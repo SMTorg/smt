@@ -8,12 +8,12 @@ Version 0.0.1
 Clone the repository from github.
 Go to the main folder SMT.
 Install the toolbox by running:
-python setup.py install
+sudo python setup.py install
 
 # How do I test the SMT?
 ## Linux
 Go to the folder examples and run:
-sudo python test.py
+python test.py
 
 ## Windows
 The Inverse Distance Weighting (IDW) model is not available with windows.
