@@ -1,7 +1,7 @@
 # README
 This repository contains the code for The Surrogate Models Toolbox (SMT).
 
-# Version?
+# Version
 Version 0.0.1
 
 # How do I use the SMT?
