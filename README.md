@@ -5,7 +5,7 @@ This repository contains the code for The Surrogate Models Toolbox (SMT).
 Version 0.0.1
 
 # How do I use the SMT?
-Clone the repository from github
+Clone the repository from github.
 Go to the main folder SMT.
 Install the toolbox by running:
 python setup.py install
