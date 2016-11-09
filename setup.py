@@ -16,7 +16,7 @@ except:
 
 setup(name='smt',
       version='0.1',
-      description='The funniest joke in the world',
+      description='The Surrogate Model Toolbox (SMT)',
       author='Mohamed Amine Bouhlel',
       author_email='mbouhlel@umich.edu',
       license='BSD-3',
