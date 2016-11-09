@@ -19,6 +19,10 @@ Go to the folder examples and run:
 
 python test.py
 
+If several versions of Python are installed on the computer, run: 
+
+sudo python test.py
+
 ## Windows
 The Inverse Distance Weighting (IDW) model is not available with windows.
 
