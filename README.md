@@ -1,5 +1,5 @@
 # README
-This repository contains the code for The Surrogate Models Toolbox (SMT).
+This repository contains the code for the surrogate models toolbox (SMT).
 
 # Version
 Version 0.0.1
@@ -24,7 +24,7 @@ If several versions of Python are installed on the computer, run:
 sudo python test.py
 
 ## Windows
-The Inverse Distance Weighting (IDW) model is not available with windows.
+The inverse distance weighting (IDW) model is not available with Windows.
 
 Open the "test.py" file with an editor and comment line 6 and from line
 64 through line 71. Then, run:
@@ -32,4 +32,4 @@ Open the "test.py" file with an editor and comment line 6 and from line
 python test.py
 
 # Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the MDO Lab
+This repository was created by Mohamed Amine Bouhlel and is maintained by the MDO Lab.
