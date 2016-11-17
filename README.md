@@ -1,5 +1,5 @@
 # README
-This repository contains the code for the surrogate models toolbox (SMT).
+This repository contains the code for the surrogate model toolbox (SMT).
 
 # Version
 Version 0.0.1
