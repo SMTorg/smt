@@ -18,8 +18,7 @@ class SM(object):
 
     '''
     
-    def __init__(self, sm_options=None, solver_options=None,
-                 printf_options=None):
+    def __init__(self, sm_options=None, printf_options=None):
         
         ''' 
         Constructor.
@@ -28,8 +27,7 @@ class SM(object):
         ---------
         sm_options : dict
             Model-related options, in _default_options in the inheriting class
-        solver_options : dict
-            Linear system and linear solver options
+
         printf_options : dict
             Output printing options
         '''
@@ -37,7 +35,6 @@ class SM(object):
         #Initialization
         self._set_default_options()
         self.sm_options.update(sm_options)
-        self.solver_options.update(solver_options)
         self.printf_options.update(printf_options)
         
         self.training_pts = {'exact': {}}

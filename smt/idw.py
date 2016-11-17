@@ -26,8 +26,6 @@ class IDW(SM):
             'name': 'IDW',
             'p': 2.5,           # Parameter p
         }
-        solver_options = {
-        }
         printf_options = {
             'global': True,     # Overriding option to print output            
             'time_eval': True,  # Print evaluation times
@@ -36,7 +34,6 @@ class IDW(SM):
         }
 
         self.sm_options = sm_options
-        self.solver_options = solver_options
         self.printf_options = printf_options
 
         

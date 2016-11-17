@@ -27,7 +27,6 @@ class PA2(SM):
         ---------
         sm_options : dict
             Model-related options, listed below
-        solver_options : dict
 
         printf_options : dict
             Output printing options, listed below
@@ -35,8 +34,6 @@ class PA2(SM):
       
         sm_options = {
             'name': 'PA2',
-        }
-        solver_options = {      # Setting given by default by scikit-learn
         }
         printf_options = {
             'global': True,     # Overriding option to print output            
@@ -46,7 +43,6 @@ class PA2(SM):
         }
         
         self.sm_options = sm_options
-        self.solver_options = solver_options
         self.printf_options = printf_options
 
 
