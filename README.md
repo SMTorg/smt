@@ -1,5 +1,5 @@
 # README
-This repository contains the code for the surrogate model toolbox (SMT).
+This repository includes the codes for the surrogate model toolbox (SMT).
 
 # Version
 Version 0.0.1
@@ -7,7 +7,7 @@ Version 0.0.1
 # How do I use the SMT?
 Clone the repository from github.
 
-Go to the main folder SMT.
+Go to the main folder 'SMT'.
 
 Install the toolbox by running:
 
@@ -15,7 +15,7 @@ sudo python setup.py install
 
 # How do I test the SMT?
 ## Linux
-Go to the folder examples and run:
+Go to the folder 'examples' and run:
 
 python test.py
 
@@ -32,4 +32,4 @@ Open the "test.py" file with an editor and comment line 6 and from line
 python test.py
 
 # Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the MDO Lab.
+This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
