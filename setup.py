@@ -27,7 +27,7 @@ setup(name='smt',
 try:
     myFile = os.getcwd()+"/smt/lib.so"
     version = sys.version_info
-    shutil.move(myFile,"/usr/local/lib/python"+str(version[0])+"."+str(version[1])+
+    shutil.copy(myFile,"/usr/local/lib/python"+str(version[0])+"."+str(version[1])+
             "/dist-packages/smt-0.1-py"+str(version[0])+"."+str(version[1])+
             ".egg/smt/lib.so")
 except:
