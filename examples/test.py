@@ -46,7 +46,7 @@ y = t.predict(xtest)
 
 print 'LS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
             ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-            ytest.reshape((ntest,1)))**2))
+            ytest.reshape((ntest,1)))**2)*100)
 
 
 ########### The PA2 model
@@ -57,7 +57,7 @@ y = t.predict(xtest)
 
 print 'PA2,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
              ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-             ytest.reshape((ntest,1)))**2))
+             ytest.reshape((ntest,1)))**2)*100)
 
 
 ########### The IDW model
@@ -68,7 +68,7 @@ y = t.predict(xtest)
 
 print 'IDW,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
              ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-             ytest.reshape((ntest,1)))**2))
+             ytest.reshape((ntest,1)))**2)*100)
 
 
 ########### The Kriging model
@@ -82,7 +82,7 @@ y = t.predict(xtest)
 
 print 'Kriging,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
                  ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-                 ytest.reshape((ntest,1)))**2))
+                 ytest.reshape((ntest,1)))**2)*100)
 
 
 ########### The KPLS model
@@ -97,7 +97,7 @@ y = t.predict(xtest)
 
 print 'KPLS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
               ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-              ytest.reshape((ntest,1)))**2))
+              ytest.reshape((ntest,1)))**2)*100)
 
 
 ########### The KPLSK model
@@ -110,7 +110,7 @@ y = t.predict(xtest)
 
 print 'KPLSK,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
                ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-               ytest.reshape((ntest,1)))**2))
+               ytest.reshape((ntest,1)))**2)*100)
 
 ########### The GEKPLS model
 # The variables 'name' must be equal to 'GEKPLSK'. 'n_comp' and 'theta0' must be
@@ -126,4 +126,4 @@ y = t.predict(xtest)
 
 print 'GEKPLS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
                 ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-                ytest.reshape((ntest,1)))**2))
+                ytest.reshape((ntest,1)))**2)*100)
