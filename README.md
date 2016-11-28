@@ -2,7 +2,12 @@
 This repository includes the codes for the surrogate model toolbox (SMT).
 
 # Version
-Version 0.0.1
+Version beta
+
+# Required packages
+Scipy    >= Version 0.15.1
+Numpy    >= Version 1.9.2
+Sklearn  >= Version 0.13.1
 
 # How do I use the SMT?
 Clone the repository from github.
@@ -11,7 +16,11 @@ Go to the main folder 'SMT'.
 
 Install the toolbox by running:
 
-sudo python setup.py install
+sudo python setup.py install        (Linux)
+
+or 
+
+python setup.py install             (Windows)
 
 # How do I test the SMT?
 ## Linux
