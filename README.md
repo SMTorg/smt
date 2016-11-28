@@ -6,7 +6,9 @@ Version beta
 
 # Required packages
 Scipy    >= Version 0.15.1
+
 Numpy    >= Version 1.9.2
+
 Sklearn  >= Version 0.13.1
 
 # How do I use the SMT?
