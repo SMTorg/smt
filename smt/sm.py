@@ -67,7 +67,7 @@ class SM(object):
                  where it is differentiated w.r.t. the kx^{th} 
                  input variable (kx is 0-based)
         '''
-
+        yt = yt.reshape((xt.shape[0],1))
         #Output or derivative variables
         if kx is None:
             kx = 0
