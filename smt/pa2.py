@@ -60,7 +60,11 @@ class PA2(SM):
         if 0 in self.training_pts['exact']:
             x = self.training_pts['exact'][0][0]
             y = self.training_pts['exact'][0][1]
-            
+        
+        if x.shape[0] < (self.dim+1)*(self.dim+2)/2.:
+            raise Exception("Number of training points should be greater or equal to %d."
+                            % ((self.dim+1)*(self.dim+2)/2.))
+        
         X = self.respoSurf(x)
         self.coef = np.dot(np.linalg.inv(np.dot(X.T,X)),(np.dot(X.T,y)))
 
