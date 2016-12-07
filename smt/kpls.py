@@ -689,8 +689,6 @@ class KPLS(SM):
         
         # Initialization 
         n_eval, n_features_x = x.shape
-        pts = self.training_pts
-        options = self.sm_options
         x = (x - self.X_mean) / self.X_std
         y = np.zeros(n_eval)
 
