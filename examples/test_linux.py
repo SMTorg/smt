@@ -19,7 +19,7 @@ xlimits[:, 0] = -10
 xlimits[:, 1] = 10
 
 # Construction of the DOE in [0,1]
-xt = doe_lhs.lhs(dim,ndoe,'cm')
+xt = doe_lhs.lhs(dim,ndoe,'m')
 
 # Transform the DOE in [LB,UB]
 xt = trans(xt,xlimits[:, 0],xlimits[:, 1])
@@ -44,10 +44,8 @@ t.train()
 # Prediction of the validation points
 y = t.predict(xtest)
 
-print 'LS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-            ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-            ytest.reshape((ntest,1)))**2)*100)
-
+print 'LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 ########### The PA2 model
 t = PA2({'name':'PA2'},{})
@@ -55,10 +53,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'PA2,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-             ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-             ytest.reshape((ntest,1)))**2)*100)
-
+print 'PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 ########### The IDW model
 t = IDW({'name':'IDW'},{})
@@ -66,10 +62,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'IDW,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-             ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-             ytest.reshape((ntest,1)))**2)*100)
-
+print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 ########### The Kriging model
 # The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
@@ -80,9 +74,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'Kriging,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-                 ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-                 ytest.reshape((ntest,1)))**2)*100)
+print 'Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 
 ########### The KPLS model
@@ -95,9 +88,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'KPLS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-              ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-              ytest.reshape((ntest,1)))**2)*100)
+print 'KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 
 ########### The KPLSK model
@@ -108,9 +100,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'KPLSK,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-               ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-               ytest.reshape((ntest,1)))**2)*100)
+print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 ########### The GEKPLS model
 # The variables 'name' must be equal to 'GEKPLSK'. 'n_comp' and 'theta0' must be
@@ -124,6 +115,5 @@ for i in xrange(dim):
 t.train()
 y = t.predict(xtest)
 
-print 'GEKPLS,  err: '+str(np.sqrt(1/ntest*linalg.norm(y.reshape((ntest,1))-
-                ytest.reshape((ntest,1)))**2)/np.sqrt(1/ntest*linalg.norm(
-                ytest.reshape((ntest,1)))**2)*100)
+print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)

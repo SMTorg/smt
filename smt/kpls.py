@@ -3,6 +3,9 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
+
+TODO
+Add additional points GEKPLS1, GEKPLS2 and so on
 """
 
 from __future__ import division
@@ -10,6 +13,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg, optimize
+from pyDOE import *
 
 from sm import SM
 from pairwise import manhattan_distances
@@ -247,25 +251,72 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     elif opt == 1:
         #GEKPLS-KPLS
         coeff_pls = np.zeros((nt,dim,n_comp))
-
-        for i in xrange(nt):
-            _X = np.zeros((dim+1,dim))
-            _y = np.zeros((dim+1,1))            
-            _X[0,:] = X[i,:].copy()
-            _y[0,0] = y[i,0].copy()
-            for j in xrange(1,dim+1):
-                _X[j,:] = _X[0,:]
-                _X[j,j-1] +=delta_x*(xlimits[j-1,1]-xlimits[j-1,0])
-                _y[j,0] = _y[0,0].copy()+ pts['exact'][j][1][i,0]*delta_x*(
-                    xlimits[j-1,1]-xlimits[j-1,0])
-            pls.fit(_X.copy(),_y.copy())
-
-            coeff_pls[i,:,:] = pls.x_rotations_                
+        for i in xrange(nt):            
+            if dim >= 3:
+                sign = bbdesign(dim,center=1)
+                _X = np.zeros((sign.shape[0],dim))
+                _y = np.zeros((sign.shape[0],1))
+                sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
+                _X = X[i,:]+ sign
+                for j in xrange(1,dim+1):
+                    sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
+                _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
+            else:
+                _X = np.zeros((9,dim))
+                _y = np.zeros((9,1))
+                # center
+                _X[:,:] = X[i,:].copy()
+                _y[0,0] = y[i,0].copy()
+                # right
+                _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _y[1,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])
+                # up
+                _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[2,0] = _y[0,0].copy()+ pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                # left
+                _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _y[3,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])
+                # down
+                _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[4,0] = _y[0,0].copy()-pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                # right up
+                _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[5,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                # left up
+                _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[6,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                # left down
+                _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[7,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                # right down
+                _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+                _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+                _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                    xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                    xlimits[1,1]-xlimits[1,0])
+                
+            pls.fit(_X.copy(),_y.copy())            
+            coeff_pls[i,:,:] = pls.x_rotations_
+            #TODO Add additional points
+            '''
             if extra_pts != 0:
                 max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_pts:]
                 XX = np.vstack((XX,_X[1+max_coeff,:]))
                 yy = np.vstack((yy,_y[1+max_coeff,:]))
-
+            '''
         return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 """
@@ -552,7 +603,7 @@ class KPLS(SM):
         del self.y_norma, self.D
 
 
-    def _reduced_likelihood_function(self, theta=None):
+    def _reduced_likelihood_function(self, theta):
                 
         """
         This function determines the BLUP parameters and evaluates the reduced
@@ -594,9 +645,6 @@ class KPLS(SM):
             G
             QR decomposition of the matrix Ft.
         """
-        if theta is None:
-            # Use built-in autocorrelation parameters
-            theta = self.theta_
         # Initialize output
         reduced_likelihood_function_value = - np.inf
         par = {}

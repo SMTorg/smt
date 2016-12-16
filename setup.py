@@ -21,7 +21,10 @@ setup(name='smt',
       author_email='mbouhlel@umich.edu',
       license='BSD-3',
       packages=['smt'],
-      install_requires=['scikit-learn'],
+      install_requires=[
+        'scikit-learn',
+        'pyDOE'
+      ],
       zip_safe=False)
 
 try:

@@ -11,6 +11,8 @@ Numpy    >= Version 1.9.2
 
 Sklearn  >= Version 0.13.1
 
+pyDOE >= Version 0.3.8
+
 # How do I use the SMT?
 Clone the repository from github.
 
@@ -25,22 +27,17 @@ or
 python setup.py install             (Windows)
 
 # How do I test the SMT?
-## Linux
-Go to the folder 'examples' and run:
 
-python test.py
+Go to the folder 'examples' and run:
+## Linux
+python test_linux.py
 
 If several versions of Python are installed on the computer, run: 
 
-sudo python test.py
+sudo python test_linux.py
 
 ## Windows
-The inverse distance weighting (IDW) model is not available with Windows.
-
-Open the "test.py" file with an editor and comment line 6 and from line
-64 through line 71. Then, run:
-
-python test.py
+python test_windows.py
 
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
