@@ -14,9 +14,13 @@ Sklearn  >= Version 0.13.1
 pyDOE >= Version 0.3.8
 
 # How do I use the SMT?
-Clone the repository from github.
+Clone the repository from github then run:
 
-Go to the main folder 'SMT'.
+pip install name_folder
+
+or
+
+Go to the main folder.
 
 Install the toolbox by running:
 
@@ -29,6 +33,7 @@ python setup.py install             (Windows)
 # How do I test the SMT?
 
 Go to the folder 'examples' and run:
+
 ## Linux
 python test_linux.py
 
