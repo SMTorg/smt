@@ -43,10 +43,10 @@ def standardization(X,y,copy=False):
     Returns
     -------
     
-    X/Xr: np.ndarray [n_obs, dim]
+    X: np.ndarray [n_obs, dim]
           The standardized input matrix.
     
-    y/yr: np.ndarray [n_obs, 1]
+    y: np.ndarray [n_obs, 1]
           The standardized output vector.
 
     X_mean: list(dim)
