@@ -9,11 +9,11 @@ from __future__ import division
 import numpy as np
 from scipy.sparse import csc_matrix
 from sm import SM
-import lib
+import IDWlib
 
 class IDW(SM):
-    
-    ''' 
+
+    '''
     Inverse distance weighting interpolant
     This model uses the inverse distance between the unknown and training
     points to predeict the unknown point.
@@ -27,7 +27,7 @@ class IDW(SM):
             'p': 2.5,           # Parameter p
         }
         printf_options = {
-            'global': True,     # Overriding option to print output            
+            'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
             'time_train': False, # Print assembly and solution time summary
             'problem': True,    # Print problem information
@@ -36,20 +36,20 @@ class IDW(SM):
         self.sm_options = sm_options
         self.printf_options = printf_options
 
-        
+
     ############################################################################
     # Model functions
     ############################################################################
 
-        
+
     def fit(self):
-      
+
         """
-        Train the model    
+        Train the model
         """
         pass
 
-    
+
     def evaluate(self, x):
 
         """
@@ -62,7 +62,7 @@ class IDW(SM):
 
         Returns
         -------
-        y : np.ndarray 
+        y : np.ndarray
             Evaluation point output variable values
         """
 
@@ -72,11 +72,10 @@ class IDW(SM):
         if 0 in self.training_pts['exact']:
             xt_list.append(self.training_pts['exact'][0][0])
             yt_list.append(self.training_pts['exact'][0][1])
-            
+
         xt = np.vstack(xt_list)
         yt = np.vstack(yt_list)
-        
-        mtx = lib.evaljacidw(self.dim, n_evals, self.nt,self.sm_options['p'], x,
-                             xt)
+
+        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt,self.sm_options['p'], x, xt)
 
         return mtx.dot(yt)

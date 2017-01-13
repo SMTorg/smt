@@ -1,4 +1,4 @@
-subroutine evaljacidw(nx, ne, nt, power, xe, xt, jac)
+subroutine compute_jac(nx, ne, nt, power, xe, xt, jac)
 
   implicit none
 
@@ -27,4 +27,4 @@ subroutine evaljacidw(nx, ne, nt, power, xe, xt, jac)
      jac(ie, :) = jac(ie, :) / sum(jac(ie, :))
   end do
 
-end subroutine evaljacidw
+end subroutine compute_jac
