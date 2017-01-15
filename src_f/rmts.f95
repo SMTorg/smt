@@ -449,157 +449,22 @@ end subroutine compute_jac
 
 
 
-subroutine compute_jac_cplx(cx, ix, jx, order, nnz, nx, neval, nelements, xlimits, xeval, &
-     data, rows, cols)
-
-  implicit none
-
-  !f2py intent(in) cx, ix, jx, order, nnz, nx, neval, nelements, xlimits, xeval,
-  !f2py intent(out) data, rows, cols
-  !f2py depend(nx) nelements, xlimits
-  !f2py depend(neval, nx) xeval
-  !f2py depend(nnz) data, rows, cols
-
-  ! Input
-  integer, intent(in) :: cx, ix, jx, order, nnz, nx, neval
-  integer, intent(in) :: nelements(nx)
-  double precision, intent(in) :: xlimits(nx, 2), xeval(neval, nx)
-
-  ! Output
-  double precision, intent(out) :: data(nnz)
-  integer, intent(out) :: rows(nnz), cols(nnz)
-
-  ! Working
-  integer :: ieval, inz, kx
-  integer :: ielem, iterm, ielem_list(nx), iterm_list(nx)
-  integer :: nelem, nterm, nelem_list(nx), nterm_list(nx)
-  double precision :: bma_d2(nx), dxb_dx(nx), h
-  complex*16 :: prod, xbar(nx), cxeval(neval, nx)
-  integer :: pow
-
-  h = 1.e-15
-
-  nelem_list(:) = nelements
-  nterm_list(:) = order
-
-  nelem = product(nelem_list)
-  nterm = product(nterm_list)
-
-  bma_d2 = (xlimits(:, 2) - xlimits(:, 1)) / nelem_list / 2.
-  dxb_dx = 1 / bma_d2
-
-  do ieval = 1, neval
-     do kx = 1, nx
-        cxeval(ieval, kx) = cmplx(xeval(ieval, kx), 0., kind(1.d0))
-     end do
-     cxeval(ieval, cx) = cxeval(ieval, cx) + cmplx(0., h, kind(1.d0))
-  end do
-
-  inz = 0
-  do ieval = 1, neval
-     do kx = 1, nx
-        call findintervalc(nelem_list(kx), xlimits(kx, :), &
-             cxeval(ieval, kx), ielem_list(kx), xbar(kx))
-     end do
-     call contractindex(nx, nelem_list, ielem_list, ielem)
-!     print *, 'aaaaaaa', xbar(:)
-
-     do iterm = 1, nterm
-        call expandindex(nx, nterm_list, iterm, iterm_list)
-
-        prod = cmplx(1., 0., kind(1.d0))
-        do kx = 1, nx
-           pow = iterm_list(kx) - 1
-           if ((kx .ne. ix) .and. (kx .ne. jx)) then
-              prod = prod * xbar(kx) ** pow
-           else if ((kx .eq. ix) .and. (kx .eq. jx)) then
-              if (pow .ge. 2) then
-                 prod = prod * pow * (pow-1) * xbar(kx) ** (pow-2) * dxb_dx(kx) * dxb_dx(kx)
-              else
-                 prod = cmplx(0., 0., kind(1.d0))
-              end if
-           else
-              if (pow .ge. 1) then
-                 prod = prod * pow * xbar(kx) ** (pow-1) * dxb_dx(kx)
-              else
-                 prod = cmplx(0., 0., kind(1.d0))
-              end if
-           end if
-        end do
-!        print *, 'xxxxxx', prod, dimag(prod), xbar(2), xbar(2)**2
-
-        inz = inz + 1
-        data(inz) = dimag(prod) / h
-        rows(inz) = ieval - 1
-        cols(inz) = (ielem - 1) * nterm + iterm - 1
-     end do
-  end do
-
-  if (inz .ne. nnz) then
-     print *, 'Error in compute_jac_cplx', inz, nnz
-     call exit(1)
-  end if
-
-end subroutine compute_jac_cplx
-
-
-
-subroutine compute_ext_mask(nx, neval, xlimits, xeval, isexternal_any, isexternal)
-
-  implicit none
-
-  !f2py intent(in) nx, neval, xlimits, xeval
-  !f2py intent(out) isexternal, isexternal
-  !f2py depend(nx) xlimits
-  !f2py depend(neval, nx) xeval
-  !f2py depend(neval) isexternal
-  !f2py depend(neval, nx) isexternal2
-
-  ! Input
-  integer, intent(in) :: nx, neval
-  double precision, intent(in) :: xlimits(nx, 2), xeval(neval, nx)
-
-  ! Output
-  logical, intent(out) :: isexternal_any(neval), isexternal(neval, nx)
-
-  ! Working
-  integer :: ieval, ix
-
-  isexternal_any(:) = .False.
-  isexternal(:, :) = .False.
-
-  do ieval = 1, neval
-     do ix = 1, nx
-        if (xeval(ieval, ix) .lt. xlimits(ix, 1)) then
-           isexternal_any(ieval) = .True.
-           isexternal(ieval, ix) = .True.
-        else if (xeval(ieval, ix) .gt. xlimits(ix, 2)) then
-           isexternal_any(ieval) = .True.
-           isexternal(ieval, ix) = .True.
-        end if
-     end do
-  end do
-
-end subroutine compute_ext_mask
-
-
-
-subroutine tpsextrapolation(nx, neval, ndx, xlimits, xeval, dx, dx2)
+subroutine compute_ext_dist(nx, neval, ndx, xlimits, xeval, dx)
 
   implicit none
 
   !f2py intent(in) nx, neval, ndx, xlimits, xeval
-  !f2py intent(out) dx, dx2
+  !f2py intent(out) dx
   !f2py depend(nx) xlimits
   !f2py depend(neval, nx) xeval
-  !f2py depend(ndx, nx) dx, dx2
+  !f2py depend(ndx, nx) dx
 
   ! Input
   integer, intent(in) :: nx, neval, ndx
   double precision, intent(in) :: xlimits(nx, 2), xeval(neval, nx)
 
   ! Output
-  double precision, intent(out) :: dx(ndx, nx), dx2(ndx, nx, nx)
+  double precision, intent(out) :: dx(ndx, nx)
 
   ! Working
   integer :: ieval, ix, iterm, nterm, index
@@ -607,31 +472,21 @@ subroutine tpsextrapolation(nx, neval, ndx, xlimits, xeval, dx, dx2)
 
   work(:, :) = xeval(:, :)
 
+  nterm = ndx / neval
+
   ! After these 2 do loops, work is the position vector from the
   ! nearest point in the domain specified by xlimits.
   do ieval = 1, neval
      do ix = 1, nx
-        work(ieval, ix) = max(xlimits(ix, 1), work(ieval, ix))
-        work(ieval, ix) = min(xlimits(ix, 2), work(ieval, ix))
-        work(ieval, ix) = xeval(ieval, ix) - work(ieval, ix)
-     end do
-  end do
-
-  ! dx is the position vector from the nearest domain point where
-  ! for each eval point, the value is stamped out nterm times.
-  ! dx2
-  nterm = ndx / neval
-  do ieval = 1, neval
-     do iterm = 1, nterm
-        index = (ieval-1)*nterm + iterm
-        dx(index, :) = work(ieval, :)
-        do ix = 1, nx
-           dx2(index, :, ix) = work(ieval, :)
-        end do
-        do ix = 1, nx
-           dx2(index, ix, :) = dx2(index, ix, :) * work(ieval, :)
+        work = xeval(ieval, ix)
+        work = max(xlimits(ix, 1), work)
+        work = min(xlimits(ix, 2), work)
+        work = xeval(ieval, ix) - work
+        do iterm = 1, nterm
+           index = (ieval - 1) * nterm + iterm
+           dx(index, ix) = work(ieval, ix)
         end do
      end do
   end do
 
-end subroutine tpsextrapolation
+end subroutine compute_ext_dist
