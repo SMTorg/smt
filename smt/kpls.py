@@ -43,10 +43,10 @@ def standardization(X,y,copy=False):
     Returns
     -------
     
-    X/Xr: np.ndarray [n_obs, dim]
+    X: np.ndarray [n_obs, dim]
           The standardized input matrix.
     
-    y/yr: np.ndarray [n_obs, 1]
+    y: np.ndarray [n_obs, 1]
           The standardized output vector.
 
     X_mean: list(dim)
@@ -237,8 +237,7 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
             - Extra points added (only when extra_pts > 0)
     
     """
-    nt,dim = X.shape
-    
+    nt,dim = X.shape    
     XX = np.empty(shape = (0,dim))
     yy = np.empty(shape = (0,1))
     pls = _pls(n_comp)
@@ -247,20 +246,19 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
         #KPLS
         pls.fit(X,y)
         return np.abs(pls.x_rotations_), XX, yy
-
     elif opt == 1:
         #GEKPLS-KPLS
         coeff_pls = np.zeros((nt,dim,n_comp))
         for i in xrange(nt):            
             if dim >= 3:
-                sign = bbdesign(dim,center=1)
+                sign = np.roll(bbdesign(dim,center=1),1,axis=0)
                 _X = np.zeros((sign.shape[0],dim))
                 _y = np.zeros((sign.shape[0],1))
                 sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
-                _X = X[i,:]+ sign
+                _X = X[i,:]+ sign                
                 for j in xrange(1,dim+1):
                     sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
-                _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
+                _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))                
             else:
                 _X = np.zeros((9,dim))
                 _y = np.zeros((9,1))
@@ -307,16 +305,19 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
                 _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
                     xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
                     xlimits[1,1]-xlimits[1,0])
-                
+            
             pls.fit(_X.copy(),_y.copy())            
             coeff_pls[i,:,:] = pls.x_rotations_
-            #TODO Add additional points
-            '''
+            #Add additional points
             if extra_pts != 0:
                 max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_pts:]
-                XX = np.vstack((XX,_X[1+max_coeff,:]))
-                yy = np.vstack((yy,_y[1+max_coeff,:]))
-            '''
+                for ii in max_coeff:
+                    XX = np.vstack((XX,X[i,:]))
+                    XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
+                    yy = np.vstack((yy,y[i,0]))
+                    yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
+                        xlimits[ii,1]-xlimits[ii,0])
+             
         return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 """
