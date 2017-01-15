@@ -51,12 +51,19 @@ class RMTS(SM):
         printf_options = {
             'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
-            'time_train': False, # Print assembly and solution time summary
+            'time_train': True, # Print assembly and solution time summary
             'problem': True,    # Print problem information
+        }
+        solver_options = {
+            'pc': 'lu',
+            'print': True,
+            'atol': 1e-15,
+            'ilimit': 100,
         }
 
         self.sm_options = sm_options
         self.printf_options = printf_options
+        self.solver_options = solver_options
 
     def fit(self):
         """
@@ -195,16 +202,17 @@ class RMTS(SM):
         mtx, rhs = smt.utils.assemble_sparse_mtx(
             block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
 
-        solver_options = {
-            'pc': 'lu',
-            'print': True,
-            'atol': 1e-15,
-            'ilimit': 100,
-        }
         sol = numpy.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, solver_options)
+        smt.utils.solve_sparse_system(mtx, rhs, sol, self.solver_options)
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
+
+    def _load_trained_model(self, data):
+        self.sol = data['sol']
+        self.num = data['num']
+
+    def _save_trained_model(self):
+        return {'sol': self.sol, 'num': self.num}
 
     def evaluate(self, x):
         """

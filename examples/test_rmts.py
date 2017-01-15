@@ -7,8 +7,10 @@ from smt.idw import IDW
 from smt.rmts import RMTS
 from scipy import linalg
 import tools_benchmark as fun
-from tools_doe import  trans
+from tools_doe import trans
 import doe_lhs
+
+np.random.seed(0)
 
 # Initialization of the problem
 dim = 3
@@ -33,6 +35,7 @@ ntest = 500
 xtest = doe_lhs.lhs(dim, ntest)
 xtest = trans(xtest,xlimits[:, 0],xlimits[:, 1])
 ytest,ydtest = fun.carre(xtest)
+ntest = xtest.shape[0]
 
 ########### The LS model
 
@@ -125,7 +128,7 @@ print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest
 ########### The RMTS model
 # The variables 'name' must be equal to 'KPLSK'. 'n_comp' and 'theta0' must be
 # an integer in [1,dim[ and a list of length n_comp, respectively.
-t = RMTS({'name':'RMTS','num_elem':[8]*dim, 'smoothness':[1.0]*dim,
+t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim,
     'xlimits':xlimits, 'mode': 'approx'},{})
 t.add_training_pts('exact',xt,yt)
 t.train()
@@ -135,4 +138,4 @@ print 'RMTS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 y1 = y.reshape((ntest,1))
 
-print xt.shape, yt.shape
+print linalg.norm(xt), linalg.norm(yt)
