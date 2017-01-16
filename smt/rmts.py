@@ -65,7 +65,7 @@ class RMTS(SM):
         self.printf_options = printf_options
         self.solver_options = solver_options
 
-    def fit(self):
+    def _fit(self):
         """
         Train the model
         """
@@ -207,12 +207,17 @@ class RMTS(SM):
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
 
-    def _load_trained_model(self, data):
-        self.sol = data['sol']
-        self.num = data['num']
-
-    def _save_trained_model(self):
-        return {'sol': self.sol, 'num': self.num}
+    def fit(self):
+        filename = '%s.sm' % self.sm_options['name']
+        checksum = smt.utils._caching_checksum(self)
+        success, data = smt.utils._caching_load(filename, checksum)
+        if not success:
+            self._fit()
+            data = {'sol': self.sol, 'num': self.num}
+            smt.utils._caching_save(filename, checksum, data)
+        else:
+            self.sol = data['sol']
+            self.num = data['num']
 
     def evaluate(self, x):
         """

@@ -10,8 +10,6 @@ from __future__ import division
 
 import numpy as np
 import time
-import cPickle as pickle
-import hashlib
 
 class SM(object):
 
@@ -100,15 +98,9 @@ class SM(object):
         if self.printf_options['global'] and self.printf_options['problem']:
             self._print_problem()
 
-        self_pkl = pickle.dumps(self)
-        checksum = hashlib.md5(self_pkl).hexdigest()
-
         #Train the model using the specified model-method
         t1 = time.time()
-        success = self._caching_load(checksum)
-        if not success:
-            self.fit()
-            self._caching_save(checksum)
+        self.fit()
         t2 = time.time()
 
         # Mixture of experts model
@@ -120,28 +112,6 @@ class SM(object):
             print
             self._print_line_time('Total (sec)', t2-t1)
             print
-
-    def _caching_load(self, checksum):
-        try:
-            filename = '%s.sm' % self.sm_options['name']
-            save_pkl = pickle.load(open(filename, 'r'))
-
-            if checksum == save_pkl['checksum']:
-                self._load_trained_model(save_pkl['data'])
-                return True
-            else:
-                return False
-        except:
-            return False
-
-    def _caching_save(self, checksum):
-        save_dict = {
-            'checksum': checksum,
-            'data': self._save_trained_model(),
-        }
-
-        filename = '%s.sm' % self.sm_options['name']
-        pickle.dump(save_dict, open(filename, 'w'))
 
     def _load_trained_model(self, data):
         self.fit()

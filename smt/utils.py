@@ -2,6 +2,8 @@ from __future__ import print_function
 import numpy
 import scipy.sparse
 import scipy.sparse.linalg
+import cPickle as pickle
+import hashlib
 import six
 from six.moves import range
 
@@ -61,3 +63,25 @@ def solve_sparse_system(mtx, rhs, sol, solver_options):
             maxiter=solver_options['ilimit'],
             tol=solver_options['atol'],
         )
+
+def _caching_load(filename, checksum):
+    try:
+        save_pkl = pickle.load(open(filename, 'r'))
+
+        if checksum == save_pkl['checksum']:
+            return True, save_pkl['data']
+        else:
+            return False, None
+    except:
+        return False, None
+
+def _caching_save(filename, checksum, data):
+    save_dict = {
+        'checksum': checksum,
+        'data': data,
+    }
+    pickle.dump(save_dict, open(filename, 'w'))
+
+def _caching_checksum(obj):
+    self_pkl = pickle.dumps(obj)
+    checksum = hashlib.md5(self_pkl).hexdigest()
