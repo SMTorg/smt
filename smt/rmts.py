@@ -8,7 +8,7 @@ TODO:
 
 from __future__ import division
 
-import numpy
+import numpy as np
 import scipy.sparse
 import RMTSlib
 import smt.utils
@@ -43,28 +43,25 @@ class RMTS(SM):
             'num_elem': [],  # int ndarray[nx]: num. of elements in each dimension
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
-            'reg_dv': 1e-10, # regularization coeff. for dv block
-            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
+            'reg_dv': 1e-8, # regularization coeff. for dv block
+            'reg_cons': 1e-8, # negative of reg. coeff. for Lagrange mult. block
             'mode': 'approx', # 'approx' or 'exact' form of linear system ()
             'extrapolate': False, # perform linear extrapolation for external eval points
+            'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_atol': 1e-15, # Absolute linear system convergence tolerance
+            'solver_ilimit': 100, # Linear system iteration limit
+            'solver_save': True,  # Whether to save linear system solution
         }
         printf_options = {
             'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
             'time_train': True, # Print assembly and solution time summary
             'problem': True,    # Print problem information
-        }
-        solver_options = {
-            'pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'print': True, # Whether to print convergence progress (i.e., residual norms)
-            'atol': 1e-15, # Absolute linear system convergence tolerance
-            'ilimit': 100, # Linear system iteration limit
-            'save': True,  # Whether to save linear system solution
+            'solver': True,     # Print convergence progress (i.e., residual norms)
         }
 
         self.sm_options = sm_options
         self.printf_options = printf_options
-        self.solver_options = solver_options
 
     def _fit(self):
         """
@@ -77,14 +74,14 @@ class RMTS(SM):
 
         num = {}
         # number of elements
-        num['elem_list'] = numpy.array(sm_options['num_elem'], int)
-        num['elem'] = numpy.prod(num['elem_list'])
+        num['elem_list'] = np.array(sm_options['num_elem'], int)
+        num['elem'] = np.prod(num['elem_list'])
         # number of terms/coefficients per element
-        num['term_list'] = 4 * numpy.ones(nx, int)
-        num['term'] = numpy.prod(num['term_list'])
+        num['term_list'] = 4 * np.ones(nx, int)
+        num['term'] = np.prod(num['term_list'])
         # number of nodes
         num['uniq_list'] = num['elem_list'] + 1
-        num['uniq'] = numpy.prod(num['uniq_list'])
+        num['uniq'] = np.prod(num['uniq_list'])
 
         self.num = num
 
@@ -97,7 +94,7 @@ class RMTS(SM):
         # We need the inverse, but the matrix size is small enough to invert since
         # RMTS is normally only used for 1 <= nx <= 4 in most cases.
         elem_coeff2nodal = RMTSlib.compute_coeff2nodal(nx, num['term'])
-        elem_nodal2coeff = numpy.linalg.inv(elem_coeff2nodal)
+        elem_nodal2coeff = np.linalg.inv(elem_coeff2nodal)
 
         # This computes a num_coeff_elem x num_coeff_uniq permutation matrix called
         # uniq2elem. This sparse matrix maps the unique list of nodal function and
@@ -113,7 +110,7 @@ class RMTS(SM):
         # This computes the positive-definite, symmetric matrix yields the energy
         # for an element when pre- and post-multiplied by a vector of function and
         # derivative values for the element. This matrix applies to all elements.
-        elem_hess = numpy.zeros((num['term'], num['term']))
+        elem_hess = np.zeros((num['term'], num['term']))
         for kx in range(nx):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], nx,
                 num['elem_list'], sm_options['xlimits'])
@@ -133,8 +130,8 @@ class RMTS(SM):
         sub_mtx_dict['dv', 'dv'] = full_hess
 
         num_coeff_uniq = num['uniq'] * 2 ** nx
-        diag = sm_options['reg_dv'] * numpy.ones(num_coeff_uniq)
-        arange = numpy.arange(num_coeff_uniq)
+        diag = sm_options['reg_dv'] * np.ones(num_coeff_uniq)
+        arange = np.arange(num_coeff_uniq)
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
         sub_mtx_dict['dv', 'dv'] += reg_dv
 
@@ -185,8 +182,8 @@ class RMTS(SM):
                 sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
                 sub_rhs_dict['con_%s'%kx] = yt
 
-                diag = -sm_options['reg_cons'] * numpy.ones(nt)
-                arange = numpy.arange(nt)
+                diag = -sm_options['reg_cons'] * np.ones(nt)
+                arange = np.arange(nt)
                 reg_cons = scipy.sparse.csc_matrix((diag, (arange, arange)))
                 sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
 
@@ -203,8 +200,8 @@ class RMTS(SM):
         mtx, rhs = smt.utils.assemble_sparse_mtx(
             block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
 
-        sol = numpy.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, self.solver_options)
+        sol = np.zeros(rhs.shape)
+        smt.utils.solve_sparse_system(mtx, rhs, sol, sm_options, self.printf_options)
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
 
@@ -215,7 +212,7 @@ class RMTS(SM):
         filename = '%s.sm' % self.sm_options['name']
         checksum = smt.utils._caching_checksum(self)
         success, data = smt.utils._caching_load(filename, checksum)
-        if not success or not self.solver_options['save']:
+        if not success or not self.sm_options['solver_save']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
             smt.utils._caching_save(filename, checksum, data)
@@ -276,7 +273,7 @@ class RMTS(SM):
             # If the ith evaluation point is not external, dx[i, :] = 0.
             ndx = ne * num['term']
             dx = RMTS.compute_ext_dist(nx, ne, ndx, sm_options['xlimits'], x)
-            isexternal = numpy.array(numpy.array(dx, bool), float)
+            isexternal = np.array(np.array(dx, bool), float)
 
             for ix in range(nx):
                 # Now we compute the first order term where we have a

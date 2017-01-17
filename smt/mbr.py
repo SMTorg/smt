@@ -8,7 +8,7 @@ TODO:
 
 from __future__ import division
 
-import numpy
+import numpy as np
 import scipy.sparse
 import MBRlib
 import smt.utils
@@ -45,24 +45,21 @@ class MBR(SM):
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
             'reg': 1e-10, # regularization coeff. for dv block
+            'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_atol': 1e-15, # Absolute linear system convergence tolerance
+            'solver_ilimit': 100, # Linear system iteration limit
+            'solver_save': True,  # Whether to save linear system solution
         }
         printf_options = {
             'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
             'time_train': True, # Print assembly and solution time summary
             'problem': True,    # Print problem information
-        }
-        solver_options = {
-            'pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'print': True, # Whether to print convergence progress (i.e., residual norms)
-            'atol': 1e-15, # Absolute linear system convergence tolerance
-            'ilimit': 100, # Linear system iteration limit
-            'save': True,  # Whether to save linear system solution
+            'solver': True,     # Print convergence progress (i.e., residual norms)
         }
 
         self.sm_options = sm_options
         self.printf_options = printf_options
-        self.solver_options = solver_options
 
     def _fit(self):
         """
@@ -74,22 +71,22 @@ class MBR(SM):
         ny = self.training_pts['exact'][0][1].shape[1]
 
         num = {}
-        num['order_list'] = numpy.array(sm_options['order'], int)
-        num['order'] = numpy.prod(num['order_list'])
-        num['ctrl_list'] = numpy.array(sm_options['num_ctrl_pts'], int)
-        num['ctrl'] = numpy.prod(num['ctrl_list'])
+        num['order_list'] = np.array(sm_options['order'], int)
+        num['order'] = np.prod(num['order_list'])
+        num['ctrl_list'] = np.array(sm_options['num_ctrl_pts'], int)
+        num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
-        num['knots'] = numpy.sum(num['knots_list'])
+        num['knots'] = np.sum(num['knots_list'])
 
         self.num = num
 
         mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
-        rhs = numpy.zeros((num['ctrl'], ny))
+        rhs = np.zeros((num['ctrl'], ny))
         xlimits = sm_options['xlimits']
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
 
-            t = numpy.zeros(xt.shape)
+            t = np.zeros(xt.shape)
             for ix in range(nx):
                 t[:, ix] = (xt[:, ix] - xlimits[ix, 0]) /\
                     (xlimits[ix, 1] - xlimits[ix, 0])
@@ -107,13 +104,13 @@ class MBR(SM):
             mtx = mtx + rect_mtx.T * rect_mtx
             rhs = rect_mtx.T * yt
 
-        diag = sm_options['reg'] * numpy.ones(num['ctrl'])
-        arange = numpy.arange(num['ctrl'])
+        diag = sm_options['reg'] * np.ones(num['ctrl'])
+        arange = np.arange(num['ctrl'])
         reg = scipy.sparse.csc_matrix((diag, (arange, arange)))
         mtx = mtx + reg
 
-        sol = numpy.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, self.solver_options)
+        sol = np.zeros(rhs.shape)
+        smt.utils.solve_sparse_system(mtx, rhs, sol, sm_options, self.printf_options)
 
         self.sol = sol
 
@@ -124,7 +121,7 @@ class MBR(SM):
         filename = '%s.sm' % self.sm_options['name']
         checksum = smt.utils._caching_checksum(self)
         success, data = smt.utils._caching_load(filename, checksum)
-        if not success or not self.solver_options['save']:
+        if not success or not self.sm_options['solver_save']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
             smt.utils._caching_save(filename, checksum, data)
@@ -155,7 +152,7 @@ class MBR(SM):
         xlimits = self.sm_options['xlimits']
         num = self.num
 
-        t = numpy.zeros(x.shape)
+        t = np.zeros(x.shape)
         for ix in range(nx):
             t[:, ix] = (x[:, ix] - xlimits[ix, 0]) /\
                 (xlimits[ix, 1] - xlimits[ix, 0])

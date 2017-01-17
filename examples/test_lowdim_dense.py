@@ -127,7 +127,7 @@ print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest
 '''
 
 ########### The RMTS model
-t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim,
+t = RMTS({'name':'RMTS','num_elem':[2]*dim, 'smoothness':[1.0]*dim,
     'xlimits':xlimits, 'mode': 'approx'},{})
 t.add_training_pts('exact',xt,yt)
 t.train()
