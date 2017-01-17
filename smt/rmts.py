@@ -55,10 +55,11 @@ class RMTS(SM):
             'problem': True,    # Print problem information
         }
         solver_options = {
-            'pc': 'lu',
-            'print': True,
-            'atol': 1e-15,
-            'ilimit': 100,
+            'pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'print': True, # Whether to print convergence progress (i.e., residual norms)
+            'atol': 1e-15, # Absolute linear system convergence tolerance
+            'ilimit': 100, # Linear system iteration limit
+            'save': True,  # Whether to save linear system solution
         }
 
         self.sm_options = sm_options
@@ -208,10 +209,13 @@ class RMTS(SM):
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
 
     def fit(self):
+        """
+        Train the model
+        """
         filename = '%s.sm' % self.sm_options['name']
         checksum = smt.utils._caching_checksum(self)
         success, data = smt.utils._caching_load(filename, checksum)
-        if not success:
+        if not success or not self.solver_options['save']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
             smt.utils._caching_save(filename, checksum, data)
@@ -221,7 +225,7 @@ class RMTS(SM):
 
     def evaluate(self, x):
         """
-        This function evaluates the Gaussian Process model at x.
+        This function evaluates the surrogate model at x.
 
         Parameters
         ----------
@@ -232,7 +236,7 @@ class RMTS(SM):
         Returns
         -------
         y : np.ndarray[n_eval,1]
-            - An array with the Best Linear Unbiased prediction at x.
+            - An array with the output values at x.
         """
         kx = 0
 
