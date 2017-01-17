@@ -4,3 +4,5 @@
 *.egg-info
 *.so
 *.so.*
+*.sm
+.DS_Store

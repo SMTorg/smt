@@ -7,15 +7,14 @@ if os.name == 'nt':
     ext = []
 else:
     # If OS is OS X or Linux, assume Fortran compilers are available
-    ext = [Extension(name='smt.lib',
-        extra_compile_args=['-fbounds-check'],
-        sources=[
-            'src_f/tps.f95',
-            'src_f/rbf.f95',
-            'src_f/idw.f95',
-            'src_f/utils.f95',
-        ],
-    )]
+    ext = [
+        Extension(name='smt.IDWlib', extra_compile_args=['-fbounds-check'],
+            sources=['src_f/idw.f95']),
+        Extension(name='smt.RMTSlib', extra_compile_args=['-fbounds-check'],
+            sources=['src_f/rmts.f95', 'src_f/utils.f95']),
+        Extension(name='smt.MBRlib', extra_compile_args=['-fbounds-check'],
+            sources=['src_f/mbr.f95']),
+    ]
 
 setup(name='smt',
     version='0.1',
