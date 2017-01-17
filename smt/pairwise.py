@@ -59,7 +59,7 @@ def check_pairwise_arrays(X, Y):
             X = X.astype(np.float)
             Y = Y.astype(np.float)
     return X, Y
-	
+
 def manhattan_distances(X, Y=None, sum_over_features=True,
                         size_threshold=5e8):
     """ Compute the L1 distances between the vectors in X and Y.
