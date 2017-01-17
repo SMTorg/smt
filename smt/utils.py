@@ -85,3 +85,4 @@ def _caching_save(filename, checksum, data):
 def _caching_checksum(obj):
     self_pkl = pickle.dumps(obj)
     checksum = hashlib.md5(self_pkl).hexdigest()
+    return checksum
