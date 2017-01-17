@@ -5,6 +5,7 @@ from smt.pa2 import PA2
 from smt.kpls import KPLS
 from smt.idw import IDW
 from smt.rmts import RMTS
+from smt.mbr import MBR
 from scipy import linalg
 import tools_benchmark as fun
 from tools_doe import trans
@@ -14,7 +15,7 @@ np.random.seed(0)
 
 # Initialization of the problem
 dim = 3
-ndoe = 200*dim
+ndoe = 500*dim
 
 # Upper and lower bounds of the problem
 xlimits = np.zeros((dim, 2))
@@ -126,8 +127,6 @@ print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest
 '''
 
 ########### The RMTS model
-# The variables 'name' must be equal to 'KPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
 t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim,
     'xlimits':xlimits, 'mode': 'approx'},{})
 t.add_training_pts('exact',xt,yt)
@@ -136,6 +135,13 @@ y = t.predict(xtest)
 
 print 'RMTS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
-y1 = y.reshape((ntest,1))
 
-print linalg.norm(xt), linalg.norm(yt)
+########### The MBR model
+t = MBR({'name':'MBR','order':[4]*dim,'num_ctrl_pts':[5]*dim,
+    'xlimits':xlimits},{})
+t.add_training_pts('exact',xt,yt)
+t.train()
+y = t.predict(xtest)
+
+print 'MBR,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1))))
