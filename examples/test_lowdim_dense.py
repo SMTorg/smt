@@ -70,62 +70,6 @@ y = t.predict(xtest)
 print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 
-'''
-
-########### The Kriging model
-# The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
-# dim and a list of length dim, respectively.
-t = KPLS({'name':'KRG','n_comp':dim,'theta0': [1e-2]*dim},{})
-t.add_training_pts('exact',xt,yt)
-
-t.train()
-y = t.predict(xtest)
-
-print 'Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-
-########### The KPLS model
-# The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively. Here is an
-# an example using 1 principal component.
-t = KPLS({'name':'KPLS','n_comp':2,'theta0': [1e-2,1e-2]},{})
-t.add_training_pts('exact',xt,yt)
-
-t.train()
-y = t.predict(xtest)
-
-print 'KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-########### The KPLSK model
-# The variables 'name' must be equal to 'KPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS({'name':'KPLSK','n_comp':2,'theta0': [1e-2,1e-2]},{})
-t.add_training_pts('exact',xt,yt)
-t.train()
-y = t.predict(xtest)
-
-print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-########### The GEKPLS model
-# The variables 'name' must be equal to 'GEKPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS({'name':'GEKPLS','n_comp':2,'theta0': [1e-2,1e-2],'xlimits':xlimits},{})
-t.add_training_pts('exact',xt,yt)
-# Add the gradient information
-for i in xrange(dim):
-    t.add_training_pts('exact',xt,yd[:, i].reshape((yt.shape[0],1)),kx=i)
-
-t.train()
-y = t.predict(xtest)
-
-print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-'''
-
 ########### The RMTS model
 t = RMTS({'name':'RMTS','num_elem':[2]*dim, 'smoothness':[1.0]*dim,
     'xlimits':xlimits, 'mode': 'approx'},{})
