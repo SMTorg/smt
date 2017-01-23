@@ -560,8 +560,8 @@ class KPLS(SM):
 
         if 0 in self.training_pts['exact']:
             #GEKPLS
-            if 1 in self.training_pts['exact'] and (self.sm_options['name'] ==
-                        'GEKPLS' or self.sm_options['name'] == 'GEKPLSK'):
+            if 1 in self.training_pts['exact'] and self.sm_options['name'] ==
+                        'GEKPLS':
                 self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),
                     self.sm_options['n_comp'],self.training_pts,
                     self.sm_options['delta_x'],self.sm_options['xlimits'],
@@ -924,9 +924,8 @@ class KPLS(SM):
                                  ), self.sm_options['poly']))
 
 
-        if not(self.sm_options['name'] in ['KRG','KPLS','GEKPLS','KPLSK',
-                                           'GEKPLSK']):
-            raise Exception("The %s model is not found in ['KRG','KPLS','GEKPLS','KPLSK','GEKPLSK']."
+        if not(self.sm_options['name'] in ['KRG','KPLS','GEKPLS','KPLSK']):
+            raise Exception("The %s model is not found in ['KRG','KPLS','GEKPLS','KPLSK']."
                                %(self.sm_options['name']))
         else:
             if self.sm_options['name'] == 'KRG':
@@ -940,8 +939,7 @@ class KPLS(SM):
                     raise Exception('Derivative values are needed for using the GEKPLS model.')
                 self.sm_options['kriging-step'] = 0
 
-            elif self.sm_options['name'] == 'KPLSK' or self.sm_options['name'] \
-                                         == 'GEKPLSK':
+            elif self.sm_options['name'] == 'KPLSK':
                 self.sm_options['kriging-step'] = 1
 
             else:
