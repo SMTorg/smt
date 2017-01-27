@@ -560,8 +560,7 @@ class KPLS(SM):
 
         if 0 in self.training_pts['exact']:
             #GEKPLS
-            if 1 in self.training_pts['exact'] and self.sm_options['name'] ==
-                        'GEKPLS':
+            if 1 in self.training_pts['exact'] and self.sm_options['name'] == 'GEKPLS':
                 self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),
                     self.sm_options['n_comp'],self.training_pts,
                     self.sm_options['delta_x'],self.sm_options['xlimits'],
