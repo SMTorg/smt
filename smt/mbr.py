@@ -12,6 +12,7 @@ import numpy as np
 import scipy.sparse
 import MBRlib
 import smt.utils
+import smt.linalg
 from sm import SM
 from six.moves import range
 
@@ -45,9 +46,13 @@ class MBR(SM):
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
             'reg': 1e-10, # regularization coeff. for dv block
-            'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_type': 'direct',    # Linear solver: 'gmres' or 'cg'
+            'solver_krylov': 'cg',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_pc': 'nopc',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_damping': 1.0,    # Damping coeff. for Jacobi/GS
+            'solver_mg': [], # Multigrid level
             'solver_atol': 1e-15, # Absolute linear system convergence tolerance
-            'solver_ilimit': 100, # Linear system iteration limit
+            'solver_ilimit': 300, # Linear system iteration limit
             'solver_save': True,  # Whether to save linear system solution
         }
         printf_options = {
@@ -110,7 +115,7 @@ class MBR(SM):
         mtx = mtx + reg
 
         sol = np.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, sm_options, self.printf_options)
+        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.print_status, [])
 
         self.sol = sol
 

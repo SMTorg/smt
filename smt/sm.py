@@ -9,20 +9,19 @@ Metamodels - a base class for metamodel methods
 from __future__ import division
 
 import numpy as np
-import time
+from smt.utils import Timer
+
 
 class SM(object):
-    
-    ''' 
+    '''
     Base class for all model methods.
 
     '''
-    
+
     def __init__(self, sm_options=None, printf_options=None):
-        
-        ''' 
+        '''
         Constructor.
-        
+
         Arguments
         ---------
         sm_options : dict
@@ -31,30 +30,27 @@ class SM(object):
         printf_options : dict
             Output printing options
         '''
-        
         #Initialization
         self._set_default_options()
         self.sm_options.update(sm_options)
         self.printf_options.update(printf_options)
-        
-        self.training_pts = {'exact': {}}
-        self.times = {}
-        self.printstr_time = '   %-14s : %10.7f'        
 
+        self.training_pts = {'exact': {}}
+
+        self.print_status = True
+        self.timer = Timer()
 
     #############################################################################
     # Model functions
     #############################################################################
 
-        
     def add_training_pts(self, typ, xt, yt, kx=None):
-        
-        ''' 
+        '''
         Adds nt training/sample data points
 
         Arguments
         ---------
-        typ : str            
+        typ : str
             'exact'  if this data are considered as a high-fidelty data
             'approx' if this data are considered as a low-fidelity data (TODO)
         xt : np.ndarray [nt, dim]
@@ -64,7 +60,7 @@ class SM(object):
         kx : int, optional
             None if this data set represents output variable values
             int  if this data set represents derivatives
-                 where it is differentiated w.r.t. the kx^{th} 
+                 where it is differentiated w.r.t. the kx^{th}
                  input variable (kx is 0-based)
         '''
         yt = yt.reshape((xt.shape[0],1))
@@ -84,39 +80,36 @@ class SM(object):
         else:
             pts[kx] = [np.array(xt), np.array(yt)]
 
-
     def train(self):
-        
-        ''' 
-           Train the model
         '''
-        
-        if self.printf_options['global']:
-            self._print_line_break()
-            self._print_line(self.sm_options['name'], True)
+        Train the model
+        '''
+        self._print_line_break()
+        self._print(self.sm_options['name'], True)
 
-        if self.printf_options['global'] and self.printf_options['problem']:
-            self._print_problem()
+        self.print_status = self.printf_options['global'] and self.printf_options['problem']
+        self.timer.print_status = self.print_status
+        self._print_problem()
+
+        self.print_status = self.printf_options['global'] and self.printf_options['time_train']
+        self.timer.print_status = self.print_status
+        if self.sm_options['name'] == 'MixExp':
+            # Mixture of experts model
+            self._print_title('Training of the Mixture of experts')
+        else:
+            self._print_title('Training')
 
         #Train the model using the specified model-method
-        t1 = time.time()
+        self.timer._start('fit')
         self.fit()
-        t2 = time.time()
+        self.timer._stop('fit')
 
-        # Mixture of experts model
-        if self.printf_options['global'] and self.printf_options['time_train']:
-            if self.sm_options['name'] == 'MixExp':
-                self._print_line_title('Training of the Mixture of experts')
-            else:
-                self._print_line_title('Training')
-            print
-            self._print_line_time('Total (sec)', t2-t1)
-            print
-
+        self._print()
+        self.timer._print('fit', 'Total training time (sec)')
+        self._print()
 
     def predict(self, x):
-        
-        ''' 
+        '''
         Evaluates the model at a set of unknown points
 
         Arguments
@@ -126,77 +119,57 @@ class SM(object):
 
         Returns
         -------
-        y : np.ndarray 
+        y : np.ndarray
             Evaluation point output variable values
         '''
-        
-        #Initialization
-        print_eval = self.printf_options['global'] and \
-                     self.printf_options['time_eval']        
         n_evals = x.shape[0]
 
+        self.print_status = self.printf_options['global'] and self.printf_options['time_eval']
+        self.timer.print_status = self.print_status
+
         # If mixture of experts model
-        if print_eval:
-            if self.sm_options['name'] == 'MixExp':                
-                self._print_line_title('Evaluation of the Mixture of experts')
-            else:
-                self._print_line_title('Evaluation')
-            string = '   %-12s : %i'
-            print string % ('# eval pts.', n_evals)
+        if self.sm_options['name'] == 'MixExp':
+            self._print_title('Evaluation of the Mixture of experts')
+        else:
+            self._print_title('Evaluation')
+        self._print('   %-12s : %i' % ('# eval pts.', n_evals))
 
         #Evaluate the unknown points using the specified model-method
-        t1 = time.time()
+        self.timer._start('predict')
         y = self.evaluate(x)
-        t2 = time.time()
+        self.timer._stop('predict')
 
-        self.times['time/pt'] = (t2-t1)/n_evals
-        if print_eval:
-            print
-            self._print_line_time('Total (sec)', t2-t1)
-            self._print_line_time('Time/pt. (sec)', (t2-t1)/n_evals)
-            print
-        
+        self._print()
+        self.timer._print('predict', 'Total prediction time (sec)')
+        self.timer._print('predict', 'Time/pt. (sec)', n_evals)
+        self._print()
+
         return y.reshape(n_evals,1)
-
 
     #############################################################################
     # Print functions
     #############################################################################
 
-    
     def _print_line_break(self):
-        
-        print '_' * 75
-        print
+        self._print('_' * 75)
+        self._print()
 
-     
-    def _print_line(self, string, center=False):
-        
-        if center:
-            pre = ' ' * int((75 - len(string))/2.0)
-        else:
-            pre = ''
-        print pre + '%s' % string
+    def _print(self, string='', center=False):
+        if self.print_status:
+            if center:
+                pre = ' ' * int((75 - len(string))/2.0)
+            else:
+                pre = ''
+            print(pre + '%s' % string)
 
-        
-    def _print_line_time(self, name, time, string=''):
-        
-        print '   %-14s : %10.7f' % (name, time), string
-
-        
-    def _print_line_title(self, title):
-        
+    def _print_title(self, title):
         self._print_line_break()
-        self._print_line(' ' + title)
-        print
-
+        self._print(' ' + title)
+        self._print()
 
     def _print_problem(self):
-        
         pts = self.training_pts
-        self._print_line_title('Problem size')
+        self._print_title('Problem size')
         nexact = self.training_pts['exact'][0][0].shape[0]
-
-        string = '   %-25s : %i'
-        print string % ('# training pts. (exact)', nexact)
-        print
+        self._print('   %-25s : %i' % ('# training pts.', nexact))
+        self._print()

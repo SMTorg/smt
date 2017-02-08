@@ -1,72 +1,77 @@
+"""
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+"""
+
 from __future__ import print_function
-import numpy as np
-import scipy.sparse
-import scipy.sparse.linalg
 import cPickle as pickle
 import hashlib
-import six
-from six.moves import range
+import time
 
 
-def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
-    name2ind = {}
-    for ind, name in enumerate(block_names):
-        name2ind[name] = ind
+class Timer(object):
 
-    sub_mtx_list = [[None for name in block_names] for name in block_names]
-    for (row_name, col_name), sub_mtx in six.iteritems(sub_mtx_dict):
-        row_ind = name2ind[row_name]
-        col_ind = name2ind[col_name]
-        sub_mtx_list[row_ind][col_ind] = sub_mtx
+    def __init__(self, print_status=True):
+        self.print_status = print_status
 
-    mtx = scipy.sparse.bmat(sub_mtx_list, format='csc')
+        self.raw_times = {}
+        self.elapsed_times = {}
 
-    rhs = np.zeros((np.sum(block_sizes), sub_rhs_dict.values()[0].shape[1]))
-    for name, sub_rhs in six.iteritems(sub_rhs_dict):
-        ind = name2ind[name]
-        ind1 = np.sum(block_sizes[:ind], dtype=int)
-        ind2 = np.sum(block_sizes[:ind+1], dtype=int)
-        rhs[ind1:ind2, :] = sub_rhs
+    def _start(self, key, desc=None):
+        self.raw_times[key] = time.time()
 
-    return mtx, rhs
+        if self.print_status and desc is not None:
+            print('   %s ... ' % desc)
 
-def solve_sparse_system(mtx, rhs, sol, sm_options, printf_options):
-    if sm_options['solver_pc'] == 'ilu':
-        pc = scipy.sparse.linalg.spilu(mtx, drop_tol=1e-16,
-                                       fill_factor=10, drop_rule='basic')
-        pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=pc.solve)
-    elif sm_options['solver_pc'] == 'lu':
-        pc = scipy.sparse.linalg.splu(mtx)
-        pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=pc.solve)
-    elif sm_options['solver_pc'] == 'nopc':
-        pc_op = None
+    def _stop(self, key, desc=None, print_done=False):
+        self.elapsed_times[key] = time.time() - self.raw_times[key]
+        self.raw_times.pop(key)
 
-    class Callback(object):
+        if self.print_status and desc is not None:
+            self._print(key, desc)
 
-        def __init__(self, print_):
-            self.counter = 0
-            self.iy = 0
-            self.print_ = print_
-            if self.print_:
-                print('   Solver output (preconditioner: %s)' % sm_options['solver_pc'])
-                print('   %3s %3s Residual' % (' iy', 'Itn'))
+        if self.print_status and print_done:
+            print('   Done. Time (sec) : %10.7f' % self.elapsed_times[key])
+            print()
 
-        def __call__(self, res):
-            if self.print_:
-                print('   %3i %3i %.9g' %
-                    (self.iy, self.counter, np.linalg.norm(res)))
-            self.counter += 1
+    def _print(self, key, desc, div_factor=1.0):
+        elapsed_time = self.elapsed_times[key] / div_factor
 
-    cb = Callback(printf_options['global'] and printf_options['solver'])
+        if self.print_status:
+            print('   %-14s : %10.7f' % (desc, elapsed_time))
+            print()
 
-    for irhs in range(rhs.shape[1]):
-        cb.counter = 0
-        cb.iy = irhs
-        sol[:, irhs], info = scipy.sparse.linalg.gmres(
-            mtx, rhs[:, irhs], M=pc_op, callback=cb,
-            maxiter=sm_options['solver_ilimit'],
-            tol=sm_options['solver_atol'],
-        )
+
+class OptionsDictionary(object):
+
+    def __init__(self, options):
+        self._dict = options
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __contains__(self, key):
+        return key in self._dict
+
+    def add(self, name, default=None, values=None, type_=None, desc=''):
+        if values is not None:
+            if default is not None:
+                assert default in values, \
+                    'Option %s: default %s not in %s' % (name, default, values)
+            if name in self:
+                assert self[name] in values, \
+                    'Option %s: value %s not in %s' % (name, self[name], values)
+
+        if type_ is not None:
+            if default is not None:
+                assert isinstance(default, type_), \
+                    'Option %s: default %s should be type %s' % (name, default, type_)
+            if name in self:
+                assert isinstance(self[name], type_), \
+                    'Option %s: default %s should be type %s' % (name, self[name], type_)
+
+        if name not in self:
+            assert default is not None, 'Required option %s not given' % name
+            self._dict[name] = default
 
 def _caching_load(filename, checksum):
     try:

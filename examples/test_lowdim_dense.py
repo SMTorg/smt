@@ -14,8 +14,8 @@ import doe_lhs
 np.random.seed(0)
 
 # Initialization of the problem
-dim = 3
-ndoe = 500*dim
+dim = 4
+ndoe = 100*dim
 
 # Upper and lower bounds of the problem
 xlimits = np.zeros((dim, 2))
@@ -70,65 +70,11 @@ y = t.predict(xtest)
 print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 
-'''
-
-########### The Kriging model
-# The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
-# dim and a list of length dim, respectively.
-t = KPLS({'name':'KRG','n_comp':dim,'theta0': [1e-2]*dim},{})
-t.add_training_pts('exact',xt,yt)
-
-t.train()
-y = t.predict(xtest)
-
-print 'Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-
-########### The KPLS model
-# The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively. Here is an
-# an example using 1 principal component.
-t = KPLS({'name':'KPLS','n_comp':2,'theta0': [1e-2,1e-2]},{})
-t.add_training_pts('exact',xt,yt)
-
-t.train()
-y = t.predict(xtest)
-
-print 'KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-########### The KPLSK model
-# The variables 'name' must be equal to 'KPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS({'name':'KPLSK','n_comp':2,'theta0': [1e-2,1e-2]},{})
-t.add_training_pts('exact',xt,yt)
-t.train()
-y = t.predict(xtest)
-
-print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-########### The GEKPLS model
-# The variables 'name' must be equal to 'GEKPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS({'name':'GEKPLS','n_comp':2,'theta0': [1e-2,1e-2],'xlimits':xlimits},{})
-t.add_training_pts('exact',xt,yt)
-# Add the gradient information
-for i in xrange(dim):
-    t.add_training_pts('exact',xt,yd[:, i].reshape((yt.shape[0],1)),kx=i)
-
-t.train()
-y = t.predict(xtest)
-
-print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1))))
-
-'''
-
 ########### The RMTS model
-t = RMTS({'name':'RMTS','num_elem':[2]*dim, 'smoothness':[1.0]*dim,
-    'xlimits':xlimits, 'mode': 'approx'},{})
+t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
+    'mode': 'approx', 'solver_mg': [2], 'solver_type': 'krylov-mg', 'solver_pc': 'nopc',
+    'solver_krylov': 'fgmres', 'solver_rtol': 1e-10,
+},{})
 t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
@@ -136,9 +82,92 @@ y = t.predict(xtest)
 print 'RMTS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 
+
+exit()
+import RMTSlib
+import scipy.sparse
+elem_lists = [
+    np.array(t.sm_options['num_elem']),
+    np.array(t.sm_options['num_elem']) / 2.]
+nx = 1
+num = {'term': 4}
+mg_full_uniq2coeff = t._compute_uniq2coeff(1, elem_lists[-1],
+    np.prod(elem_lists[-1]), num['term'], np.prod(elem_lists[-1] + 1))
+
+ne = np.prod(elem_lists[-2] + 1) * 2 ** nx
+nnz = ne * num['term']
+num_coeff = num['term'] * np.prod(elem_lists[-1])
+data, rows, cols = RMTSlib.compute_jac_interp(
+    nnz, nx, elem_lists[-1], elem_lists[-2] + 1, xlimits)
+mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
+mg_matrix = mg_jac * mg_full_uniq2coeff
+
+nnz = np.prod(elem_lists[-2] + 1) * 4 ** nx
+nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
+ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
+data, rows, cols = RMTSlib.compute_mg_interp(nx, nnz, elem_lists[-1])
+mg_matrix = scipy.sparse.csc_matrix((data, (rows, cols)),
+                                    shape=(nrows, ncols))
+
+np.set_printoptions(precision=2)
+print(mg_jac.todense())
+print(mg_full_uniq2coeff.todense())
+print(mg_matrix.todense())
+print(mg_matrix.T.dot(mg_matrix).todense())
+print(t.sol[:2*elem_lists[-2][0]+2])
+
+n1 = elem_lists[-2][0] + 1
+n2 = elem_lists[-1][0] + 1
+x1 = np.linspace(-10, 10, n1)
+x2 = np.linspace(-10, 10, n2)
+
+y1 = np.sin(x1) # * 6.14/20)
+dydx1 = np.cos(x1) # * 6.14/20) * 6.14/20
+u1 = np.zeros(2*n1)
+u1[:n1] = y1
+u1[n1:] = dydx1
+
+print(n1, n2, u1.shape, mg_matrix.shape)
+u2 = mg_matrix.T.dot(u1)
+y2 = u2[:n2]
+dydx2 = u2[n2:]
+
+u3 = mg_matrix.dot(u2)
+y3 = u3[:n1]
+dydx3 = u3[n1:]
+
+print(mg_matrix.T.dot(mg_matrix).dot(np.ones(2*n2)))
+
+import scipy.sparse.linalg
+mtx = t.tmp
+lu = scipy.sparse.linalg.splu(mtx)
+inv = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=lu.solve)
+w1, v = scipy.sparse.linalg.eigs(mtx)
+w2, v = scipy.sparse.linalg.eigs(inv)
+print(w1)
+print(w2)
+exit(0)
+
+import pylab
+pylab.subplot(2, 1, 1)
+pylab.plot(x1, y1, 'b-o')
+pylab.plot(x2, y2+0.1, 'r-o')
+pylab.plot(x1, y3, 'k-o')
+pylab.subplot(2, 1, 2)
+pylab.plot(x1, dydx1, 'b-o')
+pylab.plot(x2, dydx2, 'r-o')
+pylab.plot(x1, dydx3, 'k-o')
+pylab.show()
+
+exit(0)
+
+
+
+
 ########### The MBR model
 t = MBR({'name':'MBR','order':[4]*dim,'num_ctrl_pts':[5]*dim,
-    'xlimits':xlimits},{})
+    'xlimits':xlimits
+},{})
 t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)

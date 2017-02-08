@@ -87,7 +87,7 @@ subroutine compute_uniq2elem(nnz, nx, nelements, data, rows, cols)
 
   ! Working
   integer :: ielem, iterm, ielem_list(nx), iterm_list(nx)
-  integer :: ider, iuniq, ider_list(nx), isid_list(nx), iuniq_list(nx)
+  integer :: iderv, iuniq, iderv_list(nx), isid_list(nx), iuniq_list(nx)
   integer :: inz, ix
   integer :: nelem, nterm, nelem_list(nx), nterm_list(nx)
   integer :: ndofs, nuniq, ndofs_list(nx), nuniq_list(nx)
@@ -114,17 +114,17 @@ subroutine compute_uniq2elem(nnz, nx, nelements, data, rows, cols)
         call expandindex(nx, nterm_list, iterm, iterm_list)
 
         do ix = 1, nx
-           ider_list(ix) = der_map(iterm_list(ix))
+           iderv_list(ix) = der_map(iterm_list(ix))
            isid_list(ix) = sid_map(iterm_list(ix))
            iuniq_list(ix) = (ielem_list(ix) - 1) + isid_list(ix)
         end do
-        call contractindex(nx, ndofs_list, ider_list, ider)
+        call contractindex(nx, ndofs_list, iderv_list, iderv)
         call contractindex(nx, nuniq_list, iuniq_list, iuniq)
 
         inz = inz + 1
         data(inz) = 1.0
         rows(inz) = (ielem - 1) * nterm + iterm - 1
-        cols(inz) = (ider - 1) * nuniq + iuniq - 1
+        cols(inz) = (iderv - 1) * nuniq + iuniq - 1
      end do
   end do
 
@@ -446,6 +446,190 @@ subroutine compute_jac(ix, jx, nnz, nx, neval, nelements, xlimits, xeval, &
   end if
 
 end subroutine compute_jac
+
+
+
+subroutine compute_jac_interp(nnz, nx, nelements, nevals, xlimits, &
+     data, rows, cols)
+
+  implicit none
+
+  !f2py intent(in) nnz, nx, nelements, nevals, xlimits
+  !f2py intent(out) data, rows, cols
+  !f2py depend(nx) nelements, nevals, xlimits
+  !f2py depend(nnz) data, rows, cols
+
+  ! Input
+  integer, intent(in) :: nnz, nx
+  integer, intent(in) :: nelements(nx), nevals(nx)
+  double precision, intent(in) :: xlimits(nx, 2)
+
+  ! Output
+  double precision, intent(out) :: data(nnz)
+  integer, intent(out) :: rows(nnz), cols(nnz)
+
+  ! Working
+  integer :: inz, kx
+  integer :: ielem, iterm, ielem_list(nx), iterm_list(nx)
+  integer :: iuniq, iderv, iuniq_list(nx), iderv_list(nx)
+  integer :: nelem, nterm, nelem_list(nx), nterm_list(nx)
+  integer :: nuniq, nderv, nuniq_list(nx), nderv_list(nx)
+  double precision :: xbar(nx), prod, x(nx), u
+  double precision :: bma_d2(nx), dxb_dx(nx), new_bma_d2(nx), new_dxb_dx(nx)
+  integer :: pow
+
+  nelem_list(:) = nelements
+  nterm_list(:) = 4
+  nuniq_list(:) = nevals
+  nderv_list(:) = 2
+
+  nelem = product(nelem_list)
+  nterm = product(nterm_list)
+  nuniq = product(nuniq_list)
+  nderv = product(nderv_list)
+
+  bma_d2 = (xlimits(:, 2) - xlimits(:, 1)) / nelem_list / 2.
+  dxb_dx = 1. / bma_d2
+
+  new_bma_d2 = (xlimits(:, 2) - xlimits(:, 1)) / (nuniq_list - 1) / 2.
+  new_dxb_dx = 1. / new_bma_d2
+
+  inz = 0
+  do iuniq = 1, nuniq
+    call expandindex(nx, nuniq_list, iuniq, iuniq_list)
+
+    do kx = 1, nx
+      u = 1.0 * (iuniq_list(kx) - 1) / (nuniq_list(kx) - 1)
+      x(kx) = xlimits(kx, 1) + u * (xlimits(kx, 2) - xlimits(kx, 1))
+    end do
+
+    do iderv = 1, nderv
+      call expandindex(nx, nderv_list, iderv, iderv_list)
+
+      do kx = 1, nx
+        call findinterval(nelem_list(kx), xlimits(kx, :), x(kx), &
+          ielem_list(kx), xbar(kx))
+      end do
+      call contractindex(nx, nelem_list, ielem_list, ielem)
+
+      do iterm = 1, nterm
+        call expandindex(nx, nterm_list, iterm, iterm_list)
+
+        prod = 1.
+        do kx = 1, nx
+          pow = iterm_list(kx) - 1
+          if (iderv_list(kx) .eq. 1) then
+            prod = prod * xbar(kx) ** pow
+          else
+            if (pow .ge. 1) then
+              prod = prod * pow * xbar(kx) ** (pow-1)
+              prod = prod * dxb_dx(kx) / new_dxb_dx(kx)
+            else
+              prod = 0.
+            end if
+          end if
+        end do
+
+        inz = inz + 1
+        data(inz) = prod
+        rows(inz) = (iderv - 1) * nuniq + iuniq - 1
+        cols(inz) = (ielem - 1) * nterm + iterm - 1
+      end do
+    end do
+  end do
+
+  if (inz .ne. nnz) then
+    print *, 'Error in compute_jac_interp', inz, nnz
+    call exit(1)
+  end if
+
+end subroutine compute_jac_interp
+
+
+
+subroutine compute_mg_interp(nx, nnz, nelemcoarse, &
+    data, rows, cols)
+
+  implicit none
+
+  !f2py intent(in) nx, nnx, nelemcoarse
+  !f2py intent(out) data, rows, cols
+  !f2py depend(nx) nelemcoarse
+  !f2py depend(nnz) data, rows, cols
+
+  ! Input
+  integer, intent(in) :: nx, nnz
+  integer, intent(in) :: nelemcoarse(nx)
+
+  ! Output
+  double precision, intent(out) :: data(nnz)
+  integer, intent(out) :: rows(nnz), cols(nnz)
+
+  ! Working
+  integer :: inz, kx
+  integer :: iuniqc, iuniqf, iuniqc_list(nx), iuniqf_list(nx)
+  integer :: nuniqc, nuniqf, nuniqc_list(nx), nuniqf_list(nx)
+  integer :: ideriv, isourc, ideriv_list(nx), isourc_list(nx)
+  integer :: nderiv, nsourc, nderiv_list(nx), nsourc_list(nx)
+  integer :: inds(nx, 2)
+  double precision :: prod
+
+  nuniqc_list(:) = 1 * nelemcoarse + 1
+  nuniqf_list(:) = 2 * nelemcoarse + 1
+  nderiv_list(:) = 2
+  nsourc_list(:) = 2
+
+  nuniqc = product(nuniqc_list)
+  nuniqf = product(nuniqf_list)
+  nderiv = product(nderiv_list)
+  nsourc = product(nsourc_list)
+
+  inz = 0
+  do ideriv = 1, nderiv
+    call expandindex(nx, nderiv_list, ideriv, ideriv_list)
+
+    do iuniqf = 1, nuniqf
+      call expandindex(nx, nuniqf_list, iuniqf, iuniqf_list)
+
+      ! 1 -> 1.0 (1, 1)
+      ! 2 -> 1.5 (1, 2)
+      ! 3 -> 2.0 (2, 2)
+      do kx = 1, nx
+        inds(kx, 1) = floor((iuniqf_list(kx) + 1) / 2.)
+        inds(kx, 2) = ceiling((iuniqf_list(kx) + 1) / 2.)
+      end do
+
+      do isourc = 1, nsourc
+        call expandindex(nx, nsourc_list, isourc, isourc_list)
+
+        do kx = 1, nx
+          iuniqc_list(kx) = inds(kx, isourc_list(kx))
+        end do
+        call contractindex(nx, nuniqc_list, iuniqc_list, iuniqc)
+
+        prod = 1.
+        do kx = 1, nx
+          if (ideriv_list(kx) .eq. 2) then
+            prod = prod * 0.5
+          end if
+        end do
+
+        inz = inz + 1
+        data(inz) = prod
+        rows(inz) = (ideriv - 1) * nuniqf + iuniqf - 1
+        cols(inz) = (ideriv - 1) * nuniqc + iuniqc - 1
+      end do
+    end do
+  end do
+
+  if (inz .ne. nnz) then
+    print *, 'Error in compute_mg_interp', inz, nnz
+    call exit(1)
+  end if
+
+  data = data / 2 ** nx
+
+end subroutine compute_mg_interp
 
 
 

@@ -25,7 +25,8 @@ setup(name='smt',
     packages=['smt'],
     install_requires=[
     'scikit-learn',
-    'pyDOE'
+    'pyDOE',
+    'pyamg',
     ],
     zip_safe=False,
     ext_modules=ext,

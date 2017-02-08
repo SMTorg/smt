@@ -12,6 +12,7 @@ import numpy as np
 import scipy.sparse
 import RMTSlib
 import smt.utils
+import smt.linalg
 from sm import SM
 from six.moves import range
 
@@ -45,11 +46,17 @@ class RMTS(SM):
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
             'reg_dv': 1e-8, # regularization coeff. for dv block
             'reg_cons': 1e-8, # negative of reg. coeff. for Lagrange mult. block
-            'mode': 'approx', # 'approx' or 'exact' form of linear system ()
+            'mode': 'exact', # 'approx' or 'exact' form of linear system ()
             'extrapolate': False, # perform linear extrapolation for external eval points
+            'solver_type': 'krylov',    # Linear solver: 'gmres' or 'cg'
+            'solver_krylov': 'gmres',    # Preconditioner: 'ilu', 'lu', or 'nopc'
             'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_stationary': 'gs',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_damping': 1.0,    # Damping coeff. for Jacobi/GS
+            'solver_mg': [], # Multigrid level
             'solver_atol': 1e-15, # Absolute linear system convergence tolerance
-            'solver_ilimit': 100, # Linear system iteration limit
+            'solver_rtol': 1e-15, # Relative linear system convergence tolerance
+            'solver_ilimit': 150, # Linear system iteration limit
             'solver_save': True,  # Whether to save linear system solution
         }
         printf_options = {
@@ -62,6 +69,40 @@ class RMTS(SM):
 
         self.sm_options = sm_options
         self.printf_options = printf_options
+
+    def _compute_uniq2coeff(self, nx, num_elem_list, num_elem, num_term, num_uniq):
+
+        # This computes an num['term'] x num['term'] matrix called coeff2nodal.
+        # Multiplying this matrix with the list of coefficients for an element
+        # yields the list of function and derivative values at the element nodes.
+        # We need the inverse, but the matrix size is small enough to invert since
+        # RMTS is normally only used for 1 <= nx <= 4 in most cases.
+        elem_coeff2nodal = RMTSlib.compute_coeff2nodal(nx, num_term)
+        elem_nodal2coeff = np.linalg.inv(elem_coeff2nodal)
+
+        # This computes a num_coeff_elem x num_coeff_uniq permutation matrix called
+        # uniq2elem. This sparse matrix maps the unique list of nodal function and
+        # derivative values to the same function and derivative values, but ordered
+        # by element, with repetition.
+        nnz = num_elem * num_term
+        num_coeff_elem = num_term * num_elem
+        num_coeff_uniq = num_uniq * 2 ** nx
+        data, rows, cols = RMTSlib.compute_uniq2elem(nnz, nx, num_elem_list)
+        full_uniq2elem = scipy.sparse.csc_matrix((data, (rows, cols)),
+            shape=(num_coeff_elem, num_coeff_uniq))
+
+        # This computes the matrix full_uniq2coeff, which maps the unique
+        # degrees of freedom to the list of coefficients ordered by element.
+        nnz = num_term ** 2 * num_elem
+        num_coeff = num_term * num_elem
+        data, rows, cols = RMTSlib.compute_full_from_block(
+            nnz, num_term, num_elem, elem_nodal2coeff)
+        full_nodal2coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
+            shape=(num_coeff, num_coeff))
+
+        full_uniq2coeff = full_nodal2coeff * full_uniq2elem
+
+        return full_uniq2coeff
 
     def _fit(self):
         """
@@ -88,45 +129,35 @@ class RMTS(SM):
         sub_mtx_dict = {}
         sub_rhs_dict = {}
 
-        # This computes an num['term'] x num['term'] matrix called coeff2nodal.
-        # Multiplying this matrix with the list of coefficients for an element
-        # yields the list of function and derivative values at the element nodes.
-        # We need the inverse, but the matrix size is small enough to invert since
-        # RMTS is normally only used for 1 <= nx <= 4 in most cases.
-        elem_coeff2nodal = RMTSlib.compute_coeff2nodal(nx, num['term'])
-        elem_nodal2coeff = np.linalg.inv(elem_coeff2nodal)
+        self.timer._start('total_assembly')
 
-        # This computes a num_coeff_elem x num_coeff_uniq permutation matrix called
-        # uniq2elem. This sparse matrix maps the unique list of nodal function and
-        # derivative values to the same function and derivative values, but ordered
-        # by element, with repetition.
-        nnz = num['elem'] * num['term']
-        num_coeff_elem = num['term'] * num['elem']
-        num_coeff_uniq = num['uniq'] * 2 ** nx
-        data, rows, cols = RMTSlib.compute_uniq2elem(nnz, nx, num['elem_list'])
-        full_uniq2elem = scipy.sparse.csc_matrix((data, (rows, cols)),
-            shape=(num_coeff_elem, num_coeff_uniq))
+        self.timer._start('uniq2coeff', 'Assembling uniq2coeff')
+        full_uniq2coeff = self._compute_uniq2coeff(
+            nx, num['elem_list'], num['elem'], num['term'], num['uniq'])
+        self.timer._stop('uniq2coeff', print_done=True)
 
         # This computes the positive-definite, symmetric matrix yields the energy
         # for an element when pre- and post-multiplied by a vector of function and
         # derivative values for the element. This matrix applies to all elements.
+        self.timer._start('local hess', 'Assembling local energy terms')
         elem_hess = np.zeros((num['term'], num['term']))
         for kx in range(nx):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], nx,
                 num['elem_list'], sm_options['xlimits'])
             elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) * \
                 sm_options['smoothness'][kx]
-        elem_hess = elem_nodal2coeff.T.dot(elem_hess).dot(elem_nodal2coeff)
+        self.timer._stop('local hess', print_done=True)
 
         # This takes the dense elem_hess matrix and stamps out num['elem'] copies
         # of it to form the full sparse matrix with all the elements included.
+        self.timer._start('global hess', 'Assembling global energy terms')
         nnz = num['term'] ** 2 * num['elem']
         num_coeff = num['term'] * num['elem']
         data, rows, cols = RMTSlib.compute_full_from_block(
             nnz, num['term'], num['elem'], elem_hess)
         full_hess = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff, num_coeff))
-        full_hess = full_uniq2elem.T * full_hess * full_uniq2elem
+        full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
         sub_mtx_dict['dv', 'dv'] = full_hess
 
         num_coeff_uniq = num['uniq'] * 2 ** nx
@@ -134,22 +165,14 @@ class RMTS(SM):
         arange = np.arange(num_coeff_uniq)
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
         sub_mtx_dict['dv', 'dv'] += reg_dv
-
-        # This computes the matrix full_uniq2coeff, which maps the unique
-        # degrees of freedom to the list of coefficients ordered by element.
-        nnz = num['term'] ** 2 * num['elem']
-        num_coeff = num['term'] * num['elem']
-        data, rows, cols = RMTSlib.compute_full_from_block(
-            nnz, num['term'], num['elem'], elem_nodal2coeff)
-        full_nodal2coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
-            shape=(num_coeff, num_coeff))
-        full_uniq2coeff = full_nodal2coeff * full_uniq2elem
+        self.timer._stop('global hess', print_done=True)
 
         # This adds the training points, either using a least-squares approach
         # or with exact contraints and Lagrange multipliers.
         # In both approaches, we loop over kx: 0 is for values and kx>0 represents
         # the 1-based index of the derivative given by the training point data.
-        if self.sm_options['mode'] == 'approx':
+        if sm_options['mode'] == 'approx':
+            self.timer._start('approx', 'Assembling approximation terms')
             for kx in self.training_pts['exact']:
                 xt, yt = self.training_pts['exact'][kx]
 
@@ -159,6 +182,7 @@ class RMTS(SM):
                 data, rows, cols, rhs = RMTSlib.compute_jac_sq(
                     kx, nnz, nx, ny, num['elem_list'],
                     nt, num_coeff, sm_options['xlimits'], xt, yt)
+
                 full_jac_sq = scipy.sparse.csc_matrix((data, (rows, cols)),
                     shape=(num_coeff, num_coeff))
                 full_jac_sq = full_uniq2coeff.T * full_jac_sq * full_uniq2coeff /\
@@ -166,7 +190,10 @@ class RMTS(SM):
                 rhs = full_uniq2coeff.T * rhs / sm_options['reg_cons']
                 sub_mtx_dict['dv', 'dv'] += full_jac_sq
                 sub_rhs_dict['dv'] = rhs
-        elif self.sm_options['mode'] == 'exact':
+            self.timer._stop('approx', print_done=True)
+
+        elif sm_options['mode'] == 'exact':
+            self.timer._start('exact', 'Assembling interpolation terms')
             for kx in self.training_pts['exact']:
                 xt, yt = self.training_pts['exact'][kx]
 
@@ -186,7 +213,9 @@ class RMTS(SM):
                 arange = np.arange(nt)
                 reg_cons = scipy.sparse.csc_matrix((diag, (arange, arange)))
                 sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
+            self.timer._stop('exact', print_done=True)
 
+        self.timer._start('sparse', 'Assembling global sparse matrix')
         if sm_options['mode'] == 'approx':
             block_names = ['dv']
             block_sizes = [num['uniq'] * 2 ** nx]
@@ -197,20 +226,77 @@ class RMTS(SM):
                 [self.training_pts['exact'][kx][0].shape[0]
                 for kx in self.training_pts['exact']]
 
-        mtx, rhs = smt.utils.assemble_sparse_mtx(
+        mtx, rhs = smt.linalg.assemble_sparse_mtx(
             block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
+        self.timer._stop('sparse', print_done=True)
+
+        mg_matrices = []
+        if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
+            power_two = 2 ** len(sm_options['solver_mg'])
+            for kx in range(nx):
+                assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
+
+            elem_lists = [num['elem_list']]
+            for ind_mg, mg_factor in enumerate(sm_options['solver_mg']):
+
+                self.timer._start('mg_mat', 'Assembling multigrid op %i' % ind_mg)
+                elem_lists.append(elem_lists[-1] / mg_factor)
+
+                if 1:
+                    mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
+                        np.prod(elem_lists[-1]), num['term'], np.prod(elem_lists[-1] + 1))
+
+                    ne = np.prod(elem_lists[-2] + 1) * 2 ** nx
+                    nnz = ne * num['term']
+                    num_coeff = num['term'] * np.prod(elem_lists[-1])
+                    data, rows, cols = RMTSlib.compute_jac_interp(
+                        nnz, nx, elem_lists[-1], elem_lists[-2] + 1, sm_options['xlimits'])
+                    mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
+                    mg_matrix = mg_jac * mg_full_uniq2coeff
+                else:
+                    nnz = np.prod(elem_lists[-2] + 1) * 4 ** nx
+                    nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
+                    ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
+                    data, rows, cols = RMTSlib.compute_mg_interp(nx, nnz, elem_lists[-1])
+                    mg_matrix = scipy.sparse.csc_matrix((data, (rows, cols)),
+                                                        shape=(nrows, ncols))
+
+                if sm_options['mode'] == 'exact':
+                    num_lagr = np.sum(block_sizes[1:])
+                    mg_matrix = scipy.sparse.bmat([
+                        [mg_matrix, None],
+                        [None, scipy.sparse.identity(num_lagr)]
+                    ], format='csc')
+
+                mg_matrices.append(mg_matrix)
+                self.timer._stop('mg_mat', print_done=True)
+
+        self.timer._stop('total_assembly')
+
+        self.timer._start('solution')
 
         sol = np.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, sm_options, self.printf_options)
+        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.print_status, mg_matrices)
+
+        self.timer._stop('solution')
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
+
+        self.tmp = mtx
+
+        self.timer._print('total_assembly', 'Total assembly time (sec)')
+        self.timer._print('solution', 'Total linear solution time (sec)')
 
     def fit(self):
         """
         Train the model
         """
-        filename = '%s.sm' % self.sm_options['name']
+        tmp = self.timer
+        #self.timer = None
         checksum = smt.utils._caching_checksum(self)
+        self.timer = tmp
+
+        filename = '%s.sm' % self.sm_options['name']
         success, data = smt.utils._caching_load(filename, checksum)
         if not success or not self.sm_options['solver_save']:
             self._fit()
