@@ -14,7 +14,7 @@ import doe_lhs
 np.random.seed(0)
 
 # Initialization of the problem
-dim = 4
+dim = 3
 ndoe = 100*dim
 
 # Upper and lower bounds of the problem

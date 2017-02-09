@@ -151,13 +151,27 @@ class RMTS(SM):
         # This takes the dense elem_hess matrix and stamps out num['elem'] copies
         # of it to form the full sparse matrix with all the elements included.
         self.timer._start('global hess', 'Assembling global energy terms')
-        nnz = num['term'] ** 2 * num['elem']
-        num_coeff = num['term'] * num['elem']
-        data, rows, cols = RMTSlib.compute_full_from_block(
-            nnz, num['term'], num['elem'], elem_hess)
+        # nnz = num['term'] ** 2 * num['elem']
+        # num_coeff = num['term'] * num['elem']
+        # data, rows, cols = RMTSlib.compute_full_from_block(
+        #     nnz, num['term'], num['elem'], elem_hess)
+        # full_hess = scipy.sparse.csc_matrix((data, (rows, cols)),
+        #     shape=(num_coeff, num_coeff))
+        # full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
+        full_uniq2coeff = full_uniq2coeff.tocsr()
+        nnz = 0
+        for ielem in range(num['elem']):
+            ind1 = ielem * num['term']
+            ind2 = ielem * num['term'] + num['term']
+            nnz_block = full_uniq2coeff.indptr[ind2] - full_uniq2coeff.indptr[ind1]
+            nnz += nnz_block ** 2
+        data, rows, cols = RMTSlib.compute_full_hess(
+            nnz, full_uniq2coeff.nnz, num['term'], num['elem'], elem_hess,
+            full_uniq2coeff.data, full_uniq2coeff.indptr, full_uniq2coeff.indices,
+        )
+        ndv = num['uniq'] * 2 ** nx
         full_hess = scipy.sparse.csc_matrix((data, (rows, cols)),
-            shape=(num_coeff, num_coeff))
-        full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
+                                            shape=(ndv, ndv))
         sub_mtx_dict['dv', 'dv'] = full_hess
 
         num_coeff_uniq = num['uniq'] * 2 ** nx
