@@ -177,17 +177,14 @@ class RMTS(SM):
                 xt, yt = self.training_pts['exact'][kx]
 
                 nt = xt.shape[0]
+                nnz = nt * num['term']
                 num_coeff = num['term'] * num['elem']
-                nnz = nt * num['term'] * num['term']
-                data, rows, cols, rhs = RMTSlib.compute_jac_sq(
-                    kx, nnz, nx, ny, num['elem_list'],
-                    nt, num_coeff, sm_options['xlimits'], xt, yt)
-
-                full_jac_sq = scipy.sparse.csc_matrix((data, (rows, cols)),
-                    shape=(num_coeff, num_coeff))
-                full_jac_sq = full_uniq2coeff.T * full_jac_sq * full_uniq2coeff /\
-                    sm_options['reg_cons']
-                rhs = full_uniq2coeff.T * rhs / sm_options['reg_cons']
+                data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
+                    num['elem_list'], sm_options['xlimits'], xt)
+                full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
+                full_jac = full_jac * full_uniq2coeff
+                full_jac_sq = full_jac.T * full_jac / sm_options['reg_cons']
+                rhs = full_jac.T * yt / sm_options['reg_cons']
                 sub_mtx_dict['dv', 'dv'] += full_jac_sq
                 sub_rhs_dict['dv'] = rhs
             self.timer._stop('approx', print_done=True)
@@ -202,8 +199,7 @@ class RMTS(SM):
                 num_coeff = num['term'] * num['elem']
                 data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
                     num['elem_list'], sm_options['xlimits'], xt)
-                full_jac = scipy.sparse.csc_matrix((data, (rows, cols)),
-                                  shape=(nt, num_coeff))
+                full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
                 full_jac = full_jac * full_uniq2coeff
                 sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
                 sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
