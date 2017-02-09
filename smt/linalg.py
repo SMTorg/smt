@@ -36,34 +36,39 @@ def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
 def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
     for ind_y in range(rhs.shape[1]):
         if sm_options['solver_type'] == 'direct':
-            DirectSolver(mtx, print_global, True,
-                         ).solve(rhs[:, ind_y], sol[:, ind_y])
+            solver = DirectSolver(mtx, print_global, True)
         elif sm_options['solver_type'] == 'krylov':
-            KrylovSolver(mtx, print_global, True,
-                         solver=sm_options['solver_krylov'],
-                         pc=sm_options['solver_pc'],
-                         ilimit=sm_options['solver_ilimit'],
-                         atol=sm_options['solver_atol'],
-                         rtol=sm_options['solver_rtol'],
-                         ).solve(rhs[:, ind_y], sol[:, ind_y])
+            solver = KrylovSolver(
+                mtx, print_global, True,
+                solver=sm_options['solver_krylov'],
+                pc=sm_options['solver_pc'],
+                ilimit=sm_options['solver_ilimit'],
+                atol=sm_options['solver_atol'],
+                rtol=sm_options['solver_rtol'],
+            )
         elif sm_options['solver_type'] == 'stationary':
-            StationarySolver(mtx, print_global, True,
-                             solver=sm_options['solver_stationary'],
-                             damping=sm_options['solver_damping'],
-                             ilimit=sm_options['solver_ilimit'],
-                             atol=sm_options['solver_atol'],
-                             rtol=sm_options['solver_rtol'],
-                             ).solve(rhs[:, ind_y], sol[:, ind_y])
+            solver = StationarySolver(
+                mtx, print_global, True,
+                solver=sm_options['solver_stationary'],
+                damping=sm_options['solver_damping'],
+                ilimit=sm_options['solver_ilimit'],
+                atol=sm_options['solver_atol'],
+                rtol=sm_options['solver_rtol'],
+            )
         elif sm_options['solver_type'] == 'mg':
-            MultigridSolver(mtx, print_global, True,
-                            mg_ops=mg_ops).solve(rhs[:, ind_y], sol[:, ind_y])
+            solver = MultigridSolver(mtx, print_global, True, mg_ops=mg_ops)
         elif sm_options['solver_type'] == 'krylov-mg':
             pc = MultigridSolver(mtx, print_global, False,
                                  mg_ops=mg_ops)
-            KrylovSolver(mtx, print_global, True,
-                         solver=sm_options['solver_krylov'],
-                         pc='custom', pc_solver=pc,
-                         ilimit=sm_options['solver_ilimit'],
-                         atol=sm_options['solver_atol'],
-                         rtol=sm_options['solver_rtol'],
-                         ).solve(rhs[:, ind_y], sol[:, ind_y])
+            solver = KrylovSolver(
+                mtx, print_global, True,
+                solver=sm_options['solver_krylov'],
+                pc='custom', pc_solver=pc,
+                ilimit=sm_options['solver_ilimit'],
+                atol=sm_options['solver_atol'],
+                rtol=sm_options['solver_rtol'],
+            )
+
+        solver.timer._start('convergence')
+        solver.solve(rhs[:, ind_y], sol[:, ind_y])
+        solver.timer._stop('convergence', 'Total solver convergence time (sec)')
