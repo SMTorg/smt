@@ -112,6 +112,12 @@ class LinearSolver(object):
         self.counter += 1
 
 
+class NullSolver(LinearSolver):
+
+    def solve(self, rhs, sol=None, ind_y=0):
+        pass
+
+
 class DirectSolver(LinearSolver):
 
     def _initialize(self):
@@ -298,10 +304,13 @@ class MultigridSolver(LinearSolver):
         self.mg_mtx = [self.mtx]
         self.mg_sol = [np.zeros(self.mtx.shape[0])]
         self.mg_rhs = [np.zeros(self.mtx.shape[0])]
-        self.mg_solvers = [StationarySolver(self.mtx, self.print_global, self.print_conv,
-                                            solver='jacobi', damping=1.0, ilimit=0, #11, #31,
-                                            interval=10,
-                                            )]
+        if 1:
+            self.mg_solvers = [NullSolver(self.mtx, self.print_global, self.print_conv)]
+        if 0:
+            self.mg_solvers = [StationarySolver(self.mtx, self.print_global, self.print_conv,
+                                                solver='jacobi', damping=1.0, ilimit=0, #11, #31,
+                                                interval=10,
+                                                )]
         if 0:
             self.mg_solvers = [KrylovSolver(self.mtx, self.print_global, self.print_conv,
                                             solver='gmres',
@@ -314,10 +323,13 @@ class MultigridSolver(LinearSolver):
             mtx = mg_op.T.dot(self.mg_mtx[-1]).dot(mg_op).tocsc()
             sol = mg_op.T.dot(self.mg_sol[-1])
             rhs = mg_op.T.dot(self.mg_rhs[-1])
-            solver = StationarySolver(mtx, self.print_global, False, #self.print_conv,
-                                      solver='jacobi', damping=1.0, ilimit=1, #11, #31,
-                                      interval=10,
-                                      )
+            if 1:
+                solver = NullSolver(mtx, self.print_global, False)
+            if 0:
+                solver = StationarySolver(mtx, self.print_global, False, #self.print_conv,
+                                          solver='jacobi', damping=1.0, ilimit=1, #11, #31,
+                                          interval=10,
+                                          )
             if 0:
                 solver = KrylovSolver(mtx, self.print_global, False, #self.print_conv,
                                       solver='gmres',

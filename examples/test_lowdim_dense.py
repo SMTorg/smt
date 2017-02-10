@@ -72,7 +72,7 @@ print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 
 ########### The RMTS model
 t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
-    'mode': 'approx', 'solver_mg': [2], 'solver_type': 'krylov-mg', 'solver_pc': 'lu',
+    'mode': 'approx', 'solver_mg': [4], 'solver_type': 'krylov-mg', 'solver_pc': 'lu',
     'solver_krylov': 'fgmres', 'solver_rtol': 1e-10,
 },{})
 t.add_training_pts('exact',xt,yt)
