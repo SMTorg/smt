@@ -38,49 +38,16 @@ class LinearSolver(object):
     def _initialize(self):
         pass
 
-    # def _add_option(self, name, default=None, values=None, type_=None, desc=''):
-    #     if values is not None:
-    #         if default is not None:
-    #             assert default in values, \
-    #                 'Option %s: default %s not in %s' % (name, default, values)
-    #         if name in self.kwargs:
-    #             assert self.kwargs[name] in values, \
-    #                 'Option %s: value %s not in %s' % (name, self.kwargs[name], values)
-    #
-    #     if type_ is not None:
-    #         if default is not None:
-    #             assert isinstance(default, type_), \
-    #                 'Option %s: default %s should be type %s' % (name, default, type_)
-    #         if name in self.kwargs:
-    #             assert isinstance(self.kwargs[name], type_), \
-    #                 'Option %s: default %s should be type %s' % (name, self.kwargs[name], type_)
-    #
-    #     if name not in self.kwargs:
-    #         assert default is not None, 'Required option %s not given' % name
-    #         self.kwargs[name] = default
-
     def _print_res(self, res):
-        #self._print_sol(self.sol)
-        #return
-
         if not self.print_global or not self.print_conv:
             self.counter += 1
             return
 
-        norm = res #np.linalg.norm(res)
+        norm = res
         if self.counter == 0:
-            # print('   Solver %s : %s' % (self.__class__.__name__, self.print_info))
-            # print('   %s x %s linear system' % (self.mtx.shape[0], self.mtx.shape[1]))
-            # print('   %3s  %3s  %15s  %15s' % (' iy', 'Itn', 'Absolute norm', 'Relative norm'))
-            # print('   %s (%i x %i) : %3s  %15s  %15s' %
-            #     (self.__class__.__name__ + str(self.print_info),
-            #      self.mtx.shape[0], self.mtx.shape[1],
-            #      ' iy', 'Itn', 'Absolute norm', 'Relative norm'))
             self.norm0 = norm
 
         if self.counter % self.options['interval'] == 0:
-            # print('   %3i  %3i  %15.9e  %15.9e' %
-            #     (self.ind_y, self.counter, norm, norm / self.norm0))
             print('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
                 (self.__class__.__name__ + str(self.print_info),
                  self.mtx.shape[0], self.mtx.shape[1],
@@ -95,16 +62,9 @@ class LinearSolver(object):
         res = self.mtx.dot(sol) - self.rhs
         norm = np.linalg.norm(res)
         if self.counter == 0:
-            # print('   Solver %s : %s' % (self.__class__.__name__, self.print_info))
-            # print('   %s x %s linear system' % (self.mtx.shape[0], self.mtx.shape[1]))
-            # print('   %3s  %3s  %15s  %15s' % (' iy', 'Itn', 'Absolute norm', 'Relative norm'))
-            # print('   %s (%i x %i) : %3s  %3s  %15s  %15s' %
-            #     (self.__class__.__name__, self.mtx.shape[0], self.mtx.shape[1],
-            #      ' iy', 'Itn', 'Absolute norm', 'Relative norm'))
             self.norm0 = norm
+
         if self.counter % self.options['interval'] == 0:
-            # print('   %3i  %3i  %15.9e  %15.9e' %
-            #     (self.ind_y, self.counter, norm, norm / self.norm0))
             print('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
                 (self.__class__.__name__ + str(self.print_info),
                  self.mtx.shape[0], self.mtx.shape[1],
