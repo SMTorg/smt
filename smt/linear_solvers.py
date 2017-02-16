@@ -9,7 +9,7 @@ import pyamg.krylov
 import six
 from six.moves import range
 
-from smt.utils import OptionsDictionary, Timer
+from smt.utils import OptionsDictionary, Printer, Timer
 
 
 class LinearSolver(object):
@@ -22,24 +22,23 @@ class LinearSolver(object):
         self.ind_y = 0
         self.rhs = None
         self.norm0 = 0
-        self.print_global = print_global
         self.print_conv = print_conv
         self.print_info = ''
 
-        self.timer = Timer(print_global)
+        self.printer = Printer(print_global)
+        self.timer = Timer()
+
+        self.printer.active = print_global
+
         self.options = OptionsDictionary(kwargs)
         self.options.add('interval', 1, type_=int)
         self._initialize()
-
-    def _print(self, string=''):
-        if self.print_global:
-            print(string)
 
     def _initialize(self):
         pass
 
     def _print_res(self, res):
-        if not self.print_global or not self.print_conv:
+        if not self.print_conv:
             self.counter += 1
             return
 
@@ -48,14 +47,14 @@ class LinearSolver(object):
             self.norm0 = norm
 
         if self.counter % self.options['interval'] == 0:
-            print('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
+            self.printer('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
                 (self.__class__.__name__ + str(self.print_info),
                  self.mtx.shape[0], self.mtx.shape[1],
                  self.ind_y, self.counter, norm, norm / self.norm0))
         self.counter += 1
 
     def _print_sol(self, sol):
-        if not self.print_global or not self.print_conv:
+        if not self.print_conv:
             self.counter += 1
             return
 
@@ -65,7 +64,7 @@ class LinearSolver(object):
             self.norm0 = norm
 
         if self.counter % self.options['interval'] == 0:
-            print('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
+            self.printer('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e' %
                 (self.__class__.__name__ + str(self.print_info),
                  self.mtx.shape[0], self.mtx.shape[1],
                  self.ind_y, self.counter, norm, norm / self.norm0))
@@ -83,8 +82,10 @@ class DirectSolver(LinearSolver):
     def _initialize(self):
         self.options.add('alg', 'lu', values=['lu', 'ilu'])
 
-        self.timer._start('direct', 'Performing %s fact. (%i x %i mtx)' % \
+        self.printer._operation('Performing %s fact. (%i x %i mtx)' % \
             (self.options['alg'], self.mtx.shape[0], self.mtx.shape[1]))
+        self.timer._start('direct')
+
         if self.options['alg'] == 'lu':
             self.fact = scipy.sparse.linalg.splu(self.mtx)
         elif self.options['alg'] == 'ilu':
@@ -93,13 +94,24 @@ class DirectSolver(LinearSolver):
                 drop_tol=1e-3, #1e-3,
                 fill_factor=2, #1,
             )
-        self.timer._stop('direct', print_done=True)
+        self.timer._stop('direct')
+        self.printer._done_time(self.timer['direct'])
 
     def solve(self, rhs, sol=None, ind_y=0):
+        if self.print_conv:
+            self.printer._operation('Back solving (%i x %i mtx)' % self.mtx.shape)
+            self.timer._start('backsol')
+
         if sol is None:
-            return self.fact.solve(rhs)
+            sol = self.fact.solve(rhs)
         else:
             sol[:] = self.fact.solve(rhs)
+
+        if self.print_conv:
+            self.timer._stop('backsol')
+            self.printer._done_time(self.timer['backsol'])
+
+        return sol
 
 
 class KrylovSolver(LinearSolver):
@@ -113,12 +125,12 @@ class KrylovSolver(LinearSolver):
         self.options.add('rtol', 1e-15, type_=(int, float))
 
         if self.options['pc'] == 'lu' or self.options['pc'] == 'ilu':
-            solver = DirectSolver(self.mtx, self.print_global, False, alg=self.options['pc'])
+            solver = DirectSolver(self.mtx, self.printer.active, False, alg=self.options['pc'])
             self.pc_op = scipy.sparse.linalg.LinearOperator(self.mtx.shape, matvec=solver.solve)
         elif self.options['pc'] == 'nopc':
             self.pc_op = None
         elif self.options['pc'] == 'gs':
-            solver = StationarySolver(self.mtx, self.print_global, False,
+            solver = StationarySolver(self.mtx, self.printer.active, False,
                                       solver='gs', damping=1.0, ilimit=1)
             self.pc_op = scipy.sparse.linalg.LinearOperator(self.mtx.shape, matvec=solver.solve)
         elif self.options['pc'] == 'custom':
@@ -162,16 +174,22 @@ class KrylovSolver(LinearSolver):
         self.ind_y = ind_y
         self.rhs = rhs
 
+        if self.print_conv:
+            self.printer._operation('Running %s Krylov solver (%i x %i mtx)' % \
+                (self.options['solver'], self.mtx.shape[0], self.mtx.shape[1]))
+            self.timer._start('krylov')
+
         self._print_sol(sol)
         tmp, info = self.solver(
             self.mtx, rhs, x0=sol, M=self.pc_op,
             callback=self.callback,
             **self.solver_kwargs
         )
-        # self._print_sol(tmp)
-
         if self.print_conv:
-            self._print()
+            self.printer()
+
+            self.timer._stop('krylov')
+            self.printer._done_time(self.timer['krylov'])
 
         sol[:] = tmp
 
@@ -185,8 +203,9 @@ class StationarySolver(LinearSolver):
         self.options.add('damping', 1.0, type_=(int, float))
         self.options.add('ilimit', 10, type_=int)
 
-        self.timer._start('stationary', 'Initializing %s solver on (%i x %i) mtx' % \
-                    (self.options['solver'], self.mtx.shape[0], self.mtx.shape[1]))
+        self.printer._operation('Initializing %s solver (%i x %i mtx)' % \
+            (self.options['solver'], self.mtx.shape[0], self.mtx.shape[1]))
+        self.timer._start('stationary')
 
         if self.options['solver'] == 'jacobi':
             # A x = b
@@ -203,7 +222,8 @@ class StationarySolver(LinearSolver):
             self.inv = scipy.sparse.linalg.splu(mtx_ldw)
             self.iterate = self._gs
 
-        self.timer._stop('stationary', print_done=True)
+        self.timer._stop('stationary')
+        self.printer._done_time(self.timer['stationary'])
 
     def _split_mtx_diag(self):
         shape = self.mtx.shape
@@ -238,6 +258,7 @@ class StationarySolver(LinearSolver):
         sol += self.inv.solve(rhs - self.mtx.dot(sol))
 
     def solve(self, rhs, sol=None, ind_y=0):
+
         if sol is None:
             sol = np.array(rhs)
 
@@ -245,12 +266,20 @@ class StationarySolver(LinearSolver):
         self.ind_y = ind_y
         self.rhs = rhs
 
+        if self.print_conv:
+            self.printer._operation('Running %s stationary solver (%i x %i mtx)' % \
+                (self.options['solver'], self.mtx.shape[0], self.mtx.shape[1]))
+            self.timer._start('stationary')
+
         for ind in range(self.options['ilimit']):
             self.iterate(rhs, sol)
             self._print_sol(sol)
 
         if self.print_conv:
-            self._print()
+            self.printer()
+
+            self.timer._stop('stationary')
+            self.printer._done_time(self.timer['stationary'])
 
         return sol
 
@@ -265,14 +294,14 @@ class MultigridSolver(LinearSolver):
         self.mg_sol = [np.zeros(self.mtx.shape[0])]
         self.mg_rhs = [np.zeros(self.mtx.shape[0])]
         if 1:
-            self.mg_solvers = [NullSolver(self.mtx, self.print_global, self.print_conv)]
+            self.mg_solvers = [NullSolver(self.mtx, self.printer.active, self.print_conv)]
         if 0:
-            self.mg_solvers = [StationarySolver(self.mtx, self.print_global, self.print_conv,
+            self.mg_solvers = [StationarySolver(self.mtx, self.printer.active, self.print_conv,
                                                 solver='jacobi', damping=1.0, ilimit=0, #11, #31,
                                                 interval=10,
                                                 )]
         if 0:
-            self.mg_solvers = [KrylovSolver(self.mtx, self.print_global, self.print_conv,
+            self.mg_solvers = [KrylovSolver(self.mtx, self.printer.active, self.print_conv,
                                             solver='gmres',
                                             #pc=self.mg_solvers[0],
                                             pc='nopc',
@@ -284,14 +313,14 @@ class MultigridSolver(LinearSolver):
             sol = mg_op.T.dot(self.mg_sol[-1])
             rhs = mg_op.T.dot(self.mg_rhs[-1])
             if 1:
-                solver = NullSolver(mtx, self.print_global, False)
+                solver = NullSolver(mtx, self.printer.active, False)
             if 0:
-                solver = StationarySolver(mtx, self.print_global, False, #self.print_conv,
+                solver = StationarySolver(mtx, self.printer.active, False, #self.print_conv,
                                           solver='jacobi', damping=1.0, ilimit=1, #11, #31,
                                           interval=10,
                                           )
             if 0:
-                solver = KrylovSolver(mtx, self.print_global, False, #self.print_conv,
+                solver = KrylovSolver(mtx, self.printer.active, False, #self.print_conv,
                                       solver='gmres',
                                       #pc=solver,
                                       pc='nopc',
@@ -304,7 +333,7 @@ class MultigridSolver(LinearSolver):
             self.mg_solvers.append(solver)
 
         # self.mg_solvers[-1] = \
-        #     KrylovSolver(self.mg_mtx[-1], self.print_global, self.print_conv,
+        #     KrylovSolver(self.mg_mtx[-1], self.printer.active, self.print_conv,
         #                  solver='fgmres',
         #                  pc='nopc',
         #                  ilimit=11,
@@ -314,7 +343,7 @@ class MultigridSolver(LinearSolver):
         # self.mg_solvers[-1] = StationarySolver(mtx, True, #self.print_conv,
         #                                        solver='jacobi', damping=0.1, ilimit=31,
         #                                        print_info='mg:coarse')
-        self.mg_solvers[-1] = DirectSolver(self.mg_mtx[-1], self.print_global, self.print_conv)
+        self.mg_solvers[-1] = DirectSolver(self.mg_mtx[-1], self.printer.active, self.print_conv)
 
     def _restrict(self, ind_level):
         mg_op = self.options['mg_ops'][ind_level]
@@ -390,7 +419,7 @@ class MultigridSolver(LinearSolver):
                 self._smooth_and_interpolate(ind_level, ind_cycle, ind_y)
 
         if self.print_conv:
-            self._print()
+            self.printer()
 
         '''
         sol = self.mg_sol[0]

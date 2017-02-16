@@ -71,4 +71,6 @@ def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
 
         solver.timer._start('convergence')
         solver.solve(rhs[:, ind_y], sol[:, ind_y])
-        solver.timer._stop('convergence', 'Total solver convergence time (sec)')
+        solver.timer._stop('convergence')
+        solver.printer._total_time('Total solver convergence time (sec)',
+                                   solver.timer['convergence'])

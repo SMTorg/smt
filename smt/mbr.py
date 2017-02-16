@@ -115,7 +115,7 @@ class MBR(SM):
         mtx = mtx + reg
 
         sol = np.zeros(rhs.shape)
-        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.print_status, [])
+        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, [])
 
         self.sol = sol
 

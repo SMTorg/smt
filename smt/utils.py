@@ -10,35 +10,57 @@ import time
 
 class Timer(object):
 
-    def __init__(self, print_status=True):
-        self.print_status = print_status
-
+    def __init__(self):
         self.raw_times = {}
         self.elapsed_times = {}
 
-    def _start(self, key, desc=None):
+    def __getitem__(self, key):
+        return self.elapsed_times[key]
+
+    def _start(self, key):
+        if key in self.raw_times:
+            raise RuntimeError('The timer has already been started for key %s' % key)
+
         self.raw_times[key] = time.time()
 
-        if self.print_status and desc is not None:
-            print('   %s ... ' % desc)
+    def _stop(self, key):
+        start_time = self.raw_times.pop(key)
+        stop_time = time.time()
+        self.elapsed_times[key] = stop_time - start_time
 
-    def _stop(self, key, desc=None, print_done=False):
-        self.elapsed_times[key] = time.time() - self.raw_times[key]
-        self.raw_times.pop(key)
 
-        if self.print_status and desc is not None:
-            self._print(key, desc)
+class Printer(object):
 
-        if self.print_status and print_done:
-            print('   Done. Time (sec) : %10.7f' % self.elapsed_times[key])
-            print()
+    def __init__(self, active=False):
+        self.active = active
 
-    def _print(self, key, desc, div_factor=1.0):
-        elapsed_time = self.elapsed_times[key] / div_factor
+    def __call__(self, string=''):
+        if self.active:
+            print(string)
 
-        if self.print_status:
-            print('   %-14s : %10.7f' % (desc, elapsed_time))
-            print()
+    def _center(self, string):
+        pre = ' ' * int((75 - len(string))/2.0)
+        self(pre + '%s' % string)
+
+    def _line_break(self):
+        self('_' * 75)
+        self()
+
+    def _title(self, title):
+        self._line_break()
+        self(' ' + title)
+        self()
+
+    def _operation(self, string):
+        self('   %s ... ' % string)
+
+    def _done_time(self, elapsed_time):
+        self('   Done. Time (sec) : %10.7f' % elapsed_time)
+        self()
+
+    def _total_time(self, string, elapsed_time):
+        self('   %-14s : %10.7f' % (string, elapsed_time))
+        self()
 
 
 class OptionsDictionary(object):

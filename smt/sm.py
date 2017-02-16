@@ -9,7 +9,7 @@ Metamodels - a base class for metamodel methods
 from __future__ import division
 
 import numpy as np
-from smt.utils import Timer
+from smt.utils import Printer, Timer
 
 
 class SM(object):
@@ -36,7 +36,7 @@ class SM(object):
 
         self.training_pts = {'exact': {}}
 
-        self.print_status = True
+        self.printer = Printer()
         self.timer = Timer()
 
     #############################################################################
@@ -83,29 +83,32 @@ class SM(object):
         '''
         Train the model
         '''
-        self._print_line_break()
-        self._print(self.sm_options['name'], True)
+        n_exact = self.training_pts['exact'][0][0].shape[0]
 
-        self.print_status = self.printf_options['global'] and self.printf_options['problem']
-        self.timer.print_status = self.print_status
-        self._print_problem()
+        self.printer.active = self.printf_options['global']
+        self.printer._line_break()
+        self.printer._center(self.sm_options['name'])
 
-        self.print_status = self.printf_options['global'] and self.printf_options['time_train']
-        self.timer.print_status = self.print_status
+        self.printer.active = self.printf_options['global'] and self.printf_options['problem']
+        self.printer._title('Problem size')
+        self.printer('   %-25s : %i' % ('# training pts.', n_exact))
+        self.printer()
+
+        self.printer.active = self.printf_options['global'] and self.printf_options['time_train']
         if self.sm_options['name'] == 'MixExp':
             # Mixture of experts model
-            self._print_title('Training of the Mixture of experts')
+            self.printer._title('Training of the Mixture of experts')
         else:
-            self._print_title('Training')
+            self.printer._title('Training')
 
         #Train the model using the specified model-method
         self.timer._start('fit')
         self.fit()
         self.timer._stop('fit')
 
-        self._print()
-        self.timer._print('fit', 'Total training time (sec)')
-        self._print()
+        self.printer()
+        self.printer._total_time('Total training time (sec)', self.timer['fit'])
+        self.printer()
 
     def predict(self, x):
         '''
@@ -123,52 +126,23 @@ class SM(object):
         '''
         n_evals = x.shape[0]
 
-        self.print_status = self.printf_options['global'] and self.printf_options['time_eval']
-        self.timer.print_status = self.print_status
+        self.printer.active = self.printf_options['global'] and self.printf_options['time_eval']
 
-        # If mixture of experts model
         if self.sm_options['name'] == 'MixExp':
-            self._print_title('Evaluation of the Mixture of experts')
+            # Mixture of experts model
+            self.printer._title('Evaluation of the Mixture of experts')
         else:
-            self._print_title('Evaluation')
-        self._print('   %-12s : %i' % ('# eval pts.', n_evals))
+            self.printer._title('Evaluation')
+        self.printer('   %-12s : %i' % ('# eval pts.', n_evals))
 
         #Evaluate the unknown points using the specified model-method
         self.timer._start('predict')
         y = self.evaluate(x)
         self.timer._stop('predict')
 
-        self._print()
-        self.timer._print('predict', 'Total prediction time (sec)')
-        self.timer._print('predict', 'Time/pt. (sec)', n_evals)
-        self._print()
+        self.printer()
+        self.printer._total_time('Total prediction time (sec)', self.timer['predict'])
+        self.printer._total_time('Time/pt. (sec)', self.timer['predict'] / n_evals)
+        self.printer()
 
         return y.reshape(n_evals,1)
-
-    #############################################################################
-    # Print functions
-    #############################################################################
-
-    def _print_line_break(self):
-        self._print('_' * 75)
-        self._print()
-
-    def _print(self, string='', center=False):
-        if self.print_status:
-            if center:
-                pre = ' ' * int((75 - len(string))/2.0)
-            else:
-                pre = ''
-            print(pre + '%s' % string)
-
-    def _print_title(self, title):
-        self._print_line_break()
-        self._print(' ' + title)
-        self._print()
-
-    def _print_problem(self):
-        pts = self.training_pts
-        self._print_title('Problem size')
-        nexact = self.training_pts['exact'][0][0].shape[0]
-        self._print('   %-25s : %i' % ('# training pts.', nexact))
-        self._print()

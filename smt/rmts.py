@@ -131,26 +131,31 @@ class RMTS(SM):
 
         self.timer._start('total_assembly')
 
-        self.timer._start('uniq2coeff', 'Assembling uniq2coeff')
+        self.printer._operation('Assembling uniq2coeff')
+        self.timer._start('uniq2coeff')
         full_uniq2coeff = self._compute_uniq2coeff(
             nx, num['elem_list'], num['elem'], num['term'], num['uniq'])
-        self.timer._stop('uniq2coeff', print_done=True)
+        self.timer._stop('uniq2coeff')
+        self.printer._done_time(self.timer['uniq2coeff'])
 
         # This computes the positive-definite, symmetric matrix yields the energy
         # for an element when pre- and post-multiplied by a vector of function and
         # derivative values for the element. This matrix applies to all elements.
-        self.timer._start('local hess', 'Assembling local energy terms')
+        self.printer._operation('Assembling local energy terms')
+        self.timer._start('local hess')
         elem_hess = np.zeros((num['term'], num['term']))
         for kx in range(nx):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], nx,
                 num['elem_list'], sm_options['xlimits'])
             elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) * \
                 sm_options['smoothness'][kx]
-        self.timer._stop('local hess', print_done=True)
+        self.timer._stop('local hess')
+        self.printer._done_time(self.timer['local hess'])
 
         # This takes the dense elem_hess matrix and stamps out num['elem'] copies
         # of it to form the full sparse matrix with all the elements included.
-        self.timer._start('global hess', 'Assembling global energy terms')
+        self.printer._operation('Assembling global energy terms')
+        self.timer._start('global hess')
         nnz = num['term'] ** 2 * num['elem']
         num_coeff = num['term'] * num['elem']
         data, rows, cols = RMTSlib.compute_full_from_block(
@@ -165,14 +170,16 @@ class RMTS(SM):
         arange = np.arange(num_coeff_uniq)
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
         sub_mtx_dict['dv', 'dv'] += reg_dv
-        self.timer._stop('global hess', print_done=True)
+        self.timer._stop('global hess')
+        self.printer._done_time(self.timer['global hess'])
 
         # This adds the training points, either using a least-squares approach
         # or with exact contraints and Lagrange multipliers.
         # In both approaches, we loop over kx: 0 is for values and kx>0 represents
         # the 1-based index of the derivative given by the training point data.
         if sm_options['mode'] == 'approx':
-            self.timer._start('approx', 'Assembling approximation terms')
+            self.printer._operation('Assembling approximation terms')
+            self.timer._start('approx')
             for kx in self.training_pts['exact']:
                 xt, yt = self.training_pts['exact'][kx]
 
@@ -187,10 +194,12 @@ class RMTS(SM):
                 rhs = full_jac.T * yt / sm_options['reg_cons']
                 sub_mtx_dict['dv', 'dv'] += full_jac_sq
                 sub_rhs_dict['dv'] = rhs
-            self.timer._stop('approx', print_done=True)
+                self.timer._stop('approx')
+                self.printer._done_time(self.timer['approx'])
 
         elif sm_options['mode'] == 'exact':
-            self.timer._start('exact', 'Assembling interpolation terms')
+            self.printer._operation('Assembling interpolation terms')
+            self.timer._start('exact')
             for kx in self.training_pts['exact']:
                 xt, yt = self.training_pts['exact'][kx]
 
@@ -209,9 +218,11 @@ class RMTS(SM):
                 arange = np.arange(nt)
                 reg_cons = scipy.sparse.csc_matrix((diag, (arange, arange)))
                 sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
-            self.timer._stop('exact', print_done=True)
+            self.timer._stop('exact')
+            self.printer._done_time(self.timer['exact'])
 
-        self.timer._start('sparse', 'Assembling global sparse matrix')
+        self.printer._operation('Assembling global sparse matrix')
+        self.timer._start('sparse')
         if sm_options['mode'] == 'approx':
             block_names = ['dv']
             block_sizes = [num['uniq'] * 2 ** nx]
@@ -224,7 +235,8 @@ class RMTS(SM):
 
         mtx, rhs = smt.linalg.assemble_sparse_mtx(
             block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
-        self.timer._stop('sparse', print_done=True)
+        self.timer._stop('sparse')
+        self.printer._done_time(self.timer['sparse'])
 
         mg_matrices = []
         if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
@@ -239,8 +251,9 @@ class RMTS(SM):
 
                 nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
                 ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
-                self.timer._start('mg_mat', 'Assembling multigrid op %i (%i x %i mtx)' %
-                                  (ind_mg, nrows, ncols))
+                self.printer._operation('Assembling multigrid op %i (%i x %i mtx)' %
+                    (ind_mg, nrows, ncols))
+                self.timer._start('mg_mat')
 
                 if 1:
                     mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
@@ -269,14 +282,15 @@ class RMTS(SM):
                     ], format='csc')
 
                 mg_matrices.append(mg_matrix)
-                self.timer._stop('mg_mat', print_done=True)
+                self.timer._stop('mg_mat')
+                self.printer._done_time(self.timer['mg_mat'])
 
         self.timer._stop('total_assembly')
 
         self.timer._start('solution')
 
         sol = np.zeros(rhs.shape)
-        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.print_status, mg_matrices)
+        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
 
         self.timer._stop('solution')
 
@@ -284,8 +298,8 @@ class RMTS(SM):
 
         self.tmp = mtx
 
-        self.timer._print('total_assembly', 'Total assembly time (sec)')
-        self.timer._print('solution', 'Total linear solution time (sec)')
+        self.printer._total_time('Total assembly time (sec)', self.timer['total_assembly'])
+        self.printer._total_time('Total linear solution time (sec)', self.timer['solution'])
 
     def fit(self):
         """
