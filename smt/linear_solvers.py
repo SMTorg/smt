@@ -83,7 +83,7 @@ class DirectSolver(LinearSolver):
     def _initialize(self):
         self.options.add('alg', 'lu', values=['lu', 'ilu'])
 
-        self.timer._start('direct', 'Performing %s fact. on (%i x %i) mtx' % \
+        self.timer._start('direct', 'Performing %s fact. (%i x %i mtx)' % \
             (self.options['alg'], self.mtx.shape[0], self.mtx.shape[1]))
         if self.options['alg'] == 'lu':
             self.fact = scipy.sparse.linalg.splu(self.mtx)

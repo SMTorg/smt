@@ -235,8 +235,12 @@ class RMTS(SM):
             elem_lists = [num['elem_list']]
             for ind_mg, mg_factor in enumerate(sm_options['solver_mg']):
 
-                self.timer._start('mg_mat', 'Assembling multigrid op %i' % ind_mg)
                 elem_lists.append(elem_lists[-1] / mg_factor)
+
+                nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
+                ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
+                self.timer._start('mg_mat', 'Assembling multigrid op %i (%i x %i mtx)' %
+                                  (ind_mg, nrows, ncols))
 
                 if 1:
                     mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
@@ -287,10 +291,7 @@ class RMTS(SM):
         """
         Train the model
         """
-        tmp = self.timer
-        #self.timer = None
-        checksum = smt.utils._caching_checksum(self)
-        self.timer = tmp
+        checksum = smt.utils._caching_checksum_sm(self)
 
         filename = '%s.sm' % self.sm_options['name']
         success, data = smt.utils._caching_load(filename, checksum)

@@ -95,3 +95,11 @@ def _caching_checksum(obj):
     self_pkl = pickle.dumps(obj)
     checksum = hashlib.md5(self_pkl).hexdigest()
     return checksum
+
+def _caching_checksum_sm(sm):
+    tmp = sm.timer
+
+    sm.timer = None
+    checksum = _caching_checksum(sm)
+    sm.timer = tmp
+    return checksum
