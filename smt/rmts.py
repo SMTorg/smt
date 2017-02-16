@@ -255,24 +255,16 @@ class RMTS(SM):
                     (ind_mg, nrows, ncols))
                 self.timer._start('mg_mat')
 
-                if 1:
-                    mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
-                        np.prod(elem_lists[-1]), num['term'], np.prod(elem_lists[-1] + 1))
+                mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
+                    np.prod(elem_lists[-1]), num['term'], np.prod(elem_lists[-1] + 1))
 
-                    ne = np.prod(elem_lists[-2] + 1) * 2 ** nx
-                    nnz = ne * num['term']
-                    num_coeff = num['term'] * np.prod(elem_lists[-1])
-                    data, rows, cols = RMTSlib.compute_jac_interp(
-                        nnz, nx, elem_lists[-1], elem_lists[-2] + 1, sm_options['xlimits'])
-                    mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
-                    mg_matrix = mg_jac * mg_full_uniq2coeff
-                else:
-                    nnz = np.prod(elem_lists[-2] + 1) * 4 ** nx
-                    nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
-                    ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
-                    data, rows, cols = RMTSlib.compute_mg_interp(nx, nnz, elem_lists[-1])
-                    mg_matrix = scipy.sparse.csc_matrix((data, (rows, cols)),
-                                                        shape=(nrows, ncols))
+                ne = np.prod(elem_lists[-2] + 1) * 2 ** nx
+                nnz = ne * num['term']
+                num_coeff = num['term'] * np.prod(elem_lists[-1])
+                data, rows, cols = RMTSlib.compute_jac_interp(
+                    nnz, nx, elem_lists[-1], elem_lists[-2] + 1, sm_options['xlimits'])
+                mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
+                mg_matrix = mg_jac * mg_full_uniq2coeff
 
                 if sm_options['mode'] == 'exact':
                     num_lagr = np.sum(block_sizes[1:])
