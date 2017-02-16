@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from  KPLS_tools.pls import pls as _pls 
+from  KPLS_tools.pls import pls as _pls
 
 '''
 todo
@@ -22,23 +22,23 @@ def standard(X,y):
     return X, y, X_mean, y_mean, X_std, y_std
 
 def l1_cross_distances(X):
-    
+
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
     in X.
-    
+
     Parameters
     ----------
-    
+
     X: array_like
     An array with shape (n_samples, n_features)
-    
+
     Returns
     -------
-    
+
     D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
     The array of componentwise L1 cross-distances.
-    
+
     ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
     The indices i and j of the vectors in X associated to the cross-
     distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
@@ -48,7 +48,7 @@ def l1_cross_distances(X):
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
-    
+
     for k in xrange(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
@@ -62,7 +62,7 @@ def l1_cross_distances(X):
 def componentwise_distance(D,corr,ncomp,dim,coeff_pls,limit):
     D_final = np.zeros((D.shape[0],ncomp))
     i,nb_limit  = 0,int(limit)
-    
+
     if ncomp == dim:
         # Kriging
         while True:
@@ -79,7 +79,7 @@ def componentwise_distance(D,corr,ncomp,dim,coeff_pls,limit):
     else:
         # KPLS or GEKPLS
         while True:
-            if i * nb_limit > D_final.shape[0]:                
+            if i * nb_limit > D_final.shape[0]:
                 return D_final
             else:
                 if corr == 'squar_exp':
@@ -106,7 +106,7 @@ def compute_pls(kpls,X,y,opt=0):
 
         for i in xrange(kpls.nt):
             _X = np.zeros((kpls.dim+1,kpls.dim))
-            _y = np.zeros((kpls.dim+1,1))            
+            _y = np.zeros((kpls.dim+1,1))
             _X[0,:] = X[i,:].copy()
             _y[0,0] = y[i,0].copy()
             for j in xrange(1,kpls.dim+1):
@@ -118,7 +118,7 @@ def compute_pls(kpls,X,y,opt=0):
                                                      kpls.sm_options['xlimits'][j-1,0])
             pls.fit(_X.copy(),_y.copy())
 
-            coeff_pls[i,:,:] = pls.x_rotations_                
+            coeff_pls[i,:,:] = pls.x_rotations_
             if kpls.sm_options['indGEKPLS'] != 0:
                 max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-kpls.sm_options['indGEKPLS']:]
                 XX = np.vstack((XX,_X[1+max_coeff,:]))
@@ -137,7 +137,7 @@ def computeaquadratic(pi, mu, Sigma, x):
 
     # vector b: for the linear term
     b = np.linalg.solve(Sigma, mu)
-    linTerm = np.dot(b,x) 
+    linTerm = np.dot(b,x)
 
     # vector c: for the constant term
     cterm1 = -1.0/2.0*np.dot(mu, np.linalg.solve(Sigma, mu))
@@ -160,7 +160,7 @@ def normalPDF(x, mu, s2):
 
     return pdf
 
-    
+
 # -----------------------------------------------------------------------------
 # Log likelihood for the mixture of Gaussians (MOG)
 # -----------------------------------------------------------------------------
@@ -170,11 +170,11 @@ def mog_logLikelihood(x, piVec, muVec, sigma2Vec):
     N = len(x)
     nK = len(piVec)
 
-    # log likelihood 
+    # log likelihood
     L = 0.0
 
     for i in xrange(N):
-        # compute the likelihood of the i-th data 
+        # compute the likelihood of the i-th data
         xi = x[i,0]
         tmp = 0.0
         for k in xrange(nK):
@@ -200,8 +200,8 @@ def mog_logLikelihood(x, piVec, muVec, sigma2Vec):
 
 def mixtureofgaussians(nclusters, tol, data):
     # initialize the mean values and variance
-    
-    # split the training data into nclusters    
+
+    # split the training data into nclusters
     N = len(data)
     ntmp = np.int(N/nclusters)  # number of data in each temporary cluster
 
@@ -214,18 +214,18 @@ def mixtureofgaussians(nclusters, tol, data):
         else:
             xclusters = data[(i*ntmp):,0]
 
-        muVec[i] = np.mean(xclusters) 
+        muVec[i] = np.mean(xclusters)
         sigma2Vec[i] = (np.std(xclusters))**2
 
         piVec[i] = 1.0/nclusters
 
     L = mog_logLikelihood(data, piVec, muVec, sigma2Vec)
-    # posterior probabilities p(zk=1|x) = gamma(zk) 
+    # posterior probabilities p(zk=1|x) = gamma(zk)
     gamma = np.zeros((N, nclusters))
 
     error = 1.0
     iter = 0
-    while (error > tol): 
+    while (error > tol):
         # E-step, evaluate responsibilities
         for n in xrange(N):
             xn = data[n,0]
@@ -234,7 +234,7 @@ def mixtureofgaussians(nclusters, tol, data):
                 pik = piVec[k]
                 muk = muVec[k]
                 s2k = sigma2Vec[k]
-                
+
                 # numerator = p(zk=1)*p(x|zk=1)
                 num[k] = pik*normalPDF(xn, muk, s2k)
 
@@ -244,14 +244,14 @@ def mixtureofgaussians(nclusters, tol, data):
             # regularization, so the denominator doesn't get too close to zero
             if denom < 1e-5:
                 denom = 1e-5
-        
+
             # normalize
             for k in xrange(nclusters):
                 gamma[n,k] = num[k]/denom
-            
-        
+
+
         # M-step, update parameters
-    
+
         # Nk = sum(gamma[:,k]), the effective number of points assigned to the k-th cluster
         Nk = np.zeros(nclusters)
         for k in xrange(nclusters):
@@ -265,7 +265,7 @@ def mixtureofgaussians(nclusters, tol, data):
             muk = muk/Nk[k]
 
             muVec[k] = muk
-            
+
             # update sigma2k
             s2k = 0.0
             for n in xrange(N):
@@ -310,7 +310,7 @@ def mixtureofgaussians(nclusters, tol, data):
 
 def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     # x: data points
-    # t: classification inputs 
+    # t: classification inputs
 
     # problem dimension (number of variables)
     Ndv = x.shape[1]
@@ -321,8 +321,8 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     # number of clusters
     nclusters = len(np.unique(t))
 
-    # number of data within each cluster 
-    nmembers = np.zeros(nclusters, dtype=int) 
+    # number of data within each cluster
+    nmembers = np.zeros(nclusters, dtype=int)
 
     # clusters' prior probabilities
     pi = np.zeros(nclusters)
@@ -357,17 +357,17 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
         Sigma.append([])
 
     for j in xrange(nclusters):
-        Sigma[j] = np.zeros((Ndv, Ndv)) 
+        Sigma[j] = np.zeros((Ndv, Ndv))
 
         for n in xrange(nmembers[j]):
-            tmp_Sigma = np.zeros((Ndv, Ndv)) 
+            tmp_Sigma = np.zeros((Ndv, Ndv))
 
             vec = xmembers[j][n,:] - mu[j,:]
             for p in xrange(Ndv):
-                for r in xrange(Ndv): 
+                for r in xrange(Ndv):
                     tmp_Sigma[p,r] = vec[p]*vec[r]
 
-            Sigma[j] += tmp_Sigma 
+            Sigma[j] += tmp_Sigma
 
         Sigma[j] = 1.0/np.float(nmembers[j]) * Sigma[j]
 
@@ -375,7 +375,7 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
         reg = np.zeros((Ndv, Ndv))
 
         for d in xrange(Ndv):
-            reg[d,d] = regConstant 
+            reg[d,d] = regConstant
 
         for j in xrange(nclusters):
             Sigma[j] += reg
@@ -383,7 +383,7 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     return pi, mu, Sigma
 
 # -----------------------------------------------------------------------------
-# Evaluate the posteriors of the Gaussian classifier 
+# Evaluate the posteriors of the Gaussian classifier
 # When we already have the pi, mu, and Sigma
 # -----------------------------------------------------------------------------
 
@@ -404,29 +404,29 @@ def eval_gaussianClassifier(xevals, pi, mu, Sigma, weight=1.0, bias=0.0):
             # compute the argument of the logistic function
             post[j] = computeaquadratic(pi[j], mu[j,:], Sigma[j], x)
             post[j] = np.exp(weight*post[j]+bias)
-            
+
         # normalize the posterior probability
         post = post/np.sum(post)
-        
+
         posteriors[n,:] = post
-        
+
         # sort the posterior probability from lowest to highest
         indSort = np.argsort(post)
-        
-        # find the cluster index with the highest posterior probability 
+
+        # find the cluster index with the highest posterior probability
         indClass = indSort[-1]
 
         classList[n] = indClass
 
-        # add the counter 
+        # add the counter
         clusterCount[indClass] += 1
 
     indevalsClusters = []
-    # initialize 
+    # initialize
     for j in xrange(nclusters):
         indevalsClusters.append(np.zeros(clusterCount[j], dtype=int))
 
     for j in xrange(nclusters):
         indevalsClusters[j] = [i for (i,val) in enumerate(classList) if val == j]
-    
+
     return indevalsClusters, posteriors, classList, clusterCount

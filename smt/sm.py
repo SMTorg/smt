@@ -15,7 +15,6 @@ from smt.utils import Timer
 class SM(object):
     '''
     Base class for all model methods.
-
     '''
 
     def __init__(self, sm_options=None, printf_options=None):

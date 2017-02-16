@@ -225,7 +225,7 @@ class pls():#six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,Regres
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
             = _center_scale_xy(X, Y, self.scale)
-        
+
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -279,7 +279,7 @@ class pls():#six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,Regres
             self.x_loadings_[:, k] = x_loadings.ravel()  # P
             self.y_loadings_[:, k] = y_loadings.ravel()  # Q
         # Such that: X = TP' + Err and Y = UQ' + Err
-       
+
 
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)

@@ -11,18 +11,18 @@ from sm import SM
 
 
 class LS(SM):
-  
+
     """
     Least square model.
     This model uses the linear_model.LinearRegression class from scikit-learn.
     Default-parameters from scikit-learn are used herein.
     """
-    
+
     def _set_default_options(self):
-      
-        ''' 
+
+        '''
         Constructor.
-        
+
         Arguments
         ---------
         sm_options : dict
@@ -31,20 +31,20 @@ class LS(SM):
         printf_options : dict
             Output printing options, listed below
         '''
-        
+
         sm_options = {
-            'name': 'LS',          
+            'name': 'LS',
         }
         printf_options = {
-            'global': True,     # Overriding option to print output            
+            'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
             'time_train': True, # Print training time
             'problem': True,    # Print problem information
         }
-      
+
         self.sm_options = sm_options
         self.printf_options = printf_options
-      
+
         self.mod = linear_model.LinearRegression()
 
 
@@ -52,24 +52,24 @@ class LS(SM):
     # Model functions
     ############################################################################
 
-        
+
     def fit(self):
-      
+
         """
-        Train the model    
+        Train the model
         """
-        
+
         pts = self.training_pts
-        
+
         if 0 in pts['exact']:
             x = pts['exact'][0][0]
             y = pts['exact'][0][1]
-        
+
         self.mod.fit(x,y)
 
-        
+
     def evaluate(self,x):
-      
+
         """
         Evaluate the model at a set of unknown points
 
@@ -80,10 +80,10 @@ class LS(SM):
 
         Returns
         -------
-        y : np.ndarray 
+        y : np.ndarray
             Evaluation point output variable values
         """
-        
+
         y = self.mod.predict(x)
-        
+
         return y

@@ -104,7 +104,7 @@ print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
 
 ########### The GEKPLS model
-# The variables 'name' must be equal to 'GEKPLSK'. 'n_comp' and 'theta0' must be
+# The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
 # an integer in [1,dim[ and a list of length n_comp, respectively.
 t = KPLS({'name':'GEKPLS','n_comp':2,'theta0': [1e-2,1e-2],'xlimits':xlimits},{})
 t.add_training_pts('exact',xt,yt)
