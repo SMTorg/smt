@@ -288,16 +288,16 @@ class MultigridSolver(LinearSolver):
 
     def _initialize(self):
         self.options.add('mg_ops')
-        self.options.add('mg_cycles', 0)
+        self.options.add('mg_cycles', 0)#11)
 
         self.mg_mtx = [self.mtx]
         self.mg_sol = [np.zeros(self.mtx.shape[0])]
         self.mg_rhs = [np.zeros(self.mtx.shape[0])]
-        if 1:
-            self.mg_solvers = [NullSolver(self.mtx, self.printer.active, self.print_conv)]
         if 0:
+            self.mg_solvers = [NullSolver(self.mtx, self.printer.active, self.print_conv)]
+        if 1:
             self.mg_solvers = [StationarySolver(self.mtx, self.printer.active, self.print_conv,
-                                                solver='jacobi', damping=1.0, ilimit=0, #11, #31,
+                                                solver='gs', damping=1.0, ilimit=5, #11, #31,
                                                 interval=10,
                                                 )]
         if 0:
@@ -312,11 +312,11 @@ class MultigridSolver(LinearSolver):
             mtx = mg_op.T.dot(self.mg_mtx[-1]).dot(mg_op).tocsc()
             sol = mg_op.T.dot(self.mg_sol[-1])
             rhs = mg_op.T.dot(self.mg_rhs[-1])
-            if 1:
-                solver = NullSolver(mtx, self.printer.active, False)
             if 0:
+                solver = NullSolver(mtx, self.printer.active, False)
+            if 1:
                 solver = StationarySolver(mtx, self.printer.active, False, #self.print_conv,
-                                          solver='jacobi', damping=1.0, ilimit=1, #11, #31,
+                                          solver='gs', damping=1.0, ilimit=5, #11, #31,
                                           interval=10,
                                           )
             if 0:
