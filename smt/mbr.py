@@ -49,6 +49,7 @@ class MBR(SM):
             'solver_type': 'direct',    # Linear solver: 'gmres' or 'cg'
             'solver_krylov': 'cg',    # Preconditioner: 'ilu', 'lu', or 'nopc'
             'solver_pc': 'nopc',    # Preconditioner: 'ilu', 'lu', or 'nopc'
+            'solver_print_iter': True, # print solver iterations
             'solver_damping': 1.0,    # Damping coeff. for Jacobi/GS
             'solver_mg': [], # Multigrid level
             'solver_atol': 1e-15, # Absolute linear system convergence tolerance

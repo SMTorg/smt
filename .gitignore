@@ -5,4 +5,5 @@
 *.so
 *.so.*
 *.sm
+*.out
 .DS_Store

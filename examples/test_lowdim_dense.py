@@ -71,8 +71,8 @@ print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 
 ########### The RMTS model
-t = RMTS({'name':'RMTS','num_elem':[2]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
-    'mode': 'approx', 'solver_mg': [2], 'solver_type': 'krylov-mg', 'solver_pc': 'lu',
+t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
+    'mode': 'approx', 'solver_mg': [4], 'solver_type': 'krylov-mg', 'solver_pc': 'lu',
     'solver_krylov': 'gmres', 'solver_rtol': 1e-10,
 },{})
 t.add_training_pts('exact',xt,yt)

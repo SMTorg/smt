@@ -31,7 +31,7 @@ class LinearSolver(object):
         self.printer.active = print_global
 
         self.options = OptionsDictionary(kwargs)
-        self.options.add('interval', 1, type_=int)
+        self.options.add('interval', 10, type_=int)
         self._initialize()
 
     def _initialize(self):
@@ -117,7 +117,7 @@ class DirectSolver(LinearSolver):
 class KrylovSolver(LinearSolver):
 
     def _initialize(self):
-        self.options.add('pc', 'lu', values=['ilu', 'lu', 'nopc', 'gs', 'custom'])
+        self.options.add('pc', 'lu', values=['ilu', 'lu', 'nopc', 'gs', 'jacobi', 'custom'])
         self.options.add('pc_solver', object)
         self.options.add('solver', 'cg', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
         self.options.add('ilimit', 100, type_=int)
@@ -132,6 +132,10 @@ class KrylovSolver(LinearSolver):
         elif self.options['pc'] == 'gs':
             solver = StationarySolver(self.mtx, self.printer.active, False,
                                       solver='gs', damping=1.0, ilimit=1)
+            self.pc_op = scipy.sparse.linalg.LinearOperator(self.mtx.shape, matvec=solver.solve)
+        elif self.options['pc'] == 'jacobi':
+            solver = StationarySolver(self.mtx, self.printer.active, False,
+                                      solver='jacobi', damping=1.0, ilimit=1)
             self.pc_op = scipy.sparse.linalg.LinearOperator(self.mtx.shape, matvec=solver.solve)
         elif self.options['pc'] == 'custom':
             solver = self.options['pc_solver']
@@ -293,9 +297,9 @@ class MultigridSolver(LinearSolver):
         self.mg_mtx = [self.mtx]
         self.mg_sol = [np.zeros(self.mtx.shape[0])]
         self.mg_rhs = [np.zeros(self.mtx.shape[0])]
-        if 0:
-            self.mg_solvers = [NullSolver(self.mtx, self.printer.active, self.print_conv)]
         if 1:
+            self.mg_solvers = [NullSolver(self.mtx, self.printer.active, self.print_conv)]
+        if 0:
             self.mg_solvers = [StationarySolver(self.mtx, self.printer.active, self.print_conv,
                                                 solver='gs', damping=1.0, ilimit=5, #11, #31,
                                                 interval=10,
@@ -312,9 +316,9 @@ class MultigridSolver(LinearSolver):
             mtx = mg_op.T.dot(self.mg_mtx[-1]).dot(mg_op).tocsc()
             sol = mg_op.T.dot(self.mg_sol[-1])
             rhs = mg_op.T.dot(self.mg_rhs[-1])
-            if 0:
-                solver = NullSolver(mtx, self.printer.active, False)
             if 1:
+                solver = NullSolver(mtx, self.printer.active, False)
+            if 0:
                 solver = StationarySolver(mtx, self.printer.active, False, #self.print_conv,
                                           solver='gs', damping=1.0, ilimit=5, #11, #31,
                                           interval=10,

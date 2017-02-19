@@ -36,10 +36,10 @@ def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
 def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
     for ind_y in range(rhs.shape[1]):
         if sm_options['solver_type'] == 'direct':
-            solver = DirectSolver(mtx, print_global, True)
+            solver = DirectSolver(mtx, print_global, sm_options['solver_print_iter'])
         elif sm_options['solver_type'] == 'krylov':
             solver = KrylovSolver(
-                mtx, print_global, True,
+                mtx, print_global, sm_options['solver_print_iter'],
                 solver=sm_options['solver_krylov'],
                 pc=sm_options['solver_pc'],
                 ilimit=sm_options['solver_ilimit'],
@@ -48,7 +48,7 @@ def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
             )
         elif sm_options['solver_type'] == 'stationary':
             solver = StationarySolver(
-                mtx, print_global, True,
+                mtx, print_global, sm_options['solver_print_iter'],
                 solver=sm_options['solver_stationary'],
                 damping=sm_options['solver_damping'],
                 ilimit=sm_options['solver_ilimit'],
@@ -56,12 +56,12 @@ def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
                 rtol=sm_options['solver_rtol'],
             )
         elif sm_options['solver_type'] == 'mg':
-            solver = MultigridSolver(mtx, print_global, True, mg_ops=mg_ops)
+            solver = MultigridSolver(mtx, print_global, sm_options['solver_print_iter'], mg_ops=mg_ops)
         elif sm_options['solver_type'] == 'krylov-mg':
             pc = MultigridSolver(mtx, print_global, False,
                                  mg_ops=mg_ops)
             solver = KrylovSolver(
-                mtx, print_global, True,
+                mtx, print_global, sm_options['solver_print_iter'],
                 solver=sm_options['solver_krylov'],
                 pc='custom', pc_solver=pc,
                 ilimit=sm_options['solver_ilimit'],

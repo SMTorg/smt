@@ -48,6 +48,9 @@ class RMTS(SM):
             'reg_cons': 1e-8, # negative of reg. coeff. for Lagrange mult. block
             'mode': 'exact', # 'approx' or 'exact' form of linear system ()
             'extrapolate': False, # perform linear extrapolation for external eval points
+            'ls_p': 2, # order of norm in least-squares approximation term
+            'solver_nln_iter': 1, # number of nonlinear iterations
+            'solver_print_iter': True, # print solver iterations
             'solver_type': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'solver_krylov': 'gmres',    # Preconditioner: 'ilu', 'lu', or 'nopc'
             'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
@@ -126,9 +129,6 @@ class RMTS(SM):
 
         self.num = num
 
-        sub_mtx_dict = {}
-        sub_rhs_dict = {}
-
         self.timer._start('total_assembly')
 
         self.printer._operation('Assembling uniq2coeff')
@@ -163,13 +163,13 @@ class RMTS(SM):
         full_hess = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff, num_coeff))
         full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
-        sub_mtx_dict['dv', 'dv'] = full_hess
 
         num_coeff_uniq = num['uniq'] * 2 ** nx
         diag = sm_options['reg_dv'] * np.ones(num_coeff_uniq)
         arange = np.arange(num_coeff_uniq)
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
-        sub_mtx_dict['dv', 'dv'] += reg_dv
+
+        full_hess += reg_dv
         self.timer._stop('global hess')
         self.printer._done_time(self.timer['global hess'])
 
@@ -177,66 +177,31 @@ class RMTS(SM):
         # or with exact contraints and Lagrange multipliers.
         # In both approaches, we loop over kx: 0 is for values and kx>0 represents
         # the 1-based index of the derivative given by the training point data.
-        if sm_options['mode'] == 'approx':
-            self.printer._operation('Assembling approximation terms')
-            self.timer._start('approx')
-            for kx in self.training_pts['exact']:
-                xt, yt = self.training_pts['exact'][kx]
+        self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
+        self.timer._start('approximation')
+        reg_cons_dict = {}
+        full_jac_dict = {}
+        yt_dict = {}
+        for kx in self.training_pts['exact']:
+            xt, yt = self.training_pts['exact'][kx]
 
-                nt = xt.shape[0]
-                nnz = nt * num['term']
-                num_coeff = num['term'] * num['elem']
-                data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
-                    num['elem_list'], sm_options['xlimits'], xt)
-                full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
-                full_jac = full_jac * full_uniq2coeff
-                full_jac_sq = full_jac.T * full_jac / sm_options['reg_cons']
-                rhs = full_jac.T * yt / sm_options['reg_cons']
-                sub_mtx_dict['dv', 'dv'] += full_jac_sq
-                sub_rhs_dict['dv'] = rhs
-                self.timer._stop('approx')
-                self.printer._done_time(self.timer['approx'])
+            nt = xt.shape[0]
+            nnz = nt * num['term']
+            num_coeff = num['term'] * num['elem']
+            data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
+                num['elem_list'], sm_options['xlimits'], xt)
+            full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
+            full_jac = full_jac * full_uniq2coeff
 
-        elif sm_options['mode'] == 'exact':
-            self.printer._operation('Assembling interpolation terms')
-            self.timer._start('exact')
-            for kx in self.training_pts['exact']:
-                xt, yt = self.training_pts['exact'][kx]
+            full_jac_dict[kx] = full_jac
+            yt_dict[kx] = yt
 
-                nt = xt.shape[0]
-                nnz = nt * num['term']
-                num_coeff = num['term'] * num['elem']
-                data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
-                    num['elem_list'], sm_options['xlimits'], xt)
-                full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
-                full_jac = full_jac * full_uniq2coeff
-                sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
-                sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
-                sub_rhs_dict['con_%s'%kx] = yt
-
+            if sm_options['mode'] == 'exact':
                 diag = -sm_options['reg_cons'] * np.ones(nt)
                 arange = np.arange(nt)
-                reg_cons = scipy.sparse.csc_matrix((diag, (arange, arange)))
-                sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
-            self.timer._stop('exact')
-            self.printer._done_time(self.timer['exact'])
-
-        self.printer._operation('Assembling global sparse matrix')
-        self.timer._start('sparse')
-        if sm_options['mode'] == 'approx':
-            block_names = ['dv']
-            block_sizes = [num['uniq'] * 2 ** nx]
-        elif sm_options['mode'] == 'exact':
-            block_names = ['dv'] + \
-                ['con_%s'%kx for kx in self.training_pts['exact']]
-            block_sizes = [num['uniq'] * 2 ** nx] + \
-                [self.training_pts['exact'][kx][0].shape[0]
-                for kx in self.training_pts['exact']]
-
-        mtx, rhs = smt.linalg.assemble_sparse_mtx(
-            block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
-        self.timer._stop('sparse')
-        self.printer._done_time(self.timer['sparse'])
+                reg_cons_dict[kx] = scipy.sparse.csc_matrix((diag, (arange, arange)))
+        self.timer._stop('approximation')
+        self.printer._done_time(self.timer['approximation'])
 
         mg_matrices = []
         if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
@@ -279,10 +244,105 @@ class RMTS(SM):
 
         self.timer._stop('total_assembly')
 
+        if sm_options['mode'] == 'approx':
+            block_names = ['dv']
+            block_sizes = [num['uniq'] * 2 ** nx]
+        elif sm_options['mode'] == 'exact':
+            block_names = ['dv'] + \
+                ['con_%s'%kx for kx in self.training_pts['exact']]
+            block_sizes = [num['uniq'] * 2 ** nx] + \
+                [self.training_pts['exact'][kx][0].shape[0]
+                for kx in self.training_pts['exact']]
+
+        total_nt = 0
+        for kx in self.training_pts['exact']:
+            total_nt += self.training_pts['exact'][kx][0].shape[0]
+
         self.timer._start('solution')
 
-        sol = np.zeros(rhs.shape)
-        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
+        total_size = int(np.sum(block_sizes))
+        sol = np.zeros((total_size, ny))
+        d_sol = np.zeros((total_size, ny))
+
+        for nln_iter in range(sm_options['solver_nln_iter']):
+
+            self.printer._operation('Computing global sparse matrix')
+            self.timer._start('sparse')
+            sub_mtx_dict = {}
+            sub_rhs_dict = {}
+            sub_mtx_dict['dv', 'dv'] = full_hess
+            sub_rhs_dict['dv'] = -full_hess * sol
+            p = self.sm_options['ls_p']
+            c = 1.0 / sm_options['reg_cons'] / 2. / total_nt
+            for kx in self.training_pts['exact']:
+                full_jac = full_jac_dict[kx]
+                yt = yt_dict[kx]
+                if sm_options['mode'] == 'approx':
+                    ls_weights_1 = p * (full_jac * sol - yt) ** (p - 1)
+                    ls_weights_2 = p * (p - 1) * (full_jac * sol[:, 0] - yt[:, 0]) ** (p - 2)
+                    diags_2 = scipy.sparse.diags(ls_weights_2, format='csc')
+
+                    sub_mtx_dict['dv', 'dv'] += c * full_jac.T * diags_2 * full_jac
+                    sub_rhs_dict['dv'] -= c * full_jac.T * ls_weights_1
+                elif sm_options['mode'] == 'exact':
+                    reg_cons = reg_cons_dict[kx]
+                    sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
+                    sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
+                    sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
+                    sub_rhs_dict['con_%s'%kx] = yt
+
+            if sm_options['mode'] == 'approx':
+                mtx = sub_mtx_dict['dv', 'dv']
+                rhs = sub_rhs_dict['dv']
+            else:
+                mtx, rhs = smt.linalg.assemble_sparse_mtx(
+                    block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
+            self.timer._stop('sparse')
+            self.printer._done_time(self.timer['sparse'])
+
+            smt.linalg.solve_sparse_system(mtx, rhs, d_sol, sm_options, self.printer.active, mg_matrices)
+
+            def get_norm():
+                grad = full_hess * sol
+                for kx in self.training_pts['exact']:
+                    full_jac = full_jac_dict[kx]
+                    yt = yt_dict[kx]
+                    if sm_options['mode'] == 'approx':
+                        grad += c * p * full_jac.T * (full_jac * sol - yt) ** (p - 1)
+                norm = np.linalg.norm(grad)
+                return norm
+
+            norm0 = get_norm()
+
+            alpha = 1.0
+            sol += alpha * d_sol
+            norm = get_norm()
+            sol -= alpha * d_sol
+
+            best_norm = norm
+            best_alpha = alpha
+            best_iter = 0
+            for ls_iter in range(20):
+                if norm < 0.5 * norm0:
+                    break
+                else:
+                    alpha /= 2.
+                sol += alpha * d_sol
+                norm = get_norm()
+                sol -= alpha * d_sol
+                if norm < best_norm:
+                    best_norm = norm
+                    best_alpha = alpha
+                    best_iter = ls_iter
+
+            sol += best_alpha * d_sol
+
+            self.printer('   Nonlinear (itn, abs. norm, rel. norm, ls iters., best ls iter.) %i %15.9e %15.9e %i %i' %
+                         (nln_iter, best_norm, best_norm / norm0, ls_iter, best_iter))
+            self.printer()
+
+            if norm < 1e-3:
+                break
 
         self.timer._stop('solution')
 
