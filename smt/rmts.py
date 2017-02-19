@@ -107,55 +107,23 @@ class RMTS(SM):
 
         return full_uniq2coeff
 
-    def _fit(self):
-        """
-        Train the model
-        """
+    def _compute_local_hess(self):
+        num = self.num
         sm_options = self.sm_options
 
-        nx = self.training_pts['exact'][0][0].shape[1]
-        ny = self.training_pts['exact'][0][1].shape[1]
-
-        num = {}
-        # number of elements
-        num['elem_list'] = np.array(sm_options['num_elem'], int)
-        num['elem'] = np.prod(num['elem_list'])
-        # number of terms/coefficients per element
-        num['term_list'] = 4 * np.ones(nx, int)
-        num['term'] = np.prod(num['term_list'])
-        # number of nodes
-        num['uniq_list'] = num['elem_list'] + 1
-        num['uniq'] = np.prod(num['uniq_list'])
-
-        self.num = num
-
-        self.timer._start('total_assembly')
-
-        self.printer._operation('Assembling uniq2coeff')
-        self.timer._start('uniq2coeff')
-        full_uniq2coeff = self._compute_uniq2coeff(
-            nx, num['elem_list'], num['elem'], num['term'], num['uniq'])
-        self.timer._stop('uniq2coeff')
-        self.printer._done_time(self.timer['uniq2coeff'])
-
-        # This computes the positive-definite, symmetric matrix yields the energy
-        # for an element when pre- and post-multiplied by a vector of function and
-        # derivative values for the element. This matrix applies to all elements.
-        self.printer._operation('Assembling local energy terms')
-        self.timer._start('local hess')
         elem_hess = np.zeros((num['term'], num['term']))
-        for kx in range(nx):
-            elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], nx,
+        for kx in range(num['x']):
+            elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], num['x'],
                 num['elem_list'], sm_options['xlimits'])
             elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) * \
                 sm_options['smoothness'][kx]
-        self.timer._stop('local hess')
-        self.printer._done_time(self.timer['local hess'])
 
-        # This takes the dense elem_hess matrix and stamps out num['elem'] copies
-        # of it to form the full sparse matrix with all the elements included.
-        self.printer._operation('Assembling global energy terms')
-        self.timer._start('global hess')
+        return elem_hess
+
+    def _compute_global_hess(self, elem_hess, full_uniq2coeff):
+        num = self.num
+        sm_options = self.sm_options
+
         nnz = num['term'] ** 2 * num['elem']
         num_coeff = num['term'] * num['elem']
         data, rows, cols = RMTSlib.compute_full_from_block(
@@ -164,21 +132,19 @@ class RMTS(SM):
             shape=(num_coeff, num_coeff))
         full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
 
-        num_coeff_uniq = num['uniq'] * 2 ** nx
+        num_coeff_uniq = num['uniq'] * 2 ** num['x']
         diag = sm_options['reg_dv'] * np.ones(num_coeff_uniq)
         arange = np.arange(num_coeff_uniq)
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
 
         full_hess += reg_dv
-        self.timer._stop('global hess')
-        self.printer._done_time(self.timer['global hess'])
 
-        # This adds the training points, either using a least-squares approach
-        # or with exact contraints and Lagrange multipliers.
-        # In both approaches, we loop over kx: 0 is for values and kx>0 represents
-        # the 1-based index of the derivative given by the training point data.
-        self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
-        self.timer._start('approximation')
+        return full_hess
+
+    def _compute_approx_terms(self, full_uniq2coeff):
+        num = self.num
+        sm_options = self.sm_options
+
         reg_cons_dict = {}
         full_jac_dict = {}
         yt_dict = {}
@@ -188,7 +154,7 @@ class RMTS(SM):
             nt = xt.shape[0]
             nnz = nt * num['term']
             num_coeff = num['term'] * num['elem']
-            data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, nt,
+            data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, num['x'], nt,
                 num['elem_list'], sm_options['xlimits'], xt)
             full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
             full_jac = full_jac * full_uniq2coeff
@@ -200,69 +166,169 @@ class RMTS(SM):
                 diag = -sm_options['reg_cons'] * np.ones(nt)
                 arange = np.arange(nt)
                 reg_cons_dict[kx] = scipy.sparse.csc_matrix((diag, (arange, arange)))
+
+        return full_jac_dict, yt_dict, reg_cons_dict
+
+    def _compute_mg_terms(self, elem_lists_2, elem_lists_1):
+        num = self.num
+        sm_options = self.sm_options
+
+        mg_full_uniq2coeff = self._compute_uniq2coeff(num['x'], elem_lists_1,
+            np.prod(elem_lists_1), num['term'], np.prod(elem_lists_1 + 1))
+
+        ne = np.prod(elem_lists_2 + 1) * 2 ** num['x']
+        nnz = ne * num['term']
+        num_coeff = num['term'] * np.prod(elem_lists_1)
+        data, rows, cols = RMTSlib.compute_jac_interp(
+            nnz, num['x'], elem_lists_1, elem_lists_2 + 1, sm_options['xlimits'])
+        mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
+        mg_matrix = mg_jac * mg_full_uniq2coeff
+
+        if sm_options['mode'] == 'exact':
+            num_lagr = np.sum(block_sizes[1:])
+            mg_matrix = scipy.sparse.bmat([
+                [mg_matrix, None],
+                [None, scipy.sparse.identity(num_lagr)]
+            ], format='csc')
+
+        return mg_matrix
+
+    def _opt_func(self, p, full_hess, full_jac_dict, yt_dict, sol):
+        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+
+        func = 0.5 * sol.T * full_hess * sol
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+            func += c * numpy.sum((full_jac * sol - yt) ** p)
+
+        return func
+
+    def _opt_grad(self, p, full_hess, full_jac_dict, yt_dict, sol):
+        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+
+        grad = full_hess * sol
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+            grad += c * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
+
+        return grad
+
+    def _opt_hess(self, p, full_hess, full_jac_dict, yt_dict, sol):
+        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+
+        hess = scipy.sparse.csc_matrix(full_hess)
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+
+            diag_vec = p * (p - 1) * (full_jac * sol[:, 0] - yt[:, 0]) ** (p - 2)
+            diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
+            hess += c * full_jac.T * diag_mtx * full_jac
+
+        return hess
+
+    def _fit(self):
+        """
+        Train the model
+        """
+        sm_options = self.sm_options
+
+        num = {}
+        # number of inputs and outputs
+        num['x'] = self.training_pts['exact'][0][0].shape[1]
+        num['y'] = self.training_pts['exact'][0][1].shape[1]
+        # number of elements
+        num['elem_list'] = np.array(sm_options['num_elem'], int)
+        num['elem'] = np.prod(num['elem_list'])
+        # number of terms/coefficients per element
+        num['term_list'] = 4 * np.ones(num['x'], int)
+        num['term'] = np.prod(num['term_list'])
+        # number of nodes
+        num['uniq_list'] = num['elem_list'] + 1
+        num['uniq'] = np.prod(num['uniq_list'])
+        # total number of training points (function values and derivatives)
+        num['t'] = 0
+        for kx in self.training_pts['exact']:
+            num['t'] += self.training_pts['exact'][kx][0].shape[0]
+
+        self.num = num
+
+        self.timer._start('total_assembly')
+
+        self.printer._operation('Assembling uniq2coeff')
+        self.timer._start('uniq2coeff')
+        full_uniq2coeff = self._compute_uniq2coeff(
+            num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
+        self.timer._stop('uniq2coeff')
+        self.printer._done_time(self.timer['uniq2coeff'])
+
+        # This computes the positive-definite, symmetric matrix yields the energy
+        # for an element when pre- and post-multiplied by a vector of function and
+        # derivative values for the element. This matrix applies to all elements.
+        self.printer._operation('Assembling local energy terms')
+        self.timer._start('local hess')
+        elem_hess = self._compute_local_hess()
+        self.timer._stop('local hess')
+        self.printer._done_time(self.timer['local hess'])
+
+        # This takes the dense elem_hess matrix and stamps out num['elem'] copies
+        # of it to form the full sparse matrix with all the elements included.
+        self.printer._operation('Assembling global energy terms')
+        self.timer._start('global hess')
+        full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
+        self.timer._stop('global hess')
+        self.printer._done_time(self.timer['global hess'])
+
+        # This adds the training points, either using a least-squares approach
+        # or with exact contraints and Lagrange multipliers.
+        # In both approaches, we loop over kx: 0 is for values and kx>0 represents
+        # the 1-based index of the derivative given by the training point data.
+        self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
+        self.timer._start('approximation')
+        full_jac_dict, yt_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
         self.timer._stop('approximation')
         self.printer._done_time(self.timer['approximation'])
 
         mg_matrices = []
         if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
             power_two = 2 ** len(sm_options['solver_mg'])
-            for kx in range(nx):
+            for kx in range(num['x']):
                 assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
 
             elem_lists = [num['elem_list']]
             for ind_mg, mg_factor in enumerate(sm_options['solver_mg']):
-
                 elem_lists.append(elem_lists[-1] / mg_factor)
 
-                nrows = np.prod(elem_lists[-2] + 1) * 2 ** nx
-                ncols = np.prod(elem_lists[-1] + 1) * 2 ** nx
+                nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
+                ncols = np.prod(elem_lists[-1] + 1) * 2 ** num['x']
                 self.printer._operation('Assembling multigrid op %i (%i x %i mtx)' %
                     (ind_mg, nrows, ncols))
                 self.timer._start('mg_mat')
-
-                mg_full_uniq2coeff = self._compute_uniq2coeff(nx, elem_lists[-1],
-                    np.prod(elem_lists[-1]), num['term'], np.prod(elem_lists[-1] + 1))
-
-                ne = np.prod(elem_lists[-2] + 1) * 2 ** nx
-                nnz = ne * num['term']
-                num_coeff = num['term'] * np.prod(elem_lists[-1])
-                data, rows, cols = RMTSlib.compute_jac_interp(
-                    nnz, nx, elem_lists[-1], elem_lists[-2] + 1, sm_options['xlimits'])
-                mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
-                mg_matrix = mg_jac * mg_full_uniq2coeff
-
-                if sm_options['mode'] == 'exact':
-                    num_lagr = np.sum(block_sizes[1:])
-                    mg_matrix = scipy.sparse.bmat([
-                        [mg_matrix, None],
-                        [None, scipy.sparse.identity(num_lagr)]
-                    ], format='csc')
-
-                mg_matrices.append(mg_matrix)
+                mg_matrix = self._compute_mg_terms(elem_lists[-2], elem_lists[-1])
                 self.timer._stop('mg_mat')
                 self.printer._done_time(self.timer['mg_mat'])
+
+                mg_matrices.append(mg_matrix)
 
         self.timer._stop('total_assembly')
 
         if sm_options['mode'] == 'approx':
             block_names = ['dv']
-            block_sizes = [num['uniq'] * 2 ** nx]
+            block_sizes = [num['uniq'] * 2 ** num['x']]
         elif sm_options['mode'] == 'exact':
             block_names = ['dv'] + \
                 ['con_%s'%kx for kx in self.training_pts['exact']]
-            block_sizes = [num['uniq'] * 2 ** nx] + \
+            block_sizes = [num['uniq'] * 2 ** num['x']] + \
                 [self.training_pts['exact'][kx][0].shape[0]
-                for kx in self.training_pts['exact']]
-
-        total_nt = 0
-        for kx in self.training_pts['exact']:
-            total_nt += self.training_pts['exact'][kx][0].shape[0]
+                 for kx in self.training_pts['exact']]
 
         self.timer._start('solution')
 
         total_size = int(np.sum(block_sizes))
-        sol = np.zeros((total_size, ny))
-        d_sol = np.zeros((total_size, ny))
+        sol = np.zeros((total_size, num['y']))
+        d_sol = np.zeros((total_size, num['y']))
 
         for nln_iter in range(sm_options['solver_nln_iter']):
 
@@ -270,10 +336,10 @@ class RMTS(SM):
             self.timer._start('sparse')
             sub_mtx_dict = {}
             sub_rhs_dict = {}
-            sub_mtx_dict['dv', 'dv'] = full_hess
+            sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
             sub_rhs_dict['dv'] = -full_hess * sol
             p = self.sm_options['ls_p']
-            c = 1.0 / sm_options['reg_cons'] / 2. / total_nt
+            c = 1.0 / sm_options['reg_cons'] / 2. / num['t']
             for kx in self.training_pts['exact']:
                 full_jac = full_jac_dict[kx]
                 yt = yt_dict[kx]
@@ -346,9 +412,7 @@ class RMTS(SM):
 
         self.timer._stop('solution')
 
-        self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** nx, :]
-
-        self.tmp = mtx
+        self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
 
         self.printer._total_time('Total assembly time (sec)', self.timer['total_assembly'])
         self.printer._total_time('Total linear solution time (sec)', self.timer['solution'])
@@ -386,8 +450,6 @@ class RMTS(SM):
         """
         kx = 0
 
-        nx = self.training_pts['exact'][0][0].shape[1]
-        ny = self.training_pts['exact'][0][1].shape[1]
         ne = x.shape[0]
 
         num = self.num
@@ -396,7 +458,7 @@ class RMTS(SM):
         # Compute sparse Jacobian matrix.
         nnz = ne * num['term']
         num_coeff = num['term'] * num['elem']
-        data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, nx, ne,
+        data, rows, cols = RMTSlib.compute_jac(kx, 0, nnz, num['x'], ne,
             num['elem_list'], sm_options['xlimits'], x)
 
         # In the explanation below, n is the number of dimensions, and
@@ -421,14 +483,14 @@ class RMTS(SM):
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
             ndx = ne * num['term']
-            dx = RMTS.compute_ext_dist(nx, ne, ndx, sm_options['xlimits'], x)
+            dx = RMTS.compute_ext_dist(num['x'], ne, ndx, sm_options['xlimits'], x)
             isexternal = np.array(np.array(dx, bool), float)
 
-            for ix in range(nx):
+            for ix in range(num['x']):
                 # Now we compute the first order term where we have a
                 # derivative times (x_k - b_k) or (x_k - a_k).
                 nnz = ne * num['term']
-                data_tmp, rows, cols = RMTSlib.compute_jac(kx, ix+1, nnz, nx, ne,
+                data_tmp, rows, cols = RMTSlib.compute_jac(kx, ix+1, nnz, num['x'], ne,
                     num['elem_list'], sm_options['xlimits'], x)
                 data_tmp *= dx[:, ix]
 
