@@ -13,6 +13,7 @@ import scipy.sparse
 import RMTSlib
 import smt.utils
 import smt.linalg
+import smt.line_search
 from sm import SM
 from six.moves import range
 
@@ -50,6 +51,7 @@ class RMTS(SM):
             'extrapolate': False, # perform linear extrapolation for external eval points
             'ls_p': 2, # order of norm in least-squares approximation term
             'solver_nln_iter': 1, # number of nonlinear iterations
+            'solver_line_search': 'backtracking', # line search algorithm
             'solver_print_iter': True, # print solver iterations
             'solver_type': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'solver_krylov': 'gmres',    # Preconditioner: 'ilu', 'lu', or 'nopc'
@@ -193,18 +195,18 @@ class RMTS(SM):
 
         return mg_matrix
 
-    def _opt_func(self, p, full_hess, full_jac_dict, yt_dict, sol):
+    def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
 
-        func = 0.5 * sol.T * full_hess * sol
+        func = 0.5 * np.dot(sol[:, 0], full_hess * sol[:, 0])
         for kx in self.training_pts['exact']:
             full_jac = full_jac_dict[kx]
             yt = yt_dict[kx]
-            func += c * numpy.sum((full_jac * sol - yt) ** p)
+            func += c * np.sum((full_jac * sol[:, 0] - yt[:, 0]) ** p)
 
         return func
 
-    def _opt_grad(self, p, full_hess, full_jac_dict, yt_dict, sol):
+    def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
         c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
 
         grad = full_hess * sol
@@ -215,7 +217,7 @@ class RMTS(SM):
 
         return grad
 
-    def _opt_hess(self, p, full_hess, full_jac_dict, yt_dict, sol):
+    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
         c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
 
         hess = scipy.sparse.csc_matrix(full_hess)
@@ -228,6 +230,9 @@ class RMTS(SM):
             hess += c * full_jac.T * diag_mtx * full_jac
 
         return hess
+
+    def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        return np.linalg.norm(self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict))
 
     def _fit(self):
         """
@@ -330,81 +335,61 @@ class RMTS(SM):
         sol = np.zeros((total_size, num['y']))
         d_sol = np.zeros((total_size, num['y']))
 
-        for nln_iter in range(sm_options['solver_nln_iter']):
-
-            self.printer._operation('Computing global sparse matrix')
-            self.timer._start('sparse')
+        self.printer._operation('Computing global sparse matrix')
+        self.timer._start('sparse')
+        if sm_options['mode'] == 'approx':
+            mtx = self._opt_hess(sol, 2, full_hess, full_jac_dict, yt_dict)
+            rhs = -self._opt_grad(sol, 2, full_hess, full_jac_dict, yt_dict)
+        elif sm_options['mode'] == 'exact':
             sub_mtx_dict = {}
             sub_rhs_dict = {}
             sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
             sub_rhs_dict['dv'] = -full_hess * sol
-            p = self.sm_options['ls_p']
-            c = 1.0 / sm_options['reg_cons'] / 2. / num['t']
             for kx in self.training_pts['exact']:
                 full_jac = full_jac_dict[kx]
                 yt = yt_dict[kx]
-                if sm_options['mode'] == 'approx':
-                    ls_weights_1 = p * (full_jac * sol - yt) ** (p - 1)
-                    ls_weights_2 = p * (p - 1) * (full_jac * sol[:, 0] - yt[:, 0]) ** (p - 2)
-                    diags_2 = scipy.sparse.diags(ls_weights_2, format='csc')
 
-                    sub_mtx_dict['dv', 'dv'] += c * full_jac.T * diags_2 * full_jac
-                    sub_rhs_dict['dv'] -= c * full_jac.T * ls_weights_1
-                elif sm_options['mode'] == 'exact':
-                    reg_cons = reg_cons_dict[kx]
-                    sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
-                    sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
-                    sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
-                    sub_rhs_dict['con_%s'%kx] = yt
+                reg_cons = reg_cons_dict[kx]
+                sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
+                sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
+                sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
+                sub_rhs_dict['con_%s'%kx] = yt
 
-            if sm_options['mode'] == 'approx':
-                mtx = sub_mtx_dict['dv', 'dv']
-                rhs = sub_rhs_dict['dv']
-            else:
-                mtx, rhs = smt.linalg.assemble_sparse_mtx(
-                    block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
+            mtx, rhs = smt.linalg.assemble_sparse_mtx(
+                block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
+        self.timer._stop('sparse')
+        self.printer._done_time(self.timer['sparse'])
+
+        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
+
+        p = self.sm_options['ls_p']
+        for nln_iter in range(sm_options['solver_nln_iter']):
+            self.printer._operation('Computing global sparse matrix')
+            self.timer._start('sparse')
+            mtx = self._opt_hess(sol, p, full_hess, full_jac_dict, yt_dict)
+            rhs = -self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
             self.timer._stop('sparse')
             self.printer._done_time(self.timer['sparse'])
 
             smt.linalg.solve_sparse_system(mtx, rhs, d_sol, sm_options, self.printer.active, mg_matrices)
 
-            def get_norm():
-                grad = full_hess * sol
-                for kx in self.training_pts['exact']:
-                    full_jac = full_jac_dict[kx]
-                    yt = yt_dict[kx]
-                    if sm_options['mode'] == 'approx':
-                        grad += c * p * full_jac.T * (full_jac * sol - yt) ** (p - 1)
-                norm = np.linalg.norm(grad)
-                return norm
+            func = lambda x: self._opt_func(x, p, full_hess, full_jac_dict, yt_dict)
+            grad = lambda x: self._opt_grad(x, p, full_hess, full_jac_dict, yt_dict)
 
-            norm0 = get_norm()
+            if sm_options['solver_line_search'] == 'backtracking':
+                ls_class = smt.line_search.BacktrackingLineSearch
+            elif sm_options['solver_line_search'] == 'bracketed':
+                ls_class = smt.line_search.BracketedLineSearch
+            elif sm_options['solver_line_search'] == 'quadratic':
+                ls_class = smt.line_search.QuadraticLineSearch
+            elif sm_options['solver_line_search'] == 'cubic':
+                ls_class = smt.line_search.CubicLineSearch
 
-            alpha = 1.0
-            sol += alpha * d_sol
-            norm = get_norm()
-            sol -= alpha * d_sol
+            ls = ls_class(sol, d_sol, func, grad)
+            sol[:, :] = ls(1.0)
 
-            best_norm = norm
-            best_alpha = alpha
-            best_iter = 0
-            for ls_iter in range(20):
-                if norm < 0.5 * norm0:
-                    break
-                else:
-                    alpha /= 2.
-                sol += alpha * d_sol
-                norm = get_norm()
-                sol -= alpha * d_sol
-                if norm < best_norm:
-                    best_norm = norm
-                    best_alpha = alpha
-                    best_iter = ls_iter
-
-            sol += best_alpha * d_sol
-
-            self.printer('   Nonlinear (itn, abs. norm, rel. norm, ls iters., best ls iter.) %i %15.9e %15.9e %i %i' %
-                         (nln_iter, best_norm, best_norm / norm0, ls_iter, best_iter))
+            norm = self._opt_norm(sol, p, full_hess, full_jac_dict, yt_dict)
+            self.printer('   Nonlinear (itn, norm) %i %15.9e' % (nln_iter, norm))
             self.printer()
 
             if norm < 1e-3:
