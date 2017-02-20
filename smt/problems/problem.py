@@ -11,12 +11,17 @@ from smt.utils import OptionsDictionary
 class Problem(object):
 
     def __init__(self, **kwargs):
-        self.options = OptionsDictionary(kwargs)
-        self.options.add('ndim', 1, type_=int)
+        self.options = OptionsDictionary()
+        self.options.declare('ndim', 1, types=int)
+        self._declare_options()
+        self.options.update(kwargs)
 
         self.xlimits = np.zeros((self.options['ndim'], 2))
 
         self._initialize()
+
+    def _declare_options(self):
+        pass
 
     def _initialize(self):
         pass

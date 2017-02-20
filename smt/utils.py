@@ -65,35 +65,49 @@ class Printer(object):
 
 class OptionsDictionary(object):
 
-    def __init__(self, options):
-        self._dict = options
+    def __init__(self):
+        self._dict = {}
+        self._declared_values = {}
+        self._declared_types = {}
 
-    def __getitem__(self, key):
-        return self._dict[key]
+    def __getitem__(self, name):
+        return self._dict[name]
+
+    def __setitem__(self, name, value):
+        assert name in self._declared_values, 'Option %s has not been declared' % name
+        self._assert_valid(name, value)
+        self._dict[name] = value
 
     def __contains__(self, key):
         return key in self._dict
 
-    def add(self, name, default=None, values=None, type_=None, desc=''):
-        if values is not None:
-            if default is not None:
-                assert default in values, \
-                    'Option %s: default %s not in %s' % (name, default, values)
-            if name in self:
-                assert self[name] in values, \
-                    'Option %s: value %s not in %s' % (name, self[name], values)
+    def _assert_valid(self, name, value):
+        values = self._declared_values[name]
+        types = self._declared_types[name]
 
-        if type_ is not None:
-            if default is not None:
-                assert isinstance(default, type_), \
-                    'Option %s: default %s should be type %s' % (name, default, type_)
-            if name in self:
-                assert isinstance(self[name], type_), \
-                    'Option %s: default %s should be type %s' % (name, self[name], type_)
+        if values is not None and types is not None:
+            assert value in values or isinstance(value, types), \
+                'Option %s: value and type of %s are both invalid - ' \
+                + 'value must be %s or type must be %s' % (name, value, values, types)
+        elif values is not None:
+            assert value in values, \
+                'Option %s: value %s is invalid - must be %s' % (name, value, values)
+        elif types is not None:
+            assert isinstance(value, types), \
+                'Option %s: type of %s is invalid - must be %s' % (name, value, types)
 
-        if name not in self:
-            assert default is not None, 'Required option %s not given' % name
-            self._dict[name] = default
+    def update(self, dict_):
+        for name in dict_:
+            self[name] = dict_[name]
+
+    def declare(self, name, default=None, values=None, types=None, desc=''):
+        self._declared_values[name] = values
+        self._declared_types[name] = types
+
+        if default is not None:
+            self._assert_valid(name, default)
+
+        self._dict[name] = default
 
 def _caching_load(filename, checksum):
     try:

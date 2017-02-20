@@ -19,11 +19,10 @@ prob = TensorProduct(ndim=ndim, func='tanh')
 sampling = lhs_center
 
 sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
-    'xlimits':prob.xlimits, 'mode': 'approx', 'ls_p': 4,
-    'reg_dv': 1e-8, 'reg_cons': 1e-12, 'solver_save': False,
-    'solver_mg': [2, 2, 2], 'solver_type': 'krylov', 'solver_pc': 'nopc',
-    'solver_krylov': 'gmres', 'solver_rtol': 1e-10, 'solver_ilimit': 100,
-    'solver_nln_iter': 20, 'solver_print_iter': False, 'solver_line_search': 'backtracking',
+    'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
+    'reg_dv': 1e-8, 'reg_cons': 1e-12, 'save_solution': False,
+    'mg_factors': [2, 2, 2], 'solver': 'krylov', 'solver_nln_iter': 20,
+    'line_search': 'backtracking',
 }, {})
 
 # sm = KPLS({'name':'KRG','n_comp':ndim,'theta0': [1e-2]*ndim},{})

@@ -11,9 +11,10 @@ from smt.problems.problem import Problem
 
 class TensorProduct(Problem):
 
-    def _initialize(self):
-        self.options.add('func', values=['cos', 'exp', 'tanh'])
+    def _declare_options(self):
+        self.options.declare('func', values=['cos', 'exp', 'tanh'])
 
+    def _initialize(self):
         self.xlimits[:, 0] = -1.
         self.xlimits[:, 1] =  1.
 

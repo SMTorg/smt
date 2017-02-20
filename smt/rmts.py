@@ -49,20 +49,12 @@ class RMTS(SM):
             'reg_cons': 1e-8, # negative of reg. coeff. for Lagrange mult. block
             'mode': 'exact', # 'approx' or 'exact' form of linear system ()
             'extrapolate': False, # perform linear extrapolation for external eval points
-            'ls_p': 2, # order of norm in least-squares approximation term
+            'approx_norm': 4, # order of norm in least-squares approximation term
+            'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'solver_nln_iter': 1, # number of nonlinear iterations
-            'solver_line_search': 'backtracking', # line search algorithm
-            'solver_print_iter': True, # print solver iterations
-            'solver_type': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'solver_krylov': 'gmres',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'solver_stationary': 'gs',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'solver_damping': 1.0,    # Damping coeff. for Jacobi/GS
-            'solver_mg': [], # Multigrid level
-            'solver_atol': 1e-15, # Absolute linear system convergence tolerance
-            'solver_rtol': 1e-15, # Relative linear system convergence tolerance
-            'solver_ilimit': 150, # Linear system iteration limit
-            'solver_save': True,  # Whether to save linear system solution
+            'line_search': 'backtracking', # line search algorithm
+            'mg_factors': [], # Multigrid level
+            'save_solution': True,  # Whether to save linear system solution
         }
         printf_options = {
             'global': True,     # Overriding option to print output
@@ -297,12 +289,12 @@ class RMTS(SM):
 
         mg_matrices = []
         if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
-            power_two = 2 ** len(sm_options['solver_mg'])
+            power_two = 2 ** len(sm_options['mg_factors'])
             for kx in range(num['x']):
                 assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
 
             elem_lists = [num['elem_list']]
-            for ind_mg, mg_factor in enumerate(sm_options['solver_mg']):
+            for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
                 elem_lists.append(elem_lists[-1] / mg_factor)
 
                 nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
@@ -361,7 +353,7 @@ class RMTS(SM):
 
         smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
 
-        p = self.sm_options['ls_p']
+        p = self.sm_options['approx_norm']
         for nln_iter in range(sm_options['solver_nln_iter']):
             self.printer._operation('Computing global sparse matrix')
             self.timer._start('sparse')
@@ -375,13 +367,13 @@ class RMTS(SM):
             func = lambda x: self._opt_func(x, p, full_hess, full_jac_dict, yt_dict)
             grad = lambda x: self._opt_grad(x, p, full_hess, full_jac_dict, yt_dict)
 
-            if sm_options['solver_line_search'] == 'backtracking':
+            if sm_options['line_search'] == 'backtracking':
                 ls_class = smt.line_search.BacktrackingLineSearch
-            elif sm_options['solver_line_search'] == 'bracketed':
+            elif sm_options['line_search'] == 'bracketed':
                 ls_class = smt.line_search.BracketedLineSearch
-            elif sm_options['solver_line_search'] == 'quadratic':
+            elif sm_options['line_search'] == 'quadratic':
                 ls_class = smt.line_search.QuadraticLineSearch
-            elif sm_options['solver_line_search'] == 'cubic':
+            elif sm_options['line_search'] == 'cubic':
                 ls_class = smt.line_search.CubicLineSearch
 
             ls = ls_class(sol, d_sol, func, grad)
@@ -409,7 +401,7 @@ class RMTS(SM):
 
         filename = '%s.sm' % self.sm_options['name']
         success, data = smt.utils._caching_load(filename, checksum)
-        if not success or not self.sm_options['solver_save']:
+        if not success or not self.sm_options['save_solution']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
             smt.utils._caching_save(filename, checksum, data)

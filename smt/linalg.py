@@ -8,7 +8,8 @@ import scipy.sparse
 import six
 from six.moves import range
 
-from smt.linear_solvers import DirectSolver, KrylovSolver, StationarySolver, MultigridSolver
+from smt.linear_solvers import LinearSolver, DirectSolver, KrylovSolver
+from smt.linear_solvers import StationarySolver, MultigridSolver
 
 
 def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
@@ -34,43 +35,24 @@ def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
     return mtx, rhs
 
 def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
-    for ind_y in range(rhs.shape[1]):
-        if sm_options['solver_type'] == 'direct':
-            solver = DirectSolver(mtx, print_global, sm_options['solver_print_iter'])
-        elif sm_options['solver_type'] == 'krylov':
-            solver = KrylovSolver(
-                mtx, print_global, sm_options['solver_print_iter'],
-                solver=sm_options['solver_krylov'],
-                pc=sm_options['solver_pc'],
-                ilimit=sm_options['solver_ilimit'],
-                atol=sm_options['solver_atol'],
-                rtol=sm_options['solver_rtol'],
-            )
-        elif sm_options['solver_type'] == 'stationary':
-            solver = StationarySolver(
-                mtx, print_global, sm_options['solver_print_iter'],
-                solver=sm_options['solver_stationary'],
-                damping=sm_options['solver_damping'],
-                ilimit=sm_options['solver_ilimit'],
-                atol=sm_options['solver_atol'],
-                rtol=sm_options['solver_rtol'],
-            )
-        elif sm_options['solver_type'] == 'mg':
-            solver = MultigridSolver(mtx, print_global, sm_options['solver_print_iter'], mg_ops=mg_ops)
-        elif sm_options['solver_type'] == 'krylov-mg':
-            pc = MultigridSolver(mtx, print_global, False,
-                                 mg_ops=mg_ops)
-            solver = KrylovSolver(
-                mtx, print_global, sm_options['solver_print_iter'],
-                solver=sm_options['solver_krylov'],
-                pc='custom', pc_solver=pc,
-                ilimit=sm_options['solver_ilimit'],
-                atol=sm_options['solver_atol'],
-                rtol=sm_options['solver_rtol'],
-            )
+    if sm_options['solver'] == 'direct':
+        solver = DirectSolver()
+    elif sm_options['solver'] == 'krylov':
+        solver = KrylovSolver(solver='gmres', pc='nopc', print_solve=True,
+                              ilimit=100, atol=1e-15, rtol=1e-15)
+    elif sm_options['solver'] == 'gs' or sm_options['solver'] == 'jacobi':
+        solver = StationarySolver(solver=sm_options['solver'], damping=1.0, print_solve=True,
+                                  ilimit=100, atol=1e-15, rtol=1e-15)
+    elif sm_options['solver'] == 'mg':
+        solver = MultigridSolver(mg_ops=mg_ops, print_solve=True)
+    elif isinstance(sm_options['solver'], LinearSolver):
+        solver = sm_options['solver']
 
+    solver._initialize(mtx, print_global)
+
+    for ind_y in range(rhs.shape[1]):
         solver.timer._start('convergence')
-        solver.solve(rhs[:, ind_y], sol[:, ind_y])
+        solver._solve(rhs[:, ind_y], sol[:, ind_y], print_global)
         solver.timer._stop('convergence')
         solver.printer._total_time('Total solver convergence time (sec)',
                                    solver.timer['convergence'])
