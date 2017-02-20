@@ -76,7 +76,6 @@ class RMTS(SM):
         self.printf_options = printf_options
 
     def _compute_uniq2coeff(self, nx, num_elem_list, num_elem, num_term, num_uniq):
-
         # This computes an num['term'] x num['term'] matrix called coeff2nodal.
         # Multiplying this matrix with the list of coefficients for an element
         # yields the list of function and derivative values at the element nodes.
@@ -110,6 +109,9 @@ class RMTS(SM):
         return full_uniq2coeff
 
     def _compute_local_hess(self):
+        # This computes the positive-definite, symmetric matrix yields the energy
+        # for an element when pre- and post-multiplied by a vector of function and
+        # derivative values for the element. This matrix applies to all elements.
         num = self.num
         sm_options = self.sm_options
 
@@ -123,6 +125,8 @@ class RMTS(SM):
         return elem_hess
 
     def _compute_global_hess(self, elem_hess, full_uniq2coeff):
+        # This takes the dense elem_hess matrix and stamps out num['elem'] copies
+        # of it to form the full sparse matrix with all the elements included.
         num = self.num
         sm_options = self.sm_options
 
@@ -144,6 +148,10 @@ class RMTS(SM):
         return full_hess
 
     def _compute_approx_terms(self, full_uniq2coeff):
+        # This adds the training points, either using a least-squares approach
+        # or with exact contraints and Lagrange multipliers.
+        # In both approaches, we loop over kx: 0 is for values and kx>0 represents
+        # the 1-based index of the derivative given by the training point data.
         num = self.num
         sm_options = self.sm_options
 
@@ -269,27 +277,18 @@ class RMTS(SM):
         self.timer._stop('uniq2coeff')
         self.printer._done_time(self.timer['uniq2coeff'])
 
-        # This computes the positive-definite, symmetric matrix yields the energy
-        # for an element when pre- and post-multiplied by a vector of function and
-        # derivative values for the element. This matrix applies to all elements.
         self.printer._operation('Assembling local energy terms')
         self.timer._start('local hess')
         elem_hess = self._compute_local_hess()
         self.timer._stop('local hess')
         self.printer._done_time(self.timer['local hess'])
 
-        # This takes the dense elem_hess matrix and stamps out num['elem'] copies
-        # of it to form the full sparse matrix with all the elements included.
         self.printer._operation('Assembling global energy terms')
         self.timer._start('global hess')
         full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
         self.timer._stop('global hess')
         self.printer._done_time(self.timer['global hess'])
 
-        # This adds the training points, either using a least-squares approach
-        # or with exact contraints and Lagrange multipliers.
-        # In both approaches, we loop over kx: 0 is for values and kx>0 represents
-        # the 1-based index of the derivative given by the training point data.
         self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
         self.timer._start('approximation')
         full_jac_dict, yt_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
