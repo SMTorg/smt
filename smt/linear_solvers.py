@@ -13,8 +13,8 @@ from smt.utils import OptionsDictionary, Printer, Timer
 
 
 def get_solver(solver):
-    if solver == 'direct':
-        return DirectSolver()
+    if solver == 'lu' or solver == 'ilu':
+        return DirectSolver(alg=solver)
     elif solver == 'krylov':
         return KrylovSolver()
     elif solver == 'gs' or solver == 'jacobi':

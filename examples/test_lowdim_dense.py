@@ -15,7 +15,7 @@ np.random.seed(0)
 
 # Initialization of the problem
 dim = 4
-ndoe = 100*dim
+ndoe = 500*dim
 
 # Upper and lower bounds of the problem
 xlimits = np.zeros((dim, 2))
@@ -71,10 +71,14 @@ print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1))))
 
 ########### The RMTS model
-t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
-    'mode': 'approx', 'mg_factors': [4], 'solver_type': 'krylov-mg', 'solver_pc': 'lu',
-    'solver_krylov': 'gmres', 'solver_rtol': 1e-10,
-},{})
+# t = RMTS({'name':'RMTS','num_elem':[4]*dim, 'smoothness':[1.0]*dim, 'xlimits':xlimits,
+#     'mode': 'approx', 'mg_factors': [4], 'solver': 'krylov-mg', 'solver_pc': 'lu',
+#     'solver_krylov': 'gmres', 'solver_rtol': 1e-10,
+# },{})
+t = RMTS({'name':'RMTS','num_elem':[1]*dim, 'smoothness':[1.0]*dim,
+    'xlimits':xlimits, 'mode': 'approx', 'reg_dv': 1e-10, 'reg_cons': 1e-14,
+    'save_solution': False, 'solver': 'krylov', 'max_nln_iter': 5, 'approx_norm': 4,
+}, {})
 t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
