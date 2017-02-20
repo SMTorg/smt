@@ -51,7 +51,7 @@ class RMTS(SM):
             'extrapolate': False, # perform linear extrapolation for external eval points
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'solver_nln_iter': 1, # number of nonlinear iterations
+            'max_nln_iter': 1, # number of nonlinear iterations
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
@@ -288,7 +288,7 @@ class RMTS(SM):
         self.printer._done_time(self.timer['approximation'])
 
         mg_matrices = []
-        if sm_options['solver_type'] == 'mg' or sm_options['solver_type'] == 'krylov-mg':
+        if sm_options['solver'] == 'mg' or sm_options['solver'] == 'krylov-mg':
             power_two = 2 ** len(sm_options['mg_factors'])
             for kx in range(num['x']):
                 assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
@@ -354,7 +354,14 @@ class RMTS(SM):
         smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
 
         p = self.sm_options['approx_norm']
-        for nln_iter in range(sm_options['solver_nln_iter']):
+        if sm_options['max_nln_iter'] > 0:
+            norm = self._opt_norm(sol, p, full_hess, full_jac_dict, yt_dict)
+            fval = self._opt_func(sol, p, full_hess, full_jac_dict, yt_dict)
+            self.printer('   Nonlinear (itn, grad. norm, func. value) %i %15.9e %15.9e' \
+                         % (0, norm, fval))
+            self.printer()
+
+        for nln_iter in range(sm_options['max_nln_iter']):
             self.printer._operation('Computing global sparse matrix')
             self.timer._start('sparse')
             mtx = self._opt_hess(sol, p, full_hess, full_jac_dict, yt_dict)
@@ -380,7 +387,9 @@ class RMTS(SM):
             sol[:, :] = ls(1.0)
 
             norm = self._opt_norm(sol, p, full_hess, full_jac_dict, yt_dict)
-            self.printer('   Nonlinear (itn, norm) %i %15.9e' % (nln_iter, norm))
+            fval = self._opt_func(sol, p, full_hess, full_jac_dict, yt_dict)
+            self.printer('   Nonlinear (itn, grad. norm, func. value) %i %15.9e %15.9e' \
+                         % (nln_iter + 1, norm, fval))
             self.printer()
 
             if norm < 1e-3:
