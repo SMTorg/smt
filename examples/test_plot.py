@@ -25,7 +25,7 @@ sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'line_search': 'backtracking',
 }, {})
 
-# sm = KPLS({'name':'KRG','n_comp':ndim,'theta0': [1e-2]*ndim},{})
+# sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
 nt = 5000 * ndim
 ne = 100 * ndim

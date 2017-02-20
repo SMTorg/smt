@@ -376,7 +376,7 @@ class RMTS(SM):
                 sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
                 sub_rhs_dict['con_%s'%kx] = yt
 
-            mtx, rhs = smt.linalg.assemble_sparse_mtx(
+            mtx, rhs = smt.utils.assemble_sparse_mtx(
                 block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
         self.timer._stop('sparse')
         self.printer._done_time(self.timer['sparse'])
