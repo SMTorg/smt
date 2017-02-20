@@ -13,23 +13,24 @@ class TensorProduct(Problem):
 
     def _declare_options(self):
         self.options.declare('func', values=['cos', 'exp', 'tanh'])
+        self.options.declare('width', 1., types=(float, int))
 
     def _initialize(self):
         self.xlimits[:, 0] = -1.
         self.xlimits[:, 1] =  1.
 
         if self.options['func'] == 'cos':
-            a = 2.
-            self.func = lambda v: np.cos(a * np.pi * v)
-            self.dfunc = lambda v: -a * np.pi * np.sin(a * np.pi * v)
+            a = self.options['width']
+            self.func = lambda v: np.cos(a * 2 * np.pi * v)
+            self.dfunc = lambda v: -a * 2 * np.pi * np.sin(a * 2 * np.pi * v)
         elif self.options['func'] == 'exp':
-            a = 5.
-            self.func = lambda v: np.exp(a * v)
-            self.dfunc = lambda v: a * np.exp(a * v)
+            a = self.options['width']
+            self.func = lambda v: np.exp(5 * a * v)
+            self.dfunc = lambda v: 5 * a * np.exp(5 * a * v)
         elif self.options['func'] == 'tanh':
-            a = 5.
-            self.func = lambda v: np.tanh(a * v)
-            self.dfunc = lambda v: a / np.cosh(a * v) ** 2
+            a = self.options['width']
+            self.func = lambda v: np.tanh(5 * a * v)
+            self.dfunc = lambda v: 5 * a / np.cosh(5 * a * v) ** 2
 
     def _evaluate(self, x, kx):
         """

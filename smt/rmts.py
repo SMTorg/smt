@@ -13,6 +13,7 @@ import scipy.sparse
 import RMTSlib
 import smt.utils
 import smt.linalg
+import smt.linear_solvers
 import smt.line_search
 from sm import SM
 from six.moves import range
@@ -149,7 +150,6 @@ class RMTS(SM):
 
         reg_cons_dict = {}
         full_jac_dict = {}
-        yt_dict = {}
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
 
@@ -162,16 +162,15 @@ class RMTS(SM):
             full_jac = full_jac * full_uniq2coeff
 
             full_jac_dict[kx] = full_jac
-            yt_dict[kx] = yt
 
             if sm_options['mode'] == 'exact':
                 diag = -sm_options['reg_cons'] * np.ones(nt)
                 arange = np.arange(nt)
                 reg_cons_dict[kx] = scipy.sparse.csc_matrix((diag, (arange, arange)))
 
-        return full_jac_dict, yt_dict, reg_cons_dict
+        return full_jac_dict, reg_cons_dict
 
-    def _compute_mg_terms(self, elem_lists_2, elem_lists_1):
+    def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
         sm_options = self.sm_options
 
@@ -195,14 +194,39 @@ class RMTS(SM):
 
         return mg_matrix
 
+    def _compute_mg_matrices(self):
+        num = self.num
+        sm_options = self.sm_options
+
+        power_two = 2 ** len(sm_options['mg_factors'])
+        for kx in range(num['x']):
+            assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
+
+        elem_lists = [num['elem_list']]
+        for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
+            elem_lists.append(elem_lists[-1] / mg_factor)
+
+            nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
+            ncols = np.prod(elem_lists[-1] + 1) * 2 ** num['x']
+            self.printer._operation('Assembling multigrid op %i (%i x %i mtx)' %
+                (ind_mg, nrows, ncols))
+            self.timer._start('mg_mat')
+            mg_matrix = self._compute_single_mg_matrix(elem_lists[-2], elem_lists[-1])
+            self.timer._stop('mg_mat')
+            self.printer._done_time(self.timer['mg_mat'])
+
+            mg_matrices.append(mg_matrix)
+
+        return mg_matrices
+
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
 
-        func = 0.5 * np.dot(sol[:, 0], full_hess * sol[:, 0])
+        func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_pts['exact']:
             full_jac = full_jac_dict[kx]
             yt = yt_dict[kx]
-            func += c * np.sum((full_jac * sol[:, 0] - yt[:, 0]) ** p)
+            func += c * np.sum((full_jac * sol - yt) ** p)
 
         return func
 
@@ -225,14 +249,33 @@ class RMTS(SM):
             full_jac = full_jac_dict[kx]
             yt = yt_dict[kx]
 
-            diag_vec = p * (p - 1) * (full_jac * sol[:, 0] - yt[:, 0]) ** (p - 2)
+            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
             hess += c * full_jac.T * diag_mtx * full_jac
 
         return hess
 
+    def _opt_hess_2(self, full_hess, full_jac_dict):
+        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+        p = 2
+
+        hess = scipy.sparse.csc_matrix(full_hess)
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            hess += c * p * (p - 1) * full_jac.T * full_jac
+
+        return hess
+
     def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        return np.linalg.norm(self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict))
+        grad = self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
+        return np.linalg.norm(grad)
+
+    def _get_yt_dict(self, ind_y):
+        yt_dict = {}
+        for kx in self.training_pts['exact']:
+            xt, yt = self.training_pts['exact'][kx]
+            yt_dict[kx] = yt[:, ind_y]
+        return yt_dict
 
     def _fit(self):
         """
@@ -283,54 +326,41 @@ class RMTS(SM):
 
         self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
         self.timer._start('approximation')
-        full_jac_dict, yt_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
+        full_jac_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
         self.timer._stop('approximation')
         self.printer._done_time(self.timer['approximation'])
 
-        mg_matrices = []
-        if sm_options['solver'] == 'mg' or sm_options['solver'] == 'krylov-mg':
-            power_two = 2 ** len(sm_options['mg_factors'])
-            for kx in range(num['x']):
-                assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
-
-            elem_lists = [num['elem_list']]
-            for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
-                elem_lists.append(elem_lists[-1] / mg_factor)
-
-                nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
-                ncols = np.prod(elem_lists[-1] + 1) * 2 ** num['x']
-                self.printer._operation('Assembling multigrid op %i (%i x %i mtx)' %
-                    (ind_mg, nrows, ncols))
-                self.timer._start('mg_mat')
-                mg_matrix = self._compute_mg_terms(elem_lists[-2], elem_lists[-1])
-                self.timer._stop('mg_mat')
-                self.printer._done_time(self.timer['mg_mat'])
-
-                mg_matrices.append(mg_matrix)
+        if sm_options['solver'] == 'mg':
+            mg_matrices = self._compute_mg_matrices()
+        else:
+            mg_matrices = []
 
         self.timer._stop('total_assembly')
 
-        if sm_options['mode'] == 'approx':
-            block_names = ['dv']
-            block_sizes = [num['uniq'] * 2 ** num['x']]
-        elif sm_options['mode'] == 'exact':
-            block_names = ['dv'] + \
-                ['con_%s'%kx for kx in self.training_pts['exact']]
-            block_sizes = [num['uniq'] * 2 ** num['x']] + \
-                [self.training_pts['exact'][kx][0].shape[0]
-                 for kx in self.training_pts['exact']]
+        block_names = ['dv']
+        block_sizes = [num['uniq'] * 2 ** num['x']]
+        if sm_options['mode'] == 'exact':
+            block_names += ['con_%s'%kx for kx in self.training_pts['exact']]
+            block_sizes += [self.training_pts['exact'][kx][0].shape[0]
+                            for kx in self.training_pts['exact']]
 
         self.timer._start('solution')
 
+        solver = smt.linear_solvers.get_solver(sm_options['solver'])
+
         total_size = int(np.sum(block_sizes))
+        rhs = np.zeros((total_size, num['y']))
         sol = np.zeros((total_size, num['y']))
         d_sol = np.zeros((total_size, num['y']))
 
         self.printer._operation('Computing global sparse matrix')
         self.timer._start('sparse')
         if sm_options['mode'] == 'approx':
-            mtx = self._opt_hess(sol, 2, full_hess, full_jac_dict, yt_dict)
-            rhs = -self._opt_grad(sol, 2, full_hess, full_jac_dict, yt_dict)
+            mtx = self._opt_hess_2(full_hess, full_jac_dict)
+            for ind_y in range(num['y']):
+                yt_dict = self._get_yt_dict(ind_y)
+                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
+                                                full_jac_dict, yt_dict)
         elif sm_options['mode'] == 'exact':
             sub_mtx_dict = {}
             sub_rhs_dict = {}
@@ -338,7 +368,7 @@ class RMTS(SM):
             sub_rhs_dict['dv'] = -full_hess * sol
             for kx in self.training_pts['exact']:
                 full_jac = full_jac_dict[kx]
-                yt = yt_dict[kx]
+                xt, yt = self.training_pts['exact'][kx]
 
                 reg_cons = reg_cons_dict[kx]
                 sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
@@ -351,54 +381,76 @@ class RMTS(SM):
         self.timer._stop('sparse')
         self.printer._done_time(self.timer['sparse'])
 
-        smt.linalg.solve_sparse_system(mtx, rhs, sol, sm_options, self.printer.active, mg_matrices)
+        solver._initialize(mtx, mg_matrices=mg_matrices, print_status=self.printer.active)
+        for ind_y in range(rhs.shape[1]):
+            self.timer._start('convergence')
+            solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y,
+                          print_status = self.printer.active)
+            self.timer._stop('convergence')
+            self.printer._total_time('Total solver convergence time (sec)',
+                                     self.timer['convergence'])
 
         p = self.sm_options['approx_norm']
-        if sm_options['max_nln_iter'] > 0:
-            norm = self._opt_norm(sol, p, full_hess, full_jac_dict, yt_dict)
-            fval = self._opt_func(sol, p, full_hess, full_jac_dict, yt_dict)
-            self.printer('   Nonlinear (itn, grad. norm, func. value) %i %15.9e %15.9e' \
-                         % (0, norm, fval))
-            self.printer()
+        for ind_y in range(rhs.shape[1]):
 
-        for nln_iter in range(sm_options['max_nln_iter']):
-            self.printer._operation('Computing global sparse matrix')
-            self.timer._start('sparse')
-            mtx = self._opt_hess(sol, p, full_hess, full_jac_dict, yt_dict)
-            rhs = -self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
-            self.timer._stop('sparse')
-            self.printer._done_time(self.timer['sparse'])
+            yt_dict = self._get_yt_dict(ind_y)
 
-            smt.linalg.solve_sparse_system(mtx, rhs, d_sol, sm_options, self.printer.active, mg_matrices)
+            if sm_options['max_nln_iter'] > 0:
+                norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                self.printer(
+                    '   Nonlinear (itn, iy, grad. norm, func. value) : %3i %3i %15.9e %15.9e'
+                    % (0, ind_y, norm, fval))
+                self.printer()
 
-            func = lambda x: self._opt_func(x, p, full_hess, full_jac_dict, yt_dict)
-            grad = lambda x: self._opt_grad(x, p, full_hess, full_jac_dict, yt_dict)
+            for nln_iter in range(sm_options['max_nln_iter']):
+                self.printer._operation('Computing global sparse matrix')
+                self.timer._start('sparse')
+                mtx = self._opt_hess(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
+                                                full_jac_dict, yt_dict)
+                self.timer._stop('sparse')
+                self.printer._done_time(self.timer['sparse'])
 
-            if sm_options['line_search'] == 'backtracking':
-                ls_class = smt.line_search.BacktrackingLineSearch
-            elif sm_options['line_search'] == 'bracketed':
-                ls_class = smt.line_search.BracketedLineSearch
-            elif sm_options['line_search'] == 'quadratic':
-                ls_class = smt.line_search.QuadraticLineSearch
-            elif sm_options['line_search'] == 'cubic':
-                ls_class = smt.line_search.CubicLineSearch
+                solver._initialize(mtx, mg_matrices=mg_matrices,
+                                   print_status=self.printer.active)
+                self.timer._start('convergence')
+                solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y,
+                              print_status = self.printer.active)
+                self.timer._stop('convergence')
+                self.printer._total_time('Total solver convergence time (sec)',
+                                         self.timer['convergence'])
 
-            ls = ls_class(sol, d_sol, func, grad)
-            sol[:, :] = ls(1.0)
+                func = lambda x: self._opt_func(x, p, full_hess, full_jac_dict, yt_dict)
+                grad = lambda x: self._opt_grad(x, p, full_hess, full_jac_dict, yt_dict)
 
-            norm = self._opt_norm(sol, p, full_hess, full_jac_dict, yt_dict)
-            fval = self._opt_func(sol, p, full_hess, full_jac_dict, yt_dict)
-            self.printer('   Nonlinear (itn, grad. norm, func. value) %i %15.9e %15.9e' \
-                         % (nln_iter + 1, norm, fval))
-            self.printer()
+                if sm_options['line_search'] == 'backtracking':
+                    ls_class = smt.line_search.BacktrackingLineSearch
+                elif sm_options['line_search'] == 'bracketed':
+                    ls_class = smt.line_search.BracketedLineSearch
+                elif sm_options['line_search'] == 'quadratic':
+                    ls_class = smt.line_search.QuadraticLineSearch
+                elif sm_options['line_search'] == 'cubic':
+                    ls_class = smt.line_search.CubicLineSearch
 
-            if norm < 1e-3:
-                break
+                ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
+                sol[:, ind_y] = ls(1.0)
+
+                norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                self.printer(
+                    '   Nonlinear (itn, iy, grad. norm, func. value) : %3i %3i %15.9e %15.9e'
+                    % (nln_iter + 1, ind_y, norm, fval))
+                self.printer()
+
+                if norm < 1e-3:
+                    break
 
         self.timer._stop('solution')
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
 
+        self.printer()
         self.printer._total_time('Total assembly time (sec)', self.timer['total_assembly'])
         self.printer._total_time('Total linear solution time (sec)', self.timer['solution'])
 

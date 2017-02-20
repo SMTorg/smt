@@ -15,13 +15,13 @@ from smt.mbr import MBR
 
 ndim = 3
 prob = Carre(ndim=ndim)
-prob = TensorProduct(ndim=ndim, func='tanh')
+prob = TensorProduct(ndim=ndim, func='tanh', width=2.)
 sampling = lhs_center
 
-sm = RMTS({'name':'RMTS','num_elem':[16]*ndim, 'smoothness':[1.0]*ndim,
+sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
-    'reg_dv': 1e-8, 'reg_cons': 1e-12, 'save_solution': False,
-    'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 5,
+    'reg_dv': 1e-10, 'reg_cons': 1e-14, 'save_solution': False,
+    'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
     'line_search': 'backtracking',
 }, {})
 

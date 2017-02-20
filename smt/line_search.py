@@ -30,7 +30,7 @@ class LineSearch(object):
         return self.func(self.x + a * self.dx)
 
     def _dphi(self, a):
-        return np.dot(self.grad(self.x + a * self.dx)[:, 0], self.dx[:, 0])
+        return np.dot(self.grad(self.x + a * self.dx), self.dx)
 
     def _func_decreased(self, a):
         """

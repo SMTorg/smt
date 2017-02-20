@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
         sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
             'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
             'reg_dv': 1e-8, 'reg_cons': 1e-12, 'save_solution': False,
-            'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
+            'mg_factors': [2, 2, 2], 'solver': 'krylov', 'solver_nln_iter': 20,
             'line_search': 'backtracking',
         }, {})
 

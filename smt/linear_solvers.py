@@ -12,6 +12,19 @@ from six.moves import range
 from smt.utils import OptionsDictionary, Printer, Timer
 
 
+def get_solver(solver):
+    if solver == 'direct':
+        return DirectSolver()
+    elif solver == 'krylov':
+        return KrylovSolver()
+    elif solver == 'gs' or solver == 'jacobi':
+        return StationarySolver(solver=solver)
+    elif solver == 'mg':
+        return MultigridSolver()
+    elif isinstance(solver, LinearSolver):
+        return solver
+
+
 class LinearSolver(object):
 
     def __init__(self, **kwargs):
@@ -36,7 +49,7 @@ class LinearSolver(object):
     def _declare_options(self):
         pass
 
-    def _initialize(self, mtx, print_status=True):
+    def _initialize(self, mtx, mg_matrices=[], print_status=True):
         pass
 
     def _solve(self, rhs, sol=None, ind_y=0, print_status=True):
@@ -84,7 +97,7 @@ class DirectSolver(LinearSolver):
     def _declare_options(self):
         self.options.declare('alg', 'lu', values=['lu', 'ilu'])
 
-    def _initialize(self, mtx, print_status=True):
+    def _initialize(self, mtx, mg_matrices=[], print_status=True):
         self.printer.active = print_status and self.options['print_init']
         self.mtx = mtx
 
@@ -125,14 +138,14 @@ class KrylovSolver(LinearSolver):
 
     def _declare_options(self):
         self.options.declare('interval', 10, types=int)
-        self.options.declare('pc', 'lu', values=['ilu', 'lu', 'nopc', 'gs', 'jacobi', 'custom'],
+        self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
+        self.options.declare('pc', 'nopc', values=['ilu', 'lu', 'nopc', 'gs', 'jacobi'],
                              types=LinearSolver)
-        self.options.declare('solver', 'cg', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
         self.options.declare('ilimit', 100, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))
         self.options.declare('rtol', 1e-15, types=(int, float))
 
-    def _initialize(self, mtx, print_status=True):
+    def _initialize(self, mtx, mg_matrices=[], print_status=True):
         self.printer.active = print_status and self.options['print_init']
         self.mtx = mtx
 
@@ -148,7 +161,7 @@ class KrylovSolver(LinearSolver):
             pc_solver = self.options['pc']
 
         if pc_solver is not None:
-            pc_solver._initialize(mtx, print_status)
+            pc_solver._initialize(mtx, mg_matrices=mg_matrices, print_status=print_status)
             self.pc_solver = pc_solver
             self.pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=solver.solve)
         else:
@@ -224,7 +237,7 @@ class StationarySolver(LinearSolver):
         self.options.declare('damping', 1.0, types=(int, float))
         self.options.declare('ilimit', 10, types=int)
 
-    def _initialize(self, mtx, print_status=True):
+    def _initialize(self, mtx, mg_matrices=[], print_status=True):
         self.printer.active = print_status and self.options['print_init']
         self.mtx = mtx
 
@@ -315,7 +328,7 @@ class MultigridSolver(LinearSolver):
         self.options.declare('solver', values=['null', 'gs', 'jacobi', 'krylov'],
                              types=LinearSolver)
 
-    def _initialize(self, mtx, print_status=True):
+    def _initialize(self, mtx, mg_matrices=[], print_status=True):
         self.printer.active = print_status and self.options['print_init']
         self.mtx = mtx
 
@@ -335,7 +348,7 @@ class MultigridSolver(LinearSolver):
             solver = self.options['solver']
 
         mg_solver = solver._clone()
-        mg_solver._initialize(mtx, print_status)
+        mg_solver._initialize(mtx, mg_matrices=mg_matrices, print_status=print_status)
         self.mg_solvers = [mg_solver]
 
         for ind, mg_op in enumerate(self.options['mg_ops']):
@@ -344,15 +357,16 @@ class MultigridSolver(LinearSolver):
             mg_rhs = mg_op.T.dot(self.mg_rhs[-1])
 
             mg_solver = solver._clone()
-            mg_solver._initialize(mg_mtx, print_status)
+            mg_solver._initialize(mg_mtx, mg_matrices=mg_matrices, print_status=print_status)
 
             self.mg_mtx.append(mg_mtx)
             self.mg_sol.append(mg_sol)
             self.mg_rhs.append(mg_rhs)
             self.mg_solvers.append(mg_solver)
 
+        mg_mtx = self.mg_mtx[-1]
         mg_solver = DirectSolver()
-        mg_solver._initialize(self.mg_mtx[-1], print_status)
+        mg_solver._initialize(mg_mtx, mg_matrices=mg_matrices, print_status=print_status)
         self.mg_solvers[-1] = mg_solver
 
     def _restrict(self, ind_level):

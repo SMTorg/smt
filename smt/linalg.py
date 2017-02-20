@@ -33,26 +33,3 @@ def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):
         rhs[ind1:ind2, :] = sub_rhs
 
     return mtx, rhs
-
-def solve_sparse_system(mtx, rhs, sol, sm_options, print_global, mg_ops=[]):
-    if sm_options['solver'] == 'direct':
-        solver = DirectSolver()
-    elif sm_options['solver'] == 'krylov':
-        solver = KrylovSolver(solver='gmres', pc='nopc', print_solve=True,
-                              ilimit=100, atol=1e-15, rtol=1e-15)
-    elif sm_options['solver'] == 'gs' or sm_options['solver'] == 'jacobi':
-        solver = StationarySolver(solver=sm_options['solver'], damping=1.0, print_solve=True,
-                                  ilimit=100, atol=1e-15, rtol=1e-15)
-    elif sm_options['solver'] == 'mg':
-        solver = MultigridSolver(mg_ops=mg_ops, print_solve=True)
-    elif isinstance(sm_options['solver'], LinearSolver):
-        solver = sm_options['solver']
-
-    solver._initialize(mtx, print_global)
-
-    for ind_y in range(rhs.shape[1]):
-        solver.timer._start('convergence')
-        solver._solve(rhs[:, ind_y], sol[:, ind_y], print_global)
-        solver.timer._stop('convergence')
-        solver.printer._total_time('Total solver convergence time (sec)',
-                                   solver.timer['convergence'])
