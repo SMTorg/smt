@@ -6,61 +6,57 @@ from __future__ import print_function
 import cPickle as pickle
 import hashlib
 import time
-
-
-class Timer(object):
-
-    def __init__(self):
-        self.raw_times = {}
-        self.elapsed_times = {}
-
-    def __getitem__(self, key):
-        return self.elapsed_times[key]
-
-    def _start(self, key):
-        if key in self.raw_times:
-            raise RuntimeError('The timer has already been started for key %s' % key)
-
-        self.raw_times[key] = time.time()
-
-    def _stop(self, key):
-        start_time = self.raw_times.pop(key)
-        stop_time = time.time()
-        self.elapsed_times[key] = stop_time - start_time
+import contextlib
 
 
 class Printer(object):
 
-    def __init__(self, active=False):
-        self.active = active
+    def __init__(self):
+        self.active = False
+        self.depth = 1
+        self.times = {}
 
-    def __call__(self, string=''):
+    def _time(self, key):
+        return self.times[key]
+
+    def __call__(self, string='', noindent=False):
         if self.active:
-            print(string)
+            if noindent:
+                print(string)
+            else:
+                print('   ' * self.depth + string)
 
     def _center(self, string):
         pre = ' ' * int((75 - len(string))/2.0)
-        self(pre + '%s' % string)
+        self(pre + '%s' % string, noindent=True)
 
     def _line_break(self):
-        self('_' * 75)
+        self('_' * 75, noindent=True)
         self()
 
     def _title(self, title):
         self._line_break()
-        self(' ' + title)
+        self(' ' + title, noindent=True)
         self()
 
-    def _operation(self, string):
-        self('   %s ... ' % string)
+    @contextlib.contextmanager
+    def _timed_context(self, string=None, key=None):
+        if string is not None:
+            self(string + ' ...')
+            self()
 
-    def _done_time(self, elapsed_time):
-        self('   Done. Time (sec) : %10.7f' % elapsed_time)
-        self()
+        start_time = time.time()
+        self.depth += 1
+        yield
+        self.depth -= 1
+        stop_time = time.time()
 
-    def _total_time(self, string, elapsed_time):
-        self('   %-14s : %10.7f' % (string, elapsed_time))
-        self()
+        if string is not None:
+            self(string + ' - done. Time (sec): %10.7f' % (stop_time - start_time))
+            self()
+
+        if key is not None:
+            self.times[key] = stop_time - start_time
 
 
 class OptionsDictionary(object):
@@ -133,11 +129,11 @@ def _caching_checksum(obj):
     return checksum
 
 def _caching_checksum_sm(sm):
-    tmp = sm.timer
+    tmp = sm.printer
 
-    sm.timer = None
+    sm.printer = None
     checksum = _caching_checksum(sm)
-    sm.timer = tmp
+    sm.printer = tmp
     return checksum
 
 def assemble_sparse_mtx(block_names, block_sizes, sub_mtx_dict, sub_rhs_dict):

@@ -112,14 +112,13 @@ class MBR(SM):
         sol = np.zeros(rhs.shape)
 
         solver = smt.linear_solvers.get_solver(sm_options['solver'])
-        solver._initialize(mtx, print_status=self.printer.active)
+
+        with self.printer._timed_context('Initializing linear solver'):
+            solver._initialize(mtx, self.printer)
+
         for ind_y in range(rhs.shape[1]):
-            self.timer._start('convergence')
-            solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y,
-                          print_status = self.printer.active)
-            self.timer._stop('convergence')
-            self.printer._total_time('Total solver convergence time (sec)',
-                                     self.timer['convergence'])
+            with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
+                solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
 
         self.sol = sol
 

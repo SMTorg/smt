@@ -9,6 +9,17 @@ import six
 from six.moves import range
 
 
+def get_line_search_class(line_search):
+    if line_search == 'backtracking':
+        return BacktrackingLineSearch
+    elif line_search == 'bracketed':
+        return BracketedLineSearch
+    elif line_search == 'quadratic':
+        return QuadraticLineSearch
+    elif line_search == 'cubic':
+        return CubicLineSearch
+
+
 class LineSearch(object):
     """
     Base line search class.

@@ -208,12 +208,10 @@ class RMTS(SM):
 
             nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
             ncols = np.prod(elem_lists[-1] + 1) * 2 ** num['x']
-            self.printer._operation('Assembling multigrid op %i (%i x %i mtx)' %
-                (ind_mg, nrows, ncols))
-            self.timer._start('mg_mat')
-            mg_matrix = self._compute_single_mg_matrix(elem_lists[-2], elem_lists[-1])
-            self.timer._stop('mg_mat')
-            self.printer._done_time(self.timer['mg_mat'])
+            string = 'Assembling multigrid op %i (%i x %i mtx)' % (ind_mg, nrows, ncols)
+            with self.printer._timed_context('Assembling multigrid op %i (%i x %i mtx)'
+                                             % (ind_mg, nrows, ncols)):
+                mg_matrix = self._compute_single_mg_matrix(elem_lists[-2], elem_lists[-1])
 
             mg_matrices.append(mg_matrix)
 
@@ -303,39 +301,26 @@ class RMTS(SM):
 
         self.num = num
 
-        self.timer._start('total_assembly')
+        with self.printer._timed_context('Pre-computing matrices'):
 
-        self.printer._operation('Assembling uniq2coeff')
-        self.timer._start('uniq2coeff')
-        full_uniq2coeff = self._compute_uniq2coeff(
-            num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
-        self.timer._stop('uniq2coeff')
-        self.printer._done_time(self.timer['uniq2coeff'])
+            with self.printer._timed_context('Computing uniq2coeff'):
+                full_uniq2coeff = self._compute_uniq2coeff(
+                    num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
 
-        self.printer._operation('Assembling local energy terms')
-        self.timer._start('local hess')
-        elem_hess = self._compute_local_hess()
-        self.timer._stop('local hess')
-        self.printer._done_time(self.timer['local hess'])
+            with self.printer._timed_context('Computing local energy terms'):
+                elem_hess = self._compute_local_hess()
 
-        self.printer._operation('Assembling global energy terms')
-        self.timer._start('global hess')
-        full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
-        self.timer._stop('global hess')
-        self.printer._done_time(self.timer['global hess'])
+            with self.printer._timed_context('Computing global energy terms'):
+                full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
 
-        self.printer._operation('Assembling approximation terms (mode: %s)' % sm_options['mode'])
-        self.timer._start('approximation')
-        full_jac_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
-        self.timer._stop('approximation')
-        self.printer._done_time(self.timer['approximation'])
+            with self.printer._timed_context('Computing approximation terms'):
+                full_jac_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
 
-        if sm_options['solver'] == 'mg':
-            mg_matrices = self._compute_mg_matrices()
-        else:
-            mg_matrices = []
+            if sm_options['solver'] == 'mg':
+                mg_matrices = self._compute_mg_matrices()
+            else:
+                mg_matrices = []
 
-        self.timer._stop('total_assembly')
 
         block_names = ['dv']
         block_sizes = [num['uniq'] * 2 ** num['x']]
@@ -344,115 +329,101 @@ class RMTS(SM):
             block_sizes += [self.training_pts['exact'][kx][0].shape[0]
                             for kx in self.training_pts['exact']]
 
-        self.timer._start('solution')
+        with self.printer._timed_context('Solving for degrees of freedom'):
 
-        solver = smt.linear_solvers.get_solver(sm_options['solver'])
+            solver = smt.linear_solvers.get_solver(sm_options['solver'])
+            ls_class = smt.line_search.get_line_search_class(sm_options['line_search'])
 
-        total_size = int(np.sum(block_sizes))
-        rhs = np.zeros((total_size, num['y']))
-        sol = np.zeros((total_size, num['y']))
-        d_sol = np.zeros((total_size, num['y']))
+            total_size = int(np.sum(block_sizes))
+            rhs = np.zeros((total_size, num['y']))
+            sol = np.zeros((total_size, num['y']))
+            d_sol = np.zeros((total_size, num['y']))
 
-        self.printer._operation('Computing global sparse matrix')
-        self.timer._start('sparse')
-        if sm_options['mode'] == 'approx':
-            mtx = self._opt_hess_2(full_hess, full_jac_dict)
-            for ind_y in range(num['y']):
-                yt_dict = self._get_yt_dict(ind_y)
-                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
-                                                full_jac_dict, yt_dict)
-        elif sm_options['mode'] == 'exact':
-            sub_mtx_dict = {}
-            sub_rhs_dict = {}
-            sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
-            sub_rhs_dict['dv'] = -full_hess * sol
-            for kx in self.training_pts['exact']:
-                full_jac = full_jac_dict[kx]
-                xt, yt = self.training_pts['exact'][kx]
+            with self.printer._timed_context('Solving initial linear problem'):
 
-                reg_cons = reg_cons_dict[kx]
-                sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
-                sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
-                sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
-                sub_rhs_dict['con_%s'%kx] = yt
+                with self.printer._timed_context('Assembling linear system'):
+                    if sm_options['mode'] == 'approx':
+                        mtx = self._opt_hess_2(full_hess, full_jac_dict)
+                        for ind_y in range(num['y']):
+                            yt_dict = self._get_yt_dict(ind_y)
+                            rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
+                                                            full_jac_dict, yt_dict)
+                    elif sm_options['mode'] == 'exact':
+                        sub_mtx_dict = {}
+                        sub_rhs_dict = {}
+                        sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
+                        sub_rhs_dict['dv'] = -full_hess * sol
+                        for kx in self.training_pts['exact']:
+                            full_jac = full_jac_dict[kx]
+                            xt, yt = self.training_pts['exact'][kx]
 
-            mtx, rhs = smt.utils.assemble_sparse_mtx(
-                block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
-        self.timer._stop('sparse')
-        self.printer._done_time(self.timer['sparse'])
+                            reg_cons = reg_cons_dict[kx]
+                            sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
+                            sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
+                            sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
+                            sub_rhs_dict['con_%s'%kx] = yt
 
-        solver._initialize(mtx, mg_matrices=mg_matrices, print_status=self.printer.active)
-        for ind_y in range(rhs.shape[1]):
-            self.timer._start('convergence')
-            solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y,
-                          print_status = self.printer.active)
-            self.timer._stop('convergence')
-            self.printer._total_time('Total solver convergence time (sec)',
-                                     self.timer['convergence'])
+                        mtx, rhs = smt.utils.assemble_sparse_mtx(
+                            block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
 
-        p = self.sm_options['approx_norm']
-        for ind_y in range(rhs.shape[1]):
+                with self.printer._timed_context('Initializing linear solver'):
+                    solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
 
-            yt_dict = self._get_yt_dict(ind_y)
+                for ind_y in range(rhs.shape[1]):
+                    with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
+                        solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
 
-            if sm_options['max_nln_iter'] > 0:
-                norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                self.printer(
-                    '   Nonlinear (itn, iy, grad. norm, func. value) : %3i %3i %15.9e %15.9e'
-                    % (0, ind_y, norm, fval))
-                self.printer()
+            p = self.sm_options['approx_norm']
+            for ind_y in range(rhs.shape[1]):
 
-            for nln_iter in range(sm_options['max_nln_iter']):
-                self.printer._operation('Computing global sparse matrix')
-                self.timer._start('sparse')
-                mtx = self._opt_hess(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
-                                                full_jac_dict, yt_dict)
-                self.timer._stop('sparse')
-                self.printer._done_time(self.timer['sparse'])
+                with self.printer._timed_context('Solving nonlinear problem (col. %i)' % ind_y):
 
-                solver._initialize(mtx, mg_matrices=mg_matrices,
-                                   print_status=self.printer.active)
-                self.timer._start('convergence')
-                solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y,
-                              print_status = self.printer.active)
-                self.timer._stop('convergence')
-                self.printer._total_time('Total solver convergence time (sec)',
-                                         self.timer['convergence'])
+                    yt_dict = self._get_yt_dict(ind_y)
 
-                func = lambda x: self._opt_func(x, p, full_hess, full_jac_dict, yt_dict)
-                grad = lambda x: self._opt_grad(x, p, full_hess, full_jac_dict, yt_dict)
+                    if sm_options['max_nln_iter'] > 0:
+                        norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                        fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
+                        self.printer(
+                            'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
+                            % (0, ind_y, norm, fval))
+                        self.printer()
 
-                if sm_options['line_search'] == 'backtracking':
-                    ls_class = smt.line_search.BacktrackingLineSearch
-                elif sm_options['line_search'] == 'bracketed':
-                    ls_class = smt.line_search.BracketedLineSearch
-                elif sm_options['line_search'] == 'quadratic':
-                    ls_class = smt.line_search.QuadraticLineSearch
-                elif sm_options['line_search'] == 'cubic':
-                    ls_class = smt.line_search.CubicLineSearch
+                    for nln_iter in range(sm_options['max_nln_iter']):
+                        with self.printer._timed_context():
+                            with self.printer._timed_context('Assembling linear system'):
+                                mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
+                                                     full_jac_dict, yt_dict)
+                                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
+                                                                full_jac_dict, yt_dict)
 
-                ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
-                sol[:, ind_y] = ls(1.0)
+                            with self.printer._timed_context('Initializing linear solver'):
+                                solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
 
-                norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                self.printer(
-                    '   Nonlinear (itn, iy, grad. norm, func. value) : %3i %3i %15.9e %15.9e'
-                    % (nln_iter + 1, ind_y, norm, fval))
-                self.printer()
+                            with self.printer._timed_context('Solving linear system'):
+                                solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
 
-                if norm < 1e-3:
-                    break
+                            func = lambda x: self._opt_func(x, p, full_hess,
+                                                            full_jac_dict, yt_dict)
+                            grad = lambda x: self._opt_grad(x, p, full_hess,
+                                                            full_jac_dict, yt_dict)
 
-        self.timer._stop('solution')
+                            ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
+                            with self.printer._timed_context('Performing line search'):
+                                sol[:, ind_y] = ls(1.0)
+
+                            norm = self._opt_norm(sol[:, ind_y], p, full_hess,
+                                                  full_jac_dict, yt_dict)
+                            fval = self._opt_func(sol[:, ind_y], p, full_hess,
+                                                  full_jac_dict, yt_dict)
+                            self.printer(
+                                'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
+                                % (nln_iter + 1, ind_y, norm, fval))
+                            self.printer()
+
+                            if norm < 1e-3:
+                                break
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
-
-        self.printer()
-        self.printer._total_time('Total assembly time (sec)', self.timer['total_assembly'])
-        self.printer._total_time('Total linear solution time (sec)', self.timer['solution'])
 
     def fit(self):
         """

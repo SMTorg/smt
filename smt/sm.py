@@ -9,7 +9,7 @@ Metamodels - a base class for metamodel methods
 from __future__ import division
 
 import numpy as np
-from smt.utils import Printer, Timer
+from smt.utils import Printer
 
 
 class SM(object):
@@ -37,7 +37,6 @@ class SM(object):
         self.training_pts = {'exact': {}}
 
         self.printer = Printer()
-        self.timer = Timer()
 
     #############################################################################
     # Model functions
@@ -102,13 +101,8 @@ class SM(object):
             self.printer._title('Training')
 
         #Train the model using the specified model-method
-        self.timer._start('fit')
-        self.fit()
-        self.timer._stop('fit')
-
-        self.printer()
-        self.printer._total_time('Total training time (sec)', self.timer['fit'])
-        self.printer()
+        with self.printer._timed_context('Training'):
+            self.fit()
 
     def predict(self, x):
         '''
@@ -136,13 +130,11 @@ class SM(object):
         self.printer('   %-12s : %i' % ('# eval pts.', n_evals))
 
         #Evaluate the unknown points using the specified model-method
-        self.timer._start('predict')
-        y = self.evaluate(x)
-        self.timer._stop('predict')
+        with self.printer._timed_context('Predicting', key='prediction'):
+            y = self.evaluate(x)
 
-        self.printer()
-        self.printer._total_time('Total prediction time (sec)', self.timer['predict'])
-        self.printer._total_time('Time/pt. (sec)', self.timer['predict'] / n_evals)
+        time_pt = self.printer._time('prediction') / n_evals
+        self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
         return y.reshape(n_evals,1)
