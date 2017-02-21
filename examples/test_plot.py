@@ -22,7 +22,7 @@ sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
     'reg_dv': 1e-10, 'reg_cons': 1e-14, 'save_solution': False,
     'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
-    'line_search': 'backtracking',
+    'line_search': 'backtracking', 'max_print_depth': 4,
 }, {})
 
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})

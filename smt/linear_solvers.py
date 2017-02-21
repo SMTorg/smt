@@ -10,7 +10,7 @@ import six
 from six.moves import range
 import contextlib
 
-from smt.utils import OptionsDictionary, Printer, Timer
+from smt.utils import OptionsDictionary, Printer
 
 
 def get_solver(solver):

@@ -14,13 +14,14 @@ class Printer(object):
     def __init__(self):
         self.active = False
         self.depth = 1
+        self.max_print_depth = 100
         self.times = {}
 
     def _time(self, key):
         return self.times[key]
 
     def __call__(self, string='', noindent=False):
-        if self.active:
+        if self.active and self.depth <= self.max_print_depth:
             if noindent:
                 print(string)
             else:
@@ -43,7 +44,7 @@ class Printer(object):
     def _timed_context(self, string=None, key=None):
         if string is not None:
             self(string + ' ...')
-            self()
+            # self()
 
         start_time = time.time()
         self.depth += 1
@@ -53,7 +54,7 @@ class Printer(object):
 
         if string is not None:
             self(string + ' - done. Time (sec): %10.7f' % (stop_time - start_time))
-            self()
+            # self()
 
         if key is not None:
             self.times[key] = stop_time - start_time

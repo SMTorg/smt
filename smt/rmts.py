@@ -56,13 +56,14 @@ class RMTS(SM):
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
+            'max_print_depth': 100, # Maximum depth (level of nesting) to print
         }
         printf_options = {
             'global': True,     # Overriding option to print output
             'time_eval': True,  # Print evaluation times
             'time_train': True, # Print assembly and solution time summary
             'problem': True,    # Print problem information
-            'solver': True,     # Print convergence progress (i.e., residual norms)
+            'solver': False,     # Print convergence progress (i.e., residual norms)
         }
 
         self.sm_options = sm_options
@@ -301,6 +302,8 @@ class RMTS(SM):
 
         self.num = num
 
+        self.printer.max_print_depth = sm_options['max_print_depth']
+
         with self.printer._timed_context('Pre-computing matrices'):
 
             with self.printer._timed_context('Computing uniq2coeff'):
@@ -320,7 +323,6 @@ class RMTS(SM):
                 mg_matrices = self._compute_mg_matrices()
             else:
                 mg_matrices = []
-
 
         block_names = ['dv']
         block_sizes = [num['uniq'] * 2 ** num['x']]
@@ -386,7 +388,6 @@ class RMTS(SM):
                         self.printer(
                             'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
                             % (0, ind_y, norm, fval))
-                        self.printer()
 
                     for nln_iter in range(sm_options['max_nln_iter']):
                         with self.printer._timed_context():
@@ -418,7 +419,6 @@ class RMTS(SM):
                         self.printer(
                             'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
                             % (nln_iter + 1, ind_y, norm, fval))
-                        self.printer()
 
                         if norm < 1e-3:
                             break

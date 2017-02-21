@@ -128,12 +128,14 @@ class SM(object):
         else:
             self.printer._title('Evaluation')
         self.printer('   %-12s : %i' % ('# eval pts.', n_evals))
+        self.printer()
 
         #Evaluate the unknown points using the specified model-method
         with self.printer._timed_context('Predicting', key='prediction'):
             y = self.evaluate(x)
 
         time_pt = self.printer._time('prediction') / n_evals
+        self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
