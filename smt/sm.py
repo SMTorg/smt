@@ -38,9 +38,29 @@ class SM(object):
 
         self.printer = Printer()
 
-    #############################################################################
-    # Model functions
-    #############################################################################
+    def compute_rms_error(self, xe=None, ye=None):
+        '''
+        Returns the RMS error of the training points or (xe, ye) if not None.
+
+        Arguments
+        ---------
+        xe : np.ndarray[ne, dim] or None
+            Input values. If None, the input values at the training points are used instead.
+        ye : np.ndarray[ne, 1] or None
+            Output values. If None, the output values at the training points are used instead.
+        '''
+        if xe is not None and ye is not None:
+            ye2 = self.predict(xe)
+            return np.linalg.norm(ye2 - ye) / np.linalg.norm(ye)
+        elif xe is None and ye is None:
+            num = 0.
+            den = 0.
+            for kx in self.training_pts['exact']:
+                xt, yt = self.training_pts['exact'][kx]
+                yt2 = self.predict(xt)
+                num += np.linalg.norm(yt2 - yt) ** 2
+                den += np.linalg.norm(yt) ** 2
+            return num ** 0.5 / den ** 0.5
 
     def add_training_pts(self, typ, xt, yt, kx=None):
         '''

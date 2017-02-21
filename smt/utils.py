@@ -25,7 +25,7 @@ class Printer(object):
             if noindent:
                 print(string)
             else:
-                print('   ' * self.depth + string)
+                print('.  ' * self.depth + string)
 
     def _center(self, string):
         pre = ' ' * int((75 - len(string))/2.0)

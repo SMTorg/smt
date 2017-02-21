@@ -41,13 +41,8 @@ ye = prob(xe)
 sm.add_training_pts('exact', xt, yt)
 sm.train()
 
-yt2 = sm.predict(xt)
-error = np.linalg.norm(yt2 - yt) / np.linalg.norm(yt)
-print(error)
-
-ye2 = sm.predict(xe)
-error = np.linalg.norm(ye2 - ye) / np.linalg.norm(ye)
-print(error)
+print(sm.compute_rms_error())
+print(sm.compute_rms_error(xe, ye))
 
 xe = np.zeros((50, ndim))
 for kx in range(ndim):
