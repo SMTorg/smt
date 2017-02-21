@@ -1,22 +1,19 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-
-TODO:
-- Address approx vs exact issue
-- Generalize to arbitrary number of outputs
 """
-
 from __future__ import division
 
 import numpy as np
 import scipy.sparse
-import RMTSlib
-import smt.utils
-import smt.linalg
-import smt.linear_solvers
-import smt.line_search
-from sm import SM
 from six.moves import range
+
+import RMTSlib
+
+from smt.utils.linear_solvers import get_solver
+from smt.utils.line_search import get_line_search_class
+from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
+from smt.utils.sparse import assemble_sparse_mtx
+from smt.sm import SM
 
 
 class RMTS(SM):
@@ -333,8 +330,8 @@ class RMTS(SM):
 
         with self.printer._timed_context('Solving for degrees of freedom'):
 
-            solver = smt.linear_solvers.get_solver(sm_options['solver'])
-            ls_class = smt.line_search.get_line_search_class(sm_options['line_search'])
+            solver = get_solver(sm_options['solver'])
+            ls_class = get_line_search_class(sm_options['line_search'])
 
             total_size = int(np.sum(block_sizes))
             rhs = np.zeros((total_size, num['y']))
@@ -365,7 +362,7 @@ class RMTS(SM):
                             sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
                             sub_rhs_dict['con_%s'%kx] = yt
 
-                        mtx, rhs = smt.utils.assemble_sparse_mtx(
+                        mtx, rhs = assemble_sparse_mtx(
                             block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
 
                 with self.printer._timed_context('Initializing linear solver'):
@@ -429,14 +426,14 @@ class RMTS(SM):
         """
         Train the model
         """
-        checksum = smt.utils._caching_checksum_sm(self)
+        checksum = _caching_checksum_sm(self)
 
         filename = '%s.sm' % self.sm_options['name']
-        success, data = smt.utils._caching_load(filename, checksum)
+        success, data = _caching_load(filename, checksum)
         if not success or not self.sm_options['save_solution']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
-            smt.utils._caching_save(filename, checksum, data)
+            _caching_save(filename, checksum, data)
         else:
             self.sol = data['sol']
             self.num = data['num']

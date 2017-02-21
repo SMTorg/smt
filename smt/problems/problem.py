@@ -5,7 +5,7 @@ Base class for benchmarking/test problems.
 """
 import numpy as np
 
-from smt.utils import OptionsDictionary
+from smt.utils.options_dictionary import OptionsDictionary
 
 
 class Problem(object):

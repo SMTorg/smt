@@ -26,6 +26,24 @@ class LineSearch(object):
     """
 
     def __init__(self, x, dx, func, grad, u1=1.e-4, u2=0.9):
+        """
+        Initialize all attributes for the given problem.
+
+        Arguments
+        ---------
+        x : ndarray[:]
+            Vector representing the current location in the n-D space.
+        dx : ndarray[:]
+            Search direction.
+        func : function
+            scalar function of x.
+        grad : function
+            vector function that yields the gradient of func.
+        u1 : float
+            Parameter in the sufficient decrease criterion to ensure non-zero decrease.
+        u2 : float
+            Parameter in the curvature criterion to ensure gradient norm decreases.
+        """
         self.x = x
         self.dx = dx
         self.func = func
@@ -38,9 +56,17 @@ class LineSearch(object):
         self.dphi_0 = self._dphi(0.)
 
     def _phi(self, a):
+        """
+        Function in terms of alpha (a).
+
+        phi(a) = func(x + a dx)
+        """
         return self.func(self.x + a * self.dx)
 
     def _dphi(self, a):
+        """
+        Derivative of phi w.r.t. alpha (a).
+        """
         return np.dot(self.grad(self.x + a * self.dx), self.dx)
 
     def _func_decreased(self, a):

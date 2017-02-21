@@ -1,20 +1,18 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-
-TODO:
-- Address approx vs exact issue
-- Generalize to arbitrary number of outputs
 """
-
 from __future__ import division
 
 import numpy as np
 import scipy.sparse
-import MBRlib
-import smt.utils
-import smt.linear_solvers
-from sm import SM
 from six.moves import range
+
+import MBRlib
+
+from smt.utils.linear_solvers import get_solver
+from smt.utils.line_search import get_line_search_class
+from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
+from smt.sm import SM
 
 
 class MBR(SM):
@@ -111,7 +109,7 @@ class MBR(SM):
 
         sol = np.zeros(rhs.shape)
 
-        solver = smt.linear_solvers.get_solver(sm_options['solver'])
+        solver = get_solver(sm_options['solver'])
 
         with self.printer._timed_context('Initializing linear solver'):
             solver._initialize(mtx, self.printer)
@@ -126,13 +124,14 @@ class MBR(SM):
         """
         Train the model
         """
+        checksum = _caching_checksum_sm(self)
+
         filename = '%s.sm' % self.sm_options['name']
-        checksum = smt.utils._caching_checksum(self)
-        success, data = smt.utils._caching_load(filename, checksum)
+        success, data = _caching_load(filename, checksum)
         if not success or not self.sm_options['save_solution']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
-            smt.utils._caching_save(filename, checksum, data)
+            _caching_save(filename, checksum, data)
         else:
             self.sol = data['sol']
             self.num = data['num']

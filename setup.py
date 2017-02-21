@@ -26,6 +26,7 @@ setup(name='smt',
         'smt',
         'smt/problems',
         'smt/sampling',
+        'smt/utils',
     ],
     install_requires=[
     'scikit-learn',

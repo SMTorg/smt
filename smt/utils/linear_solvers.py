@@ -1,16 +1,15 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 """
-
 from __future__ import print_function
+
 import numpy as np
 import scipy.sparse.linalg
-import pyamg.krylov
-import six
 from six.moves import range
 import contextlib
+import pyamg.krylov
 
-from smt.utils import OptionsDictionary, Printer
+from smt.utils.options_dictionary import OptionsDictionary
 
 
 def get_solver(solver):
@@ -117,8 +116,8 @@ class DirectSolver(LinearSolver):
                 elif self.options['alg'] == 'ilu':
                     self.fact = scipy.sparse.linalg.spilu(
                         mtx, drop_rule='interp',
-                        drop_tol=1e-3, #1e-3,
-                        fill_factor=2, #1,
+                        drop_tol=1e-3,
+                        fill_factor=2,
                     )
 
     def _solve(self, rhs, sol=None, ind_y=0):

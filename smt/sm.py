@@ -9,7 +9,8 @@ Metamodels - a base class for metamodel methods
 from __future__ import division
 
 import numpy as np
-from smt.utils import Printer
+
+from smt.utils.printer import Printer
 
 
 class SM(object):
