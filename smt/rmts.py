@@ -411,17 +411,17 @@ class RMTS(SM):
                             with self.printer._timed_context('Performing line search'):
                                 sol[:, ind_y] = ls(1.0)
 
-                            norm = self._opt_norm(sol[:, ind_y], p, full_hess,
-                                                  full_jac_dict, yt_dict)
-                            fval = self._opt_func(sol[:, ind_y], p, full_hess,
-                                                  full_jac_dict, yt_dict)
-                            self.printer(
-                                'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
-                                % (nln_iter + 1, ind_y, norm, fval))
-                            self.printer()
+                        norm = self._opt_norm(sol[:, ind_y], p, full_hess,
+                                              full_jac_dict, yt_dict)
+                        fval = self._opt_func(sol[:, ind_y], p, full_hess,
+                                              full_jac_dict, yt_dict)
+                        self.printer(
+                            'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
+                            % (nln_iter + 1, ind_y, norm, fval))
+                        self.printer()
 
-                            if norm < 1e-3:
-                                break
+                        if norm < 1e-3:
+                            break
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
 
