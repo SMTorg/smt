@@ -32,8 +32,10 @@ class SM(object):
         '''
         #Initialization
         self._set_default_options()
-        self.sm_options.update(sm_options)
-        self.printf_options.update(printf_options)
+        if sm_options is not None:
+            self.sm_options.update(sm_options)
+        if printf_options is not None:
+            self.printf_options.update(printf_options)
 
         self.training_pts = {'exact': {}}
 
@@ -56,11 +58,10 @@ class SM(object):
         elif xe is None and ye is None:
             num = 0.
             den = 0.
-            for kx in self.training_pts['exact']:
-                xt, yt = self.training_pts['exact'][kx]
-                yt2 = self.predict(xt)
-                num += np.linalg.norm(yt2 - yt) ** 2
-                den += np.linalg.norm(yt) ** 2
+            xt, yt = self.training_pts['exact'][0]
+            yt2 = self.predict(xt)
+            num += np.linalg.norm(yt2 - yt) ** 2
+            den += np.linalg.norm(yt) ** 2
             return num ** 0.5 / den ** 0.5
 
     def add_training_pts(self, typ, xt, yt, kx=None):

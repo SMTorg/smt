@@ -22,16 +22,16 @@ class TensorProduct(Problem):
 
         if self.options['func'] == 'cos':
             a = self.options['width']
-            self.func = lambda v: np.cos(a * 2 * np.pi * v)
-            self.dfunc = lambda v: -a * 2 * np.pi * np.sin(a * 2 * np.pi * v)
+            self.func = lambda v: np.cos(a * np.pi * v)
+            self.dfunc = lambda v: -a * np.pi * np.sin(a * np.pi * v)
         elif self.options['func'] == 'exp':
             a = self.options['width']
-            self.func = lambda v: np.exp(5 * a * v)
-            self.dfunc = lambda v: 5 * a * np.exp(5 * a * v)
+            self.func = lambda v: np.exp(a * v)
+            self.dfunc = lambda v: a * np.exp(a * v)
         elif self.options['func'] == 'tanh':
             a = self.options['width']
-            self.func = lambda v: np.tanh(5 * a * v)
-            self.dfunc = lambda v: 5 * a / np.cosh(5 * a * v) ** 2
+            self.func = lambda v: np.tanh(a * v)
+            self.dfunc = lambda v: a / np.cosh(a * v) ** 2
 
     def _evaluate(self, x, kx):
         """
@@ -40,7 +40,7 @@ class TensorProduct(Problem):
         x : ndarray[ne, nx]
             Evaluation points.
         kx : int or None
-            Index of derivative to return values with respect to.
+            Index of derivative (0-based) to return values with respect to.
             None means return function value rather than derivative.
 
         Returns

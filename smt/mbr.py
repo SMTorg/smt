@@ -93,14 +93,14 @@ class MBR(SM):
             nnz = nt * num['order']
             data, rows, cols = MBRlib.compute_jac(kx, 0, nx, nt, nnz,
                 num['order_list'], num['ctrl_list'], t)
-            if kx != 0:
+            if kx > 0:
                 data /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
 
             rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
                 shape=(nt, num['ctrl']))
 
             mtx = mtx + rect_mtx.T * rect_mtx
-            rhs = rect_mtx.T * yt
+            rhs += rect_mtx.T * yt
 
         diag = sm_options['reg'] * np.ones(num['ctrl'])
         arange = np.arange(num['ctrl'])

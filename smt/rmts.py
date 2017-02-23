@@ -52,7 +52,7 @@ class RMTS(SM):
             'max_nln_iter': 0, # number of nonlinear iterations
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
-            'save_solution': True,  # Whether to save linear system solution
+            'save_solution': False,  # Whether to save linear system solution
             'max_print_depth': 100, # Maximum depth (level of nesting) to print
         }
         printf_options = {
