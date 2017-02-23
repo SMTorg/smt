@@ -17,14 +17,21 @@ subroutine compute_jac(nx, ne, nt, power, xe, xt, jac)
 
   ! Working
   integer :: ie, it
-  double precision :: d(nx)
+  double precision :: sq_dist(nt), d(nx)
 
   do ie = 1, ne
      do it = 1, nt
         d = xe(ie, :) - xt(it, :)
-        jac(ie, it) = dot_product(d, d) ** (-power / 2.)
+        sq_dist(it) = dot_product(d, d)
      end do
-     jac(ie, :) = jac(ie, :) / sum(jac(ie, :))
+
+     if (minval(sq_dist) .eq. 0) then
+        jac(ie, :) = 0.0
+        jac(ie, minloc(sq_dist)) = 1.0
+     else
+        jac(ie, :) = sq_dist ** (-power / 2.)
+        jac(ie, :) = jac(ie, :) / sum(jac(ie, :))
+     end if
   end do
 
 end subroutine compute_jac

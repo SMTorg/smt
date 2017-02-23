@@ -44,7 +44,7 @@ class MBR(SM):
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
             'reg': 1e-10, # regularization coeff. for dv block
-            'solver': 'lu',    # Linear solver: 'gmres' or 'cg'
+            'solver': 'krylov-lu',    # Linear solver: 'gmres' or 'cg'
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
         }

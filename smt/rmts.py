@@ -43,13 +43,13 @@ class RMTS(SM):
             'num_elem': [],  # int ndarray[nx]: num. of elements in each dimension
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
-            'reg_dv': 1e-8, # regularization coeff. for dv block
-            'reg_cons': 1e-8, # negative of reg. coeff. for Lagrange mult. block
-            'mode': 'exact', # 'approx' or 'exact' form of linear system ()
+            'reg_dv': 1e-10, # regularization coeff. for dv block
+            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
+            'mode': 'approx', # 'approx' or 'exact' form of linear system ()
             'extrapolate': False, # perform linear extrapolation for external eval points
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'max_nln_iter': 1, # number of nonlinear iterations
+            'max_nln_iter': 0, # number of nonlinear iterations
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
@@ -296,6 +296,9 @@ class RMTS(SM):
         num['t'] = 0
         for kx in self.training_pts['exact']:
             num['t'] += self.training_pts['exact'][kx][0].shape[0]
+
+        if len(sm_options['smoothness']) == 0:
+            sm_options['smoothness'] = [1.0] * num['x']
 
         self.num = num
 

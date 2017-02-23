@@ -12,6 +12,9 @@ from smt.problems.problem import Problem
 
 class Carre(Problem):
 
+    def _declare_options(self):
+        self.options.declare('name', 'Carre', types=str)
+
     def _initialize(self):
         self.xlimits[:, 0] = -10.
         self.xlimits[:, 1] =  10.

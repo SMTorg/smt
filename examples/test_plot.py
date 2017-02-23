@@ -13,7 +13,7 @@ from smt.rmts import RMTS
 from smt.mbr import MBR
 
 
-ndim = 3
+ndim = 1
 prob = Carre(ndim=ndim)
 prob = TensorProduct(ndim=ndim, func='tanh', width=2.)
 sampling = lhs_center
@@ -24,6 +24,8 @@ sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
     'line_search': 'backtracking', 'max_print_depth': 4,
 }, {})
+
+sm = IDW({'name':'IDW'},{'global':False})
 
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 

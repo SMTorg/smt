@@ -17,12 +17,18 @@ def get_solver(solver):
         return DirectSolver(alg=solver)
     elif solver == 'krylov':
         return KrylovSolver()
+    elif solver == 'krylov-lu':
+        return KrylovSolver(pc='lu')
     elif solver == 'gs' or solver == 'jacobi':
         return StationarySolver(solver=solver)
     elif solver == 'mg':
         return MultigridSolver()
     elif isinstance(solver, LinearSolver):
         return solver
+    elif solver == 'null':
+        return NullSolver()
+    elif solver == None:
+        return None
 
 
 class Callback(object):
@@ -138,7 +144,7 @@ class KrylovSolver(LinearSolver):
     def _declare_options(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
-        self.options.declare('pc', 'nopc', values=['ilu', 'lu', 'nopc', 'gs', 'jacobi'],
+        self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi'],
                              types=LinearSolver)
         self.options.declare('ilimit', 100, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))
@@ -149,21 +155,12 @@ class KrylovSolver(LinearSolver):
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
 
-            if self.options['pc'] == 'nopc':
-                pc_solver = None
-            elif self.options['pc'] == 'lu' or self.options['pc'] == 'ilu':
-                pc_solver = DirectSolver(alg=self.options['pc'])
-            elif self.options['pc'] == 'gs' or self.options['pc'] == 'jacobi':
-                pc_solver = StationarySolver(solver=self.options['pc'], damping=1.0, ilimit=1)
-            elif self.options['pc'] == 'mg':
-                pc_solver = MultigridSolver(mg_ops=mg_ops)
-            elif isinstance(self.options['pc'], LinearSolver):
-                pc_solver = self.options['pc']
+            pc_solver = get_solver(self.options['pc'])
 
             if pc_solver is not None:
                 pc_solver._initialize(mtx, printer, mg_matrices=mg_matrices)
                 self.pc_solver = pc_solver
-                self.pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=solver.solve)
+                self.pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=pc_solver._solve)
             else:
                 self.pc_solver = None
                 self.pc_op = None
@@ -329,16 +326,7 @@ class MultigridSolver(LinearSolver):
             self.mg_sol = [np.zeros(self.mtx.shape[0])]
             self.mg_rhs = [np.zeros(self.mtx.shape[0])]
 
-            if self.options['solver'] == 'null':
-                solver = NullSolver()
-            elif self.options['solver'] == 'gs' or self.options['solver'] == 'jacobi':
-                solver = StationarySolver(solver=self.options['solver'], damping=1.0, ilimit=5,
-                                          interval=10)
-            elif self.options['solver'] == 'krylov':
-                solver = KrylovSolver(solver='gmres', pc='nopc', interval=10,
-                                      ilimit=101, atol=1e-15)
-            elif isinstance(self.options['solver'], LinearSolver):
-                solver = self.options['solver']
+            solver = get_solver(self.options['solver'])
 
             mg_solver = solver._clone()
             mg_solver._initialize(mtx, printer, mg_matrices=mg_matrices)

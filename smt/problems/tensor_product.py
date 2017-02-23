@@ -12,6 +12,7 @@ from smt.problems.problem import Problem
 class TensorProduct(Problem):
 
     def _declare_options(self):
+        self.options.declare('name', 'TP', types=str)
         self.options.declare('func', values=['cos', 'exp', 'tanh'])
         self.options.declare('width', 1., types=(float, int))
 

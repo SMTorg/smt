@@ -76,6 +76,6 @@ class IDW(SM):
         xt = np.vstack(xt_list)
         yt = np.vstack(yt_list)
 
-        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt,self.sm_options['p'], x, xt)
+        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.sm_options['p'], x, xt)
 
         return mtx.dot(yt)
