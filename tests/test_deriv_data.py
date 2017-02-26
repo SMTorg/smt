@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 import numpy as np
 import unittest
+import inspect
 
 from six import iteritems
 from collections import OrderedDict
@@ -24,6 +25,8 @@ try:
 except:
     compiled_available = False
 
+
+print_output = False
 
 class Test(SMTestCase):
 
@@ -70,7 +73,11 @@ class Test(SMTestCase):
         self.ge_t_errors = ge_t_errors
         self.ge_e_errors = ge_e_errors
 
-    def run_test(self, pname, sname):
+    def run_test(self):
+        method_name = inspect.stack()[1][3]
+        pname = method_name.split('_')[1]
+        sname = method_name.split('_')[2]
+
         if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
             return
 
@@ -124,8 +131,9 @@ class Test(SMTestCase):
         ge_t_error = sm.compute_rms_error()
         ge_e_error = sm.compute_rms_error(xe, ye)
 
-        print('%8s %6s %18.9e %18.9e %18.9e %18.9e'
-              % (pname[:6], sname, t_error, e_error, ge_t_error, ge_e_error))
+        if print_output:
+            print('%8s %6s %18.9e %18.9e %18.9e %18.9e'
+                  % (pname[:6], sname, t_error, e_error, ge_t_error, ge_e_error))
 
         self.assert_error(t_error, 0., self.t_errors[sname])
         self.assert_error(e_error, 0., self.e_errors[sname])
@@ -136,48 +144,41 @@ class Test(SMTestCase):
     # Function: carre
 
     def test_carre_RMTS(self):
-        method = self.test_carre_RMTS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     def test_carre_MBR(self):
-        method = self.test_carre_MBR
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     # --------------------------------------------------------------------
     # Function: exp
 
     def test_exp_RMTS(self):
-        method = self.test_exp_RMTS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     def test_exp_MBR(self):
-        method = self.test_exp_MBR
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     # --------------------------------------------------------------------
     # Function: tanh
 
     def test_tanh_RMTS(self):
-        method = self.test_tanh_RMTS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     def test_tanh_MBR(self):
-        method = self.test_tanh_MBR
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     # --------------------------------------------------------------------
     # Function: cos
 
     def test_cos_RMTS(self):
-        method = self.test_cos_RMTS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
     def test_cos_MBR(self):
-        method = self.test_cos_MBR
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+        self.run_test()
 
 
 if __name__ == '__main__':
+    print_output = True
     print('%6s %8s %18s %18s %18s %18s'
           % ('SM', 'Problem', 'Train. pt. error', 'Test pt. error', 'GE tr. pt. error', 'GE test pt. error'))
     unittest.main()
