@@ -40,29 +40,25 @@ class Test(SMTestCase):
         problems['cos'] = TensorProduct(ndim=ndim, func='cos')
 
         sms = OrderedDict()
-        sms['LS'] = LS()
-        sms['PA2'] = PA2()
-        sms['KRG'] = KPLS({'name':'KRG','n_comp':ndim, 'theta0': [1.0]*ndim})
         if compiled_available:
-            sms['IDW'] = IDW()
             sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
             sms['MBR'] = MBR({'name':'MBR', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         t_errors = {}
-        t_errors['LS'] = 1.0
-        t_errors['PA2'] = 1.0
-        t_errors['KRG'] = 1e-6
-        t_errors['IDW'] = 1e-15
         t_errors['RMTS'] = 1e-6
         t_errors['MBR'] = 1e-2
 
         e_errors = {}
-        e_errors['LS'] = 1.5
-        e_errors['PA2'] = 1.5
-        e_errors['KRG'] = 1e-2
-        e_errors['IDW'] = 1.0
         e_errors['RMTS'] = 1e-1
         e_errors['MBR'] = 1e-1
+
+        ge_t_errors = {}
+        ge_t_errors['RMTS'] = 1e-4
+        ge_t_errors['MBR'] = 1e-2
+
+        ge_e_errors = {}
+        ge_e_errors['RMTS'] = 1e-1
+        ge_e_errors['MBR'] = 1e-1
 
         self.nt = nt
         self.ne = ne
@@ -71,6 +67,8 @@ class Test(SMTestCase):
         self.sms = sms
         self.t_errors = t_errors
         self.e_errors = e_errors
+        self.ge_t_errors = ge_t_errors
+        self.ge_e_errors = ge_e_errors
 
     def run_test(self, pname, sname):
         if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
@@ -81,10 +79,16 @@ class Test(SMTestCase):
         np.random.seed(0)
         xt = self.sampling(prob.xlimits, self.nt)
         yt = prob(xt)
+        dyt = {}
+        for kx in range(prob.xlimits.shape[0]):
+            dyt[kx] = prob(xt, kx=kx)
 
         np.random.seed(1)
         xe = self.sampling(prob.xlimits, self.ne)
         ye = prob(xe)
+        dye = {}
+        for kx in range(prob.xlimits.shape[0]):
+            dye[kx] = prob(xe, kx=kx)
 
         sm0 = self.sms[sname]
 
@@ -103,30 +107,33 @@ class Test(SMTestCase):
         t_error = sm.compute_rms_error()
         e_error = sm.compute_rms_error(xe, ye)
 
-        print('%8s %6s %18.9e %18.9e'
-              % (pname[:6], sname, t_error, e_error))
+        sm = sm0.__class__()
+        sm.sm_options = dict(sm0.sm_options)
+        sm.printf_options = dict(sm0.printf_options)
+        sm.sm_options['xlimits'] = prob.xlimits
+        sm.printf_options['global'] = False
+
+        sm.training_pts = {'exact': {}}
+        sm.add_training_pts('exact', xt, yt)
+        for kx in range(prob.xlimits.shape[0]):
+            sm.add_training_pts('exact', xt, dyt[kx], kx)
+
+        with Silence():
+            sm.train()
+
+        ge_t_error = sm.compute_rms_error()
+        ge_e_error = sm.compute_rms_error(xe, ye)
+
+        print('%8s %6s %18.9e %18.9e %18.9e %18.9e'
+              % (pname[:6], sname, t_error, e_error, ge_t_error, ge_e_error))
 
         self.assert_error(t_error, 0., self.t_errors[sname])
         self.assert_error(e_error, 0., self.e_errors[sname])
+        self.assert_error(ge_t_error, 0., self.ge_t_errors[sname])
+        self.assert_error(ge_e_error, 0., self.ge_e_errors[sname])
 
     # --------------------------------------------------------------------
     # Function: carre
-
-    def test_carre_LS(self):
-        method = self.test_carre_LS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_carre_PA2(self):
-        method = self.test_carre_PA2
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_carre_KRG(self):
-        method = self.test_carre_KRG
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_carre_IDW(self):
-        method = self.test_carre_IDW
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
 
     def test_carre_RMTS(self):
         method = self.test_carre_RMTS
@@ -139,22 +146,6 @@ class Test(SMTestCase):
     # --------------------------------------------------------------------
     # Function: exp
 
-    def test_exp_LS(self):
-        method = self.test_exp_LS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_exp_PA2(self):
-        method = self.test_exp_PA2
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_exp_KRG(self):
-        method = self.test_exp_KRG
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_exp_IDW(self):
-        method = self.test_exp_IDW
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
     def test_exp_RMTS(self):
         method = self.test_exp_RMTS
         self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
@@ -165,22 +156,6 @@ class Test(SMTestCase):
 
     # --------------------------------------------------------------------
     # Function: tanh
-
-    def test_tanh_LS(self):
-        method = self.test_tanh_LS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_tanh_PA2(self):
-        method = self.test_tanh_PA2
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_tanh_KRG(self):
-        method = self.test_tanh_KRG
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_tanh_IDW(self):
-        method = self.test_tanh_IDW
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
 
     def test_tanh_RMTS(self):
         method = self.test_tanh_RMTS
@@ -193,22 +168,6 @@ class Test(SMTestCase):
     # --------------------------------------------------------------------
     # Function: cos
 
-    def test_cos_LS(self):
-        method = self.test_cos_LS
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_cos_PA2(self):
-        method = self.test_cos_PA2
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_cos_KRG(self):
-        method = self.test_cos_KRG
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
-    def test_cos_IDW(self):
-        method = self.test_cos_IDW
-        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
-
     def test_cos_RMTS(self):
         method = self.test_cos_RMTS
         self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
@@ -219,6 +178,6 @@ class Test(SMTestCase):
 
 
 if __name__ == '__main__':
-    print('%6s %8s %18s %18s'
-          % ('SM', 'Problem', 'Train. pt. error', 'Test pt. error'))
+    print('%6s %8s %18s %18s %18s %18s'
+          % ('SM', 'Problem', 'Train. pt. error', 'Test pt. error', 'GE tr. pt. error', 'GE test pt. error'))
     unittest.main()

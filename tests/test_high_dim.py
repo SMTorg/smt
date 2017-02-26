@@ -27,7 +27,7 @@ except:
 
 class Test(SMTestCase):
 
-    def test_all(self):
+    def setUp(self):
         ndim = 10
         nt = 500
         ne = 100
@@ -35,9 +35,9 @@ class Test(SMTestCase):
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
-        problems['tp-exp'] = TensorProduct(ndim=ndim, func='exp')
-        problems['tp-tanh'] = TensorProduct(ndim=ndim, func='tanh')
-        problems['tp-cos'] = TensorProduct(ndim=ndim, func='cos')
+        problems['exp'] = TensorProduct(ndim=ndim, func='exp')
+        problems['tanh'] = TensorProduct(ndim=ndim, func='tanh')
+        problems['cos'] = TensorProduct(ndim=ndim, func='cos')
 
         sms = OrderedDict()
         sms['LS'] = LS()
@@ -54,40 +54,130 @@ class Test(SMTestCase):
 
         e_errors = {}
         e_errors['LS'] = 1.5
-        e_errors['PA2'] = 1.5
-        e_errors['KRG'] = 1e-3
-        e_errors['IDW'] = 1.0
+        e_errors['PA2'] = 2.0
+        e_errors['KRG'] = 2.0
+        e_errors['IDW'] = 1.5
 
-        for pname, prob in iteritems(problems):
+        self.nt = nt
+        self.ne = ne
+        self.sampling = sampling
+        self.problems = problems
+        self.sms = sms
+        self.t_errors = t_errors
+        self.e_errors = e_errors
 
-            np.random.seed(0)
-            xt = sampling(prob.xlimits, nt)
-            yt = prob(xt)
+    def run_test(self, pname, sname):
+        if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
+            return
 
-            np.random.seed(1)
-            xe = sampling(prob.xlimits, ne)
-            ye = prob(xe)
+        prob = self.problems[pname]
 
-            print()
-            for sname, sm0 in iteritems(sms):
+        np.random.seed(0)
+        xt = self.sampling(prob.xlimits, self.nt)
+        yt = prob(xt)
 
-                sm = sm0.__class__()
-                sm.sm_options = dict(sm0.sm_options)
-                sm.printf_options = dict(sm0.printf_options)
-                sm.sm_options['xlimits'] = prob.xlimits
-                sm.printf_options['global'] = False
+        np.random.seed(1)
+        xe = self.sampling(prob.xlimits, self.ne)
+        ye = prob(xe)
 
-                sm.training_pts = {'exact': {}}
-                sm.add_training_pts('exact', xt, yt)
-                with Silence():
-                    sm.train()
+        sm0 = self.sms[sname]
 
-                t_error = sm.compute_rms_error()
-                e_error = sm.compute_rms_error(xe, ye)
-                print('%8s %6s %18.9e %18.9e'
-                      % (pname[:6], sname, t_error, e_error))
-                self.assert_error(t_error, 0., t_errors[sname])
-                # self.assert_error(e_error, 0., e_errors[sname])
+        sm = sm0.__class__()
+        sm.sm_options = dict(sm0.sm_options)
+        sm.printf_options = dict(sm0.printf_options)
+        sm.sm_options['xlimits'] = prob.xlimits
+        sm.printf_options['global'] = False
+
+        sm.training_pts = {'exact': {}}
+        sm.add_training_pts('exact', xt, yt)
+
+        with Silence():
+            sm.train()
+
+        t_error = sm.compute_rms_error()
+        e_error = sm.compute_rms_error(xe, ye)
+
+        print('%8s %6s %18.9e %18.9e'
+              % (pname[:6], sname, t_error, e_error))
+
+        self.assert_error(t_error, 0., self.t_errors[sname])
+        self.assert_error(e_error, 0., self.e_errors[sname])
+
+    # --------------------------------------------------------------------
+    # Function: carre
+
+    def test_carre_LS(self):
+        method = self.test_carre_LS
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_carre_PA2(self):
+        method = self.test_carre_PA2
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_carre_KRG(self):
+        method = self.test_carre_KRG
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_carre_IDW(self):
+        method = self.test_carre_IDW
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    # --------------------------------------------------------------------
+    # Function: exp
+
+    def test_exp_LS(self):
+        method = self.test_exp_LS
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_exp_PA2(self):
+        method = self.test_exp_PA2
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_exp_KRG(self):
+        method = self.test_exp_KRG
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_exp_IDW(self):
+        method = self.test_exp_IDW
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    # --------------------------------------------------------------------
+    # Function: tanh
+
+    def test_tanh_LS(self):
+        method = self.test_tanh_LS
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_tanh_PA2(self):
+        method = self.test_tanh_PA2
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_tanh_KRG(self):
+        method = self.test_tanh_KRG
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_tanh_IDW(self):
+        method = self.test_tanh_IDW
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    # --------------------------------------------------------------------
+    # Function: cos
+
+    def test_cos_LS(self):
+        method = self.test_cos_LS
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_cos_PA2(self):
+        method = self.test_cos_PA2
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_cos_KRG(self):
+        method = self.test_cos_KRG
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
+
+    def test_cos_IDW(self):
+        method = self.test_cos_IDW
+        self.run_test(method.__name__.split('_')[1], method.__name__.split('_')[2])
 
 
 if __name__ == '__main__':
