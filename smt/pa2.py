@@ -102,21 +102,23 @@ class PA2(SM):
 
         return M.T
 
-
-    def evaluate(self,x):
-
+    def evaluate(self, x, kx):
         """
-        Evaluates the model at a set of unknown points
+        Evaluate the surrogate model at x.
 
-        Arguments
-        ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        Parameters
+        ----------
+        x: np.ndarray[n_eval,dim]
+        An array giving the point(s) at which the prediction(s) should be made.
+        kx : int or None
+        None if evaluation of the interpolant is desired.
+        int  if evaluation of derivatives of the interpolant is desired
+             with respect to the kx^{th} input variable (kx is 0-based).
 
         Returns
         -------
-        y : np.ndarray
-            Evaluation point output variable values
+        y : np.ndarray[n_eval,1]
+        - An array with the output values at x.
         """
 
         X = self.respoSurf(x)
