@@ -36,7 +36,7 @@ before_install:
   fi
 - if [ "$OS" = "MacOSX" ]; then
     ./miniconda.sh -b  -p /Users/travis/miniconda;
-    brew install gfortran;
+    brew install gcc;
   fi
 - PATHPREFIX=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "/Users/travis/miniconda/bin"; else echo "/home/travis/miniconda/bin"; fi)
 - export PATH=$PATHPREFIX:$PATH
@@ -44,6 +44,7 @@ before_install:
 #- conda update --yes conda
 
 install:
+- pip install --upgrade pip
 - conda install --yes python=$PY numpy scipy nose
 - pip install git+https://github.com/OpenMDAO/testflo.git
 - pip install -e .
