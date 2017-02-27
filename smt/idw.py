@@ -43,29 +43,29 @@ class IDW(SM):
 
 
     def fit(self):
-
         """
         Train the model
         """
         pass
 
-
-    def evaluate(self, x):
-
+    def evaluate(self, x, kx):
         """
-        Evaluates the model at a set of unknown points
+        Evaluate the surrogate model at x.
 
-        Arguments
-        ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        Parameters
+        ----------
+        x: np.ndarray[n_eval,dim]
+            An array giving the point(s) at which the prediction(s) should be made.
+        kx : int or None
+            None if evaluation of the interpolant is desired.
+            int  if evaluation of derivatives of the interpolant is desired
+                 with respect to the kx^{th} input variable (kx is 0-based).
 
         Returns
         -------
-        y : np.ndarray
-            Evaluation point output variable values
+        y : np.ndarray[n_eval,1]
+            - An array with the output values at x.
         """
-
         n_evals = x.shape[0]
         xt_list = []
         yt_list = []
@@ -76,6 +76,6 @@ class IDW(SM):
         xt = np.vstack(xt_list)
         yt = np.vstack(yt_list)
 
-        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt,self.sm_options['p'], x, xt)
+        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.sm_options['p'], x, xt)
 
         return mtx.dot(yt)

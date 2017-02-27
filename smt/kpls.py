@@ -717,22 +717,23 @@ class KPLS(SM):
 
         return reduced_likelihood_function_value, par
 
-
-    def evaluate(self, x):
-
+    def evaluate(self, x, kx):
         """
-        This function evaluates the Gaussian Process model at x.
+        Evaluate the surrogate model at x.
 
         Parameters
         ----------
         x: np.ndarray[n_eval,dim]
-            - An array giving the point(s) at which the prediction(s) should be
-              made.
+        An array giving the point(s) at which the prediction(s) should be made.
+        kx : int or None
+        None if evaluation of the interpolant is desired.
+        int  if evaluation of derivatives of the interpolant is desired
+             with respect to the kx^{th} input variable (kx is 0-based).
 
         Returns
         -------
         y : np.ndarray[n_eval,1]
-            - An array with the Best Linear Unbiased prediction at x.
+        - An array with the output values at x.
         """
 
         # Initialization

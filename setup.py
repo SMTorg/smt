@@ -22,10 +22,16 @@ setup(name='smt',
     author='Mohamed Amine Bouhlel',
     author_email='mbouhlel@umich.edu',
     license='BSD-3',
-    packages=['smt'],
+    packages=[
+        'smt',
+        'smt/problems',
+        'smt/sampling',
+        'smt/utils',
+    ],
     install_requires=[
     'scikit-learn',
-    'pyDOE'
+    'pyDOE',
+    'pyamg',
     ],
     zip_safe=False,
     ext_modules=ext,

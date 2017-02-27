@@ -1,19 +1,18 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-
-TODO:
-- Address approx vs exact issue
-- Generalize to arbitrary number of outputs
 """
-
 from __future__ import division
 
 import numpy as np
 import scipy.sparse
-import MBRlib
-import smt.utils
-from sm import SM
 from six.moves import range
+
+import MBRlib
+
+from smt.utils.linear_solvers import get_solver
+from smt.utils.line_search import get_line_search_class
+from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
+from smt.sm import SM
 
 
 class MBR(SM):
@@ -45,10 +44,9 @@ class MBR(SM):
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
             'reg': 1e-10, # regularization coeff. for dv block
-            'solver_pc': 'lu',    # Preconditioner: 'ilu', 'lu', or 'nopc'
-            'solver_atol': 1e-15, # Absolute linear system convergence tolerance
-            'solver_ilimit': 100, # Linear system iteration limit
-            'solver_save': True,  # Whether to save linear system solution
+            'solver': 'krylov-lu',    # Linear solver: 'gmres' or 'cg'
+            'mg_factors': [], # Multigrid level
+            'save_solution': True,  # Whether to save linear system solution
         }
         printf_options = {
             'global': True,     # Overriding option to print output
@@ -95,14 +93,14 @@ class MBR(SM):
             nnz = nt * num['order']
             data, rows, cols = MBRlib.compute_jac(kx, 0, nx, nt, nnz,
                 num['order_list'], num['ctrl_list'], t)
-            if kx != 0:
+            if kx > 0:
                 data /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
 
             rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
                 shape=(nt, num['ctrl']))
 
             mtx = mtx + rect_mtx.T * rect_mtx
-            rhs = rect_mtx.T * yt
+            rhs += rect_mtx.T * yt
 
         diag = sm_options['reg'] * np.ones(num['ctrl'])
         arange = np.arange(num['ctrl'])
@@ -110,7 +108,15 @@ class MBR(SM):
         mtx = mtx + reg
 
         sol = np.zeros(rhs.shape)
-        smt.utils.solve_sparse_system(mtx, rhs, sol, sm_options, self.printf_options)
+
+        solver = get_solver(sm_options['solver'])
+
+        with self.printer._timed_context('Initializing linear solver'):
+            solver._initialize(mtx, self.printer)
+
+        for ind_y in range(rhs.shape[1]):
+            with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
+                solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
 
         self.sol = sol
 
@@ -118,33 +124,36 @@ class MBR(SM):
         """
         Train the model
         """
+        checksum = _caching_checksum_sm(self)
+
         filename = '%s.sm' % self.sm_options['name']
-        checksum = smt.utils._caching_checksum(self)
-        success, data = smt.utils._caching_load(filename, checksum)
-        if not success or not self.sm_options['solver_save']:
+        success, data = _caching_load(filename, checksum)
+        if not success or not self.sm_options['save_solution']:
             self._fit()
             data = {'sol': self.sol, 'num': self.num}
-            smt.utils._caching_save(filename, checksum, data)
+            _caching_save(filename, checksum, data)
         else:
             self.sol = data['sol']
             self.num = data['num']
 
-    def evaluate(self, x):
+    def evaluate(self, x, kx):
         """
-        This function evaluates the surrogate model at x.
+        Evaluate the surrogate model at x.
 
         Parameters
         ----------
         x: np.ndarray[n_eval,dim]
-            - An array giving the point(s) at which the prediction(s) should be
-              made.
+        An array giving the point(s) at which the prediction(s) should be made.
+        kx : int or None
+        None if evaluation of the interpolant is desired.
+        int  if evaluation of derivatives of the interpolant is desired
+             with respect to the kx^{th} input variable (kx is 0-based).
 
         Returns
         -------
         y : np.ndarray[n_eval,1]
-            - An array with the output values at x.
+        - An array with the output values at x.
         """
-        kx = 0
 
         nx = self.training_pts['exact'][0][0].shape[1]
         ny = self.training_pts['exact'][0][1].shape[1]
