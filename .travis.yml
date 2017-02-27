@@ -8,6 +8,8 @@ os:
   - linux
   - os x
 
+osx_image: xcode8.2
+
 language: generic
 
 env:
