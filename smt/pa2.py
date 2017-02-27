@@ -8,7 +8,7 @@ from __future__ import division
 
 import numpy as np
 import scipy
-from sm import SM
+from smt.sm import SM
 
 
 class PA2(SM):

@@ -15,7 +15,7 @@ import numpy as np
 from scipy import linalg, optimize
 from pyDOE import *
 
-from sm import SM
+from smt.sm import SM
 from pairwise import manhattan_distances
 from  pls import pls as _pls
 

@@ -8,7 +8,7 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from sm import SM
+from smt.sm import SM
 import IDWlib
 
 class IDW(SM):

@@ -7,7 +7,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 from __future__ import division
 
 from sklearn import linear_model
-from sm import SM
+from smt.sm import SM
 
 
 class LS(SM):
