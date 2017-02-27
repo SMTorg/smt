@@ -36,7 +36,7 @@ before_install:
   fi
 - if [ "$OS" = "MacOSX" ]; then
     ./miniconda.sh -b  -p /Users/travis/miniconda;
-    brew install gfortran
+    brew install gfortran;
   fi
 - PATHPREFIX=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "/Users/travis/miniconda/bin"; else echo "/home/travis/miniconda/bin"; fi)
 - export PATH=$PATHPREFIX:$PATH
