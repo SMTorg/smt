@@ -61,8 +61,8 @@ calculate the pair-wise point distances of a matrix
         return []
 
     d = []
-    for i in xrange(n - 1):
-        for j in xrange(i + 1, n):
+    for i in range(n - 1):
+        for j in range(i + 1, n):
             d.append((sum((x[j, :] - x[i, :])**2))**0.5)
 
     return np.array(d)
@@ -78,12 +78,12 @@ generate the intervals
     a = cut[:samples]
     b = cut[1:samples + 1]
     rdpoints = np.zeros_like(u)
-    for j in xrange(n):
+    for j in range(n):
         rdpoints[:, j] = u[:, j]*(b-a) + a
 
     # Make the random pairings
     H = np.zeros_like(rdpoints)
-    for j in xrange(n):
+    for j in range(n):
         order = np.random.permutation(range(samples))
         H[:, j] = rdpoints[order, j]
 
@@ -103,7 +103,7 @@ generate the intervals
 
     # Make the random pairings
     H = np.zeros_like(u)
-    for j in xrange(n):
+    for j in range(n):
         H[:, j] = np.random.permutation(_center)
 
     return H
@@ -114,7 +114,7 @@ maximin
     """
     maxdist = 0
     # Maximize the minimum distance between points
-    for i in xrange(iterations):
+    for i in range(iterations):
         if lhstype=='maximin':
             Hcandidate = _lhsclassic(n, samples)
         else:
@@ -134,7 +134,7 @@ correlation des points
     mincorr = np.inf
 
     # Minimize the components correlation coefficients
-    for i in xrange(iterations):
+    for i in range(iterations):
         # Generate a random LHS
         Hcandidate = _lhsclassic(n, samples)
         R = np.corrcoef(Hcandidate)

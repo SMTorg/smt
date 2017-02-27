@@ -109,7 +109,7 @@ print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 t = KPLS({'name':'GEKPLS','n_comp':2,'theta0': [1e-2,1e-2],'xlimits':xlimits},{})
 t.add_training_pts('exact',xt,yt)
 # Add the gradient information
-for i in xrange(dim):
+for i in range(dim):
     t.add_training_pts('exact',xt,yd[:, i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()

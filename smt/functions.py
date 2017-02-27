@@ -49,7 +49,7 @@ def l1_cross_distances(X):
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
 
-    for k in xrange(n_samples - 1):
+    for k in range(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
@@ -104,12 +104,12 @@ def compute_pls(kpls,X,y,opt=0):
         #GEKPLS-indGEKPLS-GEHKPLS
         coeff_pls = np.zeros((kpls.nt,kpls.dim,kpls.sm_options['ncomp']))
 
-        for i in xrange(kpls.nt):
+        for i in range(kpls.nt):
             _X = np.zeros((kpls.dim+1,kpls.dim))
             _y = np.zeros((kpls.dim+1,1))
             _X[0,:] = X[i,:].copy()
             _y[0,0] = y[i,0].copy()
-            for j in xrange(1,kpls.dim+1):
+            for j in range(1,kpls.dim+1):
                 _X[j,:] = _X[0,:]
                 _X[j,j-1] +=kpls.sm_options['delta_x']*(kpls.sm_options['xlimits'][j-1,1]-
                                                         kpls.sm_options['xlimits'][j-1,0])
@@ -173,11 +173,11 @@ def mog_logLikelihood(x, piVec, muVec, sigma2Vec):
     # log likelihood
     L = 0.0
 
-    for i in xrange(N):
+    for i in range(N):
         # compute the likelihood of the i-th data
         xi = x[i,0]
         tmp = 0.0
-        for k in xrange(nK):
+        for k in range(nK):
             pik = piVec[k]
             muk = muVec[k]
             s2k = sigma2Vec[k]
@@ -208,7 +208,7 @@ def mixtureofgaussians(nclusters, tol, data):
     muVec = np.zeros(nclusters)
     sigma2Vec = np.zeros(nclusters)
     piVec = np.zeros(nclusters)
-    for i in xrange(nclusters):
+    for i in range(nclusters):
         if (i != nclusters-1):
             xclusters = data[(i*ntmp):((i+1)*ntmp),0]
         else:
@@ -227,10 +227,10 @@ def mixtureofgaussians(nclusters, tol, data):
     iter = 0
     while (error > tol):
         # E-step, evaluate responsibilities
-        for n in xrange(N):
+        for n in range(N):
             xn = data[n,0]
             num = np.zeros(nclusters)
-            for k in xrange(nclusters):
+            for k in range(nclusters):
                 pik = piVec[k]
                 muk = muVec[k]
                 s2k = sigma2Vec[k]
@@ -246,7 +246,7 @@ def mixtureofgaussians(nclusters, tol, data):
                 denom = 1e-5
 
             # normalize
-            for k in xrange(nclusters):
+            for k in range(nclusters):
                 gamma[n,k] = num[k]/denom
 
 
@@ -254,12 +254,12 @@ def mixtureofgaussians(nclusters, tol, data):
 
         # Nk = sum(gamma[:,k]), the effective number of points assigned to the k-th cluster
         Nk = np.zeros(nclusters)
-        for k in xrange(nclusters):
+        for k in range(nclusters):
             # update muk
             Nk[k] = sum(gamma[:,k])
 
             muk = 0.0
-            for n in xrange(N):
+            for n in range(N):
                 muk += gamma[n,k]*data[n,0]
 
             muk = muk/Nk[k]
@@ -268,7 +268,7 @@ def mixtureofgaussians(nclusters, tol, data):
 
             # update sigma2k
             s2k = 0.0
-            for n in xrange(N):
+            for n in range(N):
                 s2k += gamma[n,k]*((data[n,0]-muVec[k])**2)
 
             s2k = s2k/Nk[k]
@@ -288,10 +288,10 @@ def mixtureofgaussians(nclusters, tol, data):
 
     # list of indices of data that belong to each cluster
     indClusters = []
-    for k in xrange(nclusters):
+    for k in range(nclusters):
         indClusters.append([])
 
-    for n in xrange(N):
+    for n in range(N):
         # find the cluster index where the posterior probability is the highest
         indMax = np.argsort(gamma[n,:])
         indMax = indMax[-1]
@@ -331,11 +331,11 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     indmembers = []
     xmembers = []
     # initialize
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         indmembers.append([])
         xmembers.append([])
 
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         indmembers[j] = [i for (i,val) in enumerate(t) if val == j]
         xmembers[j] = x[indmembers[j],:].copy()
         nmembers[j] = len(indmembers[j])
@@ -345,26 +345,26 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     # compute mean of each cluster
     mu = np.zeros((nclusters, Ndv))
 
-    for j in xrange(nclusters):
-        for d in xrange(Ndv):
+    for j in range(nclusters):
+        for d in range(Ndv):
             mu[j,d] = np.sum(xmembers[j][:,d])
         mu[j,:] = mu[j,:]/nmembers[j]
 
     # compute the class covariance matrix
     Sigma = []
     # initialize
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         Sigma.append([])
 
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         Sigma[j] = np.zeros((Ndv, Ndv))
 
-        for n in xrange(nmembers[j]):
+        for n in range(nmembers[j]):
             tmp_Sigma = np.zeros((Ndv, Ndv))
 
             vec = xmembers[j][n,:] - mu[j,:]
-            for p in xrange(Ndv):
-                for r in xrange(Ndv):
+            for p in range(Ndv):
+                for r in range(Ndv):
                     tmp_Sigma[p,r] = vec[p]*vec[r]
 
             Sigma[j] += tmp_Sigma
@@ -374,10 +374,10 @@ def gaussianclassifier(x,t,regularize=True, regConstant=0.01):
     if regularize:
         reg = np.zeros((Ndv, Ndv))
 
-        for d in xrange(Ndv):
+        for d in range(Ndv):
             reg[d,d] = regConstant
 
-        for j in xrange(nclusters):
+        for j in range(nclusters):
             Sigma[j] += reg
 
     return pi, mu, Sigma
@@ -396,11 +396,11 @@ def eval_gaussianClassifier(xevals, pi, mu, Sigma, weight=1.0, bias=0.0):
     classList = np.zeros(Nevals, dtype=int)
     clusterCount = np.zeros(nclusters, dtype=int)
 
-    for n in xrange(Nevals):
+    for n in range(Nevals):
         x = xevals[n,:]
 
         post = np.zeros(nclusters)
-        for j in xrange(nclusters):
+        for j in range(nclusters):
             # compute the argument of the logistic function
             post[j] = computeaquadratic(pi[j], mu[j,:], Sigma[j], x)
             post[j] = np.exp(weight*post[j]+bias)
@@ -423,10 +423,10 @@ def eval_gaussianClassifier(xevals, pi, mu, Sigma, weight=1.0, bias=0.0):
 
     indevalsClusters = []
     # initialize
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         indevalsClusters.append(np.zeros(clusterCount[j], dtype=int))
 
-    for j in xrange(nclusters):
+    for j in range(nclusters):
         indevalsClusters[j] = [i for (i,val) in enumerate(classList) if val == j]
 
     return indevalsClusters, posteriors, classList, clusterCount

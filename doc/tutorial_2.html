@@ -1851,7 +1851,7 @@ y = \sum\limits_{i=1}^{\text{dim}}x_i^2,
 <p>      # Add the training points</p>
 <p>      t.add training pts('exact',xt,yt)</p>
 <p>      # Add the gradient information if available</p>
-<p>      for i in xrange(dim):</p>
+<p>      for i in range(dim):</p>
 <p>           t.add training pts('exact',xt,yd[:, i],kx=i)</p>
 <p>Next, we build the surrogate model through the &quot;train&quot; method</p>
 <p>      # Train the model</p>
@@ -4409,7 +4409,7 @@ SZKUK4YTSZKUK4YTSZKUK4YTSZKUK4YTSZKUK/8XI7lLSq+xffkAAAAASUVORK5CYII=
 <span class="n">t</span> <span class="o">=</span> <span class="n">KPLS</span><span class="p">({</span><span class="s">&#39;name&#39;</span><span class="p">:</span><span class="s">&#39;GEKPLS&#39;</span><span class="p">,</span><span class="s">&#39;n_comp&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="s">&#39;theta0&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">],</span><span class="s">&#39;xlimits&#39;</span><span class="p">:</span><span class="n">xlimits</span><span class="p">},{})</span>
 <span class="n">t</span><span class="o">.</span><span class="n">add_training_pts</span><span class="p">(</span><span class="s">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">)</span>
 <span class="c"># Add the gradient information</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
     <span class="n">t</span><span class="o">.</span><span class="n">add_training_pts</span><span class="p">(</span><span class="s">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yd</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">yt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">)),</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
 
 <span class="n">t</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
