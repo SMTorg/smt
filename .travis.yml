@@ -6,7 +6,6 @@ sudo: false
 
 os:
   - linux
-  - os x
 
 osx_image: xcode8.2
 
