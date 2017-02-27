@@ -16,7 +16,7 @@ pyDOE >= Version 0.3.8
 # How do I use the SMT?
 Clone the repository from github then run:
 
-pip install name_folder
+pip install -e name_folder
 
 or
 
@@ -26,7 +26,7 @@ Install the toolbox by running:
 
 sudo python setup.py install        (Linux)
 
-or 
+or
 
 python setup.py install             (Windows)
 
@@ -37,7 +37,7 @@ Go to the folder 'examples' and run:
 ## Linux
 python test_linux.py
 
-If several versions of Python are installed on the computer, run: 
+If several versions of Python are installed on the computer, run:
 
 sudo python test_linux.py
 
