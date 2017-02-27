@@ -12,7 +12,7 @@ import numpy as np
 from scipy import sparse
 
 import six as six
-from fixes import safe_copy
+from smt.fixes import safe_copy
 
 
 class DataConversionWarning(UserWarning):

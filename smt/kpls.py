@@ -16,8 +16,8 @@ from scipy import linalg, optimize
 from pyDOE import *
 
 from smt.sm import SM
-from pairwise import manhattan_distances
-from  pls import pls as _pls
+from smt.pairwise import manhattan_distances
+from smt.pls import pls as _pls
 
 def standardization(X,y,copy=False):
 
