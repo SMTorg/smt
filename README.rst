@@ -1,4 +1,4 @@
-Linux: [![Build Status](https://travis-ci.org/hwangjt/SMT.svg?branch=master)](https://travis-ci.org/hwangjt/SMT)   
+Linux: [![Build Status](https://travis-ci.org/hwangjt/SMT.svg?branch=master)](https://travis-ci.org/hwangjt/SMT)
 Windows: [![Build status](https://ci.appveyor.com/api/projects/status/1dd3wovs981r86e0?svg=true)](https://ci.appveyor.com/project/hwangjt/smt)
 
 # README
@@ -19,9 +19,9 @@ pyDOE >= Version 0.3.8
 # Installation
 Clone the repository from github then run:
 
-.. code-block:: bash
-
-  pip install -e name_folder
+```
+pip install -e name_folder
+```
 
 or
 
@@ -29,15 +29,15 @@ Go to the main folder.
 
 Install the toolbox by running:
 
-.. code-block:: bash
-
-  sudo python setup.py install        (Linux)
+```
+sudo python setup.py install        (Linux)
+```
 
 or
 
-.. code-block:: bash
-
-  python setup.py install             (Windows)
+```
+python setup.py install             (Windows)
+```
 
 # Usage
 
@@ -47,18 +47,15 @@ For examples demonstrating how to use SMT, go to the 'examples' folder.
 
 To run tests, first install the python testing framework using:
 
-.. code-block:: bash
-
-  pip install git+https://github.com/OpenMDAO/testflo.git
+```
+pip install git+https://github.com/OpenMDAO/testflo.git
+```
 
 and run
 
-.. code-block:: bash
-
-  testflo
-
-## Windows
-python test_windows.py
+```
+testflo
+```
 
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
