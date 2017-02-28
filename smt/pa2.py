@@ -8,7 +8,7 @@ from __future__ import division
 
 import numpy as np
 import scipy
-from sm import SM
+from smt.sm import SM
 
 
 class PA2(SM):
@@ -91,12 +91,12 @@ class PA2(SM):
         M = np.zeros((n_app,n))
         x = x.T
         M[0,:] = np.ones((1,n))
-        for i in xrange(1,dim+1):
+        for i in range(1,dim+1):
             M[i,:] = x[i-1,:]
-        for i in xrange(dim+1,2*dim+1):
+        for i in range(dim+1,2*dim+1):
             M[i,:]=x[i-(dim+1),:]**2
-        for i in xrange(dim-1):
-            for j in xrange(i+1,dim):
+        for i in range(dim-1):
+            for j in range(i+1,dim):
                 k = int(2*dim+2+(i)*dim-((i+1)*(i))/2+(j-(i+2)))
                 M[k,:] = x[i,:]*x[j,:]
 

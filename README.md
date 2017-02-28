@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/SMTorganization/SMT.svg?branch=master)](https://travis-ci.org/SMTorganization/SMT) (Linux)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) (Windows)
+
 # README
 This repository includes the codes for the surrogate model toolbox (SMT).
 
@@ -13,10 +17,12 @@ Sklearn  >= Version 0.13.1
 
 pyDOE >= Version 0.3.8
 
-# How do I use the SMT?
+# Installation
 Clone the repository from github then run:
 
-pip install name_folder
+```
+pip install -e name_folder
+```
 
 or
 
@@ -24,25 +30,33 @@ Go to the main folder.
 
 Install the toolbox by running:
 
+```
 sudo python setup.py install        (Linux)
+```
 
-or 
+or
 
+```
 python setup.py install             (Windows)
+```
 
-# How do I test the SMT?
+# Usage
 
-Go to the folder 'examples' and run:
+For examples demonstrating how to use SMT, go to the 'examples' folder.
 
-## Linux
-python test_linux.py
+# Tests
 
-If several versions of Python are installed on the computer, run: 
+To run tests, first install the python testing framework using:
 
-sudo python test_linux.py
+```
+pip install git+https://github.com/OpenMDAO/testflo.git
+```
 
-## Windows
-python test_windows.py
+and run
+
+```
+testflo
+```
 
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.

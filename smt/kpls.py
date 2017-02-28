@@ -15,9 +15,9 @@ import numpy as np
 from scipy import linalg, optimize
 from pyDOE import *
 
-from sm import SM
-from pairwise import manhattan_distances
-from  pls import pls as _pls
+from smt.sm import SM
+from smt.pairwise import manhattan_distances
+from smt.pls import pls as _pls
 
 def standardization(X,y,copy=False):
 
@@ -110,7 +110,7 @@ def l1_cross_distances(X):
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
 
-    for k in xrange(n_samples - 1):
+    for k in range(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
@@ -249,14 +249,14 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     elif opt == 1:
         #GEKPLS-KPLS
         coeff_pls = np.zeros((nt,dim,n_comp))
-        for i in xrange(nt):
+        for i in range(nt):
             if dim >= 3:
                 sign = np.roll(bbdesign(dim,center=1),1,axis=0)
                 _X = np.zeros((sign.shape[0],dim))
                 _y = np.zeros((sign.shape[0],1))
                 sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
                 _X = X[i,:]+ sign
-                for j in xrange(1,dim+1):
+                for j in range(1,dim+1):
                     sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
                 _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
             else:
@@ -795,11 +795,11 @@ class KPLS(SM):
 
         key, limit, _rhobeg = True, 10*self.sm_options['n_comp'], 0.5
 
-        for ii in xrange(self.sm_options['kriging-step']+1):
+        for ii in range(self.sm_options['kriging-step']+1):
             best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
                 constraints = [], [], [], []
 
-            for i in xrange(self.sm_options['n_comp']):
+            for i in range(self.sm_options['n_comp']):
                 constraints.append(lambda log10t,i=i:
                                    log10t[i] - np.log10(1e-6))
                 constraints.append(lambda log10t,i=i:

@@ -69,7 +69,7 @@ class Silence:
     >>>
 
     """
-    def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='w'):
+    def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):
         self.outfiles = stdout, stderr
         self.combine = (stdout == stderr)
         self.mode = mode

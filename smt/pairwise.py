@@ -11,7 +11,7 @@
 import numpy as np
 from scipy.sparse import issparse
 
-from validation import atleast2d_or_csr
+from smt.validation import atleast2d_or_csr
 
 def check_pairwise_arrays(X, Y):
     """ Set X and Y appropriately and checks inputs

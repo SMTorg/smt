@@ -1,0 +1,31 @@
+build: false
+
+version: 0.1.{build}
+
+platform:
+  - x64
+
+environment:
+  matrix:
+    - PYTHON: 2.7
+    - PYTHON: 3.4
+
+init:
+  - set CONDA=Miniconda
+  - if "%PYTHON%" == "3.4" (set CONDA=%CONDA%3)
+  - if "%PLATFORM%" == "x64" (set CONDA=%CONDA%-x64)
+  - echo %CONDA%
+  - set PATH=C:\%CONDA%;C:\%CONDA%\Scripts;%PATH%
+  - conda config --set always_yes yes
+  # We need to do this first as other commands may not work with older versions of conda.
+  - conda update conda
+  - conda install numpy scipy nose hdf5 --quiet
+
+install:
+  - pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
+  #Grab testflo for running test, to ensure examples are run
+  - pip install git+https://github.com/OpenMDAO/testflo.git
+  - pip install -e .
+
+test_script:
+  - testflo . -n 1

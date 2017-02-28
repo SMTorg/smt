@@ -10,7 +10,7 @@ from smt.problems.carre import Carre
 from smt.problems.tensor_product import TensorProduct
 from smt.sampling.lhs import lhs_center
 from smt.sampling.random import random
-from smt.utils.testing import SMTestCase
+from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
 from smt.ls import LS
