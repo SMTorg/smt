@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/hwangjt/SMT.svg?branch=master)](https://travis-ci.org/hwangjt/SMT) (Linux)
+[![Build Status](https://travis-ci.org/SMTorganization/SMT.svg?branch=master)](https://travis-ci.org/SMTorganization/SMT) (Linux)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/1dd3wovs981r86e0?svg=true)](https://ci.appveyor.com/project/hwangjt/smt) (Windows)
+[![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) (Windows)
 
 # README
 This repository includes the codes for the surrogate model toolbox (SMT).
