@@ -16,10 +16,12 @@ Sklearn  >= Version 0.13.1
 
 pyDOE >= Version 0.3.8
 
-# How do I use the SMT?
+# Installation
 Clone the repository from github then run:
 
-pip install -e name_folder
+.. code-block:: bash
+
+  pip install -e name_folder
 
 or
 
@@ -27,22 +29,33 @@ Go to the main folder.
 
 Install the toolbox by running:
 
-sudo python setup.py install        (Linux)
+.. code-block:: bash
+
+  sudo python setup.py install        (Linux)
 
 or
 
-python setup.py install             (Windows)
+.. code-block:: bash
 
-# How do I test the SMT?
+  python setup.py install             (Windows)
 
-Go to the folder 'examples' and run:
+# Usage
 
-## Linux
-python test_linux.py
+For examples demonstrating how to use SMT, go to the 'examples' folder.
 
-If several versions of Python are installed on the computer, run:
+# Tests
 
-sudo python test_linux.py
+To run tests, first install the python testing framework using:
+
+.. code-block:: bash
+
+  pip install git+https://github.com/OpenMDAO/testflo.git
+
+and run
+
+.. code-block:: bash
+
+  testflo
 
 ## Windows
 python test_windows.py
