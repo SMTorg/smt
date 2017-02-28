@@ -3,7 +3,6 @@ build: false
 version: 0.1.{build}
 
 platform:
-  - x86
   - x64
 
 environment:
