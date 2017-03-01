@@ -46,7 +46,7 @@ class RMTS(SM):
             'reg_dv': 1e-10, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
             'mode': 'approx', # 'approx' or 'exact' form of linear system ()
-            'extrapolate': False, # perform linear extrapolation for external eval points
+            'extrapolate': True, # perform linear extrapolation for external eval points
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'max_nln_iter': 0, # number of nonlinear iterations
@@ -145,11 +145,17 @@ class RMTS(SM):
         # the 1-based index of the derivative given by the training point data.
         num = self.num
         sm_options = self.sm_options
+        xlimits = sm_options['xlimits']
 
         reg_cons_dict = {}
         full_jac_dict = {}
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
+
+            xmin = np.min(xt, axis=0)
+            xmax = np.max(xt, axis=0)
+            assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
+            assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
 
             nt = xt.shape[0]
             nnz = nt * num['term']
@@ -493,7 +499,7 @@ class RMTS(SM):
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
             ndx = ne * num['term']
-            dx = RMTS.compute_ext_dist(num['x'], ne, ndx, sm_options['xlimits'], x)
+            dx = RMTSlib.compute_ext_dist(num['x'], ne, ndx, sm_options['xlimits'], x)
             isexternal = np.array(np.array(dx, bool), float)
 
             for ix in range(num['x']):

@@ -15,7 +15,7 @@ from smt.mbr import MBR
 
 ndim = 1
 prob = Carre(ndim=ndim)
-prob = TensorProduct(ndim=ndim, func='tanh', width=2.)
+# prob = TensorProduct(ndim=ndim, func='tanh', width=2.)
 sampling = lhs_center
 
 sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
@@ -24,9 +24,8 @@ sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
     'line_search': 'backtracking', 'max_print_depth': 4,
 }, {})
-
-sm = IDW({'name':'IDW'},{'global':False})
-
+# sm = MBR({'name':'MBR', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim, 'xlimits':prob.xlimits})
+# sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
 nt = 5000 * ndim
@@ -49,7 +48,7 @@ print(sm.compute_rms_error(xe, ye))
 xe = np.zeros((50, ndim))
 for kx in range(ndim):
     xe[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-xe[:, 0] = np.linspace(prob.xlimits[0, 0], prob.xlimits[0, 1], 50)
+xe[:, 0] = np.linspace(1.5*prob.xlimits[0, 0], 1.5*prob.xlimits[0, 1], 50)
 ye = prob(xe)
 y = sm.predict(xe)
 import pylab
