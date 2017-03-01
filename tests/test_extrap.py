@@ -87,10 +87,11 @@ class Test(SMTestCase):
         self.run_test('RMTS', False, False)
 
     def test_rmts_train(self):
-        with self.assertRaises(Exception) as context:
-            self.run_test('RMTS', True, False)
-        self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+        if compiled_available:
+            with self.assertRaises(Exception) as context:
+                self.run_test('RMTS', True, False)
+            self.assertEqual(str(context.exception),
+                             'Training pts above max for 0')
 
     def test_rmts_predict(self):
         self.run_test('RMTS', False, True)
@@ -99,10 +100,11 @@ class Test(SMTestCase):
         self.run_test('MBR', False, False)
 
     def test_mbr_train(self):
-        with self.assertRaises(Exception) as context:
-            self.run_test('MBR', True, False)
-        self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+        if compiled_available:
+            with self.assertRaises(Exception) as context:
+                self.run_test('MBR', True, False)
+            self.assertEqual(str(context.exception),
+                             'Training pts above max for 0')
 
     def test_mbr_predict(self):
         self.run_test('MBR', False, True)
