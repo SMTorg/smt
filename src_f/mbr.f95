@@ -309,3 +309,47 @@ subroutine basis2(k, kpm, t, d, S, i0)
   end do
 
 end subroutine basis2
+
+
+
+subroutine compute_ext_dist(nx, neval, ndx, xlimits, xeval, dx)
+
+  implicit none
+
+  !f2py intent(in) nx, neval, ndx, xlimits, xeval
+  !f2py intent(out) dx
+  !f2py depend(nx) xlimits
+  !f2py depend(neval, nx) xeval
+  !f2py depend(ndx, nx) dx
+
+  ! Input
+  integer, intent(in) :: nx, neval, ndx
+  double precision, intent(in) :: xlimits(nx, 2), xeval(neval, nx)
+
+  ! Output
+  double precision, intent(out) :: dx(ndx, nx)
+
+  ! Working
+  integer :: ieval, ix, iterm, nterm, index
+  double precision :: work(neval, nx)
+
+  work(:, :) = xeval(:, :)
+
+  nterm = ndx / neval
+
+  ! After these 2 do loops, work is the position vector from the
+  ! nearest point in the domain specified by xlimits.
+  do ieval = 1, neval
+     do ix = 1, nx
+        work = xeval(ieval, ix)
+        work = max(xlimits(ix, 1), work)
+        work = min(xlimits(ix, 2), work)
+        work = xeval(ieval, ix) - work
+        do iterm = 1, nterm
+           index = (ieval - 1) * nterm + iterm
+           dx(index, ix) = work(ieval, ix)
+        end do
+     end do
+  end do
+
+end subroutine compute_ext_dist

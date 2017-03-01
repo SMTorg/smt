@@ -43,6 +43,7 @@ class MBR(SM):
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
+            'extrapolate': True, # perform linear extrapolation for external eval points
             'reg': 1e-10, # regularization coeff. for dv block
             'solver': 'krylov-lu',    # Linear solver: 'gmres' or 'cg'
             'mg_factors': [], # Multigrid level
@@ -83,6 +84,11 @@ class MBR(SM):
         xlimits = sm_options['xlimits']
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
+
+            xmin = np.min(xt, axis=0)
+            xmax = np.max(xt, axis=0)
+            assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
+            assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
 
             t = np.zeros(xt.shape)
             for ix in range(nx):
@@ -160,17 +166,42 @@ class MBR(SM):
         ne = x.shape[0]
         xlimits = self.sm_options['xlimits']
         num = self.num
+        sm_options = self.sm_options
 
         t = np.zeros(x.shape)
         for ix in range(nx):
             t[:, ix] = (x[:, ix] - xlimits[ix, 0]) /\
                 (xlimits[ix, 1] - xlimits[ix, 0])
+        t = np.maximum(t, 0. + 1e-15)
+        t = np.minimum(t, 1. - 1e-15)
 
         nnz = ne * num['order']
         data, rows, cols = MBRlib.compute_jac(kx, 0, nx, ne, nnz,
             num['order_list'], num['ctrl_list'], t)
         if kx != 0:
             data /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
+
+        if sm_options['extrapolate']:
+            ndx = ne * num['order']
+            dx = MBRlib.compute_ext_dist(nx, ne, ndx, sm_options['xlimits'], x)
+            isexternal = np.array(np.array(dx, bool), float)
+
+            for ix in range(nx):
+                nnz = ne * num['order']
+                data_tmp, rows, cols = MBRlib.compute_jac(kx, ix+1, nx, ne, nnz,
+                    num['order_list'], num['ctrl_list'], t)
+                data_tmp /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
+                if kx != 0:
+                    data_tmp /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
+                data_tmp *= dx[:, ix]
+
+                # If we are evaluating a derivative (with index kx),
+                # we zero the first order terms for which dx_k = 0.
+                if kx != 0:
+                    data_tmp *= 1 - isexternal[:, kx-1]
+
+                data += data_tmp
+
         rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(ne, num['ctrl']))
 
