@@ -20,7 +20,7 @@ from smt.kpls import KPLS
 try:
     from smt.idw import IDW
     from smt.rmts import RMTS
-    from smt.mbr import MBR
+    from smt.rmtb import RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -74,7 +74,7 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
+        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
             return
 
         prob = self.problems[pname]

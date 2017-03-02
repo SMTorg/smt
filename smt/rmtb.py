@@ -7,7 +7,7 @@ import numpy as np
 import scipy.sparse
 from six.moves import range
 
-import MBRlib
+import RMTBlib
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
@@ -15,11 +15,11 @@ from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
 from smt.rmt import RMT
 
 
-class MBR(RMT):
+class RMTB(RMT):
     """
-    Multi-dimensional B-spline Regression (MBR).
+    Regularized Minimal-energy Tensor-product B-Spline (RMTB) interpolant.
 
-    MBR builds an approximation from a tensor product of B-spline curves.
+    RMTB builds an approximation from a tensor product of B-spline curves.
     In 1-D it is a B-spline curve, in 2-D it is a B-spline surface, in 3-D
     it is a B-spline volume, and so on - it works for any arbitrary number
     of dimensions. However, the training points should preferably be
@@ -32,14 +32,14 @@ class MBR(RMT):
 
     Disadvantages:
     - Training time scales poorly with the # dimensions
-    - The data should be structured - MBR does not handle track data well
-    - MBR approximates, not interpolates - it does not pass through the
+    - The data should be structured - RMTB does not handle track data well
+    - RMTB approximates, not interpolates - it does not pass through the
     training points
     """
 
     def _set_default_options(self):
         sm_options = {
-            'name': 'MBR', # Multi-dimensional B-spline Regression
+            'name': 'RMTB', # Multi-dimensional B-spline Regression
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
@@ -78,7 +78,7 @@ class MBR(RMT):
 
         n = x.shape[0]
         nnz = n * self.num['order']
-        data, rows, cols = MBRlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
+        data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
             self.num['order_list'], self.num['ctrl_list'], t)
         if ix1 != 0:
             data /= xlimits[ix1-1, 1] - xlimits[ix1-1, 0]
@@ -96,13 +96,13 @@ class MBR(RMT):
 
         nt_list = num['ctrl_list'] - num['order_list'] + 1
         nt = np.prod(nt_list)
-        t = MBRlib.compute_quadrature_points(nt, num['x'], nt_list)
+        t = RMTBlib.compute_quadrature_points(nt, num['x'], nt_list)
 
         # Square root of volume of each integration element
         elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
         for kx in range(num['x']):
             nnz = nt * num['order']
-            data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
+            data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
                 num['order_list'], num['ctrl_list'], t)
             data *= elem_vol_sqrt
             data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2

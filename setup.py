@@ -12,8 +12,8 @@ else:
             sources=['src_f/idw.f95']),
         Extension(name='smt.RMTSlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmts.f95', 'src_f/utils.f95']),
-        Extension(name='smt.MBRlib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/mbr.f95', 'src_f/utils.f95']),
+        Extension(name='smt.RMTBlib', extra_compile_args=['-fbounds-check'],
+            sources=['src_f/rmtb.f95', 'src_f/utils.f95']),
     ]
 
 setup(name='smt',

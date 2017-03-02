@@ -10,7 +10,7 @@ from smt.pa2 import PA2
 from smt.kpls import KPLS
 from smt.idw import IDW
 from smt.rmts import RMTS
-from smt.mbr import MBR
+from smt.rmtb import RMTB
 
 
 ndim = 3
@@ -24,7 +24,7 @@ sampling = lhs_center
 #     'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 20,
 #     'line_search': 'backtracking', 'max_print_depth': 4,
 # }, {})
-sm = MBR({'name':'MBR', 'order':[4]*ndim, 'num_ctrl_pts':[15]*ndim, 'xlimits':prob.xlimits,
+sm = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[15]*ndim, 'xlimits':prob.xlimits,
     'max_nln_iter': 20, 'max_print_depth': 4,
     'save_solution': False})
 # sm = IDW({'name':'IDW'},{'global':False})

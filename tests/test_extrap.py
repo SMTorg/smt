@@ -20,7 +20,7 @@ from smt.kpls import KPLS
 try:
     from smt.idw import IDW
     from smt.rmts import RMTS
-    from smt.mbr import MBR
+    from smt.rmtb import RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -42,7 +42,7 @@ class Test(SMTestCase):
         sms = OrderedDict()
         if compiled_available:
             sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
-            sms['MBR'] = MBR({'name':'MBR', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         self.nt = nt
         self.ne = ne
@@ -51,7 +51,7 @@ class Test(SMTestCase):
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
+        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
             return
 
         prob = self.problems['carre']
@@ -96,18 +96,18 @@ class Test(SMTestCase):
     def test_rmts_predict(self):
         self.run_test('RMTS', False, True)
 
-    def test_mbr(self):
-        self.run_test('MBR', False, False)
+    def test_rmtb(self):
+        self.run_test('RMTB', False, False)
 
-    def test_mbr_train(self):
+    def test_rmtb_train(self):
         if compiled_available:
             with self.assertRaises(Exception) as context:
-                self.run_test('MBR', True, False)
+                self.run_test('RMTB', True, False)
             self.assertEqual(str(context.exception),
                              'Training pts above max for 0')
 
-    def test_mbr_predict(self):
-        self.run_test('MBR', False, True)
+    def test_rmtb_predict(self):
+        self.run_test('RMTB', False, True)
 
 
 if __name__ == '__main__':
