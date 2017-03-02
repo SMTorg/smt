@@ -13,18 +13,18 @@ from smt.rmts import RMTS
 from smt.mbr import MBR
 
 
-ndim = 1
-prob = Carre(ndim=ndim)
-# prob = TensorProduct(ndim=ndim, func='tanh', width=2.)
+ndim = 3
+# prob = Carre(ndim=ndim)
+prob = TensorProduct(ndim=ndim, func='tanh', width=5.)
 sampling = lhs_center
 
 sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
     'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
-    'reg_dv': 1e-10, 'reg_cons': 1e-14, 'save_solution': False,
+    'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
     'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 20,
     'line_search': 'backtracking', 'max_print_depth': 4,
 }, {})
-# sm = MBR({'name':'MBR', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim, 'xlimits':prob.xlimits})
+sm = MBR({'name':'MBR', 'order':[4]*ndim, 'num_ctrl_pts':[15]*ndim, 'xlimits':prob.xlimits})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
@@ -48,10 +48,10 @@ print(sm.compute_rms_error(xe, ye))
 xe = np.zeros((50, ndim))
 for kx in range(ndim):
     xe[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-xe[:, 0] = np.linspace(1.5*prob.xlimits[0, 0], 1.5*prob.xlimits[0, 1], 50)
+xe[:, 0] = np.linspace(1.2*prob.xlimits[0, 0], 1.2*prob.xlimits[0, 1], 50)
 ye = prob(xe)
 y = sm.predict(xe)
 import pylab
-pylab.plot(xe[:, 0], ye, 'or')
-pylab.plot(xe[:, 0], y, 'ob')
+pylab.plot(xe[:, 0], ye, '-or')
+pylab.plot(xe[:, 0], y, '-ob')
 pylab.show()

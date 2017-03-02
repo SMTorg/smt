@@ -44,7 +44,8 @@ class MBR(SM):
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
             'extrapolate': True, # perform linear extrapolation for external eval points
-            'reg': 1e-10, # regularization coeff. for dv block
+            'reg_dv': 1e-4, # regularization coeff. for dv block
+            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
             'solver': 'krylov-lu',    # Linear solver: 'gmres' or 'cg'
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
@@ -65,6 +66,7 @@ class MBR(SM):
         Train the model
         """
         sm_options = self.sm_options
+        xlimits = sm_options['xlimits']
 
         nx = self.training_pts['exact'][0][0].shape[1]
         ny = self.training_pts['exact'][0][1].shape[1]
@@ -81,7 +83,24 @@ class MBR(SM):
 
         mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
         rhs = np.zeros((num['ctrl'], ny))
-        xlimits = sm_options['xlimits']
+
+        if 1:
+            nt_list = num['ctrl_list'] - num['order_list'] + 1
+            nt = np.prod(nt_list)
+            t = MBRlib.compute_quadrature_points(nt, nx, nt_list)
+
+            # Square root of volume of each integration element
+            elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+            for kx in range(nx):
+                nnz = nt * num['order']
+                data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, nx, nt, nnz,
+                    num['order_list'], num['ctrl_list'], t)
+                data *= elem_vol_sqrt
+                data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
+                rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
+                    shape=(nt, num['ctrl']))
+                mtx = mtx + rect_mtx.T * rect_mtx * sm_options['reg_cons']
+
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
 
@@ -108,7 +127,7 @@ class MBR(SM):
             mtx = mtx + rect_mtx.T * rect_mtx
             rhs += rect_mtx.T * yt
 
-        diag = sm_options['reg'] * np.ones(num['ctrl'])
+        diag = sm_options['reg_dv'] * sm_options['reg_cons'] * np.ones(num['ctrl'])
         arange = np.arange(num['ctrl'])
         reg = scipy.sparse.csc_matrix((diag, (arange, arange)))
         mtx = mtx + reg

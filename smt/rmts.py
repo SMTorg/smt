@@ -136,7 +136,7 @@ class RMTS(SM):
 
         full_hess += reg_dv
 
-        return full_hess
+        return full_hess * sm_options['reg_cons']
 
     def _compute_approx_terms(self, full_uniq2coeff):
         # This adds the training points, either using a least-squares approach
@@ -222,7 +222,7 @@ class RMTS(SM):
         return mg_matrices
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+        c = 0.5 / self.num['t']
 
         func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_pts['exact']:
@@ -233,7 +233,7 @@ class RMTS(SM):
         return func
 
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+        c = 0.5 / self.num['t']
 
         grad = full_hess * sol
         for kx in self.training_pts['exact']:
@@ -244,7 +244,7 @@ class RMTS(SM):
         return grad
 
     def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+        c = 0.5 / self.num['t']
 
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
@@ -258,7 +258,7 @@ class RMTS(SM):
         return hess
 
     def _opt_hess_2(self, full_hess, full_jac_dict):
-        c = 0.5 / self.sm_options['reg_cons'] / self.num['t']
+        c = 0.5 / self.num['t']
         p = 2
 
         hess = scipy.sparse.csc_matrix(full_hess)
@@ -426,7 +426,7 @@ class RMTS(SM):
                             'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
                             % (nln_iter + 1, ind_y, norm, fval))
 
-                        if norm < 1e-3:
+                        if norm < 1e-16:
                             break
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]

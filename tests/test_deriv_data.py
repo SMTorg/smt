@@ -53,7 +53,7 @@ class Test(SMTestCase):
 
         e_errors = {}
         e_errors['RMTS'] = 1e-1
-        e_errors['MBR'] = 1e-1
+        e_errors['MBR'] = 1.5e-1
 
         ge_t_errors = {}
         ge_t_errors['RMTS'] = 1e-4
