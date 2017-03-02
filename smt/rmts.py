@@ -161,10 +161,6 @@ class RMTS(RMT):
         num = self.num
         sm_options = self.sm_options
 
-        power_two = 2 ** len(sm_options['mg_factors'])
-        for kx in range(num['x']):
-            assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
-
         elem_lists = [num['elem_list']]
         mg_matrices = []
         for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
@@ -233,8 +229,8 @@ class RMTS(RMT):
                 for kx in self.training_pts['exact']:
                     full_jac_dict[kx] = full_jac_dict[kx] * full_uniq2coeff
 
-            # mg_matrices = self._compute_mg_matrices()
-            mg_matrices = []
+            mg_matrices = self._compute_mg_matrices()
+            # mg_matrices = []
 
         with self.printer._timed_context('Solving for degrees of freedom'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)

@@ -52,7 +52,7 @@ class Callback(object):
             self.norm0 = norm
 
         if self.counter % self.interval == 0:
-            self.printer('   %s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e'
+            self.printer('%s (%i x %i mtx), output %-3i : %3i  %15.9e  %15.9e'
                          % (self.string, self.size, self.size, self.ind_y,
                             self.counter, norm, norm / self.norm0))
         self.counter += 1
@@ -74,7 +74,7 @@ class LinearSolver(object):
 
         self.options = OptionsDictionary()
         self.options.declare('print_init', True, types=bool)
-        self.options.declare('print_solve', False, types=bool)
+        self.options.declare('print_solve', True, types=bool)
         self._declare_options()
         self.options.update(kwargs)
 
@@ -205,7 +205,7 @@ class KrylovSolver(LinearSolver):
                 sol = np.array(rhs)
 
             with printer._timed_context('Running %s Krylov solver (%i x %i mtx)'
-                                             % ((self.options['solver'], ) + self.mtx.shape)):
+                                        % ((self.options['solver'], ) + self.mtx.shape)):
                 self.callback.counter = 0
                 self.callback.ind_y = ind_y
                 self.callback.mtx = self.mtx
@@ -217,7 +217,6 @@ class KrylovSolver(LinearSolver):
                     callback=self.callback_func,
                     **self.solver_kwargs
                 )
-                printer()
 
             sol[:] = tmp
 
@@ -306,7 +305,6 @@ class StationarySolver(LinearSolver):
                 for ind in range(self.options['ilimit']):
                     self.iterate(rhs, sol)
                     self.callback._print_sol(sol)
-                printer()
 
         return sol
 
@@ -314,7 +312,8 @@ class StationarySolver(LinearSolver):
 class MultigridSolver(LinearSolver):
 
     def _declare_options(self):
-        self.options.declare('mg_cycles', 0)#11)
+        self.options.declare('interval', 1, types=int)
+        self.options.declare('mg_cycles', 0, types=int)
         self.options.declare('solver', 'null', values=['null', 'gs', 'jacobi', 'krylov'],
                              types=LinearSolver)
 
@@ -352,6 +351,9 @@ class MultigridSolver(LinearSolver):
             mg_solver._initialize(mg_mtx, printer)
             self.mg_solvers[-1] = mg_solver
 
+            self.callback = Callback(mtx.shape[0], 'Multigrid solver',
+                                     self.options['interval'], printer)
+
     def _restrict(self, ind_level):
         mg_op = self.mg_ops[ind_level]
         mtx = self.mg_mtx[ind_level]
@@ -380,7 +382,7 @@ class MultigridSolver(LinearSolver):
         sol = self.mg_sol[-1]
         rhs = self.mg_rhs[-1]
         solver = self.mg_solvers[-1]
-        solver.print_info = 'MG iter %i level %i' % (ind_cycle, len(self.options['mg_ops']))
+        solver.print_info = 'MG iter %i level %i' % (ind_cycle, len(self.mg_ops))
         solver._solve(rhs, sol, ind_y)
 
     def _smooth_and_interpolate(self, ind_level, ind_cycle, ind_y):
@@ -429,8 +431,6 @@ class MultigridSolver(LinearSolver):
 
                 for ind_level in range(len(self.mg_ops) - 1, -1, -1):
                     self._smooth_and_interpolate(ind_level, ind_cycle, ind_y)
-
-            printer()
 
             orig_sol[:] = self.mg_sol[0]
 
