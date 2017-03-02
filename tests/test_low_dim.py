@@ -20,7 +20,7 @@ from smt.kpls import KPLS
 try:
     from smt.idw import IDW
     from smt.rmts import RMTS
-    from smt.mbr import MBR
+    from smt.rmtb import RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -47,19 +47,19 @@ class Test(SMTestCase):
         sms['PA2'] = PA2()
         if compiled_available:
             sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[30]*ndim, 'solver':'krylov-lu'})
-            sms['MBR'] = MBR({'name':'MBR', 'order':[6]*ndim, 'num_ctrl_pts':[30]*ndim})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[30]*ndim})
 
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
         t_errors['RMTS'] = 1e-3
-        t_errors['MBR'] = 1e-3
+        t_errors['RMTB'] = 1e-2
 
         e_errors = {}
         e_errors['LS'] = 1.5
         e_errors['PA2'] = 1.5
         e_errors['RMTS'] = 1e-2
-        e_errors['MBR'] = 1e-3
+        e_errors['RMTB'] = 3e-2
 
         self.nt = nt
         self.ne = ne
@@ -74,7 +74,7 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'MBR'] and not compiled_available:
+        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
             return
 
         prob = self.problems[pname]
@@ -123,7 +123,7 @@ class Test(SMTestCase):
     def test_carre_RMTS(self):
         self.run_test()
 
-    def test_carre_MBR(self):
+    def test_carre_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
@@ -138,7 +138,7 @@ class Test(SMTestCase):
     def test_exp_RMTS(self):
         self.run_test()
 
-    def test_exp_MBR(self):
+    def test_exp_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
@@ -153,7 +153,7 @@ class Test(SMTestCase):
     def test_tanh_RMTS(self):
         self.run_test()
 
-    def test_tanh_MBR(self):
+    def test_tanh_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
@@ -168,7 +168,7 @@ class Test(SMTestCase):
     def test_cos_RMTS(self):
         self.run_test()
 
-    def test_cos_MBR(self):
+    def test_cos_RMTB(self):
         self.run_test()
 
 
