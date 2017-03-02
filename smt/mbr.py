@@ -12,10 +12,10 @@ import MBRlib
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
-from smt.sm import SM
+from smt.rmt import RMT
 
 
-class MBR(SM):
+class MBR(RMT):
     """
     Multi-dimensional B-spline Regression (MBR).
 
@@ -61,6 +61,27 @@ class MBR(SM):
         self.sm_options = sm_options
         self.printf_options = printf_options
 
+    def _compute_jac(self, ix1, ix2, x):
+        xlimits = self.sm_options['xlimits']
+
+        t = np.zeros(x.shape)
+        for kx in range(self.num['x']):
+            t[:, kx] = (x[:, kx] - xlimits[kx, 0]) /\
+                (xlimits[kx, 1] - xlimits[kx, 0])
+        t = np.maximum(t, 0. + 1e-15)
+        t = np.minimum(t, 1. - 1e-15)
+
+        n = x.shape[0]
+        nnz = n * self.num['order']
+        data, rows, cols = MBRlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
+            self.num['order_list'], self.num['ctrl_list'], t)
+        if ix1 != 0:
+            data /= xlimits[ix1-1, 1] - xlimits[ix1-1, 0]
+        if ix2 != 0:
+            data /= xlimits[ix2-1, 1] - xlimits[ix2-1, 0]
+
+        return data, rows, cols
+
     def _fit(self):
         """
         Train the model
@@ -72,12 +93,17 @@ class MBR(SM):
         ny = self.training_pts['exact'][0][1].shape[1]
 
         num = {}
+        # number of inputs and outputs
+        num['x'] = self.training_pts['exact'][0][0].shape[1]
+        num['y'] = self.training_pts['exact'][0][1].shape[1]
         num['order_list'] = np.array(sm_options['order'], int)
         num['order'] = np.prod(num['order_list'])
         num['ctrl_list'] = np.array(sm_options['num_ctrl_pts'], int)
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
+        num['dof'] = num['ctrl']
+        num['support'] = num['order']
 
         self.num = num
 
@@ -144,84 +170,3 @@ class MBR(SM):
                 solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
 
         self.sol = sol
-
-    def fit(self):
-        """
-        Train the model
-        """
-        checksum = _caching_checksum_sm(self)
-
-        filename = '%s.sm' % self.sm_options['name']
-        success, data = _caching_load(filename, checksum)
-        if not success or not self.sm_options['save_solution']:
-            self._fit()
-            data = {'sol': self.sol, 'num': self.num}
-            _caching_save(filename, checksum, data)
-        else:
-            self.sol = data['sol']
-            self.num = data['num']
-
-    def evaluate(self, x, kx):
-        """
-        Evaluate the surrogate model at x.
-
-        Parameters
-        ----------
-        x: np.ndarray[n_eval,dim]
-        An array giving the point(s) at which the prediction(s) should be made.
-        kx : int or None
-        None if evaluation of the interpolant is desired.
-        int  if evaluation of derivatives of the interpolant is desired
-             with respect to the kx^{th} input variable (kx is 0-based).
-
-        Returns
-        -------
-        y : np.ndarray[n_eval,1]
-        - An array with the output values at x.
-        """
-
-        nx = self.training_pts['exact'][0][0].shape[1]
-        ny = self.training_pts['exact'][0][1].shape[1]
-        ne = x.shape[0]
-        xlimits = self.sm_options['xlimits']
-        num = self.num
-        sm_options = self.sm_options
-
-        t = np.zeros(x.shape)
-        for ix in range(nx):
-            t[:, ix] = (x[:, ix] - xlimits[ix, 0]) /\
-                (xlimits[ix, 1] - xlimits[ix, 0])
-        t = np.maximum(t, 0. + 1e-15)
-        t = np.minimum(t, 1. - 1e-15)
-
-        nnz = ne * num['order']
-        data, rows, cols = MBRlib.compute_jac(kx, 0, nx, ne, nnz,
-            num['order_list'], num['ctrl_list'], t)
-        if kx != 0:
-            data /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
-
-        if sm_options['extrapolate']:
-            ndx = ne * num['order']
-            dx = MBRlib.compute_ext_dist(nx, ne, ndx, sm_options['xlimits'], x)
-            isexternal = np.array(np.array(dx, bool), float)
-
-            for ix in range(nx):
-                nnz = ne * num['order']
-                data_tmp, rows, cols = MBRlib.compute_jac(kx, ix+1, nx, ne, nnz,
-                    num['order_list'], num['ctrl_list'], t)
-                data_tmp /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
-                if kx != 0:
-                    data_tmp /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
-                data_tmp *= dx[:, ix]
-
-                # If we are evaluating a derivative (with index kx),
-                # we zero the first order terms for which dx_k = 0.
-                if kx != 0:
-                    data_tmp *= 1 - isexternal[:, kx-1]
-
-                data += data_tmp
-
-        rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
-            shape=(ne, num['ctrl']))
-
-        return rect_mtx.dot(self.sol)
