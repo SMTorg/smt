@@ -19,7 +19,7 @@ prob = TensorProduct(ndim=ndim, func='tanh', width=5.)
 sampling = lhs_center
 
 sm = RMTS({'name':'RMTS','num_elem':[20]*ndim, 'smoothness':[1.0]*ndim,
-    'xlimits':prob.xlimits, 'mode': 'approx', 'approx_norm': 4,
+    'xlimits':prob.xlimits, 'approx_norm': 4,
     'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
     'mg_factors': [2, 2, 2], 'solver': 'krylov', 'max_nln_iter': 0,
     'line_search': 'backtracking', 'max_print_depth': 4,

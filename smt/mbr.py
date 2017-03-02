@@ -110,22 +110,21 @@ class MBR(RMT):
         mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
         rhs = np.zeros((num['ctrl'], ny))
 
-        if 1:
-            nt_list = num['ctrl_list'] - num['order_list'] + 1
-            nt = np.prod(nt_list)
-            t = MBRlib.compute_quadrature_points(nt, nx, nt_list)
+        nt_list = num['ctrl_list'] - num['order_list'] + 1
+        nt = np.prod(nt_list)
+        t = MBRlib.compute_quadrature_points(nt, nx, nt_list)
 
-            # Square root of volume of each integration element
-            elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
-            for kx in range(nx):
-                nnz = nt * num['order']
-                data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, nx, nt, nnz,
-                    num['order_list'], num['ctrl_list'], t)
-                data *= elem_vol_sqrt
-                data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
-                rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
-                    shape=(nt, num['ctrl']))
-                mtx = mtx + rect_mtx.T * rect_mtx * sm_options['reg_cons']
+        # Square root of volume of each integration element
+        elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+        for kx in range(nx):
+            nnz = nt * num['order']
+            data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, nx, nt, nnz,
+                num['order_list'], num['ctrl_list'], t)
+            data *= elem_vol_sqrt
+            data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
+            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
+                shape=(nt, num['ctrl']))
+            mtx = mtx + rect_mtx.T * rect_mtx * sm_options['reg_cons']
 
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]

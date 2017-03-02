@@ -12,7 +12,6 @@ import RMTSlib
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
-from smt.utils.sparse import assemble_sparse_mtx
 from smt.rmt import RMT
 
 
@@ -45,7 +44,6 @@ class RMTS(RMT):
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
             'reg_dv': 1e-10, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
-            'mode': 'approx', # 'approx' or 'exact' form of linear system ()
             'extrapolate': True, # perform linear extrapolation for external eval points
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
@@ -145,15 +143,13 @@ class RMTS(RMT):
         return full_hess * sm_options['reg_cons']
 
     def _compute_approx_terms(self, full_uniq2coeff):
-        # This adds the training points, either using a least-squares approach
-        # or with exact contraints and Lagrange multipliers.
-        # In both approaches, we loop over kx: 0 is for values and kx>0 represents
+        # This computates the approximation terms for the training points.
+        # We loop over kx: 0 is for values and kx>0 represents
         # the 1-based index of the derivative given by the training point data.
         num = self.num
         sm_options = self.sm_options
         xlimits = sm_options['xlimits']
 
-        reg_cons_dict = {}
         full_jac_dict = {}
         for kx in self.training_pts['exact']:
             xt, yt = self.training_pts['exact'][kx]
@@ -170,12 +166,7 @@ class RMTS(RMT):
 
             full_jac_dict[kx] = full_jac
 
-            if sm_options['mode'] == 'exact':
-                diag = -sm_options['reg_cons'] * np.ones(nt)
-                arange = np.arange(nt)
-                reg_cons_dict[kx] = scipy.sparse.csc_matrix((diag, (arange, arange)))
-
-        return full_jac_dict, reg_cons_dict
+        return full_jac_dict
 
     def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
@@ -191,13 +182,6 @@ class RMTS(RMT):
             nnz, num['x'], elem_lists_1, elem_lists_2 + 1, sm_options['xlimits'])
         mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
         mg_matrix = mg_jac * mg_full_uniq2coeff
-
-        if sm_options['mode'] == 'exact':
-            num_lagr = np.sum(block_sizes[1:])
-            mg_matrix = scipy.sparse.bmat([
-                [mg_matrix, None],
-                [None, scipy.sparse.identity(num_lagr)]
-            ], format='csc')
 
         return mg_matrix
 
@@ -223,64 +207,6 @@ class RMTS(RMT):
             mg_matrices.append(mg_matrix)
 
         return mg_matrices
-
-    def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
-
-        func = 0.5 * np.dot(sol, full_hess * sol)
-        for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
-            yt = yt_dict[kx]
-            func += c * np.sum((full_jac * sol - yt) ** p)
-
-        return func
-
-    def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
-
-        grad = full_hess * sol
-        for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
-            yt = yt_dict[kx]
-            grad += c * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
-
-        return grad
-
-    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
-
-        hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
-            yt = yt_dict[kx]
-
-            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
-            diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
-            hess += c * full_jac.T * diag_mtx * full_jac
-
-        return hess
-
-    def _opt_hess_2(self, full_hess, full_jac_dict):
-        c = 0.5 / self.num['t']
-        p = 2
-
-        hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
-            hess += c * p * (p - 1) * full_jac.T * full_jac
-
-        return hess
-
-    def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        grad = self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
-        return np.linalg.norm(grad)
-
-    def _get_yt_dict(self, ind_y):
-        yt_dict = {}
-        for kx in self.training_pts['exact']:
-            xt, yt = self.training_pts['exact'][kx]
-            yt_dict[kx] = yt[:, ind_y]
-        return yt_dict
 
     def _fit(self):
         """
@@ -308,6 +234,7 @@ class RMTS(RMT):
         # for RMT
         num['coeff'] = num['term'] * num['elem']
         num['support'] = num['term']
+        num['dof'] = num['uniq'] * 2 ** num['x']
 
         if len(sm_options['smoothness']) == 0:
             sm_options['smoothness'] = [1.0] * num['x']
@@ -329,26 +256,19 @@ class RMTS(RMT):
                 full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
 
             with self.printer._timed_context('Computing approximation terms'):
-                full_jac_dict, reg_cons_dict = self._compute_approx_terms(full_uniq2coeff)
+                full_jac_dict = self._compute_approx_terms(full_uniq2coeff)
 
             if sm_options['solver'] == 'mg':
                 mg_matrices = self._compute_mg_matrices()
             else:
                 mg_matrices = []
 
-        block_names = ['dv']
-        block_sizes = [num['uniq'] * 2 ** num['x']]
-        if sm_options['mode'] == 'exact':
-            block_names += ['con_%s'%kx for kx in self.training_pts['exact']]
-            block_sizes += [self.training_pts['exact'][kx][0].shape[0]
-                            for kx in self.training_pts['exact']]
-
         with self.printer._timed_context('Solving for degrees of freedom'):
 
             solver = get_solver(sm_options['solver'])
             ls_class = get_line_search_class(sm_options['line_search'])
 
-            total_size = int(np.sum(block_sizes))
+            total_size = int(num['dof'])
             rhs = np.zeros((total_size, num['y']))
             sol = np.zeros((total_size, num['y']))
             d_sol = np.zeros((total_size, num['y']))
@@ -356,29 +276,11 @@ class RMTS(RMT):
             with self.printer._timed_context('Solving initial linear problem'):
 
                 with self.printer._timed_context('Assembling linear system'):
-                    if sm_options['mode'] == 'approx':
-                        mtx = self._opt_hess_2(full_hess, full_jac_dict)
-                        for ind_y in range(num['y']):
-                            yt_dict = self._get_yt_dict(ind_y)
-                            rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
-                                                            full_jac_dict, yt_dict)
-                    elif sm_options['mode'] == 'exact':
-                        sub_mtx_dict = {}
-                        sub_rhs_dict = {}
-                        sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
-                        sub_rhs_dict['dv'] = -full_hess * sol[:num['uniq'] * 2 ** num['x'], :]
-                        for kx in self.training_pts['exact']:
-                            full_jac = full_jac_dict[kx]
-                            xt, yt = self.training_pts['exact'][kx]
-
-                            reg_cons = reg_cons_dict[kx]
-                            sub_mtx_dict['con_%s'%kx, 'dv'] = full_jac
-                            sub_mtx_dict['dv', 'con_%s'%kx] = full_jac.T
-                            sub_mtx_dict['con_%s'%kx, 'con_%s'%kx] = reg_cons
-                            sub_rhs_dict['con_%s'%kx] = yt
-
-                        mtx, rhs = assemble_sparse_mtx(
-                            block_names, block_sizes, sub_mtx_dict, sub_rhs_dict)
+                    mtx = self._opt_hess_2(full_hess, full_jac_dict)
+                    for ind_y in range(num['y']):
+                        yt_dict = self._get_yt_dict(ind_y)
+                        rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
+                                                        full_jac_dict, yt_dict)
 
                 with self.printer._timed_context('Initializing linear solver'):
                     solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)

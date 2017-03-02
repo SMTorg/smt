@@ -21,6 +21,64 @@ class RMT(SM):
     Regularized Minimal-energy Tensor-product interpolant base class for RMTS and RMTB.
     """
 
+    def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        c = 0.5 / self.num['t']
+
+        func = 0.5 * np.dot(sol, full_hess * sol)
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+            func += c * np.sum((full_jac * sol - yt) ** p)
+
+        return func
+
+    def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        c = 0.5 / self.num['t']
+
+        grad = full_hess * sol
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+            grad += c * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
+
+        return grad
+
+    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        c = 0.5 / self.num['t']
+
+        hess = scipy.sparse.csc_matrix(full_hess)
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            yt = yt_dict[kx]
+
+            diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+            diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
+            hess += c * full_jac.T * diag_mtx * full_jac
+
+        return hess
+
+    def _opt_hess_2(self, full_hess, full_jac_dict):
+        c = 0.5 / self.num['t']
+        p = 2
+
+        hess = scipy.sparse.csc_matrix(full_hess)
+        for kx in self.training_pts['exact']:
+            full_jac = full_jac_dict[kx]
+            hess += c * p * (p - 1) * full_jac.T * full_jac
+
+        return hess
+
+    def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        grad = self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
+        return np.linalg.norm(grad)
+
+    def _get_yt_dict(self, ind_y):
+        yt_dict = {}
+        for kx in self.training_pts['exact']:
+            xt, yt = self.training_pts['exact'][kx]
+            yt_dict[kx] = yt[:, ind_y]
+        return yt_dict
+
     def fit(self):
         """
         Train the model
