@@ -39,8 +39,8 @@ class RMTS(RMT):
     def _set_default_options(self):
         sm_options = {
             'name': 'RMTS', # Regularized Minimal-energy Tensor-product Spline
-            'num_elem': [],  # int ndarray[nx]: num. of elements in each dimension
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
+            'num_elem': [],  # int ndarray[nx]: num. of elements in each dimension
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
             'reg_dv': 1e-10, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
@@ -133,40 +133,12 @@ class RMTS(RMT):
             shape=(num_coeff, num_coeff))
         full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
 
-        num_coeff_uniq = num['uniq'] * 2 ** num['x']
-        diag = sm_options['reg_dv'] * np.ones(num_coeff_uniq)
-        arange = np.arange(num_coeff_uniq)
+        diag = sm_options['reg_dv'] * np.ones(num['dof'])
+        arange = np.arange(num['dof'])
         reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
-
         full_hess += reg_dv
 
         return full_hess * sm_options['reg_cons']
-
-    def _compute_approx_terms(self, full_uniq2coeff):
-        # This computates the approximation terms for the training points.
-        # We loop over kx: 0 is for values and kx>0 represents
-        # the 1-based index of the derivative given by the training point data.
-        num = self.num
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
-
-        full_jac_dict = {}
-        for kx in self.training_pts['exact']:
-            xt, yt = self.training_pts['exact'][kx]
-
-            xmin = np.min(xt, axis=0)
-            xmax = np.max(xt, axis=0)
-            assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
-            assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
-
-            data, rows, cols = self._compute_jac(kx, 0, xt)
-            nt = xt.shape[0]
-            full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['coeff']))
-            full_jac = full_jac * full_uniq2coeff
-
-            full_jac_dict[kx] = full_jac
-
-        return full_jac_dict
 
     def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
@@ -194,6 +166,7 @@ class RMTS(RMT):
             assert num['elem_list'][kx] % power_two == 0, 'Invalid multigrid level'
 
         elem_lists = [num['elem_list']]
+        mg_matrices = []
         for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
             elem_lists.append(elem_lists[-1] / mg_factor)
 
@@ -256,85 +229,14 @@ class RMTS(RMT):
                 full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
 
             with self.printer._timed_context('Computing approximation terms'):
-                full_jac_dict = self._compute_approx_terms(full_uniq2coeff)
+                full_jac_dict = self._compute_approx_terms()
+                for kx in self.training_pts['exact']:
+                    full_jac_dict[kx] = full_jac_dict[kx] * full_uniq2coeff
 
-            if sm_options['solver'] == 'mg':
-                mg_matrices = self._compute_mg_matrices()
-            else:
-                mg_matrices = []
+            # mg_matrices = self._compute_mg_matrices()
+            mg_matrices = []
 
         with self.printer._timed_context('Solving for degrees of freedom'):
-
-            solver = get_solver(sm_options['solver'])
-            ls_class = get_line_search_class(sm_options['line_search'])
-
-            total_size = int(num['dof'])
-            rhs = np.zeros((total_size, num['y']))
-            sol = np.zeros((total_size, num['y']))
-            d_sol = np.zeros((total_size, num['y']))
-
-            with self.printer._timed_context('Solving initial linear problem'):
-
-                with self.printer._timed_context('Assembling linear system'):
-                    mtx = self._opt_hess_2(full_hess, full_jac_dict)
-                    for ind_y in range(num['y']):
-                        yt_dict = self._get_yt_dict(ind_y)
-                        rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
-                                                        full_jac_dict, yt_dict)
-
-                with self.printer._timed_context('Initializing linear solver'):
-                    solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
-
-                for ind_y in range(rhs.shape[1]):
-                    with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
-                        solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
-
-            p = self.sm_options['approx_norm']
-            for ind_y in range(rhs.shape[1]):
-
-                with self.printer._timed_context('Solving nonlinear problem (col. %i)' % ind_y):
-
-                    yt_dict = self._get_yt_dict(ind_y)
-
-                    if sm_options['max_nln_iter'] > 0:
-                        norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                        fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                        self.printer(
-                            'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
-                            % (0, ind_y, norm, fval))
-
-                    for nln_iter in range(sm_options['max_nln_iter']):
-                        with self.printer._timed_context():
-                            with self.printer._timed_context('Assembling linear system'):
-                                mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
-                                                     full_jac_dict, yt_dict)
-                                rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
-                                                                full_jac_dict, yt_dict)
-
-                            with self.printer._timed_context('Initializing linear solver'):
-                                solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
-
-                            with self.printer._timed_context('Solving linear system'):
-                                solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
-
-                            func = lambda x: self._opt_func(x, p, full_hess,
-                                                            full_jac_dict, yt_dict)
-                            grad = lambda x: self._opt_grad(x, p, full_hess,
-                                                            full_jac_dict, yt_dict)
-
-                            ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
-                            with self.printer._timed_context('Performing line search'):
-                                sol[:, ind_y] = ls(1.0)
-
-                        norm = self._opt_norm(sol[:, ind_y], p, full_hess,
-                                              full_jac_dict, yt_dict)
-                        fval = self._opt_func(sol[:, ind_y], p, full_hess,
-                                              full_jac_dict, yt_dict)
-                        self.printer(
-                            'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
-                            % (nln_iter + 1, ind_y, norm, fval))
-
-                        if norm < 1e-16:
-                            break
+            sol = self._solve(full_hess, full_jac_dict, mg_matrices)
 
         self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]

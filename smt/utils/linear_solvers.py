@@ -19,6 +19,8 @@ def get_solver(solver):
         return KrylovSolver()
     elif solver == 'krylov-lu':
         return KrylovSolver(pc='lu')
+    elif solver == 'krylov-mg':
+        return KrylovSolver(pc='mg')
     elif solver == 'gs' or solver == 'jacobi':
         return StationarySolver(solver=solver)
     elif solver == 'mg':
@@ -144,7 +146,7 @@ class KrylovSolver(LinearSolver):
     def _declare_options(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
-        self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi'],
+        self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg'],
                              types=LinearSolver)
         self.options.declare('ilimit', 100, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))
@@ -312,9 +314,8 @@ class StationarySolver(LinearSolver):
 class MultigridSolver(LinearSolver):
 
     def _declare_options(self):
-        self.options.declare('mg_ops')
         self.options.declare('mg_cycles', 0)#11)
-        self.options.declare('solver', values=['null', 'gs', 'jacobi', 'krylov'],
+        self.options.declare('solver', 'null', values=['null', 'gs', 'jacobi', 'krylov'],
                              types=LinearSolver)
 
     def _initialize(self, mtx, printer, mg_matrices=[]):
@@ -322,36 +323,37 @@ class MultigridSolver(LinearSolver):
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
 
+            solver = get_solver(self.options['solver'])
+            mg_solver = solver._clone()
+            mg_solver._initialize(mtx, printer)
+
             self.mg_mtx = [mtx]
             self.mg_sol = [np.zeros(self.mtx.shape[0])]
             self.mg_rhs = [np.zeros(self.mtx.shape[0])]
-
-            solver = get_solver(self.options['solver'])
-
-            mg_solver = solver._clone()
-            mg_solver._initialize(mtx, printer, mg_matrices=mg_matrices)
+            self.mg_ops = []
             self.mg_solvers = [mg_solver]
 
-            for ind, mg_op in enumerate(self.options['mg_ops']):
+            for ind, mg_op in enumerate(mg_matrices):
                 mg_mtx = mg_op.T.dot(self.mg_mtx[-1]).dot(mg_op).tocsc()
                 mg_sol = mg_op.T.dot(self.mg_sol[-1])
                 mg_rhs = mg_op.T.dot(self.mg_rhs[-1])
 
                 mg_solver = solver._clone()
-                mg_solver._initialize(mg_mtx, printer, mg_matrices=mg_matrices)
+                mg_solver._initialize(mg_mtx, printer)
 
                 self.mg_mtx.append(mg_mtx)
                 self.mg_sol.append(mg_sol)
                 self.mg_rhs.append(mg_rhs)
+                self.mg_ops.append(mg_op)
                 self.mg_solvers.append(mg_solver)
 
             mg_mtx = self.mg_mtx[-1]
             mg_solver = DirectSolver()
-            mg_solver._initialize(mg_mtx, printer, mg_matrices=mg_matrices)
+            mg_solver._initialize(mg_mtx, printer)
             self.mg_solvers[-1] = mg_solver
 
     def _restrict(self, ind_level):
-        mg_op = self.options['mg_ops'][ind_level]
+        mg_op = self.mg_ops[ind_level]
         mtx = self.mg_mtx[ind_level]
         sol = self.mg_sol[ind_level]
         rhs = self.mg_rhs[ind_level]
@@ -361,7 +363,7 @@ class MultigridSolver(LinearSolver):
         self.mg_rhs[ind_level + 1][:] = res_coarse
 
     def _smooth_and_restrict(self, ind_level, ind_cycle, ind_y):
-        mg_op = self.options['mg_ops'][ind_level]
+        mg_op = self.mg_ops[ind_level]
         mtx = self.mg_mtx[ind_level]
         sol = self.mg_sol[ind_level]
         rhs = self.mg_rhs[ind_level]
@@ -382,7 +384,7 @@ class MultigridSolver(LinearSolver):
         solver._solve(rhs, sol, ind_y)
 
     def _smooth_and_interpolate(self, ind_level, ind_cycle, ind_y):
-        mg_op = self.options['mg_ops'][ind_level]
+        mg_op = self.mg_ops[ind_level]
         mtx = self.mg_mtx[ind_level]
         sol = self.mg_sol[ind_level]
         rhs = self.mg_rhs[ind_level]
@@ -410,22 +412,22 @@ class MultigridSolver(LinearSolver):
 
             self.mg_rhs[0][:] = rhs
 
-            for ind_level in range(len(self.options['mg_ops'])):
+            for ind_level in range(len(self.mg_ops)):
                 self._restrict(ind_level)
 
             self._coarse_solve(-1, ind_y)
 
-            for ind_level in range(len(self.options['mg_ops']) - 1, -1, -1):
+            for ind_level in range(len(self.mg_ops) - 1, -1, -1):
                 self._smooth_and_interpolate(ind_level, -1, ind_y)
 
             for ind_cycle in range(self.options['mg_cycles']):
 
-                for ind_level in range(len(self.options['mg_ops'])):
+                for ind_level in range(len(self.mg_ops)):
                     self._smooth_and_restrict(ind_level, ind_cycle, ind_y)
 
                 self._coarse_solve(ind_cycle, ind_y)
 
-                for ind_level in range(len(self.options['mg_ops']) - 1, -1, -1):
+                for ind_level in range(len(self.mg_ops) - 1, -1, -1):
                     self._smooth_and_interpolate(ind_level, ind_cycle, ind_y)
 
             printer()

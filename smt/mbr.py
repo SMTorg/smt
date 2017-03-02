@@ -43,12 +43,17 @@ class MBR(RMT):
             'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
             'order': [], # int ndarray[nx]: B-spline order in each dimension
             'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
-            'extrapolate': True, # perform linear extrapolation for external eval points
+            'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
             'reg_dv': 1e-4, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
-            'solver': 'krylov-lu',    # Linear solver: 'gmres' or 'cg'
+            'extrapolate': True, # perform linear extrapolation for external eval points
+            'approx_norm': 4, # order of norm in least-squares approximation term
+            'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
+            'max_nln_iter': 0, # number of nonlinear iterations
+            'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': True,  # Whether to save linear system solution
+            'max_print_depth': 100, # Maximum depth (level of nesting) to print
         }
         printf_options = {
             'global': True,     # Overriding option to print output
@@ -82,6 +87,36 @@ class MBR(RMT):
 
         return data, rows, cols
 
+    def _compute_global_hess(self):
+        num = self.num
+        sm_options = self.sm_options
+        xlimits = sm_options['xlimits']
+
+        mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
+
+        nt_list = num['ctrl_list'] - num['order_list'] + 1
+        nt = np.prod(nt_list)
+        t = MBRlib.compute_quadrature_points(nt, num['x'], nt_list)
+
+        # Square root of volume of each integration element
+        elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+        for kx in range(num['x']):
+            nnz = nt * num['order']
+            data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
+                num['order_list'], num['ctrl_list'], t)
+            data *= elem_vol_sqrt
+            data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
+            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
+                shape=(nt, num['ctrl']))
+            mtx = mtx + rect_mtx.T * rect_mtx * sm_options['smoothness'][kx]
+
+        diag = sm_options['reg_dv'] * np.ones(num['dof'])
+        arange = np.arange(num['dof'])
+        reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
+        mtx = mtx + reg_dv
+
+        return mtx * sm_options['reg_cons']
+
     def _fit(self):
         """
         Train the model
@@ -102,70 +137,33 @@ class MBR(RMT):
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
+        # total number of training points (function values and derivatives)
+        num['t'] = 0
+        for kx in self.training_pts['exact']:
+            num['t'] += self.training_pts['exact'][kx][0].shape[0]
+        # for RMT
         num['coeff'] = num['ctrl']
         num['support'] = num['order']
+        num['dof'] = num['ctrl']
+
+        if len(sm_options['smoothness']) == 0:
+            sm_options['smoothness'] = [1.0] * num['x']
 
         self.num = num
 
-        mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
-        rhs = np.zeros((num['ctrl'], ny))
+        self.printer.max_print_depth = sm_options['max_print_depth']
 
-        nt_list = num['ctrl_list'] - num['order_list'] + 1
-        nt = np.prod(nt_list)
-        t = MBRlib.compute_quadrature_points(nt, nx, nt_list)
+        with self.printer._timed_context('Pre-computing matrices'):
 
-        # Square root of volume of each integration element
-        elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
-        for kx in range(nx):
-            nnz = nt * num['order']
-            data, rows, cols = MBRlib.compute_jac(kx+1, kx+1, nx, nt, nnz,
-                num['order_list'], num['ctrl_list'], t)
-            data *= elem_vol_sqrt
-            data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
-            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
-                shape=(nt, num['ctrl']))
-            mtx = mtx + rect_mtx.T * rect_mtx * sm_options['reg_cons']
+            with self.printer._timed_context('Computing global energy terms'):
+                full_hess = self._compute_global_hess()
 
-        for kx in self.training_pts['exact']:
-            xt, yt = self.training_pts['exact'][kx]
+            with self.printer._timed_context('Computing approximation terms'):
+                full_jac_dict = self._compute_approx_terms()
 
-            xmin = np.min(xt, axis=0)
-            xmax = np.max(xt, axis=0)
-            assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
-            assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
+            mg_matrices = []
 
-            t = np.zeros(xt.shape)
-            for ix in range(nx):
-                t[:, ix] = (xt[:, ix] - xlimits[ix, 0]) /\
-                    (xlimits[ix, 1] - xlimits[ix, 0])
-
-            nt = xt.shape[0]
-            nnz = nt * num['order']
-            data, rows, cols = MBRlib.compute_jac(kx, 0, nx, nt, nnz,
-                num['order_list'], num['ctrl_list'], t)
-            if kx > 0:
-                data /= xlimits[kx-1, 1] - xlimits[kx-1, 0]
-
-            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
-                shape=(nt, num['ctrl']))
-
-            mtx = mtx + rect_mtx.T * rect_mtx
-            rhs += rect_mtx.T * yt
-
-        diag = sm_options['reg_dv'] * sm_options['reg_cons'] * np.ones(num['ctrl'])
-        arange = np.arange(num['ctrl'])
-        reg = scipy.sparse.csc_matrix((diag, (arange, arange)))
-        mtx = mtx + reg
-
-        sol = np.zeros(rhs.shape)
-
-        solver = get_solver(sm_options['solver'])
-
-        with self.printer._timed_context('Initializing linear solver'):
-            solver._initialize(mtx, self.printer)
-
-        for ind_y in range(rhs.shape[1]):
-            with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
-                solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
+        with self.printer._timed_context('Solving for degrees of freedom'):
+            sol = self._solve(full_hess, full_jac_dict, mg_matrices)
 
         self.sol = sol
