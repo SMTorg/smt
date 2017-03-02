@@ -165,8 +165,7 @@ class RMTS(RMT):
 
             data, rows, cols = self._compute_jac(kx, 0, xt)
             nt = xt.shape[0]
-            num_coeff = num['term'] * num['elem']
-            full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num_coeff))
+            full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['coeff']))
             full_jac = full_jac * full_uniq2coeff
 
             full_jac_dict[kx] = full_jac
@@ -307,7 +306,7 @@ class RMTS(RMT):
         for kx in self.training_pts['exact']:
             num['t'] += self.training_pts['exact'][kx][0].shape[0]
         # for RMT
-        num['dof'] = num['term'] * num['elem']
+        num['coeff'] = num['term'] * num['elem']
         num['support'] = num['term']
 
         if len(sm_options['smoothness']) == 0:
@@ -367,7 +366,7 @@ class RMTS(RMT):
                         sub_mtx_dict = {}
                         sub_rhs_dict = {}
                         sub_mtx_dict['dv', 'dv'] = scipy.sparse.csc_matrix(full_hess)
-                        sub_rhs_dict['dv'] = -full_hess * sol
+                        sub_rhs_dict['dv'] = -full_hess * sol[:num['uniq'] * 2 ** num['x'], :]
                         for kx in self.training_pts['exact']:
                             full_jac = full_jac_dict[kx]
                             xt, yt = self.training_pts['exact'][kx]

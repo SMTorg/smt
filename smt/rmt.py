@@ -100,6 +100,6 @@ class RMT(SM):
 
                 data += data_tmp
 
-        mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['dof']))
+        mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['coeff']))
 
         return mtx.dot(self.sol)

@@ -102,7 +102,7 @@ class MBR(RMT):
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
-        num['dof'] = num['ctrl']
+        num['coeff'] = num['ctrl']
         num['support'] = num['order']
 
         self.num = num
