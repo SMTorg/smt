@@ -44,7 +44,7 @@ class RMTS(RMT):
             'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
             'reg_dv': 1e-10, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
-            'extrapolate': True, # perform linear extrapolation for external eval points
+            'extrapolate': False, # perform linear extrapolation for external eval points
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'max_nln_iter': 0, # number of nonlinear iterations
