@@ -109,13 +109,18 @@ class RMTS(RMT):
         # derivative values for the element. This matrix applies to all elements.
         num = self.num
         sm_options = self.sm_options
+        xlimits = sm_options['xlimits']
+
+        # Square root of volume of each integration element and of the whole domain
+        elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
+        total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
 
         elem_hess = np.zeros((num['term'], num['term']))
         for kx in range(num['x']):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], num['x'],
-                num['elem_list'], sm_options['xlimits'])
-            elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) * \
-                sm_options['smoothness'][kx]
+                num['elem_list'], xlimits)
+            elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) \
+                * (elem_vol / total_vol * sm_options['smoothness'][kx])
 
         return elem_hess
 

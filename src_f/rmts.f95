@@ -160,7 +160,7 @@ subroutine compute_sec_deriv(kx, njac, nx, nelements, xlimits, jac)
   integer :: ngpt, ngpt_list(nx)
   integer :: iterm, iterm_list(nx)
   integer :: nterm, nterm_list(nx)
-  double precision :: bma_d2(nx), dxb_dx(nx), xval, prod, prod_dx, prod_wts
+  double precision :: bma_d2(nx), dxb_dx(nx), xval, prod, prod_wts
   integer :: pow
   double precision :: gpts(4), wts(4)
 
@@ -168,10 +168,10 @@ subroutine compute_sec_deriv(kx, njac, nx, nelements, xlimits, jac)
   gpts(2) = -sqrt(3./7. - 2./7. * sqrt(6./5.))
   gpts(3) =  sqrt(3./7. - 2./7. * sqrt(6./5.))
   gpts(4) =  sqrt(3./7. + 2./7. * sqrt(6./5.))
-  wts(1) = (18. - sqrt(30.))/36.
-  wts(2) = (18. + sqrt(30.))/36.
-  wts(3) = (18. + sqrt(30.))/36.
-  wts(4) = (18. - sqrt(30.))/36.
+  wts(1) = (18. - sqrt(30.))/36. * 0.5
+  wts(2) = (18. + sqrt(30.))/36. * 0.5
+  wts(3) = (18. + sqrt(30.))/36. * 0.5
+  wts(4) = (18. - sqrt(30.))/36. * 0.5
 
   nterm_list(:) = 4
   nterm = product(nterm_list)
@@ -186,8 +186,6 @@ subroutine compute_sec_deriv(kx, njac, nx, nelements, xlimits, jac)
   ! dxb_k/dx_k = 1.0 / ((b_k - a_k) / n_k / 2.0)
   bma_d2 = (xlimits(:, 2) - xlimits(:, 1)) / nelements / 2.
   dxb_dx = 1 / bma_d2
-
-  prod_dx = product(bma_d2)
 
   ! Flattened loop over Gauss points
   do igpt = 1, ngpt
@@ -221,12 +219,9 @@ subroutine compute_sec_deriv(kx, njac, nx, nelements, xlimits, jac)
            end if
         end do
 
-        jac(igpt, iterm) = prod * sqrt(prod_wts * prod_dx)
+        jac(igpt, iterm) = prod * sqrt(prod_wts)
      end do
   end do
-
-  ! Normalize by the total volume of the integration domain
-  jac = jac / sqrt(product(xlimits(:, 2) - xlimits(:, 1)))
 
 end subroutine compute_sec_deriv
 

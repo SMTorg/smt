@@ -46,20 +46,20 @@ class Test(SMTestCase):
         sms['LS'] = LS()
         sms['PA2'] = PA2()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[30]*ndim, 'solver':'krylov-lu'})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[30]*ndim})
+            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[30]*ndim, 'solver':'krylov', 'max_nln_iter': 20})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[30]*ndim, 'max_nln_iter': 20})
 
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
-        t_errors['RMTS'] = 1e-3
+        t_errors['RMTS'] = 1e-2
         t_errors['RMTB'] = 1e-2
 
         e_errors = {}
         e_errors['LS'] = 1.5
         e_errors['PA2'] = 1.5
         e_errors['RMTS'] = 1e-2
-        e_errors['RMTB'] = 3e-2
+        e_errors['RMTB'] = 1e-2
 
         self.nt = nt
         self.ne = ne
