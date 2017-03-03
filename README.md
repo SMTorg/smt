@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/SMTorganization/SMT.svg?branch=master)](https://travis-ci.org/SMTorganization/SMT) (Linux)
+[![Build Status](https://travis-ci.org/SMTorg/SMT.svg?branch=master)](https://travis-ci.org/SMTorg/SMT) (Linux)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) (Windows)
 
