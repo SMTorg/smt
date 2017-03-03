@@ -48,7 +48,7 @@ class RMT(SM):
         return full_jac_dict
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
+        c = 0.5
 
         func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_pts['exact']:
@@ -59,7 +59,7 @@ class RMT(SM):
         return func
 
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
+        c = 0.5
 
         grad = full_hess * sol
         for kx in self.training_pts['exact']:
@@ -70,7 +70,7 @@ class RMT(SM):
         return grad
 
     def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5 / self.num['t']
+        c = 0.5
 
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
@@ -84,7 +84,7 @@ class RMT(SM):
         return hess
 
     def _opt_hess_2(self, full_hess, full_jac_dict):
-        c = 0.5 / self.num['t']
+        c = 0.5
         p = 2
 
         hess = scipy.sparse.csc_matrix(full_hess)

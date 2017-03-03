@@ -65,7 +65,7 @@ class Test(SMTestCase):
         e_errors['KRG'] = 1e-2
         e_errors['IDW'] = 1.0
         e_errors['RMTS'] = 1e-1
-        e_errors['RMTB'] = 1.5e-1
+        e_errors['RMTB'] = 1e-1
 
         self.nt = nt
         self.ne = ne

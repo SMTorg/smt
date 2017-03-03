@@ -98,17 +98,18 @@ class RMTB(RMT):
         nt = np.prod(nt_list)
         t = RMTBlib.compute_quadrature_points(nt, num['x'], nt_list)
 
-        # Square root of volume of each integration element
-        elem_vol_sqrt = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+        # Square root of volume of each integration element and of the whole domain
+        elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+        total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
+
         for kx in range(num['x']):
             nnz = nt * num['order']
             data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
                 num['order_list'], num['ctrl_list'], t)
-            data *= elem_vol_sqrt
             data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
-            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)),
-                shape=(nt, num['ctrl']))
-            mtx = mtx + rect_mtx.T * rect_mtx * sm_options['smoothness'][kx]
+            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
+            mtx = mtx + rect_mtx.T * rect_mtx \
+                * (elem_vol / total_vol * sm_options['smoothness'][kx])
 
         diag = sm_options['reg_dv'] * np.ones(num['dof'])
         arange = np.arange(num['dof'])

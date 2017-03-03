@@ -53,14 +53,14 @@ class Test(SMTestCase):
 
         e_errors = {}
         e_errors['RMTS'] = 1e-1
-        e_errors['RMTB'] = 1.5e-1
+        e_errors['RMTB'] = 1e-1
 
         ge_t_errors = {}
         ge_t_errors['RMTS'] = 1e-4
         ge_t_errors['RMTB'] = 2e-2
 
         ge_e_errors = {}
-        ge_e_errors['RMTS'] = 1e-1
+        ge_e_errors['RMTS'] = 4e-1
         ge_e_errors['RMTB'] = 1e-1
 
         self.nt = nt
