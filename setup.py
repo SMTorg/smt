@@ -2,7 +2,7 @@ from numpy.distutils.core import setup, Extension
 import os
 
 
-if os.name == 'nt':
+if os.name == 'nt' and 0:
     # If OS is Windows, don't compile Fortran code
     ext = []
 else:
