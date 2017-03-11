@@ -34,7 +34,8 @@ sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
     'line_search': 'backtracking', 'max_print_depth': 5,
 }, {})
 sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
-    'max_nln_iter': 10, 'max_print_depth': 4, 'min_energy': False, 'save_solution': False})
+    'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
+    'line_search': 'null'})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
