@@ -59,7 +59,7 @@ class RMTS(RMT):
             'time_eval': True,  # Print evaluation times
             'time_train': True, # Print assembly and solution time summary
             'problem': True,    # Print problem information
-            'solver': False,     # Print convergence progress (i.e., residual norms)
+            'solver': True,     # Print convergence progress (i.e., residual norms)
         }
 
         self.sm_options = sm_options
@@ -223,7 +223,10 @@ class RMTS(RMT):
             with self.printer._timed_context('Computing approximation terms'):
                 full_jac_dict = self._compute_approx_terms()
                 for kx in self.training_pts['exact']:
-                    full_jac_dict[kx] = full_jac_dict[kx] * full_uniq2coeff
+                    full_jac, full_jac_T = full_jac_dict[kx]
+                    full_jac = full_jac * full_uniq2coeff
+                    full_jac_T = full_uniq2coeff.T.tocsc() * full_jac_T
+                    full_jac_dict[kx] = (full_jac, full_jac_T)
 
             full_hess *= sm_options['reg_cons']
 

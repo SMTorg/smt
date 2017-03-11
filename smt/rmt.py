@@ -49,56 +49,86 @@ class RMT(SM):
             nt = xt.shape[0]
             full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['coeff']))
 
-            full_jac_dict[kx] = full_jac
+            full_jac_dict[kx] = (full_jac, full_jac.T.tocsc())
 
         return full_jac_dict
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5
-
         func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
+            full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
-            func += c * np.sum((full_jac * sol - yt) ** p)
+            func += 0.5 * np.sum((full_jac * sol - yt) ** p)
 
         return func
 
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5
-
         grad = full_hess * sol
         for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
+            full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
-            grad += c * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
+            grad += 0.5 * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
 
         return grad
 
-    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        c = 0.5
-
+    def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
+            full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
 
             diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
-            hess += c * full_jac.T * diag_mtx * full_jac
+            hess += 0.5 * full_jac_T * diag_mtx * full_jac
 
         return hess
 
-    def _opt_hess_2(self, full_hess, full_jac_dict):
-        c = 0.5
+    def _opt_hess_op(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        class SpMatrix(object):
+            def __init__(self):
+                self.shape = full_hess.shape
+                self.diag_vec = {}
+                for kx in full_jac_dict:
+                    full_jac, full_jac_T = full_jac_dict[kx]
+                    yt = yt_dict[kx]
+                    self.diag_vec[kx] = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+            def dot(self, other):
+                vec = full_hess * other
+                for kx in full_jac_dict:
+                    full_jac, full_jac_T = full_jac_dict[kx]
+                    vec += 0.5 * full_jac_T * (self.diag_vec[kx] * (full_jac * other))
+                return vec
+
+        mtx = SpMatrix()
+        op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
+        return op
+
+    def _opt_hess_mtx_2(self, full_hess, full_jac_dict):
         p = 2
 
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
-            full_jac = full_jac_dict[kx]
-            hess += c * p * (p - 1) * full_jac.T * full_jac
+            full_jac, full_jac_T = full_jac_dict[kx]
+            hess += 0.5 * p * (p - 1) * full_jac_T * full_jac
 
         return hess
+
+    def _opt_hess_op_2(self, full_hess, full_jac_dict):
+        p = 2
+
+        class SpMatrix(object):
+            def __init__(self):
+                self.shape = full_hess.shape
+            def dot(self, other):
+                vec = full_hess * other
+                for kx in full_jac_dict:
+                    full_jac, full_jac_T = full_jac_dict[kx]
+                    vec += 0.5 * p * (p - 1) * full_jac_T * (full_jac * other)
+                return vec
+
+        mtx = SpMatrix()
+        op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
+        return op
 
     def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
         grad = self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
@@ -123,10 +153,10 @@ class RMT(SM):
         sol = np.zeros((total_size, num['y']))
         d_sol = np.zeros((total_size, num['y']))
 
-        with self.printer._timed_context('Solving initial linear problem'):
+        with self.printer._timed_context('Solving initial linear problem (n=%i)' % total_size):
 
             with self.printer._timed_context('Assembling linear system'):
-                mtx = self._opt_hess_2(full_hess, full_jac_dict)
+                mtx = self._opt_hess_op_2(full_hess, full_jac_dict)
                 for ind_y in range(num['y']):
                     yt_dict = self._get_yt_dict(ind_y)
                     rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
@@ -156,8 +186,8 @@ class RMT(SM):
                 for nln_iter in range(sm_options['max_nln_iter']):
                     with self.printer._timed_context():
                         with self.printer._timed_context('Assembling linear system'):
-                            mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
-                                                 full_jac_dict, yt_dict)
+                            mtx = self._opt_hess_op(sol[:, ind_y], p, full_hess,
+                                                    full_jac_dict, yt_dict)
                             rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
                                                             full_jac_dict, yt_dict)
 

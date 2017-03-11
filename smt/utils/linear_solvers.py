@@ -148,7 +148,7 @@ class KrylovSolver(LinearSolver):
         self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
         self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg'],
                              types=LinearSolver)
-        self.options.declare('ilimit', 100, types=int)
+        self.options.declare('ilimit', 50, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))
         self.options.declare('rtol', 1e-15, types=(int, float))
 

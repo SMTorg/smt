@@ -4,15 +4,8 @@ import unittest
 
 from six.moves import range
 
-from smt.problems.cantilever_beam import CantileverBeam
-from smt.problems.carre import Carre
-from smt.problems.robot_arm import RobotArm
-from smt.problems.rosenbrock import Rosenbrock
-from smt.problems.tensor_product import TensorProduct
-from smt.problems.torsion_vibration import TorsionVibration
-from smt.problems.water_flow import WaterFlow
-from smt.problems.welded_beam import WeldedBeam
-from smt.problems.wing_weight import WingWeight
+from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
+from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.utils.sm_test_case import SMTestCase
 
 
@@ -62,16 +55,16 @@ class Test(SMTestCase):
         self.run_test(Carre(ndim=3))
 
     def test_exp(self):
-        self.run_test(TensorProduct(ndim=1, func='exp'))
-        self.run_test(TensorProduct(ndim=3, func='exp'))
+        self.run_test(TensorProduct(name='TP-exp', ndim=1, func='exp'))
+        self.run_test(TensorProduct(name='TP-exp', ndim=3, func='exp'))
 
     def test_tanh(self):
-        self.run_test(TensorProduct(ndim=1, func='tanh'))
-        self.run_test(TensorProduct(ndim=3, func='tanh'))
+        self.run_test(TensorProduct(name='TP-tanh', ndim=1, func='tanh'))
+        self.run_test(TensorProduct(name='TP-tanh', ndim=3, func='tanh'))
 
     def test_cos(self):
-        self.run_test(TensorProduct(ndim=1, func='cos'))
-        self.run_test(TensorProduct(ndim=3, func='cos'))
+        self.run_test(TensorProduct(name='TP-cos', ndim=1, func='cos'))
+        self.run_test(TensorProduct(name='TP-cos', ndim=3, func='cos'))
 
     def test_rosenbrock(self):
         self.run_test(Rosenbrock(ndim=2))
@@ -89,16 +82,19 @@ class Test(SMTestCase):
         self.run_test(RobotArm(ndim=6))
 
     def test_torsion_vibration(self):
-        self.run_test(TorsionVibration())
-
-    def test_wing_weight(self):
-        self.run_test(WingWeight())
+        self.run_test(TorsionVibration(ndim=15))
+        self.run_test(ReducedProblem(TorsionVibration(ndim=15), 3))
 
     def test_water_flow(self):
-        self.run_test(WaterFlow())
+        self.run_test(WaterFlow(ndim=8))
+        self.run_test(ReducedProblem(WaterFlow(ndim=8), 3))
 
     def test_welded_beam(self):
-        self.run_test(WeldedBeam())
+        self.run_test(WeldedBeam(ndim=3))
+
+    def test_wing_weight(self):
+        self.run_test(WingWeight(ndim=10))
+        self.run_test(ReducedProblem(WingWeight(ndim=10), 3))
 
 
 if __name__ == '__main__':
