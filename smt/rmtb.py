@@ -47,6 +47,7 @@ class RMTB(RMT):
             'reg_dv': 1e-4, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
             'extrapolate': False, # perform linear extrapolation for external eval points
+            'min_energy': True, # whether to include energy minimizaton terms
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'max_nln_iter': 0, # number of nonlinear iterations
@@ -87,12 +88,10 @@ class RMTB(RMT):
 
         return data, rows, cols
 
-    def _compute_global_hess(self):
+    def _compute_energy_terms(self):
         num = self.num
         sm_options = self.sm_options
         xlimits = sm_options['xlimits']
-
-        mtx = scipy.sparse.csc_matrix((num['ctrl'], num['ctrl']))
 
         nt_list = num['ctrl_list'] - num['order_list'] + 1
         nt = np.prod(nt_list)
@@ -102,21 +101,17 @@ class RMTB(RMT):
         elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
         total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
 
+        full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
         for kx in range(num['x']):
             nnz = nt * num['order']
             data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
                 num['order_list'], num['ctrl_list'], t)
             data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
             rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
-            mtx = mtx + rect_mtx.T * rect_mtx \
+            full_hess += rect_mtx.T * rect_mtx \
                 * (elem_vol / total_vol * sm_options['smoothness'][kx])
 
-        diag = sm_options['reg_dv'] * np.ones(num['dof'])
-        arange = np.arange(num['dof'])
-        reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
-        mtx = mtx + reg_dv
-
-        return mtx * sm_options['reg_cons']
+        return full_hess
 
     def _fit(self):
         """
@@ -156,11 +151,17 @@ class RMTB(RMT):
 
         with self.printer._timed_context('Pre-computing matrices'):
 
-            with self.printer._timed_context('Computing global energy terms'):
-                full_hess = self._compute_global_hess()
+            with self.printer._timed_context('Initializing Hessian'):
+                full_hess = self._initialize_hessian()
+
+            if sm_options['min_energy']:
+                with self.printer._timed_context('Computing energy terms'):
+                    full_hess += self._compute_energy_terms()
 
             with self.printer._timed_context('Computing approximation terms'):
                 full_jac_dict = self._compute_approx_terms()
+
+            full_hess *= sm_options['reg_cons']
 
             mg_matrices = []
 

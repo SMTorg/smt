@@ -19,17 +19,17 @@ prob = TensorProduct(ndim=ndim, func='tanh', width=5.)
 sampling = lhs_center
 
 sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
-    'xlimits':prob.xlimits, 'approx_norm': 4,
+    'xlimits':prob.xlimits, 'approx_norm': 4, 'min_energy': False,
     'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
     'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 15,
     'line_search': 'backtracking', 'max_print_depth': 4,
 }, {})
-sm = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[20]*ndim, 'xlimits':prob.xlimits,
-    'max_nln_iter': 15, 'max_print_depth': 4, 'save_solution': False})
+sm = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[15]*ndim, 'xlimits':prob.xlimits,
+    'max_nln_iter': 10, 'max_print_depth': 4, 'min_energy': False, 'save_solution': False})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
-nt = 5000 * ndim
+nt = 10000 * ndim
 ne = 100 * ndim
 
 np.random.seed(0)
@@ -49,7 +49,9 @@ print(sm.compute_rms_error(xe, ye))
 xe = np.zeros((50, ndim))
 for kx in range(ndim):
     xe[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-xe[:, 0] = np.linspace(1.2*prob.xlimits[0, 0], 1.2*prob.xlimits[0, 1], 50)
+
+a = 1.0
+xe[:, 0] = np.linspace(a*prob.xlimits[0, 0], a*prob.xlimits[0, 1], 50)
 ye = prob(xe)
 y = sm.predict(xe)
 import pylab

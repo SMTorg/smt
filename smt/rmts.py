@@ -45,6 +45,7 @@ class RMTS(RMT):
             'reg_dv': 1e-10, # regularization coeff. for dv block
             'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
             'extrapolate': False, # perform linear extrapolation for external eval points
+            'min_energy': True, # whether to include energy minimizaton terms
             'approx_norm': 4, # order of norm in least-squares approximation term
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
             'max_nln_iter': 0, # number of nonlinear iterations
@@ -103,10 +104,7 @@ class RMTS(RMT):
 
         return full_uniq2coeff
 
-    def _compute_local_hess(self):
-        # This computes the positive-definite, symmetric matrix yields the energy
-        # for an element when pre- and post-multiplied by a vector of function and
-        # derivative values for the element. This matrix applies to all elements.
+    def _compute_energy_terms(self):
         num = self.num
         sm_options = self.sm_options
         xlimits = sm_options['xlimits']
@@ -115,6 +113,9 @@ class RMTS(RMT):
         elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
         total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
 
+        # This computes the positive-definite, symmetric matrix yields the energy
+        # for an element when pre- and post-multiplied by a vector of function and
+        # derivative values for the element. This matrix applies to all elements.
         elem_hess = np.zeros((num['term'], num['term']))
         for kx in range(num['x']):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], num['x'],
@@ -122,28 +123,16 @@ class RMTS(RMT):
             elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) \
                 * (elem_vol / total_vol * sm_options['smoothness'][kx])
 
-        return elem_hess
-
-    def _compute_global_hess(self, elem_hess, full_uniq2coeff):
         # This takes the dense elem_hess matrix and stamps out num['elem'] copies
         # of it to form the full sparse matrix with all the elements included.
-        num = self.num
-        sm_options = self.sm_options
-
         nnz = num['term'] ** 2 * num['elem']
         num_coeff = num['term'] * num['elem']
         data, rows, cols = RMTSlib.compute_full_from_block(
             nnz, num['term'], num['elem'], elem_hess)
-        full_hess = scipy.sparse.csc_matrix((data, (rows, cols)),
+        full_hess_coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff, num_coeff))
-        full_hess = full_uniq2coeff.T * full_hess * full_uniq2coeff
 
-        diag = sm_options['reg_dv'] * np.ones(num['dof'])
-        arange = np.arange(num['dof'])
-        reg_dv = scipy.sparse.csc_matrix((diag, (arange, arange)))
-        full_hess += reg_dv
-
-        return full_hess * sm_options['reg_cons']
+        return full_hess_coeff
 
     def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
@@ -223,19 +212,22 @@ class RMTS(RMT):
                 full_uniq2coeff = self._compute_uniq2coeff(
                     num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
 
-            with self.printer._timed_context('Computing local energy terms'):
-                elem_hess = self._compute_local_hess()
+            with self.printer._timed_context('Initializing Hessian'):
+                full_hess = self._initialize_hessian()
 
-            with self.printer._timed_context('Computing global energy terms'):
-                full_hess = self._compute_global_hess(elem_hess, full_uniq2coeff)
+            if sm_options['min_energy']:
+                with self.printer._timed_context('Computing energy terms'):
+                    full_hess_coeff = self._compute_energy_terms()
+                    full_hess += full_uniq2coeff.T * full_hess_coeff * full_uniq2coeff
 
             with self.printer._timed_context('Computing approximation terms'):
                 full_jac_dict = self._compute_approx_terms()
                 for kx in self.training_pts['exact']:
                     full_jac_dict[kx] = full_jac_dict[kx] * full_uniq2coeff
 
+            full_hess *= sm_options['reg_cons']
+
             mg_matrices = self._compute_mg_matrices()
-            # mg_matrices = []
 
         with self.printer._timed_context('Solving for degrees of freedom'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)

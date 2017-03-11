@@ -21,6 +21,12 @@ class RMT(SM):
     Regularized Minimal-energy Tensor-product interpolant base class for RMTS and RMTB.
     """
 
+    def _initialize_hessian(self):
+        diag = self.sm_options['reg_dv'] * np.ones(self.num['dof'])
+        arange = np.arange(self.num['dof'])
+        full_hess = scipy.sparse.csc_matrix((diag, (arange, arange)))
+        return full_hess
+
     def _compute_approx_terms(self):
         # This computates the approximation terms for the training points.
         # We loop over kx: 0 is for values and kx>0 represents
