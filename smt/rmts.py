@@ -49,7 +49,7 @@ class RMTS(RMT):
             'approx_norm': 4, # order of norm in least-squares approximation term
             'use_mtx_free': False, # whether to solve the linear system in a matrix-free way
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'max_nln_iter': 0, # number of nonlinear iterations
+            'max_nln_iter': 10, # number of nonlinear iterations
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': False,  # Whether to save linear system solution
@@ -227,7 +227,7 @@ class RMTS(RMT):
                     full_jac, full_jac_T = full_jac_dict[kx]
                     full_jac = full_jac * full_uniq2coeff
                     full_jac_T = full_uniq2coeff.T.tocsc() * full_jac_T
-                    full_jac_dict[kx] = [full_jac, full_jac_T]
+                    full_jac_dict[kx] = (full_jac, full_jac_T)
 
             full_hess *= sm_options['reg_cons']
 

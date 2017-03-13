@@ -42,13 +42,13 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim,
-                'solver':'krylov-lu'})
+            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
+                'max_nln_iter': 0})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         t_errors = {}
         t_errors['RMTS'] = 1e-6
-        t_errors['RMTB'] = 1e-2
+        t_errors['RMTB'] = 3e-2
 
         e_errors = {}
         e_errors['RMTS'] = 1e-1

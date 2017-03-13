@@ -51,7 +51,7 @@ class RMTB(RMT):
             'approx_norm': 4, # order of norm in least-squares approximation term
             'use_mtx_free': False, # whether to solve the linear system in a matrix-free way
             'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'max_nln_iter': 5, # number of nonlinear iterations
+            'max_nln_iter': 10, # number of nonlinear iterations
             'line_search': 'backtracking', # line search algorithm
             'mg_factors': [], # Multigrid level
             'save_solution': False,  # Whether to save linear system solution

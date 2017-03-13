@@ -46,9 +46,9 @@ class Test(SMTestCase):
         sms['KRG'] = KPLS({'name':'KRG','n_comp':ndim, 'theta0': [1.0]*ndim})
         if compiled_available:
             sms['IDW'] = IDW()
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim,
-                'solver':'krylov-lu'})
+            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
+                'max_nln_iter': 0})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         t_errors = {}
         t_errors['LS'] = 1.0
