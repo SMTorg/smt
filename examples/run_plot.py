@@ -36,7 +36,7 @@ ndim = prob.options['ndim']
 # }, {})
 sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
     'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
-    'line_search': 'null', 'use_mtx_free': False})
+    'line_search': 'null'})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
