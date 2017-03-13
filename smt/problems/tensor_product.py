@@ -56,8 +56,8 @@ class TensorProduct(Problem):
         else:
             for ix in range(nx):
                 if kx == ix:
-                    y[:, 0] *= self.dfunc(x[:, kx])
+                    y[:, 0] *= self.dfunc(x[:, ix])
                 else:
-                    y[:, 0] *= self.func(x[:, kx])
+                    y[:, 0] *= self.func(x[:, ix])
 
         return y
