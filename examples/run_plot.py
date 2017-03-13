@@ -17,7 +17,7 @@ from smt.rmtb import RMTB
 prob = TensorProduct(ndim=3, func='tanh', width=5.)
 prob = WeldedBeam(ndim=3)
 prob = CantileverBeam(ndim=3)
-prob = Rosenbrock(ndim=3)
+prob = Rosenbrock(ndim=4)
 # prob = RobotArm(ndim=4)
 
 
@@ -28,15 +28,15 @@ sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
 ndim = prob.options['ndim']
 
-sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
-    'xlimits':prob.xlimits, 'approx_norm': 4, 'min_energy': False,
-    'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
-    'mg_factors': [4], 'solver': 'krylov-lu', 'max_nln_iter': 0,
-    'line_search': 'backtracking', 'max_print_depth': 5,
-}, {})
-# sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
-#     'max_nln_iter': 0, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
-#     'line_search': 'null'})
+# sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
+#     'xlimits':prob.xlimits, 'approx_norm': 4, 'min_energy': False,
+#     'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
+#     'mg_factors': [4], 'solver': 'krylov-lu', 'max_nln_iter': 0,
+#     'line_search': 'backtracking', 'max_print_depth': 5,
+# }, {})
+sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
+    'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
+    'line_search': 'null', 'use_mtx_free': False})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
