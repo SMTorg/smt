@@ -4,8 +4,7 @@ import pylab
 
 from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.sampling import LHS, Random, FullFactorial
 from smt.ls import LS
 from smt.pa2 import PA2
 from smt.kpls import KPLS
@@ -18,11 +17,13 @@ from smt.rmtb import RMTB
 prob = TensorProduct(ndim=3, func='tanh', width=5.)
 prob = WeldedBeam(ndim=3)
 prob = CantileverBeam(ndim=3)
-prob = Rosenbrock(ndim=5)
-prob = RobotArm(ndim=4)
+prob = Rosenbrock(ndim=3)
+# prob = RobotArm(ndim=4)
 
 
-sampling = lhs_center
+sampling = LHS(xlimits=prob.xlimits)
+sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
+# sampling = Random(xlimits=prob.xlimits)
 
 
 ndim = prob.options['ndim']
@@ -30,12 +31,12 @@ ndim = prob.options['ndim']
 sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
     'xlimits':prob.xlimits, 'approx_norm': 4, 'min_energy': False,
     'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
-    'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 15,
+    'mg_factors': [4], 'solver': 'krylov-lu', 'max_nln_iter': 0,
     'line_search': 'backtracking', 'max_print_depth': 5,
 }, {})
-sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
-    'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
-    'line_search': 'null'})
+# sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
+#     'max_nln_iter': 0, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
+#     'line_search': 'null'})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
@@ -43,11 +44,11 @@ nt = 10000 * ndim
 ne = 100 * ndim
 
 np.random.seed(0)
-xt = sampling(prob.xlimits, nt)
+xt = sampling(nt)
 yt = prob(xt)
 
 np.random.seed(1)
-xe = sampling(prob.xlimits, ne)
+xe = sampling(ne)
 ye = prob(xe)
 
 sm.add_training_pts('exact', xt, yt)

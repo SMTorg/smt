@@ -116,6 +116,7 @@ class DirectSolver(LinearSolver):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
+            assert isinstance(mtx, scipy.sparse.spmatrix), 'mtx is of type %s' % type(mtx)
 
             with printer._timed_context('Performing %s fact. (%i x %i mtx)'
                                         % ((self.options['alg'], ) + mtx.shape)):

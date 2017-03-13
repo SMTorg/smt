@@ -67,9 +67,15 @@ class RMT(SM):
         for kx in self.training_pts['exact']:
             full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
-            grad += 0.5 * full_jac.T * p * (full_jac * sol - yt) ** (p - 1)
+            grad += 0.5 * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
 
         return grad
+
+    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        if self.sm_options['use_mtx_free']:
+            return self._opt_hess_op(sol, p, full_hess, full_jac_dict, yt_dict)
+        else:
+            return self._opt_hess_mtx(sol, p, full_hess, full_jac_dict, yt_dict)
 
     def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
         hess = scipy.sparse.csc_matrix(full_hess)
@@ -102,6 +108,12 @@ class RMT(SM):
         mtx = SpMatrix()
         op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
         return op
+
+    def _opt_hess_2(self, full_hess, full_jac_dict):
+        if self.sm_options['use_mtx_free']:
+            return self._opt_hess_op_2(full_hess, full_jac_dict)
+        else:
+            return self._opt_hess_mtx_2(full_hess, full_jac_dict)
 
     def _opt_hess_mtx_2(self, full_hess, full_jac_dict):
         p = 2
@@ -156,7 +168,7 @@ class RMT(SM):
         with self.printer._timed_context('Solving initial linear problem (n=%i)' % total_size):
 
             with self.printer._timed_context('Assembling linear system'):
-                mtx = self._opt_hess_op_2(full_hess, full_jac_dict)
+                mtx = self._opt_hess_2(full_hess, full_jac_dict)
                 for ind_y in range(num['y']):
                     yt_dict = self._get_yt_dict(ind_y)
                     rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
@@ -186,7 +198,7 @@ class RMT(SM):
                 for nln_iter in range(sm_options['max_nln_iter']):
                     with self.printer._timed_context():
                         with self.printer._timed_context('Assembling linear system'):
-                            mtx = self._opt_hess_op(sol[:, ind_y], p, full_hess,
+                            mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
                                                     full_jac_dict, yt_dict)
                             rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
                                                             full_jac_dict, yt_dict)

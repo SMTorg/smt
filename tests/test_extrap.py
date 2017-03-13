@@ -6,10 +6,9 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems.carre import Carre
-from smt.problems.tensor_product import TensorProduct
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.problems import Carre, TensorProduct
+from smt.sampling import LHS
+
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
@@ -34,7 +33,6 @@ class Test(SMTestCase):
         ndim = 3
         nt = 500
         ne = 100
-        sampling = lhs_center
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
@@ -46,7 +44,6 @@ class Test(SMTestCase):
 
         self.nt = nt
         self.ne = ne
-        self.sampling = sampling
         self.problems = problems
         self.sms = sms
 
@@ -55,9 +52,10 @@ class Test(SMTestCase):
             return
 
         prob = self.problems['carre']
+        sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
-        xt = self.sampling(prob.xlimits, self.nt)
+        xt = sampling(self.nt)
         yt = prob(xt)
 
         sm0 = self.sms[sname]
