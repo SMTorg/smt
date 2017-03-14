@@ -12,7 +12,7 @@ from smt.sampling.sampling import Sampling
 
 class Random(Sampling):
 
-    def __call__(self, n):
+    def _compute(self, n):
         """
         Compute the requested number of sampling points.
 
@@ -28,9 +28,4 @@ class Random(Sampling):
         """
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
-
-        x = np.random.rand(n, nx)
-        for kx in range(nx):
-            x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
-
-        return x
+        return np.random.rand(n, nx)

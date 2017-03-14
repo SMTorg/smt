@@ -1,23 +1,22 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
-Base class for sampling algorithms.
+Nonuniformly spaced sampling.
 """
+from __future__ import division
 import numpy as np
+import scipy.interpolate
+from six.moves import range
 
-from smt.utils.options_dictionary import OptionsDictionary
+from smt.sampling.sampling import Sampling
+from smt.sampling.full_factorial import FullFactorial
 
 
-class Sampling(object):
-
-    def __init__(self, **kwargs):
-        self.options = OptionsDictionary()
-        self.options.declare('xlimits', types=np.ndarray)
-        self._declare_options()
-        self.options.update(kwargs)
+class Clustered(Sampling):
 
     def _declare_options(self):
-        pass
+        self.options.declare('kernel', types=Sampling)
+        self.options.declare('spacing', types=[''])
 
     def __call__(self, n):
         """
@@ -33,10 +32,15 @@ class Sampling(object):
         ndarray[n, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options['xlimits']
+        xlimits = self.options['kernel'].options['xlimits']
         nx = xlimits.shape[0]
+        x = self.options['kernel']._compute(n)
 
-        x = self._compute(n)
+        x -= 0.5
+        x *= 2.0
+        x[:, :] = x ** 2. * np.sign(x)
+        x /= 2.0
+        x += 0.5
         for kx in range(nx):
             x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
 

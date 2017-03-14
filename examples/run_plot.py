@@ -4,7 +4,7 @@ import pylab
 
 from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
-from smt.sampling import LHS, Random, FullFactorial
+from smt.sampling import LHS, Random, FullFactorial, Clustered
 from smt.ls import LS
 from smt.pa2 import PA2
 from smt.kpls import KPLS
@@ -14,16 +14,18 @@ from smt.rmtb import RMTB
 
 
 # prob = Carre(ndim=4)
-prob = TensorProduct(ndim=3, func='tanh', width=5.)
-prob = WeldedBeam(ndim=3)
-prob = CantileverBeam(ndim=3)
-prob = Rosenbrock(ndim=4)
+prob = TensorProduct(ndim=3, func='tanh', width=10.)
+# prob = WeldedBeam(ndim=3)
+# prob = CantileverBeam(ndim=3)
+# prob = Rosenbrock(ndim=4)
 # prob = RobotArm(ndim=4)
 
 
 sampling = LHS(xlimits=prob.xlimits)
 sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 # sampling = Random(xlimits=prob.xlimits)
+
+sampling = Clustered(kernel=sampling)
 
 
 ndim = prob.options['ndim']
@@ -34,13 +36,13 @@ sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
     'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 10,
     'line_search': 'backtracking', 'max_print_depth': 5,
 }, {})
-sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
-    'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
-    'line_search': 'null'})
+sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[30]*ndim, 'xlimits':prob.xlimits,
+    'max_nln_iter': 0, 'max_print_depth': 5, 'min_energy': True, 'save_solution': False,
+    'line_search': 'null', 'reg_dv': 1e-15, 'reg_cons': 1e-4})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
-nt = 10000 * ndim
+nt = 1000 * ndim
 ne = 100 * ndim
 
 np.random.seed(0)
