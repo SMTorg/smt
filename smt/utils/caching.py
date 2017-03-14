@@ -1,7 +1,10 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 """
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
 import hashlib
 
 
@@ -24,12 +27,13 @@ def _caching_load(filename, checksum):
         The loaded data if successful; otherwise, None.
     """
     try:
-        save_pkl = pickle.load(open(filename, 'r'))
+        with open(filename, 'rb') as f:
+            save_pkl = pickle.load(f)
 
-        if checksum == save_pkl['checksum']:
-            return True, save_pkl['data']
-        else:
-            return False, None
+            if checksum == save_pkl['checksum']:
+                return True, save_pkl['data']
+            else:
+                return False, None
     except:
         return False, None
 
@@ -48,7 +52,8 @@ def _caching_save(filename, checksum, data):
         'checksum': checksum,
         'data': data,
     }
-    pickle.dump(save_dict, open(filename, 'w'))
+    with open(filename, 'wb') as f:
+        pickle.dump(save_dict, f)
 
 def _caching_checksum(obj):
     """

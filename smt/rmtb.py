@@ -7,12 +7,12 @@ import numpy as np
 import scipy.sparse
 from six.moves import range
 
-import RMTBlib
-
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
 from smt.rmt import RMT
+
+from smt import RMTBlib
 
 
 class RMTB(RMT):

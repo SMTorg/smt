@@ -7,13 +7,12 @@ import numpy as np
 import scipy.sparse
 from six.moves import range
 
-import RMTSlib
-
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
-from smt.utils.sparse import assemble_sparse_mtx
 from smt.sm import SM
+
+from smt import RMTSlib
 
 
 class RMT(SM):
@@ -236,16 +235,25 @@ class RMT(SM):
         Train the model
         """
         checksum = _caching_checksum_sm(self)
-
         filename = '%s.sm' % self.sm_options['name']
-        success, data = _caching_load(filename, checksum)
-        if not success or not self.sm_options['save_solution']:
+
+        # If caching (saving) is requested, try to load data
+        if self.sm_options['save_solution']:
+            loaded, data = _caching_load(filename, checksum)
+        else:
+            loaded = False
+
+        # If caching not requested or loading failed, actually run
+        if not loaded:
             self._fit()
-            data = {'sol': self.sol, 'num': self.num}
-            _caching_save(filename, checksum, data)
         else:
             self.sol = data['sol']
             self.num = data['num']
+
+        # If caching (saving) is requested, save data
+        if self.sm_options['save_solution']:
+            data = {'sol': self.sol, 'num': self.num}
+            _caching_save(filename, checksum, data)
 
     def evaluate(self, x, kx):
         """
