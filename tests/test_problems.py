@@ -66,6 +66,10 @@ class Test(SMTestCase):
         self.run_test(TensorProduct(name='TP-cos', ndim=1, func='cos'))
         self.run_test(TensorProduct(name='TP-cos', ndim=3, func='cos'))
 
+    def test_gaussian(self):
+        self.run_test(TensorProduct(name='TP-gaussian', ndim=1, func='gaussian'))
+        self.run_test(TensorProduct(name='TP-gaussian', ndim=3, func='gaussian'))
+
     def test_rosenbrock(self):
         self.run_test(Rosenbrock(ndim=2))
         self.run_test(Rosenbrock(ndim=3))

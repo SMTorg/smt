@@ -13,25 +13,26 @@ class TensorProduct(Problem):
 
     def _declare_options(self):
         self.options.declare('name', 'TP', types=str)
-        self.options.declare('func', values=['cos', 'exp', 'tanh'])
+        self.options.declare('func', values=['cos', 'exp', 'tanh', 'gaussian'])
         self.options.declare('width', 1., types=(float, int))
 
     def _initialize(self):
         self.xlimits[:, 0] = -1.
         self.xlimits[:, 1] =  1.
 
+        a = self.options['width']
         if self.options['func'] == 'cos':
-            a = self.options['width']
             self.func = lambda v: np.cos(a * np.pi * v)
             self.dfunc = lambda v: -a * np.pi * np.sin(a * np.pi * v)
         elif self.options['func'] == 'exp':
-            a = self.options['width']
             self.func = lambda v: np.exp(a * v)
             self.dfunc = lambda v: a * np.exp(a * v)
         elif self.options['func'] == 'tanh':
-            a = self.options['width']
             self.func = lambda v: np.tanh(a * v)
             self.dfunc = lambda v: a / np.cosh(a * v) ** 2
+        elif self.options['func'] == 'gaussian':
+            self.func = lambda v: np.exp(-2. * a * v ** 2)
+            self.dfunc = lambda v: -4. * a * v * np.exp(-2. * a * v ** 2)
 
     def _evaluate(self, x, kx):
         """
