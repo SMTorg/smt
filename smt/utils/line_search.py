@@ -18,6 +18,8 @@ def get_line_search_class(line_search):
         return QuadraticLineSearch
     elif line_search == 'cubic':
         return CubicLineSearch
+    elif line_search == 'null':
+        return NullLineSearch
 
 
 class LineSearch(object):
@@ -80,6 +82,37 @@ class LineSearch(object):
         Check curvature criterion.
         """
         return np.abs(self._dphi(a)) <= np.abs(self.u2 * self.dphi_0)
+
+
+class NullLineSearch(object):
+    """
+    Base line search class.
+    """
+
+    def __init__(self, x, dx, func, grad, u1=1.e-4, u2=0.9):
+        """
+        Initialize all attributes for the given problem.
+
+        Arguments
+        ---------
+        x : ndarray[:]
+            Vector representing the current location in the n-D space.
+        dx : ndarray[:]
+            Search direction.
+        func : function
+            scalar function of x.
+        grad : function
+            vector function that yields the gradient of func.
+        u1 : float
+            Parameter in the sufficient decrease criterion to ensure non-zero decrease.
+        u2 : float
+            Parameter in the curvature criterion to ensure gradient norm decreases.
+        """
+        self.x = x
+        self.dx = dx
+
+    def __call__(self, initial_a=1):
+        return self.x + initial_a * self.dx
 
 
 class BacktrackingLineSearch(LineSearch):

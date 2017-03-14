@@ -6,10 +6,9 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems.carre import Carre
-from smt.problems.tensor_product import TensorProduct
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.problems import Carre, TensorProduct
+from smt.sampling import LHS
+
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
@@ -34,30 +33,27 @@ class Test(SMTestCase):
         ndim = 3
         nt = 500
         ne = 100
-        sampling = lhs_center
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
+                'max_nln_iter': 0})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         self.nt = nt
         self.ne = ne
-        self.sampling = sampling
         self.problems = problems
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems['carre']
+        sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
-        xt = self.sampling(prob.xlimits, self.nt)
+        xt = sampling(self.nt)
         yt = prob(xt)
 
         sm0 = self.sms[sname]
@@ -83,29 +79,33 @@ class Test(SMTestCase):
         if extrap_predict:
             sm.predict(x)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts(self):
         self.run_test('RMTS', False, False)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts_train(self):
-        if compiled_available:
-            with self.assertRaises(Exception) as context:
-                self.run_test('RMTS', True, False)
-            self.assertEqual(str(context.exception),
-                             'Training pts above max for 0')
+        with self.assertRaises(Exception) as context:
+            self.run_test('RMTS', True, False)
+        self.assertEqual(str(context.exception),
+                         'Training pts above max for 0')
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts_predict(self):
         self.run_test('RMTS', False, True)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb(self):
         self.run_test('RMTB', False, False)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb_train(self):
-        if compiled_available:
-            with self.assertRaises(Exception) as context:
-                self.run_test('RMTB', True, False)
-            self.assertEqual(str(context.exception),
-                             'Training pts above max for 0')
+        with self.assertRaises(Exception) as context:
+            self.run_test('RMTB', True, False)
+        self.assertEqual(str(context.exception),
+                         'Training pts above max for 0')
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb_predict(self):
         self.run_test('RMTB', False, True)
 

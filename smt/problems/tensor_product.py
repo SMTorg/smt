@@ -51,10 +51,13 @@ class TensorProduct(Problem):
         ne, nx = x.shape
 
         y = np.ones((ne, 1))
-        y[:, 0] = np.prod(self.func(x), 1).T
-
-        if kx is not None:
-            y[:, 0] /= self.func(x[:, kx])
-            y[:, 0] *= self.dfunc(x[:, kx])
+        if kx is None:
+            y[:, 0] = np.prod(self.func(x), 1).T
+        else:
+            for ix in range(nx):
+                if kx == ix:
+                    y[:, 0] *= self.dfunc(x[:, ix])
+                else:
+                    y[:, 0] *= self.func(x[:, ix])
 
         return y

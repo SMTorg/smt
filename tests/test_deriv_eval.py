@@ -6,10 +6,9 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems.carre import Carre
-from smt.problems.tensor_product import TensorProduct
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.problems import Carre, TensorProduct
+from smt.sampling import LHS
+
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
@@ -34,19 +33,18 @@ class Test(SMTestCase):
         ndim = 2
         nt = 500
         ne = 100
-        sampling = lhs_center
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu'})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[6]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
+                'max_nln_iter': 0})
+            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         self.nt = nt
         self.ne = ne
-        self.sampling = sampling
         self.problems = problems
         self.sms = sms
 
@@ -55,20 +53,18 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems[pname]
+        sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
-        xt = self.sampling(prob.xlimits, self.nt)
+        xt = sampling(self.nt)
         yt = prob(xt)
         dyt = {}
         for kx in range(prob.xlimits.shape[0]):
             dyt[kx] = prob(xt, kx=kx)
 
         np.random.seed(1)
-        xe = self.sampling(prob.xlimits, self.ne)
+        xe = sampling(self.ne)
         ye = prob(xe)
         dye = {}
         for kx in range(prob.xlimits.shape[0]):
@@ -103,9 +99,11 @@ class Test(SMTestCase):
     # --------------------------------------------------------------------
     # Function: carre
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTB(self):
         self.run_test()
 

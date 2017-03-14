@@ -6,10 +6,9 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems.carre import Carre
-from smt.problems.tensor_product import TensorProduct
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.problems import Carre, TensorProduct
+from smt.sampling import LHS
+
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
@@ -34,7 +33,6 @@ class Test(SMTestCase):
         ndim = 10
         nt = 500
         ne = 100
-        sampling = lhs_center
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
@@ -63,7 +61,6 @@ class Test(SMTestCase):
 
         self.nt = nt
         self.ne = ne
-        self.sampling = sampling
         self.problems = problems
         self.sms = sms
         self.t_errors = t_errors
@@ -74,17 +71,15 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems[pname]
+        sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
-        xt = self.sampling(prob.xlimits, self.nt)
+        xt = sampling(self.nt)
         yt = prob(xt)
 
         np.random.seed(1)
-        xe = self.sampling(prob.xlimits, self.ne)
+        xe = sampling(self.ne)
         ye = prob(xe)
 
         sm0 = self.sms[sname]
@@ -123,6 +118,7 @@ class Test(SMTestCase):
     def test_carre_KRG(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_IDW(self):
         self.run_test()
 
@@ -138,6 +134,7 @@ class Test(SMTestCase):
     def test_exp_KRG(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_IDW(self):
         self.run_test()
 
@@ -153,6 +150,7 @@ class Test(SMTestCase):
     def test_tanh_KRG(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):
         self.run_test()
 
@@ -168,6 +166,7 @@ class Test(SMTestCase):
     def test_cos_KRG(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
         self.run_test()
 

@@ -1,5 +1,6 @@
 from numpy.distutils.core import setup, Extension
 import os
+from subprocess import call
 
 
 if os.name == 'nt':
@@ -36,3 +37,9 @@ setup(name='smt',
     zip_safe=False,
     ext_modules=ext,
 )
+
+for lib_name in ['IDWlib', 'RMTSlib', 'RMTBlib']:
+    try:
+        call(['mv', 'smt/%s.cpython-36m-darwin.so' % lib_name, 'smt/%s.so' % lib_name])
+    except:
+        pass

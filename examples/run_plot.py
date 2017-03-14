@@ -1,10 +1,10 @@
 from __future__ import print_function, division
 import numpy as np
+import pylab
 
-from smt.problems.carre import Carre
-from smt.problems.tensor_product import TensorProduct
-from smt.sampling.lhs import lhs_center
-from smt.sampling.random import random
+from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
+from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
+from smt.sampling import LHS, Random, FullFactorial
 from smt.ls import LS
 from smt.pa2 import PA2
 from smt.kpls import KPLS
@@ -13,32 +13,42 @@ from smt.rmts import RMTS
 from smt.rmtb import RMTB
 
 
-ndim = 3
-# prob = Carre(ndim=ndim)
-prob = TensorProduct(ndim=ndim, func='tanh', width=5.)
-sampling = lhs_center
+# prob = Carre(ndim=4)
+prob = TensorProduct(ndim=3, func='tanh', width=5.)
+prob = WeldedBeam(ndim=3)
+prob = CantileverBeam(ndim=3)
+prob = Rosenbrock(ndim=4)
+# prob = RobotArm(ndim=4)
 
-# sm = RMTS({'name':'RMTS','num_elem':[8]*ndim, 'smoothness':[1.0]*ndim,
-#     'xlimits':prob.xlimits, 'approx_norm': 4,
-#     'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
-#     'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 20,
-#     'line_search': 'backtracking', 'max_print_depth': 4,
-# }, {})
-sm = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[15]*ndim, 'xlimits':prob.xlimits,
-    'max_nln_iter': 20, 'max_print_depth': 4,
-    'save_solution': False})
+
+sampling = LHS(xlimits=prob.xlimits)
+sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
+# sampling = Random(xlimits=prob.xlimits)
+
+
+ndim = prob.options['ndim']
+
+sm = RMTS({'name':'RMTS','num_elem':[4]*ndim, 'smoothness':[1.0]*ndim,
+    'xlimits':prob.xlimits, 'approx_norm': 4, 'min_energy': False,
+    'reg_dv': 1e-10, 'reg_cons': 1e-10, 'save_solution': False,
+    'mg_factors': [4], 'solver': 'krylov', 'max_nln_iter': 10,
+    'line_search': 'backtracking', 'max_print_depth': 5,
+}, {})
+sm = RMTB({'name':'RMTB', 'order':[3]*ndim, 'num_ctrl_pts':[10]*ndim, 'xlimits':prob.xlimits,
+    'max_nln_iter': 10, 'max_print_depth': 5, 'min_energy': False, 'save_solution': False,
+    'line_search': 'null'})
 # sm = IDW({'name':'IDW'},{'global':False})
 # sm = KPLS({'name':'KRG', 'n_comp':ndim, 'theta0': [1e-2]*ndim},{})
 
-nt = 5000 * ndim
+nt = 10000 * ndim
 ne = 100 * ndim
 
 np.random.seed(0)
-xt = sampling(prob.xlimits, nt)
+xt = sampling(nt)
 yt = prob(xt)
 
 np.random.seed(1)
-xe = sampling(prob.xlimits, ne)
+xe = sampling(ne)
 ye = prob(xe)
 
 sm.add_training_pts('exact', xt, yt)
@@ -47,13 +57,27 @@ sm.train()
 print(sm.compute_rms_error())
 print(sm.compute_rms_error(xe, ye))
 
-xe = np.zeros((50, ndim))
+nplot = 50
+xe1 = np.zeros((nplot, ndim))
+xe2 = np.zeros((nplot, ndim))
 for kx in range(ndim):
-    xe[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-xe[:, 0] = np.linspace(1.2*prob.xlimits[0, 0], 1.2*prob.xlimits[0, 1], 50)
-ye = prob(xe)
-y = sm.predict(xe)
-import pylab
-pylab.plot(xe[:, 0], ye, '-or')
-pylab.plot(xe[:, 0], y, '-ob')
+    xe1[:, kx] = 0.2 * prob.xlimits[kx, 0] + 0.8 * prob.xlimits[kx, 1]
+    xe2[:, kx] = 0.2 * prob.xlimits[kx, 0] + 0.8 * prob.xlimits[kx, 1]
+
+a = 1.0
+
+xe1[:, 0] = np.linspace(a*prob.xlimits[0, 0], a*prob.xlimits[0, 1], nplot)
+ye1 = prob(xe1)
+y1 = sm.predict(xe1)
+pylab.subplot(2, 1, 1)
+pylab.plot(xe1[:, 0], ye1, '-or')
+pylab.plot(xe1[:, 0], y1, '-ob')
+
+xe2[:, -1] = np.linspace(a*prob.xlimits[-1, 0], a*prob.xlimits[-1, 1], nplot)
+ye2 = prob(xe2)
+y2 = sm.predict(xe2)
+pylab.subplot(2, 1, 2)
+pylab.plot(xe2[:, -1], ye2, '-or')
+pylab.plot(xe2[:, -1], y2, '-ob')
+
 pylab.show()

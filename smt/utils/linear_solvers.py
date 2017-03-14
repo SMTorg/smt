@@ -116,6 +116,7 @@ class DirectSolver(LinearSolver):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
+            assert isinstance(mtx, scipy.sparse.spmatrix), 'mtx is of type %s' % type(mtx)
 
             with printer._timed_context('Performing %s fact. (%i x %i mtx)'
                                         % ((self.options['alg'], ) + mtx.shape)):
@@ -148,7 +149,7 @@ class KrylovSolver(LinearSolver):
         self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
         self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg'],
                              types=LinearSolver)
-        self.options.declare('ilimit', 100, types=int)
+        self.options.declare('ilimit', 50, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))
         self.options.declare('rtol', 1e-15, types=(int, float))
 
