@@ -49,9 +49,6 @@ class Test(SMTestCase):
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems['carre']
         sampling = LHS(xlimits=prob.xlimits)
 
@@ -82,29 +79,33 @@ class Test(SMTestCase):
         if extrap_predict:
             sm.predict(x)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts(self):
         self.run_test('RMTS', False, False)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts_train(self):
-        if compiled_available:
-            with self.assertRaises(Exception) as context:
-                self.run_test('RMTS', True, False)
-            self.assertEqual(str(context.exception),
-                             'Training pts above max for 0')
+        with self.assertRaises(Exception) as context:
+            self.run_test('RMTS', True, False)
+        self.assertEqual(str(context.exception),
+                         'Training pts above max for 0')
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmts_predict(self):
         self.run_test('RMTS', False, True)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb(self):
         self.run_test('RMTB', False, False)
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb_train(self):
-        if compiled_available:
-            with self.assertRaises(Exception) as context:
-                self.run_test('RMTB', True, False)
-            self.assertEqual(str(context.exception),
-                             'Training pts above max for 0')
+        with self.assertRaises(Exception) as context:
+            self.run_test('RMTB', True, False)
+        self.assertEqual(str(context.exception),
+                         'Training pts above max for 0')
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_rmtb_predict(self):
         self.run_test('RMTB', False, True)
 

@@ -53,9 +53,6 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems[pname]
         sampling = LHS(xlimits=prob.xlimits)
 
@@ -102,9 +99,11 @@ class Test(SMTestCase):
     # --------------------------------------------------------------------
     # Function: carre
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTB(self):
         self.run_test()
 

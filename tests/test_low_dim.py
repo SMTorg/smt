@@ -71,9 +71,6 @@ class Test(SMTestCase):
         pname = method_name.split('_')[1]
         sname = method_name.split('_')[2]
 
-        if sname in ['IDW', 'RMTS', 'RMTB'] and not compiled_available:
-            return
-
         prob = self.problems[pname]
         sampling = LHS(xlimits=prob.xlimits)
 
@@ -118,9 +115,11 @@ class Test(SMTestCase):
     def test_carre_PA2(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTB(self):
         self.run_test()
 
@@ -133,9 +132,11 @@ class Test(SMTestCase):
     def test_exp_PA2(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_RMTB(self):
         self.run_test()
 
@@ -148,9 +149,11 @@ class Test(SMTestCase):
     def test_tanh_PA2(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_RMTB(self):
         self.run_test()
 
@@ -163,9 +166,11 @@ class Test(SMTestCase):
     def test_cos_PA2(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_RMTS(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_RMTB(self):
         self.run_test()
 
