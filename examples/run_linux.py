@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import print_function, division
 import numpy as np
 from smt.ls import LS
 from smt.pa2 import PA2
@@ -44,8 +44,8 @@ t.train()
 # Prediction of the validation points
 y = t.predict(xtest)
 
-print 'LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 ########### The PA2 model
 t = PA2()
@@ -53,8 +53,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 ########### The IDW model
 t = IDW()
@@ -62,8 +62,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 ########### The Kriging model
 # The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
@@ -74,8 +74,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 
 ########### The KPLS model
@@ -88,8 +88,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 
 ########### The KPLSK model
@@ -100,8 +100,8 @@ t.add_training_pts('exact',xt,yt)
 t.train()
 y = t.predict(xtest)
 
-print 'KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
 
 ########### The GEKPLS model
 # The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
@@ -115,5 +115,5 @@ for i in range(dim):
 t.train()
 y = t.predict(xtest)
 
-print 'GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100)
+print('GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))

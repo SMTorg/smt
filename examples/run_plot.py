@@ -31,9 +31,9 @@ sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 ndim = prob.options['ndim']
 
 sm = RMTS(xlimits=prob.xlimits, num_elem=4, max_print_depth=5)
-sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=10, max_print_depth=5)
-sm = IDW()
-sm = KPLS(name='KRG', n_comp=ndim, theta0=[0.5]*ndim)
+# sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=10, max_print_depth=5)
+# sm = IDW()
+# sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
 
 nt = 500 * ndim
 ne = 100 * ndim
@@ -51,8 +51,6 @@ sm.train()
 
 print(sm.compute_rms_error())
 print(sm.compute_rms_error(xe, ye))
-
-# exit()
 
 nplot = 50
 xe1 = np.zeros((nplot, ndim))

@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import print_function, division
 import numpy as np
 from smt.ls import LS
 from smt.pa2 import PA2
