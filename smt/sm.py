@@ -11,6 +11,7 @@ from __future__ import division
 import numpy as np
 
 from smt.utils.printer import Printer
+from smt.utils.options_dictionary import OptionsDictionary
 
 
 class SM(object):
@@ -18,28 +19,37 @@ class SM(object):
     Base class for all model methods.
     '''
 
-    def __init__(self, sm_options=None, printf_options=None):
+    def __init__(self, **kwargs):
         '''
         Constructor.
 
         Arguments
         ---------
-        sm_options : dict
-            Model-related options, in _default_options in the inheriting class
-
-        printf_options : dict
-            Output printing options
+        **kwargs : named arguments
+            Set of options that can be optionally set; each option must have been declared.
         '''
-        #Initialization
-        self._set_default_options()
-        if sm_options is not None:
-            self.sm_options.update(sm_options)
-        if printf_options is not None:
-            self.printf_options.update(printf_options)
+        self.options = OptionsDictionary()
+        self._declare_options()
+        self.options.update(kwargs)
 
         self.training_pts = {'exact': {}}
 
         self.printer = Printer()
+
+
+    def _declare_options(self):
+        declare = self.options.declare
+
+        declare('print_global', True, types=bool,
+                desc='Global print toggle. If False, all printing is suppressed')
+        declare('print_training', True, types=bool,
+                desc='Whether to print training information')
+        declare('print_prediction', True, types=bool,
+                desc='Whether to print prediction information')
+        declare('print_problem', True, types=bool,
+                desc='Whether to print problem information')
+        declare('print_solver', True, types=bool,
+                desc='Whether to print solver information')
 
     def compute_rms_error(self, xe=None, ye=None, kx=None):
         '''
@@ -115,17 +125,17 @@ class SM(object):
         '''
         n_exact = self.training_pts['exact'][0][0].shape[0]
 
-        self.printer.active = self.printf_options['global']
+        self.printer.active = self.options['print_global']
         self.printer._line_break()
-        self.printer._center(self.sm_options['name'])
+        self.printer._center(self.options['name'])
 
-        self.printer.active = self.printf_options['global'] and self.printf_options['problem']
+        self.printer.active = self.options['print_global'] and self.options['print_problem']
         self.printer._title('Problem size')
         self.printer('   %-25s : %i' % ('# training pts.', n_exact))
         self.printer()
 
-        self.printer.active = self.printf_options['global'] and self.printf_options['time_train']
-        if self.sm_options['name'] == 'MixExp':
+        self.printer.active = self.options['print_global'] and self.options['print_training']
+        if self.options['name'] == 'MixExp':
             # Mixture of experts model
             self.printer._title('Training of the Mixture of experts')
         else:
@@ -155,9 +165,9 @@ class SM(object):
         '''
         n_evals = x.shape[0]
 
-        self.printer.active = self.printf_options['global'] and self.printf_options['time_eval']
+        self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
-        if self.sm_options['name'] == 'MixExp':
+        if self.options['name'] == 'MixExp':
             # Mixture of experts model
             self.printer._title('Evaluation of the Mixture of experts')
         else:

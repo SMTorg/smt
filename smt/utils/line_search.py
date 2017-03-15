@@ -9,6 +9,8 @@ import six
 from six.moves import range
 
 
+VALID_LINE_SEARCHES = ('backtracking', 'bracketed', 'quadratic', 'cubic', 'null')
+
 def get_line_search_class(line_search):
     if line_search == 'backtracking':
         return BacktrackingLineSearch

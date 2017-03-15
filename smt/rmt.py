@@ -7,8 +7,8 @@ import numpy as np
 import scipy.sparse
 from six.moves import range
 
-from smt.utils.linear_solvers import get_solver
-from smt.utils.line_search import get_line_search_class
+from smt.utils.linear_solvers import get_solver, LinearSolver, VALID_SOLVERS
+from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_SEARCHES
 from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
 from smt.sm import SM
 
@@ -20,8 +20,43 @@ class RMT(SM):
     Regularized Minimal-energy Tensor-product interpolant base class for RMTS and RMTB.
     """
 
+    def _declare_options(self):
+        super(RMT, self)._declare_options()
+        declare = self.options.declare
+
+        declare('xlimits', types=np.ndarray,
+                desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
+        declare('smoothness', None, values=(None), types=(list, np.ndarray),
+                desc='Smoothness parameter in each dimension - length nx. None implies uniform')
+        declare('reg_dv', 1e-10, types=(int, float),
+                desc='Regularization coeff. for system degrees of freedom. ' +
+                     'Should be increased (to say 1e-4) when min_energy is False')
+        declare('reg_cons', 1e-10, types=(int, float),
+                desc='Regularization coeff. for energy minimization terms. ' +
+                     'Negative of the regularization coeff. of the Lagrange mult. block')
+        declare('extrapolate', False, types=bool,
+                desc='Whether to perform linear extrapolation for external evaluation points')
+        declare('min_energy', True, types=bool,
+                desc='Whether to perform energy minimization')
+        declare('approx_order', 4, types=int,
+                desc='Exponent in the approximation term')
+        declare('mtx_free', False, types=bool,
+                desc='Whether to solve the linear system in a matrix-free way')
+        declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
+                desc='Linear solver')
+        declare('nln_max_iter', 10, types=int,
+                desc='maximum number of nonlinear iterations')
+        declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
+                desc='Line search algorithm')
+        declare('mg_factors', [], types=(list, np.ndarray),
+                desc='List of multigrid factors; each entry is a reduction factor')
+        declare('save_solution', False, types=bool,
+                desc='Whether to save the linear system solution')
+        declare('max_print_depth', 100, types=int,
+                desc='Maximum depth (level of nesting) to print operation descriptions and times')
+
     def _initialize_hessian(self):
-        diag = self.sm_options['reg_dv'] * np.ones(self.num['dof'])
+        diag = self.options['reg_dv'] * np.ones(self.num['dof'])
         arange = np.arange(self.num['dof'])
         full_hess = scipy.sparse.csc_matrix((diag, (arange, arange)))
         return full_hess
@@ -31,8 +66,7 @@ class RMT(SM):
         # We loop over kx: 0 is for values and kx>0 represents
         # the 1-based index of the derivative given by the training point data.
         num = self.num
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        xlimits = self.options['xlimits']
 
         full_jac_dict = {}
         for kx in self.training_pts['exact']:
@@ -71,7 +105,7 @@ class RMT(SM):
         return grad
 
     def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        if self.sm_options['use_mtx_free']:
+        if self.options['mtx_free']:
             return self._opt_hess_op(sol, p, full_hess, full_jac_dict, yt_dict)
         else:
             return self._opt_hess_mtx(sol, p, full_hess, full_jac_dict, yt_dict)
@@ -109,7 +143,7 @@ class RMT(SM):
         return op
 
     def _opt_hess_2(self, full_hess, full_jac_dict):
-        if self.sm_options['use_mtx_free']:
+        if self.options['mtx_free']:
             return self._opt_hess_op_2(full_hess, full_jac_dict)
         else:
             return self._opt_hess_mtx_2(full_hess, full_jac_dict)
@@ -154,10 +188,10 @@ class RMT(SM):
 
     def _solve(self, full_hess, full_jac_dict, mg_matrices):
         num = self.num
-        sm_options = self.sm_options
+        options = self.options
 
-        solver = get_solver(sm_options['solver'])
-        ls_class = get_line_search_class(sm_options['line_search'])
+        solver = get_solver(options['solver'])
+        ls_class = get_line_search_class(options['line_search'])
 
         total_size = int(num['dof'])
         rhs = np.zeros((total_size, num['y']))
@@ -180,21 +214,21 @@ class RMT(SM):
                 with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
                     solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
 
-        p = self.sm_options['approx_norm']
+        p = self.options['approx_order']
         for ind_y in range(rhs.shape[1]):
 
             with self.printer._timed_context('Solving nonlinear problem (col. %i)' % ind_y):
 
                 yt_dict = self._get_yt_dict(ind_y)
 
-                if sm_options['max_nln_iter'] > 0:
+                if options['nln_max_iter'] > 0:
                     norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
                     fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
                     self.printer(
                         'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
                         % (0, ind_y, norm, fval))
 
-                for nln_iter in range(sm_options['max_nln_iter']):
+                for nln_iter in range(options['nln_max_iter']):
                     with self.printer._timed_context():
                         with self.printer._timed_context('Assembling linear system'):
                             mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
@@ -235,10 +269,10 @@ class RMT(SM):
         Train the model
         """
         checksum = _caching_checksum_sm(self)
-        filename = '%s.sm' % self.sm_options['name']
+        filename = '%s.sm' % self.options['name']
 
         # If caching (saving) is requested, try to load data
-        if self.sm_options['save_solution']:
+        if self.options['save_solution']:
             loaded, data = _caching_load(filename, checksum)
         else:
             loaded = False
@@ -251,7 +285,7 @@ class RMT(SM):
             self.num = data['num']
 
         # If caching (saving) is requested, save data
-        if self.sm_options['save_solution']:
+        if self.options['save_solution']:
             data = {'sol': self.sol, 'num': self.num}
             _caching_save(filename, checksum, data)
 
@@ -276,7 +310,7 @@ class RMT(SM):
         n = x.shape[0]
 
         num = self.num
-        sm_options = self.sm_options
+        options = self.options
 
         data, rows, cols = self._compute_jac(kx, 0, x)
 
@@ -296,13 +330,13 @@ class RMT(SM):
         # f and all derivatives evaluated at x1,b2,b3,x4 change with x1.
         # The extrapolation function is non-differentiable at boundaries:
         # i.e., where x_k = a_k or x_k = b_k for at least one k.
-        if sm_options['extrapolate']:
+        if options['extrapolate']:
 
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
             ndx = n * num['support']
-            dx = RMTSlib.compute_ext_dist(num['x'], n, ndx, sm_options['xlimits'], x)
+            dx = RMTSlib.compute_ext_dist(num['x'], n, ndx, options['xlimits'], x)
             isexternal = np.array(np.array(dx, bool), float)
 
             for ix in range(num['x']):

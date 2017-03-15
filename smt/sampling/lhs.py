@@ -16,7 +16,7 @@ class LHS(Sampling):
         self.options.declare('criterion', 'c', values=['center', 'maximin', 'centermaximin',
                                                        'correlation', 'c', 'm', 'cm', 'corr'])
 
-    def __call__(self, n):
+    def _compute(self, n):
         """
         Compute the requested number of sampling points.
 
@@ -32,9 +32,4 @@ class LHS(Sampling):
         """
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
-
-        x = pyDOE.lhs(nx, samples=n, criterion=self.options['criterion'])
-        for kx in range(nx):
-            x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
-
-        return x
+        return pyDOE.lhs(nx, samples=n, criterion=self.options['criterion'])

@@ -23,26 +23,17 @@ class IDW(SM):
     is computed with respect to the distance between x and the training points.
     '''
 
-    def _set_default_options(self):
-        sm_options = {
-            'name': 'IDW',
-            'p': 2.5,           # Parameter p
-        }
-        printf_options = {
-            'global': True,     # Overriding option to print output
-            'time_eval': True,  # Print evaluation times
-            'time_train': False, # Print assembly and solution time summary
-            'problem': True,    # Print problem information
-        }
+    def _declare_options(self):
+        super(IDW, self)._declare_options()
+        declare = self.options.declare
 
-        self.sm_options = sm_options
-        self.printf_options = printf_options
-
+        declare('name', 'IDW', types=str,
+                desc='Inverse distance weighting interpolant')
+        declare('p', 2.5, types=(int, float), desc='order of distance norm')
 
     ############################################################################
     # Model functions
     ############################################################################
-
 
     def fit(self):
         """
@@ -78,6 +69,6 @@ class IDW(SM):
         xt = np.vstack(xt_list)
         yt = np.vstack(yt_list)
 
-        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.sm_options['p'], x, xt)
+        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
 
         return mtx.dot(yt)

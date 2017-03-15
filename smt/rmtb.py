@@ -37,39 +37,19 @@ class RMTB(RMT):
     training points
     """
 
-    def _set_default_options(self):
-        sm_options = {
-            'name': 'RMTB', # Multi-dimensional B-spline Regression
-            'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
-            'order': [], # int ndarray[nx]: B-spline order in each dimension
-            'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
-            'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
-            'reg_dv': 1e-4, # regularization coeff. for dv block
-            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
-            'extrapolate': False, # perform linear extrapolation for external eval points
-            'min_energy': True, # whether to include energy minimizaton terms
-            'approx_norm': 4, # order of norm in least-squares approximation term
-            'use_mtx_free': False, # whether to solve the linear system in a matrix-free way
-            'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'max_nln_iter': 10, # number of nonlinear iterations
-            'line_search': 'backtracking', # line search algorithm
-            'mg_factors': [], # Multigrid level
-            'save_solution': False,  # Whether to save linear system solution
-            'max_print_depth': 100, # Maximum depth (level of nesting) to print
-        }
-        printf_options = {
-            'global': True,     # Overriding option to print output
-            'time_eval': True,  # Print evaluation times
-            'time_train': True, # Print assembly and solution time summary
-            'problem': True,    # Print problem information
-            'solver': True,     # Print convergence progress (i.e., residual norms)
-        }
+    def _declare_options(self):
+        super(RMTB, self)._declare_options()
+        declare = self.options.declare
 
-        self.sm_options = sm_options
-        self.printf_options = printf_options
+        declare('name', 'RMTB', types=str,
+                desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
+        declare('order', 3, types=(int, list, np.ndarray),
+                desc='B-spline order in each dimension - length [nx]')
+        declare('num_ctrl_pts', 10, types=(int, list, np.ndarray),
+                desc='# B-spline control points in each dimension - length [nx]')
 
     def _compute_jac(self, ix1, ix2, x):
-        xlimits = self.sm_options['xlimits']
+        xlimits = self.options['xlimits']
 
         t = np.zeros(x.shape)
         for kx in range(self.num['x']):
@@ -91,8 +71,8 @@ class RMTB(RMT):
 
     def _compute_energy_terms(self):
         num = self.num
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        options = self.options
+        xlimits = options['xlimits']
 
         nt_list = num['ctrl_list'] - num['order_list'] + 1
         nt = np.prod(nt_list)
@@ -110,7 +90,7 @@ class RMTB(RMT):
             data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
             rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
             full_hess += rect_mtx.T * rect_mtx \
-                * (elem_vol / total_vol * sm_options['smoothness'][kx])
+                * (elem_vol / total_vol * options['smoothness'][kx])
 
         return full_hess
 
@@ -118,19 +98,24 @@ class RMTB(RMT):
         """
         Train the model
         """
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        options = self.options
+        xlimits = options['xlimits']
 
         nx = self.training_pts['exact'][0][0].shape[1]
-        ny = self.training_pts['exact'][0][1].shape[1]
+        if isinstance(options['order'], int):
+            options['order'] = [options['order']] * nx
+        if isinstance(options['num_ctrl_pts'], int):
+            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
+        if options['smoothness'] is None:
+            options['smoothness'] = [1.0] * nx
 
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
-        num['order_list'] = np.array(sm_options['order'], int)
+        num['order_list'] = np.array(options['order'], int)
         num['order'] = np.prod(num['order_list'])
-        num['ctrl_list'] = np.array(sm_options['num_ctrl_pts'], int)
+        num['ctrl_list'] = np.array(options['num_ctrl_pts'], int)
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
@@ -143,26 +128,23 @@ class RMTB(RMT):
         num['support'] = num['order']
         num['dof'] = num['ctrl']
 
-        if len(sm_options['smoothness']) == 0:
-            sm_options['smoothness'] = [1.0] * num['x']
-
         self.num = num
 
-        self.printer.max_print_depth = sm_options['max_print_depth']
+        self.printer.max_print_depth = options['max_print_depth']
 
         with self.printer._timed_context('Pre-computing matrices'):
 
             with self.printer._timed_context('Initializing Hessian'):
                 full_hess = self._initialize_hessian()
 
-            if sm_options['min_energy']:
+            if options['min_energy']:
                 with self.printer._timed_context('Computing energy terms'):
                     full_hess += self._compute_energy_terms()
 
             with self.printer._timed_context('Computing approximation terms'):
                 full_jac_dict = self._compute_approx_terms()
 
-            full_hess *= sm_options['reg_cons']
+            full_hess *= options['reg_cons']
 
             mg_matrices = []
 

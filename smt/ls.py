@@ -18,35 +18,12 @@ class LS(SM):
     Default-parameters from scikit-learn are used herein.
     """
 
-    def _set_default_options(self):
+    def _declare_options(self):
+        super(LS, self)._declare_options()
+        declare = self.options.declare
 
-        '''
-        Constructor.
-
-        Arguments
-        ---------
-        sm_options : dict
-            Model-related options, listed below
-
-        printf_options : dict
-            Output printing options, listed below
-        '''
-
-        sm_options = {
-            'name': 'LS',
-        }
-        printf_options = {
-            'global': True,     # Overriding option to print output
-            'time_eval': True,  # Print evaluation times
-            'time_train': True, # Print training time
-            'problem': True,    # Print problem information
-        }
-
-        self.sm_options = sm_options
-        self.printf_options = printf_options
-
-        self.mod = linear_model.LinearRegression()
-
+        declare('name', 'LS', types=str,
+                desc='Least squares interpolant')
 
     ############################################################################
     # Model functions
@@ -54,17 +31,16 @@ class LS(SM):
 
 
     def fit(self):
-
         """
         Train the model
         """
-
         pts = self.training_pts
 
         if 0 in pts['exact']:
             x = pts['exact'][0][0]
             y = pts['exact'][0][1]
 
+        self.mod = linear_model.LinearRegression()
         self.mod.fit(x,y)
 
     def evaluate(self, x, kx):

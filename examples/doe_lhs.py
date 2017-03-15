@@ -178,7 +178,7 @@ def _lhscorrelate(n, samples, iterations):
         R = np.corrcoef(Hcandidate)
         if np.max(np.abs(R[R!=1]))<mincorr:
             mincorr = np.max(np.abs(R-np.eye(R.shape[0])))
-            print 'new candidate solution found with max,abs corrcoef = {}'.format(mincorr)
+            print('new candidate solution found with max,abs corrcoef = {}'.format(mincorr))
             H = Hcandidate.copy()
 
     return H

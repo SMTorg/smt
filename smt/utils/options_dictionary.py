@@ -22,6 +22,21 @@ class OptionsDictionary(object):
         self._declared_values = {}
         self._declared_types = {}
 
+    def clone(self):
+        """
+        Return a clone of this object.
+
+        Returns
+        -------
+        OptionsDictionary
+            Deep-copied clone.
+        """
+        clone = self.__class__()
+        clone._dict = dict(self._dict)
+        clone._declared_values = dict(self._declared_values)
+        clone._declared_types = dict(self._declared_types)
+        return clone
+
     def __getitem__(self, name):
         """
         Get an option that was previously declared and optionally set.

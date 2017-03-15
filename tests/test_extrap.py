@@ -39,9 +39,8 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
-                'max_nln_iter': 0})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         self.nt = nt
         self.ne = ne
@@ -59,10 +58,10 @@ class Test(SMTestCase):
         sm0 = self.sms[sname]
 
         sm = sm0.__class__()
-        sm.sm_options = dict(sm0.sm_options)
-        sm.printf_options = dict(sm0.printf_options)
-        sm.sm_options['xlimits'] = prob.xlimits
-        sm.printf_options['global'] = False
+        sm.options = sm0.options.clone()
+        if 'xlimits' in sm.options._declared_values:
+            sm.options['xlimits'] = prob.xlimits
+        sm.options['print_global'] = False
 
         x = np.zeros((1, xt.shape[1]))
         x[0, :] = prob.xlimits[:, 1] + 1.0

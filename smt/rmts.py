@@ -36,41 +36,20 @@ class RMTS(RMT):
     - The user must choose the number of elements in each dimension
     """
 
-    def _set_default_options(self):
-        sm_options = {
-            'name': 'RMTS', # Regularized Minimal-energy Tensor-product Spline
-            'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
-            'num_elem': [],  # int ndarray[nx]: num. of elements in each dimension
-            'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
-            'reg_dv': 1e-10, # regularization coeff. for dv block
-            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
-            'extrapolate': False, # perform linear extrapolation for external eval points
-            'min_energy': True, # whether to include energy minimizaton terms
-            'approx_norm': 4, # order of norm in least-squares approximation term
-            'use_mtx_free': False, # whether to solve the linear system in a matrix-free way
-            'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
-            'max_nln_iter': 10, # number of nonlinear iterations
-            'line_search': 'backtracking', # line search algorithm
-            'mg_factors': [], # Multigrid level
-            'save_solution': False,  # Whether to save linear system solution
-            'max_print_depth': 100, # Maximum depth (level of nesting) to print
-        }
-        printf_options = {
-            'global': True,     # Overriding option to print output
-            'time_eval': True,  # Print evaluation times
-            'time_train': True, # Print assembly and solution time summary
-            'problem': True,    # Print problem information
-            'solver': True,     # Print convergence progress (i.e., residual norms)
-        }
+    def _declare_options(self):
+        super(RMTS, self)._declare_options()
+        declare = self.options.declare
 
-        self.sm_options = sm_options
-        self.printf_options = printf_options
+        declare('name', 'RMTS', types=str,
+                desc='Regularized Minimal-energy Tensor-product Spline interpolant')
+        declare('num_elem', 4, types=(int, list, np.ndarray),
+                desc='# elements in each dimension - ndarray [nx]')
 
     def _compute_jac(self, ix1, ix2, x):
         n = x.shape[0]
         nnz = n * self.num['term']
         return RMTSlib.compute_jac(ix1, ix2, nnz, self.num['x'], n,
-            self.num['elem_list'], self.sm_options['xlimits'], x)
+            self.num['elem_list'], self.options['xlimits'], x)
 
     def _compute_uniq2coeff(self, nx, num_elem_list, num_elem, num_term, num_uniq):
         # This computes an num['term'] x num['term'] matrix called coeff2nodal.
@@ -107,8 +86,8 @@ class RMTS(RMT):
 
     def _compute_energy_terms(self):
         num = self.num
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        options = self.options
+        xlimits = options['xlimits']
 
         # Square root of volume of each integration element and of the whole domain
         elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
@@ -122,7 +101,7 @@ class RMTS(RMT):
             elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], num['x'],
                 num['elem_list'], xlimits)
             elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) \
-                * (elem_vol / total_vol * sm_options['smoothness'][kx])
+                * (elem_vol / total_vol * options['smoothness'][kx])
 
         # This takes the dense elem_hess matrix and stamps out num['elem'] copies
         # of it to form the full sparse matrix with all the elements included.
@@ -137,7 +116,7 @@ class RMTS(RMT):
 
     def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
-        sm_options = self.sm_options
+        options = self.options
 
         mg_full_uniq2coeff = self._compute_uniq2coeff(num['x'], elem_lists_1,
             np.prod(elem_lists_1), num['term'], np.prod(elem_lists_1 + 1))
@@ -146,7 +125,7 @@ class RMTS(RMT):
         nnz = ne * num['term']
         num_coeff = num['term'] * np.prod(elem_lists_1)
         data, rows, cols = RMTSlib.compute_jac_interp(
-            nnz, num['x'], elem_lists_1, elem_lists_2 + 1, sm_options['xlimits'])
+            nnz, num['x'], elem_lists_1, elem_lists_2 + 1, options['xlimits'])
         mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
         mg_matrix = mg_jac * mg_full_uniq2coeff
 
@@ -154,11 +133,11 @@ class RMTS(RMT):
 
     def _compute_mg_matrices(self):
         num = self.num
-        sm_options = self.sm_options
+        options = self.options
 
         elem_lists = [num['elem_list']]
         mg_matrices = []
-        for ind_mg, mg_factor in enumerate(sm_options['mg_factors']):
+        for ind_mg, mg_factor in enumerate(options['mg_factors']):
             elem_lists.append(elem_lists[-1] / mg_factor)
 
             nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
@@ -176,14 +155,18 @@ class RMTS(RMT):
         """
         Train the model
         """
-        sm_options = self.sm_options
+        options = self.options
+
+        nx = self.training_pts['exact'][0][0].shape[1]
+        if isinstance(options['num_elem'], int):
+            options['num_elem'] = options['num_elem'] * np.ones(nx, int)
 
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
         # number of elements
-        num['elem_list'] = np.array(sm_options['num_elem'], int)
+        num['elem_list'] = np.array(options['num_elem'], int)
         num['elem'] = np.prod(num['elem_list'])
         # number of terms/coefficients per element
         num['term_list'] = 4 * np.ones(num['x'], int)
@@ -200,12 +183,12 @@ class RMTS(RMT):
         num['support'] = num['term']
         num['dof'] = num['uniq'] * 2 ** num['x']
 
-        if len(sm_options['smoothness']) == 0:
-            sm_options['smoothness'] = [1.0] * num['x']
+        if options['smoothness'] is None:
+            options['smoothness'] = [1.0] * num['x']
 
         self.num = num
 
-        self.printer.max_print_depth = sm_options['max_print_depth']
+        self.printer.max_print_depth = options['max_print_depth']
 
         with self.printer._timed_context('Pre-computing matrices'):
 
@@ -216,7 +199,7 @@ class RMTS(RMT):
             with self.printer._timed_context('Initializing Hessian'):
                 full_hess = self._initialize_hessian()
 
-            if sm_options['min_energy']:
+            if options['min_energy']:
                 with self.printer._timed_context('Computing energy terms'):
                     full_hess_coeff = self._compute_energy_terms()
                     full_hess += full_uniq2coeff.T * full_hess_coeff * full_uniq2coeff
@@ -229,7 +212,7 @@ class RMTS(RMT):
                     full_jac_T = full_uniq2coeff.T.tocsc() * full_jac_T
                     full_jac_dict[kx] = (full_jac, full_jac_T)
 
-            full_hess *= sm_options['reg_cons']
+            full_hess *= options['reg_cons']
 
             mg_matrices = self._compute_mg_matrices()
 

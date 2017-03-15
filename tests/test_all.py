@@ -7,7 +7,7 @@ from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Carre, TensorProduct
-from smt.sampling import LHS
+from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
@@ -43,19 +43,18 @@ class Test(SMTestCase):
         sms = OrderedDict()
         sms['LS'] = LS()
         sms['PA2'] = PA2()
-        sms['KRG'] = KPLS({'name':'KRG','n_comp':ndim, 'theta0': [1.0]*ndim})
+        sms['KRG'] = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
         if compiled_available:
             sms['IDW'] = IDW()
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
-                'max_nln_iter': 0})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
         t_errors['KRG'] = 1e-6
         t_errors['IDW'] = 1e-15
-        t_errors['RMTS'] = 1e-6
+        t_errors['RMTS'] = 1e-2
         t_errors['RMTB'] = 1e-2
 
         e_errors = {}
@@ -63,8 +62,8 @@ class Test(SMTestCase):
         e_errors['PA2'] = 1.5
         e_errors['KRG'] = 1e-2
         e_errors['IDW'] = 1.0
-        e_errors['RMTS'] = 1e-1
-        e_errors['RMTB'] = 1e-1
+        e_errors['RMTS'] = 3e-2
+        e_errors['RMTB'] = 3e-2
 
         self.nt = nt
         self.ne = ne
@@ -79,7 +78,7 @@ class Test(SMTestCase):
         sname = method_name.split('_')[2]
 
         prob = self.problems[pname]
-        sampling = LHS(xlimits=prob.xlimits)
+        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
         np.random.seed(0)
         xt = sampling(self.nt)
@@ -92,10 +91,10 @@ class Test(SMTestCase):
         sm0 = self.sms[sname]
 
         sm = sm0.__class__()
-        sm.sm_options = dict(sm0.sm_options)
-        sm.printf_options = dict(sm0.printf_options)
-        sm.sm_options['xlimits'] = prob.xlimits
-        sm.printf_options['global'] = False
+        sm.options = sm0.options.clone()
+        if 'xlimits' in sm.options._declared_values:
+            sm.options['xlimits'] = prob.xlimits
+        sm.options['print_global'] = False
 
         sm.training_pts = {'exact': {}}
         sm.add_training_pts('exact', xt, yt)
