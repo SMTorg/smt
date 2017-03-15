@@ -510,7 +510,7 @@ class KPLS(SM):
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
         declare('n_comp', 1, types=int, desc='Number of principal components')
-        declare('theta0', [1e-2], types=list, desc='Initial hyperparameters')
+        declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('delta_x', 1e-4, types=(int, float), desc='Step used in the FOTA')
         declare('extra_pts', 0, types=int, desc='Number of extra points per training point')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
