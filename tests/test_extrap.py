@@ -39,9 +39,9 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
+            sms['RMTS'] = RMTS({'num_elem':[6]*ndim, 'solver':'krylov-lu',
                 'max_nln_iter': 0})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTB'] = RMTB({'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
 
         self.nt = nt
         self.ne = ne

@@ -7,7 +7,7 @@ from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Carre, TensorProduct
-from smt.sampling import LHS
+from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
@@ -42,25 +42,24 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS({'name':'RMTS', 'num_elem':[6]*ndim, 'solver':'krylov-lu',
-                'max_nln_iter': 0})
-            sms['RMTB'] = RMTB({'name':'RMTB', 'order':[4]*ndim, 'num_ctrl_pts':[8]*ndim})
+            sms['RMTS'] = RMTS({'num_elem':[6]*ndim})
+            sms['RMTB'] = RMTB({'order':[4]*ndim, 'num_ctrl_pts':[10]*ndim})
 
         t_errors = {}
-        t_errors['RMTS'] = 1e-6
-        t_errors['RMTB'] = 3e-2
+        t_errors['RMTS'] = 1e-2
+        t_errors['RMTB'] = 1e-2
 
         e_errors = {}
         e_errors['RMTS'] = 1e-1
         e_errors['RMTB'] = 1e-1
 
         ge_t_errors = {}
-        ge_t_errors['RMTS'] = 1e-4
-        ge_t_errors['RMTB'] = 2e-2
+        ge_t_errors['RMTS'] = 1e-2
+        ge_t_errors['RMTB'] = 1e-2
 
         ge_e_errors = {}
-        ge_e_errors['RMTS'] = 4e-1
-        ge_e_errors['RMTB'] = 1e-1
+        ge_e_errors['RMTS'] = 1e-2
+        ge_e_errors['RMTB'] = 1e-2
 
         self.nt = nt
         self.ne = ne
@@ -77,7 +76,7 @@ class Test(SMTestCase):
         sname = method_name.split('_')[2]
 
         prob = self.problems[pname]
-        sampling = LHS(xlimits=prob.xlimits)
+        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
         np.random.seed(0)
         xt = sampling(self.nt)

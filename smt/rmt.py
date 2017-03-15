@@ -20,6 +20,34 @@ class RMT(SM):
     Regularized Minimal-energy Tensor-product interpolant base class for RMTS and RMTB.
     """
 
+    def _set_default_options(self):
+        sm_options = {
+            'xlimits': [],    # flt ndarray[nx, 2]: lower/upper bounds in each dimension
+            'smoothness': [], # flt ndarray[nx]: smoothness parameter in each dimension
+            'reg_dv': 1e-10, # regularization coeff. for dv block
+            'reg_cons': 1e-10, # negative of reg. coeff. for Lagrange mult. block
+            'extrapolate': False, # perform linear extrapolation for external eval points
+            'min_energy': True, # whether to include energy minimizaton terms
+            'approx_norm': 4, # order of norm in least-squares approximation term
+            'use_mtx_free': False, # whether to solve the linear system in a matrix-free way
+            'solver': 'krylov',    # Linear solver: 'gmres' or 'cg'
+            'max_nln_iter': 10, # number of nonlinear iterations
+            'line_search': 'backtracking', # line search algorithm
+            'mg_factors': [], # Multigrid level
+            'save_solution': False,  # Whether to save linear system solution
+            'max_print_depth': 100, # Maximum depth (level of nesting) to print
+        }
+        printf_options = {
+            'global': True,     # Overriding option to print output
+            'time_eval': True,  # Print evaluation times
+            'time_train': True, # Print assembly and solution time summary
+            'problem': True,    # Print problem information
+            'solver': True,     # Print convergence progress (i.e., residual norms)
+        }
+
+        self.sm_options = sm_options
+        self.printf_options = printf_options
+
     def _initialize_hessian(self):
         diag = self.sm_options['reg_dv'] * np.ones(self.num['dof'])
         arange = np.arange(self.num['dof'])
