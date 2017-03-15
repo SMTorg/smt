@@ -17,39 +17,16 @@ class PA2(SM):
     Square polynomial approach
     """
 
+    def _declare_options(self):
+        super(PA2, self)._declare_options()
+        declare = self.options.declare
 
-    def _set_default_options(self):
-
-        '''
-        Constructor.
-
-        Arguments
-        ---------
-        sm_options : dict
-            Model-related options, listed below
-
-        printf_options : dict
-            Output printing options, listed below
-        '''
-
-        sm_options = {
-            'name': 'PA2',
-        }
-        printf_options = {
-            'global': True,     # Overriding option to print output
-            'time_eval': True,  # Print evaluation times
-            'time_train': True, # Print assembly and solution time summary
-            'problem': True,    # Print problem information
-        }
-
-        self.sm_options = sm_options
-        self.printf_options = printf_options
-
+        declare('name', 'PA2', types=str,
+                desc='Squared polynomial interpolant')
 
     ############################################################################
     # Model functions
     ############################################################################
-
 
     def fit(self):
 

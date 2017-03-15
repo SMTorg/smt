@@ -37,19 +37,19 @@ class RMTB(RMT):
     training points
     """
 
-    def _set_default_options(self):
-        super(RMTB, self)._set_default_options()
+    def _declare_options(self):
+        super(RMTB, self)._declare_options()
+        declare = self.options.declare
 
-        sm_options = {
-            'name': 'RMTB', # Regularized Minimal-energy Tensor-product B-spline
-            'order': [], # int ndarray[nx]: B-spline order in each dimension
-            'num_ctrl_pts': [], # int ndarray[nx]: num. B-spline control pts. in each dim.
-        }
-
-        self.sm_options.update(sm_options)
+        declare('name', 'RMTB', types=str,
+                desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
+        declare('order', 3, types=(int, list, np.ndarray),
+                desc='B-spline order in each dimension - length [nx]')
+        declare('num_ctrl_pts', 10, types=(int, list, np.ndarray),
+                desc='# B-spline control points in each dimension - length [nx]')
 
     def _compute_jac(self, ix1, ix2, x):
-        xlimits = self.sm_options['xlimits']
+        xlimits = self.options['xlimits']
 
         t = np.zeros(x.shape)
         for kx in range(self.num['x']):
@@ -71,8 +71,8 @@ class RMTB(RMT):
 
     def _compute_energy_terms(self):
         num = self.num
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        options = self.options
+        xlimits = options['xlimits']
 
         nt_list = num['ctrl_list'] - num['order_list'] + 1
         nt = np.prod(nt_list)
@@ -90,7 +90,7 @@ class RMTB(RMT):
             data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
             rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
             full_hess += rect_mtx.T * rect_mtx \
-                * (elem_vol / total_vol * sm_options['smoothness'][kx])
+                * (elem_vol / total_vol * options['smoothness'][kx])
 
         return full_hess
 
@@ -98,19 +98,24 @@ class RMTB(RMT):
         """
         Train the model
         """
-        sm_options = self.sm_options
-        xlimits = sm_options['xlimits']
+        options = self.options
+        xlimits = options['xlimits']
 
         nx = self.training_pts['exact'][0][0].shape[1]
-        ny = self.training_pts['exact'][0][1].shape[1]
+        if isinstance(options['order'], int):
+            options['order'] = [options['order']] * nx
+        if isinstance(options['num_ctrl_pts'], int):
+            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
+        if options['smoothness'] is None:
+            options['smoothness'] = [1.0] * nx
 
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
-        num['order_list'] = np.array(sm_options['order'], int)
+        num['order_list'] = np.array(options['order'], int)
         num['order'] = np.prod(num['order_list'])
-        num['ctrl_list'] = np.array(sm_options['num_ctrl_pts'], int)
+        num['ctrl_list'] = np.array(options['num_ctrl_pts'], int)
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
@@ -123,26 +128,23 @@ class RMTB(RMT):
         num['support'] = num['order']
         num['dof'] = num['ctrl']
 
-        if len(sm_options['smoothness']) == 0:
-            sm_options['smoothness'] = [1.0] * num['x']
-
         self.num = num
 
-        self.printer.max_print_depth = sm_options['max_print_depth']
+        self.printer.max_print_depth = options['max_print_depth']
 
         with self.printer._timed_context('Pre-computing matrices'):
 
             with self.printer._timed_context('Initializing Hessian'):
                 full_hess = self._initialize_hessian()
 
-            if sm_options['min_energy']:
+            if options['min_energy']:
                 with self.printer._timed_context('Computing energy terms'):
                     full_hess += self._compute_energy_terms()
 
             with self.printer._timed_context('Computing approximation terms'):
                 full_jac_dict = self._compute_approx_terms()
 
-            full_hess *= sm_options['reg_cons']
+            full_hess *= options['reg_cons']
 
             mg_matrices = []
 

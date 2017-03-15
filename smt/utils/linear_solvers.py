@@ -12,6 +12,8 @@ import pyamg.krylov
 from smt.utils.options_dictionary import OptionsDictionary
 
 
+VALID_SOLVERS = ('lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null')
+
 def get_solver(solver):
     if solver == 'lu' or solver == 'ilu':
         return DirectSolver(alg=solver)

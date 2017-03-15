@@ -14,10 +14,12 @@ import warnings
 import numpy as np
 from scipy import linalg, optimize
 from pyDOE import *
+from types import FunctionType
 
 from smt.sm import SM
 from smt.pairwise import manhattan_distances
 from smt.pls import pls as _pls
+
 
 def standardization(X,y,copy=False):
 
@@ -496,50 +498,28 @@ class KPLS(SM):
         'abs_exp': abs_exp,
         'squar_exp': squar_exp}
 
-    def _set_default_options(self):
+    def _declare_options(self):
+        super(KPLS, self)._declare_options()
+        declare = self.options.declare
 
-        '''
-        Constructor.
-
-        Arguments
-        ---------
-        sm_options : dict
-            Model-related options, listed below
-
-        printf_options : dict
-            Output printing options, listed below
-        '''
-
-        sm_options = {
-            'name': 'KPLS',               # KRG for Standard kriging if n_comp
-                                          # = dimension
-                                          # KPLS for Kriging combined Partial
-                                          # Least Squares
-                                          # KPLSK for Kriging combined Partial
-                                          # Least Squares + local optim Kriging
-                                          # GEKPLS for Gradient Enhanced KPLS
-            'n_comp': 1,                  # Number of principal components
-            'theta0': [1e-2],             # Initial hyperparameters
-            'delta_x': 1e-4,              # Step used in the FOTA
-            'xlimits': None,              # np.ndarray[nx, 2]: upper and lower
-                                          # var bounds
-            'extra_pts': 0,               # Number of extra points per each
-                                          # training point
-            'poly' : 'constant',          # Regression term
-            'corr' :  'squar_exp',        # Type of the correlation function
-        }
-        printf_options = {
-            'global': True,               # Overriding option to print output
-            'time_eval': True,            # Print evaluation times
-            'time_train': True,           # Print assembly and solution time summary
-            'problem': True,              # Print problem information
-        }
-
-        sm_options['best_iteration_fail'] = None
-        sm_options['nb_ill_matrix'] = 5
-        self.sm_options = sm_options
-        self.printf_options = printf_options
-
+        declare('name', 'KPLS', types=str,
+                desc='KRG for Standard kriging if n_comp = dimension ' +
+                     'KPLS for Kriging with Partial Least Squares ' +
+                     'KPLSK for Kriging with Partial Least Squares + local optim Kriging ' +
+                     'GEKPLS for Gradient Enhanced KPLS')
+        declare('xlimits', types=np.ndarray,
+                desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
+        declare('n_comp', 1, types=int, desc='Number of principal components')
+        declare('theta0', [1e-2], types=list, desc='Initial hyperparameters')
+        declare('delta_x', 1e-4, types=(int, float), desc='Step used in the FOTA')
+        declare('extra_pts', 0, types=int, desc='Number of extra points per training point')
+        declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
+                desc='regr. term')
+        declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
+                desc='type of corr. func.')
+        declare('best_iteration_fail', None)
+        declare('nb_ill_matrix', 5)
+        declare('kriging-step')
 
     ############################################################################
     # Model functions
@@ -560,20 +540,20 @@ class KPLS(SM):
 
         if 0 in self.training_pts['exact']:
             #GEKPLS
-            if 1 in self.training_pts['exact'] and self.sm_options['name'] == 'GEKPLS':
+            if 1 in self.training_pts['exact'] and self.options['name'] == 'GEKPLS':
                 self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),
-                    self.sm_options['n_comp'],self.training_pts,
-                    self.sm_options['delta_x'],self.sm_options['xlimits'],
-                                            self.sm_options['extra_pts'],1)
-                if self.sm_options['extra_pts'] != 0:
-                    self.nt *= (self.sm_options['extra_pts']+1)
+                    self.options['n_comp'],self.training_pts,
+                    self.options['delta_x'],self.options['xlimits'],
+                                            self.options['extra_pts'],1)
+                if self.options['extra_pts'] != 0:
+                    self.nt *= (self.options['extra_pts']+1)
                     X = np.vstack((X,XX))
                     y = np.vstack((y,yy))
             #KPLS
-            elif (self.sm_options['name'] == 'KPLS' or self.sm_options['name']
-                  == 'KPLSK') and self.sm_options['n_comp'] < self.dim:
+            elif (self.options['name'] == 'KPLS' or self.options['name']
+                  == 'KPLSK') and self.options['n_comp'] < self.dim:
                 self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(), \
-                   self.sm_options['n_comp'])
+                   self.options['n_comp'])
             #Kriging
             else:
                 self.coeff_pls = None
@@ -588,7 +568,7 @@ class KPLS(SM):
             raise Exception("Multiple input features cannot have the same value.")
 
         # Regression matrix and parameters
-        self.F = self.sm_options['poly'](self.X_norma)
+        self.F = self.options['poly'](self.X_norma)
         n_samples_F = self.F.shape[0]
         if self.F.ndim > 1:
             p = self.F.shape[1]
@@ -650,7 +630,7 @@ class KPLS(SM):
         par = {}
 
         # Set up R
-        r = self.sm_options['corr'](theta, self.D)
+        r = self.options['corr'](theta, self.D)
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
         R = np.eye(self.nt) * (1. + nugget)
@@ -700,18 +680,18 @@ class KPLS(SM):
         par['G'] = G
 
         # A particular case when f_min_cobyla fail
-        if ( self.sm_options['best_iteration_fail'] is not None) and \
+        if ( self.options['best_iteration_fail'] is not None) and \
             (not np.isinf(reduced_likelihood_function_value)):
 
-            if (reduced_likelihood_function_value >  self.sm_options[
+            if (reduced_likelihood_function_value >  self.options[
                     'best_iteration_fail']):
-                 self.sm_options['best_iteration_fail'] = \
+                 self.options['best_iteration_fail'] = \
                     reduced_likelihood_function_value
                  self._thetaMemory = theta
 
-        elif ( self.sm_options['best_iteration_fail'] is None) and \
+        elif ( self.options['best_iteration_fail'] is None) and \
             (not np.isinf(reduced_likelihood_function_value)):
-             self.sm_options['best_iteration_fail'] = \
+             self.options['best_iteration_fail'] = \
                     reduced_likelihood_function_value
              self._thetaMemory = theta
 
@@ -744,13 +724,13 @@ class KPLS(SM):
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
-        d = componentwise_distance(dx,self.sm_options['corr'].__name__,
-                                        self.sm_options['n_comp'],self.dim,
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                                        self.options['n_comp'],self.dim,
                                         self.coeff_pls,1e2)
 
         # Get regression function and correlation
-        f = self.sm_options['poly'](x)
-        r = self.sm_options['corr'](self.optimal_theta, d).reshape(n_eval,
+        f = self.options['poly'](x)
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,
                                         self.nt)
         # Scaled predictor
         y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
@@ -793,13 +773,13 @@ class KPLS(SM):
                 return - self._reduced_likelihood_function(
                     theta=10.**log10t)[0]
 
-        key, limit, _rhobeg = True, 10*self.sm_options['n_comp'], 0.5
+        key, limit, _rhobeg = True, 10*self.options['n_comp'], 0.5
 
-        for ii in range(self.sm_options['kriging-step']+1):
+        for ii in range(self.options['kriging-step']+1):
             best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
                 constraints = [], [], [], []
 
-            for i in range(self.sm_options['n_comp']):
+            for i in range(self.options['n_comp']):
                 constraints.append(lambda log10t,i=i:
                                    log10t[i] - np.log10(1e-6))
                 constraints.append(lambda log10t,i=i:
@@ -808,15 +788,15 @@ class KPLS(SM):
             # Compute D which is the componentwise distances between locations
             #  x and x' at which the correlation model should be evaluated.
             self.D = componentwise_distance(D,
-                                        self.sm_options['corr'].__name__,
-                                        self.sm_options['n_comp'],self.dim,
+                                        self.options['corr'].__name__,
+                                        self.options['n_comp'],self.dim,
                                         self.coeff_pls)
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while (k < stop):
                 # Use specified starting point as first guess
-                theta0 = self.sm_options['theta0']
+                theta0 = self.options['theta0']
                 try:
                     optimal_theta = 10. ** optimize.fmin_cobyla(
                         minus_reduced_likelihood_function, np.log10(theta0),
@@ -833,14 +813,14 @@ class KPLS(SM):
                             if incr != 0:
                                 return
                         else:
-                            if optimal_rlf_value >= self.sm_options[
+                            if optimal_rlf_value >= self.options[
                                     'best_iteration_fail'] :
                                 if optimal_rlf_value > best_optimal_rlf_value:
                                     best_optimal_rlf_value = optimal_rlf_value
                                     best_optimal_par = optimal_par
                                     best_optimal_theta = optimal_theta
                                 else:
-                                    if  self.sm_options['best_iteration_fail'] \
+                                    if  self.options['best_iteration_fail'] \
                                         > best_optimal_rlf_value:
                                         best_optimal_theta = self._thetaMemory
                                         best_optimal_rlf_value , best_optimal_par = \
@@ -850,7 +830,7 @@ class KPLS(SM):
                         if np.isinf(optimal_rlf_value):
                             stop += 1
                         else:
-                            if optimal_rlf_value >=  self.sm_options[
+                            if optimal_rlf_value >=  self.options[
                                     'best_iteration_fail']:
                                 if optimal_rlf_value > best_optimal_rlf_value:
                                     best_optimal_rlf_value = optimal_rlf_value
@@ -858,7 +838,7 @@ class KPLS(SM):
                                     best_optimal_theta = optimal_theta
 
                             else:
-                                if  self.sm_options['best_iteration_fail'] > \
+                                if  self.options['best_iteration_fail'] > \
                                     best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory.copy()
                                     best_optimal_rlf_value , best_optimal_par = \
@@ -867,14 +847,14 @@ class KPLS(SM):
                     k += 1
                 except ValueError as ve:
                     # If iteration is max when fmin_cobyla fail is not reached
-                    if (self.sm_options['nb_ill_matrix'] > 0):
-                        self.sm_options['nb_ill_matrix'] -= 1
+                    if (self.options['nb_ill_matrix'] > 0):
+                        self.options['nb_ill_matrix'] -= 1
                         k += 1
                         stop += 1
                         # One evaluation objectif function is done at least
-                        if ( self.sm_options['best_iteration_fail'] is not
+                        if ( self.options['best_iteration_fail'] is not
                              None):
-                            if  self.sm_options['best_iteration_fail'] > \
+                            if  self.options['best_iteration_fail'] > \
                                 best_optimal_rlf_value:
                                 best_optimal_theta = self._thetaMemory
                                 best_optimal_rlf_value , best_optimal_par = \
@@ -889,19 +869,19 @@ class KPLS(SM):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if self.sm_options['kriging-step']:
+            if self.options['kriging-step']:
                 # Next iteration is to do a kriging model starting from the
                 # given by the KPLS or GEKPLS models
                 if key:
-                    if self.sm_options['corr'].__name__ == 'squar_exp':
-                        self.sm_options['theta0'] = (best_optimal_theta *
+                    if self.options['corr'].__name__ == 'squar_exp':
+                        self.options['theta0'] = (best_optimal_theta *
                                                  self.coeff_pls**2).sum(1)
                     else:
-                        self.sm_options['theta0'] = (best_optimal_theta *
+                        self.options['theta0'] = (best_optimal_theta *
                                                  np.abs(self.coeff_pls)).sum(1)
-                    self.sm_options['n_comp'] = self.dim
-                    key, limit, _rhobeg,self.sm_options[
-                        'best_iteration_fail'] = False, 3*self.sm_options[
+                    self.options['n_comp'] = self.dim
+                    key, limit, _rhobeg,self.options[
+                        'best_iteration_fail'] = False, 3*self.options[
                         'n_comp'], 0.05, None
 
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
@@ -914,53 +894,53 @@ class KPLS(SM):
         """
 
         # Check regression model
-        if not callable(self.sm_options['poly']):
-            if self.sm_options['poly'] in self._regression_types:
-                self.sm_options['poly'] = self._regression_types[
-                    self.sm_options['poly']]
+        if not callable(self.options['poly']):
+            if self.options['poly'] in self._regression_types:
+                self.options['poly'] = self._regression_types[
+                    self.options['poly']]
             else:
                 raise ValueError("regr should be one of %s or callable, "
                                  "%s was given." % (self._regression_types.keys(
-                                 ), self.sm_options['poly']))
+                                 ), self.options['poly']))
 
 
-        if not(self.sm_options['name'] in ['KRG','KPLS','GEKPLS','KPLSK']):
+        if not(self.options['name'] in ['KRG','KPLS','GEKPLS','KPLSK']):
             raise Exception("The %s model is not found in ['KRG','KPLS','GEKPLS','KPLSK']."
-                               %(self.sm_options['name']))
+                               %(self.options['name']))
         else:
-            if self.sm_options['name'] == 'KRG':
-                if self.sm_options['n_comp'] != self.dim:
+            if self.options['name'] == 'KRG':
+                if self.options['n_comp'] != self.dim:
                     raise Exception('The number of principal components must be equal to the number of dimension for using the kriging model.')
 
-                self.sm_options['kriging-step'] = 0
+                self.options['kriging-step'] = 0
 
-            elif self.sm_options['name'] == 'GEKPLS':
+            elif self.options['name'] == 'GEKPLS':
                 if not(1 in self.training_pts['exact']):
                     raise Exception('Derivative values are needed for using the GEKPLS model.')
-                self.sm_options['kriging-step'] = 0
+                self.options['kriging-step'] = 0
 
-            elif self.sm_options['name'] == 'KPLSK':
-                self.sm_options['kriging-step'] = 1
+            elif self.options['name'] == 'KPLSK':
+                self.options['kriging-step'] = 1
 
             else:
-                self.sm_options['kriging-step'] = 0
+                self.options['kriging-step'] = 0
 
-        if self.dim == self.sm_options['n_comp']:
-            if self.sm_options['name'] != 'KRG':
+        if self.dim == self.options['n_comp']:
+            if self.options['name'] != 'KRG':
                 warnings.warn('Kriging is used instead of the KPLS model!')
-                self.sm_options['name'] = 'KRG'
+                self.options['name'] = 'KRG'
 
-        if len(self.sm_options['theta0']) != self.sm_options['n_comp']:
+        if len(self.options['theta0']) != self.options['n_comp']:
             raise('Number of principal components must be equal to the number of theta0.')
 
-        if not callable(self.sm_options['corr']):
-            if self.sm_options['corr'] in self._correlation_types:
-                self.sm_options['corr'] = self._correlation_types[self.sm_options['corr']]
+        if not callable(self.options['corr']):
+            if self.options['corr'] in self._correlation_types:
+                self.options['corr'] = self._correlation_types[self.options['corr']]
 
             else:
                 raise ValueError("corr should be one of %s or callable, "
                                  "%s was given."
-                                 % (self._correlation_types.keys(), self.sm_options['corr']))
+                                 % (self._correlation_types.keys(), self.options['corr']))
 
 
     def _check_F(self,n_samples_F,p):
