@@ -74,31 +74,6 @@ class RMTB(RMT):
         full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
         return full_jac
 
-    # def _compute_energy_terms(self):
-    #     num = self.num
-    #     options = self.options
-    #     xlimits = options['xlimits']
-    #
-    #     nt_list = num['ctrl_list'] - num['order_list'] + 1
-    #     nt = np.prod(nt_list)
-    #     t = RMTBlib.compute_quadrature_points(nt, num['x'], nt_list)
-    #
-    #     # Square root of volume of each integration element and of the whole domain
-    #     elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
-    #     total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
-    #
-    #     full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
-    #     for kx in range(num['x']):
-    #         nnz = nt * num['order']
-    #         data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
-    #             num['order_list'], num['ctrl_list'], t)
-    #         data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
-    #         rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
-    #         full_hess += rect_mtx.T * rect_mtx \
-    #             * (elem_vol / total_vol * options['smoothness'][kx])
-    #
-    #     return full_hess
-
     def _fit(self):
         """
         Train the model
