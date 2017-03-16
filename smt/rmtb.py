@@ -47,7 +47,7 @@ class RMTB(RMT):
         declare('num_ctrl_pts', 10, types=(int, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
-    def _compute_jac(self, ix1, ix2, x):
+    def _compute_jac_raw(self, ix1, ix2, x):
         xlimits = self.options['xlimits']
 
         t = np.zeros(x.shape)
@@ -68,30 +68,36 @@ class RMTB(RMT):
 
         return data, rows, cols
 
-    def _compute_energy_terms(self):
-        num = self.num
-        options = self.options
-        xlimits = options['xlimits']
+    def _compute_jac(self, ix1, ix2, x):
+        data, rows, cols = self._compute_jac_raw(ix1, ix2, x)
+        n = x.shape[0]
+        full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
+        return full_jac
 
-        nt_list = num['ctrl_list'] - num['order_list'] + 1
-        nt = np.prod(nt_list)
-        t = RMTBlib.compute_quadrature_points(nt, num['x'], nt_list)
-
-        # Square root of volume of each integration element and of the whole domain
-        elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
-        total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
-
-        full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
-        for kx in range(num['x']):
-            nnz = nt * num['order']
-            data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
-                num['order_list'], num['ctrl_list'], t)
-            data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
-            rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
-            full_hess += rect_mtx.T * rect_mtx \
-                * (elem_vol / total_vol * options['smoothness'][kx])
-
-        return full_hess
+    # def _compute_energy_terms(self):
+    #     num = self.num
+    #     options = self.options
+    #     xlimits = options['xlimits']
+    #
+    #     nt_list = num['ctrl_list'] - num['order_list'] + 1
+    #     nt = np.prod(nt_list)
+    #     t = RMTBlib.compute_quadrature_points(nt, num['x'], nt_list)
+    #
+    #     # Square root of volume of each integration element and of the whole domain
+    #     elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / nt_list)
+    #     total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
+    #
+    #     full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
+    #     for kx in range(num['x']):
+    #         nnz = nt * num['order']
+    #         data, rows, cols = RMTBlib.compute_jac(kx+1, kx+1, num['x'], nt, nnz,
+    #             num['order_list'], num['ctrl_list'], t)
+    #         data /= (xlimits[kx, 1] - xlimits[kx, 0]) ** 2
+    #         rect_mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['ctrl']))
+    #         full_hess += rect_mtx.T * rect_mtx \
+    #             * (elem_vol / total_vol * options['smoothness'][kx])
+    #
+    #     return full_hess
 
     def _fit(self):
         """
@@ -116,6 +122,8 @@ class RMTB(RMT):
         num['order'] = np.prod(num['order_list'])
         num['ctrl_list'] = np.array(options['num_ctrl_pts'], int)
         num['ctrl'] = np.prod(num['ctrl_list'])
+        num['elem_list'] = np.array(num['ctrl_list'] - num['order_list'] + 1, int)
+        num['elem'] = np.prod(num['elem_list'])
         num['knots_list'] = num['order_list'] + num['ctrl_list']
         num['knots'] = np.sum(num['knots_list'])
         # total number of training points (function values and derivatives)
@@ -131,23 +139,23 @@ class RMTB(RMT):
 
         self.printer.max_print_depth = options['max_print_depth']
 
-        with self.printer._timed_context('Pre-computing matrices'):
+        with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
-            with self.printer._timed_context('Initializing Hessian'):
+            with self.printer._timed_context('Initializing Hessian', 'init_hess'):
                 full_hess = self._initialize_hessian()
 
             if options['min_energy']:
-                with self.printer._timed_context('Computing energy terms'):
+                with self.printer._timed_context('Computing energy terms', 'energy'):
                     full_hess += self._compute_energy_terms()
 
-            with self.printer._timed_context('Computing approximation terms'):
+            with self.printer._timed_context('Computing approximation terms', 'approx'):
                 full_jac_dict = self._compute_approx_terms()
 
             full_hess *= options['reg_cons']
 
             mg_matrices = []
 
-        with self.printer._timed_context('Solving for degrees of freedom'):
+        with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)
 
         self.sol = sol

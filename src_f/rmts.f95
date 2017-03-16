@@ -583,3 +583,35 @@ subroutine compute_ext_dist(nx, neval, ndx, xlimits, xeval, dx)
   end do
 
 end subroutine compute_ext_dist
+
+
+
+subroutine compute_quadrature_points(n, nx, nelem_list, xlimits, x)
+
+  implicit none
+
+  !f2py intent(in) n, nx, nelem_list, xlimits
+  !f2py intent(out) x
+  !f2py depend(nx) nelem_list, xlimits
+  !f2py depend(n, nx) x
+
+  ! Input
+  integer, intent(in) :: n, nx, nelem_list(nx)
+  double precision, intent(in) :: xlimits(nx, 2)
+
+  ! Output
+  double precision, intent(out) :: x(n, nx)
+
+  ! Working
+  integer :: i, ix, ielem_list(nx)
+  double precision :: t
+
+  do i = 1, n
+    call expandindex(nx, nelem_list, i, ielem_list)
+    do ix = 1, nx
+      t = (-1. + 2 * ielem_list(ix)) / 2. / nelem_list(ix)
+      x(i, ix) = xlimits(ix, 1) + t * (xlimits(ix, 2) - xlimits(ix, 1))
+    end do
+  end do
+
+end subroutine compute_quadrature_points

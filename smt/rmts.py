@@ -44,11 +44,17 @@ class RMTS(RMT):
         declare('num_elements', 4, types=(int, list, np.ndarray),
                 desc='# elements in each dimension - ndarray [nx]')
 
-    def _compute_jac(self, ix1, ix2, x):
+    def _compute_jac_raw(self, ix1, ix2, x):
         n = x.shape[0]
         nnz = n * self.num['term']
         return RMTSlib.compute_jac(ix1, ix2, nnz, self.num['x'], n,
             self.num['elem_list'], self.options['xlimits'], x)
+
+    def _compute_jac(self, ix1, ix2, x):
+        data, rows, cols = self._compute_jac_raw(ix1, ix2, x)
+        n = x.shape[0]
+        full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
+        return full_jac * self.full_uniq2coeff
 
     def _compute_uniq2coeff(self, nx, num_elem_list, num_elem, num_term, num_uniq):
         # This computes an num['term'] x num['term'] matrix called coeff2nodal.
@@ -83,7 +89,7 @@ class RMTS(RMT):
 
         return full_uniq2coeff
 
-    def _compute_energy_terms(self):
+    def _compute_energy_terms_all(self):
         num = self.num
         options = self.options
         xlimits = options['xlimits']
@@ -111,7 +117,7 @@ class RMTS(RMT):
         full_hess_coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff, num_coeff))
 
-        return full_hess_coeff
+        return self.full_uniq2coeff.T * full_hess_coeff * self.full_uniq2coeff
 
     def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
         num = self.num
@@ -189,33 +195,27 @@ class RMTS(RMT):
 
         self.printer.max_print_depth = options['max_print_depth']
 
-        with self.printer._timed_context('Pre-computing matrices'):
+        with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
-            with self.printer._timed_context('Computing uniq2coeff'):
-                full_uniq2coeff = self._compute_uniq2coeff(
+            with self.printer._timed_context('Computing uniq2coeff', 'uniq2coeff'):
+                self.full_uniq2coeff = self._compute_uniq2coeff(
                     num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
 
-            with self.printer._timed_context('Initializing Hessian'):
+            with self.printer._timed_context('Initializing Hessian', 'init_hess'):
                 full_hess = self._initialize_hessian()
 
             if options['min_energy']:
-                with self.printer._timed_context('Computing energy terms'):
-                    full_hess_coeff = self._compute_energy_terms()
-                    full_hess += full_uniq2coeff.T * full_hess_coeff * full_uniq2coeff
+                with self.printer._timed_context('Computing energy terms', 'energy'):
+                    full_hess += self._compute_energy_terms()
 
-            with self.printer._timed_context('Computing approximation terms'):
+            with self.printer._timed_context('Computing approximation terms', 'approx'):
                 full_jac_dict = self._compute_approx_terms()
-                for kx in self.training_pts['exact']:
-                    full_jac, full_jac_T = full_jac_dict[kx]
-                    full_jac = full_jac * full_uniq2coeff
-                    full_jac_T = full_uniq2coeff.T.tocsc() * full_jac_T
-                    full_jac_dict[kx] = (full_jac, full_jac_T)
 
             full_hess *= options['reg_cons']
 
             mg_matrices = self._compute_mg_matrices()
 
-        with self.printer._timed_context('Solving for degrees of freedom'):
+        with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)
 
-        self.sol = full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
+        self.sol = self.full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]

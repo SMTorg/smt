@@ -142,7 +142,7 @@ class SM(object):
             self.printer._title('Training')
 
         #Train the model using the specified model-method
-        with self.printer._timed_context('Training'):
+        with self.printer._timed_context('Training', 'training'):
             self.fit()
 
     def predict(self, x, kx=None):
@@ -185,7 +185,7 @@ class SM(object):
         with self.printer._timed_context('Predicting', key='prediction'):
             y = self.evaluate(x, kx)
 
-        time_pt = self.printer._time('prediction') / n_evals
+        time_pt = self.printer._time('prediction')[-1] / n_evals
         self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()

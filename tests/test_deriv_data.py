@@ -26,8 +26,8 @@ class Test(SMTestCase):
 
     def setUp(self):
         ndim = 3
-        nt = 500
-        ne = 100
+        nt = 2500
+        ne = 500
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
