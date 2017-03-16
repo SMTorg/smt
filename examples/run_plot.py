@@ -25,7 +25,7 @@ sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
 ndim = prob.options['ndim']
 
-sm = RMTS(xlimits=prob.xlimits, num_elem=4, max_print_depth=5)
+sm = RMTS(xlimits=prob.xlimits, num_elements=4, max_print_depth=5)
 # sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=10, max_print_depth=5)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)

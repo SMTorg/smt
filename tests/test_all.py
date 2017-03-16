@@ -42,7 +42,7 @@ class Test(SMTestCase):
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
-            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTS'] = RMTS(num_elements=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         t_errors = {}

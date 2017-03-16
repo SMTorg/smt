@@ -35,7 +35,7 @@ class Test(SMTestCase):
         sms = OrderedDict()
         if compiled_available:
             sms['RBF'] = RBF(d0=1e1)
-            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTS'] = RMTS(num_elements=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         self.nt = nt

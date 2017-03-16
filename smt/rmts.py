@@ -41,7 +41,7 @@ class RMTS(RMT):
 
         declare('name', 'RMTS', types=str,
                 desc='Regularized Minimal-energy Tensor-product Spline interpolant')
-        declare('num_elem', 4, types=(int, list, np.ndarray),
+        declare('num_elements', 4, types=(int, list, np.ndarray),
                 desc='# elements in each dimension - ndarray [nx]')
 
     def _compute_jac(self, ix1, ix2, x):
@@ -157,15 +157,15 @@ class RMTS(RMT):
         options = self.options
 
         nx = self.training_pts['exact'][0][0].shape[1]
-        if isinstance(options['num_elem'], int):
-            options['num_elem'] = options['num_elem'] * np.ones(nx, int)
+        if isinstance(options['num_elements'], int):
+            options['num_elements'] = options['num_elements'] * np.ones(nx, int)
 
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
         # number of elements
-        num['elem_list'] = np.array(options['num_elem'], int)
+        num['elem_list'] = np.array(options['num_elements'], int)
         num['elem'] = np.prod(num['elem_list'])
         # number of terms/coefficients per element
         num['term_list'] = 4 * np.ones(num['x'], int)
