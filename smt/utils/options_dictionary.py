@@ -76,6 +76,9 @@ class OptionsDictionary(object):
     def __contains__(self, key):
         return key in self._dict
 
+    def is_declared(self, key):
+        return key in self._declared_values
+
     def _assert_valid(self, name, value):
         values = self._declared_values[name]
         types = self._declared_types[name]
