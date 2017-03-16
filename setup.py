@@ -11,6 +11,8 @@ else:
     ext = [
         Extension(name='smt.IDWlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/idw.f95']),
+        Extension(name='smt.RBFlib', extra_compile_args=['-fbounds-check'],
+            sources=['src_f/rbf.f95']),
         Extension(name='smt.RMTSlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmts.f95', 'src_f/utils.f95']),
         Extension(name='smt.RMTBlib', extra_compile_args=['-fbounds-check'],
@@ -38,7 +40,7 @@ setup(name='smt',
     ext_modules=ext,
 )
 
-for lib_name in ['IDWlib', 'RMTSlib', 'RMTBlib']:
+for lib_name in ['IDWlib', 'RBFlib', 'RMTSlib', 'RMTBlib']:
     try:
         call(['mv', 'smt/%s.cpython-36m-darwin.so' % lib_name, 'smt/%s.so' % lib_name])
     except:

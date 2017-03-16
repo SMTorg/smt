@@ -12,14 +12,9 @@ from smt.sampling import LHS
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt.ls import LS
-from smt.pa2 import PA2
-from smt.kpls import KPLS
-
+from smt import LS, PA2, KPLS
 try:
-    from smt.idw import IDW
-    from smt.rmts import RMTS
-    from smt.rmtb import RMTB
+    from smt import IDW, RBF, RMTS, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -46,18 +41,21 @@ class Test(SMTestCase):
         sms['KRG'] = KPLS(name='KRG', n_comp=ndim, theta0=[40e-2]*ndim)
         if compiled_available:
             sms['IDW'] = IDW()
+            sms['RBF'] = RBF()
 
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
         t_errors['KRG'] = 1e-6
         t_errors['IDW'] = 1e-15
+        t_errors['RBF'] = 1e-2
 
         e_errors = {}
         e_errors['LS'] = 1.5
         e_errors['PA2'] = 2.0
         e_errors['KRG'] = 2.0
         e_errors['IDW'] = 1.5
+        e_errors['RBF'] = 1.5
 
         self.nt = nt
         self.ne = ne
@@ -122,6 +120,10 @@ class Test(SMTestCase):
     def test_carre_IDW(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    def test_carre_RBF(self):
+        self.run_test()
+
     # --------------------------------------------------------------------
     # Function: exp
 
@@ -136,6 +138,10 @@ class Test(SMTestCase):
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_IDW(self):
+        self.run_test()
+
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    def test_exp_RBF(self):
         self.run_test()
 
     # --------------------------------------------------------------------
@@ -154,6 +160,10 @@ class Test(SMTestCase):
     def test_tanh_IDW(self):
         self.run_test()
 
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    def test_tanh_RBF(self):
+        self.run_test()
+
     # --------------------------------------------------------------------
     # Function: cos
 
@@ -168,6 +178,10 @@ class Test(SMTestCase):
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
+        self.run_test()
+
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    def test_cos_RBF(self):
         self.run_test()
 
 

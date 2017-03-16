@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import numpy as np
 import scipy.sparse.linalg
+import scipy.linalg
 from six.moves import range
 import contextlib
 import pyamg.krylov
@@ -12,10 +13,15 @@ import pyamg.krylov
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-VALID_SOLVERS = ('lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null')
+VALID_SOLVERS = ('krylov-dense', 'dense', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg',
+                 'gs', 'jacobi', 'mg', 'null')
 
 def get_solver(solver):
-    if solver == 'lu' or solver == 'ilu':
+    if solver == 'dense':
+        return DenseSolver()
+    elif solver == 'krylov-dense':
+        return KrylovSolver(pc='dense')
+    elif solver == 'lu' or solver == 'ilu':
         return DirectSolver(alg=solver)
     elif solver == 'krylov':
         return KrylovSolver()
@@ -109,6 +115,30 @@ class NullSolver(LinearSolver):
         pass
 
 
+class DenseSolver(LinearSolver):
+
+    def _initialize(self, mtx, printer, mg_matrices=[]):
+        self.printer = printer
+        with self._active(self.options['print_init']) as printer:
+            self.mtx = mtx
+            assert isinstance(mtx, np.ndarray), 'mtx is of type %s' % type(mtx)
+
+            with printer._timed_context('Performing LU fact. (%i x %i mtx)' % mtx.shape):
+                self.fact = scipy.linalg.lu_factor(mtx)
+
+    def _solve(self, rhs, sol=None, ind_y=0):
+        with self._active(self.options['print_solve']) as printer:
+            self.rhs = rhs
+
+            if sol is None:
+                sol = np.array(rhs)
+
+            with printer._timed_context('Back solving (%i x %i mtx)' % self.mtx.shape):
+                sol[:] = scipy.linalg.lu_solve(self.fact, rhs)
+
+        return sol
+
+
 class DirectSolver(LinearSolver):
 
     def _declare_options(self):
@@ -149,7 +179,7 @@ class KrylovSolver(LinearSolver):
     def _declare_options(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'gmres', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
-        self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg'],
+        self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg', 'dense'],
                              types=LinearSolver)
         self.options.declare('ilimit', 50, types=int)
         self.options.declare('atol', 1e-15, types=(int, float))

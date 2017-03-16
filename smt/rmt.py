@@ -52,7 +52,7 @@ class RMT(SM):
                 desc='List of multigrid factors; each entry is a reduction factor')
         declare('save_solution', False, types=bool,
                 desc='Whether to save the linear system solution')
-        declare('max_print_depth', 100, types=int,
+        declare('max_print_depth', 5, types=int,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
     def _initialize_hessian(self):
@@ -297,10 +297,9 @@ class RMT(SM):
         ----------
         x : np.ndarray[n_eval,dim]
             An array giving the point(s) at which the prediction(s) should be made.
-        kx : int or None
-            None if evaluation of the interpolant is desired.
-            int  if evaluation of derivatives of the interpolant is desired
-                 with respect to the kx^{th} input variable (kx is 0-based).
+        kx : int
+            0    for the interpolant.
+            > 0  for the derivative with respect to the kx^{th} input variable (kx is 1-based).
 
         Returns
         -------

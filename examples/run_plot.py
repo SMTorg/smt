@@ -5,19 +5,14 @@ import pylab
 from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.sampling import LHS, Random, FullFactorial, Clustered
-from smt.ls import LS
-from smt.pa2 import PA2
-from smt.kpls import KPLS
-from smt.idw import IDW
-from smt.rmts import RMTS
-from smt.rmtb import RMTB
+from smt import LS, PA2, KPLS, IDW, RBF, RMTS, RMTB
 
 
-prob = Carre(ndim=3)
+# prob = Carre(ndim=3)
 # prob = TensorProduct(ndim=3, func='cos', width=1.)
 # prob = WeldedBeam(ndim=3)
 # prob = CantileverBeam(ndim=3)
-# prob = Rosenbrock(ndim=3)
+prob = Rosenbrock(ndim=2)
 # prob = RobotArm(ndim=4)
 
 
@@ -34,6 +29,7 @@ sm = RMTS(xlimits=prob.xlimits, num_elem=4, max_print_depth=5)
 # sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=10, max_print_depth=5)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
+sm = RBF(d0=1e0, poly_degree=1)
 
 nt = 500 * ndim
 ne = 100 * ndim
