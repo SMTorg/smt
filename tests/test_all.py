@@ -42,7 +42,7 @@ class Test(SMTestCase):
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
-            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTS'] = RMTS(num_elements=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         t_errors = {}
@@ -60,8 +60,8 @@ class Test(SMTestCase):
         e_errors['KRG'] = 1e-2
         e_errors['IDW'] = 1e0
         e_errors['RBF'] = 1e0
-        e_errors['RMTS'] = 3e-2
-        e_errors['RMTB'] = 3e-2
+        e_errors['RMTS'] = 2e-1
+        e_errors['RMTB'] = 2e-1
 
         self.nt = nt
         self.ne = ne
@@ -90,7 +90,7 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if 'xlimits' in sm.options._declared_values:
+        if sm.options.is_declared('xlimits'):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 

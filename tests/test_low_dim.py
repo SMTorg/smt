@@ -39,7 +39,7 @@ class Test(SMTestCase):
         sms['LS'] = LS()
         sms['PA2'] = PA2()
         if compiled_available:
-            sms['RMTS'] = RMTS(num_elem=30, nln_max_iter=20)
+            sms['RMTS'] = RMTS(num_elements=30, nln_max_iter=20)
             sms['RMTB'] = RMTB(order=6, num_ctrl_pts=30, nln_max_iter=20)
 
         t_errors = {}
@@ -81,7 +81,7 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if 'xlimits' in sm.options._declared_values:
+        if sm.options.is_declared('xlimits'):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 

@@ -124,4 +124,7 @@ class Printer(object):
             self(string + ' - done. Time (sec): %10.7f' % (stop_time - start_time))
 
         if key is not None:
-            self.times[key] = stop_time - start_time
+            if key not in self.times:
+                self.times[key] = [stop_time - start_time]
+            else:
+                self.times[key].append(stop_time - start_time)

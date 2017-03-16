@@ -62,8 +62,8 @@ class RMT(SM):
         return full_hess
 
     def _compute_approx_terms(self):
-        # This computates the approximation terms for the training points.
-        # We loop over kx: 0 is for values and kx>0 represents
+        # This computes the approximation terms for the training points.
+        # We loop over kx: 0 is for values and kx>0 represents.
         # the 1-based index of the derivative given by the training point data.
         num = self.num
         xlimits = self.options['xlimits']
@@ -77,14 +77,28 @@ class RMT(SM):
             assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
             assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
 
-            data, rows, cols = self._compute_jac(kx, 0, xt)
-
-            nt = xt.shape[0]
-            full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(nt, num['coeff']))
-
+            full_jac = self._compute_jac(kx, 0, xt)
             full_jac_dict[kx] = (full_jac, full_jac.T.tocsc())
 
         return full_jac_dict
+
+    def _compute_energy_terms(self):
+        # This computes the energy terms that are to be minimized.
+        # The quadrature points are the centroids of the multi-dimensional elements.
+        num = self.num
+        xlimits = self.options['xlimits']
+
+        x = RMTSlib.compute_quadrature_points(num['elem'], num['x'], num['elem_list'], xlimits)
+
+        elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
+        total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
+
+        full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
+        for kx in range(num['x']):
+            mtx = self._compute_jac(kx+1, kx+1, x)
+            full_hess += mtx.T * mtx * (elem_vol / total_vol * self.options['smoothness'][kx])
+
+        return full_hess
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         func = 0.5 * np.dot(sol, full_hess * sol)
@@ -311,7 +325,7 @@ class RMT(SM):
         num = self.num
         options = self.options
 
-        data, rows, cols = self._compute_jac(kx, 0, x)
+        data, rows, cols = self._compute_jac_raw(kx, 0, x)
 
         # In the explanation below, n is the number of dimensions, and
         # a_k and b_k are the lower and upper bounds for x_k.
@@ -341,7 +355,7 @@ class RMT(SM):
             for ix in range(num['x']):
                 # Now we compute the first order term where we have a
                 # derivative times (x_k - b_k) or (x_k - a_k).
-                data_tmp, rows, cols = self._compute_jac(kx, ix+1, x)
+                data_tmp, rows, cols = self._compute_jac_raw(kx, ix+1, x)
                 data_tmp *= dx[:, ix]
 
                 # If we are evaluating a derivative (with index kx),

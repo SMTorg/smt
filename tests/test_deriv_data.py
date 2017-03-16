@@ -26,8 +26,8 @@ class Test(SMTestCase):
 
     def setUp(self):
         ndim = 3
-        nt = 500
-        ne = 100
+        nt = 2500
+        ne = 500
 
         problems = OrderedDict()
         problems['carre'] = Carre(ndim=ndim)
@@ -37,7 +37,7 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS(num_elem=6)
+            sms['RMTS'] = RMTS(num_elements=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         t_errors = {}
@@ -91,7 +91,7 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if 'xlimits' in sm.options._declared_values:
+        if sm.options.is_declared('xlimits'):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
@@ -106,7 +106,7 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if 'xlimits' in sm.options._declared_values:
+        if sm.options.is_declared('xlimits'):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
