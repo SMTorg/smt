@@ -12,14 +12,9 @@ from smt.sampling import LHS
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt.ls import LS
-from smt.pa2 import PA2
-from smt.kpls import KPLS
-
+from smt import LS, PA2, KPLS
 try:
-    from smt.idw import IDW
-    from smt.rmts import RMTS
-    from smt.rmtb import RMTB
+    from smt import IDW, RBF, RMTS, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -39,6 +34,7 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
+            sms['RBF'] = RBF(d0=1e1)
             sms['RMTS'] = RMTS(num_elem=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
@@ -97,6 +93,10 @@ class Test(SMTestCase):
 
     # --------------------------------------------------------------------
     # Function: carre
+
+    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    def test_carre_RBF(self):
+        self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_carre_RMTS(self):

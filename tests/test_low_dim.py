@@ -12,14 +12,9 @@ from smt.sampling import LHS
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt.ls import LS
-from smt.pa2 import PA2
-from smt.kpls import KPLS
-
+from smt import LS, PA2, KPLS
 try:
-    from smt.idw import IDW
-    from smt.rmts import RMTS
-    from smt.rmtb import RMTB
+    from smt import IDW, RBF, RMTS, RMTB
     compiled_available = True
 except:
     compiled_available = False
