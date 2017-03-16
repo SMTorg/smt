@@ -4,17 +4,23 @@ import pylab
 
 from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
+from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.sampling import LHS, Random, FullFactorial, Clustered
 from smt import LS, PA2, KPLS, IDW, RBF, RMTS, RMTB
 
 
-# prob = Carre(ndim=3)
-# prob = TensorProduct(ndim=3, func='cos', width=1.)
+ndim = 3
+# prob = Carre(ndim=ndim)
+# prob = TensorProduct(ndim=ndim, func='cos', width=1.)
 # prob = WeldedBeam(ndim=3)
-# prob = CantileverBeam(ndim=3)
-prob = Rosenbrock(ndim=4)
-# prob = RobotArm(ndim=4)
+# prob = CantileverBeam(ndim=3*ndim)
+# prob = Rosenbrock(ndim=ndim)
+# prob = RobotArm(ndim=2*ndim)
 
+prob = NdimCantileverBeam(ndim=ndim)
+prob = NdimRobotArm(ndim=ndim)
+prob = NdimRosenbrock(ndim=ndim)
+prob = NdimStepFunction(ndim=ndim)
 
 sampling = LHS(xlimits=prob.xlimits)
 sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
@@ -26,7 +32,7 @@ sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 ndim = prob.options['ndim']
 
 sm = RMTS(xlimits=prob.xlimits, num_elements=6, max_print_depth=5)
-sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=10, max_print_depth=5, min_energy=True)
+sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=20, max_print_depth=5, min_energy=True)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
 # sm = RBF(d0=1e0, poly_degree=1)

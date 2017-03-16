@@ -32,9 +32,9 @@ class ReducedProblem(Problem):
         if isinstance(dims, int):
             self.dims = np.arange(dims)
             assert dims <= problem.options['ndim']
-        elif isinstance(dims, (list, tuple)):
+        elif isinstance(dims, (list, tuple, np.ndarray)):
             self.dims = np.array(dims, int)
-            assert numpy.max(dims) < problem.options['ndim']
+            assert np.max(dims) < problem.options['ndim']
         else:
             raise ValueError('dims is invalid')
 
@@ -43,8 +43,8 @@ class ReducedProblem(Problem):
         self.options.declare('name', 'R_'+self.problem.options['name'], types=str)
 
         self.xlimits = np.zeros((self.options['ndim'], 2))
-        for idim in self.dims:
-            self.xlimits[idim, :] = problem.xlimits[self.dims[idim], :]
+        for idim, idim_reduced in enumerate(self.dims):
+            self.xlimits[idim, :] = problem.xlimits[idim_reduced, :]
 
     def _evaluate(self, x, kx):
         """

@@ -8,3 +8,7 @@ from .torsion_vibration import TorsionVibration
 from .water_flow import WaterFlow
 from .welded_beam import WeldedBeam
 from .wing_weight import WingWeight
+from .ndim_cantilever_beam import NdimCantileverBeam
+from .ndim_robot_arm import NdimRobotArm
+from .ndim_rosenbrock import NdimRosenbrock
+from .ndim_step_function import NdimStepFunction
