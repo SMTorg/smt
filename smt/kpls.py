@@ -931,7 +931,7 @@ class KPLS(SM):
                 self.options['name'] = 'KRG'
 
         if len(self.options['theta0']) != self.options['n_comp']:
-            raise('Number of principal components must be equal to the number of theta0.')
+            raise Exception('Number of principal components must be equal to the number of theta0.')
 
         if not callable(self.options['corr']):
             if self.options['corr'] in self._correlation_types:

@@ -30,10 +30,10 @@ class RMT(SM):
                 desc='Smoothness parameter in each dimension - length nx. None implies uniform')
         declare('reg_dv', 1e-10, types=(int, float),
                 desc='Regularization coeff. for system degrees of freedom. ' +
-                     'Should be increased (to say 1e-4) when min_energy is False')
+                     'This ensures there is always a unique solution')
         declare('reg_cons', 1e-10, types=(int, float),
-                desc='Regularization coeff. for energy minimization terms. ' +
-                     'Negative of the regularization coeff. of the Lagrange mult. block')
+                desc='Negative of the regularization coeff. of the Lagrange mult. block ' +
+                     'The weight of the energy terms (and reg_dv) relative to the approx terms')
         declare('extrapolate', False, types=bool,
                 desc='Whether to perform linear extrapolation for external evaluation points')
         declare('min_energy', True, types=bool,
@@ -44,7 +44,7 @@ class RMT(SM):
                 desc='Whether to solve the linear system in a matrix-free way')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
-        declare('nln_max_iter', 10, types=int,
+        declare('nln_max_iter', 5, types=int,
                 desc='maximum number of nonlinear iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')

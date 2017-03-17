@@ -26,7 +26,7 @@ class Test(SMTestCase):
 
     def setUp(self):
         ndim = 2
-        nt = 500
+        nt = 5000
         ne = 100
 
         problems = OrderedDict()

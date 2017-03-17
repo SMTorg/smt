@@ -9,7 +9,7 @@ from smt.sampling import LHS, Random, FullFactorial, Clustered
 from smt import LS, PA2, KPLS, IDW, RBF, RMTS, RMTB
 
 
-ndim = 3
+ndim = 4
 # prob = Carre(ndim=ndim)
 # prob = TensorProduct(ndim=ndim, func='cos', width=1.)
 # prob = WeldedBeam(ndim=3)
@@ -17,9 +17,9 @@ ndim = 3
 # prob = Rosenbrock(ndim=ndim)
 # prob = RobotArm(ndim=2*ndim)
 
-prob = NdimCantileverBeam(ndim=ndim)
-prob = NdimRobotArm(ndim=ndim)
-prob = NdimRosenbrock(ndim=ndim)
+# prob = NdimCantileverBeam(ndim=ndim)
+# prob = NdimRobotArm(ndim=ndim)
+# prob = NdimRosenbrock(ndim=ndim)
 prob = NdimStepFunction(ndim=ndim)
 
 sampling = LHS(xlimits=prob.xlimits)
@@ -31,14 +31,14 @@ sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
 ndim = prob.options['ndim']
 
-sm = RMTS(xlimits=prob.xlimits, num_elements=6, max_print_depth=5)
-sm = RMTB(xlimits=prob.xlimits, order=3, num_ctrl_pts=20, max_print_depth=5, min_energy=True)
+sm = RMTS(xlimits=prob.xlimits)
+sm = RMTB(xlimits=prob.xlimits, min_energy=False, nln_max_iter=0)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
 # sm = RBF(d0=1e0, poly_degree=1)
 
-nt = 5000 * ndim
-ne = 100 * ndim
+nt = 50000 * ndim
+ne = 1000 * ndim
 
 np.random.seed(0)
 xt = sampling(nt)

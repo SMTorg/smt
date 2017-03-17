@@ -44,7 +44,7 @@ class RMTB(RMT):
                 desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
         declare('order', 3, types=(int, list, np.ndarray),
                 desc='B-spline order in each dimension - length [nx]')
-        declare('num_ctrl_pts', 10, types=(int, list, np.ndarray),
+        declare('num_ctrl_pts', 20, types=(int, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
     def _compute_jac_raw(self, ix1, ix2, x):
