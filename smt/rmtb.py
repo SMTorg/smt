@@ -42,9 +42,9 @@ class RMTB(RMT):
 
         declare('name', 'RMTB', types=str,
                 desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
-        declare('order', 3, types=(int, list, np.ndarray),
+        declare('order', 3, types=(int, tuple, list, np.ndarray),
                 desc='B-spline order in each dimension - length [nx]')
-        declare('num_ctrl_pts', 15, types=(int, list, np.ndarray),
+        declare('num_ctrl_pts', 15, types=(int, tuple, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
     def _compute_jac_raw(self, ix1, ix2, x):
@@ -116,16 +116,10 @@ class RMTB(RMT):
         options = self.options
         nx = self.training_pts['exact'][0][0].shape[1]
 
-        if isinstance(options['order'], int):
-            options['order'] = [options['order']] * nx
-        options['order'] = np.atleast_1d(options['order'])
-
-        if isinstance(options['num_ctrl_pts'], int):
-            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
-        options['num_ctrl_pts'] = np.atleast_1d(options['num_ctrl_pts'])
-
-        if options['smoothness'] is None:
-            options['smoothness'] = [1.0] * nx
+        for name in ['smoothness', 'num_ctrl_pts', 'order']:
+            if isinstance(options[name], (int, float)):
+                options[name] = [options[name]] * nx
+            options[name] = np.atleast_1d(options[name])
 
         self.printer.max_print_depth = options['max_print_depth']
 
@@ -133,70 +127,21 @@ class RMTB(RMT):
 
         self.num = num = self._get_num_dict()
 
-        total_size = int(num['dof'])
-        sol = np.zeros((total_size, num['y']))
+        with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
-        orig_num_ctrl_pts = np.array(options['num_ctrl_pts'], int)
-        orig_nln_max_iter = options['nln_max_iter']
+            with self.printer._timed_context('Initializing Hessian', 'init_hess'):
+                full_hess = self._initialize_hessian()
 
-        # -----------------
+            if options['min_energy']:
+                with self.printer._timed_context('Computing energy terms', 'energy'):
+                    full_hess += self._compute_energy_terms()
 
-        if 1:
-            mg_num_ctrl_pts = np.maximum(num['order_list'], options['num_ctrl_pts'] / 2).astype(int)
+            with self.printer._timed_context('Computing approximation terms', 'approx'):
+                full_jac_dict = self._compute_approx_terms()
 
-            options['num_ctrl_pts'] = mg_num_ctrl_pts
-            options['nln_max_iter'] = 0
+            full_hess *= options['reg_cons']
 
-            self.num = num = self._get_num_dict()
-
-            mg_matrices = self._compute_mg_matrices(orig_num_ctrl_pts)
-
-            total_size = int(num['dof'])
-            mg_sol = np.zeros((total_size, num['y']))
-
-            with self.printer._timed_context('Pre-computing matrices (MG)', 'assembly'):
-
-                with self.printer._timed_context('Initializing Hessian', 'init_hess'):
-                    full_hess = self._initialize_hessian()
-
-                if options['min_energy']:
-                    with self.printer._timed_context('Computing energy terms', 'energy'):
-                        full_hess += self._compute_energy_terms()
-
-                with self.printer._timed_context('Computing approximation terms', 'approx'):
-                    full_jac_dict = self._compute_approx_terms()
-
-                full_hess *= options['reg_cons']
-
-            with self.printer._timed_context('Solving for degrees of freedom (MG)', 'total_solution'):
-                self._solve(full_hess, full_jac_dict, mg_sol, [])
-
-            sol[:, :] = mg_matrices[0].dot(mg_sol)
-
-        # -----------------
-
-        options['num_ctrl_pts'] = orig_num_ctrl_pts
-        options['nln_max_iter'] = orig_nln_max_iter
-
-        self.num = num = self._get_num_dict()
-
-        if 1:
-
-            with self.printer._timed_context('Pre-computing matrices', 'assembly'):
-
-                with self.printer._timed_context('Initializing Hessian', 'init_hess'):
-                    full_hess = self._initialize_hessian()
-
-                if options['min_energy']:
-                    with self.printer._timed_context('Computing energy terms', 'energy'):
-                        full_hess += self._compute_energy_terms()
-
-                with self.printer._timed_context('Computing approximation terms', 'approx'):
-                    full_jac_dict = self._compute_approx_terms()
-
-                full_hess *= options['reg_cons']
-
-            with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
-                self._solve(full_hess, full_jac_dict, sol, [])
+        with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
+            sol = self._solve(full_hess, full_jac_dict, [])
 
         self.sol = sol

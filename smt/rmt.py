@@ -26,7 +26,7 @@ class RMT(SM):
 
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
-        declare('smoothness', None, values=(None), types=(list, np.ndarray),
+        declare('smoothness', 1.0, types=(int, float, tuple, list, np.ndarray),
                 desc='Smoothness parameter in each dimension - length nx. None implies uniform')
         declare('reg_dv', 1e-10, types=(int, float),
                 desc='Regularization coeff. for system degrees of freedom. ' +
@@ -210,7 +210,7 @@ class RMT(SM):
             yt_dict[kx] = yt[:, ind_y]
         return yt_dict
 
-    def _solve(self, full_hess, full_jac_dict, sol, mg_matrices):
+    def _solve(self, full_hess, full_jac_dict, mg_matrices):
         num = self.num
         options = self.options
 
@@ -219,6 +219,7 @@ class RMT(SM):
 
         total_size = int(num['dof'])
         rhs = np.zeros((total_size, num['y']))
+        sol = np.zeros((total_size, num['y']))
         d_sol = np.zeros((total_size, num['y']))
 
         with self.printer._timed_context('Solving initial linear problem (n=%i)' % total_size):
@@ -284,6 +285,8 @@ class RMT(SM):
 
                     if norm < 1e-16:
                         break
+
+        return sol
 
     def fit(self):
         """
