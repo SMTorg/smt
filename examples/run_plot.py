@@ -37,7 +37,7 @@ sm = RMTB(xlimits=prob.xlimits, min_energy=False, nln_max_iter=0)
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
 # sm = RBF(d0=1e0, poly_degree=1)
 
-nt = 50000
+nt = 100000
 ne = 1000 * ndim
 
 np.random.seed(0)
@@ -61,26 +61,21 @@ print(sm.compute_rms_error())
 print(sm.compute_rms_error(xe, ye))
 
 nplot = 50
-xe1 = np.zeros((nplot, ndim))
-xe2 = np.zeros((nplot, ndim))
-for kx in range(ndim):
-    xe1[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-    xe2[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
-
 a = 1.0
 
-xe1[:, 0] = np.linspace(a*prob.xlimits[0, 0], a*prob.xlimits[0, 1], nplot)
-ye1 = prob(xe1)
-y1 = sm.predict(xe1)
-plt.subplot(2, 1, 1)
-plt.plot(xe1[:, 0], ye1, '-or')
-plt.plot(xe1[:, 0], y1, '-ob')
+nr = 2
+nc = 2
 
-xe2[:, -1] = np.linspace(a*prob.xlimits[-1, 0], a*prob.xlimits[-1, 1], nplot)
-ye2 = prob(xe2)
-y2 = sm.predict(xe2)
-plt.subplot(2, 1, 2)
-plt.plot(xe2[:, -1], ye2, '-or')
-plt.plot(xe2[:, -1], y2, '-ob')
+xe = np.zeros((nplot, ndim))
+for ix in range(ndim):
+    for kx in range(ndim):
+        xe[:, kx] = 0.25 * prob.xlimits[kx, 0] + 0.75 * prob.xlimits[kx, 1]
+
+    xe[:, ix] = np.linspace(a*prob.xlimits[ix, 0], a*prob.xlimits[ix, 1], nplot)
+    ye = prob(xe)
+    ye2 = sm.predict(xe)
+    plt.subplot(nr, nc, ix + 1)
+    plt.plot(xe[:, ix], ye, '-or')
+    plt.plot(xe[:, ix], ye2, '-ob')
 
 plt.show()
