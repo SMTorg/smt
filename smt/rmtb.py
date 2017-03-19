@@ -74,28 +74,26 @@ class RMTB(RMT):
         full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
         return full_jac
 
-    def _fit(self):
-        """
-        Train the model
-        """
-        options = self.options
-        xlimits = options['xlimits']
+    def _compute_mg_matrices(self):
+        num = self.num
+        xlimits = self.options['xlimits']
 
-        nx = self.training_pts['exact'][0][0].shape[1]
-        if isinstance(options['order'], int):
-            options['order'] = [options['order']] * nx
-        if isinstance(options['num_ctrl_pts'], int):
-            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
-        if options['smoothness'] is None:
-            options['smoothness'] = [1.0] * nx
+        from smt import RMTSlib
+        num_ctrl_pts_list = np.maximum(self.num['order_list'], self.num['ctrl_list'] / 2)
+        num_ctrl_pts_list = np.array(num_ctrl_pts_list, int)
+        x = RMTSlib.compute_quadrature_points(num['elem'], num['x'], num_ctrl_pts_list, xlimits)
+        mg_matrix = self._compute_jac(0, 0, x)
 
+        return [mg_matrix]
+
+    def _get_num_dict(self):
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
-        num['order_list'] = np.array(options['order'], int)
+        num['order_list'] = np.array(self.options['order'], int)
         num['order'] = np.prod(num['order_list'])
-        num['ctrl_list'] = np.array(options['num_ctrl_pts'], int)
+        num['ctrl_list'] = np.array(self.options['num_ctrl_pts'], int)
         num['ctrl'] = np.prod(num['ctrl_list'])
         num['elem_list'] = np.array(num['ctrl_list'] - num['order_list'] + 1, int)
         num['elem'] = np.prod(num['elem_list'])
@@ -110,9 +108,27 @@ class RMTB(RMT):
         num['support'] = num['order']
         num['dof'] = num['ctrl']
 
-        self.num = num
+        return num
+
+    def _fit(self):
+        """
+        Train the model
+        """
+        options = self.options
+        nx = self.training_pts['exact'][0][0].shape[1]
+
+        if isinstance(options['order'], int):
+            options['order'] = [options['order']] * nx
+
+        if isinstance(options['num_ctrl_pts'], int):
+            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
+
+        if options['smoothness'] is None:
+            options['smoothness'] = [1.0] * nx
 
         self.printer.max_print_depth = options['max_print_depth']
+
+        self.num = num = self._get_num_dict()
 
         with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
@@ -128,7 +144,7 @@ class RMTB(RMT):
 
             full_hess *= options['reg_cons']
 
-            mg_matrices = []
+            mg_matrices = self._compute_mg_matrices()
 
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)

@@ -156,16 +156,7 @@ class RMTS(RMT):
 
         return mg_matrices
 
-    def _fit(self):
-        """
-        Train the model
-        """
-        options = self.options
-
-        nx = self.training_pts['exact'][0][0].shape[1]
-        if isinstance(options['num_elements'], int):
-            options['num_elements'] = options['num_elements'] * np.ones(nx, int)
-
+    def _get_num_dict(self):
         num = {}
         # number of inputs and outputs
         num['x'] = self.training_pts['exact'][0][0].shape[1]
@@ -188,12 +179,26 @@ class RMTS(RMT):
         num['support'] = num['term']
         num['dof'] = num['uniq'] * 2 ** num['x']
 
-        if options['smoothness'] is None:
-            options['smoothness'] = [1.0] * num['x']
+        return num
 
-        self.num = num
+    def _fit(self):
+        """
+        Train the model
+        """
+        options = self.options
+        nx = self.training_pts['exact'][0][0].shape[1]
+
+        if isinstance(options['num_elements'], int):
+            options['num_elements'] = options['num_elements'] * np.ones(nx, int)
+
+        if options['smoothness'] is None:
+            options['smoothness'] = [1.0] * nx
 
         self.printer.max_print_depth = options['max_print_depth']
+
+        num = self._get_num_dict()
+
+        self.num = num
 
         with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
@@ -213,7 +218,7 @@ class RMTS(RMT):
 
             full_hess *= options['reg_cons']
 
-            mg_matrices = self._compute_mg_matrices()
+            mg_matrices = [] #self._compute_mg_matrices()
 
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
             sol = self._solve(full_hess, full_jac_dict, mg_matrices)

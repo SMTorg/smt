@@ -80,6 +80,8 @@ class RMT(SM):
             full_jac = self._compute_jac(kx, 0, xt)
             full_jac_dict[kx] = (full_jac, full_jac.T.tocsc())
 
+        self.c = 1.0 / xlimits.shape[0]
+
         return full_jac_dict
 
     def _compute_energy_terms(self):
@@ -105,7 +107,8 @@ class RMT(SM):
         for kx in self.training_pts['exact']:
             full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
-            func += 0.5 * np.sum((full_jac * sol - yt) ** p)
+            c = 1.0 if kx == 0 else self.c
+            func += 0.5 * c * np.sum((full_jac * sol - yt) ** p)
 
         return func
 
@@ -114,7 +117,8 @@ class RMT(SM):
         for kx in self.training_pts['exact']:
             full_jac, full_jac_T = full_jac_dict[kx]
             yt = yt_dict[kx]
-            grad += 0.5 * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
+            c = 1.0 if kx == 0 else self.c
+            grad += 0.5 * c * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
 
         return grad
 
@@ -132,7 +136,8 @@ class RMT(SM):
 
             diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
-            hess += 0.5 * full_jac_T * diag_mtx * full_jac
+            c = 1.0 if kx == 0 else self.c
+            hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
 
         return hess
 
@@ -149,10 +154,12 @@ class RMT(SM):
                 vec = full_hess * other
                 for kx in full_jac_dict:
                     full_jac, full_jac_T = full_jac_dict[kx]
-                    vec += 0.5 * full_jac_T * (self.diag_vec[kx] * (full_jac * other))
+                    c = 1.0 if kx == 0 else self.c
+                    vec += 0.5 * c * full_jac_T * (self.diag_vec[kx] * (full_jac * other))
                 return vec
 
         mtx = SpMatrix()
+        mtx.c = self.c
         op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
         return op
 
@@ -168,7 +175,8 @@ class RMT(SM):
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
             full_jac, full_jac_T = full_jac_dict[kx]
-            hess += 0.5 * p * (p - 1) * full_jac_T * full_jac
+            c = 1.0 if kx == 0 else self.c
+            hess += 0.5 * c * p * (p - 1) * full_jac_T * full_jac
 
         return hess
 
@@ -182,10 +190,12 @@ class RMT(SM):
                 vec = full_hess * other
                 for kx in full_jac_dict:
                     full_jac, full_jac_T = full_jac_dict[kx]
-                    vec += 0.5 * p * (p - 1) * full_jac_T * (full_jac * other)
+                    c = 1.0 if kx == 0 else self.c
+                    vec += 0.5 * c * p * (p - 1) * full_jac_T * (full_jac * other)
                 return vec
 
         mtx = SpMatrix()
+        mtx.c = self.c
         op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
         return op
 
