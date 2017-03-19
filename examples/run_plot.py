@@ -31,7 +31,7 @@ sampling = LHS(xlimits=prob.xlimits)
 
 ndim = prob.options['ndim']
 
-# sm = RMTS(xlimits=prob.xlimits, min_energy=False, nln_max_iter=0)
+sm = RMTS(xlimits=prob.xlimits, min_energy=False, nln_max_iter=0)
 sm = RMTB(xlimits=prob.xlimits, min_energy=False, nln_max_iter=0)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)

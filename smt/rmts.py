@@ -162,7 +162,7 @@ class RMTS(RMT):
         num['x'] = self.training_pts['exact'][0][0].shape[1]
         num['y'] = self.training_pts['exact'][0][1].shape[1]
         # number of elements
-        num['elem_list'] = np.array(options['num_elements'], int)
+        num['elem_list'] = np.array(self.options['num_elements'], int)
         num['elem'] = np.prod(num['elem_list'])
         # number of terms/coefficients per element
         num['term_list'] = 4 * np.ones(num['x'], int)
