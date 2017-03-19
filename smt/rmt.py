@@ -44,12 +44,12 @@ class RMT(SM):
                 desc='Whether to solve the linear system in a matrix-free way')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
+        declare('grad_weight', 0.5, types=(int, float),
+                desc='Weight on gradient training data')
         declare('nln_max_iter', 5, types=int,
                 desc='maximum number of nonlinear iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')
-        declare('mg_factors', [], types=(list, np.ndarray),
-                desc='List of multigrid factors; each entry is a reduction factor')
         declare('save_solution', False, types=bool,
                 desc='Whether to save the linear system solution')
         declare('max_print_depth', 5, types=int,
@@ -80,7 +80,7 @@ class RMT(SM):
             full_jac = self._compute_jac(kx, 0, xt)
             full_jac_dict[kx] = (full_jac, full_jac.T.tocsc())
 
-        self.c = 1.0 / xlimits.shape[0]
+        self.c = self.options['grad_weight'] / xlimits.shape[0]
 
         return full_jac_dict
 
@@ -210,7 +210,7 @@ class RMT(SM):
             yt_dict[kx] = yt[:, ind_y]
         return yt_dict
 
-    def _solve(self, full_hess, full_jac_dict, mg_matrices):
+    def _solve(self, full_hess, full_jac_dict):
         num = self.num
         options = self.options
 
@@ -232,7 +232,7 @@ class RMT(SM):
                                                     full_jac_dict, yt_dict)
 
             with self.printer._timed_context('Initializing linear solver'):
-                solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
+                solver._initialize(mtx, self.printer)
 
             for ind_y in range(rhs.shape[1]):
                 with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
@@ -261,7 +261,7 @@ class RMT(SM):
                                                             full_jac_dict, yt_dict)
 
                         with self.printer._timed_context('Initializing linear solver'):
-                            solver._initialize(mtx, self.printer, mg_matrices=mg_matrices)
+                            solver._initialize(mtx, self.printer)
 
                         with self.printer._timed_context('Solving linear system'):
                             solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)

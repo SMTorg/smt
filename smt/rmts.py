@@ -89,73 +89,6 @@ class RMTS(RMT):
 
         return full_uniq2coeff
 
-    def _compute_energy_terms_all(self):
-        num = self.num
-        options = self.options
-        xlimits = options['xlimits']
-
-        # Square root of volume of each integration element and of the whole domain
-        elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
-        total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
-
-        # This computes the positive-definite, symmetric matrix yields the energy
-        # for an element when pre- and post-multiplied by a vector of function and
-        # derivative values for the element. This matrix applies to all elements.
-        elem_hess = np.zeros((num['term'], num['term']))
-        for kx in range(num['x']):
-            elem_sec_deriv = RMTSlib.compute_sec_deriv(kx+1, num['term'], num['x'],
-                num['elem_list'], xlimits)
-            elem_hess += elem_sec_deriv.T.dot(elem_sec_deriv) \
-                * (elem_vol / total_vol * options['smoothness'][kx])
-
-        # This takes the dense elem_hess matrix and stamps out num['elem'] copies
-        # of it to form the full sparse matrix with all the elements included.
-        nnz = num['term'] ** 2 * num['elem']
-        num_coeff = num['term'] * num['elem']
-        data, rows, cols = RMTSlib.compute_full_from_block(
-            nnz, num['term'], num['elem'], elem_hess)
-        full_hess_coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
-            shape=(num_coeff, num_coeff))
-
-        return self.full_uniq2coeff.T * full_hess_coeff * self.full_uniq2coeff
-
-    def _compute_single_mg_matrix(self, elem_lists_2, elem_lists_1):
-        num = self.num
-        options = self.options
-
-        mg_full_uniq2coeff = self._compute_uniq2coeff(num['x'], elem_lists_1,
-            np.prod(elem_lists_1), num['term'], np.prod(elem_lists_1 + 1))
-
-        ne = np.prod(elem_lists_2 + 1) * 2 ** num['x']
-        nnz = ne * num['term']
-        num_coeff = num['term'] * np.prod(elem_lists_1)
-        data, rows, cols = RMTSlib.compute_jac_interp(
-            nnz, num['x'], elem_lists_1, elem_lists_2 + 1, options['xlimits'])
-        mg_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(ne, num_coeff))
-        mg_matrix = mg_jac * mg_full_uniq2coeff
-
-        return mg_matrix
-
-    def _compute_mg_matrices(self):
-        num = self.num
-        options = self.options
-
-        elem_lists = [num['elem_list']]
-        mg_matrices = []
-        for ind_mg, mg_factor in enumerate(options['mg_factors']):
-            elem_lists.append(elem_lists[-1] / mg_factor)
-
-            nrows = np.prod(elem_lists[-2] + 1) * 2 ** num['x']
-            ncols = np.prod(elem_lists[-1] + 1) * 2 ** num['x']
-            string = 'Assembling multigrid op %i (%i x %i mtx)' % (ind_mg, nrows, ncols)
-            with self.printer._timed_context('Assembling multigrid op %i (%i x %i mtx)'
-                                             % (ind_mg, nrows, ncols)):
-                mg_matrix = self._compute_single_mg_matrix(elem_lists[-2], elem_lists[-1])
-
-            mg_matrices.append(mg_matrix)
-
-        return mg_matrices
-
     def _get_num_dict(self):
         num = {}
         # number of inputs and outputs
@@ -218,6 +151,6 @@ class RMTS(RMT):
             full_hess *= options['reg_cons']
 
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
-            sol = self._solve(full_hess, full_jac_dict, [])
+            sol = self._solve(full_hess, full_jac_dict)
 
         self.sol = self.full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]

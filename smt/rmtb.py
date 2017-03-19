@@ -74,17 +74,6 @@ class RMTB(RMT):
         full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
         return full_jac
 
-    def _compute_mg_matrices(self, mg_num_ctrl_pts):
-        num = self.num
-        xlimits = self.options['xlimits']
-
-        from smt import RMTSlib
-        n = np.prod(mg_num_ctrl_pts)
-        x = RMTSlib.compute_quadrature_points(n, num['x'], mg_num_ctrl_pts, xlimits)
-        mg_matrix = self._compute_jac(0, 0, x)
-
-        return [mg_matrix]
-
     def _get_num_dict(self):
         num = {}
         # number of inputs and outputs
@@ -142,6 +131,6 @@ class RMTB(RMT):
             full_hess *= options['reg_cons']
 
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
-            sol = self._solve(full_hess, full_jac_dict, [])
+            sol = self._solve(full_hess, full_jac_dict)
 
         self.sol = sol
