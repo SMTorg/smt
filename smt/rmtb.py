@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import scipy.sparse
 from six.moves import range
+from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
@@ -42,9 +43,9 @@ class RMTB(RMT):
 
         declare('name', 'RMTB', types=str,
                 desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
-        declare('order', 3, types=(int, tuple, list, np.ndarray),
+        declare('order', 3, types=(Integral, tuple, list, np.ndarray),
                 desc='B-spline order in each dimension - length [nx]')
-        declare('num_ctrl_pts', 15, types=(int, tuple, list, np.ndarray),
+        declare('num_ctrl_pts', 15, types=(Integral, tuple, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
     def _compute_jac_raw(self, ix1, ix2, x):

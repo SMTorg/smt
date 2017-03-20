@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import scipy.sparse
 from six.moves import range
+from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
@@ -41,7 +42,7 @@ class RMTS(RMT):
 
         declare('name', 'RMTS', types=str,
                 desc='Regularized Minimal-energy Tensor-product Spline interpolant')
-        declare('num_elements', 4, types=(int, list, np.ndarray),
+        declare('num_elements', 4, types=(Integral, list, np.ndarray),
                 desc='# elements in each dimension - ndarray [nx]')
 
     def _compute_jac_raw(self, ix1, ix2, x):

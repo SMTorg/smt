@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import scipy.sparse
 from six.moves import range
+from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver, LinearSolver, VALID_SOLVERS
 from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_SEARCHES
@@ -26,33 +27,33 @@ class RMT(SM):
 
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
-        declare('smoothness', 1.0, types=(int, float, tuple, list, np.ndarray),
+        declare('smoothness', 1.0, types=(Integral, float, tuple, list, np.ndarray),
                 desc='Smoothness parameter in each dimension - length nx. None implies uniform')
-        declare('reg_dv', 1e-10, types=(int, float),
+        declare('reg_dv', 1e-10, types=(Integral, float),
                 desc='Regularization coeff. for system degrees of freedom. ' +
                      'This ensures there is always a unique solution')
-        declare('reg_cons', 1e-10, types=(int, float),
+        declare('reg_cons', 1e-2, types=(Integral, float),
                 desc='Negative of the regularization coeff. of the Lagrange mult. block ' +
                      'The weight of the energy terms (and reg_dv) relative to the approx terms')
         declare('extrapolate', False, types=bool,
                 desc='Whether to perform linear extrapolation for external evaluation points')
         declare('min_energy', True, types=bool,
                 desc='Whether to perform energy minimization')
-        declare('approx_order', 4, types=int,
+        declare('approx_order', 4, types=Integral,
                 desc='Exponent in the approximation term')
         declare('mtx_free', False, types=bool,
                 desc='Whether to solve the linear system in a matrix-free way')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
-        declare('grad_weight', 0.5, types=(int, float),
+        declare('grad_weight', 0.5, types=(Integral, float),
                 desc='Weight on gradient training data')
-        declare('nln_max_iter', 5, types=int,
+        declare('nln_max_iter', 5, types=Integral,
                 desc='maximum number of nonlinear iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')
         declare('save_solution', False, types=bool,
                 desc='Whether to save the linear system solution')
-        declare('max_print_depth', 5, types=int,
+        declare('max_print_depth', 5, types=Integral,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
     def _initialize_hessian(self):
@@ -90,7 +91,8 @@ class RMT(SM):
         num = self.num
         xlimits = self.options['xlimits']
 
-        x = RMTSlib.compute_quadrature_points(num['elem'], num['x'], num['elem_list'], xlimits)
+        n = np.prod(2 * num['elem_list'])
+        x = RMTSlib.compute_quadrature_points(n, num['x'], 2 * num['elem_list'], xlimits)
 
         elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
         total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
