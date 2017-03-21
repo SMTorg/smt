@@ -34,12 +34,14 @@ def cached_operation(inputs_dict, data_dir, desc=''):
     try:
         with open(filename, 'rb') as f:
             outputs_dict = pickle.load(f)
+        load_successful = True
     except:
         outputs_dict = {}
+        load_successful = False
 
     yield outputs_dict
 
-    if outputs_dict and data_dir:
+    if load_successful and data_dir:
         with open(filename, 'wb') as f:
             pickle.dump(outputs_dict, f)
 
