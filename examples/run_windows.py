@@ -4,9 +4,8 @@ from smt.ls import LS
 from smt.pa2 import PA2
 from smt.kpls import KPLS
 from scipy import linalg
-import tools_benchmark as fun
-from tools_doe import  trans
-import doe_lhs
+from smt.problems import Carre
+from smt.sampling import LHS
 
 # Initialization of the problem
 dim = 10
@@ -17,20 +16,22 @@ xlimits = np.zeros((dim, 2))
 xlimits[:, 0] = -10
 xlimits[:, 1] = 10
 
-# Construction of the DOE in [0,1]
-xt = doe_lhs.lhs(dim,ndoe,'m')
-
-# Transform the DOE in [LB,UB]
-xt = trans(xt,xlimits[:, 0],xlimits[:, 1])
+# Construction of the DOE
+sampling = LHS(xlimits=xlimits,criterion = 'm')
+xt = sampling(ndoe)
 
 # Compute the output (+ the gradient)
-yt,yd = fun.carre(xt)
+fun = Carre(ndim = dim)
+yt = fun(xt)
+for i in range(dim):
+    yd = fun(xt,kx=i)
+    yt = np.concatenate((yt,yd),axis=1)
 
 # Construction of the validation points
 ntest = 500
-xtest = doe_lhs.lhs(dim, ntest)
-xtest = trans(xtest,xlimits[:, 0],xlimits[:, 1])
-ytest,ydtest = fun.carre(xtest)
+sampling = LHS(xlimits=xlimits,criterion = 'm')
+xtest = sampling(ntest)
+ytest = fun(xtest)
 
 ########### The LS model
 

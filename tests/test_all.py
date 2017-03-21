@@ -48,20 +48,22 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
-        t_errors['KRG'] = 1e-6
-        t_errors['IDW'] = 1e-15
-        t_errors['RBF'] = 1e-2
-        t_errors['RMTS'] = 1e-2
-        t_errors['RMTB'] = 1e-2
+        t_errors['KRG'] = 1e-5
+        if compiled_available:
+            t_errors['IDW'] = 1e-15
+            t_errors['RBF'] = 1e-2
+            t_errors['RMTS'] = 1e-2
+            t_errors['RMTB'] = 1e-2
 
         e_errors = {}
         e_errors['LS'] = 1.5
         e_errors['PA2'] = 1.5
         e_errors['KRG'] = 1e-2
-        e_errors['IDW'] = 1e0
-        e_errors['RBF'] = 1e0
-        e_errors['RMTS'] = 2e-1
-        e_errors['RMTB'] = 2e-1
+        if compiled_available:
+            e_errors['IDW'] = 1e0
+            e_errors['RBF'] = 1e0
+            e_errors['RMTS'] = 2e-1
+            e_errors['RMTB'] = 2e-1
 
         self.nt = nt
         self.ne = ne
