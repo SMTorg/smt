@@ -26,7 +26,7 @@ class Test(SMTestCase):
 
     def setUp(self):
         ndim = 3
-        nt = 2500
+        nt = 5000
         ne = 500
 
         problems = OrderedDict()
@@ -37,12 +37,12 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS(num_elements=6)
-            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
+            sms['RMTS'] = RMTS()
+            sms['RMTB'] = RMTB()
 
         t_errors = {}
-        t_errors['RMTS'] = 1e-2
-        t_errors['RMTB'] = 1e-2
+        t_errors['RMTS'] = 1e-1
+        t_errors['RMTB'] = 1e-1
 
         e_errors = {}
         e_errors['RMTS'] = 1e-1

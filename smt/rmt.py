@@ -32,7 +32,7 @@ class RMT(SM):
         declare('reg_dv', 1e-10, types=(Integral, float),
                 desc='Regularization coeff. for system degrees of freedom. ' +
                      'This ensures there is always a unique solution')
-        declare('reg_cons', 1e-2, types=(Integral, float),
+        declare('reg_cons', 1e-4, types=(Integral, float),
                 desc='Negative of the regularization coeff. of the Lagrange mult. block ' +
                      'The weight of the energy terms (and reg_dv) relative to the approx terms')
         declare('extrapolate', False, types=bool,

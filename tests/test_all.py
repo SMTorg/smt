@@ -42,8 +42,8 @@ class Test(SMTestCase):
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
-            sms['RMTS'] = RMTS(num_elements=6)
-            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
+            sms['RMTS'] = RMTS()
+            sms['RMTB'] = RMTB()
 
         t_errors = {}
         t_errors['LS'] = 1.0
@@ -52,8 +52,8 @@ class Test(SMTestCase):
         if compiled_available:
             t_errors['IDW'] = 1e-15
             t_errors['RBF'] = 1e-2
-            t_errors['RMTS'] = 1e-2
-            t_errors['RMTB'] = 1e-2
+            t_errors['RMTS'] = 1e-1
+            t_errors['RMTB'] = 1e-1
 
         e_errors = {}
         e_errors['LS'] = 1.5

@@ -39,8 +39,8 @@ class Test(SMTestCase):
         sms['LS'] = LS()
         sms['PA2'] = PA2()
         if compiled_available:
-            sms['RMTS'] = RMTS(num_elements=30, nln_max_iter=20)
-            sms['RMTB'] = RMTB(order=6, num_ctrl_pts=30, nln_max_iter=20)
+            sms['RMTS'] = RMTS(num_elements=20, reg_cons=1e-10)
+            sms['RMTB'] = RMTB(num_ctrl_pts=40, reg_cons=1e-10)
 
         t_errors = {}
         t_errors['LS'] = 1.0
