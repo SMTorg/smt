@@ -79,7 +79,7 @@ class RBF(SM):
 
         sol = np.zeros((num['dof'], num['y']))
 
-        solver = get_solver('dense')
+        solver = get_solver('dense-chol')
         with self.printer._timed_context('Initializing linear solver'):
             solver._initialize(mtx, self.printer)
 
