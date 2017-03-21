@@ -10,7 +10,7 @@ from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver, LinearSolver, VALID_SOLVERS
 from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_SEARCHES
-from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
+from smt.utils.caching import cached_operation
 from smt.sm import SM
 
 from smt import RMTSlib
@@ -51,8 +51,10 @@ class RMT(SM):
                 desc='maximum number of nonlinear iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')
-        declare('save_solution', False, types=bool,
-                desc='Whether to save the linear system solution')
+        declare('save_energy_terms', False, types=bool,
+                desc='Whether to cache energy terms in the data_dir directory')
+        declare('data_dir', None, values=(None,), types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
         declare('max_print_depth', 5, types=Integral,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
@@ -61,6 +63,14 @@ class RMT(SM):
         arange = np.arange(self.num['dof'])
         full_hess = scipy.sparse.csc_matrix((diag, (arange, arange)))
         return full_hess
+
+    def _compute_jac(self, ix1, ix2, x):
+        data, rows, cols = self._compute_jac_raw(ix1, ix2, x)
+        n = x.shape[0]
+        full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
+        if self.full_dof2coeff is not None:
+            full_jac = full_jac * self.full_dof2coeff
+        return full_jac
 
     def _compute_approx_terms(self):
         # This computes the approximation terms for the training points.
@@ -78,10 +88,13 @@ class RMT(SM):
             assert np.all(xlimits[:, 0] <= xmin), 'Training pts below min for %s' % kx
             assert np.all(xlimits[:, 1] >= xmax), 'Training pts above max for %s' % kx
 
-            full_jac = self._compute_jac(kx, 0, xt)
-            full_jac_dict[kx] = (full_jac, full_jac.T.tocsc())
+            if kx == 0:
+                c = 1.0
+            else:
+                self.options['grad_weight'] / xlimits.shape[0]
 
-        self.c = self.options['grad_weight'] / xlimits.shape[0]
+            full_jac = self._compute_jac(kx, 0, xt)
+            full_jac_dict[kx] = (full_jac, full_jac.T.tocsc(), c)
 
         return full_jac_dict
 
@@ -91,25 +104,46 @@ class RMT(SM):
         num = self.num
         xlimits = self.options['xlimits']
 
-        n = np.prod(2 * num['elem_list'])
-        x = RMTSlib.compute_quadrature_points(n, num['x'], 2 * num['elem_list'], xlimits)
+        inputs = {}
+        inputs['nx'] = xlimits.shape[0]
+        inputs['elem_list'] = num['elem_list']
+        if self.__class__.__name__ == 'RMTB':
+            inputs['num_ctrl_list'] = num['ctrl_list']
+            inputs['order_list'] = num['order_list']
+
+        if self.options['save_energy_terms']:
+            cache_dir = self.options['data_dir']
+        else:
+            cache_dir = None
+        with cached_operation(inputs, cache_dir) as outputs:
+            if outputs:
+                sq_mtx = outputs['sq_mtx']
+            else:
+                n = np.prod(2 * num['elem_list'])
+                x = RMTSlib.compute_quadrature_points(n, num['x'], 2 * num['elem_list'], xlimits)
+
+                sq_mtx = [None] * num['x']
+                for kx in range(num['x']):
+                    mtx = self._compute_jac(kx+1, kx+1, x)
+                    sq_mtx[kx] = mtx.T.tocsc() * mtx * (xlimits[kx, 1] - xlimits[kx, 0]) ** 4
+
+                outputs['sq_mtx'] = sq_mtx
 
         elem_vol = np.prod((xlimits[:, 1] - xlimits[:, 0]) / num['elem_list'])
         total_vol = np.prod(xlimits[:, 1] - xlimits[:, 0])
 
         full_hess = scipy.sparse.csc_matrix((num['dof'], num['dof']))
         for kx in range(num['x']):
-            mtx = self._compute_jac(kx+1, kx+1, x)
-            full_hess += mtx.T * mtx * (elem_vol / total_vol * self.options['smoothness'][kx])
+            full_hess += sq_mtx[kx] * (elem_vol / total_vol * self.options['smoothness'][kx] \
+                / (xlimits[kx, 1] - xlimits[kx, 0]) ** 4)
 
         return full_hess
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_pts['exact']:
-            full_jac, full_jac_T = full_jac_dict[kx]
+            full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
-            c = 1.0 if kx == 0 else self.c
             func += 0.5 * c * np.sum((full_jac * sol - yt) ** p)
 
         return func
@@ -117,9 +151,8 @@ class RMT(SM):
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
         grad = full_hess * sol
         for kx in self.training_pts['exact']:
-            full_jac, full_jac_T = full_jac_dict[kx]
+            full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
-            c = 1.0 if kx == 0 else self.c
             grad += 0.5 * c * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
 
         return grad
@@ -133,12 +166,11 @@ class RMT(SM):
     def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
-            full_jac, full_jac_T = full_jac_dict[kx]
+            full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
 
             diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
-            c = 1.0 if kx == 0 else self.c
             hess += 0.5 * c * full_jac_T * diag_mtx * full_jac
 
         return hess
@@ -149,19 +181,17 @@ class RMT(SM):
                 self.shape = full_hess.shape
                 self.diag_vec = {}
                 for kx in full_jac_dict:
-                    full_jac, full_jac_T = full_jac_dict[kx]
+                    full_jac, full_jac_T, c = full_jac_dict[kx]
                     yt = yt_dict[kx]
                     self.diag_vec[kx] = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
             def dot(self, other):
                 vec = full_hess * other
                 for kx in full_jac_dict:
-                    full_jac, full_jac_T = full_jac_dict[kx]
-                    c = 1.0 if kx == 0 else self.c
+                    full_jac, full_jac_T, c = full_jac_dict[kx]
                     vec += 0.5 * c * full_jac_T * (self.diag_vec[kx] * (full_jac * other))
                 return vec
 
         mtx = SpMatrix()
-        mtx.c = self.c
         op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
         return op
 
@@ -176,8 +206,7 @@ class RMT(SM):
 
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_pts['exact']:
-            full_jac, full_jac_T = full_jac_dict[kx]
-            c = 1.0 if kx == 0 else self.c
+            full_jac, full_jac_T, c = full_jac_dict[kx]
             hess += 0.5 * c * p * (p - 1) * full_jac_T * full_jac
 
         return hess
@@ -191,13 +220,11 @@ class RMT(SM):
             def dot(self, other):
                 vec = full_hess * other
                 for kx in full_jac_dict:
-                    full_jac, full_jac_T = full_jac_dict[kx]
-                    c = 1.0 if kx == 0 else self.c
+                    full_jac, full_jac_T, c = full_jac_dict[kx]
                     vec += 0.5 * c * p * (p - 1) * full_jac_T * (full_jac * other)
                 return vec
 
         mtx = SpMatrix()
-        mtx.c = self.c
         op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
         return op
 
@@ -290,30 +317,46 @@ class RMT(SM):
 
         return sol
 
+    def _fit(self):
+        """
+        Train the model
+        """
+        with self.printer._timed_context('Pre-computing matrices', 'assembly'):
+
+            with self.printer._timed_context('Computing dof2coeff', 'dof2coeff'):
+                self.full_dof2coeff = self._compute_dof2coeff()
+
+            with self.printer._timed_context('Initializing Hessian', 'init_hess'):
+                full_hess = self._initialize_hessian()
+
+            if self.options['min_energy']:
+                with self.printer._timed_context('Computing energy terms', 'energy'):
+                    full_hess += self._compute_energy_terms()
+
+            with self.printer._timed_context('Computing approximation terms', 'approx'):
+                full_jac_dict = self._compute_approx_terms()
+
+            full_hess *= self.options['reg_cons']
+
+        with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
+            self.sol = self._solve(full_hess, full_jac_dict)
+
+        if self.full_dof2coeff is not None:
+            self.sol = self.full_dof2coeff * self.sol
+
     def fit(self):
         """
         Train the model
         """
-        checksum = _caching_checksum_sm(self)
-        filename = '%s.sm' % self.options['name']
+        self._initialize()
 
-        # If caching (saving) is requested, try to load data
-        if self.options['save_solution']:
-            loaded, data = _caching_load(filename, checksum)
-        else:
-            loaded = False
-
-        # If caching not requested or loading failed, actually run
-        if not loaded:
-            self._fit()
-        else:
-            self.sol = data['sol']
-            self.num = data['num']
-
-        # If caching (saving) is requested, save data
-        if self.options['save_solution']:
-            data = {'sol': self.sol, 'num': self.num}
-            _caching_save(filename, checksum, data)
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._fit()
+                outputs['sol'] = self.sol
 
     def evaluate(self, x, kx):
         """
