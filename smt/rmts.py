@@ -55,7 +55,7 @@ class RMTS(RMT):
         data, rows, cols = self._compute_jac_raw(ix1, ix2, x)
         n = x.shape[0]
         full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
-        return full_jac * self.full_uniq2coeff
+        return full_jac
 
     def _compute_uniq2coeff(self, nx, num_elem_list, num_elem, num_term, num_uniq):
         # This computes an num['term'] x num['term'] matrix called coeff2nodal.
@@ -136,11 +136,13 @@ class RMTS(RMT):
         with self.printer._timed_context('Pre-computing matrices', 'assembly'):
 
             with self.printer._timed_context('Computing uniq2coeff', 'uniq2coeff'):
-                self.full_uniq2coeff = self._compute_uniq2coeff(
+                full_uniq2coeff = self._compute_uniq2coeff(
                     num['x'], num['elem_list'], num['elem'], num['term'], num['uniq'])
 
             with self.printer._timed_context('Initializing Hessian', 'init_hess'):
                 full_hess = self._initialize_hessian()
+                self.dof2coeff = full_uniq2coeff
+                self.dof2coeff_T = full_uniq2coeff.T.tocsc()
 
             if options['min_energy']:
                 with self.printer._timed_context('Computing energy terms', 'energy'):
@@ -154,4 +156,4 @@ class RMTS(RMT):
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
             sol = self._solve(full_hess, full_jac_dict)
 
-        self.sol = self.full_uniq2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
+        self.sol = self.dof2coeff * sol[:num['uniq'] * 2 ** num['x'], :]
