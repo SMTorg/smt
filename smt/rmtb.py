@@ -10,12 +10,12 @@ from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
-from smt.rmt import RMT
+from smt.rmts import RMTS
 
 from smt import RMTBlib
 
 
-class RMTB(RMT):
+class RMTB(RMTS):
     """
     Regularized Minimal-energy Tensor-product B-Spline (RMTB) interpolant.
 

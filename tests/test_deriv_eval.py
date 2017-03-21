@@ -14,7 +14,7 @@ from smt.utils.silence import Silence
 
 from smt import LS, PA2, KPLS
 try:
-    from smt import IDW, RBF, RMTS, RMTB
+    from smt import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -35,7 +35,7 @@ class Test(SMTestCase):
         sms = OrderedDict()
         if compiled_available:
             sms['RBF'] = RBF()
-            sms['RMTS'] = RMTS()
+            sms['RMTC'] = RMTC()
             sms['RMTB'] = RMTB()
 
         self.nt = nt
@@ -99,7 +99,7 @@ class Test(SMTestCase):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTS(self):
+    def test_carre_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')

@@ -14,7 +14,7 @@ from smt.utils.silence import Silence
 
 from smt import LS, PA2, KPLS
 try:
-    from smt import IDW, RBF, RMTS, RMTB
+    from smt import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -37,23 +37,23 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS()
+            sms['RMTC'] = RMTC()
             sms['RMTB'] = RMTB()
 
         t_errors = {}
-        t_errors['RMTS'] = 1e-1
+        t_errors['RMTC'] = 1e-1
         t_errors['RMTB'] = 1e-1
 
         e_errors = {}
-        e_errors['RMTS'] = 1e-1
+        e_errors['RMTC'] = 1e-1
         e_errors['RMTB'] = 1e-1
 
         ge_t_errors = {}
-        ge_t_errors['RMTS'] = 1e-2
+        ge_t_errors['RMTC'] = 1e-2
         ge_t_errors['RMTB'] = 1e-2
 
         ge_e_errors = {}
-        ge_e_errors['RMTS'] = 1e-2
+        ge_e_errors['RMTC'] = 1e-2
         ge_e_errors['RMTB'] = 1e-2
 
         self.nt = nt
@@ -134,7 +134,7 @@ class Test(SMTestCase):
     # Function: carre
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTS(self):
+    def test_carre_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -145,7 +145,7 @@ class Test(SMTestCase):
     # Function: exp
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_exp_RMTS(self):
+    def test_exp_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -156,7 +156,7 @@ class Test(SMTestCase):
     # Function: tanh
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_tanh_RMTS(self):
+    def test_tanh_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -167,7 +167,7 @@ class Test(SMTestCase):
     # Function: cos
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_cos_RMTS(self):
+    def test_cos_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')

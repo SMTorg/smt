@@ -14,7 +14,7 @@ from smt.utils.silence import Silence
 
 from smt import LS, PA2, KPLS
 try:
-    from smt import IDW, RBF, RMTS, RMTB
+    from smt import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -34,7 +34,7 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTS'] = RMTS(num_elements=6)
+            sms['RMTC'] = RMTC(num_elements=6)
             sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
 
         self.nt = nt
@@ -74,33 +74,33 @@ class Test(SMTestCase):
             sm.predict(x)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmts(self):
-        self.run_test('RMTS', False, False)
+    def test_RMTC(self):
+        self.run_test('RMTC', False, False)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmts_train(self):
+    def test_RMTC_train(self):
         with self.assertRaises(Exception) as context:
-            self.run_test('RMTS', True, False)
+            self.run_test('RMTC', True, False)
         self.assertEqual(str(context.exception),
                          'Training pts above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmts_predict(self):
-        self.run_test('RMTS', False, True)
+    def test_RMTC_predict(self):
+        self.run_test('RMTC', False, True)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmtb(self):
+    def test_RMTB(self):
         self.run_test('RMTB', False, False)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmtb_train(self):
+    def test_RMTB_train(self):
         with self.assertRaises(Exception) as context:
             self.run_test('RMTB', True, False)
         self.assertEqual(str(context.exception),
                          'Training pts above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_rmtb_predict(self):
+    def test_RMTB_predict(self):
         self.run_test('RMTB', False, True)
 
 

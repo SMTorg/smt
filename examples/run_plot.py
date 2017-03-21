@@ -6,7 +6,7 @@ from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenb
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.sampling import LHS, Random, FullFactorial, Clustered
-from smt import LS, PA2, KPLS, IDW, RBF, RMTS, RMTB
+from smt import LS, PA2, KPLS, IDW, RBF, RMTC, RMTB
 
 
 ndim = 3
@@ -31,7 +31,7 @@ sampling = LHS(xlimits=prob.xlimits)
 
 ndim = prob.options['ndim']
 
-sm = RMTS(xlimits=prob.xlimits)#, min_energy=False, nln_max_iter=0)
+sm = RMTC(xlimits=prob.xlimits)#, min_energy=False, nln_max_iter=0)
 sm = RMTB(xlimits=prob.xlimits, min_energy=True, nln_max_iter=20)
 # sm = IDW()
 # sm = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
