@@ -41,7 +41,7 @@ def cached_operation(inputs_dict, data_dir, desc=''):
 
     yield outputs_dict
 
-    if load_successful and data_dir:
+    if not load_successful and data_dir:
         with open(filename, 'wb') as f:
             pickle.dump(outputs_dict, f)
 
