@@ -121,8 +121,6 @@ class RMTB(RMT):
 
             with self.printer._timed_context('Initializing Hessian', 'init_hess'):
                 full_hess = self._initialize_hessian()
-                self.dof2coeff = scipy.sparse.eye(num['ctrl'], format='csc')
-                self.dof2coeff_T = scipy.sparse.eye(num['ctrl'], format='csc')
 
             if options['min_energy']:
                 with self.printer._timed_context('Computing energy terms', 'energy'):
