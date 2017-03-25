@@ -4,7 +4,7 @@ from .kpls import KPLS
 try:
     from .idw import IDW
     from .rbf import RBF
-    from .rmts import RMTS
+    from .rmtc import RMTC
     from .rmtb import RMTB
 except:
     pass

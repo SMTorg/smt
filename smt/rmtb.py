@@ -6,15 +6,16 @@ from __future__ import division
 import numpy as np
 import scipy.sparse
 from six.moves import range
+from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
-from smt.rmt import RMT
+from smt.rmts import RMTS
 
 from smt import RMTBlib
 
 
-class RMTB(RMT):
+class RMTB(RMTS):
     """
     Regularized Minimal-energy Tensor-product B-Spline (RMTB) interpolant.
 
@@ -42,52 +43,21 @@ class RMTB(RMT):
 
         declare('name', 'RMTB', types=str,
                 desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
-        declare('order', 3, types=(int, list, np.ndarray),
+        declare('order', 3, types=(Integral, tuple, list, np.ndarray),
                 desc='B-spline order in each dimension - length [nx]')
-        declare('num_ctrl_pts', 10, types=(int, list, np.ndarray),
+        declare('num_ctrl_pts', 15, types=(Integral, tuple, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
-    def _compute_jac_raw(self, ix1, ix2, x):
-        xlimits = self.options['xlimits']
-
-        t = np.zeros(x.shape)
-        for kx in range(self.num['x']):
-            t[:, kx] = (x[:, kx] - xlimits[kx, 0]) /\
-                (xlimits[kx, 1] - xlimits[kx, 0])
-        t = np.maximum(t, 0. + 1e-15)
-        t = np.minimum(t, 1. - 1e-15)
-
-        n = x.shape[0]
-        nnz = n * self.num['order']
-        data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
-            self.num['order_list'], self.num['ctrl_list'], t)
-        if ix1 != 0:
-            data /= xlimits[ix1-1, 1] - xlimits[ix1-1, 0]
-        if ix2 != 0:
-            data /= xlimits[ix2-1, 1] - xlimits[ix2-1, 0]
-
-        return data, rows, cols
-
-    def _compute_jac(self, ix1, ix2, x):
-        data, rows, cols = self._compute_jac_raw(ix1, ix2, x)
-        n = x.shape[0]
-        full_jac = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, self.num['coeff']))
-        return full_jac
-
-    def _fit(self):
-        """
-        Train the model
-        """
+    def _initialize(self):
         options = self.options
-        xlimits = options['xlimits']
-
         nx = self.training_pts['exact'][0][0].shape[1]
-        if isinstance(options['order'], int):
-            options['order'] = [options['order']] * nx
-        if isinstance(options['num_ctrl_pts'], int):
-            options['num_ctrl_pts'] = [options['num_ctrl_pts']] * nx
-        if options['smoothness'] is None:
-            options['smoothness'] = [1.0] * nx
+
+        for name in ['smoothness', 'num_ctrl_pts', 'order']:
+            if isinstance(options[name], (int, float)):
+                options[name] = [options[name]] * nx
+            options[name] = np.atleast_1d(options[name])
+
+        self.printer.max_print_depth = options['max_print_depth']
 
         num = {}
         # number of inputs and outputs
@@ -112,25 +82,26 @@ class RMTB(RMT):
 
         self.num = num
 
-        self.printer.max_print_depth = options['max_print_depth']
+    def _compute_jac_raw(self, ix1, ix2, x):
+        xlimits = self.options['xlimits']
 
-        with self.printer._timed_context('Pre-computing matrices', 'assembly'):
+        t = np.zeros(x.shape)
+        for kx in range(self.num['x']):
+            t[:, kx] = (x[:, kx] - xlimits[kx, 0]) /\
+                (xlimits[kx, 1] - xlimits[kx, 0])
+        t = np.maximum(t, 0. + 1e-15)
+        t = np.minimum(t, 1. - 1e-15)
 
-            with self.printer._timed_context('Initializing Hessian', 'init_hess'):
-                full_hess = self._initialize_hessian()
+        n = x.shape[0]
+        nnz = n * self.num['order']
+        data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
+            self.num['order_list'], self.num['ctrl_list'], t)
+        if ix1 != 0:
+            data /= xlimits[ix1-1, 1] - xlimits[ix1-1, 0]
+        if ix2 != 0:
+            data /= xlimits[ix2-1, 1] - xlimits[ix2-1, 0]
 
-            if options['min_energy']:
-                with self.printer._timed_context('Computing energy terms', 'energy'):
-                    full_hess += self._compute_energy_terms()
+        return data, rows, cols
 
-            with self.printer._timed_context('Computing approximation terms', 'approx'):
-                full_jac_dict = self._compute_approx_terms()
-
-            full_hess *= options['reg_cons']
-
-            mg_matrices = []
-
-        with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
-            sol = self._solve(full_hess, full_jac_dict, mg_matrices)
-
-        self.sol = sol
+    def _compute_dof2coeff(self):
+        return None

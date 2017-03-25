@@ -10,7 +10,7 @@ from scipy.sparse import csc_matrix
 from smt.sm import SM
 
 from smt.utils.linear_solvers import get_solver
-from smt.utils.caching import _caching_checksum_sm, _caching_load, _caching_save
+from smt.utils.caching import cached_operation
 
 from smt import RBFlib
 
@@ -31,20 +31,22 @@ class RBF(SM):
                 desc='basis function scaling parameter in exp(-d^2 / d0^2)')
         declare('poly_degree', -1, values=(-1, 0, 1),
                 desc='-1 means no global polynomial, 0 means constant, 1 means linear trend')
-        declare('save_solution', False, types=bool,
-                desc='Whether to save the linear system solution')
+        declare('data_dir', values=None, types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
         declare('reg', 1e-10, types=(int, float),
                 desc='Regularization coeff.')
         declare('max_print_depth', 5, types=int,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
-    def _fit(self):
+    def _initialize(self):
         options = self.options
 
         nx = self.training_pts['exact'][0][0].shape[1]
         if isinstance(options['d0'], (int, float)):
             options['d0'] = [options['d0']] * nx
         options['d0'] = np.atleast_1d(options['d0'])
+
+        self.printer.max_print_depth = options['max_print_depth']
 
         num = {}
         # number of inputs and outputs
@@ -63,7 +65,9 @@ class RBF(SM):
 
         self.num = num
 
-        self.printer.max_print_depth = options['max_print_depth']
+    def _fit(self):
+        options = self.options
+        num = self.num
 
         xt, yt = self.training_pts['exact'][0]
         jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], num['radial'],
@@ -79,7 +83,7 @@ class RBF(SM):
 
         sol = np.zeros((num['dof'], num['y']))
 
-        solver = get_solver('dense')
+        solver = get_solver('dense-chol')
         with self.printer._timed_context('Initializing linear solver'):
             solver._initialize(mtx, self.printer)
 
@@ -93,26 +97,15 @@ class RBF(SM):
         """
         Train the model
         """
-        checksum = _caching_checksum_sm(self)
-        filename = '%s.sm' % self.options['name']
+        self._initialize()
 
-        # If caching (saving) is requested, try to load data
-        if self.options['save_solution']:
-            loaded, data = _caching_load(filename, checksum)
-        else:
-            loaded = False
-
-        # If caching not requested or loading failed, actually run
-        if not loaded:
-            self._fit()
-        else:
-            self.sol = data['sol']
-            self.num = data['num']
-
-        # If caching (saving) is requested, save data
-        if self.options['save_solution']:
-            data = {'sol': self.sol, 'num': self.num}
-            _caching_save(filename, checksum, data)
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._fit()
+                outputs['sol'] = self.sol
 
     def evaluate(self, x, kx):
         """

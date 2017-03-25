@@ -6,6 +6,7 @@ from six.moves import range
 
 from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
+from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.utils.sm_test_case import SMTestCase
 
 
@@ -87,18 +88,34 @@ class Test(SMTestCase):
 
     def test_torsion_vibration(self):
         self.run_test(TorsionVibration(ndim=15))
-        self.run_test(ReducedProblem(TorsionVibration(ndim=15), 3))
+        self.run_test(ReducedProblem(TorsionVibration(ndim=15), dims=[5, 10, 12, 13]))
 
     def test_water_flow(self):
         self.run_test(WaterFlow(ndim=8))
-        self.run_test(ReducedProblem(WaterFlow(ndim=8), 3))
+        self.run_test(ReducedProblem(WaterFlow(ndim=8), dims=[0, 1, 6]))
 
     def test_welded_beam(self):
         self.run_test(WeldedBeam(ndim=3))
 
     def test_wing_weight(self):
         self.run_test(WingWeight(ndim=10))
-        self.run_test(ReducedProblem(WingWeight(ndim=10), 3))
+        self.run_test(ReducedProblem(WingWeight(ndim=10), dims=[0, 2, 3, 5]))
+
+    def test_ndim_cantilever_beam(self):
+        self.run_test(NdimCantileverBeam(ndim=1))
+        self.run_test(NdimCantileverBeam(ndim=2))
+
+    def test_ndim_robot_arm(self):
+        self.run_test(NdimRobotArm(ndim=1))
+        self.run_test(NdimRobotArm(ndim=2))
+
+    def test_ndim_rosenbrock(self):
+        self.run_test(NdimRosenbrock(ndim=1))
+        self.run_test(NdimRosenbrock(ndim=2))
+
+    def test_ndim_step_function(self):
+        self.run_test(NdimStepFunction(ndim=1))
+        self.run_test(NdimStepFunction(ndim=2))
 
 
 if __name__ == '__main__':

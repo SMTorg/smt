@@ -6,54 +6,45 @@ try:
 except:
     import pickle
 import hashlib
+import contextlib
 
 
-def _caching_load(filename, checksum):
+@contextlib.contextmanager
+def cached_operation(inputs_dict, data_dir, desc=''):
     """
-    Load the saved SM state if the checksum in the file matches the given one.
+    Context manager for an operation that may be cached.
 
     Arguments
     ---------
-    filename : str
-        Name of the file to try to read in.
-    checksum : str
-        Hexadecimal string checksum to be compared to that found in the file, if any.
+    inputs_dict : dict
+        Dictionary containing the inputs of the operation.
+    data_dir : None or str
+        Directory containing the cached data files; if None, do not load or save.
+    desc : str
+        Optional descriptive prefix for the filename.
 
-    Returns
-    -------
-    bool
-        Whether the load was successful.
-    object or None
-        The loaded data if successful; otherwise, None.
+    Yields
+    ------
+    outputs_dict : dict
+        Dictionary containing the outputs of the operation.
     """
+    checksum = _caching_checksum(inputs_dict)
+    filename = '%s/%s_%s.dat' % (data_dir, desc, checksum)
+
     try:
         with open(filename, 'rb') as f:
-            save_pkl = pickle.load(f)
-
-            if checksum == save_pkl['checksum']:
-                return True, save_pkl['data']
-            else:
-                return False, None
+            outputs_dict = pickle.load(f)
+        load_successful = True
     except:
-        return False, None
+        outputs_dict = {}
+        load_successful = False
 
-def _caching_save(filename, checksum, data):
-    """
-    Save the given data and the given checksum to a file with the given filename.
+    yield outputs_dict
 
-    Arguments
-    ---------
-    filename : str
-        Name of the file to save to.
-    checksum : str
-        Hexadecimal string checksum to be included in the file.
-    """
-    save_dict = {
-        'checksum': checksum,
-        'data': data,
-    }
-    with open(filename, 'wb') as f:
-        pickle.dump(save_dict, f)
+    if not load_successful and data_dir:
+        with open(filename, 'wb') as f:
+            pickle.dump(outputs_dict, f)
+
 
 def _caching_checksum(obj):
     """
@@ -62,36 +53,25 @@ def _caching_checksum(obj):
     Arguments
     ---------
     obj : object
-        Object to compute the checksum for.
+        Object to compute the checksum for; normally a dictionary.
 
     Returns
     -------
     str
         Hexadecimal string checksum that was computed.
     """
+    try:
+        tmp = obj['self'].printer
+        obj['self'].printer = None
+    except:
+        pass
+
     self_pkl = pickle.dumps(obj)
     checksum = hashlib.md5(self_pkl).hexdigest()
-    return checksum
 
-def _caching_checksum_sm(sm):
-    """
-    Compute the hex string checksum of the SM instance, ignoring the printer attribute.
+    try:
+        obj['self'].printer = tmp
+    except:
+        pass
 
-    Arguments
-    ---------
-    sm : SM
-        The surrogate model object. We will temporarily remove the printer attribute
-        when computing the checksum since it stores recorded times which will be
-        inconsistent from run to run.
-
-    Returns
-    -------
-    str
-        Hexadecimal string checksum that was computed.
-    """
-    tmp = sm.printer
-
-    sm.printer = None
-    checksum = _caching_checksum(sm)
-    sm.printer = tmp
     return checksum
