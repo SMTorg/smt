@@ -55,7 +55,7 @@ class CantileverBeam(Problem):
         P = self.options['P']
         E = self.options['E']
 
-        y = np.zeros((ne, 1))
+        y = np.zeros((ne, 1), complex)
         if kx is None:
             for ielem in range(nelem):
                 b = x[:, 3*ielem + 0]

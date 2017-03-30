@@ -36,7 +36,7 @@ class Carre(Problem):
         """
         ne, nx = x.shape
 
-        y = np.zeros((ne, 1))
+        y = np.zeros((ne, 1), complex)
         if kx is None:
             y[:, 0] = np.sum(x**2, 1).T
         else:

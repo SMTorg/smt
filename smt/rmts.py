@@ -45,7 +45,7 @@ class RMTS(SM):
                 desc='Whether to solve the linear system in a matrix-free way')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
-        declare('grad_weight', 0.1, types=(Integral, float),
+        declare('grad_weight', 0.5, types=(Integral, float),
                 desc='Weight on gradient training data')
         declare('nln_max_iter', 5, types=Integral,
                 desc='maximum number of nonlinear iterations')

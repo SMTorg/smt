@@ -13,6 +13,7 @@ class Problem(object):
     def __init__(self, **kwargs):
         self.options = OptionsDictionary()
         self.options.declare('ndim', 1, types=int)
+        self.options.declare('return_complex', False, types=bool)
         self._declare_options()
         self.options.update(kwargs)
 
@@ -50,4 +51,9 @@ class Problem(object):
             if not isinstance(kx, int) or kx < 0:
                 raise TypeError('kx should be None or a non-negative int.')
 
-        return self._evaluate(x, kx)
+        y = self._evaluate(x, kx)
+
+        if self.options['return_complex']:
+            return y
+        else:
+            return np.real(y)
