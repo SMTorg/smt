@@ -40,6 +40,7 @@ class ReducedProblem(Problem):
 
         self.options = OptionsDictionary()
         self.options.declare('ndim', len(self.dims), types=int)
+        self.options.declare('return_complex', False, types=bool)
         self.options.declare('name', 'R_'+self.problem.options['name'], types=str)
 
         self.xlimits = np.zeros((self.options['ndim'], 2))
@@ -64,7 +65,7 @@ class ReducedProblem(Problem):
         ne, nx = x.shape
 
         nx_prob = self.problem.options['ndim']
-        x_prob = np.zeros((ne, nx_prob))
+        x_prob = np.zeros((ne, nx_prob), complex)
         for ix in range(nx_prob):
             x_prob[:, ix] = (1 - self.w) * self.problem.xlimits[ix, 0] \
                 + self.w * self.problem.xlimits[ix, 1]

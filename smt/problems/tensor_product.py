@@ -51,7 +51,7 @@ class TensorProduct(Problem):
         """
         ne, nx = x.shape
 
-        y = np.ones((ne, 1))
+        y = np.ones((ne, 1), complex)
         if kx is None:
             y[:, 0] = np.prod(self.func(x), 1).T
         else:

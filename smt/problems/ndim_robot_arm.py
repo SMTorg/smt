@@ -21,6 +21,7 @@ class NdimRobotArm(Problem):
 
         self.options = OptionsDictionary()
         self.options.declare('ndim', ndim, types=int)
+        self.options.declare('return_complex', False, types=bool)
         self.options.declare('name', 'NdimRobotArm', types=str)
 
         self.xlimits = self.problem.xlimits

@@ -17,6 +17,7 @@ class WaterFlow(Problem):
 
     def _declare_options(self):
         self.options.declare('name', 'WaterFlow', types=str)
+        self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 8
 
     def _initialize(self):
@@ -42,7 +43,7 @@ class WaterFlow(Problem):
         """
         ne, nx = x.shape
 
-        y = np.zeros((ne, 1))
+        y = np.zeros((ne, 1), complex)
 
         def partial_derivative(function, var=0, point=[]):
             args = point[:]
@@ -67,6 +68,13 @@ class WaterFlow(Problem):
                 y[i,0] = func(x0,x1,x2,x3,x4,x5,x6,x7)
             else:
                 point = [x0,x1,x2,x3,x4,x5,x6,x7]
-                y[i, 0] = partial_derivative(func, var=kx, point=point)
+                if self.options['use_FD']:
+                    point = np.real(np.array(point))
+                    y[i, 0] = partial_derivative(func, var=kx, point=point)
+                else:
+                    ch = 1e-20
+                    point[kx] += complex(0, ch)
+                    y[i, 0] = np.imag(func(*point)) / ch
+                    point[kx] -= complex(0, ch)
 
         return y

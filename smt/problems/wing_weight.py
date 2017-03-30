@@ -18,6 +18,7 @@ class WingWeight(Problem):
 
     def _declare_options(self):
         self.options.declare('name', 'WingWeight', types=str)
+        self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 10
 
     def _initialize(self):
@@ -43,7 +44,11 @@ class WingWeight(Problem):
         """
         ne, nx = x.shape
 
-        y = np.zeros((ne, 1))
+        y = np.zeros((ne, 1), complex)
+
+        def deg2rad(deg):
+            rad = deg / 180. * np.pi
+            return rad
 
         def partial_derivative(function, var=0, point=[]):
             args = point[:]
@@ -53,8 +58,8 @@ class WingWeight(Problem):
             return derivative(wraps, point[var], dx = 1e-6)
 
         def func(x0,x1,x2,x3,x4,x5,x6,x7,x8,x9):
-            return 0.036*x0**0.758*x1**0.0035*(x2/np.cos(np.deg2rad(x3))**2) \
-                *x4**0.006*x5**0.04*(100*x6/np.cos(np.deg2rad(x3)))**(-0.3)*(x7*x8)**0.49+x0*x9
+            return 0.036*x0**0.758*x1**0.0035*(x2/np.cos(deg2rad(x3))**2) \
+                *x4**0.006*x5**0.04*(100*x6/np.cos(deg2rad(x3)))**(-0.3)*(x7*x8)**0.49+x0*x9
 
         for i in range(ne):
             x0 = x[i,0]
@@ -71,6 +76,13 @@ class WingWeight(Problem):
                 y[i,0] = func(x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
             else:
                 point = [x0,x1,x2,x3,x4,x5,x6,x7,x8,x9]
-                y[i, 0] = partial_derivative(func, var=kx, point=point)
+                if self.options['use_FD']:
+                    point = np.real(np.array(point))
+                    y[i, 0] = partial_derivative(func, var=kx, point=point)
+                else:
+                    ch = 1e-20
+                    point[kx] += complex(0, ch)
+                    y[i, 0] = np.imag(func(*point)) / ch
+                    point[kx] -= complex(0, ch)
 
         return y

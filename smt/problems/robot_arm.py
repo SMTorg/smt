@@ -46,16 +46,16 @@ class RobotArm(Problem):
 
         nseg = int(self.options['ndim'] / 2)
 
-        pos_x = np.zeros(ne)
-        pos_y = np.zeros(ne)
+        pos_x = np.zeros(ne, complex)
+        pos_y = np.zeros(ne, complex)
         for iseg in range(nseg):
             L = x[:, 2*iseg + 0]
             pos_x += L * np.cos(np.sum(x[:, 1:2*iseg+2:2], axis=1))
             pos_y += L * np.sin(np.sum(x[:, 1:2*iseg+2:2], axis=1))
 
-        y = np.zeros((ne, 1))
-        d_pos_x = np.zeros(ne)
-        d_pos_y = np.zeros(ne)
+        y = np.zeros((ne, 1), complex)
+        d_pos_x = np.zeros(ne, complex)
+        d_pos_y = np.zeros(ne, complex)
         if kx is None:
             y[:, 0] = (pos_x ** 2 + pos_y ** 2) ** 0.5
         else:

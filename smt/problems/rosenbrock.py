@@ -35,7 +35,7 @@ class Rosenbrock(Problem):
         """
         ne, nx = x.shape
 
-        y = np.zeros((ne, 1))
+        y = np.zeros((ne, 1), complex)
         if kx is None:
             for ix in range(nx - 1):
                 y[:, 0] += 100. * (x[:, ix+1] - x[:, ix] ** 2) ** 2 + (1 - x[:, ix]) ** 2

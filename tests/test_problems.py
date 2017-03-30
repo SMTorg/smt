@@ -13,6 +13,8 @@ from smt.utils.sm_test_case import SMTestCase
 class Test(SMTestCase):
 
     def run_test(self, problem):
+        problem.options['return_complex'] = True
+        
         # Test xlimits
         ndim = problem.options['ndim']
         xlimits = problem.xlimits
@@ -27,29 +29,47 @@ class Test(SMTestCase):
         self.assertEqual(x.shape[0], y.shape[0])
 
         # Test derivatives
-        x = np.zeros((4, ndim))
+        x = np.zeros((4, ndim), complex)
         x[0, :] = 0.2 * xlimits[:, 0] + 0.8 * xlimits[:, 1]
         x[1, :] = 0.4 * xlimits[:, 0] + 0.6 * xlimits[:, 1]
         x[2, :] = 0.6 * xlimits[:, 0] + 0.4 * xlimits[:, 1]
         x[3, :] = 0.8 * xlimits[:, 0] + 0.2 * xlimits[:, 1]
         y0 = problem(x)
         dydx_FD = np.zeros(4)
+        dydx_CS = np.zeros(4)
         dydx_AN = np.zeros(4)
 
         print()
         h = 1e-5
+        ch = 1e-16
         for iy in range(ny):
             for idim in range(ndim):
                 x[:, idim] += h
-                y = problem(x)
+                y_FD = problem(x)
                 x[:, idim] -= h
-                dydx_FD[:] = (y[:, iy] - y0[:, iy]) / h
+
+                x[:, idim] += complex(0, ch)
+                y_CS = problem(x)
+                x[:, idim] -= complex(0, ch)
+
+                dydx_FD[:] = (y_FD[:, iy] - y0[:, iy]) / h
+                dydx_CS[:] = np.imag(y_CS[:, iy]) / ch
                 dydx_AN[:] = problem(x, idim)[:, iy]
-                abs_rms_error = np.linalg.norm(dydx_FD - dydx_AN)
-                rel_rms_error = np.linalg.norm(dydx_FD - dydx_AN) / np.linalg.norm(dydx_FD)
-                msg = '{:16s} iy {:2} dim {:2} of {:2} abs {:16.9e} rel {:16.9e}'
-                print(msg.format(problem.options['name'], iy, idim, ndim, abs_rms_error, rel_rms_error))
-                self.assertTrue(rel_rms_error < 1e-3 or abs_rms_error < 1e-5)
+
+                abs_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN)
+                rel_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN) / np.linalg.norm(dydx_FD)
+
+                abs_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN)
+                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / np.linalg.norm(dydx_CS)
+
+                msg = '{:16s} iy {:2} dim {:2} of {:2} ' \
+                    + 'abs_FD {:16.9e} rel_FD {:16.9e} abs_CS {:16.9e} rel_CS {:16.9e}'
+                print(msg.format(
+                    problem.options['name'], iy, idim, ndim,
+                    abs_rms_error_FD, rel_rms_error_FD,
+                    abs_rms_error_CS, rel_rms_error_CS,
+                ))
+                self.assertTrue(rel_rms_error_FD < 1e-3 or abs_rms_error_FD < 1e-5)
 
     def test_carre(self):
         self.run_test(Carre(ndim=1))
