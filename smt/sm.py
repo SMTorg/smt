@@ -92,9 +92,9 @@ class SM(object):
         typ : str
             'exact'  if this data are considered as a high-fidelty data
             'approx' if this data are considered as a low-fidelity data (TODO)
-        xt : np.ndarray [nt, dim]
+        xt : np.ndarray [nt, nx]
             Training point input variable values
-        yt : np.ndarray [nt, 1]
+        yt : np.ndarray [nt, ny]
             Training point output variable values or derivatives (a vector)
         kx : int or None
             None if this data set represents output variable values
@@ -102,7 +102,14 @@ class SM(object):
                  where it is differentiated w.r.t. the kx^{th}
                  input variable (kx is 0-based)
         '''
-        yt = yt.reshape((xt.shape[0],1))
+        nt = xt.shape[0]
+        nx = xt.shape[1]
+        ny = int(np.prod(yt.shape) / nt)
+        yt = yt.reshape((nt, ny))
+
+        self.nx = nx
+        self.ny = ny
+
         #Output or derivative variables
         if kx is None:
             kx = 0
@@ -190,4 +197,4 @@ class SM(object):
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
-        return y.reshape(n_evals,1)
+        return y.reshape(n_evals, self.ny)
