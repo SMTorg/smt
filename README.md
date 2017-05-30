@@ -24,22 +24,6 @@ Clone the repository from github then run:
 pip install -e name_folder
 ```
 
-or
-
-Go to the main folder.
-
-Install the toolbox by running:
-
-```
-sudo python setup.py install        (Linux)
-```
-
-or
-
-```
-python setup.py install             (Windows)
-```
-
 # Usage
 
 For examples demonstrating how to use SMT, go to the 'examples' folder.
