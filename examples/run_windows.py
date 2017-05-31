@@ -45,7 +45,7 @@ t.train()
 y = t.predict(xtest)
 
 print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The PA2 model
 t = PA2()
@@ -54,7 +54,7 @@ t.train()
 y = t.predict(xtest)
 
 print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The Kriging model
 # The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
@@ -66,7 +66,7 @@ t.train()
 y = t.predict(xtest)
 
 print('Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The KPLS model
 # The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
@@ -79,7 +79,7 @@ t.train()
 y = t.predict(xtest)
 
 print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 
 ########### The KPLSK model
@@ -91,19 +91,36 @@ t.train()
 y = t.predict(xtest)
 
 print('KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
-########### The GEKPLS model
+########### The GEKPLS model using 1 approximating points
 # The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
 # an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS(name='GEKPLS', n_comp=2, theta0=[1e-2,1e-2], xlimits=xlimits)
-t.add_training_pts('exact',xt,yt)
+t = KPLS(name='GEKPLS', n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,
+         extra_pts= 1)
+t.add_training_pts('exact',xt,yt[:,0])
 # Add the gradient information
 for i in range(dim):
-    t.add_training_pts('exact',xt,yd[:, i].reshape((yt.shape[0],1)),kx=i)
+    t.add_training_pts('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()
 y = t.predict(xtest)
 
-print('GEKPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))*100))
+print('GEKPLS1,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
+
+########### The GEKPLS model using 2 approximating points
+# The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
+# an integer in [1,dim[ and a list of length n_comp, respectively.
+t = KPLS(name='GEKPLS', n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,
+         extra_pts= 2)
+t.add_training_pts('exact',xt,yt[:,0])
+# Add the gradient information
+for i in range(dim):
+    t.add_training_pts('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
+
+t.train()
+y = t.predict(xtest)
+
+print('GEKPLS2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))

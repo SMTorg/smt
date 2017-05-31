@@ -5,6 +5,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Metamodels - a base class for metamodel methods
 """
 #TODO: Extend to multifidelity problems by adding training_pts = {'approx': {}}
+#TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict) 
 
 from __future__ import division
 
