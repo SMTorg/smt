@@ -719,27 +719,62 @@ class KPLS(SM):
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
-        y = np.zeros(n_eval)
-
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
         d = componentwise_distance(dx,self.options['corr'].__name__,
-                                        self.options['n_comp'],self.dim,
-                                        self.coeff_pls,1e2)
-
-        # Get regression function and correlation
-        f = self.options['poly'](x)
+                                   self.options['n_comp'],self.dim,
+                                   self.coeff_pls)
+        # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,
                                         self.nt)
-        # Scaled predictor
-        y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
-                    self.optimal_par['gamma'])
-        # Predictor
-        y = (self.y_mean + self.y_std * y_).ravel()
+        # Output prediction
+        if kx == 0:
+            y = np.zeros(n_eval)
 
-        return y
+            # Compute the regression function
+            f = self.options['poly'](x)
+            
+            # Scaled predictor
+            y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
+                        self.optimal_par['gamma'])
+            # Predictor
+            y = (self.y_mean + self.y_std * y_).ravel()
 
+            return y
+        # Gradient prediction
+        else:            
+            if self.options['corr'].__name__ != 'squar_exp':
+                raise ValueError(
+                'The derivative is only available for square exponential kernel')
+            # Beta and gamma = R^-1(y-FBeta)
+            beta = self.optimal_par['beta']
+            gamma = self.optimal_par['gamma']
+            
+            if self.options['poly'].__name__ == 'constant':
+                df = np.array([0])
+            elif self.options['poly'].__name__ == 'linear':
+                df = np.zeros((self.dim + 1, self.dim))
+                df[1:,:] = 1
+            else:
+                raise ValueError(
+                    'The derivative is only available for ordinary kriging or '+
+                    'universal kriging using a linear trend')
+            df_dx = np.dot(df.T, beta)
+            d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
+            if self.options['name'] == 'KPLSK' or self.options['name'] == 'KRG':
+                return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
+            else:
+                # PLS-based models
+                theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
+                return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
+
+
+
+
+            
 
     def _optimize_hyperparam(self,D):
 
