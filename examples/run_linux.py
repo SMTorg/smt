@@ -29,7 +29,7 @@ for i in range(dim):
     yt = np.concatenate((yt,yd),axis=1)
 
 # Construction of the validation points
-ntest = 5000
+ntest = 500
 sampling = LHS(xlimits=xlimits)
 xtest = sampling(ntest)
 ytest = fun(xtest)
