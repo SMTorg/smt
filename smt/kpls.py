@@ -4,8 +4,14 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
 
-TODO
-Add additional points GEKPLS1, GEKPLS2 and so on
+TODO:
+- Add additional points GEKPLS1, GEKPLS2 and so on
+
+- define outputs['sol'] = self.sol
+
+- debug _train: self_pkl = pickle.dumps(obj)
+                           cPickle.PicklingError: Can't pickle <type 'function'>: attribute lookup __builtin__.function failed
+
 """
 
 from __future__ import division
@@ -15,6 +21,7 @@ import numpy as np
 from scipy import linalg, optimize
 from pyDOE import *
 from types import FunctionType
+from smt.utils.caching import cached_operation
 
 from smt.sm import SM
 from smt.pairwise import manhattan_distances
@@ -192,7 +199,7 @@ def componentwise_distance(D,corr,n_comp,dim,coeff_pls,limit=int(1e4)):
                 i+=1
 
 
-def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
+def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0,
                 opt=0):
 
     """
@@ -219,7 +226,7 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     xlimits: np.ndarray[dim, 2]
             - The upper and lower var bounds.
 
-    extra_pts: int
+    extra_points: int
             - The number of extra points per each training point.
 
     opt: int
@@ -232,11 +239,11 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     Coeff_pls: np.ndarray[dim, n_comp]
             - The PLS-coefficients.
 
-    XX: np.ndarray[extra_pts*nt, dim]
-            - Extra points added (only when extra_pts > 0)
+    XX: np.ndarray[extra_points*nt, dim]
+            - Extra points added (only when extra_points > 0)
 
-    yy: np.ndarray[extra_pts*nt, 1]
-            - Extra points added (only when extra_pts > 0)
+    yy: np.ndarray[extra_points*nt, 1]
+            - Extra points added (only when extra_points > 0)
 
     """
     nt,dim = X.shape
@@ -311,8 +318,8 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
             pls.fit(_X.copy(),_y.copy())
             coeff_pls[i,:,:] = pls.x_rotations_
             #Add additional points
-            if extra_pts != 0:
-                max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_pts:]
+            if extra_points != 0:
+                max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
                 for ii in max_coeff:
                     XX = np.vstack((XX,X[i,:]))
                     XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
@@ -512,7 +519,7 @@ class KPLS(SM):
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('delta_x', 1e-4, types=(int, float), desc='Step used in the FOTA')
-        declare('extra_pts', 0, types=int, desc='Number of extra points per training point')
+        declare('extra_points', 0, types=int, desc='Number of extra points per training point')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
                 desc='regr. term')
         declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
@@ -520,13 +527,15 @@ class KPLS(SM):
         declare('best_iteration_fail', None)
         declare('nb_ill_matrix', 5)
         declare('kriging-step')
+        declare('data_dir', values=None, types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
 
     ############################################################################
     # Model functions
     ############################################################################
 
 
-    def fit(self):
+    def _new_train(self):
 
         """
         Train the model
@@ -535,18 +544,18 @@ class KPLS(SM):
         self._check_param()
 
         # Compute PLS coefficients
-        X = self.training_pts['exact'][0][0]
-        y = self.training_pts['exact'][0][1]
+        X = self.training_points['exact'][0][0]
+        y = self.training_points['exact'][0][1]
 
-        if 0 in self.training_pts['exact']:
+        if 0 in self.training_points['exact']:
             #GEKPLS
-            if 1 in self.training_pts['exact'] and self.options['name'] == 'GEKPLS':
+            if 1 in self.training_points['exact'] and self.options['name'] == 'GEKPLS':
                 self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),
-                    self.options['n_comp'],self.training_pts,
+                    self.options['n_comp'],self.training_points,
                     self.options['delta_x'],self.options['xlimits'],
-                                            self.options['extra_pts'],1)
-                if self.options['extra_pts'] != 0:
-                    self.nt *= (self.options['extra_pts']+1)
+                                            self.options['extra_points'],1)
+                if self.options['extra_points'] != 0:
+                    self.nt *= (self.options['extra_points']+1)
                     X = np.vstack((X,XX))
                     y = np.vstack((y,yy))
             #KPLS
@@ -582,6 +591,20 @@ class KPLS(SM):
 
         del self.y_norma, self.D
 
+    def _train(self):
+        """
+        Train the model
+        """
+        """
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._new_train()
+                #outputs['sol'] = self.sol
+        """
+        self._new_train()
 
     def _reduced_likelihood_function(self, theta):
 
@@ -697,7 +720,7 @@ class KPLS(SM):
 
         return reduced_likelihood_function_value, par
 
-    def evaluate(self, x, kx):
+    def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
 
@@ -713,7 +736,8 @@ class KPLS(SM):
         Returns
         -------
         y : np.ndarray[n_eval,1]
-        - An array with the output values at x.
+        - An array with the output values at x if dx = 0.
+        - An array with the i-th partial derivative at x if dx != 0
         """
 
         # Initialization
@@ -950,7 +974,7 @@ class KPLS(SM):
                 self.options['kriging-step'] = 0
 
             elif self.options['name'] == 'GEKPLS':
-                if not(1 in self.training_pts['exact']):
+                if not(1 in self.training_points['exact']):
                     raise Exception('Derivative values are needed for using the GEKPLS model.')
                 self.options['kriging-step'] = 0
 

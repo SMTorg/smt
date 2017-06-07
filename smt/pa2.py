@@ -2,6 +2,8 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. Nathalie.bartoli      <nathalie@onera.fr>
 
+TO DO:
+- define outputs['sol'] = self.sol
 """
 
 from __future__ import division
@@ -9,7 +11,7 @@ from __future__ import division
 import numpy as np
 import scipy
 from smt.sm import SM
-
+from smt.utils.caching import cached_operation
 
 class PA2(SM):
 
@@ -23,20 +25,22 @@ class PA2(SM):
 
         declare('name', 'PA2', types=str,
                 desc='Squared polynomial interpolant')
+        declare('data_dir', values=None, types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
 
     ############################################################################
     # Model functions
     ############################################################################
 
-    def fit(self):
+    def _new_train(self):
 
         """
         Train the model
         """
 
-        if 0 in self.training_pts['exact']:
-            x = self.training_pts['exact'][0][0]
-            y = self.training_pts['exact'][0][1]
+        if 0 in self.training_points['exact']:
+            x = self.training_points['exact'][0][0]
+            y = self.training_points['exact'][0][1]
 
         if x.shape[0] < (self.dim+1)*(self.dim+2)/2.:
             raise Exception("Number of training points should be greater or equal to %d."
@@ -45,6 +49,18 @@ class PA2(SM):
         X = self.respoSurf(x)
         self.coef = np.dot(np.linalg.inv(np.dot(X.T,X)),(np.dot(X.T,y)))
 
+    def _train(self):
+        """
+        Train the model
+        """
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._new_train()
+                #outputs['sol'] = self.sol
+        
 
     def respoSurf(self,x):
 
@@ -79,7 +95,7 @@ class PA2(SM):
 
         return M.T
 
-    def evaluate(self, x, kx):
+    def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
 

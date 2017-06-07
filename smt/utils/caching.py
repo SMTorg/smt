@@ -30,7 +30,6 @@ def cached_operation(inputs_dict, data_dir, desc=''):
     """
     checksum = _caching_checksum(inputs_dict)
     filename = '%s/%s_%s.dat' % (data_dir, desc, checksum)
-
     try:
         with open(filename, 'rb') as f:
             outputs_dict = pickle.load(f)
@@ -65,7 +64,7 @@ def _caching_checksum(obj):
         obj['self'].printer = None
     except:
         pass
-
+    
     self_pkl = pickle.dumps(obj)
     checksum = hashlib.md5(self_pkl).hexdigest()
 

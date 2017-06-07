@@ -62,10 +62,10 @@ class Test(SMTestCase):
         x[0, :] = prob.xlimits[:, 1] + 1.0
         y = prob(x)
 
-        sm.training_pts = {'exact': {}}
-        sm.add_training_pts('exact', xt, yt)
+        sm.training_points = {'exact': {}}
+        sm.add_training_points('exact', xt, yt)
         if extrap_train:
-            sm.add_training_pts('exact', x, y)
+            sm.add_training_points('exact', x, y)
 
         with Silence():
             sm.train()
@@ -82,7 +82,7 @@ class Test(SMTestCase):
         with self.assertRaises(Exception) as context:
             self.run_test('RMTC', True, False)
         self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+                         'Training points above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTC_predict(self):
@@ -97,7 +97,7 @@ class Test(SMTestCase):
         with self.assertRaises(Exception) as context:
             self.run_test('RMTB', True, False)
         self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+                         'Training points above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTB_predict(self):

@@ -41,7 +41,7 @@ class RBF(SM):
     def _initialize(self):
         options = self.options
 
-        nx = self.training_pts['exact'][0][0].shape[1]
+        nx = self.training_points['exact'][0][0].shape[1]
         if isinstance(options['d0'], (int, float)):
             options['d0'] = [options['d0']] * nx
         options['d0'] = np.atleast_1d(options['d0'])
@@ -50,10 +50,10 @@ class RBF(SM):
 
         num = {}
         # number of inputs and outputs
-        num['x'] = self.training_pts['exact'][0][0].shape[1]
-        num['y'] = self.training_pts['exact'][0][1].shape[1]
+        num['x'] = self.training_points['exact'][0][0].shape[1]
+        num['y'] = self.training_points['exact'][0][1].shape[1]
         # number of radial function terms
-        num['radial'] = self.training_pts['exact'][0][0].shape[0]
+        num['radial'] = self.training_points['exact'][0][0].shape[0]
         # number of polynomial terms
         if options['poly_degree'] == -1:
             num['poly'] = 0
@@ -65,11 +65,11 @@ class RBF(SM):
 
         self.num = num
 
-    def _fit(self):
+    def _new_train(self):
         options = self.options
         num = self.num
 
-        xt, yt = self.training_pts['exact'][0]
+        xt, yt = self.training_points['exact'][0]
         jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], num['radial'],
             num['radial'], num['dof'], options['d0'], xt, xt)
 
@@ -93,7 +93,7 @@ class RBF(SM):
 
         self.sol = sol
 
-    def fit(self):
+    def _train(self):
         """
         Train the model
         """
@@ -104,10 +104,10 @@ class RBF(SM):
             if outputs:
                 self.sol = outputs['sol']
             else:
-                self._fit()
+                self._new_train()
                 outputs['sol'] = self.sol
 
-    def evaluate(self, x, kx):
+    def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
 
@@ -130,7 +130,7 @@ class RBF(SM):
         num = self.num
         options = self.options
 
-        xt = self.training_pts['exact'][0][0]
+        xt = self.training_points['exact'][0][0]
         jac = RBFlib.compute_jac(kx, options['poly_degree'], num['x'], n,
             num['radial'], num['dof'], options['d0'], x, xt)
         return jac.dot(self.sol)

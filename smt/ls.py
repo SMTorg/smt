@@ -2,13 +2,15 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. Nathalie.bartoli      <nathalie@onera.fr>
 
+TO DO:
+- define outputs['sol'] = self.sol
 """
 
 from __future__ import division
 
 from sklearn import linear_model
 from smt.sm import SM
-
+from smt.utils.caching import cached_operation
 
 class LS(SM):
 
@@ -24,17 +26,19 @@ class LS(SM):
 
         declare('name', 'LS', types=str,
                 desc='Least squares interpolant')
+        declare('data_dir', values=None, types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
 
     ############################################################################
     # Model functions
     ############################################################################
 
 
-    def fit(self):
+    def _new_train(self):
         """
         Train the model
         """
-        pts = self.training_pts
+        pts = self.training_points
 
         if 0 in pts['exact']:
             x = pts['exact'][0][0]
@@ -43,7 +47,19 @@ class LS(SM):
         self.mod = linear_model.LinearRegression()
         self.mod.fit(x,y)
 
-    def evaluate(self, x, kx):
+    def _train(self):
+        """
+        Train the model
+        """
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._new_train()
+                #outputs['sol'] = self.sol
+                
+    def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
 
