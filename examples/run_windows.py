@@ -1,8 +1,8 @@
 from __future__ import print_function, division
 import numpy as np
-from smt.ls import LS
-from smt.pa2 import PA2
-from smt.kpls import KPLS
+from smt.methods.ls import LS
+from smt.methods.pa2 import PA2
+from smt.methods.kpls import KPLS
 from scipy import linalg
 from smt.problems import Carre
 from smt.sampling import LHS

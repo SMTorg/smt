@@ -7,12 +7,12 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.sm import SM
+from smt.methods.sm import SM
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.caching import cached_operation
 
-from smt import RBFlib
+from smt.methods import RBFlib
 
 
 class RBF(SM):

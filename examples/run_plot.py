@@ -6,7 +6,7 @@ from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenb
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.sampling import LHS, Random, FullFactorial, Clustered
-from smt import LS, PA2, KPLS, IDW, RBF, RMTC, RMTB
+from smt.methods import LS, PA2, KPLS, IDW, RBF, RMTC, RMTB
 
 
 ndim = 3

@@ -23,9 +23,9 @@ from pyDOE import *
 from types import FunctionType
 from smt.utils.caching import cached_operation
 
-from smt.sm import SM
-from smt.pairwise import manhattan_distances
-from smt.pls import pls as _pls
+from smt.methods.sm import SM
+from smt.utils.pairwise import manhattan_distances
+from smt.utils.pls import pls as _pls
 
 
 def standardization(X,y,copy=False):
@@ -720,6 +720,53 @@ class KPLS(SM):
 
         return reduced_likelihood_function_value, par
 
+    def _predict_value(self,n_eval,x,r):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+        y = np.zeros(n_eval)
+
+        # Compute the regression function
+        f = self.options['poly'](x)
+        
+        # Scaled predictor
+        y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
+                    self.optimal_par['gamma'])
+        # Predictor
+        y = (self.y_mean + self.y_std * y_).ravel()
+
+        return y
+
+    def _predict_derivative(self,n_eval,x,kx):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+
+        if self.options['poly'].__name__ == 'constant':
+            df = np.array([0])
+        elif self.options['poly'].__name__ == 'linear':
+            df = np.zeros((self.dim + 1, self.dim))
+            df[1:,:] = 1
+        else:
+            raise ValueError(
+                'The derivative is only available for ordinary kriging or '+
+                'universal kriging using a linear trend')
+
+        # Beta and gamma = R^-1(y-FBeta)
+        beta = self.optimal_par['beta']
+        gamma = self.optimal_par['gamma']
+            
+        df_dx = np.dot(df.T, beta)
+        d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
+        if self.options['name'] == 'KPLSK' or self.options['name'] == 'KRG':
+            return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
+        else:
+            # PLS-based models
+            theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
+            return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
+        
     def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
@@ -754,51 +801,17 @@ class KPLS(SM):
                                         self.nt)
         # Output prediction
         if kx == 0:
-            y = np.zeros(n_eval)
-
-            # Compute the regression function
-            f = self.options['poly'](x)
-            
-            # Scaled predictor
-            y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
-                        self.optimal_par['gamma'])
-            # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
-
+            y = self._predict_value(n_eval,x,r)
             return y
+            
         # Gradient prediction
-        else:            
+        else:
             if self.options['corr'].__name__ != 'squar_exp':
                 raise ValueError(
                 'The derivative is only available for square exponential kernel')
-            # Beta and gamma = R^-1(y-FBeta)
-            beta = self.optimal_par['beta']
-            gamma = self.optimal_par['gamma']
-            
-            if self.options['poly'].__name__ == 'constant':
-                df = np.array([0])
-            elif self.options['poly'].__name__ == 'linear':
-                df = np.zeros((self.dim + 1, self.dim))
-                df[1:,:] = 1
-            else:
-                raise ValueError(
-                    'The derivative is only available for ordinary kriging or '+
-                    'universal kriging using a linear trend')
-            df_dx = np.dot(df.T, beta)
-            d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
-            if self.options['name'] == 'KPLSK' or self.options['name'] == 'KRG':
-                return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
-                       self.y_std/self.X_std[kx-1]
-            else:
-                # PLS-based models
-                theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
-                return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))* \
-                       self.y_std/self.X_std[kx-1]
 
-
-
-
-            
+            y = self._predict_derivative(n_eval,x,kx)
+            return y
 
     def _optimize_hyperparam(self,D):
 

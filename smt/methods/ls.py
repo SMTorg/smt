@@ -4,12 +4,13 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 TO DO:
 - define outputs['sol'] = self.sol
+- implement the derivative predictions
 """
 
 from __future__ import division
 
 from sklearn import linear_model
-from smt.sm import SM
+from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
 class LS(SM):
@@ -58,6 +59,12 @@ class LS(SM):
             else:
                 self._new_train()
                 #outputs['sol'] = self.sol
+
+    def _predict_value(self,x):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+        return self.mod.predict(x)
                 
     def _predict(self, x, kx):
         """
@@ -77,7 +84,8 @@ class LS(SM):
         y : np.ndarray[n_eval,1]
         - An array with the output values at x.
         """
-
-        y = self.mod.predict(x)
-
-        return y
+        if kx == 0:
+            y = self._predict_value(x)
+            return y
+        else:
+            raise NotImplementedError

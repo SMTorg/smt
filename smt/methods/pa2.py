@@ -4,13 +4,14 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 TO DO:
 - define outputs['sol'] = self.sol
+- implement the derivative predictions
 """
 
 from __future__ import division
 
 import numpy as np
 import scipy
-from smt.sm import SM
+from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
 class PA2(SM):
@@ -46,7 +47,7 @@ class PA2(SM):
             raise Exception("Number of training points should be greater or equal to %d."
                             % ((self.dim+1)*(self.dim+2)/2.))
 
-        X = self.respoSurf(x)
+        X = self._response_surface(x)
         self.coef = np.dot(np.linalg.inv(np.dot(X.T,X)),(np.dot(X.T,y)))
 
     def _train(self):
@@ -61,23 +62,18 @@ class PA2(SM):
                 self._new_train()
                 #outputs['sol'] = self.sol
         
-
-    def respoSurf(self,x):
-
+    def _response_surface(self,x):
         """
         Build the response surface of degree 2
-
         argument
         -----------
         x : np.ndarray [nt, dim]
             Training points
-
         Returns
         -------
         M : np.ndarray
             Matrix of the surface
         """
-
         dim = x.shape[1]
         n = x.shape[0]
         n_app = int(scipy.special.binom(dim+2, dim))
@@ -94,6 +90,15 @@ class PA2(SM):
                 M[k,:] = x[i,:]*x[j,:]
 
         return M.T
+    
+    def _predict_value(self,x):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """    
+        M=self._response_surface(x)
+        y = np.dot(M,self.coef).T
+
+        return y
 
     def _predict(self, x, kx):
         """
@@ -113,8 +118,8 @@ class PA2(SM):
         y : np.ndarray[n_eval,1]
         - An array with the output values at x.
         """
-
-        X = self.respoSurf(x)
-        y = np.dot(X,self.coef).T
-
-        return y
+        if kx == 0:
+            y = self._predict_value(x)
+            return y
+        else:
+            raise NotImplementedError

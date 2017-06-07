@@ -2,16 +2,18 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang         <hwangjt@umich.edu>
 
+TO DO:
+- implement the derivative predictions
 """
 
 from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.sm import SM
+from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
-from smt import IDWlib
+from smt.methods import IDWlib
 
 
 class IDW(SM):
@@ -56,6 +58,24 @@ class IDW(SM):
                 self._new_train()
                 #outputs['sol'] = self.sol
 
+    def _predict_value(self,x):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+        n_evals = x.shape[0]
+        xt_list = []
+        yt_list = []
+        if 0 in self.training_points['exact']:
+            xt_list.append(self.training_points['exact'][0][0])
+            yt_list.append(self.training_points['exact'][0][1])
+
+        xt = np.vstack(xt_list)
+        yt = np.vstack(yt_list)
+
+        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
+
+        return mtx.dot(yt)
+    
     def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
@@ -74,16 +94,8 @@ class IDW(SM):
         y : np.ndarray[n_eval,1]
             - An array with the output values at x.
         """
-        n_evals = x.shape[0]
-        xt_list = []
-        yt_list = []
-        if 0 in self.training_points['exact']:
-            xt_list.append(self.training_points['exact'][0][0])
-            yt_list.append(self.training_points['exact'][0][1])
-
-        xt = np.vstack(xt_list)
-        yt = np.vstack(yt_list)
-
-        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
-
-        return mtx.dot(yt)
+        if kx == 0:
+            y = self._predict_value(x)
+            return y
+        else:
+            raise NotImplementedError

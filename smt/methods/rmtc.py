@@ -10,9 +10,9 @@ from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
-from smt.rmts import RMTS
+from smt.methods.rmts import RMTS
 
-from smt import RMTClib
+from smt.methods import RMTClib
 
 
 class RMTC(RMTS):
