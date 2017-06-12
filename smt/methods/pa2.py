@@ -61,7 +61,7 @@ class PA2(SM):
             else:
                 self._new_train()
                 #outputs['sol'] = self.sol
-        
+
     def _response_surface(self,x):
         """
         Build the response surface of degree 2
@@ -90,11 +90,11 @@ class PA2(SM):
                 M[k,:] = x[i,:]*x[j,:]
 
         return M.T
-    
+
     def _predict_value(self,x):
         """
         This function is used by _predict function. See _predict for more details.
-        """    
+        """
         M=self._response_surface(x)
         y = np.dot(M,self.coef).T
 

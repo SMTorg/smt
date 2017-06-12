@@ -4,6 +4,8 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
 TODO:
+- Add additional points GEKPLS1, GEKPLS2 and so on
+
 - define outputs['sol'] = self.sol
 
 - debug _train: self_pkl = pickle.dumps(obj)
@@ -79,6 +81,7 @@ def standardization(X,y,copy=False):
         Xr = (X.copy() - X_mean) / X_std
         yr = (y.copy() - y_mean) / y_std
         return Xr, yr, X_mean, y_mean, X_std, y_std
+
     else:
         X = (X - X_mean) / X_std
         y = (y - y_mean) / y_std
@@ -124,7 +127,7 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-def componentwise_distance(D,corr,n_comp,coeff_pls):
+def componentwise_distance(D,corr,n_comp,dim,coeff_pls):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -142,6 +145,9 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
 
     n_comp: int
             - Number of principal components used.
+
+    dim: int
+            - Number of dimension.
 
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
@@ -166,15 +172,15 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
         else:
             if corr == 'squar_exp':
                 D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
-                                (i+1)*nb_limit,:]** 2,coeff_pls**2)
+                            (i+1)*nb_limit,:]** 2,coeff_pls**2)
             else:
                 # abs_exp
                 D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
-                                nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
+                        nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
             i+=1
 
 
-def compute_pls(X,y,n_comp):
+def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
 
     """
     Computes the PLS-coefficients.
@@ -191,18 +197,107 @@ def compute_pls(X,y,n_comp):
     n_comp: int
             - Number of principal components used.
 
+    pts: dict()
+            - The gradient values.
+
+    delta_x: real
+            - The step used in the FOTA.
+
+    xlimits: np.ndarray[dim, 2]
+            - The upper and lower var bounds.
+
+    extra_points: int
+            - The number of extra points per each training point.
+
     Returns
     -------
 
     Coeff_pls: np.ndarray[dim, n_comp]
             - The PLS-coefficients.
 
+    XX: np.ndarray[extra_points*nt, dim]
+            - Extra points added (when extra_points > 0)
+
+    yy: np.ndarray[extra_points*nt, 1]
+            - Extra points added (when extra_points > 0)
+
     """
     nt,dim = X.shape
+    XX = np.empty(shape = (0,dim))
+    yy = np.empty(shape = (0,1))
     pls = _pls(n_comp)
 
-    pls.fit(X,y)
-    return np.abs(pls.x_rotations_)
+    coeff_pls = np.zeros((nt,dim,n_comp))
+    for i in range(nt):
+        if dim >= 3:
+            sign = np.roll(bbdesign(dim,center=1),1,axis=0)
+            _X = np.zeros((sign.shape[0],dim))
+            _y = np.zeros((sign.shape[0],1))
+            sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
+            _X = X[i,:]+ sign
+            for j in range(1,dim+1):
+                sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
+            _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
+        else:
+            _X = np.zeros((9,dim))
+            _y = np.zeros((9,1))
+            # center
+            _X[:,:] = X[i,:].copy()
+            _y[0,0] = y[i,0].copy()
+            # right
+            _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[1,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # up
+            _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[2,0] = _y[0,0].copy()+ pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left
+            _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[3,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # down
+            _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[4,0] = _y[0,0].copy()-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right up
+            _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[5,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left up
+            _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[6,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left down
+            _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[7,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right down
+            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+
+        pls.fit(_X.copy(),_y.copy())
+        coeff_pls[i,:,:] = pls.x_rotations_
+        #Add additional points
+        if extra_points != 0:
+            max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
+            for ii in max_coeff:
+                XX = np.vstack((XX,X[i,:]))
+                XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
+                yy = np.vstack((yy,y[i,0]))
+                yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
+                    xlimits[ii,1]-xlimits[ii,0])
+
+    return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 """
 The kpls-correlation models subroutine.
@@ -220,7 +315,6 @@ def abs_exp(theta, d):
         the autocorrelation parameter(s).
 
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
 
     Returns
     -------
@@ -253,7 +347,6 @@ def squar_exp(theta, d):
         the autocorrelation parameter(s).
 
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-            - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
 
     Returns
     -------
@@ -363,10 +456,12 @@ def quadratic(x):
 The KPLS class.
 """
 
-class KPLS(SM):
+class GEKPLS(SM):
 
     '''
-    - KPLS
+    - Ordinary kriging
+    - KPLS(-K)
+    - GEKPLS
     '''
 
     _regression_types = {
@@ -379,19 +474,24 @@ class KPLS(SM):
         'squar_exp': squar_exp}
 
     def _declare_options(self):
-        super(KPLS, self)._declare_options()
+        super(GEKPLS, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'KPLS', types=str,
-                desc='KPLS for Kriging with Partial Least Squares')
+        declare('name', 'GEKPLS', types=str,
+                desc='GEKPLS for Gradient Enhanced KPLS')
+        declare('xlimits', types=np.ndarray,
+                desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
+        declare('delta_x', 1e-4, types=(int, float), desc='Step used in the FOTA')
+        declare('extra_points', 0, types=int, desc='Number of extra points per training point')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
                 desc='regr. term')
         declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
                 desc='type of corr. func.')
         declare('best_iteration_fail', None)
         declare('nb_ill_matrix', 5)
+        declare('kriging-step')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
@@ -404,14 +504,20 @@ class KPLS(SM):
         """
         Train the model
         """
-
         self._check_param()
 
         # Compute PLS coefficients
         X = self.training_points['exact'][0][0]
         y = self.training_points['exact'][0][1]
 
-        self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
+        if 0 in self.training_points['exact']:
+            self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),self.options['n_comp'],
+                self.training_points,self.options['delta_x'],self.options['xlimits'],
+                self.options['extra_points'])
+            if self.options['extra_points'] != 0:
+                self.nt *= (self.options['extra_points']+1)
+                X = np.vstack((X,XX))
+                y = np.vstack((y,yy))
 
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
@@ -632,10 +738,9 @@ class KPLS(SM):
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
-                                 False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,self.options['n_comp'],
-                                   self.coeff_pls)
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
         # Output prediction
@@ -683,10 +788,10 @@ class KPLS(SM):
         def minus_reduced_likelihood_function(log10t):
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
 
-        limit, _rhobeg = 10*self.options['n_comp'], 0.5
+        key, limit, _rhobeg = True, 10*self.options['n_comp'], 0.5
 
         best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
-                constraints = [], [], [], []
+            constraints = [], [], [], []
 
         for i in range(self.options['n_comp']):
             constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
@@ -695,7 +800,7 @@ class KPLS(SM):
         # Compute D which is the componentwise distances between locations
         #  x and x' at which the correlation model should be evaluated.
         self.D = componentwise_distance(D,self.options['corr'].__name__,
-                            self.options['n_comp'],self.coeff_pls)
+                    self.options['n_comp'],self.dim,self.coeff_pls)
 
         # Initialization
         k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
@@ -704,8 +809,8 @@ class KPLS(SM):
             theta0 = self.options['theta0']
             try:
                 optimal_theta = 10. ** optimize.fmin_cobyla(
-                    minus_reduced_likelihood_function, np.log10(theta0),constraints,
-                    rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,maxfun=limit)
+                    minus_reduced_likelihood_function, np.log10(theta0),
+                    constraints, rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,maxfun=limit)
 
                 optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta)
@@ -717,18 +822,16 @@ class KPLS(SM):
                         if incr != 0:
                             return
                     else:
-                        if optimal_rlf_value >= self.options['best_iteration_fail']:
+                        if optimal_rlf_value >= self.options['best_iteration_fail'] :
                             if optimal_rlf_value > best_optimal_rlf_value:
                                 best_optimal_rlf_value = optimal_rlf_value
                                 best_optimal_par = optimal_par
                                 best_optimal_theta = optimal_theta
                             else:
-                                if self.options['best_iteration_fail'] \
-                                   > best_optimal_rlf_value:
+                                if self.options['best_iteration_fail'] > best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory
                                     best_optimal_rlf_value , best_optimal_par = \
-                                        self._reduced_likelihood_function(\
-                                          theta= best_optimal_theta)
+                                        self._reduced_likelihood_function(theta= best_optimal_theta)
                 else:
                     if np.isinf(optimal_rlf_value):
                         stop += 1
@@ -740,12 +843,10 @@ class KPLS(SM):
                                 best_optimal_theta = optimal_theta
 
                         else:
-                            if  self.options['best_iteration_fail'] > \
-                                best_optimal_rlf_value:
+                            if self.options['best_iteration_fail'] > best_optimal_rlf_value:
                                 best_optimal_theta = self._thetaMemory.copy()
                                 best_optimal_rlf_value , best_optimal_par = \
-                                    self._reduced_likelihood_function( \
-                                        theta=best_optimal_theta)
+                                    self._reduced_likelihood_function(theta=best_optimal_theta)
                 k += 1
             except ValueError as ve:
                 # If iteration is max when fmin_cobyla fail is not reached
@@ -755,12 +856,10 @@ class KPLS(SM):
                     stop += 1
                     # One evaluation objectif function is done at least
                     if (self.options['best_iteration_fail'] is not None):
-                        if self.options['best_iteration_fail'] > \
-                           best_optimal_rlf_value:
+                        if self.options['best_iteration_fail'] > best_optimal_rlf_value:
                             best_optimal_theta = self._thetaMemory
                             best_optimal_rlf_value , best_optimal_par = \
-                                self._reduced_likelihood_function(theta=
-                                    best_optimal_theta)
+                                self._reduced_likelihood_function(theta=best_optimal_theta)
                 # Optimization fail
                 elif best_optimal_par == [] :
                     print("Optimization failed. Try increasing the ``nugget``")
@@ -771,6 +870,7 @@ class KPLS(SM):
                     print("fmin_cobyla failed but the best value is retained")
 
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
+
 
     def _check_param(self):
 
@@ -788,6 +888,9 @@ class KPLS(SM):
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['poly']))
 
+        if not(1 in self.training_points['exact']):
+            raise Exception('Derivative values are needed for using the GEKPLS model.')
+
         if len(self.options['theta0']) != self.options['n_comp']:
             raise Exception('Number of principal components must be equal to the number of theta0.')
 
@@ -796,9 +899,8 @@ class KPLS(SM):
                 self.options['corr'] = self._correlation_types[self.options['corr']]
             else:
                 raise ValueError("corr should be one of %s or callable, "
-                                 "%s was given."% (self._correlation_types.keys(),
-                                self.options['corr']))
-
+                                 "%s was given."
+                                 % (self._correlation_types.keys(), self.options['corr']))
 
     def _check_F(self,n_samples_F,p):
 

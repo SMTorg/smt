@@ -75,7 +75,7 @@ class IDW(SM):
         mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
 
         return mtx.dot(yt)
-    
+
     def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.

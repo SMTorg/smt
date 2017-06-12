@@ -3,6 +3,9 @@ import numpy as np
 from smt.methods.ls import LS
 from smt.methods.pa2 import PA2
 from smt.methods.kpls import KPLS
+from smt.methods.kplsk import KPLSK
+from smt.methods.gekpls import GEKPLS
+from smt.methods.krg import KRG
 from scipy import linalg
 from smt.problems import Carre
 from smt.sampling import LHS
@@ -56,11 +59,9 @@ y = t.predict(xtest)
 print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
-
 ########### The Kriging model
-# The variables 'name', 'ncomp' and 'theta0' must be equal to 'Kriging',
-# dim and a list of length dim, respectively.
-t = KPLS(name='KRG', n_comp=dim, theta0=[1e-2]*dim)
+# The variable 'theta0' is a list of length dim.
+t = KRG(theta0=[1e-2]*dim)
 t.add_training_points('exact',xt,yt[:,0])
 
 t.train()
@@ -83,9 +84,8 @@ print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The KPLSK model
-# The variables 'name' must be equal to 'KPLSK'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS(name='KPLSK', n_comp=2, theta0=[1e-2,1e-2])
+# 'n_comp' and 'theta0' must be an integer in [1,dim[ and a list of length n_comp, respectively.
+t = KPLSK(n_comp=2, theta0=[1e-2,1e-2])
 t.add_training_points('exact',xt,yt[:,0])
 t.train()
 y = t.predict(xtest)
@@ -94,10 +94,8 @@ print('KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The GEKPLS model using 1 approximating points
-# The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS(name='GEKPLS', n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,
-         extra_points= 1)
+# 'n_comp' and 'theta0' must be an integer in [1,dim[ and a list of length n_comp, respectively.
+t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,extra_points= 1)
 t.add_training_points('exact',xt,yt[:,0])
 # Add the gradient information
 for i in range(dim):
@@ -110,9 +108,8 @@ print('GEKPLS1,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntes
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The GEKPLS model using 2 approximating points
-# The variables 'name' must be equal to 'GEKPLS'. 'n_comp' and 'theta0' must be
-# an integer in [1,dim[ and a list of length n_comp, respectively.
-t = KPLS(name='GEKPLS', n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,
+# 'n_comp' and 'theta0' must be an integer in [1,dim[ and a list of length n_comp, respectively.
+t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=xlimits,delta_x=1e-4,
          extra_points= 2)
 t.add_training_points('exact',xt,yt[:,0])
 # Add the gradient information

@@ -79,6 +79,7 @@ def standardization(X,y,copy=False):
         Xr = (X.copy() - X_mean) / X_std
         yr = (y.copy() - y_mean) / y_std
         return Xr, yr, X_mean, y_mean, X_std, y_std
+
     else:
         X = (X - X_mean) / X_std
         y = (y - y_mean) / y_std
@@ -124,7 +125,7 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-def componentwise_distance(D,corr,n_comp,coeff_pls):
+def componentwise_distance(D,corr,n_comp,dim,coeff_pls=None,opt=0):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -143,8 +144,15 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
     n_comp: int
             - Number of principal components used.
 
+    dim: int
+            - Number of dimension.
+
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
+
+    opt: int
+            - 0 for KPLS and 1 for kriging step
+
 
     Returns
     -------
@@ -159,20 +167,30 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
 
     D_corr = np.zeros((D.shape[0],n_comp))
     i,nb_limit  = 0,int(limit)
-
     while True:
         if i * nb_limit > D_corr.shape[0]:
             return D_corr
         else:
-            if corr == 'squar_exp':
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
-                                (i+1)*nb_limit,:]** 2,coeff_pls**2)
+            if opt == 0:
+                #KPLS
+                if corr == 'squar_exp':
+                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
+                                    (i+1)*nb_limit,:]** 2,coeff_pls**2)
+                else:
+                    # abs_exp
+                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
+                        nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
             else:
-                # abs_exp
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
-                                nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
-            i+=1
+                #Kriging-step
+                if corr == 'squar_exp':
+                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = D[i*nb_limit:(i+1)*
+                                                      nb_limit,:]**2
+                else:
+                    # abs_exp
+                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.abs(D[i*nb_limit:
+                                                    (i+1)*nb_limit,:])
 
+            i+=1
 
 def compute_pls(X,y,n_comp):
 
@@ -363,10 +381,10 @@ def quadratic(x):
 The KPLS class.
 """
 
-class KPLS(SM):
+class KPLSK(SM):
 
     '''
-    - KPLS
+    - KPLSK
     '''
 
     _regression_types = {
@@ -379,11 +397,11 @@ class KPLS(SM):
         'squar_exp': squar_exp}
 
     def _declare_options(self):
-        super(KPLS, self)._declare_options()
+        super(KPLSK, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'KPLS', types=str,
-                desc='KPLS for Kriging with Partial Least Squares')
+        declare('name', 'KPLSK', types=str,
+                desc='KPLSK for Kriging with Partial Least Squares + local optim Kriging ')
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
@@ -411,7 +429,8 @@ class KPLS(SM):
         X = self.training_points['exact'][0][0]
         y = self.training_points['exact'][0][1]
 
-        self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
+        if 0 in self.training_points['exact']:
+            self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
 
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
@@ -604,9 +623,8 @@ class KPLS(SM):
 
         df_dx = np.dot(df.T, beta)
         d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
-        theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
-
-        return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
+        return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
 
     def _predict(self, x, kx):
         """
@@ -634,8 +652,8 @@ class KPLS(SM):
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,self.options['n_comp'],
-                                   self.coeff_pls)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                                   self.options['n_comp'],self.dim,opt=1)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
         # Output prediction
@@ -683,94 +701,113 @@ class KPLS(SM):
         def minus_reduced_likelihood_function(log10t):
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
 
-        limit, _rhobeg = 10*self.options['n_comp'], 0.5
+        limit, _rhobeg, opt = 10*self.options['n_comp'], 0.5, 0
+        exit_fucntion = False
 
-        best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
+        for ii in range(2):
+            best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
                 constraints = [], [], [], []
 
-        for i in range(self.options['n_comp']):
-            constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
-            constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
+            for i in range(self.options['n_comp']):
+                constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
+                constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
 
-        # Compute D which is the componentwise distances between locations
-        #  x and x' at which the correlation model should be evaluated.
-        self.D = componentwise_distance(D,self.options['corr'].__name__,
-                            self.options['n_comp'],self.coeff_pls)
+            # Compute D which is the componentwise distances between locations
+            #  x and x' at which the correlation model should be evaluated.
+            self.D = componentwise_distance(D,self.options['corr'].__name__,
+                                            self.options['n_comp'],self.dim,self.coeff_pls,opt)
 
-        # Initialization
-        k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
-        while (k < stop):
-            # Use specified starting point as first guess
-            theta0 = self.options['theta0']
-            try:
-                optimal_theta = 10. ** optimize.fmin_cobyla(
-                    minus_reduced_likelihood_function, np.log10(theta0),constraints,
-                    rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,maxfun=limit)
+            # Initialization
+            k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
+            while (k < stop):
+                # Use specified starting point as first guess
+                theta0 = self.options['theta0']
+                try:
+                    optimal_theta = 10. ** optimize.fmin_cobyla(minus_reduced_likelihood_function,
+                        np.log10(theta0),constraints, rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,
+                        maxfun=limit)
 
-                optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                    theta=optimal_theta)
+                    optimal_rlf_value, optimal_par = \
+                        self._reduced_likelihood_function(theta=optimal_theta)
 
-                # Compare the new optimizer to the best previous one
-                if k > 0:
-                    if np.isinf(optimal_rlf_value):
-                        stop += 1
-                        if incr != 0:
-                            return
-                    else:
-                        if optimal_rlf_value >= self.options['best_iteration_fail']:
-                            if optimal_rlf_value > best_optimal_rlf_value:
-                                best_optimal_rlf_value = optimal_rlf_value
-                                best_optimal_par = optimal_par
-                                best_optimal_theta = optimal_theta
-                            else:
-                                if self.options['best_iteration_fail'] \
-                                   > best_optimal_rlf_value:
-                                    best_optimal_theta = self._thetaMemory
-                                    best_optimal_rlf_value , best_optimal_par = \
-                                        self._reduced_likelihood_function(\
-                                          theta= best_optimal_theta)
-                else:
-                    if np.isinf(optimal_rlf_value):
-                        stop += 1
-                    else:
-                        if optimal_rlf_value >=  self.options['best_iteration_fail']:
-                            if optimal_rlf_value > best_optimal_rlf_value:
-                                best_optimal_rlf_value = optimal_rlf_value
-                                best_optimal_par = optimal_par
-                                best_optimal_theta = optimal_theta
-
+                    # Compare the new optimizer to the best previous one
+                    if k > 0:
+                        if np.isinf(optimal_rlf_value):
+                            stop += 1
+                            if incr != 0:
+                                return
                         else:
-                            if  self.options['best_iteration_fail'] > \
-                                best_optimal_rlf_value:
-                                best_optimal_theta = self._thetaMemory.copy()
-                                best_optimal_rlf_value , best_optimal_par = \
-                                    self._reduced_likelihood_function( \
-                                        theta=best_optimal_theta)
-                k += 1
-            except ValueError as ve:
-                # If iteration is max when fmin_cobyla fail is not reached
-                if (self.options['nb_ill_matrix'] > 0):
-                    self.options['nb_ill_matrix'] -= 1
-                    k += 1
-                    stop += 1
-                    # One evaluation objectif function is done at least
-                    if (self.options['best_iteration_fail'] is not None):
-                        if self.options['best_iteration_fail'] > \
-                           best_optimal_rlf_value:
-                            best_optimal_theta = self._thetaMemory
-                            best_optimal_rlf_value , best_optimal_par = \
-                                self._reduced_likelihood_function(theta=
-                                    best_optimal_theta)
-                # Optimization fail
-                elif best_optimal_par == [] :
-                    print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
-                # Break the while loop
-                else:
-                    k = stop + 1
-                    print("fmin_cobyla failed but the best value is retained")
+                            if optimal_rlf_value >= self.options[
+                                    'best_iteration_fail'] :
+                                if optimal_rlf_value > best_optimal_rlf_value:
+                                    best_optimal_rlf_value = optimal_rlf_value
+                                    best_optimal_par = optimal_par
+                                    best_optimal_theta = optimal_theta
+                                else:
+                                    if self.options['best_iteration_fail'] \
+                                        > best_optimal_rlf_value:
+                                        best_optimal_theta = self._thetaMemory
+                                        best_optimal_rlf_value , best_optimal_par = \
+                                          self._reduced_likelihood_function(\
+                                          theta= best_optimal_theta)
+                    else:
+                        if np.isinf(optimal_rlf_value):
+                            stop += 1
+                        else:
+                            if optimal_rlf_value >=  self.options[
+                                    'best_iteration_fail']:
+                                if optimal_rlf_value > best_optimal_rlf_value:
+                                    best_optimal_rlf_value = optimal_rlf_value
+                                    best_optimal_par = optimal_par
+                                    best_optimal_theta = optimal_theta
 
-        return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
+                            else:
+                                if  self.options['best_iteration_fail'] > \
+                                    best_optimal_rlf_value:
+                                    best_optimal_theta = self._thetaMemory.copy()
+                                    best_optimal_rlf_value , best_optimal_par = \
+                                        self._reduced_likelihood_function( \
+                                            theta=best_optimal_theta)
+                    k += 1
+                except ValueError as ve:
+                    # If iteration is max when fmin_cobyla fail is not reached
+                    if (self.options['nb_ill_matrix'] > 0):
+                        self.options['nb_ill_matrix'] -= 1
+                        k += 1
+                        stop += 1
+                        # One evaluation objectif function is done at least
+                        if (self.options['best_iteration_fail'] is not None):
+                            if self.options['best_iteration_fail'] > \
+                                best_optimal_rlf_value:
+                                best_optimal_theta = self._thetaMemory
+                                best_optimal_rlf_value , best_optimal_par = \
+                                    self._reduced_likelihood_function(theta=
+                                    best_optimal_theta)
+                    # Optimization fail
+                    elif best_optimal_par == [] :
+                        print("Optimization failed. Try increasing the ``nugget``")
+                        raise ve
+                    # Break the while loop
+                    else:
+                        k = stop + 1
+                        print("fmin_cobyla failed but the best value is retained")
+
+            if exit_fucntion:
+                return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
+
+            if self.options['corr'].__name__ == 'squar_exp':
+                self.options['theta0'] = (best_optimal_theta*self.coeff_pls**2).sum(1)
+            else:
+                self.options['theta0'] = (best_optimal_theta*np.abs(self.coeff_pls)).sum(1)
+            self.options['n_comp'] = self.dim
+            limit = 3*self.options['n_comp']
+            _rhobeg = 0.05
+            self.options['best_iteration_fail'] = None
+            opt = 1
+            exit_fucntion = True
+
+
+
 
     def _check_param(self):
 

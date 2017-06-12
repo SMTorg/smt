@@ -65,7 +65,7 @@ class LS(SM):
         This function is used by _predict function. See _predict for more details.
         """
         return self.mod.predict(x)
-                
+
     def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.

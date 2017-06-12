@@ -12,7 +12,7 @@ from smt.sampling import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt.methods import LS, PA2, KPLS
+from smt.methods import LS, PA2, KPLS, KRG, KPLSK
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
@@ -38,7 +38,7 @@ class Test(SMTestCase):
         sms = OrderedDict()
         sms['LS'] = LS()
         sms['PA2'] = PA2()
-        sms['KRG'] = KPLS(name='KRG', n_comp=ndim, theta0=[1.0]*ndim)
+        sms['KRG'] = KRG(theta0=[1.0]*ndim)
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()

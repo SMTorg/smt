@@ -15,7 +15,6 @@ from smt.methods.sm import SM
 
 from smt.methods import RMTSlib
 
-
 class RMTS(SM):
     """
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.

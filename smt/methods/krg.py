@@ -22,7 +22,6 @@ from smt.utils.caching import cached_operation
 
 from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
-from smt.utils.pls import pls as _pls
 
 def standardization(X,y,copy=False):
 
@@ -79,6 +78,7 @@ def standardization(X,y,copy=False):
         Xr = (X.copy() - X_mean) / X_std
         yr = (y.copy() - y_mean) / y_std
         return Xr, yr, X_mean, y_mean, X_std, y_std
+
     else:
         X = (X - X_mean) / X_std
         y = (y - y_mean) / y_std
@@ -124,7 +124,7 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-def componentwise_distance(D,corr,n_comp,coeff_pls):
+def componentwise_distance(D,corr,dim):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -140,16 +140,13 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
             - Name of the correlation function used.
               squar_exp or abs_exp.
 
-    n_comp: int
-            - Number of principal components used.
-
-    coeff_pls: np.ndarray [dim, n_comp]
-            - The PLS-coefficients.
+    dim: int
+            - Number of dimension.
 
     Returns
     -------
 
-    D_corr: np.ndarray [n_obs * (n_obs - 1) / 2, n_comp]
+    D_corr: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
 
@@ -157,7 +154,7 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
     #Manage the memory.
     limit=int(1e4)
 
-    D_corr = np.zeros((D.shape[0],n_comp))
+    D_corr = np.zeros((D.shape[0],dim))
     i,nb_limit  = 0,int(limit)
 
     while True:
@@ -165,47 +162,16 @@ def componentwise_distance(D,corr,n_comp,coeff_pls):
             return D_corr
         else:
             if corr == 'squar_exp':
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
-                                (i+1)*nb_limit,:]** 2,coeff_pls**2)
+                D_corr[i*nb_limit:(i+1)*nb_limit,:] = D[i*nb_limit:(i+1)*
+                                                      nb_limit,:]**2
             else:
                 # abs_exp
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
-                                nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
+                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.abs(D[i*nb_limit:
+                                                    (i+1)*nb_limit,:])
             i+=1
 
-
-def compute_pls(X,y,n_comp):
-
-    """
-    Computes the PLS-coefficients.
-
-    Parameters
-    ----------
-
-    X: np.ndarray [n_obs,dim]
-            - - The input variables.
-
-    y: np.ndarray [n_obs,1]
-            - The output variable
-
-    n_comp: int
-            - Number of principal components used.
-
-    Returns
-    -------
-
-    Coeff_pls: np.ndarray[dim, n_comp]
-            - The PLS-coefficients.
-
-    """
-    nt,dim = X.shape
-    pls = _pls(n_comp)
-
-    pls.fit(X,y)
-    return np.abs(pls.x_rotations_)
-
 """
-The kpls-correlation models subroutine.
+The kriging-correlation models subroutine.
 """
 
 def abs_exp(theta, d):
@@ -219,8 +185,7 @@ def abs_exp(theta, d):
     theta : list[ncomp]
         the autocorrelation parameter(s).
 
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, dim]
 
     Returns
     -------
@@ -252,8 +217,7 @@ def squar_exp(theta, d):
     theta : list[ncomp]
         the autocorrelation parameter(s).
 
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-            - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, dim]
 
     Returns
     -------
@@ -277,7 +241,7 @@ def squar_exp(theta, d):
 
 
 """
-The built-in regression models subroutine for the KPLS module.
+The built-in regression models subroutine for the kriging module.
 """
 
 def constant(x):
@@ -360,14 +324,10 @@ def quadratic(x):
     return f
 
 """
-The KPLS class.
+The kriging class.
 """
 
-class KPLS(SM):
-
-    '''
-    - KPLS
-    '''
+class KRG(SM):
 
     _regression_types = {
         'constant': constant,
@@ -379,13 +339,11 @@ class KPLS(SM):
         'squar_exp': squar_exp}
 
     def _declare_options(self):
-        super(KPLS, self)._declare_options()
+        super(KRG, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'KPLS', types=str,
-                desc='KPLS for Kriging with Partial Least Squares')
-        declare('n_comp', 1, types=int, desc='Number of principal components')
-        declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
+        declare('name', 'KRG', types=str, desc='KRG for Standard kriging ')
+        declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
                 desc='regr. term')
         declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
@@ -404,14 +362,11 @@ class KPLS(SM):
         """
         Train the model
         """
-
         self._check_param()
 
         # Compute PLS coefficients
         X = self.training_points['exact'][0][0]
         y = self.training_points['exact'][0][1]
-
-        self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
 
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
@@ -604,9 +559,8 @@ class KPLS(SM):
 
         df_dx = np.dot(df.T, beta)
         d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
-        theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
-
-        return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
+        return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
+                       self.y_std/self.X_std[kx-1]
 
     def _predict(self, x, kx):
         """
@@ -634,8 +588,7 @@ class KPLS(SM):
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,self.options['n_comp'],
-                                   self.coeff_pls)
+        d = componentwise_distance(dx,self.options['corr'].__name__,self.dim)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
         # Output prediction
@@ -659,7 +612,7 @@ class KPLS(SM):
 
         Parameters
         ----------
-        D: np.ndarray [n_obs * (n_obs - 1) / 2, n_comp]
+        D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
 
@@ -678,24 +631,22 @@ class KPLS(SM):
         best_optimal_theta: list(n_comp)
             - The best hyperparameters found by the optimization.
         """
-
         # Initialize the hyperparameter-optimization
         def minus_reduced_likelihood_function(log10t):
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
 
-        limit, _rhobeg = 10*self.options['n_comp'], 0.5
+        key, limit, _rhobeg = True, 10*len(self.options['theta0']), 0.5
 
         best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
-                constraints = [], [], [], []
+            constraints = [], [], [], []
 
-        for i in range(self.options['n_comp']):
+        for i in range(self.dim):
             constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
             constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
 
         # Compute D which is the componentwise distances between locations
         #  x and x' at which the correlation model should be evaluated.
-        self.D = componentwise_distance(D,self.options['corr'].__name__,
-                            self.options['n_comp'],self.coeff_pls)
+        self.D = componentwise_distance(D,self.options['corr'].__name__,self.dim)
 
         # Initialization
         k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
@@ -704,11 +655,12 @@ class KPLS(SM):
             theta0 = self.options['theta0']
             try:
                 optimal_theta = 10. ** optimize.fmin_cobyla(
-                    minus_reduced_likelihood_function, np.log10(theta0),constraints,
-                    rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,maxfun=limit)
+                    minus_reduced_likelihood_function, np.log10(theta0),
+                    constraints, rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,
+                    maxfun=limit)
 
-                optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                    theta=optimal_theta)
+                optimal_rlf_value, optimal_par = \
+                    self._reduced_likelihood_function(theta=optimal_theta)
 
                 # Compare the new optimizer to the best previous one
                 if k > 0:
@@ -724,11 +676,11 @@ class KPLS(SM):
                                 best_optimal_theta = optimal_theta
                             else:
                                 if self.options['best_iteration_fail'] \
-                                   > best_optimal_rlf_value:
+                                    > best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory
                                     best_optimal_rlf_value , best_optimal_par = \
                                         self._reduced_likelihood_function(\
-                                          theta= best_optimal_theta)
+                                        theta= best_optimal_theta)
                 else:
                     if np.isinf(optimal_rlf_value):
                         stop += 1
@@ -740,12 +692,12 @@ class KPLS(SM):
                                 best_optimal_theta = optimal_theta
 
                         else:
-                            if  self.options['best_iteration_fail'] > \
-                                best_optimal_rlf_value:
+                            if self.options['best_iteration_fail'] > \
+                               best_optimal_rlf_value:
                                 best_optimal_theta = self._thetaMemory.copy()
                                 best_optimal_rlf_value , best_optimal_par = \
                                     self._reduced_likelihood_function( \
-                                        theta=best_optimal_theta)
+                                    theta=best_optimal_theta)
                 k += 1
             except ValueError as ve:
                 # If iteration is max when fmin_cobyla fail is not reached
@@ -772,6 +724,7 @@ class KPLS(SM):
 
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
+
     def _check_param(self):
 
         """
@@ -788,8 +741,8 @@ class KPLS(SM):
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['poly']))
 
-        if len(self.options['theta0']) != self.options['n_comp']:
-            raise Exception('Number of principal components must be equal to the number of theta0.')
+        if len(self.options['theta0']) != self.dim:
+            raise Exception('Number of dimensions must be equal to the number of theta0.')
 
         if not callable(self.options['corr']):
             if self.options['corr'] in self._correlation_types:

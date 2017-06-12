@@ -14,7 +14,6 @@ from smt.utils.caching import cached_operation
 
 from smt.methods import RBFlib
 
-
 class RBF(SM):
 
     '''
