@@ -6,7 +6,7 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems import Carre, TensorProduct
+from smt.problems import Sphere, TensorProduct
 from smt.sampling import LHS
 
 from smt.utils.sm_test_case import SMTestCase
@@ -30,7 +30,7 @@ class Test(SMTestCase):
         ne = 100
 
         problems = OrderedDict()
-        problems['carre'] = Carre(ndim=ndim)
+        problems['sphere'] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
@@ -43,7 +43,7 @@ class Test(SMTestCase):
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        prob = self.problems['carre']
+        prob = self.problems['sphere']
         sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)

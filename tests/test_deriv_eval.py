@@ -6,7 +6,7 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems import Carre, TensorProduct
+from smt.problems import Sphere, TensorProduct
 from smt.sampling import LHS
 
 from smt.utils.sm_test_case import SMTestCase
@@ -30,7 +30,7 @@ class Test(SMTestCase):
         ne = 100
 
         problems = OrderedDict()
-        problems['carre'] = Carre(ndim=ndim)
+        problems['sphere'] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
@@ -92,18 +92,18 @@ class Test(SMTestCase):
         self.assert_error(e_error1, 0., 1e-1)
 
     # --------------------------------------------------------------------
-    # Function: carre
+    # Function: sphere
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RBF(self):
+    def test_sphere_RBF(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTC(self):
+    def test_sphere_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTB(self):
+    def test_sphere_RMTB(self):
         self.run_test()
 
 

@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="utf-8" />
-<title>tutorial_1</title>
+<title>problems</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -1681,86 +1681,62 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="SMT:-A-Python-Surrogate-Model-Toolbox">SMT: A Python Surrogate Model Toolbox<a class="anchor-link" href="#SMT:-A-Python-Surrogate-Model-Toolbox">&#182;</a></h1>
-</div>
-</div>
-</div>
-
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="preamble">preamble</h2>
-<p><img src="grie5.png" style="margin: 0px 0px 5px 20px; width: 10cm; float: right;" title="Example surrogate model"/> SMT, surrogate model toolbox, is a Python toolbox that includes four types of surrogate models---the least square (ls), square polynomial (pa2), inverse distance weighting (idw) and kriging-based models.</p>
-<p>The toolbox supports Linux and Microsoft Windows, except the idw model which is available only with Linux.</p>
-<p>This package is devoted to gathering several types of surrogate models within the same platform, for providing a benchmark to the engineering field. Another purpose of the SMT is for research purposes.</p>
-<p>SMT is typically used as a surrogate model for a (time-consuming) computer model.</p>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Version-0.1">Version 0.1<a class="anchor-link" href="#Version-0.1">&#182;</a></h2>
-</div>
-</div>
-</div>
-
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="availability">Availability</h2>
-<p>The toolbox is available for free. It could be used for commercial, research purposes, or both.</p>
-<p><a href="https://github.com/bouhlelma/SMT">To download the package</a></p>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="documentation">Documentation</h2>
-<p><a href="./tutorial_2.html">Quick tutorial</a></p>
-<p><a href="http://link.springer.com/article/10.1007/s00158-015-1395-9">KPLS</a></p>
-<p><a href="https://www.hindawi.com/journals/mpe/2016/6723410/">KPLSK</a></p>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="On-going-development">On-going development<a class="anchor-link" href="#On-going-development">&#182;</a></h2>
-</div>
-</div>
-</div>
-
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Poeple-involved">Poeple involved<a class="anchor-link" href="#Poeple-involved">&#182;</a></h3>
-</div>
-</div>
-</div>
-
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>SMT is maintained by Mohamed Amine Bouhlel from MDOlab        mbouhlel@umich.edu</p>
-<p>John Hwang             hwangjt@umich.edu</p>
-<p>Nathalie Bartoli         nathalie.bartoli@onera.fr</p>
-<p>Rhea P. Liem            rpliem@ust.hk</p>
+<h1 id="list-of-problems">List of problems</h1>
+<p>TODO: complete the expression of all functions</p>
+<h3 id="analytical-functions">Analytical functions</h3>
+<p>All figures given here are a 2-D plot.</p>
+<ul>
+<li>Sphere function (dimension = <span class="math inline">\(d\)</span>) <img src=sphere.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\sum\limits_{i=1}^dx_i^2,\quad-10\leq x_i\leq 10,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span></li>
+<li>Rosenbrock function (dimension = <span class="math inline">\(d\)</span>) <img src=rosenbrock.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\sum\limits_{i=1}^{d-1}\left[(x_{i+1}-x_i^2)^2+(x_i-1)^2\right],\quad-2\leq x_i\leq 2,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span></li>
+<li>Ndim Rosenbrock function</li>
+<li>Tensor Product function (dimension = <span class="math inline">\(d\)</span>)</li>
+</ul>
+All figures for the tensor product function are given with <span class="math inline">\(a=1\)</span>. <img src=cos_tensor_prod.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\prod\limits_{i=1}^{d}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span>
+<img src=exp_tensor_prod.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\prod\limits_{i=1}^{d}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span>
+<img src=tanh_tensor_prod.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\prod\limits_{i=1}^{d}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span>
+<img src=Gaussian_tensor_prod.png width=400 height=70 />
+<span class="math display">\[\begin{equation}
+\prod\limits_{i=1}^{d}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+\end{equation}\]</span>
+<ul>
+<li>Ndim Step function</li>
+</ul>
+<h3 id="engineering-functions">Engineering functions</h3>
+<ul>
+<li>Cantilever Beam function</li>
+<li>Ndim Cantilever Beam function</li>
+<li>Robot Arm function (dimension = 8)
+<span class="math display">\[\begin{equation*}
+\sqrt{\left(\sum\limits_{i=1}^4L_i\cos\left(\sum\limits_{j=1}^i\theta_j\right)\right)^2+\left(\sum\limits_{i=1}^4L_i\sin\left(\sum\limits_{j=1}^i\theta_j\right)
+\right)^2},\quad L_i \in [0,1] \quad \text{for}\quad i=1,\dotsc,4 \quad \text{and}\quad \theta_j \in [0,2\pi]\quad\text{for}\quad j=1,\dotsc,4.
+\end{equation*}\]</span></li>
+<li>Ndim Robot Arm function</li>
+<li>Torsion Vibration function</li>
+<li>Water Flow function (dimension = 8)
+<span class="math display">\[\begin{equation*}
+\frac{2\pi T_u\left(H_u-H_l\right)}{\ln\left(\frac{r}{r_w}\right)\left[1+\frac{2LT_u}{\ln\left(\frac{r}{r_w}\right)r_w^2K_w}+\frac{T_u}{T_l}\right]},\quad 0.05\leq r_w\leq 0.15,\quad 100\leq r\leq 50000,\quad 63070\leq T_u\leq 115600,\quad 990 \leq H_u \leq 1110, \quad 63.1 \leq T_l \leq 116, \quad 700 \leq H_l \leq 820, \quad 1120 \leq L \leq 1680,\quad \text{and}\quad  9855 \leq K_w \leq 12045.
+\end{equation*}\]</span></li>
+<li>Welded Beam function</li>
+<li>Wing Weight function (dimension = 10)
+<span class="math display">\[\begin{equation*}
+0.036S_w^{0.758}W_{fw}^{0.0035}\left(\frac{A}{\cos^2\Lambda}\right)q^{0.006}\lambda^{0.04}\left(\frac{100tc}{\cos\Lambda}\right)^{-0.3}\left(N_zW_{dg}\right)^{0.49}+S_wW_p,\quad 150\leq S_w\leq 200,\quad 220\leq W_{fw}\leq 300,\quad 6 \leq A \leq 10,\quad -10 \leq \Lambda \leq 10,\quad 16\leq q\leq 45,\quad 0.5\leq \lambda\leq 1,\quad 0.08 \leq t_c\leq 0.18,\quad 2.5\leq N_z\leq 6,\quad 1700\leq W_{dg}\leq 25000,\quad \text{and} \quad 0.025\leq W_p\leq 0.08.
+\end{equation*}\]</span></li>
+</ul>
 </div>
 </div>
 </div>
@@ -1769,11 +1745,10 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h6 id="Last-update-December-15,-2016">Last update December 15, 2016<a class="anchor-link" href="#Last-update-December-15,-2016">&#182;</a></h6>
+<h1 id="example-of-execution">Example of execution</h1>
 </div>
 </div>
 </div>
-
     </div>
   </div>
 </body>

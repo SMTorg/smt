@@ -4,7 +4,7 @@ import unittest
 
 from six.moves import range
 
-from smt.problems import CantileverBeam, Carre, ReducedProblem, RobotArm, Rosenbrock
+from smt.problems import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.utils.sm_test_case import SMTestCase
@@ -71,9 +71,9 @@ class Test(SMTestCase):
                 ))
                 self.assertTrue(rel_rms_error_FD < 1e-3 or abs_rms_error_FD < 1e-5)
 
-    def test_carre(self):
-        self.run_test(Carre(ndim=1))
-        self.run_test(Carre(ndim=3))
+    def test_sphere(self):
+        self.run_test(Sphere(ndim=1))
+        self.run_test(Sphere(ndim=3))
 
     def test_exp(self):
         self.run_test(TensorProduct(name='TP-exp', ndim=1, func='exp'))

@@ -296,7 +296,6 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
                 yy = np.vstack((yy,y[i,0]))
                 yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
                     xlimits[ii,1]-xlimits[ii,0])
-
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 """
