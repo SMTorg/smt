@@ -1,5 +1,5 @@
 from .cantilever_beam import CantileverBeam
-from .carre import Carre
+from .sphere import Sphere
 from .reduced_problem import ReducedProblem
 from .robot_arm import RobotArm
 from .rosenbrock import Rosenbrock

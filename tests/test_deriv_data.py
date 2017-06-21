@@ -6,15 +6,15 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems import Carre, TensorProduct
+from smt.problems import Sphere, TensorProduct
 from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt import LS, PA2, KPLS
+from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
 try:
-    from smt import IDW, RBF, RMTC, RMTB
+    from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -30,7 +30,7 @@ class Test(SMTestCase):
         ne = 500
 
         problems = OrderedDict()
-        problems['carre'] = Carre(ndim=ndim)
+        problems['sphere'] = Sphere(ndim=ndim)
         problems['exp'] = TensorProduct(ndim=ndim, func='exp')
         problems['tanh'] = TensorProduct(ndim=ndim, func='tanh')
         problems['cos'] = TensorProduct(ndim=ndim, func='cos')
@@ -95,8 +95,8 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_pts = {'exact': {}}
-        sm.add_training_pts('exact', xt, yt)
+        sm.training_points = {'exact': {}}
+        sm.add_training_points('exact', xt, yt)
 
         with Silence():
             sm.train()
@@ -110,10 +110,10 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_pts = {'exact': {}}
-        sm.add_training_pts('exact', xt, yt)
+        sm.training_points = {'exact': {}}
+        sm.add_training_points('exact', xt, yt)
         for kx in range(prob.xlimits.shape[0]):
-            sm.add_training_pts('exact', xt, dyt[kx], kx)
+            sm.add_training_points('exact', xt, dyt[kx], kx)
 
         with Silence():
             sm.train()
@@ -131,14 +131,14 @@ class Test(SMTestCase):
         self.assert_error(ge_e_error, 0., self.ge_e_errors[sname])
 
     # --------------------------------------------------------------------
-    # Function: carre
+    # Function: sphere
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTC(self):
+    def test_sphere_RMTC(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_carre_RMTB(self):
+    def test_sphere_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------

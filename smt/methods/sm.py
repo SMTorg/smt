@@ -4,7 +4,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 Metamodels - a base class for metamodel methods
 """
-#TODO: Extend to multifidelity problems by adding training_pts = {'approx': {}}
+#TODO: Extend to multifidelity problems by adding training_points = {'approx': {}}
 #TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict) 
 
 from __future__ import division
@@ -33,7 +33,7 @@ class SM(object):
         self._declare_options()
         self.options.update(kwargs)
 
-        self.training_pts = {'exact': {}}
+        self.training_points = {'exact': {}}
 
         self.printer = Printer()
 
@@ -76,15 +76,15 @@ class SM(object):
                 kx2 = 0
             else:
                 kx2 += 1
-            if kx2 not in self.training_pts['exact']:
+            if kx2 not in self.training_points['exact']:
                 raise ValueError('There is no training point data available for kx %s' % kx2)
-            xt, yt = self.training_pts['exact'][kx2]
+            xt, yt = self.training_points['exact'][kx2]
             yt2 = self.predict(xt, kx)
             num += np.linalg.norm(yt2 - yt) ** 2
             den += np.linalg.norm(yt) ** 2
             return num ** 0.5 / den ** 0.5
 
-    def add_training_pts(self, typ, xt, yt, kx=None):
+    def add_training_points(self, typ, xt, yt, kx=None):
         '''
         Adds nt training/sample data points
 
@@ -120,7 +120,7 @@ class SM(object):
             kx = kx + 1
 
         #Construct the input data
-        pts = self.training_pts[typ]
+        pts = self.training_points[typ]
         if kx in pts:
             pts[kx][0] = np.vstack([pts[kx][0], xt])
             pts[kx][1] = np.vstack([pts[kx][1], yt])
@@ -131,7 +131,7 @@ class SM(object):
         '''
         Train the model
         '''
-        n_exact = self.training_pts['exact'][0][0].shape[0]
+        n_exact = self.training_points['exact'][0][0].shape[0]
 
         self.printer.active = self.options['print_global']
         self.printer._line_break()
@@ -139,7 +139,7 @@ class SM(object):
 
         self.printer.active = self.options['print_global'] and self.options['print_problem']
         self.printer._title('Problem size')
-        self.printer('   %-25s : %i' % ('# training pts.', n_exact))
+        self.printer('   %-25s : %i' % ('# training points.', n_exact))
         self.printer()
 
         self.printer.active = self.options['print_global'] and self.options['print_training']
@@ -151,7 +151,7 @@ class SM(object):
 
         #Train the model using the specified model-method
         with self.printer._timed_context('Training', 'training'):
-            self.fit()
+            self._train()
 
     def predict(self, x, kx=None):
         '''
@@ -180,7 +180,7 @@ class SM(object):
             self.printer._title('Evaluation of the Mixture of experts')
         else:
             self.printer._title('Evaluation')
-        self.printer('   %-12s : %i' % ('# eval pts.', n_evals))
+        self.printer('   %-12s : %i' % ('# eval points.', n_evals))
         self.printer()
 
         #Output or derivative variables
@@ -191,7 +191,7 @@ class SM(object):
 
         #Evaluate the unknown points using the specified model-method
         with self.printer._timed_context('Predicting', key='prediction'):
-            y = self.evaluate(x, kx)
+            y = self._predict(x, kx)
 
         time_pt = self.printer._time('prediction')[-1] / n_evals
         self.printer()

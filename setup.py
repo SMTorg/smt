@@ -9,15 +9,15 @@ if os.name == 'nt':
 else:
     # If OS is OS X or Linux, assume Fortran compilers are available
     ext = [
-        Extension(name='smt.IDWlib', extra_compile_args=['-fbounds-check'],
+        Extension(name='smt.methods.IDWlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/idw.f95']),
-        Extension(name='smt.RBFlib', extra_compile_args=['-fbounds-check'],
+        Extension(name='smt.methods.RBFlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rbf.f95']),
-        Extension(name='smt.RMTSlib', extra_compile_args=['-fbounds-check'],
+        Extension(name='smt.methods.RMTSlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmts.f95', 'src_f/utils.f95']),
-        Extension(name='smt.RMTClib', extra_compile_args=['-fbounds-check'],
+        Extension(name='smt.methods.RMTClib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmtc.f95', 'src_f/utils.f95']),
-        Extension(name='smt.RMTBlib', extra_compile_args=['-fbounds-check'],
+        Extension(name='smt.methods.RMTBlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmtb.f95', 'src_f/utils.f95']),
     ]
 
@@ -29,6 +29,7 @@ setup(name='smt',
     license='BSD-3',
     packages=[
         'smt',
+        'smt/methods',
         'smt/problems',
         'smt/sampling',
         'smt/utils',

@@ -3,9 +3,14 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
+TODO:
+- Add additional points GEKPLS1, GEKPLS2 and so on
 
-TODO
-Add additional points GEKPLS1, GEKPLS2 and so on
+- define outputs['sol'] = self.sol
+
+- debug _train: self_pkl = pickle.dumps(obj)
+                           cPickle.PicklingError: Can't pickle <type 'function'>: attribute lookup __builtin__.function failed
+
 """
 
 from __future__ import division
@@ -15,11 +20,11 @@ import numpy as np
 from scipy import linalg, optimize
 from pyDOE import *
 from types import FunctionType
+from smt.utils.caching import cached_operation
 
-from smt.sm import SM
-from smt.pairwise import manhattan_distances
-from smt.pls import pls as _pls
-
+from smt.methods.sm import SM
+from smt.utils.pairwise import manhattan_distances
+from smt.utils.pls import pls as _pls
 
 def standardization(X,y,copy=False):
 
@@ -122,7 +127,7 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-def componentwise_distance(D,corr,n_comp,dim,coeff_pls,limit=int(1e4)):
+def componentwise_distance(D,corr,n_comp,dim,coeff_pls):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -147,9 +152,6 @@ def componentwise_distance(D,corr,n_comp,dim,coeff_pls,limit=int(1e4)):
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
 
-    limit: int
-            - Manage the memory.
-
     Returns
     -------
 
@@ -158,42 +160,27 @@ def componentwise_distance(D,corr,n_comp,dim,coeff_pls,limit=int(1e4)):
               vectors in X.
 
     """
+    #Manage the memory.
+    limit=int(1e4)
 
     D_corr = np.zeros((D.shape[0],n_comp))
     i,nb_limit  = 0,int(limit)
 
-    if n_comp == dim:
-        # Kriging
-        while True:
-            if i * nb_limit > D_corr.shape[0]:
-                return D_corr
+    while True:
+        if i * nb_limit > D_corr.shape[0]:
+            return D_corr
+        else:
+            if corr == 'squar_exp':
+                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
+                            (i+1)*nb_limit,:]** 2,coeff_pls**2)
             else:
-                if corr == 'squar_exp':
-                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = D[i*nb_limit:(i+1)*
-                                                             nb_limit,:]**2
-                else:
-                    # abs_exp
-                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.abs(D[i*nb_limit:
-                                                            (i+1)*nb_limit,:])
-                i+=1
-    else:
-        # KPLS or GEKPLS
-        while True:
-            if i * nb_limit > D_corr.shape[0]:
-                return D_corr
-            else:
-                if corr == 'squar_exp':
-                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
-                                    (i+1)*nb_limit,:]** 2,coeff_pls**2)
-                else:
-                    # abs_exp
-                    D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
+                # abs_exp
+                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
                         nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
-                i+=1
+            i+=1
 
 
-def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
-                opt=0):
+def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
 
     """
     Computes the PLS-coefficients.
@@ -219,12 +206,8 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     xlimits: np.ndarray[dim, 2]
             - The upper and lower var bounds.
 
-    extra_pts: int
+    extra_points: int
             - The number of extra points per each training point.
-
-    opt: int
-            - opt = 0: using the KPLS model.
-            - opt = 1: using the GEKPLS model.
 
     Returns
     -------
@@ -232,11 +215,11 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     Coeff_pls: np.ndarray[dim, n_comp]
             - The PLS-coefficients.
 
-    XX: np.ndarray[extra_pts*nt, dim]
-            - Extra points added (only when extra_pts > 0)
+    XX: np.ndarray[extra_points*nt, dim]
+            - Extra points added (when extra_points > 0)
 
-    yy: np.ndarray[extra_pts*nt, 1]
-            - Extra points added (only when extra_pts > 0)
+    yy: np.ndarray[extra_points*nt, 1]
+            - Extra points added (when extra_points > 0)
 
     """
     nt,dim = X.shape
@@ -244,83 +227,76 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_pts=0,
     yy = np.empty(shape = (0,1))
     pls = _pls(n_comp)
 
-    if opt == 0:
-        #KPLS
-        pls.fit(X,y)
-        return np.abs(pls.x_rotations_), XX, yy
-    elif opt == 1:
-        #GEKPLS-KPLS
-        coeff_pls = np.zeros((nt,dim,n_comp))
-        for i in range(nt):
-            if dim >= 3:
-                sign = np.roll(bbdesign(dim,center=1),1,axis=0)
-                _X = np.zeros((sign.shape[0],dim))
-                _y = np.zeros((sign.shape[0],1))
-                sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
-                _X = X[i,:]+ sign
-                for j in range(1,dim+1):
-                    sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
-                _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
-            else:
-                _X = np.zeros((9,dim))
-                _y = np.zeros((9,1))
-                # center
-                _X[:,:] = X[i,:].copy()
-                _y[0,0] = y[i,0].copy()
-                # right
-                _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _y[1,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])
-                # up
-                _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[2,0] = _y[0,0].copy()+ pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
-                # left
-                _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _y[3,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])
-                # down
-                _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[4,0] = _y[0,0].copy()-pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
-                # right up
-                _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[5,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
-                # left up
-                _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[6,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
-                # left down
-                _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[7,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
-                # right down
-                _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-                _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-                _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
-                    xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
-                    xlimits[1,1]-xlimits[1,0])
+    coeff_pls = np.zeros((nt,dim,n_comp))
+    for i in range(nt):
+        if dim >= 3:
+            sign = np.roll(bbdesign(dim,center=1),1,axis=0)
+            _X = np.zeros((sign.shape[0],dim))
+            _y = np.zeros((sign.shape[0],1))
+            sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
+            _X = X[i,:]+ sign
+            for j in range(1,dim+1):
+                sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
+            _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
+        else:
+            _X = np.zeros((9,dim))
+            _y = np.zeros((9,1))
+            # center
+            _X[:,:] = X[i,:].copy()
+            _y[0,0] = y[i,0].copy()
+            # right
+            _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[1,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # up
+            _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[2,0] = _y[0,0].copy()+ pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left
+            _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[3,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # down
+            _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[4,0] = _y[0,0].copy()-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right up
+            _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[5,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left up
+            _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[6,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left down
+            _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[7,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right down
+            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
 
-            pls.fit(_X.copy(),_y.copy())
-            coeff_pls[i,:,:] = pls.x_rotations_
-            #Add additional points
-            if extra_pts != 0:
-                max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_pts:]
-                for ii in max_coeff:
-                    XX = np.vstack((XX,X[i,:]))
-                    XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
-                    yy = np.vstack((yy,y[i,0]))
-                    yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
-                        xlimits[ii,1]-xlimits[ii,0])
-
-        return np.abs(coeff_pls).mean(axis=0), XX, yy
+        pls.fit(_X.copy(),_y.copy())
+        coeff_pls[i,:,:] = pls.x_rotations_
+        #Add additional points
+        if extra_points != 0:
+            max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
+            for ii in max_coeff:
+                XX = np.vstack((XX,X[i,:]))
+                XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
+                yy = np.vstack((yy,y[i,0]))
+                yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
+                    xlimits[ii,1]-xlimits[ii,0])
+    return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 """
 The kpls-correlation models subroutine.
@@ -338,7 +314,6 @@ def abs_exp(theta, d):
         the autocorrelation parameter(s).
 
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
 
     Returns
     -------
@@ -371,7 +346,6 @@ def squar_exp(theta, d):
         the autocorrelation parameter(s).
 
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-            - |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
 
     Returns
     -------
@@ -481,7 +455,7 @@ def quadratic(x):
 The KPLS class.
 """
 
-class KPLS(SM):
+class GEKPLS(SM):
 
     '''
     - Ordinary kriging
@@ -499,20 +473,17 @@ class KPLS(SM):
         'squar_exp': squar_exp}
 
     def _declare_options(self):
-        super(KPLS, self)._declare_options()
+        super(GEKPLS, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'KPLS', types=str,
-                desc='KRG for Standard kriging if n_comp = dimension ' +
-                     'KPLS for Kriging with Partial Least Squares ' +
-                     'KPLSK for Kriging with Partial Least Squares + local optim Kriging ' +
-                     'GEKPLS for Gradient Enhanced KPLS')
+        declare('name', 'GEKPLS', types=str,
+                desc='GEKPLS for Gradient Enhanced KPLS')
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('delta_x', 1e-4, types=(int, float), desc='Step used in the FOTA')
-        declare('extra_pts', 0, types=int, desc='Number of extra points per training point')
+        declare('extra_points', 0, types=int, desc='Number of extra points per training point')
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
                 desc='regr. term')
         declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
@@ -520,43 +491,32 @@ class KPLS(SM):
         declare('best_iteration_fail', None)
         declare('nb_ill_matrix', 5)
         declare('kriging-step')
+        declare('data_dir', values=None, types=str,
+                desc='Directory for loading / saving cached data; None means do not save or load')
 
     ############################################################################
     # Model functions
     ############################################################################
 
-
-    def fit(self):
+    def _new_train(self):
 
         """
         Train the model
         """
-
         self._check_param()
 
         # Compute PLS coefficients
-        X = self.training_pts['exact'][0][0]
-        y = self.training_pts['exact'][0][1]
+        X = self.training_points['exact'][0][0]
+        y = self.training_points['exact'][0][1]
 
-        if 0 in self.training_pts['exact']:
-            #GEKPLS
-            if 1 in self.training_pts['exact'] and self.options['name'] == 'GEKPLS':
-                self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),
-                    self.options['n_comp'],self.training_pts,
-                    self.options['delta_x'],self.options['xlimits'],
-                                            self.options['extra_pts'],1)
-                if self.options['extra_pts'] != 0:
-                    self.nt *= (self.options['extra_pts']+1)
-                    X = np.vstack((X,XX))
-                    y = np.vstack((y,yy))
-            #KPLS
-            elif (self.options['name'] == 'KPLS' or self.options['name']
-                  == 'KPLSK') and self.options['n_comp'] < self.dim:
-                self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(), \
-                   self.options['n_comp'])
-            #Kriging
-            else:
-                self.coeff_pls = None
+        if 0 in self.training_points['exact']:
+            self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),self.options['n_comp'],
+                self.training_points,self.options['delta_x'],self.options['xlimits'],
+                self.options['extra_points'])
+            if self.options['extra_points'] != 0:
+                self.nt *= (self.options['extra_points']+1)
+                X = np.vstack((X,XX))
+                y = np.vstack((y,yy))
 
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
@@ -582,6 +542,20 @@ class KPLS(SM):
 
         del self.y_norma, self.D
 
+    def _train(self):
+        """
+        Train the model
+        """
+        """
+        inputs = {'self': self}
+        with cached_operation(inputs, self.options['data_dir']) as outputs:
+            if outputs:
+                self.sol = outputs['sol']
+            else:
+                self._new_train()
+                #outputs['sol'] = self.sol
+        """
+        self._new_train()
 
     def _reduced_likelihood_function(self, theta):
 
@@ -614,8 +588,7 @@ class KPLS(SM):
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
-            Universal Kriging or given beta0 for Ordinary
-            Kriging.
+            Universal Kriging or for Ordinary Kriging.
             gamma
             Gaussian Process weights.
             C
@@ -697,7 +670,49 @@ class KPLS(SM):
 
         return reduced_likelihood_function_value, par
 
-    def evaluate(self, x, kx):
+    def _predict_value(self,n_eval,x,r):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+        y = np.zeros(n_eval)
+
+        # Compute the regression function
+        f = self.options['poly'](x)
+
+        # Scaled predictor
+        y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
+                    self.optimal_par['gamma'])
+        # Predictor
+        y = (self.y_mean + self.y_std * y_).ravel()
+
+        return y
+
+    def _predict_derivative(self,n_eval,x,kx):
+        """
+        This function is used by _predict function. See _predict for more details.
+        """
+
+        if self.options['poly'].__name__ == 'constant':
+            df = np.array([0])
+        elif self.options['poly'].__name__ == 'linear':
+            df = np.zeros((self.dim + 1, self.dim))
+            df[1:,:] = 1
+        else:
+            raise ValueError(
+                'The derivative is only available for ordinary kriging or '+
+                'universal kriging using a linear trend')
+
+        # Beta and gamma = R^-1(y-FBeta)
+        beta = self.optimal_par['beta']
+        gamma = self.optimal_par['gamma']
+
+        df_dx = np.dot(df.T, beta)
+        d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
+        theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
+
+        return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
+
+    def _predict(self, x, kx):
         """
         Evaluate the surrogate model at x.
 
@@ -713,9 +728,34 @@ class KPLS(SM):
         Returns
         -------
         y : np.ndarray[n_eval,1]
-        - An array with the output values at x.
+        - An array with the output values at x if dx = 0.
+        - An array with the i-th partial derivative at x if dx != 0
         """
 
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
+        # Compute the correlation function
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+        # Output prediction
+        if kx == 0:
+            y = self._predict_value(n_eval,x,r)
+            return y
+
+        # Gradient prediction
+        else:
+            if self.options['corr'].__name__ != 'squar_exp':
+                raise ValueError(
+                'The derivative is only available for square exponential kernel')
+
+            y = self._predict_derivative(n_eval,x,kx)
+            return y
+
+    def _predict_variance(self, x):
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -723,59 +763,22 @@ class KPLS(SM):
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
         d = componentwise_distance(dx,self.options['corr'].__name__,
-                                   self.options['n_comp'],self.dim,
-                                   self.coeff_pls)
+                    self.options['n_comp'],self.dim,self.coeff_pls)
         # Compute the correlation function
-        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,
-                                        self.nt)
-        # Output prediction
-        if kx == 0:
-            y = np.zeros(n_eval)
-
-            # Compute the regression function
-            f = self.options['poly'](x)
-            
-            # Scaled predictor
-            y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
-                        self.optimal_par['gamma'])
-            # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
-
-            return y
-        # Gradient prediction
-        else:            
-            if self.options['corr'].__name__ != 'squar_exp':
-                raise ValueError(
-                'The derivative is only available for square exponential kernel')
-            # Beta and gamma = R^-1(y-FBeta)
-            beta = self.optimal_par['beta']
-            gamma = self.optimal_par['gamma']
-            
-            if self.options['poly'].__name__ == 'constant':
-                df = np.array([0])
-            elif self.options['poly'].__name__ == 'linear':
-                df = np.zeros((self.dim + 1, self.dim))
-                df[1:,:] = 1
-            else:
-                raise ValueError(
-                    'The derivative is only available for ordinary kriging or '+
-                    'universal kriging using a linear trend')
-            df_dx = np.dot(df.T, beta)
-            d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
-            if self.options['name'] == 'KPLSK' or self.options['name'] == 'KRG':
-                return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
-                       self.y_std/self.X_std[kx-1]
-            else:
-                # PLS-based models
-                theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
-                return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))* \
-                       self.y_std/self.X_std[kx-1]
-
-
-
-
-            
-
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+        
+        C = self.optimal_par['C']
+        rt = linalg.solve_triangular(self.optimal_par['C'], r.T, lower=True)
+        
+        u = linalg.solve_triangular(self.optimal_par['G'].T,np.dot(self.optimal_par['Ft'].T, rt) -
+                             self.options['poly'](x).T)
+                   
+        MSE = self.optimal_par['sigma2']*(1.-(rt ** 2.).sum(axis=0)+(u ** 2.).sum(axis=0))
+        # Mean Squared Error might be slightly negative depending on
+        # machine precision: force to zero!
+        MSE[MSE < 0.] = 0.
+        return MSE
+        
     def _optimize_hyperparam(self,D):
 
         """
@@ -805,119 +808,88 @@ class KPLS(SM):
 
         # Initialize the hyperparameter-optimization
         def minus_reduced_likelihood_function(log10t):
-                return - self._reduced_likelihood_function(
-                    theta=10.**log10t)[0]
+            return - self._reduced_likelihood_function(theta=10.**log10t)[0]
 
         key, limit, _rhobeg = True, 10*self.options['n_comp'], 0.5
 
-        for ii in range(self.options['kriging-step']+1):
-            best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
-                constraints = [], [], [], []
+        best_optimal_theta, best_optimal_rlf_value, best_optimal_par, \
+            constraints = [], [], [], []
 
-            for i in range(self.options['n_comp']):
-                constraints.append(lambda log10t,i=i:
-                                   log10t[i] - np.log10(1e-6))
-                constraints.append(lambda log10t,i=i:
-                                   np.log10(10) - log10t[i])
+        for i in range(self.options['n_comp']):
+            constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
+            constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
 
-            # Compute D which is the componentwise distances between locations
-            #  x and x' at which the correlation model should be evaluated.
-            self.D = componentwise_distance(D,
-                                        self.options['corr'].__name__,
-                                        self.options['n_comp'],self.dim,
-                                        self.coeff_pls)
+        # Compute D which is the componentwise distances between locations
+        #  x and x' at which the correlation model should be evaluated.
+        self.D = componentwise_distance(D,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
 
-            # Initialization
-            k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
-            while (k < stop):
-                # Use specified starting point as first guess
-                theta0 = self.options['theta0']
-                try:
-                    optimal_theta = 10. ** optimize.fmin_cobyla(
-                        minus_reduced_likelihood_function, np.log10(theta0),
-                        constraints, rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,
-                        maxfun=limit)
+        # Initialization
+        k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
+        while (k < stop):
+            # Use specified starting point as first guess
+            theta0 = self.options['theta0']
+            try:
+                optimal_theta = 10. ** optimize.fmin_cobyla(
+                    minus_reduced_likelihood_function, np.log10(theta0),
+                    constraints, rhobeg= _rhobeg, rhoend = 1e-4,iprint=0,maxfun=limit)
 
-                    optimal_rlf_value, optimal_par = \
-                        self._reduced_likelihood_function(theta=optimal_theta)
+                optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
+                    theta=optimal_theta)
 
-                    # Compare the new optimizer to the best previous one
-                    if k > 0:
-                        if np.isinf(optimal_rlf_value):
-                            stop += 1
-                            if incr != 0:
-                                return
-                        else:
-                            if optimal_rlf_value >= self.options[
-                                    'best_iteration_fail'] :
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
-                                else:
-                                    if  self.options['best_iteration_fail'] \
-                                        > best_optimal_rlf_value:
-                                        best_optimal_theta = self._thetaMemory
-                                        best_optimal_rlf_value , best_optimal_par = \
-                                          self._reduced_likelihood_function(\
-                                          theta= best_optimal_theta)
-                    else:
-                        if np.isinf(optimal_rlf_value):
-                            stop += 1
-                        else:
-                            if optimal_rlf_value >=  self.options[
-                                    'best_iteration_fail']:
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
-
-                            else:
-                                if  self.options['best_iteration_fail'] > \
-                                    best_optimal_rlf_value:
-                                    best_optimal_theta = self._thetaMemory.copy()
-                                    best_optimal_rlf_value , best_optimal_par = \
-                                        self._reduced_likelihood_function( \
-                                            theta=best_optimal_theta)
-                    k += 1
-                except ValueError as ve:
-                    # If iteration is max when fmin_cobyla fail is not reached
-                    if (self.options['nb_ill_matrix'] > 0):
-                        self.options['nb_ill_matrix'] -= 1
-                        k += 1
+                # Compare the new optimizer to the best previous one
+                if k > 0:
+                    if np.isinf(optimal_rlf_value):
                         stop += 1
-                        # One evaluation objectif function is done at least
-                        if ( self.options['best_iteration_fail'] is not
-                             None):
-                            if  self.options['best_iteration_fail'] > \
-                                best_optimal_rlf_value:
-                                best_optimal_theta = self._thetaMemory
-                                best_optimal_rlf_value , best_optimal_par = \
-                                    self._reduced_likelihood_function(theta=
-                                    best_optimal_theta)
-                    # Optimization fail
-                    elif best_optimal_par == [] :
-                        print("Optimization failed. Try increasing the ``nugget``")
-                        raise ve
-                    # Break the while loop
+                        if incr != 0:
+                            return
                     else:
-                        k = stop + 1
-                        print("fmin_cobyla failed but the best value is retained")
+                        if optimal_rlf_value >= self.options['best_iteration_fail'] :
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
+                            else:
+                                if self.options['best_iteration_fail'] > best_optimal_rlf_value:
+                                    best_optimal_theta = self._thetaMemory
+                                    best_optimal_rlf_value , best_optimal_par = \
+                                        self._reduced_likelihood_function(theta= best_optimal_theta)
+                else:
+                    if np.isinf(optimal_rlf_value):
+                        stop += 1
+                    else:
+                        if optimal_rlf_value >=  self.options['best_iteration_fail']:
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
 
-            if self.options['kriging-step']:
-                # Next iteration is to do a kriging model starting from the
-                # given by the KPLS or GEKPLS models
-                if key:
-                    if self.options['corr'].__name__ == 'squar_exp':
-                        self.options['theta0'] = (best_optimal_theta *
-                                                 self.coeff_pls**2).sum(1)
-                    else:
-                        self.options['theta0'] = (best_optimal_theta *
-                                                 np.abs(self.coeff_pls)).sum(1)
-                    self.options['n_comp'] = self.dim
-                    key, limit, _rhobeg,self.options[
-                        'best_iteration_fail'] = False, 3*self.options[
-                        'n_comp'], 0.05, None
+                        else:
+                            if self.options['best_iteration_fail'] > best_optimal_rlf_value:
+                                best_optimal_theta = self._thetaMemory.copy()
+                                best_optimal_rlf_value , best_optimal_par = \
+                                    self._reduced_likelihood_function(theta=best_optimal_theta)
+                k += 1
+            except ValueError as ve:
+                # If iteration is max when fmin_cobyla fail is not reached
+                if (self.options['nb_ill_matrix'] > 0):
+                    self.options['nb_ill_matrix'] -= 1
+                    k += 1
+                    stop += 1
+                    # One evaluation objectif function is done at least
+                    if (self.options['best_iteration_fail'] is not None):
+                        if self.options['best_iteration_fail'] > best_optimal_rlf_value:
+                            best_optimal_theta = self._thetaMemory
+                            best_optimal_rlf_value , best_optimal_par = \
+                                self._reduced_likelihood_function(theta=best_optimal_theta)
+                # Optimization fail
+                elif best_optimal_par == [] :
+                    print("Optimization failed. Try increasing the ``nugget``")
+                    raise ve
+                # Break the while loop
+                else:
+                    k = stop + 1
+                    print("fmin_cobyla failed but the best value is retained")
 
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
@@ -935,35 +907,11 @@ class KPLS(SM):
                     self.options['poly']]
             else:
                 raise ValueError("regr should be one of %s or callable, "
-                                 "%s was given." % (self._regression_types.keys(
-                                 ), self.options['poly']))
+                                 "%s was given." % (self._regression_types.keys(),
+                                self.options['poly']))
 
-
-        if not(self.options['name'] in ['KRG','KPLS','GEKPLS','KPLSK']):
-            raise Exception("The %s model is not found in ['KRG','KPLS','GEKPLS','KPLSK']."
-                               %(self.options['name']))
-        else:
-            if self.options['name'] == 'KRG':
-                if self.options['n_comp'] != self.dim:
-                    raise Exception('The number of principal components must be equal to the number of dimension for using the kriging model.')
-
-                self.options['kriging-step'] = 0
-
-            elif self.options['name'] == 'GEKPLS':
-                if not(1 in self.training_pts['exact']):
-                    raise Exception('Derivative values are needed for using the GEKPLS model.')
-                self.options['kriging-step'] = 0
-
-            elif self.options['name'] == 'KPLSK':
-                self.options['kriging-step'] = 1
-
-            else:
-                self.options['kriging-step'] = 0
-
-        if self.dim == self.options['n_comp']:
-            if self.options['name'] != 'KRG':
-                warnings.warn('Kriging is used instead of the KPLS model!')
-                self.options['name'] = 'KRG'
+        if not(1 in self.training_points['exact']):
+            raise Exception('Derivative values are needed for using the GEKPLS model.')
 
         if len(self.options['theta0']) != self.options['n_comp']:
             raise Exception('Number of principal components must be equal to the number of theta0.')
@@ -971,12 +919,10 @@ class KPLS(SM):
         if not callable(self.options['corr']):
             if self.options['corr'] in self._correlation_types:
                 self.options['corr'] = self._correlation_types[self.options['corr']]
-
             else:
                 raise ValueError("corr should be one of %s or callable, "
                                  "%s was given."
                                  % (self._correlation_types.keys(), self.options['corr']))
-
 
     def _check_F(self,n_samples_F,p):
 

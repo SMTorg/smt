@@ -6,15 +6,15 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems import Carre, TensorProduct
+from smt.problems import Sphere, TensorProduct
 from smt.sampling import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt import LS, PA2, KPLS
+from smt.methods import LS, PA2, KPLS, KRG
 try:
-    from smt import IDW, RBF, RMTC, RMTB
+    from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -30,7 +30,7 @@ class Test(SMTestCase):
         ne = 100
 
         problems = OrderedDict()
-        problems['carre'] = Carre(ndim=ndim)
+        problems['sphere'] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
@@ -43,7 +43,7 @@ class Test(SMTestCase):
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        prob = self.problems['carre']
+        prob = self.problems['sphere']
         sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
@@ -62,10 +62,10 @@ class Test(SMTestCase):
         x[0, :] = prob.xlimits[:, 1] + 1.0
         y = prob(x)
 
-        sm.training_pts = {'exact': {}}
-        sm.add_training_pts('exact', xt, yt)
+        sm.training_points = {'exact': {}}
+        sm.add_training_points('exact', xt, yt)
         if extrap_train:
-            sm.add_training_pts('exact', x, y)
+            sm.add_training_points('exact', x, y)
 
         with Silence():
             sm.train()
@@ -82,7 +82,7 @@ class Test(SMTestCase):
         with self.assertRaises(Exception) as context:
             self.run_test('RMTC', True, False)
         self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+                         'Training points above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTC_predict(self):
@@ -97,7 +97,7 @@ class Test(SMTestCase):
         with self.assertRaises(Exception) as context:
             self.run_test('RMTB', True, False)
         self.assertEqual(str(context.exception),
-                         'Training pts above max for 0')
+                         'Training points above max for 0')
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTB_predict(self):

@@ -10,10 +10,10 @@ import numpy as np
 from smt.problems.problem import Problem
 
 
-class Carre(Problem):
+class Sphere(Problem):
 
     def _declare_options(self):
-        self.options.declare('name', 'Carre', types=str)
+        self.options.declare('name', 'Sphere', types=str)
 
     def _initialize(self):
         self.xlimits[:, 0] = -10.

@@ -10,10 +10,9 @@ from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
-from smt.rmts import RMTS
+from smt.methods.rmts import RMTS
 
-from smt import RMTClib
-
+from smt.methods import RMTClib
 
 class RMTC(RMTS):
     """
@@ -47,7 +46,7 @@ class RMTC(RMTS):
 
     def _initialize(self):
         options = self.options
-        nx = self.training_pts['exact'][0][0].shape[1]
+        nx = self.training_points['exact'][0][0].shape[1]
 
         for name in ['smoothness', 'num_elements']:
             if isinstance(options[name], (int, float)):
@@ -58,8 +57,8 @@ class RMTC(RMTS):
 
         num = {}
         # number of inputs and outputs
-        num['x'] = self.training_pts['exact'][0][0].shape[1]
-        num['y'] = self.training_pts['exact'][0][1].shape[1]
+        num['x'] = self.training_points['exact'][0][0].shape[1]
+        num['y'] = self.training_points['exact'][0][1].shape[1]
         # number of elements
         num['elem_list'] = np.array(options['num_elements'], int)
         num['elem'] = np.prod(num['elem_list'])
@@ -71,8 +70,8 @@ class RMTC(RMTS):
         num['uniq'] = np.prod(num['uniq_list'])
         # total number of training points (function values and derivatives)
         num['t'] = 0
-        for kx in self.training_pts['exact']:
-            num['t'] += self.training_pts['exact'][kx][0].shape[0]
+        for kx in self.training_points['exact']:
+            num['t'] += self.training_points['exact'][kx][0].shape[0]
         # for RMT
         num['coeff'] = num['term'] * num['elem']
         num['support'] = num['term']
