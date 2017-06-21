@@ -78,6 +78,7 @@ t.add_training_points('exact',xt,yt[:,0])
 t.train()
 y = t.predict(xtest)
 
+
 print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 

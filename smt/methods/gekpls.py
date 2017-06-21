@@ -588,8 +588,7 @@ class GEKPLS(SM):
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
-            Universal Kriging or given beta0 for Ordinary
-            Kriging.
+            Universal Kriging or for Ordinary Kriging.
             gamma
             Gaussian Process weights.
             C
@@ -756,6 +755,30 @@ class GEKPLS(SM):
             y = self._predict_derivative(n_eval,x,kx)
             return y
 
+    def _predict_variance(self, x):
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
+                                 False)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
+        # Compute the correlation function
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+        
+        C = self.optimal_par['C']
+        rt = linalg.solve_triangular(self.optimal_par['C'], r.T, lower=True)
+        
+        u = linalg.solve_triangular(self.optimal_par['G'].T,np.dot(self.optimal_par['Ft'].T, rt) -
+                             self.options['poly'](x).T)
+                   
+        MSE = self.optimal_par['sigma2']*(1.-(rt ** 2.).sum(axis=0)+(u ** 2.).sum(axis=0))
+        # Mean Squared Error might be slightly negative depending on
+        # machine precision: force to zero!
+        MSE[MSE < 0.] = 0.
+        return MSE
+        
     def _optimize_hyperparam(self,D):
 
         """

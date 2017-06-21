@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="utf-8" />
-<title>problems</title>
+<title>sampling</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -1676,169 +1676,12 @@ div#notebook {
   <div tabindex="-1" id="notebook" class="border-box-sizing">
     <div class="container" id="notebook-container">
 
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="list-of-problems">List of problems</h1>
-<p>TODO: - complete the expressions of Ndim functions - s_a is not used in cantilever Beam problem (Check the implementation of cantilever Beam function)</p>
-<h3 id="analytical-functions">Analytical functions</h3>
-<p>All figures given here are a 2-D plot.</p>
-<ul>
-<li><font color='blue'>Sphere function (dimension = <span class="math inline">\(d\)</span>)</font></li>
-</ul>
-<p><img src=sphere.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\sum\limits_{i=1}^dx_i^2,\quad-10\leq x_i\leq 10,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<ul>
-<li><font color='blue'>Rosenbrock function (dimension = <span class="math inline">\(d\)</span>)</font></li>
-</ul>
-<p><img src=rosenbrock.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\sum\limits_{i=1}^{d-1}\left[(x_{i+1}-x_i^2)^2+(x_i-1)^2\right],\quad-2\leq x_i\leq 2,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<ul>
-<li><p><font color='blue'>Ndim Rosenbrock function</font></p></li>
-<li><p><font color='blue'>Tensor Product function (dimension = <span class="math inline">\(d\)</span>)</font></p></li>
-</ul>
-<p>All figures for the tensor product function are given with <span class="math inline">\(a=1\)</span>.</p>
-<p><img src=cos_tensor_prod.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\prod\limits_{i=1}^{d}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<p><img src=exp_tensor_prod.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\prod\limits_{i=1}^{d}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<p><img src=tanh_tensor_prod.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\prod\limits_{i=1}^{d}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<p><img src=Gaussian_tensor_prod.png width=400 height=70 /></p>
-<span class="math display">\[\begin{equation}
-\prod\limits_{i=1}^{d}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-\end{equation}\]</span>
-<ul>
-<li><font color='blue'>Ndim Step function</font></li>
-</ul>
-<h3 id="engineering-functions">Engineering functions</h3>
-<ul>
-<li><p><font color='blue'>Cantilever Beam function</font></p></li>
-<li><p><font color='blue'>Ndim Cantilever Beam function</font></p></li>
-<li><p><font color='blue'>Robot Arm function (dimension = 8)</font></p></li>
-</ul>
-<span class="math display">\[\begin{equation*}
-\sqrt{\left(\sum\limits_{i=1}^4L_i\cos\left(\sum\limits_{j=1}^i\theta_j\right)\right)^2+\left(\sum\limits_{i=1}^4L_i\sin\left(\sum\limits_{j=1}^i\theta_j\right)
-\right)^2},\quad L_i \in [0,1] \quad \text{for}\quad i=1,\dotsc,4 \quad \text{and}\quad \theta_j \in [0,2\pi]\quad\text{for}\quad j=1,\dotsc,4.
-\end{equation*}\]</span>
-<ul>
-<li><p><font color='blue'>Ndim Robot Arm function</font></p></li>
-<li><p><font color='blue'>Torsion Vibration function (dimension = 15)</font></p></li>
-</ul>
-<span class="math display">\[\begin{equation*}
-\frac{1}{2\pi}\sqrt{\frac{-b-\sqrt{b^2-4ac}}{2a}},
-\end{equation*}\]</span>
-<p>where <span class="math inline">\(K_i=\frac{\pi G_id_i}{32L_i},\quad M_j=\frac{\rho_j \pi t_jD_j}{4g},\quad J_j=0.5M_j\frac{D_j}{2},\quad a = 1,\quad b=-\left(\frac{K_1+K2}{J_1}+\frac{K_2+K3}{J_2}\right),\quad c=\frac{K_1K_2+K_2K_3+K_3K_1}{J_1J_2},\quad \text{for}\quad d_1\in [1.8,2.2],\quad L_1\in[9,11],\quad G_1\in [105300000,128700000],\quad d_2\in [1.638,2.002],\quad L_2\in[10.8,13.2],\quad G_2\in[5580000,6820000],\quad d_3\in[2.025,2.475],\quad L_3\in[7.2,8.8],\quad G_3\in[3510000,4290000],\quad D_1\in[10.8,13.2],\quad t_1\in[2.7,3.3],\quad \rho_1\in[0.252,0.308],\quad D_2\in[12.6,15.4],\quad t_2\in[3.6,4.4],\quad\rho_1\in[0.09,0.11]\)</span></p>
-<ul>
-<li><font color='blue'>Water Flow function (dimension = 8)</font></li>
-</ul>
-<span class="math display">\[\begin{equation*}
-\frac{2\pi T_u\left(H_u-H_l\right)}{\ln\left(\frac{r}{r_w}\right)\left[1+\frac{2LT_u}{\ln\left(\frac{r}{r_w}\right)r_w^2K_w}+\frac{T_u}{T_l}\right]},\quad 0.05\leq r_w\leq 0.15,\quad 100\leq r\leq 50000,\quad 63070\leq T_u\leq 115600,\quad 990 \leq H_u \leq 1110, \quad 63.1 \leq T_l \leq 116, \quad 700 \leq H_l \leq 820, \quad 1120 \leq L \leq 1680,\quad \text{and}\quad  9855 \leq K_w \leq 12045.
-\end{equation*}\]</span>
-<ul>
-<li><font color='blue'>Welded Beam function (dimension = 3)</font></li>
-</ul>
-<span class="math display">\[\begin{equation*}
-\sqrt{\frac{\tau&#39;^2+\tau&#39;&#39;^2+l\tau&#39;\tau&#39;&#39;}{\sqrt{0.25\left(l^2+(h+t)^2\right)}}},
-\end{equation*}\]</span>
-<p>where <span class="math inline">\(\tau&#39;=\frac{6000}{\sqrt{2}hl}, \quad\tau&#39;&#39;=\frac{6000(14+0.5l)\sqrt{0.25\left(l^2+(h+t)^2\right)}}{2\left[0.707hl\left(\frac{l^2}{12}+0.25(h+t)^2\right)\right]},\quad \text{for}\quad h\in[0.125,1],\quad l,t\in[5,10]\)</span></p>
-<ul>
-<li><font color='blue'>Wing Weight function (dimension = 10)</font></li>
-</ul>
-<span class="math display">\[\begin{equation*}
-0.036S_w^{0.758}W_{fw}^{0.0035}\left(\frac{A}{\cos^2\Lambda}\right)q^{0.006}\lambda^{0.04}\left(\frac{100tc}{\cos\Lambda}\right)^{-0.3}\left(N_zW_{dg}\right)^{0.49}+S_wW_p,\quad 150\leq S_w\leq 200,\quad 220\leq W_{fw}\leq 300,\quad 6 \leq A \leq 10,\quad -10 \leq \Lambda \leq 10,\quad 16\leq q\leq 45,\quad 0.5\leq \lambda\leq 1,\quad 0.08 \leq t_c\leq 0.18,\quad 2.5\leq N_z\leq 6,\quad 1700\leq W_{dg}\leq 25000,\quad \text{and} \quad 0.025\leq W_p\leq 0.08.
-\end{equation*}\]</span>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="example-of-execution">Example of execution</h1>
-<p>In the following, we use methods from sampling directory to generate sampling points to be evaluated by a function from problems directory. More details about sampling methods are given <a href="./sampling.html">here</a>.</p>
-<ul>
-<li>The Sphere example</li>
-</ul>
-</div>
-</div>
-</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
-<span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
-
-<span class="c">#Definition of the number of dimensions and the number of sampling points</span>
-<span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">100</span>
-
-<span class="c">#Define the Sphere function</span>
-<span class="n">fun</span> <span class="o">=</span> <span class="n">Sphere</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
-
-<span class="c">#Construction of the sampling points</span>
-<span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span><span class="c">#&#39;m&#39; for maximin criterion</span>
-<span class="n">xt</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ndoe</span><span class="p">)</span>
-
-<span class="c">#Compute the output</span>
-<span class="n">yt</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
-
-<span class="c">#Compute the gradient</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
-
-<span class="c">#The final result yt and yd contain the output and the derivative, respectively.</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>The Welded Beam function</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">WeldedBeam</span>
-<span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
-
-<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">30</span>
-<span class="n">fun</span> <span class="o">=</span> <span class="n">WeldedBeam</span><span class="p">()</span>
-
-<span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span>
-
-<span class="n">xt</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ndoe</span><span class="p">)</span>
-<span class="n">yt</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+<div class="highlight"><pre> 
 </pre></div>
 
 </div>

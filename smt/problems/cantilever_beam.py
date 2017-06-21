@@ -9,7 +9,7 @@ from __future__ import division
 import numpy as np
 
 from smt.problems.problem import Problem
-
+#TODO: s_a is not used here. In addition, double-check this function!
 
 class CantileverBeam(Problem):
 
