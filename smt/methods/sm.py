@@ -5,7 +5,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Metamodels - a base class for metamodel methods
 """
 #TODO: Extend to multifidelity problems by adding training_points = {'approx': {}}
-#TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict) 
+#TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict)
 
 from __future__ import division
 
@@ -67,7 +67,10 @@ class SM(object):
             If int, we are checking the derivs. w.r.t. the kx^{th} input variable (0-based).
         '''
         if xe is not None and ye is not None:
-            ye2 = self.predict(xe, kx)
+            if kx == None:
+                ye2 = self.predict_value(xe)
+            else:
+                ye2 = self.predict_derivative(xe, kx)
             return np.linalg.norm(ye2 - ye) / np.linalg.norm(ye)
         elif xe is None and ye is None:
             num = 0.
@@ -79,7 +82,10 @@ class SM(object):
             if kx2 not in self.training_points['exact']:
                 raise ValueError('There is no training point data available for kx %s' % kx2)
             xt, yt = self.training_points['exact'][kx2]
-            yt2 = self.predict(xt, kx)
+            if kx == None:
+                yt2 = self.predict_value(xt)
+            else:
+                yt2 = self.predict_derivative(xt, kx)
             num += np.linalg.norm(yt2 - yt) ** 2
             den += np.linalg.norm(yt) ** 2
             return num ** 0.5 / den ** 0.5
@@ -153,18 +159,14 @@ class SM(object):
         with self.printer._timed_context('Training', 'training'):
             self._train()
 
-    def predict(self, x, kx=None):
+    def predict_value(self, x):
         '''
-        Evaluates the model at a set of unknown points
+        Evaluates the model at a set of points.
 
         Arguments
         ---------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
-        kx : int or None
-            None if evaluation of the interpolant is desired.
-            int  if evaluation of derivatives of the interpolant is desired
-                 with respect to the kx^{th} input variable (kx is 0-based).
 
         Returns
         -------
@@ -183,15 +185,9 @@ class SM(object):
         self.printer('   %-12s : %i' % ('# eval points.', n_evals))
         self.printer()
 
-        #Output or derivative variables
-        if kx is None:
-            kx = 0
-        else:
-            kx = kx + 1
-
         #Evaluate the unknown points using the specified model-method
         with self.printer._timed_context('Predicting', key='prediction'):
-            y = self._predict(x, kx)
+            y = self._predict_value(x)
 
         time_pt = self.printer._time('prediction')[-1] / n_evals
         self.printer()
@@ -199,3 +195,92 @@ class SM(object):
         self.printer()
 
         return y.reshape(n_evals, self.ny)
+
+    def predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        n_evals = x.shape[0]
+
+        self.printer.active = self.options['print_global'] and self.options['print_prediction']
+
+        if self.options['name'] == 'MixExp':
+            # Mixture of experts model
+            self.printer._title('Evaluation of the Mixture of experts')
+        else:
+            self.printer._title('Evaluation')
+        self.printer('   %-12s : %i' % ('# eval points.', n_evals))
+        self.printer()
+
+        #Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context('Predicting', key='prediction'):
+            y = self._predict_derivative(x, kx)
+
+        time_pt = self.printer._time('prediction')[-1] / n_evals
+        self.printer()
+        self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
+        self.printer()
+
+        return y.reshape(n_evals, self.ny)
+
+    def predict_variance(self, x):
+        '''
+        Evaluates the variance at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values.
+
+        Returns
+        -------
+        y : np.ndarray
+            Variance values.
+        '''
+        return self._predict_variance(x)
+
+    def _predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        raise NotImplementedError('Derivative evaluation is not implemented for this SM method.')
+
+    def _predict_variance(self, x):
+        '''
+        Evaluates the variance at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values.
+
+        Returns
+        -------
+        y : np.ndarray
+            Variance values.
+        '''
+        raise NotImplementedError('Variance prediction is not implemented for this SM method.')

@@ -71,7 +71,7 @@ class Test(SMTestCase):
             sm.train()
 
         if extrap_predict:
-            sm.predict(x)
+            sm.predict_value(x)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTC(self):

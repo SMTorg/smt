@@ -106,24 +106,48 @@ class RBF(SM):
                 self._new_train()
                 outputs['sol'] = self.sol
 
-    def _predict(self, x, kx):
-        """
-        Evaluate the surrogate model at x.
+    def _predict_value(self, x):
+        '''
+        Evaluates the model at a set of points.
 
-        Parameters
-        ----------
-        x : np.ndarray[n_eval,dim]
-            An array giving the point(s) at which the prediction(s) should be made.
-        kx : int or None
-            None if evaluation of the interpolant is desired.
-            int  if evaluation of derivatives of the interpolant is desired
-                 with respect to the kx^{th} input variable (kx is 0-based).
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
 
         Returns
         -------
-        y : np.ndarray[n_eval,1]
-            - An array with the output values at x.
-        """
+        y : np.ndarray
+            Evaluation point output variable values
+        '''
+        n = x.shape[0]
+
+        num = self.num
+        options = self.options
+
+        xt = self.training_points['exact'][0][0]
+        jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], n,
+            num['radial'], num['dof'], options['d0'], x, xt)
+        return jac.dot(self.sol)
+
+    def _predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        kx += 1
+
         n = x.shape[0]
 
         num = self.num
