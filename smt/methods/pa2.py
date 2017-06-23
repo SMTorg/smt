@@ -91,7 +91,7 @@ class PA2(SM):
 
         return M.T
 
-    def _predict_value(self,x):
+    def _predict_value(self, x):
         """
         This function is used by _predict function. See _predict for more details.
         """
@@ -99,27 +99,3 @@ class PA2(SM):
         y = np.dot(M,self.coef).T
 
         return y
-
-    def _predict(self, x, kx):
-        """
-        Evaluate the surrogate model at x.
-
-        Parameters
-        ----------
-        x: np.ndarray[n_eval,dim]
-        An array giving the point(s) at which the prediction(s) should be made.
-        kx : int or None
-        None if evaluation of the interpolant is desired.
-        int  if evaluation of derivatives of the interpolant is desired
-             with respect to the kx^{th} input variable (kx is 0-based).
-
-        Returns
-        -------
-        y : np.ndarray[n_eval,1]
-        - An array with the output values at x.
-        """
-        if kx == 0:
-            y = self._predict_value(x)
-            return y
-        else:
-            raise NotImplementedError

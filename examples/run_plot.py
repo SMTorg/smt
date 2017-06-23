@@ -56,7 +56,7 @@ for ix in range(ndim):
 
     xe[:, ix] = np.linspace(a*prob.xlimits[ix, 0], a*prob.xlimits[ix, 1], nplot)
     ye = prob(xe)
-    ye2 = sm.predict(xe)
+    ye2 = sm.predict_value(xe)
     plt.subplot(nr, nc, ix + 1)
     plt.plot(xe[:, ix], ye, '-or')
     plt.plot(xe[:, ix], ye2, '-ob')

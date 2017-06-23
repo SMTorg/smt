@@ -670,10 +670,30 @@ class GEKPLS(SM):
 
         return reduced_likelihood_function_value, par
 
-    def _predict_value(self,n_eval,x,r):
-        """
-        This function is used by _predict function. See _predict for more details.
-        """
+    def _predict_value(self, x):
+        '''
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        '''
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
+        # Compute the correlation function
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+
         y = np.zeros(n_eval)
 
         # Compute the regression function
@@ -687,10 +707,39 @@ class GEKPLS(SM):
 
         return y
 
-    def _predict_derivative(self,n_eval,x,kx):
-        """
-        This function is used by _predict function. See _predict for more details.
-        """
+    def _predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        kx += 1
+
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = componentwise_distance(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.dim,self.coeff_pls)
+        # Compute the correlation function
+        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+
+        if self.options['corr'].__name__ != 'squar_exp':
+            raise ValueError(
+            'The derivative is only available for square exponential kernel')
+
+        y = np.zeros(n_eval)
 
         if self.options['poly'].__name__ == 'constant':
             df = np.array([0])
@@ -712,49 +761,6 @@ class GEKPLS(SM):
 
         return (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
 
-    def _predict(self, x, kx):
-        """
-        Evaluate the surrogate model at x.
-
-        Parameters
-        ----------
-        x: np.ndarray[n_eval,dim]
-        An array giving the point(s) at which the prediction(s) should be made.
-        kx : int or None
-        None if evaluation of the interpolant is desired.
-        int  if evaluation of derivatives of the interpolant is desired
-             with respect to the kx^{th} input variable (kx is 0-based).
-
-        Returns
-        -------
-        y : np.ndarray[n_eval,1]
-        - An array with the output values at x if dx = 0.
-        - An array with the i-th partial derivative at x if dx != 0
-        """
-
-        # Initialization
-        n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,
-                    self.options['n_comp'],self.dim,self.coeff_pls)
-        # Compute the correlation function
-        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
-        # Output prediction
-        if kx == 0:
-            y = self._predict_value(n_eval,x,r)
-            return y
-
-        # Gradient prediction
-        else:
-            if self.options['corr'].__name__ != 'squar_exp':
-                raise ValueError(
-                'The derivative is only available for square exponential kernel')
-
-            y = self._predict_derivative(n_eval,x,kx)
-            return y
-
     def _predict_variance(self, x):
         # Initialization
         n_eval, n_features_x = x.shape
@@ -766,19 +772,19 @@ class GEKPLS(SM):
                     self.options['n_comp'],self.dim,self.coeff_pls)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
-        
+
         C = self.optimal_par['C']
         rt = linalg.solve_triangular(self.optimal_par['C'], r.T, lower=True)
-        
+
         u = linalg.solve_triangular(self.optimal_par['G'].T,np.dot(self.optimal_par['Ft'].T, rt) -
                              self.options['poly'](x).T)
-                   
+
         MSE = self.optimal_par['sigma2']*(1.-(rt ** 2.).sum(axis=0)+(u ** 2.).sum(axis=0))
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.] = 0.
         return MSE
-        
+
     def _optimize_hyperparam(self,D):
 
         """

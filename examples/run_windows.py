@@ -43,7 +43,7 @@ t.add_training_points('exact',xt,yt[:,0])
 # Train the model
 t.train()
 # Prediction of the validation points
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
@@ -52,7 +52,7 @@ print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 t = PA2()
 t.add_training_points('exact',xt,yt[:,0])
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
@@ -63,7 +63,7 @@ t = KRG(theta0=[1e-2]*ndim)
 t.add_training_points('exact',xt,yt[:,0])
 
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
@@ -76,7 +76,7 @@ t = KPLS(name='KPLS', n_comp=2, theta0=[1e-2,1e-2])
 t.add_training_points('exact',xt,yt[:,0])
 
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 
 print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
@@ -87,7 +87,7 @@ print('KPLS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 t = KPLSK(n_comp=2, theta0=[1e-2,1e-2])
 t.add_training_points('exact',xt,yt[:,0])
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('KPLSK,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
@@ -102,7 +102,7 @@ for i in range(ndim):
     t.add_training_points('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('GEKPLS1,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
@@ -117,7 +117,7 @@ for i in range(ndim):
     t.add_training_points('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()
-y = t.predict(xtest)
+y = t.predict_value(xtest)
 
 print('GEKPLS2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
