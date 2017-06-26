@@ -1676,18 +1676,30 @@ div#notebook {
   <div tabindex="-1" id="notebook" class="border-box-sizing">
     <div class="container" id="notebook-container">
 
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
 <div class="inner_cell">
-    <div class="input_area">
-<div class="highlight"><pre> 
-</pre></div>
-
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="list-of-sampling-methods">List of sampling methods</h1>
+<h3 id="latin-hypercube-sampling-lhs">Latin hypercube sampling (LHS)</h3>
+<p>The LHS design is a statistical method for generating a quasi-random sampling distribution. It is among the most popular sampling techniques in computer experiments thanks to its simplicity and projection properties with high-dimensional problems. LHS is built as follow: we cut each dimension space, wich represents a variable, into <span class="math inline">\(n\)</span> sections with <span class="math inline">\(n\)</span> is the number of sampling points, and we put only one point in each section.</p>
+<p><img src=LHS.png width=400 height=70 /></p>
+<p>The figure above gives us an example of an LHS design with 2 variables <span class="math inline">\(x1\)</span> and <span class="math inline">\(x2\)</span> where each column from <span class="math inline">\(x1\)</span>-axis and each row from <span class="math inline">\(x2\)</span>-axis contain only one point.</p>
+<p>The LHS method uses the pyDOE package (Design of Experiments for Python) which is available on https://pythonhosted.org/pyDOE/index.html. 5 criteria for the construction of LHS are implemented in SMT: - Center the points within the sampling intervals. - Maximize the minimum distance between points and place the point in a randomized location within its interval. - Maximize the minimum distance between points and center the point within its interval. - Minimize the maximum correlation coefficient. - Optimize the design using the Enhanced Stochastic Evolutionary algorithm (ESE).</p>
+<p>The four first criteria are the same than in pyDOE (for more details, see https://pythonhosted.org/pyDOE/index.html). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [1]).</p>
+<p>[1] R. Jin, W. Chen and A. Sudjianto (2005), &quot;An efficient algorithm for constructing optimal design of computer experiments.&quot; Journal of Statistical Planning and Inference, 134:268-287.</p>
 </div>
 </div>
 </div>
-
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="last-update-june-26-2017">Last update June 26, 2017</h4>
+</div>
+</div>
 </div>
     </div>
   </div>
