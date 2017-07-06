@@ -128,7 +128,9 @@ class RBF(SM):
         xt = self.training_points['exact'][0][0]
         jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], n,
             num['radial'], num['dof'], options['d0'], x, xt)
-        return jac.dot(self.sol)
+        
+        y = jac.dot(self.sol)
+        return y
 
     def _predict_derivative(self, x, kx):
         '''
@@ -156,4 +158,6 @@ class RBF(SM):
         xt = self.training_points['exact'][0][0]
         jac = RBFlib.compute_jac(kx, options['poly_degree'], num['x'], n,
             num['radial'], num['dof'], options['d0'], x, xt)
-        return jac.dot(self.sol)
+            
+        y = jac.dot(self.sol)
+        return y

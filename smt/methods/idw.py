@@ -74,4 +74,5 @@ class IDW(SM):
 
         mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
 
-        return mtx.dot(yt)
+        y = mtx.dot(yt)
+        return y

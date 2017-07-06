@@ -92,9 +92,20 @@ class PA2(SM):
         return M.T
 
     def _predict_value(self, x):
-        """
-        This function is used by _predict function. See _predict for more details.
-        """
+        '''
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        '''
+        
         M=self._response_surface(x)
         y = np.dot(M,self.coef).T
 

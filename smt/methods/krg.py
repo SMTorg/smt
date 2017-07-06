@@ -605,8 +605,9 @@ class KRG(SM):
 
         df_dx = np.dot(df.T, beta)
         d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
-        return (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
+        y = (df_dx[0]-2*self.optimal_theta[kx-1]*np.dot(d_dx*r,gamma))* \
                        self.y_std/self.X_std[kx-1]
+        return y
 
     def _predict_variance(self, x):
         # Initialization
