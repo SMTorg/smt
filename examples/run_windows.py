@@ -1,12 +1,8 @@
 from __future__ import print_function, division
 import numpy as np
-from smt.methods.ls import LS
-from smt.methods.pa2 import PA2
-from smt.methods.kpls import KPLS
-from smt.methods.kplsk import KPLSK
-from smt.methods.gekpls import GEKPLS
-from smt.methods.krg import KRG
 from scipy import linalg
+
+from smt.methods import LS, PA2, KPLS, KPLSK, GEKPLS, KRG
 from smt.problems import Sphere
 from smt.sampling import LHS
 
