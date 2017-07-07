@@ -11,16 +11,13 @@ class OptionsDictionary(object):
     ----------
     _dict : dict
         Dictionary of option values keyed by option names.
-    _declared_values : dict
-        Dictionary of acceptable values lists keyed by option names.
-    _declared_types : dict
-        Dictionary of acceptable option value types keyed by option names.
+    _declared_entries : dict
+        Dictionary of declared entries.
     """
 
     def __init__(self):
         self._dict = {}
-        self._declared_values = {}
-        self._declared_types = {}
+        self._declared_entries = {}
 
     def clone(self):
         """
@@ -33,8 +30,7 @@ class OptionsDictionary(object):
         """
         clone = self.__class__()
         clone._dict = dict(self._dict)
-        clone._declared_values = dict(self._declared_values)
-        clone._declared_types = dict(self._declared_types)
+        clone._declared_entries = dict(self._declared_entries)
         return clone
 
     def __getitem__(self, name):
@@ -69,7 +65,7 @@ class OptionsDictionary(object):
         value : object
             The value to set.
         """
-        assert name in self._declared_values, 'Option %s has not been declared' % name
+        assert name in self._declared_entries, 'Option %s has not been declared' % name
         self._assert_valid(name, value)
         self._dict[name] = value
 
@@ -77,11 +73,11 @@ class OptionsDictionary(object):
         return key in self._dict
 
     def is_declared(self, key):
-        return key in self._declared_values
+        return key in self._declared_entries
 
     def _assert_valid(self, name, value):
-        values = self._declared_values[name]
-        types = self._declared_types[name]
+        values = self._declared_entries[name]['values']
+        types = self._declared_entries[name]['types']
 
         if values is not None and types is not None:
             assert value in values or isinstance(value, types), \
@@ -128,8 +124,12 @@ class OptionsDictionary(object):
         desc : str
             Optional description of the option.
         """
-        self._declared_values[name] = values
-        self._declared_types[name] = types
+        self._declared_entries[name] = {
+            'values': values,
+            'types': types,
+            'default': default,
+            'desc': desc,
+        }
 
         if default is not None:
             self._assert_valid(name, default)
