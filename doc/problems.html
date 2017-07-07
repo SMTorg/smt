@@ -1682,7 +1682,7 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="list-of-problems">List of problems</h1>
-<p>TODO: - complete the expressions of Ndim functions - s_a is not used in cantilever Beam problem (Check the implementation of cantilever Beam function)</p>
+<p>TODO: - complete the expressions of Ndim functions - Check the implementation of cantilever Beam function</p>
 <h3 id="analytical-functions">Analytical functions</h3>
 <p>All figures given here are a 2-D plot.</p>
 <ul>
@@ -1778,7 +1778,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
@@ -1786,7 +1786,7 @@ div#notebook {
 
 <span class="c">#Definition of the number of dimensions and the number of sampling points</span>
 <span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">5</span>
 
 <span class="c">#Define the Sphere function</span>
 <span class="n">fun</span> <span class="o">=</span> <span class="n">Sphere</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
@@ -1803,9 +1803,36 @@ div#notebook {
     <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
 
 <span class="c">#The final result yt and yd contain the output and the derivative, respectively.</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;Values:&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;Derivatives:&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">yd</span><span class="p">)</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_text output_pyerr">
+<pre>
+<span class="ansired">---------------------------------------------------------------------------</span>
+<span class="ansired">ImportError</span>                               Traceback (most recent call last)
+<span class="ansigreen">&lt;ipython-input-2-b294d7535ab6&gt;</span> in <span class="ansicyan">&lt;module&gt;</span><span class="ansiblue">()</span>
+<span class="ansigreen">----&gt; 1</span><span class="ansiyellow"> </span><span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>problems <span class="ansigreen">import</span> Sphere<span class="ansiyellow"></span>
+<span class="ansigreen">      2</span> <span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>sampling <span class="ansigreen">import</span> LHS<span class="ansiyellow"></span>
+<span class="ansigreen">      3</span> <span class="ansiyellow"></span>
+<span class="ansigreen">      4</span> <span class="ansired">#Definition of the number of dimensions and the number of sampling points</span><span class="ansiyellow"></span><span class="ansiyellow"></span>
+<span class="ansigreen">      5</span> ndim <span class="ansiyellow">=</span> <span class="ansicyan">10</span><span class="ansiyellow"></span>
+
+<span class="ansired">ImportError</span>: No module named problems</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -1823,14 +1850,14 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">WeldedBeam</span>
+<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">RobotArm</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
 
 <span class="n">ndoe</span> <span class="o">=</span> <span class="mi">30</span>
-<span class="n">fun</span> <span class="o">=</span> <span class="n">WeldedBeam</span><span class="p">()</span>
+<span class="n">fun</span> <span class="o">=</span> <span class="n">RobotArm</span><span class="p">()</span>
 
 <span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span>
 
@@ -1839,9 +1866,37 @@ div#notebook {
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
     <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+    
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;Values:&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;Derivatives:&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">yd</span><span class="p">)</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_text output_pyerr">
+<pre>
+<span class="ansired">---------------------------------------------------------------------------</span>
+<span class="ansired">ImportError</span>                               Traceback (most recent call last)
+<span class="ansigreen">&lt;ipython-input-3-3d64e5925319&gt;</span> in <span class="ansicyan">&lt;module&gt;</span><span class="ansiblue">()</span>
+<span class="ansigreen">----&gt; 1</span><span class="ansiyellow"> </span><span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>problems <span class="ansigreen">import</span> RobotArm<span class="ansiyellow"></span>
+<span class="ansigreen">      2</span> <span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>sampling <span class="ansigreen">import</span> LHS<span class="ansiyellow"></span>
+<span class="ansigreen">      3</span> <span class="ansiyellow"></span>
+<span class="ansigreen">      4</span> ndoe <span class="ansiyellow">=</span> <span class="ansicyan">30</span><span class="ansiyellow"></span>
+<span class="ansigreen">      5</span> fun <span class="ansiyellow">=</span> RobotArm<span class="ansiyellow">(</span><span class="ansiyellow">)</span><span class="ansiyellow"></span>
+
+<span class="ansired">ImportError</span>: No module named problems</pre>
+</div>
+</div>
+
 </div>
 </div>
 

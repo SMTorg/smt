@@ -61,7 +61,41 @@ class LS(SM):
                 #outputs['sol'] = self.sol
 
     def _predict_value(self,x):
-        """
-        This function is used by _predict function. See _predict for more details.
-        """
-        return self.mod.predict(x)
+        '''
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        '''
+        y = self.mod.predict(x)
+        return y
+        
+    def _predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        
+        # Initialization
+        n_eval, n_features_x = x.shape
+        y = np.ones((n_eval,1)) * self.mod
+        
+        return y

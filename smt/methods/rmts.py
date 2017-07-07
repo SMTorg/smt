@@ -371,7 +371,8 @@ class RMTS(SM):
         y : np.ndarray
             Evaluation point output variable values
         '''
-        return self._predict(x, 0)
+        y = self._predict(x, 0)
+        return y
 
     def _predict_derivative(self, x, kx):
         '''
@@ -389,7 +390,8 @@ class RMTS(SM):
         y : np.ndarray
             Derivative values.
         '''
-        return self._predict(x, kx + 1)
+        y = self._predict(x, kx + 1)
+        return y
 
     def _predict(self, x, kx):
         """
@@ -454,5 +456,6 @@ class RMTS(SM):
                 data += data_tmp
 
         mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['coeff']))
-
-        return mtx.dot(self.sol)
+        y = mtx.dot(self.sol)
+        
+        return y
