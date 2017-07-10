@@ -539,7 +539,7 @@ class GEKPLS(SM):
         self.optimal_rlf_value, self.optimal_par, self.optimal_theta = \
                 self._optimize_hyperparam(D)
 
-        del self.y_norma, self.D
+        del self.D
 
     def _train(self):
         """
