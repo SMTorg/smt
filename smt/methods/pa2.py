@@ -24,11 +24,11 @@ class PA2(SM):
         super(PA2, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'PA2', types=str,
-                desc='Squared polynomial interpolant')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        self.name = 'PA2'
+        
     ############################################################################
     # Model functions
     ############################################################################

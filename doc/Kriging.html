@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>LS</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>Kriging</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,12 +11775,22 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="The-Least-Squares-model">The Least Squares model<a class="anchor-link" href="#The-Least-Squares-model">&#194;&#182;</a></h1><p>The following description is taken from scikit-learn version 0.18.2 (<a href="http://scikit-learn.org/stable/modules/linear_model.html">http://scikit-learn.org/stable/modules/linear_model.html</a>).</p>
-<p>The Least Squares method fits a linear model with coefficients $w = \left(w_1,\dotsc,w_p\right)$ to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
-Mathematically it solves a problem of the form:</p>
+<h1 id="Kriging">Kriging<a class="anchor-link" href="#Kriging">&#194;&#182;</a></h1><p>Kriging is an interpolating model that is a combination of a known function $f_i(x)$ which is added to a realization of a stochastic process $Z(x)$:</p>
 \begin{equation}
-\min_\limits{w}||Xw-y||_2^2
-\end{equation}<p><img src="least_squares.png"/></p>
+\hat{y} = \sum\limits_{i=1}^k\beta_if_i(x)+Z(x).
+\end{equation}<p>$Z(x)$ is a realization of a stochastique process with mean zero and spatial covariance function given by:</p>
+\begin{equation}
+cov\left[Z\left(x^{(i)}\right),Z\left(x^{(j)}\right)\right] =\sigma^2R\left(x^{(i)},x^{(j)}\right)
+\end{equation}<p>where $\sigma^2$ is the process variance, and $R$ is the correlation.
+Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions:</p>
+\begin{equation}
+\prod\limits_{l=1}^d\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^d\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
+\text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
+\end{equation}<p>These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.</p>
+<p>The deterministic term $\sum\limits_{i=1}^k\beta_if_i(x)$ can be replaced by a constant, a linear model, or a quadratic model.
+These three types of the deterministic term above are available in SMT.</p>
+<p>More details about the kriging approach could be found in [1].</p>
+<p>[1] J. Sacks, S. B. Schiller, W. J. Welch, Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.</p>
 <h2 id="Options">Options<a class="anchor-link" href="#Options">&#194;&#182;</a></h2><table>
 <thead><tr>
 <th>Option</th>
@@ -11791,6 +11801,13 @@ Mathematically it solves a problem of the form:</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>theta0</td>
+<td>None</td>
+<td>None</td>
+<td>['list', 'ndarray']</td>
+<td>Initial hyperparameters</td>
+</tr>
 <tr>
 <td>data_dir</td>
 <td>None</td>
@@ -11820,6 +11837,20 @@ Mathematically it solves a problem of the form:</p>
 <td>Global print toggle. If False, all printing is suppressed</td>
 </tr>
 <tr>
+<td>poly</td>
+<td>constant</td>
+<td>('constant', 'linear', 'quadratic')</td>
+<td>['function']</td>
+<td>regr. term</td>
+</tr>
+<tr>
+<td>corr</td>
+<td>squar_exp</td>
+<td>('abs_exp', 'squar_exp')</td>
+<td>['function']</td>
+<td>type of corr. func.</td>
+</tr>
+<tr>
 <td>print_training</td>
 <td>True</td>
 <td>None</td>
@@ -11841,12 +11872,12 @@ Mathematically it solves a problem of the form:</p>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">smt.methods.ls</span> <span class="kn">import</span> <span class="n">LS</span>
+<span class="kn">from</span> <span class="nn">smt.methods.krg</span> <span class="kn">import</span> <span class="n">KRG</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">linalg</span>
 <span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
@@ -11876,18 +11907,15 @@ Mathematically it solves a problem of the form:</p>
 <span class="n">xtest</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ntest</span><span class="p">)</span>
 <span class="n">ytest</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
 
-<span class="c1">########### The LS model</span>
-
-<span class="c1"># Initialization of the model</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">LS</span><span class="p">()</span>
-<span class="c1"># Add the DOE</span>
+<span class="c1">########### The Kriging model</span>
+<span class="c1"># The variable &#39;theta0&#39; is a list of length ndim.</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">KRG</span><span class="p">(</span><span class="n">theta0</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-2</span><span class="p">]</span><span class="o">*</span><span class="n">ndim</span><span class="p">)</span>
 <span class="n">t</span><span class="o">.</span><span class="n">add_training_points</span><span class="p">(</span><span class="s1">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="c1"># Train the model</span>
+
 <span class="n">t</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-<span class="c1"># Prediction of the validation points</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">predict_value</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;LS,  err: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">-</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Kriging,  err: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">-</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span>
             <span class="mi">1</span><span class="p">)))</span><span class="o">/</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">)))))</span>
 </pre></div>
 
@@ -11907,7 +11935,7 @@ Mathematically it solves a problem of the form:</p>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>___________________________________________________________________________
    
-                                    LS
+                                  Kriging
 ___________________________________________________________________________
    
  Problem size
@@ -11919,7 +11947,7 @@ ___________________________________________________________________________
  Training
    
    Training ...
-   Training - done. Time (sec):  0.0022240
+   Training - done. Time (sec):  0.2357221
 ___________________________________________________________________________
    
  Evaluation
@@ -11927,11 +11955,11 @@ ___________________________________________________________________________
       # eval points. : 500
    
    Predicting ...
-   Predicting - done. Time (sec):  0.0001590
+   Predicting - done. Time (sec):  0.0158658
    
-   Prediction time/pt. (sec) :  0.0000003
+   Prediction time/pt. (sec) :  0.0000317
    
-LS,  err: 0.286493412465
+Kriging,  err: 0.00689888422534
 </pre>
 </div>
 </div>

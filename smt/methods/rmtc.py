@@ -39,11 +39,11 @@ class RMTC(RMTS):
         super(RMTC, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'RMTC', types=str,
-                desc='Regularized Minimal-energy Tensor-product Spline interpolant')
         declare('num_elements', 4, types=(Integral, list, np.ndarray),
                 desc='# elements in each dimension - ndarray [nx]')
 
+        self.name = 'RMTC'
+        
     def _initialize(self):
         options = self.options
         nx = self.training_points['exact'][0][0].shape[1]

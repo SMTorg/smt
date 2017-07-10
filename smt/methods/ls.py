@@ -25,11 +25,11 @@ class LS(SM):
         super(LS, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'LS', types=str,
-                desc='Least squares interpolant')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        self.name = 'LS'
+        
     ############################################################################
     # Model functions
     ############################################################################

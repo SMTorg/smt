@@ -68,7 +68,7 @@ print('Kriging,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntes
 # The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
 # an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
 # an example using 1 principal component.
-t = KPLS(name='KPLS', n_comp=2, theta0=[1e-2,1e-2])
+t = KPLS(n_comp=2, theta0=[1e-2,1e-2])
 t.add_training_points('exact',xt,yt[:,0])
 
 t.train()

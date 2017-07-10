@@ -40,13 +40,13 @@ class RMTB(RMTS):
         super(RMTB, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'RMTB', types=str,
-                desc='Regularized Minimal-energy Tensor-product B-spline interpolant')
         declare('order', 3, types=(Integral, tuple, list, np.ndarray),
                 desc='B-spline order in each dimension - length [nx]')
         declare('num_ctrl_pts', 15, types=(Integral, tuple, list, np.ndarray),
                 desc='# B-spline control points in each dimension - length [nx]')
 
+        self.name = 'RMTB'
+        
     def _initialize(self):
         options = self.options
         nx = self.training_points['exact'][0][0].shape[1]
