@@ -141,7 +141,7 @@ class SM(object):
 
         self.printer.active = self.options['print_global']
         self.printer._line_break()
-        self.printer._center(self.options['name'])
+        self.printer._center(self.name)
 
         self.printer.active = self.options['print_global'] and self.options['print_problem']
         self.printer._title('Problem size')
@@ -149,7 +149,7 @@ class SM(object):
         self.printer()
 
         self.printer.active = self.options['print_global'] and self.options['print_training']
-        if self.options['name'] == 'MixExp':
+        if self.name == 'MixExp':
             # Mixture of experts model
             self.printer._title('Training of the Mixture of experts')
         else:
@@ -177,7 +177,7 @@ class SM(object):
 
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
-        if self.options['name'] == 'MixExp':
+        if self.name == 'MixExp':
             # Mixture of experts model
             self.printer._title('Evaluation of the Mixture of experts')
         else:
@@ -216,7 +216,7 @@ class SM(object):
 
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
-        if self.options['name'] == 'MixExp':
+        if self.name == 'MixExp':
             # Mixture of experts model
             self.printer._title('Evaluation of the Mixture of experts')
         else:

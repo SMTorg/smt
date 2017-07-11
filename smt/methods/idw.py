@@ -30,12 +30,12 @@ class IDW(SM):
         super(IDW, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'IDW', types=str,
-                desc='Inverse distance weighting interpolant')
         declare('p', 2.5, types=(int, float), desc='order of distance norm')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        self.name = 'IDW'
+        
     ############################################################################
     # Model functions
     ############################################################################

@@ -382,19 +382,19 @@ class KPLS(SM):
         super(KPLS, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'KPLS', types=str,
-                desc='KPLS for Kriging with Partial Least Squares')
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
-        declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
+        declare('poly', 'constant', types=FunctionType,values=('constant', 'linear', 'quadratic'), 
                 desc='regr. term')
-        declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
+        declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'), 
                 desc='type of corr. func.')
-        declare('best_iteration_fail', None)
-        declare('nb_ill_matrix', 5)
-        declare('data_dir', values=None, types=str,
+        declare('data_dir', types=str,values=None, 
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        self.name = 'KPLS'
+        self.best_iteration_fail = None
+        self.nb_ill_matrix = 5
+        
     ############################################################################
     # Model functions
     ############################################################################
@@ -548,19 +548,16 @@ class KPLS(SM):
         par['G'] = G
 
         # A particular case when f_min_cobyla fail
-        if ( self.options['best_iteration_fail'] is not None) and \
+        if (self.best_iteration_fail is not None) and \
             (not np.isinf(reduced_likelihood_function_value)):
 
-            if (reduced_likelihood_function_value >  self.options[
-                    'best_iteration_fail']):
-                 self.options['best_iteration_fail'] = \
-                    reduced_likelihood_function_value
+            if (reduced_likelihood_function_value >  self.best_iteration_fail):
+                 self.best_iteration_fail = reduced_likelihood_function_value
                  self._thetaMemory = theta
 
-        elif ( self.options['best_iteration_fail'] is None) and \
+        elif (self.best_iteration_fail is None) and \
             (not np.isinf(reduced_likelihood_function_value)):
-             self.options['best_iteration_fail'] = \
-                    reduced_likelihood_function_value
+             self.best_iteration_fail = reduced_likelihood_function_value
              self._thetaMemory = theta
 
         return reduced_likelihood_function_value, par
@@ -746,14 +743,13 @@ class KPLS(SM):
                         if incr != 0:
                             return
                     else:
-                        if optimal_rlf_value >= self.options['best_iteration_fail']:
+                        if optimal_rlf_value >= self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
                                 best_optimal_rlf_value = optimal_rlf_value
                                 best_optimal_par = optimal_par
                                 best_optimal_theta = optimal_theta
                             else:
-                                if self.options['best_iteration_fail'] \
-                                   > best_optimal_rlf_value:
+                                if self.best_iteration_fail > best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory
                                     best_optimal_rlf_value , best_optimal_par = \
                                         self._reduced_likelihood_function(\
@@ -762,15 +758,14 @@ class KPLS(SM):
                     if np.isinf(optimal_rlf_value):
                         stop += 1
                     else:
-                        if optimal_rlf_value >=  self.options['best_iteration_fail']:
+                        if optimal_rlf_value >=  self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
                                 best_optimal_rlf_value = optimal_rlf_value
                                 best_optimal_par = optimal_par
                                 best_optimal_theta = optimal_theta
 
                         else:
-                            if  self.options['best_iteration_fail'] > \
-                                best_optimal_rlf_value:
+                            if  self.best_iteration_fail > best_optimal_rlf_value:
                                 best_optimal_theta = self._thetaMemory.copy()
                                 best_optimal_rlf_value , best_optimal_par = \
                                     self._reduced_likelihood_function( \
@@ -778,14 +773,13 @@ class KPLS(SM):
                 k += 1
             except ValueError as ve:
                 # If iteration is max when fmin_cobyla fail is not reached
-                if (self.options['nb_ill_matrix'] > 0):
-                    self.options['nb_ill_matrix'] -= 1
+                if (self.nb_ill_matrix > 0):
+                    self.nb_ill_matrix -= 1
                     k += 1
                     stop += 1
                     # One evaluation objectif function is done at least
-                    if (self.options['best_iteration_fail'] is not None):
-                        if self.options['best_iteration_fail'] > \
-                           best_optimal_rlf_value:
+                    if (self.best_iteration_fail is not None):
+                        if self.best_iteration_fail > best_optimal_rlf_value:
                             best_optimal_theta = self._thetaMemory
                             best_optimal_rlf_value , best_optimal_par = \
                                 self._reduced_likelihood_function(theta=

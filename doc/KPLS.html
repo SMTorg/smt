@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>LS</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>KPLS</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,12 +11775,17 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="The-Least-Squares-model">The Least Squares model<a class="anchor-link" href="#The-Least-Squares-model">&#194;&#182;</a></h1><p>The following description is taken from scikit-learn version 0.18.2 (<a href="http://scikit-learn.org/stable/modules/linear_model.html">http://scikit-learn.org/stable/modules/linear_model.html</a>).</p>
-<p>The Least Squares method fits a linear model with coefficients $w = \left(w_1,\dotsc,w_p\right)$ to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
-Mathematically it solves a problem of the form:</p>
+<h1 id="KPLS">KPLS<a class="anchor-link" href="#KPLS">&#194;&#182;</a></h1><p>KPLS is a combination of the partial least squares (PLS) method and the <a href="./KRG.html">kriging model</a>.
+The PLS method [1] is a well known tool for high-dimentional problems that searches the direction that maximizes the variance between the input and ouput variables.
+This is done by a projection in a smaller space spanned by the so-called principal components.
+The PLS information are integrated into the kriging correlation matrix to scale the number of inputs by reducing the number of hyperparameters.
+The number of principal components $q$, which corresponds to the number of hyperparameters for KPLS and much lower than $d$ (number of dimension of the problem), usually does not exceed 4 components:</p>
 \begin{equation}
-\min_\limits{w}||Xw-y||_2^2
-\end{equation}<p><img src="least_squares.png"/></p>
+\prod\limits_{l=1}^d\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^2\right),\qquad \qquad \qquad\prod\limits_{l=1}^d \prod\limits_{h=1}^q\exp\left(-\theta_h\left(w_l^{(h)}x_l^{(i)}-w_l^{(h)}x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l,\theta_h\in\mathbb{R}^+\\
+\text{Standard Gaussian correlation function} \quad \qquad\text{PLS-Gaussian correlation function}\qquad \qquad\qquad\quad
+\end{equation}<p>More details about the KPLS approach could be found in these sources [2].</p>
+<p>[1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.</p>
+<p>[2] Bouhlel, M. A., Bartoli, N., Otsmane, A., and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.</p>
 <h2 id="Options">Options<a class="anchor-link" href="#Options">&#194;&#182;</a></h2><table>
 <thead><tr>
 <th>Option</th>
@@ -11791,6 +11796,13 @@ Mathematically it solves a problem of the form:</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>n_comp</td>
+<td>1</td>
+<td>None</td>
+<td>['int']</td>
+<td>Number of principal components</td>
+</tr>
 <tr>
 <td>data_dir</td>
 <td>None</td>
@@ -11820,6 +11832,27 @@ Mathematically it solves a problem of the form:</p>
 <td>Global print toggle. If False, all printing is suppressed</td>
 </tr>
 <tr>
+<td>theta0</td>
+<td>[0.01]</td>
+<td>None</td>
+<td>['list', 'ndarray']</td>
+<td>Initial hyperparameters</td>
+</tr>
+<tr>
+<td>poly</td>
+<td>constant</td>
+<td>('constant', 'linear', 'quadratic')</td>
+<td>['function']</td>
+<td>regr. term</td>
+</tr>
+<tr>
+<td>corr</td>
+<td>squar_exp</td>
+<td>('abs_exp', 'squar_exp')</td>
+<td>['function']</td>
+<td>type of corr. func.</td>
+</tr>
+<tr>
 <td>print_training</td>
 <td>True</td>
 <td>None</td>
@@ -11846,7 +11879,7 @@ Mathematically it solves a problem of the form:</p>
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">smt.methods.ls</span> <span class="kn">import</span> <span class="n">LS</span>
+<span class="kn">from</span> <span class="nn">smt.methods.kpls</span> <span class="kn">import</span> <span class="n">KPLS</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">linalg</span>
 <span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
@@ -11876,18 +11909,14 @@ Mathematically it solves a problem of the form:</p>
 <span class="n">xtest</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ntest</span><span class="p">)</span>
 <span class="n">ytest</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
 
-<span class="c1">########### The LS model</span>
-
-<span class="c1"># Initialization of the model</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">LS</span><span class="p">()</span>
-<span class="c1"># Add the DOE</span>
+<span class="c1">########### The KPLS model</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">KPLS</span><span class="p">(</span><span class="n">n_comp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-2</span><span class="p">,</span><span class="mf">1e-2</span><span class="p">])</span>
 <span class="n">t</span><span class="o">.</span><span class="n">add_training_points</span><span class="p">(</span><span class="s1">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="c1"># Train the model</span>
+
 <span class="n">t</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-<span class="c1"># Prediction of the validation points</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">predict_value</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;LS,  err: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">-</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;KPLS,  err: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">-</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span>
             <span class="mi">1</span><span class="p">)))</span><span class="o">/</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">)))))</span>
 </pre></div>
 
@@ -11907,7 +11936,7 @@ Mathematically it solves a problem of the form:</p>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>___________________________________________________________________________
    
-                                    LS
+                                   KPLS
 ___________________________________________________________________________
    
  Problem size
@@ -11919,7 +11948,7 @@ ___________________________________________________________________________
  Training
    
    Training ...
-   Training - done. Time (sec):  0.0022240
+   Training - done. Time (sec):  0.0452139
 ___________________________________________________________________________
    
  Evaluation
@@ -11927,11 +11956,11 @@ ___________________________________________________________________________
       # eval points. : 500
    
    Predicting ...
-   Predicting - done. Time (sec):  0.0001590
+   Predicting - done. Time (sec):  0.0136290
    
-   Prediction time/pt. (sec) :  0.0000003
+   Prediction time/pt. (sec) :  0.0000273
    
-LS,  err: 0.286493412465
+KPLS,  err: 0.171443239795
 </pre>
 </div>
 </div>

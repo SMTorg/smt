@@ -24,11 +24,9 @@ class RBF(SM):
         super(RBF, self)._declare_options()
         declare = self.options.declare
 
-        declare('name', 'RBF', types=str,
-                desc='Radial Basis Function interpolant')
         declare('d0', 1.0, types=(int, float, list, np.ndarray),
                 desc='basis function scaling parameter in exp(-d^2 / d0^2)')
-        declare('poly_degree', -1, values=(-1, 0, 1),
+        declare('poly_degree', -1,types=int, values=(-1, 0, 1),
                 desc='-1 means no global polynomial, 0 means constant, 1 means linear trend')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
@@ -37,6 +35,8 @@ class RBF(SM):
         declare('max_print_depth', 5, types=int,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
+        self.name = 'RBF'
+        
     def _initialize(self):
         options = self.options
 

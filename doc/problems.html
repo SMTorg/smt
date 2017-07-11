@@ -1778,7 +1778,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
@@ -1818,18 +1818,22 @@ div#notebook {
 
 
 <div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_text output_pyerr">
+<div class="output_subarea output_stream output_stdout output_text">
 <pre>
-<span class="ansired">---------------------------------------------------------------------------</span>
-<span class="ansired">ImportError</span>                               Traceback (most recent call last)
-<span class="ansigreen">&lt;ipython-input-2-b294d7535ab6&gt;</span> in <span class="ansicyan">&lt;module&gt;</span><span class="ansiblue">()</span>
-<span class="ansigreen">----&gt; 1</span><span class="ansiyellow"> </span><span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>problems <span class="ansigreen">import</span> Sphere<span class="ansiyellow"></span>
-<span class="ansigreen">      2</span> <span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>sampling <span class="ansigreen">import</span> LHS<span class="ansiyellow"></span>
-<span class="ansigreen">      3</span> <span class="ansiyellow"></span>
-<span class="ansigreen">      4</span> <span class="ansired">#Definition of the number of dimensions and the number of sampling points</span><span class="ansiyellow"></span><span class="ansiyellow"></span>
-<span class="ansigreen">      5</span> ndim <span class="ansiyellow">=</span> <span class="ansicyan">10</span><span class="ansiyellow"></span>
+Values:
+[[ 344.85020108]
+ [ 526.40805444]
+ [ 235.9726683 ]
+ [ 403.96978851]
+ [ 344.31677516]]
+Derivatives:
+[[ -9.81412766]
+ [ -1.49151696]
+ [ 13.93772135]
+ [ 11.57104702]
+ [-19.65008856]]
 
-<span class="ansired">ImportError</span>: No module named problems</pre>
+</pre>
 </div>
 </div>
 
@@ -1856,8 +1860,11 @@ div#notebook {
 <div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">RobotArm</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
 
-<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">30</span>
-<span class="n">fun</span> <span class="o">=</span> <span class="n">RobotArm</span><span class="p">()</span>
+<span class="c">#Definition of the number of dimensions and the number of sampling points</span>
+<span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">fun</span> <span class="o">=</span> <span class="n">RobotArm</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
 
 <span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span>
 
@@ -1882,18 +1889,22 @@ div#notebook {
 
 
 <div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_text output_pyerr">
+<div class="output_subarea output_stream output_stdout output_text">
 <pre>
-<span class="ansired">---------------------------------------------------------------------------</span>
-<span class="ansired">ImportError</span>                               Traceback (most recent call last)
-<span class="ansigreen">&lt;ipython-input-3-3d64e5925319&gt;</span> in <span class="ansicyan">&lt;module&gt;</span><span class="ansiblue">()</span>
-<span class="ansigreen">----&gt; 1</span><span class="ansiyellow"> </span><span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>problems <span class="ansigreen">import</span> RobotArm<span class="ansiyellow"></span>
-<span class="ansigreen">      2</span> <span class="ansigreen">from</span> smt<span class="ansiyellow">.</span>sampling <span class="ansigreen">import</span> LHS<span class="ansiyellow"></span>
-<span class="ansigreen">      3</span> <span class="ansiyellow"></span>
-<span class="ansigreen">      4</span> ndoe <span class="ansiyellow">=</span> <span class="ansicyan">30</span><span class="ansiyellow"></span>
-<span class="ansigreen">      5</span> fun <span class="ansiyellow">=</span> RobotArm<span class="ansiyellow">(</span><span class="ansiyellow">)</span><span class="ansiyellow"></span>
+Values:
+[[ 0.3234571 ]
+ [ 1.15746453]
+ [ 1.17965384]
+ [ 1.36482119]
+ [ 1.17328341]]
+Derivatives:
+[[-0.87055038]
+ [-0.39407563]
+ [ 0.00220572]
+ [ 0.41198267]
+ [-0.25911706]]
 
-<span class="ansired">ImportError</span>: No module named problems</pre>
+</pre>
 </div>
 </div>
 
