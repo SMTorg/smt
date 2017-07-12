@@ -61,26 +61,27 @@ class CantileverBeam(Problem):
                 b = x[:, 3*ielem + 0]
                 h = x[:, 3*ielem + 1]
 
-                y[:, 0] += 12. / b / h ** 3 * np.sum(x[:, 2::3], axis=1) ** 3
-                y[:, 0] -= 12. / b / h ** 3 * np.sum(x[:, 5 + 3*ielem::3], axis=1) ** 3
+                y[:, 0] += 12. / b / h ** 3 * np.sum(x[:, 2+ 3*ielem::3], axis=1) ** 3
+                y[:, 0] -= 12. / b / h ** 3 * np.sum(x[:, 5+3*ielem::3], axis=1) ** 3
         else:
             kelem = int(np.floor(kx / 3))
             if kx % 3 == 0:
                 b = x[:, 3*kelem + 0]
                 h = x[:, 3*kelem + 1]
-                y[:, 0] += -12. / b ** 2 / h ** 3 * np.sum(x[:, 2::3], axis=1) ** 3
+                y[:, 0] += -12. / b ** 2 / h ** 3 * np.sum(x[:, 2 + 3*kelem::3], axis=1) ** 3
                 y[:, 0] -= -12. / b ** 2 / h ** 3 * np.sum(x[:, 5 + 3*kelem::3], axis=1) ** 3
+                
             elif kx % 3 == 1:
                 b = x[:, 3*kelem + 0]
                 h = x[:, 3*kelem + 1]
-                y[:, 0] += -36. / b / h ** 4 * np.sum(x[:, 2::3], axis=1) ** 3
+                y[:, 0] += -36. / b / h ** 4 * np.sum(x[:, 2 + 3*kelem::3], axis=1) ** 3
                 y[:, 0] -= -36. / b / h ** 4 * np.sum(x[:, 5 + 3*kelem::3], axis=1) ** 3
             elif kx % 3 == 2:
-                for ielem in range(nelem):
+                for ielem in range(kelem+1):
                     b = x[:, 3*ielem + 0]
                     h = x[:, 3*ielem + 1]
-                    y[:, 0] += 36. / b / h ** 3 * np.sum(x[:, 2::3], axis=1) ** 2
+                    y[:, 0] += 36. / b / h ** 3 * np.sum(x[:, 2+ 3*ielem::3], axis=1) ** 2
                     if kelem > ielem:
-                       y[:, 0] -= 36. / b / h ** 3 * np.sum(x[:, 5 + 3*ielem::3], axis=1) ** 2
+                       y[:, 0] -= 36. / b / h ** 3 * np.sum(x[:, 5 + 3*ielem::3], axis=1) ** 2                   
 
-        return y
+        return (P/3/E) * y
