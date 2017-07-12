@@ -61,7 +61,7 @@ class CantileverBeam(Problem):
                 b = x[:, 3*ielem + 0]
                 h = x[:, 3*ielem + 1]
 
-                y[:, 0] += 12. / b / h ** 3 * np.sum(x[:, 2+ 3*ielem::3], axis=1) ** 3
+                y[:, 0] += 12. / b / h ** 3 * np.sum(x[:, 2+3*ielem::3], axis=1) ** 3
                 y[:, 0] -= 12. / b / h ** 3 * np.sum(x[:, 5+3*ielem::3], axis=1) ** 3
         else:
             kelem = int(np.floor(kx / 3))
