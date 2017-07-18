@@ -1681,8 +1681,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>TODO: - complete the expressions of Ndim functions</p>
 <h1 id="list-of-problems">List of problems</h1>
-<p>TODO: - complete the expressions of Ndim functions - Check the implementation of cantilever Beam function</p>
 <h3 id="analytical-functions">Analytical functions</h3>
 <p>All figures given here are a 2-D plot.</p>
 <ul>
@@ -1778,11 +1778,12 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="c">#Definition of the number of dimensions and the number of sampling points</span>
 <span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
@@ -1799,8 +1800,9 @@ div#notebook {
 <span class="n">yt</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
 
 <span class="c">#Compute the gradient</span>
+<span class="n">yd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ndoe</span><span class="p">,</span><span class="n">ndim</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">yd</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 
 <span class="c">#The final result yt and yd contain the output and the derivative, respectively.</span>
 <span class="k">print</span><span class="p">(</span><span class="s">&#39;Values:&#39;</span><span class="p">)</span>
@@ -1821,17 +1823,22 @@ div#notebook {
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
 Values:
-[[ 344.85020108]
- [ 526.40805444]
- [ 235.9726683 ]
- [ 403.96978851]
- [ 344.31677516]]
+[[ 330.18747428]
+ [ 365.54857015]
+ [ 321.07137791]
+ [ 464.91496782]
+ [ 279.58903509]]
 Derivatives:
-[[ -9.81412766]
- [ -1.49151696]
- [ 13.93772135]
- [ 11.57104702]
- [-19.65008856]]
+[[  4.88572432  13.524524    18.11844328  -8.6246839  -16.53246798
+    5.93071625   8.23845451  14.55151266  -5.09466533   9.86070613]
+ [ -7.1317248    6.98776431  11.32928068  -0.02073335   7.71499819
+   -1.63156156  18.6869698  -18.19182897 -16.16370375  15.18410059]
+ [ 14.77343202  -8.17108385  -6.09893508 -19.62399361  -7.85040878
+   -6.74206902  -7.98534029 -11.86357153   0.77530455 -16.27178458]
+ [-18.38208839 -18.79967133  -0.86887621   7.79320533  17.50164613
+  -16.37671302 -18.48854041  11.65918492   6.27357396  -3.90093119]
+ [  3.47349953  -3.95724285 -15.84766046  19.29208146  -0.87185621
+   12.21221679  -2.57866066   1.91356162  15.70612758  -7.77215523]]
 
 </pre>
 </div>
@@ -1847,32 +1854,34 @@ Derivatives:
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>The Welded Beam function</li>
+<li>The Cantilever Beam problem</li>
 </ul>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">RobotArm</span>
+<div class="highlight"><pre><span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">CantileverBeam</span>
 <span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
 
 <span class="c">#Definition of the number of dimensions and the number of sampling points</span>
-<span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">ndim</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">ndoe</span> <span class="o">=</span> <span class="mi">15</span>
 
-<span class="n">fun</span> <span class="o">=</span> <span class="n">RobotArm</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
+<span class="n">fun</span> <span class="o">=</span> <span class="n">CantileverBeam</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
 
 <span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span>
 
 <span class="n">xt</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ndoe</span><span class="p">)</span>
 <span class="n">yt</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
 
+<span class="c">#Compute the gradient</span>
+<span class="n">yd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ndoe</span><span class="p">,</span><span class="n">ndim</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">yd</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
     
 <span class="k">print</span><span class="p">(</span><span class="s">&#39;Values:&#39;</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">yt</span><span class="p">)</span>
@@ -1892,17 +1901,67 @@ Derivatives:
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
 Values:
-[[ 0.3234571 ]
- [ 1.15746453]
- [ 1.17965384]
- [ 1.36482119]
- [ 1.17328341]]
+[[ 0.00684252]
+ [ 0.00664714]
+ [ 0.01898242]
+ [ 0.03024115]
+ [ 0.00608603]
+ [ 0.00435421]
+ [ 0.01054841]
+ [ 0.00894611]
+ [ 0.01458831]
+ [ 0.00910113]
+ [ 0.01980261]
+ [ 0.00973082]
+ [ 0.00803631]
+ [ 0.02220798]
+ [ 0.02014977]]
 Derivatives:
-[[-0.87055038]
- [-0.39407563]
- [ 0.00220572]
- [ 0.41198267]
- [-0.25911706]]
+[[ -1.30305280e-01  -1.50828005e-02   5.50628757e-03  -8.06832636e-02
+   -1.81489638e-02   7.11679840e-03  -1.41793944e-02  -3.50764284e-03
+    6.00983459e-03  -8.11897092e-03  -6.58227720e-04   6.20277791e-03]
+ [ -2.23492480e-01  -2.14034189e-02   8.04226096e-03  -4.54726164e-02
+   -8.28791308e-03   5.98286465e-03  -2.51054718e-02  -7.84333007e-03
+    7.39955586e-03  -3.14146085e-03  -8.23238909e-04   6.72812379e-03]
+ [ -1.17359272e-01  -2.64363174e-02   7.10320748e-03  -4.78707294e-01
+   -7.33330550e-02   1.84317850e-02  -1.43750320e-01  -3.93795448e-02
+    2.07717862e-02  -1.86556962e-02  -4.80741126e-03   2.01936852e-02]
+ [ -9.66278481e-01  -1.94129586e-01   3.84490227e-02  -2.50718761e-01
+   -5.12044874e-02   2.76130686e-02  -2.21929286e-01  -3.36586864e-02
+    3.23586880e-02  -8.41507129e-03  -1.17091954e-03   3.05651132e-02]
+ [ -4.89330828e-02  -1.16315801e-02   3.21056715e-03  -7.28687880e-02
+   -2.10612298e-02   6.52978804e-03  -1.56152586e-02  -5.11126901e-03
+    6.82835092e-03  -1.36443087e-02  -8.73199262e-04   7.02973515e-03]
+ [ -5.37976825e-02  -8.90381864e-03   3.00896778e-03  -4.90119612e-02
+   -6.65447681e-03   4.35891568e-03  -1.51154311e-02  -2.73686492e-03
+    3.90051220e-03  -4.85355791e-02  -3.98546831e-03   5.53077413e-03]
+ [ -2.29774883e-01  -8.55203619e-02   1.50174938e-02  -1.49932102e-02
+   -4.38240839e-03   9.94979503e-03  -1.04629411e-02  -1.76318433e-03
+    9.97576999e-03  -2.14493697e-03  -6.11693643e-04   1.01292889e-02]
+ [ -1.87257946e-01  -3.49117779e-02   8.20114984e-03  -1.28320818e-02
+   -2.92039208e-03   5.86468613e-03  -1.10621955e-01  -2.28804287e-02
+    1.10417168e-02  -6.88441781e-03  -1.34285345e-03   1.08220336e-02]
+ [ -1.74067055e-01  -4.21676597e-02   1.21137623e-02  -2.71016854e-01
+   -7.40654976e-02   1.86472108e-02  -3.46170894e-02  -3.35380327e-03
+    1.42488121e-02  -6.16410224e-04  -1.27369147e-04   1.41870296e-02]
+ [ -1.32510090e-01  -4.78622216e-02   1.13569098e-02  -2.04232623e-02
+   -3.90560926e-03   6.24553570e-03  -1.83475668e-01  -1.75711177e-02
+    1.11283047e-02  -3.38214516e-04  -7.91733102e-05   1.03469710e-02]
+ [ -7.75657753e-01  -1.20196371e-01   2.50607453e-02  -1.08866098e-01
+   -1.32310567e-02   1.63632107e-02  -2.97903157e-02  -4.70203548e-03
+    1.57801811e-02  -6.58317375e-02  -1.19982767e-02   1.92747987e-02]
+ [ -5.34845530e-02  -1.70753542e-02   5.72829741e-03  -4.57585457e-01
+   -4.44602550e-02   1.44041818e-02  -5.30541478e-03  -1.19048632e-03
+    9.33865015e-03  -1.11297829e-02  -3.09902769e-03   1.05699935e-02]
+ [ -1.68142975e-01  -2.67658386e-02   6.96890561e-03  -2.11119830e-01
+   -1.11110662e-02   8.57924239e-03  -2.36457897e-02  -5.77151939e-03
+    7.92751596e-03  -1.14821827e-03  -2.46613013e-04   7.66271896e-03]
+ [ -1.10242455e+00  -1.08120679e-01   2.59897573e-02  -1.18310049e-01
+   -5.13605329e-02   2.10579334e-02  -1.00383831e-01  -7.25311556e-03
+    2.11654890e-02  -1.07151085e-02  -2.06761940e-03   2.09012332e-02]
+ [ -4.96013403e-01  -3.28521358e-02   1.36864696e-02  -7.22109738e-01
+   -1.00034167e-01   2.41653021e-02  -7.43153376e-02  -1.02909179e-02
+    1.99882792e-02  -9.99903943e-04  -2.20698391e-04   1.97895465e-02]]
 
 </pre>
 </div>

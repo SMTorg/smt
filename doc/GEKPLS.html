@@ -11775,18 +11775,26 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Todo description</p>
-<h1 id="GEKPLS">GEKPLS<a class="anchor-link" href="#GEKPLS">&#194;&#182;</a></h1><p>KPLS is a combination of the partial least squares (PLS) method and the <a href="./KRG.html">kriging model</a>.
-The PLS method [1] is a well known tool for high-dimentional problems that searches the direction that maximizes the variance between the input and ouput variables.
-This is done by a projection in a smaller space spanned by the so-called principal components.
-The PLS information are integrated into the kriging correlation matrix to scale the number of inputs by reducing the number of hyperparameters.
-The number of principal components $q$, which corresponds to the number of hyperparameters for KPLS and much lower than $d$ (number of dimension of the problem), usually does not exceed 4 components:</p>
+<h1 id="GEKPLS">GEKPLS<a class="anchor-link" href="#GEKPLS">&#194;&#182;</a></h1><p>GEKPLS is a gradient-enhaced kriging with partial least squares approach.
+Gradient-enhaced kriging (GEK) is an extention of kriging which supports gradient information [1].
+GEK is usually more accurate than kriging, however, it is not computationally efficient when the number of inputs, the number of sampling points, or both, are high.
+This is mainly due to the size of the corresponding correlation matrix that increases proportionally with both the number of inputs and the number of sampling points.</p>
+<p>To adress these issues, GEKPLS exploits the gradient information with a slight increase of the size of the correlation matrix and reduces the number of hyperparameters.
+The key idea of GEKPLS consists in generating a set of approximating points around each sampling points using the first order Taylor approximation method.
+Then, the PLS method is applied several times, each time on a different number of sampling points with the associated sampling points.
+Each PLS provides a set of coefficients that gives the contribution of each variable nearby the associated sampling point to the output.
+Finally, an average of all PLS coefficients is computed to get the global influence to the output.
+Denoting these coefficients by $\left(w_1^{(h)},\dots,w_d^{(h)}\right)$, the GEKPLS Gaussian kernel function is given by:</p>
 \begin{equation}
-\prod\limits_{l=1}^d\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^2\right),\qquad \qquad \qquad\prod\limits_{l=1}^d \prod\limits_{h=1}^q\exp\left(-\theta_h\left(w_l^{(h)}x_l^{(i)}-w_l^{(h)}x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l,\theta_h\in\mathbb{R}^+\\
-\text{Standard Gaussian correlation function} \quad \qquad\text{PLS-Gaussian correlation function}\qquad \qquad\qquad\quad
-\end{equation}<p>More details about the KPLS approach could be found in these sources [2].</p>
-<p>[1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
-[2] Bouhlel, M. A., Bartoli, N., Otsmane, A., and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.</p>
+k\left(x^{(i)},x^{(j)}\right)=\sigma\prod\limits_{l=1}^d \prod\limits_{h=1}^q\exp\left(-\theta_h\left(w_l^{(h)}x_l^{(i)}-w_l^{(h)}x_l^{(j)}\right)^{2}\right)
+\end{equation}<p>This approach reduces the number of hyperparameters (reduced dimension) from $d$ to $q$ with $d&gt;&gt;q$.</p>
+<p>As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point.
+The idea here is to add only m approximating points $(m \in [1, d])$ around each sampling point. 
+Only the $m$ highest coefficients given by the first principal component are considered, which usually contains the most useful information. 
+More details of such approach are given in [2].</p>
+<p>[1] I. J. Forrester, A. Sobester, and A. J. Keane, Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008. (Chapter 7)</p>
+<p>[2] Bouhlel, M. A. and Martins, J. R. R. A., Gradient-enhanced kriging for high-dimensional problems (under review), Engineering with
+Computers, 2017.</p>
 <h2 id="Options">Options<a class="anchor-link" href="#Options">&#194;&#182;</a></h2><table>
 <thead><tr>
 <th>Option</th>

@@ -820,7 +820,7 @@ class KPLSK(SM):
                 self.options['theta0'] = (best_optimal_theta*self.coeff_pls**2).sum(1)
             else:
                 self.options['theta0'] = (best_optimal_theta*np.abs(self.coeff_pls)).sum(1)
-            self.options['n_comp'] = self.dim
+            self.options['n_comp'] = int(self.dim)
             limit = 3*self.options['n_comp']
             _rhobeg = 0.05
             self.best_iteration_fail = None
