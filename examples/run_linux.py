@@ -2,7 +2,7 @@ from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 
-from smt.methods import LS, PA2, KPLS, KPLSK, GEKPLS, KRG#, IDW
+from smt.methods import LS, PA2, KPLS, KPLSK, GEKPLS, KRG IDW
 from smt.problems import Sphere
 from smt.sampling import LHS
 
