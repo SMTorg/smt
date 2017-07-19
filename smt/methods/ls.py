@@ -4,10 +4,11 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 TO DO:
 - define outputs['sol'] = self.sol
-- implement the derivative predictions
 """
 
 from __future__ import division
+
+import numpy as np
 
 from sklearn import linear_model
 from smt.methods.sm import SM
@@ -44,7 +45,7 @@ class LS(SM):
         if 0 in pts['exact']:
             x = pts['exact'][0][0]
             y = pts['exact'][0][1]
-
+        
         self.mod = linear_model.LinearRegression()
         self.mod.fit(x,y)
 
@@ -96,6 +97,6 @@ class LS(SM):
         
         # Initialization
         n_eval, n_features_x = x.shape
-        y = np.ones((n_eval,1)) * self.mod
+        y = np.ones((n_eval,1)) * self.mod.coef_[0,kx]
         
         return y
