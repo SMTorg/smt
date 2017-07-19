@@ -119,7 +119,6 @@ class PA2(SM):
             elif i < kx:
                 k = int(2*dim+2+(i)*dim-((i+1)*(i))/2+(kx-(i+2)))
                 cross_coef += self.coef[k,0]* x[:,i]
-                print i,k
                 
         y = (linear_coef+quad_coef+cross_coef).reshape((x.shape[0],1))
         return y
