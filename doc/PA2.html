@@ -1682,11 +1682,12 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="the-square-polynomial-approach">The Square Polynomial approach</h1>
+<h6 id="nomenclature"><a href="./nomenclature.html">Nomenclature</a></h6>
 <p>The square polynomial model can be expressed by</p>
 <span class="math display">\[\begin{equation}
-{\bf y} = {\bf Xw} + {\bf \epsilon},
+{\bf y} = {\bf X\beta} + {\bf \epsilon},
 \end{equation}\]</span>
-<p>where <span class="math inline">\({\bf y} = \left(y^{(1)},\dotsc,y^{(n)}\right)\)</span> is the response vector, <span class="math inline">\({\bf \epsilon}\)</span> is a vector of random errors, and</p>
+<p>where <span class="math inline">\({\bf \epsilon}\)</span> is a vector of random errors and</p>
 <span class="math display">\[\begin{equation}
 {\bf X} =
 \begin{bmatrix}
@@ -1699,7 +1700,7 @@ div#notebook {
 \end{equation}\]</span>
 <p>The vector of estimated polynomial regression corefficients using ordinary least square estimation is</p>
 <span class="math display">\[\begin{equation}
-{\bf w} = {\bf X^TX}^{-1} {\bf X^Ty}.
+{\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
 \end{equation}\]</span>
 <p><img src=square_polynomial.png width=400 height=70 /></p>
 <h2 id="options">Options</h2>
