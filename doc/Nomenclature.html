@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="utf-8" />
-<title>GEKPLS</title>
+<title>Nomenclature</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -1681,230 +1681,60 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="gekpls">GEKPLS</h1>
-<h6 id="nomenclature"><a href="./nomenclature.html">Nomenclature</a></h6>
-<p>GEKPLS is a gradient-enhaced kriging with partial least squares approach. Gradient-enhaced kriging (GEK) is an extention of kriging which supports gradient information [1]. GEK is usually more accurate than kriging, however, it is not computationally efficient when the number of inputs, the number of sampling points, or both, are high. This is mainly due to the size of the corresponding correlation matrix that increases proportionally with both the number of inputs and the number of sampling points.</p>
-<p>To adress these issues, GEKPLS exploits the gradient information with a slight increase of the size of the correlation matrix and reduces the number of hyperparameters. The key idea of GEKPLS consists in generating a set of approximating points around each sampling points using the first order Taylor approximation method. Then, the PLS method is applied several times, each time on a different number of sampling points with the associated sampling points. Each PLS provides a set of coefficients that gives the contribution of each variable nearby the associated sampling point to the output. Finally, an average of all PLS coefficients is computed to get the global influence to the output. Denoting these coefficients by <span class="math inline">\(\left(w_1^{(k)},\dots,w_d^{(k)}\right)\)</span>, the GEKPLS Gaussian kernel function is given by:</p>
-<span class="math display">\[\begin{equation}
-k\left({\bf x^{(i)}},{\bf x^{(j)}}\right)=\sigma\prod\limits_{l=1}^d \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right)
-\end{equation}\]</span>
-<p>This approach reduces the number of hyperparameters (reduced dimension) from <span class="math inline">\(d\)</span> to <span class="math inline">\(h\)</span> with <span class="math inline">\(d&gt;&gt;h\)</span>.</p>
-<p>As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point. The idea here is to add only m approximating points <span class="math inline">\((m \in [1, d])\)</span> around each sampling point. Only the <span class="math inline">\(m\)</span> highest coefficients given by the first principal component are considered, which usually contains the most useful information. More details of such approach are given in [2].</p>
-<p>[1] I. J. Forrester, A. Sobester, and A. J. Keane, Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008. (Chapter 7)</p>
-<p>[2] Bouhlel, M. A. and Martins, J. R. R. A., Gradient-enhanced kriging for high-dimensional problems (under review), Engineering with Computers, 2017.</p>
-<h2 id="options">Options</h2>
-<table style="width:14%;">
+<h1 id="nomenclature">Nomenclature</h1>
+<p>Matrices and vectors are in bold type.</p>
+<table style="width:11%;">
 <colgroup>
-<col width="2%" />
-<col width="2%" />
-<col width="2%" />
-<col width="2%" />
-<col width="2%" />
+<col width="5%" />
+<col width="5%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th>Option</th>
-<th>Default</th>
-<th>Acceptable values</th>
-<th>Acceptable types</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>n_comp</td>
-<td>1</td>
-<td>None</td>
-<td>['int']</td>
+<td><span class="math inline">\(d\)</span></td>
+<td>Number of dimensions</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n\)</span></td>
+<td>Number of sampling points</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(h\)</span></td>
 <td>Number of principal components</td>
 </tr>
 <tr class="even">
-<td>delta_x</td>
-<td>0.0001</td>
-<td>None</td>
-<td>['int', 'float']</td>
-<td>Step used in the FOTA</td>
+<td><span class="math inline">\({\bf x}\)</span></td>
+<td><span class="math inline">\(1\times d\)</span> vector</td>
 </tr>
 <tr class="odd">
-<td>print_solver</td>
-<td>True</td>
-<td>None</td>
-<td>['bool']</td>
-<td>Whether to print solver information</td>
+<td><span class="math inline">\(x_j\)</span></td>
+<td><span class="math inline">\(j^{\text{th}}\)</span> element of <span class="math inline">\({\bf x}\)</span> for <span class="math inline">\(j=1,\dots,d\)</span></td>
 </tr>
 <tr class="even">
-<td>print_problem</td>
-<td>True</td>
-<td>None</td>
-<td>['bool']</td>
-<td>Whether to print problem information</td>
+<td><span class="math inline">\({\bf X}\)</span></td>
+<td><span class="math inline">\(n\times d\)</span> matrix containing sampling points</td>
 </tr>
 <tr class="odd">
-<td>print_global</td>
-<td>True</td>
-<td>None</td>
-<td>['bool']</td>
-<td>Global print toggle. If False, all printing is suppressed</td>
+<td><span class="math inline">\({\bf x}^{(i)}\)</span></td>
+<td><span class="math inline">\(i^{\text{th}}\)</span> sampling point for <span class="math inline">\(i=1,\dots,n\)</span> (<span class="math inline">\(1\times d\)</span> vector)</td>
 </tr>
 <tr class="even">
-<td>extra_points</td>
-<td>0</td>
-<td>None</td>
-<td>['int']</td>
-<td>Number of extra points per training point</td>
+<td><span class="math inline">\(y\)</span></td>
+<td>The objective function</td>
 </tr>
 <tr class="odd">
-<td>theta0</td>
-<td>[0.01]</td>
-<td>None</td>
-<td>['list', 'ndarray']</td>
-<td>Initial hyperparameters</td>
-</tr>
-<tr class="even">
-<td>poly</td>
-<td>constant</td>
-<td>('constant', 'linear', 'quadratic')</td>
-<td>['function']</td>
-<td>regr. term</td>
-</tr>
-<tr class="odd">
-<td>corr</td>
-<td>squar_exp</td>
-<td>('abs_exp', 'squar_exp')</td>
-<td>['function']</td>
-<td>type of corr. func.</td>
-</tr>
-<tr class="even">
-<td>data_dir</td>
-<td>None</td>
-<td>None</td>
-<td>['str']</td>
-<td>Directory for loading / saving cached data; None means do not save or load</td>
-</tr>
-<tr class="odd">
-<td>print_prediction</td>
-<td>True</td>
-<td>None</td>
-<td>['bool']</td>
-<td>Whether to print prediction information</td>
-</tr>
-<tr class="even">
-<td>print_training</td>
-<td>True</td>
-<td>None</td>
-<td>['bool']</td>
-<td>Whether to print training information</td>
-</tr>
-<tr class="odd">
-<td>xlimits</td>
-<td>None</td>
-<td>None</td>
-<td>['ndarray']</td>
-<td>Lower/upper bounds in each dimension - ndarray [nx, 2]</td>
+<td><span class="math inline">\({\bf y}\)</span></td>
+<td><span class="math inline">\(n\times 1\)</span> vector containing simulation of <span class="math inline">\({\bf X}\)</span>, i.e. <span class="math inline">\(y({\bf x}^{(1)}) = y_1,\dotsc,y({\bf x}^{(n)}) = y_n\)</span></td>
 </tr>
 </tbody>
 </table>
-<h2 id="example-code">Example code</h2>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">smt.methods.gekpls</span> <span class="kn">import</span> <span class="n">GEKPLS</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">linalg</span>
-<span class="kn">from</span> <span class="nn">smt.problems</span> <span class="kn">import</span> <span class="n">Sphere</span>
-<span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">LHS</span>
-
-
-<span class="c"># Initialization of the problem</span>
-<span class="n">ndim</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">ndoe</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">10</span><span class="o">*</span><span class="n">ndim</span><span class="p">)</span>
-
-<span class="c"># Define the function</span>
-<span class="n">fun</span> <span class="o">=</span> <span class="n">Sphere</span><span class="p">(</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span><span class="p">)</span>
-
-<span class="c"># Construction of the DOE</span>
-<span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">criterion</span> <span class="o">=</span> <span class="s">&#39;m&#39;</span><span class="p">)</span>
-<span class="n">xt</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ndoe</span><span class="p">)</span>
-
-<span class="c"># Compute the output</span>
-<span class="n">yt</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
-<span class="c"># Compute the gradient</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">yd</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
-    <span class="n">yt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">yt</span><span class="p">,</span><span class="n">yd</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c"># Construction of the validation points</span>
-<span class="n">ntest</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">sampling</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">)</span>
-<span class="n">xtest</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">ntest</span><span class="p">)</span>
-<span class="n">ytest</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
-
-<span class="c">########### The GEKPLS model using 1 approximating points</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">GEKPLS</span><span class="p">(</span><span class="n">n_comp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-2</span><span class="p">],</span> <span class="n">xlimits</span><span class="o">=</span><span class="n">fun</span><span class="o">.</span><span class="n">xlimits</span><span class="p">,</span><span class="n">delta_x</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span><span class="n">extra_points</span><span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">t</span><span class="o">.</span><span class="n">add_training_points</span><span class="p">(</span><span class="s">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-<span class="c"># Add the gradient information</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">):</span>
-    <span class="n">t</span><span class="o">.</span><span class="n">add_training_points</span><span class="p">(</span><span class="s">&#39;exact&#39;</span><span class="p">,</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">[:,</span> <span class="mi">1</span><span class="o">+</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">yt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">)),</span><span class="n">kx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
-
-<span class="n">t</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">predict_value</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;GEKPLS1,  err: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">-</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span>
-            <span class="mi">1</span><span class="p">)))</span><span class="o">/</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">ntest</span><span class="p">,</span><span class="mi">1</span><span class="p">)))))</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>
-___________________________________________________________________________
-   
-                                  GEKPLS
-___________________________________________________________________________
-   
- Problem size
-   
-      # training points.        : 100
-   
-___________________________________________________________________________
-   
- Training
-   
-   Training ...
-   Training - done. Time (sec):  0.1533151
-___________________________________________________________________________
-   
- Evaluation
-   
-      # eval points. : 500
-   
-   Predicting ...
-   Predicting - done. Time (sec):  0.0110800
-   
-   Prediction time/pt. (sec) :  0.0000222
-   
-GEKPLS1,  err: 0.00206913932703
-
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
     </div>
   </div>

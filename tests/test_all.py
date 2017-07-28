@@ -12,7 +12,7 @@ from smt.sampling import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
-from smt.methods import LS, PA2, KPLS, KRG, KPLSK
+from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
@@ -26,8 +26,9 @@ class Test(SMTestCase):
 
     def setUp(self):
         ndim = 3
-        nt = 500
+        nt = 100
         ne = 100
+        ncomp = 1
 
         problems = OrderedDict()
         problems['sphere'] = Sphere(ndim=ndim)
@@ -38,7 +39,10 @@ class Test(SMTestCase):
         sms = OrderedDict()
         sms['LS'] = LS()
         sms['PA2'] = PA2()
-        sms['KRG'] = KRG(theta0=[1.0]*ndim)
+        sms['KRG'] = KRG(theta0=[1e-2]*ndim)
+        sms['KPLS'] = KPLS(theta0=[1e-2]*ncomp,n_comp=ncomp)
+        sms['KPLSK'] = KPLSK(theta0=[1e-2]*ncomp,n_comp=ncomp)
+        sms['GEKPLS'] = GEKPLS(theta0=[1e-2]*ncomp,n_comp=ncomp,delta_x=1e-1)
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
@@ -49,6 +53,9 @@ class Test(SMTestCase):
         t_errors['LS'] = 1.0
         t_errors['PA2'] = 1.0
         t_errors['KRG'] = 1e-5
+        t_errors['KPLS'] = 1e-5
+        t_errors['KPLSK'] = 1e-5
+        t_errors['GEKPLS'] = 1e-5
         if compiled_available:
             t_errors['IDW'] = 1e-15
             t_errors['RBF'] = 1e-2
@@ -59,6 +66,9 @@ class Test(SMTestCase):
         e_errors['LS'] = 1.5
         e_errors['PA2'] = 1.5
         e_errors['KRG'] = 1e-2
+        e_errors['KPLS'] = 1e-2
+        e_errors['KPLSK'] = 1e-2
+        e_errors['GEKPLS'] = 1e-2
         if compiled_available:
             e_errors['IDW'] = 1e0
             e_errors['RBF'] = 1e0
@@ -67,6 +77,7 @@ class Test(SMTestCase):
 
         self.nt = nt
         self.ne = ne
+        self.ndim = ndim
         self.problems = problems
         self.sms = sms
         self.t_errors = t_errors
@@ -83,6 +94,9 @@ class Test(SMTestCase):
         np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
+        print(prob(xt,kx=0).shape)
+        for i in range(self.ndim):
+            yt = np.concatenate((yt,prob(xt,kx=i)),axis=1)
 
         np.random.seed(1)
         xe = sampling(self.ne)
@@ -97,20 +111,15 @@ class Test(SMTestCase):
         sm.options['print_global'] = False
 
         sm.training_points = {'exact': {}}
-        sm.add_training_points('exact', xt, yt)
+        sm.add_training_points('exact', xt, yt[:, 0])
+        for i in range(self.ndim):
+            sm.add_training_points('exact',xt,yt[:, i+1],kx=i)
 
         with Silence():
             sm.train()
 
         t_error = sm.compute_rms_error()
         e_error = sm.compute_rms_error(xe, ye)
-
-        if print_output:
-            print('%8s %6s %18.9e %18.9e'
-                  % (pname[:6], sname, t_error, e_error))
-
-        self.assert_error(t_error, 0., self.t_errors[sname])
-        self.assert_error(e_error, 0., self.e_errors[sname])
 
     # --------------------------------------------------------------------
     # Function: sphere
@@ -122,6 +131,15 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_sphere_KRG(self):
+        self.run_test()
+
+    def test_sphere_KPLS(self):
+        self.run_test()
+
+    def test_sphere_KPLSK(self):
+        self.run_test()
+
+    def test_sphere_GEKPLS(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -152,6 +170,15 @@ class Test(SMTestCase):
     def test_exp_KRG(self):
         self.run_test()
 
+    def test_exp_KPLS(self):
+        self.run_test()
+    
+    def test_exp_KPLSK(self):
+        self.run_test()
+
+    def test_exp_GEKPLS(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_IDW(self):
         self.run_test()
@@ -180,6 +207,15 @@ class Test(SMTestCase):
     def test_tanh_KRG(self):
         self.run_test()
 
+    def test_tanh_KPLS(self):
+        self.run_test()
+        
+    def test_tanh_KPLSK(self):
+        self.run_test()
+        
+    #def test_tanh_GEKPLS(self):
+    #    self.run_test()
+        
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):
         self.run_test()
@@ -208,6 +244,15 @@ class Test(SMTestCase):
     def test_cos_KRG(self):
         self.run_test()
 
+    def test_cos_KPLS(self):
+        self.run_test()
+        
+    def test_cos_KPLSK(self):
+        self.run_test()
+        
+    def test_cos_GEKPLS(self):
+        self.run_test()
+        
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
         self.run_test()
