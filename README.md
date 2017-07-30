@@ -13,7 +13,7 @@ Scipy    >= Version 0.15.1
 
 Numpy    >= Version 1.9.2
 
-Sklearn  >= Version 0.13.1
+Scikit-learn  >= Version 0.13.1
 
 pyDOE >= Version 0.3.8
 
