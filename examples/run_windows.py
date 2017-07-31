@@ -35,7 +35,7 @@ ytest = fun(xtest)
 # Initialization of the model
 t = LS()
 # Add the DOE
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 # Train the model
 t.train()
 # Prediction of the validation points
@@ -55,7 +55,7 @@ print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 
 ########### The PA2 model
 t = PA2()
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 t.train()
 y = t.predict_value(xtest)
 
@@ -73,7 +73,7 @@ print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
 ########### The Kriging model
 # The variable 'theta0' is a list of length ndim.
 t = KRG(theta0=[1e-2]*ndim)
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 
 t.train()
 y = t.predict_value(xtest)
@@ -100,7 +100,7 @@ variability = t.predict_variance(xtest)
 # an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
 # an example using 1 principal component.
 t = KPLS( n_comp=2, theta0=[1e-2,1e-2])
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 
 t.train()
 y = t.predict_value(xtest)
@@ -125,7 +125,7 @@ variability = t.predict_variance(xtest)
 ########### The KPLSK model
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 t = KPLSK(n_comp=2, theta0=[1e-2,1e-2])
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 t.train()
 y = t.predict_value(xtest)
 
@@ -149,10 +149,10 @@ variability = t.predict_variance(xtest)
 ########### The GEKPLS model using 1 approximating points
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-4,extra_points= 1)
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 # Add the gradient information
 for i in range(ndim):
-    t.add_training_points('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
+    t.add_training_points_derivatives('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()
 y = t.predict_value(xtest)
@@ -178,10 +178,10 @@ variability = t.predict_variance(xtest)
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-4,
          extra_points= 2)
-t.add_training_points('exact',xt,yt[:,0])
+t.add_training_points_values('exact',xt,yt[:,0])
 # Add the gradient information
 for i in range(ndim):
-    t.add_training_points('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
+    t.add_training_points_derivatives('exact',xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
 
 t.train()
 y = t.predict_value(xtest)
@@ -201,4 +201,4 @@ for i in range(ndim):
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variance(xtest)    
+variability = t.predict_variance(xtest)
