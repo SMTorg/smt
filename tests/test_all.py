@@ -111,9 +111,9 @@ class Test(SMTestCase):
         sm.options['print_global'] = False
 
         sm.training_points = {'exact': {}}
-        sm.add_training_points('exact', xt, yt[:, 0])
+        sm.add_training_points_values('exact', xt, yt[:, 0])
         for i in range(self.ndim):
-            sm.add_training_points('exact',xt,yt[:, i+1],kx=i)
+            sm.add_training_points_derivatives('exact',xt,yt[:, i+1],kx=i)
 
         with Silence():
             sm.train()
