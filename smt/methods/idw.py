@@ -35,7 +35,7 @@ class IDW(SM):
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'IDW'
-        
+
     ############################################################################
     # Model functions
     ############################################################################

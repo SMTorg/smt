@@ -26,6 +26,7 @@ from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 from smt.utils.pls import pls as _pls
 
+
 def standardization(X,y,copy=False):
 
     """
@@ -485,14 +486,14 @@ class GEKPLS(SM):
         declare('poly', 'constant', values=('constant', 'linear', 'quadratic'), types=FunctionType,
                 desc='regr. term')
         declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'), types=FunctionType,
-                desc='type of corr. func.')        
+                desc='type of corr. func.')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'GEKPLS'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -755,7 +756,7 @@ class GEKPLS(SM):
         d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
         theta = np.sum(self.optimal_theta * self.coeff_pls**2,axis=1)
         y = (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
-        
+
         return y
 
     def _predict_variance(self, x):

@@ -14,9 +14,10 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTClib
 
+
 class RMTC(RMTS):
     """
-    Regularized Minimal-energy Tensor-product Spline (RMTC) interpolant.
+    Regularized Minimal-energy Tensor-product Cubic hermite spline (RMTC) interpolant.
 
     RMTC divides the n-dimensional space using n-dimensional box elements.
     Each n-D box is represented using a tensor-product of cubic functions,
@@ -43,7 +44,7 @@ class RMTC(RMTS):
                 desc='# elements in each dimension - ndarray [nx]')
 
         self.name = 'RMTC'
-        
+
     def _initialize(self):
         options = self.options
         nx = self.training_points['exact'][0][0].shape[1]

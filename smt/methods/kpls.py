@@ -24,6 +24,7 @@ from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 from smt.utils.pls import pls as _pls
 
+
 def standardization(X,y,copy=False):
 
     """
@@ -384,17 +385,17 @@ class KPLS(SM):
 
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
-        declare('poly', 'constant', types=FunctionType,values=('constant', 'linear', 'quadratic'), 
+        declare('poly', 'constant', types=FunctionType,values=('constant', 'linear', 'quadratic'),
                 desc='regr. term')
-        declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'), 
+        declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
                 desc='type of corr. func.')
-        declare('data_dir', types=str,values=None, 
+        declare('data_dir', types=str,values=None,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'KPLS'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
-        
+
     ############################################################################
     # Model functions
     ############################################################################

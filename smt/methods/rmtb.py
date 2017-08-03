@@ -14,9 +14,10 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTBlib
 
+
 class RMTB(RMTS):
     """
-    Regularized Minimal-energy Tensor-product B-Spline (RMTB) interpolant.
+    Regularized Minimal-energy Tensor-product B-spline (RMTB) interpolant.
 
     RMTB builds an approximation from a tensor product of B-spline curves.
     In 1-D it is a B-spline curve, in 2-D it is a B-spline surface, in 3-D
@@ -46,7 +47,7 @@ class RMTB(RMTS):
                 desc='# B-spline control points in each dimension - length [nx]')
 
         self.name = 'RMTB'
-        
+
     def _initialize(self):
         options = self.options
         nx = self.training_points['exact'][0][0].shape[1]

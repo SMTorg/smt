@@ -13,6 +13,7 @@ from sklearn import linear_model
 from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
+
 class LS(SM):
 
     """
@@ -29,7 +30,7 @@ class LS(SM):
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'LS'
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -76,7 +77,7 @@ class LS(SM):
         '''
         y = self.mod.predict(x)
         return y
-        
+
     def _predict_derivative(self, x, kx):
         '''
         Evaluates the derivatives at a set of points.
@@ -93,9 +94,9 @@ class LS(SM):
         y : np.ndarray
             Derivative values.
         '''
-        
+
         # Initialization
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval,1)) * self.mod
-        
+
         return y

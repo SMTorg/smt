@@ -15,6 +15,7 @@ from smt.methods.sm import SM
 
 from smt.methods import RMTSlib
 
+
 class RMTS(SM):
     """
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.
@@ -457,5 +458,5 @@ class RMTS(SM):
 
         mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['coeff']))
         y = mtx.dot(self.sol)
-        
+
         return y

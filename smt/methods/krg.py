@@ -24,6 +24,7 @@ from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 
+
 def standardization(X,y,copy=False):
 
     """
@@ -344,7 +345,7 @@ class KRG(SM):
         declare = self.options.declare
 
         declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
-        declare('poly', 'constant',types=FunctionType,values=('constant', 'linear', 'quadratic'), 
+        declare('poly', 'constant',types=FunctionType,values=('constant', 'linear', 'quadratic'),
                 desc='regr. term')
         declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
                 desc='type of corr. func.')
@@ -353,8 +354,8 @@ class KRG(SM):
 
         self.name = 'Kriging'
         self.best_iteration_fail = None
-        self.nb_ill_matrix = 5        
-        
+        self.nb_ill_matrix = 5
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -573,7 +574,7 @@ class KRG(SM):
             Derivative values.
         '''
         kx += 1
-        
+
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std

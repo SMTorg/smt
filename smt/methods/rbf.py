@@ -14,6 +14,7 @@ from smt.utils.caching import cached_operation
 
 from smt.methods import RBFlib
 
+
 class RBF(SM):
 
     '''
@@ -36,7 +37,7 @@ class RBF(SM):
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
         self.name = 'RBF'
-        
+
     def _initialize(self):
         options = self.options
 
@@ -128,7 +129,7 @@ class RBF(SM):
         xt = self.training_points['exact'][0][0]
         jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], n,
             num['radial'], num['dof'], options['d0'], x, xt)
-        
+
         y = jac.dot(self.sol)
         return y
 
@@ -158,6 +159,6 @@ class RBF(SM):
         xt = self.training_points['exact'][0][0]
         jac = RBFlib.compute_jac(kx, options['poly_degree'], num['x'], n,
             num['radial'], num['dof'], options['d0'], x, xt)
-            
+
         y = jac.dot(self.sol)
         return y

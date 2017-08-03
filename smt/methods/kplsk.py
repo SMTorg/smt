@@ -24,6 +24,7 @@ from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 from smt.utils.pls import pls as _pls
 
+
 def standardization(X,y,copy=False):
 
     """
@@ -412,7 +413,7 @@ class KPLSK(SM):
         self.name = 'KPLSK'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -636,7 +637,7 @@ class KPLSK(SM):
             Derivative values.
         '''
         kx += 1
-        
+
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std

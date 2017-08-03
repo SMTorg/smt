@@ -14,6 +14,7 @@ import scipy
 from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
+
 class PA2(SM):
 
     """
@@ -28,7 +29,7 @@ class PA2(SM):
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'PA2'
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -105,7 +106,7 @@ class PA2(SM):
         y : np.ndarray
             Evaluation point output variable values
         '''
-        
+
         M=self._response_surface(x)
         y = np.dot(M,self.coef).T
 
