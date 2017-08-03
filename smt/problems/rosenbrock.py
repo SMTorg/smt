@@ -11,7 +11,7 @@ from smt.problems.problem import Problem
 
 class Rosenbrock(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'Rosenbrock', types=str)
 
     def _initialize(self):

@@ -89,8 +89,8 @@ class KRG(SM):
         'abs_exp': abs_exp,
         'squar_exp': squar_exp}
 
-    def _declare_options(self):
-        super(KRG, self)._declare_options()
+    def initialize(self):
+        super(KRG, self).initialize()
         declare = self.options.declare
 
         declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')

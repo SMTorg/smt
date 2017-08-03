@@ -14,7 +14,7 @@ from smt.sampling.sampling import Sampling
 
 class LHS(Sampling):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('criterion', 'c', values=['center', 'maximin', 'centermaximin',
                                                        'correlation', 'c', 'm', 'cm', 'corr','ese'],
                              types=str, desc='criterion used to construct the LHS design '+

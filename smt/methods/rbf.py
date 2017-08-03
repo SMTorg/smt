@@ -21,8 +21,8 @@ class RBF(SM):
     Radial basis function interpolant with global polynomial trend.
     '''
 
-    def _declare_options(self):
-        super(RBF, self)._declare_options()
+    def initialize(self):
+        super(RBF, self).initialize()
         declare = self.options.declare
 
         declare('d0', 1.0, types=(int, float, list, np.ndarray),

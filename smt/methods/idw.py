@@ -26,8 +26,8 @@ class IDW(SM):
     is computed with respect to the distance between x and the training points.
     '''
 
-    def _declare_options(self):
-        super(IDW, self)._declare_options()
+    def initialize(self):
+        super(IDW, self).initialize()
         declare = self.options.declare
 
         declare('p', 2.5, types=(int, float), desc='order of distance norm')

@@ -13,7 +13,7 @@ from smt.problems.problem import Problem
 
 class CantileverBeam(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'CantileverBeam', types=str)
         self.options.declare('P', 50e3, types=(int, float), desc='Tip load (50 kN)')
         self.options.declare('E', 200e9, types=(int, float), desc='Modulus of elast. (200 GPa)')

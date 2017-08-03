@@ -127,8 +127,8 @@ class KPLS(SM):
         'abs_exp': abs_exp,
         'squar_exp': squar_exp}
 
-    def _declare_options(self):
-        super(KPLS, self)._declare_options()
+    def initialize(self):
+        super(KPLS, self).initialize()
         declare = self.options.declare
 
         declare('n_comp', 1, types=int, desc='Number of principal components')

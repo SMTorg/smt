@@ -23,8 +23,8 @@ class LS(SM):
     Default-parameters from scikit-learn are used herein.
     """
 
-    def _declare_options(self):
-        super(LS, self)._declare_options()
+    def initialize(self):
+        super(LS, self).initialize()
         declare = self.options.declare
 
         declare('data_dir', values=None, types=str,

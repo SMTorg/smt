@@ -20,8 +20,8 @@ class PA2(SM):
     Square polynomial approach
     """
 
-    def _declare_options(self):
-        super(PA2, self)._declare_options()
+    def initialize(self):
+        super(PA2, self).initialize()
         declare = self.options.declare
 
         declare('data_dir', values=None, types=str,

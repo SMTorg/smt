@@ -15,7 +15,7 @@ from smt.problems.problem import Problem
 
 class TorsionVibration(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'TorsionVibration', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 15

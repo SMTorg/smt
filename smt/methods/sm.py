@@ -31,15 +31,14 @@ class SM(object):
             Set of options that can be optionally set; each option must have been declared.
         '''
         self.options = OptionsDictionary()
-        self._declare_options()
+        self.initialize()
         self.options.update(kwargs)
 
         self.training_points = defaultdict(dict)
 
         self.printer = Printer()
 
-
-    def _declare_options(self):
+    def initialize(self):
         declare = self.options.declare
 
         declare('print_global', True, types=bool,

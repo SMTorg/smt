@@ -21,8 +21,8 @@ class RMTS(SM):
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.
     """
 
-    def _declare_options(self):
-        super(RMTS, self)._declare_options()
+    def initialize(self):
+        super(RMTS, self).initialize()
         declare = self.options.declare
 
         declare('xlimits', types=np.ndarray,

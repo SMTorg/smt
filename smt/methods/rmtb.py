@@ -37,8 +37,8 @@ class RMTB(RMTS):
     training points
     """
 
-    def _declare_options(self):
-        super(RMTB, self)._declare_options()
+    def initialize(self):
+        super(RMTB, self).initialize()
         declare = self.options.declare
 
         declare('order', 3, types=(Integral, tuple, list, np.ndarray),
