@@ -18,13 +18,13 @@ from smt.methods import IDWlib
 
 class IDW(SM):
 
-    '''
+    """
     Inverse distance weighting interpolant
     This model uses the inverse distance between the unknown and training
     points to predeict the unknown point.
     We do not need to fit this model because the response of an unknown point x
     is computed with respect to the distance between x and the training points.
-    '''
+    """
 
     def initialize(self):
         super(IDW, self).initialize()
@@ -58,7 +58,7 @@ class IDW(SM):
                 self._new_train()
                 #outputs['sol'] = self.sol
 
-    def _predict_value(self,x):
+    def _predict_values(self,x):
         """
         This function is used by _predict function. See _predict for more details.
         """

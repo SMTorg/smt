@@ -11,7 +11,7 @@ from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-
+from smt.utils import compute_rms_error
 from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
@@ -117,8 +117,8 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = sm.compute_rms_error()
-        e_error = sm.compute_rms_error(xe, ye)
+        t_error = compute_rms_error(sm)
+        e_error = compute_rms_error(sm, xe, ye)
 
     # --------------------------------------------------------------------
     # Function: sphere

@@ -62,8 +62,8 @@ class LS(SM):
                 self._new_train()
                 #outputs['sol'] = self.sol
 
-    def _predict_value(self,x):
-        '''
+    def _predict_values(self,x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -75,12 +75,12 @@ class LS(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         y = self.mod.predict(x)
         return y
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -94,7 +94,7 @@ class LS(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
 
         # Initialization
         n_eval, n_features_x = x.shape

@@ -17,13 +17,14 @@ from smt.methods import RBFlib
 
 class RBF(SM):
 
-    '''
+    """
     Radial basis function interpolant with global polynomial trend.
-    '''
+    """
 
     def initialize(self):
         super(RBF, self).initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('d0', 1.0, types=(int, float, list, np.ndarray),
                 desc='basis function scaling parameter in exp(-d^2 / d0^2)')
@@ -35,6 +36,8 @@ class RBF(SM):
                 desc='Regularization coeff.')
         declare('max_print_depth', 5, types=int,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
+
+        supports['derivatives'] = True
 
         self.name = 'RBF'
 
@@ -107,8 +110,8 @@ class RBF(SM):
                 self._new_train()
                 outputs['sol'] = self.sol
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -120,7 +123,7 @@ class RBF(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         n = x.shape[0]
 
         num = self.num
@@ -133,8 +136,8 @@ class RBF(SM):
         y = jac.dot(self.sol)
         return y
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -148,7 +151,7 @@ class RBF(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         kx += 1
 
         n = x.shape[0]

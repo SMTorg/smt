@@ -92,8 +92,8 @@ class PA2(SM):
         return M.T
         
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -107,7 +107,7 @@ class PA2(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         dim = self.dim    
         
         linear_coef = self.coef[1+kx,0]
@@ -124,8 +124,8 @@ class PA2(SM):
         y = (linear_coef+quad_coef+cross_coef).reshape((x.shape[0],1))
         return y
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -137,7 +137,7 @@ class PA2(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
 
         M=self._response_surface(x)
         y = np.dot(M,self.coef).T

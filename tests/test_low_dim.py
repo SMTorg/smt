@@ -11,7 +11,7 @@ from smt.sampling import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-
+from smt.utils import compute_rms_error
 from smt.methods import LS, PA2, KPLS, KRG
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
@@ -90,8 +90,8 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = sm.compute_rms_error()
-        e_error = sm.compute_rms_error(xe, ye)
+        t_error = compute_rms_error(sm)
+        e_error = compute_rms_error(sm, xe, ye)
 
         if print_output:
             print('%8s %6s %18.9e %18.9e'

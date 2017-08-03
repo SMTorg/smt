@@ -14,23 +14,32 @@ from collections import defaultdict
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
+from smt.utils.checks import check_support, check_x_shape
 
 
 class SM(object):
-    '''
+    """
     Base class for all model methods.
-    '''
+    """
 
     def __init__(self, **kwargs):
-        '''
+        """
         Constructor.
 
         Arguments
         ---------
         **kwargs : named arguments
             Set of options that can be optionally set; each option must have been declared.
-        '''
+        """
         self.options = OptionsDictionary()
+
+        self.supports = supports = {}
+        supports['training_derivatives'] = False
+        supports['derivatives'] = False
+        supports['output_derivatives'] = False
+        supports['adjoint_api'] = False
+        supports['variances'] = False
+
         self.initialize()
         self.options.update(kwargs)
 
@@ -52,58 +61,20 @@ class SM(object):
         declare('print_solver', True, types=bool,
                 desc='Whether to print solver information')
 
-    def compute_rms_error(self, xe=None, ye=None, kx=None):
-        '''
-        Returns the RMS error of the training points or the given points.
-
-        Arguments
-        ---------
-        xe : np.ndarray[ne, dim] or None
-            Input values. If None, the input values at the training points are used instead.
-        ye : np.ndarray[ne, 1] or None
-            Output / deriv. values. If None, the training pt. outputs / derivs. are used.
-        kx : int or None
-            If None, we are checking the output values.
-            If int, we are checking the derivs. w.r.t. the kx^{th} input variable (0-based).
-        '''
-        if xe is not None and ye is not None:
-            if kx == None:
-                ye2 = self.predict_value(xe)
-            else:
-                ye2 = self.predict_derivative(xe, kx)
-            return np.linalg.norm(ye2 - ye) / np.linalg.norm(ye)
-        elif xe is None and ye is None:
-            num = 0.
-            den = 0.
-            if kx is None:
-                kx2 = 0
-            else:
-                kx2 += 1
-            if kx2 not in self.training_points[None]:
-                raise ValueError('There is no training point data available for kx %s' % kx2)
-            xt, yt = self.training_points[None][kx2]
-            if kx == None:
-                yt2 = self.predict_value(xt)
-            else:
-                yt2 = self.predict_derivative(xt, kx)
-            num += np.linalg.norm(yt2 - yt) ** 2
-            den += np.linalg.norm(yt) ** 2
-            return num ** 0.5 / den ** 0.5
-
     def set_training_values(self, xt, yt, name=None):
-        '''
+        """
         Set training data (values).
 
         Arguments
         ---------
-        xt : np.ndarray[nt, nx]
+        xt : np.ndarray[nt, nx] or np.ndarray[nt]
             The input values for the nt training points.
-        yt : np.ndarray[nt, ny]
+        yt : np.ndarray[nt, ny] or np.ndarray[nt]
             The output values for the nt training points.
         name : str or None
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
-        '''
+        """
         if not isinstance(xt, np.ndarray):
             raise ValueError('xt must be a NumPy array')
         if not isinstance(yt, np.ndarray):
@@ -129,21 +100,21 @@ class SM(object):
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
     def set_training_derivatives(self, xt, dyt_dxt, kx, name=None):
-        '''
+        """
         Set training data (derivatives).
 
         Arguments
         ---------
-        xt : np.ndarray[nt, nx]
+        xt : np.ndarray[nt, nx] or np.ndarray[nt]
             The input values for the nt training points.
-        dyt_dxt : np.ndarray[nt, ny]
+        dyt_dxt : np.ndarray[nt, ny] or np.ndarray[nt]
             The derivatives values for the nt training points.
         kx : int
             0-based index of the derivatives being set.
         name : str or None
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
-        '''
+        """
         if not isinstance(xt, np.ndarray):
             raise ValueError('xt must be a NumPy array')
         if not isinstance(dyt_dxt, np.ndarray):
@@ -164,9 +135,9 @@ class SM(object):
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
     def train(self):
-        '''
+        """
         Train the model
-        '''
+        """
         n_exact = self.training_points[None][0][0].shape[0]
 
         self.printer.active = self.options['print_global']
@@ -189,21 +160,23 @@ class SM(object):
         with self.printer._timed_context('Training', 'training'):
             self._train()
 
-    def predict_value(self, x):
-        '''
-        Evaluates the model at a set of points.
+    def predict_values(self, x):
+        """
+        Predict the output values at a set of points.
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction points.
 
         Returns
         -------
-        y : np.ndarray
-            Evaluation point output variable values
-        '''
-        n_evals = x.shape[0]
+        y : np.ndarray[n, ny]
+            Output values at the prediction points.
+        """
+        check_x_shape(self.nx, x)
+
+        n = x.shape[0]
 
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
@@ -212,37 +185,45 @@ class SM(object):
             self.printer._title('Evaluation of the Mixture of experts')
         else:
             self.printer._title('Evaluation')
-        self.printer('   %-12s : %i' % ('# eval points.', n_evals))
+        self.printer('   %-12s : %i' % ('# eval points.', n))
         self.printer()
 
         #Evaluate the unknown points using the specified model-method
         with self.printer._timed_context('Predicting', key='prediction'):
-            y = self._predict_value(x)
+            y = self._predict_values(x)
 
-        time_pt = self.printer._time('prediction')[-1] / n_evals
+        time_pt = self.printer._time('prediction')[-1] / n
         self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
-        return y.reshape(n_evals, self.ny)
+        return y.reshape((n, self.ny))
 
-    def predict_derivative(self, x, kx):
-        '''
-        Evaluates the derivatives at a set of points.
+    def predict_derivatives(self, x, kx):
+        """
+        Predict the dy_dx derivatives at a set of points.
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction points.
         kx : int
             The 0-based index of the input variable with respect to which derivatives are desired.
 
         Returns
         -------
-        y : np.ndarray
-            Derivative values.
-        '''
-        n_evals = x.shape[0]
+        dy_dx : np.ndarray[n, ny]
+            Derivatives.
+        """
+        check_support(self, 'derivatives')
+        check_x_shape(self.nx, x)
+
+        n = x.shape[0]
+        if x.shape[1] != self.nx:
+            if self.nx == 1:
+                raise ValueError('x should have shape [:, 1] or [:]')
+            else:
+                raise ValueError('x should have shape [:, {}]'.format(self.nx))
 
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
@@ -251,66 +232,58 @@ class SM(object):
             self.printer._title('Evaluation of the Mixture of experts')
         else:
             self.printer._title('Evaluation')
-        self.printer('   %-12s : %i' % ('# eval points.', n_evals))
+        self.printer('   %-12s : %i' % ('# eval points.', n))
         self.printer()
 
         #Evaluate the unknown points using the specified model-method
         with self.printer._timed_context('Predicting', key='prediction'):
-            y = self._predict_derivative(x, kx)
+            y = self._predict_derivatives(x, kx)
 
-        time_pt = self.printer._time('prediction')[-1] / n_evals
+        time_pt = self.printer._time('prediction')[-1] / n
         self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
-        return y.reshape(n_evals, self.ny)
+        return y.reshape(n, self.ny)
 
-    def predict_variance(self, x):
-        '''
-        Evaluates the variance at a set of points.
-
-        Arguments
-        ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values.
-
-        Returns
-        -------
-        y : np.ndarray
-            Variance values.
-        '''
-        return self._predict_variance(x)
-
-    def _predict_derivative(self, x, kx):
-        '''
-        Evaluates the derivatives at a set of points.
+    def predict_variances(self, x):
+        """
+        Predict the variances at a set of points.
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
-        kx : int
-            The 0-based index of the input variable with respect to which derivatives are desired.
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction points.
 
         Returns
         -------
-        y : np.ndarray
-            Derivative values.
-        '''
-        raise NotImplementedError('Derivative evaluation is not implemented for this SM method.')
+        s2 : np.ndarray[n, ny]
+            Variances.
+        """
+        check_support(self, 'variances')
+        check_x_shape(self.nx, x)
 
-    def _predict_variance(self, x):
-        '''
-        Evaluates the variance at a set of points.
+        n = x.shape[0]
+        s2 = self._predict_variances(x)
+        return s2.reshape(n, self.ny)
+
+    def predict_output_derivatives(self, x):
+        """
+        Predict the derivatives dy_dyt at a set of points.
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values.
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction points.
 
         Returns
         -------
-        y : np.ndarray
-            Variance values.
-        '''
-        raise NotImplementedError('Variance prediction is not implemented for this SM method.')
+        dy_dyt : dict[ny] of np.ndarray[n, nt]
+            Output derivatives.
+        """
+        check_support(self, 'output_derivatives')
+        check_x_shape(self.nx, x)
+
+        n = x.shape[0]
+        dy_dyt = self._predict_output_derivatives(x)
+        return dy_dyt

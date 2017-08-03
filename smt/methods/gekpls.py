@@ -207,11 +207,11 @@ The KPLS class.
 
 class GEKPLS(SM):
 
-    '''
+    """
     - Ordinary kriging
     - KPLS(-K)
     - GEKPLS
-    '''
+    """
 
     _regression_types = {
         'constant': constant,
@@ -416,8 +416,8 @@ class GEKPLS(SM):
 
         return reduced_likelihood_function_value, par
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -429,7 +429,7 @@ class GEKPLS(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -453,8 +453,8 @@ class GEKPLS(SM):
 
         return y
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -468,7 +468,7 @@ class GEKPLS(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         kx += 1
 
         # Initialization
@@ -508,7 +508,7 @@ class GEKPLS(SM):
 
         return y
 
-    def _predict_variance(self, x):
+    def _predict_variances(self, x):
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std

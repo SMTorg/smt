@@ -24,6 +24,7 @@ class RMTS(SM):
     def initialize(self):
         super(RMTS, self).initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
@@ -57,6 +58,9 @@ class RMTS(SM):
                 desc='Directory for loading / saving cached data; None means do not save or load')
         declare('max_print_depth', 5, types=Integral,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
+
+        supports['training_derivatives'] = True
+        supports['derivatives'] = True
 
     def _initialize_hessian(self):
         diag = self.options['reg_dv'] * np.ones(self.num['dof'])
@@ -358,8 +362,8 @@ class RMTS(SM):
                 self._new_train()
                 outputs['sol'] = self.sol
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -371,12 +375,12 @@ class RMTS(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         y = self._predict(x, 0)
         return y
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -390,7 +394,7 @@ class RMTS(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         y = self._predict(x, kx + 1)
         return y
 
