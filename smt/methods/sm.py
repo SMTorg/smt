@@ -90,7 +90,7 @@ class SM(object):
             den += np.linalg.norm(yt) ** 2
             return num ** 0.5 / den ** 0.5
 
-    def add_training_points(self, typ, xt, yt, kx=None):
+    def add_training_points_values(self, typ, xt, yt):
         '''
         Adds nt training/sample data points
 
@@ -102,12 +102,7 @@ class SM(object):
         xt : np.ndarray [nt, nx]
             Training point input variable values
         yt : np.ndarray [nt, ny]
-            Training point output variable values or derivatives (a vector)
-        kx : int or None
-            None if this data set represents output variable values
-            int  if this data set represents derivatives
-                 where it is differentiated w.r.t. the kx^{th}
-                 input variable (kx is 0-based)
+            Training point output variable values (a vector)
         '''
         nt = xt.shape[0]
         nx = xt.shape[1]
@@ -117,14 +112,10 @@ class SM(object):
         self.nx = nx
         self.ny = ny
 
-        #Output or derivative variables
-        if kx is None:
-            kx = 0
-            self.dim = xt.shape[1]
-            self.nt = xt.shape[0]
-        else:
-            kx = kx + 1
-
+        kx = 0
+        self.dim = xt.shape[1]
+        self.nt = xt.shape[0]
+        
         #Construct the input data
         pts = self.training_points[typ]
         if kx in pts:
@@ -133,6 +124,42 @@ class SM(object):
         else:
             pts[kx] = [np.array(xt), np.array(yt)]
 
+    def add_training_points_derivatives(self, typ, xt, yt, kx):
+        '''
+        Adds nt training/sample data points
+
+        Arguments
+        ---------
+        typ : str
+            'exact'  if this data are considered as a high-fidelty data
+            'approx' if this data are considered as a low-fidelity data (TODO)
+        xt : np.ndarray [nt, nx]
+            Training point input variable values
+        yt : np.ndarray [nt, ny]
+            Training derivatives (a vector)
+        kx : int 
+            The kx^{th} input variable (kx is 0-based)
+        '''
+        nt = xt.shape[0]
+        nx = xt.shape[1]
+        ny = int(np.prod(yt.shape) / nt)
+        yt = yt.reshape((nt, ny))
+
+        self.nx = nx
+        self.ny = ny
+
+        #Derivative variables
+        kx = kx + 1
+
+        #Construct the input data
+        pts = self.training_points[typ]
+        if kx in pts:
+            pts[kx][0] = np.vstack([pts[kx][0], xt])
+            pts[kx][1] = np.vstack([pts[kx][1], yt])
+        else:
+            pts[kx] = [np.array(xt), np.array(yt)]
+            
+            
     def train(self):
         '''
         Train the model

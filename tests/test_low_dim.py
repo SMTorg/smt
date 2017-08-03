@@ -86,7 +86,7 @@ class Test(SMTestCase):
         sm.options['print_global'] = False
 
         sm.training_points = {'exact': {}}
-        sm.add_training_points('exact', xt, yt)
+        sm.add_training_points_values('exact', xt, yt)
 
         with Silence():
             sm.train()

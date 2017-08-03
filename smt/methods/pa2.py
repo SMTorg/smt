@@ -4,7 +4,6 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 TO DO:
 - define outputs['sol'] = self.sol
-- implement the derivative predictions
 """
 
 from __future__ import division
@@ -75,7 +74,7 @@ class PA2(SM):
         M : np.ndarray
             Matrix of the surface
         """
-        dim = x.shape[1]
+        dim = self.dim
         n = x.shape[0]
         n_app = int(scipy.special.binom(dim+2, dim))
         M = np.zeros((n_app,n))
@@ -91,6 +90,39 @@ class PA2(SM):
                 M[k,:] = x[i,:]*x[j,:]
 
         return M.T
+        
+
+    def _predict_derivative(self, x, kx):
+        '''
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray
+            Derivative values.
+        '''
+        dim = self.dim    
+        
+        linear_coef = self.coef[1+kx,0]
+        quad_coef = 2 * self.coef[1+dim+kx,0] * x[:,kx]
+        cross_coef = 0
+        for i in range(dim):
+            if i > kx:
+                k = int(2*dim+2+(kx)*dim-((kx+1)*(kx))/2+(i-(kx+2)))
+                cross_coef += self.coef[k,0]* x[:,i]
+            elif i < kx:
+                k = int(2*dim+2+(i)*dim-((i+1)*(i))/2+(kx-(i+2)))
+                cross_coef += self.coef[k,0]* x[:,i]
+                
+        y = (linear_coef+quad_coef+cross_coef).reshape((x.shape[0],1))
+        return y
 
     def _predict_value(self, x):
         '''
