@@ -65,9 +65,9 @@ class IDW(SM):
         n_evals = x.shape[0]
         xt_list = []
         yt_list = []
-        if 0 in self.training_points['exact']:
-            xt_list.append(self.training_points['exact'][0][0])
-            yt_list.append(self.training_points['exact'][0][1])
+        if 0 in self.training_points[None]:
+            xt_list.append(self.training_points[None][0][0])
+            yt_list.append(self.training_points[None][0][1])
 
         xt = np.vstack(xt_list)
         yt = np.vstack(yt_list)

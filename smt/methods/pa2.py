@@ -39,9 +39,9 @@ class PA2(SM):
         Train the model
         """
 
-        if 0 in self.training_points['exact']:
-            x = self.training_points['exact'][0][0]
-            y = self.training_points['exact'][0][1]
+        if 0 in self.training_points[None]:
+            x = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
 
         if x.shape[0] < (self.dim+1)*(self.dim+2)/2.:
             raise Exception("Number of training points should be greater or equal to %d."

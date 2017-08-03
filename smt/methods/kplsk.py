@@ -174,10 +174,10 @@ class KPLSK(SM):
         self._check_param()
 
         # Compute PLS coefficients
-        X = self.training_points['exact'][0][0]
-        y = self.training_points['exact'][0][1]
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
 
-        if 0 in self.training_points['exact']:
+        if 0 in self.training_points[None]:
             self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
 
         # Center and scale X and y

@@ -80,8 +80,8 @@ class RMTS(SM):
         xlimits = self.options['xlimits']
 
         full_jac_dict = {}
-        for kx in self.training_points['exact']:
-            xt, yt = self.training_points['exact'][kx]
+        for kx in self.training_points[None]:
+            xt, yt = self.training_points[None][kx]
 
             xmin = np.min(xt, axis=0)
             xmax = np.max(xt, axis=0)
@@ -141,7 +141,7 @@ class RMTS(SM):
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         func = 0.5 * np.dot(sol, full_hess * sol)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
             func += 0.5 * c * np.sum((full_jac * sol - yt) ** p)
@@ -150,7 +150,7 @@ class RMTS(SM):
 
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
         grad = full_hess * sol
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
             grad += 0.5 * c * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
@@ -165,7 +165,7 @@ class RMTS(SM):
 
     def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
         hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
 
@@ -205,7 +205,7 @@ class RMTS(SM):
         p = 2
 
         hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             hess += 0.5 * c * p * (p - 1) * full_jac_T * full_jac
 
@@ -234,8 +234,8 @@ class RMTS(SM):
 
     def _get_yt_dict(self, ind_y):
         yt_dict = {}
-        for kx in self.training_points['exact']:
-            xt, yt = self.training_points['exact'][kx]
+        for kx in self.training_points[None]:
+            xt, yt = self.training_points[None][kx]
             yt_dict[kx] = yt[:, ind_y]
         return yt_dict
 

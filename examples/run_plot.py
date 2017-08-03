@@ -34,10 +34,10 @@ np.random.seed(1)
 xe = sampling(ne)
 ye = prob(xe)
 
-sm.add_training_points('exact', xt, yt)
+sm.set_training_values( xt, yt)
 if 0:
     for kx in range(ndim):
-        sm.add_training_points('exact', xt, dyt[kx], kx)
+        sm.set_training_values( xt, dyt[kx], kx)
 sm.train()
 
 print(sm.compute_rms_error())

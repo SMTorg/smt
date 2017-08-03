@@ -95,8 +95,7 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt)
+        sm.set_training_values(xt, yt)
 
         with Silence():
             sm.train()
@@ -110,10 +109,9 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt)
+        sm.set_training_values(xt, yt)
         for kx in range(prob.xlimits.shape[0]):
-            sm.add_training_points_derivatives('exact', xt, dyt[kx], kx)
+            sm.set_training_derivatives(xt, dyt[kx], kx)
 
         with Silence():
             sm.train()

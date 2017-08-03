@@ -62,10 +62,9 @@ class Test(SMTestCase):
         x[0, :] = prob.xlimits[:, 1] + 1.0
         y = prob(x)
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt)
+        sm.set_training_values(xt, yt)
         if extrap_train:
-            sm.add_training_points_values('exact', x, y)
+            sm.set_training_values(x, y)
 
         with Silence():
             sm.train()

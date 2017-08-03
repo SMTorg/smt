@@ -43,9 +43,9 @@ class LS(SM):
         """
         pts = self.training_points
 
-        if 0 in pts['exact']:
-            x = pts['exact'][0][0]
-            y = pts['exact'][0][1]
+        if 0 in pts[None]:
+            x = pts[None][0][0]
+            y = pts[None][0][1]
 
         self.mod = linear_model.LinearRegression()
         self.mod.fit(x,y)

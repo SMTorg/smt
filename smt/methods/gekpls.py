@@ -138,7 +138,7 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
             sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
             _X = X[i,:]+ sign
             for j in range(1,dim+1):
-                sign[:,j-1] = sign[:,j-1]*pts['exact'][j][1][i,0]
+                sign[:,j-1] = sign[:,j-1]*pts[None][j][1][i,0]
             _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
         else:
             _X = np.zeros((9,dim))
@@ -148,43 +148,43 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
             _y[0,0] = y[i,0].copy()
             # right
             _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[1,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
+            _y[1,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
                 xlimits[0,1]-xlimits[0,0])
             # up
             _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[2,0] = _y[0,0].copy()+ pts['exact'][2][1][i,0]*delta_x*(
+            _y[2,0] = _y[0,0].copy()+ pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # left
             _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[3,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
+            _y[3,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
                 xlimits[0,1]-xlimits[0,0])
             # down
             _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[4,0] = _y[0,0].copy()-pts['exact'][2][1][i,0]*delta_x*(
+            _y[4,0] = _y[0,0].copy()-pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # right up
             _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
             _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[5,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+            _y[5,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # left up
             _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
             _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[6,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts['exact'][2][1][i,0]*delta_x*(
+            _y[6,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # left down
             _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
             _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[7,0] = _y[0,0].copy()- pts['exact'][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+            _y[7,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # right down
             _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
             _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[3,0] = _y[0,0].copy()+ pts['exact'][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts['exact'][2][1][i,0]*delta_x*(
+            _y[3,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
 
         pls.fit(_X.copy(),_y.copy())
@@ -196,7 +196,7 @@ def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
                 XX = np.vstack((XX,X[i,:]))
                 XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
                 yy = np.vstack((yy,y[i,0]))
-                yy[-1,0] += pts['exact'][1+ii][1][i,0]*delta_x*(
+                yy[-1,0] += pts[None][1+ii][1][i,0]*delta_x*(
                     xlimits[ii,1]-xlimits[ii,0])
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
@@ -255,10 +255,10 @@ class GEKPLS(SM):
         self._check_param()
 
         # Compute PLS coefficients
-        X = self.training_points['exact'][0][0]
-        y = self.training_points['exact'][0][1]
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
 
-        if 0 in self.training_points['exact']:
+        if 0 in self.training_points[None]:
             self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),self.options['n_comp'],
                 self.training_points,self.options['delta_x'],self.options['xlimits'],
                 self.options['extra_points'])
@@ -663,7 +663,7 @@ class GEKPLS(SM):
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['poly']))
 
-        if not(1 in self.training_points['exact']):
+        if not(1 in self.training_points[None]):
             raise Exception('Derivative values are needed for using the GEKPLS model.')
 
         if len(self.options['theta0']) != self.options['n_comp']:

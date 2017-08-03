@@ -110,10 +110,9 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt[:, 0])
+        sm.set_training_values(xt, yt[:, 0])
         for i in range(self.ndim):
-            sm.add_training_points_derivatives('exact',xt,yt[:, i+1],kx=i)
+            sm.set_training_derivatives(xt,yt[:, i+1],i)
 
         with Silence():
             sm.train()
@@ -172,7 +171,7 @@ class Test(SMTestCase):
 
     def test_exp_KPLS(self):
         self.run_test()
-    
+
     def test_exp_KPLSK(self):
         self.run_test()
 
@@ -209,13 +208,13 @@ class Test(SMTestCase):
 
     def test_tanh_KPLS(self):
         self.run_test()
-        
+
     def test_tanh_KPLSK(self):
         self.run_test()
-        
+
     #def test_tanh_GEKPLS(self):
     #    self.run_test()
-        
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):
         self.run_test()
@@ -246,13 +245,13 @@ class Test(SMTestCase):
 
     def test_cos_KPLS(self):
         self.run_test()
-        
+
     def test_cos_KPLSK(self):
         self.run_test()
-        
+
     def test_cos_GEKPLS(self):
         self.run_test()
-        
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
         self.run_test()

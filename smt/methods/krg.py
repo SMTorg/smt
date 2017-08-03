@@ -117,8 +117,8 @@ class KRG(SM):
         self._check_param()
 
         # Compute PLS coefficients
-        X = self.training_points['exact'][0][0]
-        y = self.training_points['exact'][0][1]
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
 
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \

@@ -10,6 +10,7 @@ Metamodels - a base class for metamodel methods
 from __future__ import division
 
 import numpy as np
+from collections import defaultdict
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
@@ -33,7 +34,7 @@ class SM(object):
         self._declare_options()
         self.options.update(kwargs)
 
-        self.training_points = {'exact': {}}
+        self.training_points = defaultdict(dict)
 
         self.printer = Printer()
 
@@ -79,9 +80,9 @@ class SM(object):
                 kx2 = 0
             else:
                 kx2 += 1
-            if kx2 not in self.training_points['exact']:
+            if kx2 not in self.training_points[None]:
                 raise ValueError('There is no training point data available for kx %s' % kx2)
-            xt, yt = self.training_points['exact'][kx2]
+            xt, yt = self.training_points[None][kx2]
             if kx == None:
                 yt2 = self.predict_value(xt)
             else:
@@ -90,81 +91,84 @@ class SM(object):
             den += np.linalg.norm(yt) ** 2
             return num ** 0.5 / den ** 0.5
 
-    def add_training_points_values(self, typ, xt, yt):
+    def set_training_values(self, xt, yt, name=None):
         '''
-        Adds nt training/sample data points
+        Set training data (values).
 
         Arguments
         ---------
-        typ : str
-            'exact'  if this data are considered as a high-fidelty data
-            'approx' if this data are considered as a low-fidelity data (TODO)
-        xt : np.ndarray [nt, nx]
-            Training point input variable values
-        yt : np.ndarray [nt, ny]
-            Training point output variable values (a vector)
+        xt : np.ndarray[nt, nx]
+            The input values for the nt training points.
+        yt : np.ndarray[nt, ny]
+            The output values for the nt training points.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
         '''
-        nt = xt.shape[0]
-        nx = xt.shape[1]
-        ny = int(np.prod(yt.shape) / nt)
-        yt = yt.reshape((nt, ny))
+        if not isinstance(xt, np.ndarray):
+            raise ValueError('xt must be a NumPy array')
+        if not isinstance(yt, np.ndarray):
+            raise ValueError('yt must be a NumPy array')
 
-        self.nx = nx
-        self.ny = ny
+        xt = np.atleast_2d(xt.T).T
+        yt = np.atleast_2d(yt.T).T
+
+        if len(xt.shape) != 2:
+            raise ValueError('xt must have a rank of 1 or 2')
+        if len(yt.shape) != 2:
+            raise ValueError('yt must have a rank of 1 or 2')
+        if xt.shape[0] != yt.shape[0]:
+            raise ValueError('the first dimension of xt and yt must have the same length')
+
+        self.nt = xt.shape[0]
+        self.nx = xt.shape[1]
+        self.ny = yt.shape[1]
 
         kx = 0
         self.dim = xt.shape[1]
-        self.nt = xt.shape[0]
-        
-        #Construct the input data
-        pts = self.training_points[typ]
-        if kx in pts:
-            pts[kx][0] = np.vstack([pts[kx][0], xt])
-            pts[kx][1] = np.vstack([pts[kx][1], yt])
-        else:
-            pts[kx] = [np.array(xt), np.array(yt)]
 
-    def add_training_points_derivatives(self, typ, xt, yt, kx):
+        self.training_points[name][kx] = [np.array(xt), np.array(yt)]
+
+    def set_training_derivatives(self, xt, dyt_dxt, kx, name=None):
         '''
-        Adds nt training/sample data points
+        Set training data (derivatives).
 
         Arguments
         ---------
-        typ : str
-            'exact'  if this data are considered as a high-fidelty data
-            'approx' if this data are considered as a low-fidelity data (TODO)
-        xt : np.ndarray [nt, nx]
-            Training point input variable values
-        yt : np.ndarray [nt, ny]
-            Training derivatives (a vector)
-        kx : int 
-            The kx^{th} input variable (kx is 0-based)
+        xt : np.ndarray[nt, nx]
+            The input values for the nt training points.
+        dyt_dxt : np.ndarray[nt, ny]
+            The derivatives values for the nt training points.
+        kx : int
+            0-based index of the derivatives being set.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
         '''
-        nt = xt.shape[0]
-        nx = xt.shape[1]
-        ny = int(np.prod(yt.shape) / nt)
-        yt = yt.reshape((nt, ny))
+        if not isinstance(xt, np.ndarray):
+            raise ValueError('xt must be a NumPy array')
+        if not isinstance(dyt_dxt, np.ndarray):
+            raise ValueError('dyt_dxt must be a NumPy array')
+        if not isinstance(kx, int):
+            raise ValueError('kx must be an int')
 
-        self.nx = nx
-        self.ny = ny
+        xt = np.atleast_2d(xt.T).T
+        dyt_dxt = np.atleast_2d(dyt_dxt.T).T
 
-        #Derivative variables
-        kx = kx + 1
+        if len(xt.shape) != 2:
+            raise ValueError('xt must have a rank of 1 or 2')
+        if len(dyt_dxt.shape) != 2:
+            raise ValueError('dyt_dxt must have a rank of 1 or 2')
+        if xt.shape[0] != dyt_dxt.shape[0]:
+            raise ValueError('the first dimension of xt and dyt_dxt must have the same length')
 
-        #Construct the input data
-        pts = self.training_points[typ]
-        if kx in pts:
-            pts[kx][0] = np.vstack([pts[kx][0], xt])
-            pts[kx][1] = np.vstack([pts[kx][1], yt])
-        else:
-            pts[kx] = [np.array(xt), np.array(yt)]
-            
-            
+        self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
+
     def train(self):
         '''
         Train the model
         '''
-        n_exact = self.training_points['exact'][0][0].shape[0]
+        n_exact = self.training_points[None][0][0].shape[0]
 
         self.printer.active = self.options['print_global']
         self.printer._line_break()
