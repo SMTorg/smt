@@ -20,7 +20,7 @@ ndim = prob.options['ndim']
 
 sm = RMTC(xlimits=prob.xlimits)#, min_energy=False, nln_max_iter=0)
 sm = RMTB(xlimits=prob.xlimits, min_energy=True, nln_max_iter=20)
-sm = RBF(poly_degree=0)
+# sm = RBF(poly_degree=0)
 
 nt = 1000
 ne = int(nt / 2)

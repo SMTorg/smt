@@ -14,6 +14,7 @@ from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 
 from smt.methods import RMTSlib
+from smt.methods.rmtsclib import PyRMTS
 
 
 class RMTS(SM):
@@ -354,8 +355,17 @@ class RMTS(SM):
         """
         self._initialize()
 
+        nx = self.training_points[None][0][0].shape[1]
+        self.rmtsc = PyRMTS()
+        self.rmtsc.setup(nx, self.options['xlimits'][:, 0], self.options['xlimits'][:, 1])
+
+        tmp = self.rmtsc
+        self.rmtsc = None
+
         inputs = {'self': self}
         with cached_operation(inputs, self.options['data_dir']) as outputs:
+            self.rmtsc = tmp
+
             if outputs:
                 self.sol = outputs['sol']
             else:
