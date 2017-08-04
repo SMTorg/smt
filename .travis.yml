@@ -2,7 +2,7 @@ branches:
   only:
     - master
 
-sudo: false
+sudo: required
 
 os:
   - linux
@@ -26,6 +26,8 @@ addons:
     - liblapack-dev
     - libopenmpi-dev
     - openmpi-bin
+    - gcc-5
+    - g++-5
 
 before_install:
 - OS=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "MacOSX"; else echo "Linux"; fi)
@@ -43,6 +45,8 @@ before_install:
 - export PATH=$PATHPREFIX:$PATH
 #- export OPENMDAO_TEST_DOCS=1
 #- conda update --yes conda
+- sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
+- sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++
 
 install:
 - pip install --upgrade pip

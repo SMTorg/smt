@@ -24,6 +24,24 @@ void RMTS::setup(int nx, double * lower, double * upper) {
   memcpy(this->upper, upper, nx * sizeof(*upper));
 }
 
+void RMTS::compute_ext_dist(int n, int nterm, double * x, double * dx) {
+  double work;
+
+  for (int i = 0; i < n; i++) {
+    for (int ix = 0; ix < nx; ix++) {
+      // compute the vector pointing from the nearest point in the domain to the current x
+      work = x[i * nx + ix];
+      work = max(lower[ix], work);
+      work = min(upper[ix], work);
+      work = x[i * nx + ix] - work;
+      for (int iterm = 0; iterm < nterm; iterm++) {
+        dx[i * nterm * nx + iterm * nx + ix] = work;
+      }
+    }
+  }
+}
+
+
 // void RMTS::compute_jac(int n, double* x, double* jac) {
 //   double w[nt], r2[nt], min_val, sum, d;
 //   int min_loc;
