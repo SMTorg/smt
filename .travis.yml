@@ -47,6 +47,7 @@ before_install:
 install:
 - pip install --upgrade pip
 - conda install --yes python=$PY numpy scipy nose
+- conda install Cython
 - pip install git+https://github.com/OpenMDAO/testflo.git
 - pip install -e .
 

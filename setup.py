@@ -24,7 +24,6 @@ if os.name == 'nt':
     install_requires=[
     'scikit-learn',
     'pyDOE',
-    'Cython',
     ],
     zip_safe=False,
     ext_modules=ext,
@@ -76,7 +75,6 @@ else:
     'scikit-learn',
     'pyDOE',
     'pyamg',
-    'Cython',
     ],
     zip_safe=False,
     ext_modules=ext,
