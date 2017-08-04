@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -41,6 +42,18 @@ void RMTS::compute_ext_dist(int n, int nterm, double * x, double * dx) {
   }
 }
 
+// do ieval = 1, neval
+//    do ix = 1, nx
+//       work = xeval(ieval, ix)
+//       work = max(xlimits(ix, 1), work)
+//       work = min(xlimits(ix, 2), work)
+//       work = xeval(ieval, ix) - work
+//       do iterm = 1, nterm
+//          index = (ieval - 1) * nterm + iterm
+//          dx(index, ix) = work(ieval, ix)
+//       end do
+//    end do
+// end do
 
 // void RMTS::compute_jac(int n, double* x, double* jac) {
 //   double w[nt], r2[nt], min_val, sum, d;

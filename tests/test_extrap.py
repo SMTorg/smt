@@ -34,8 +34,8 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTC'] = RMTC(num_elements=6)
-            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
+            sms['RMTC'] = RMTC(num_elements=6, extrapolate=True)
+            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10, extrapolate=True)
 
         self.nt = nt
         self.ne = ne

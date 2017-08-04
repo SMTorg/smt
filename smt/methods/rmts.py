@@ -455,6 +455,12 @@ class RMTS(SM):
             # If the ith evaluation point is not external, dx[i, :] = 0.
             ndx = n * num['support']
             dx = RMTSlib.compute_ext_dist(num['x'], n, ndx, options['xlimits'], x)
+
+            dx2 = np.zeros(n * num['support'] * num['x'])
+            self.rmtsc.compute_ext_dist(n, num['support'], x.flatten(), dx2)
+            dx2 = dx2.reshape((n * num['support'], num['x']))
+            print('extrapppp', np.linalg.norm(dx-dx2))
+
             isexternal = np.array(np.array(dx, bool), float)
 
             for ix in range(num['x']):
