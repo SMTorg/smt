@@ -357,7 +357,9 @@ class RMTS(SM):
 
         nx = self.training_points[None][0][0].shape[1]
         self.rmtsc = PyRMTS()
-        self.rmtsc.setup(nx, self.options['xlimits'][:, 0], self.options['xlimits'][:, 1])
+        self.rmtsc.setup(nx,
+            np.array(self.options['xlimits'][:, 0]),
+            np.array(self.options['xlimits'][:, 1]))
 
         tmp = self.rmtsc
         self.rmtsc = None
@@ -453,13 +455,9 @@ class RMTS(SM):
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
-            ndx = n * num['support']
-            dx = RMTSlib.compute_ext_dist(num['x'], n, ndx, options['xlimits'], x)
-
-            dx2 = np.zeros(n * num['support'] * num['x'])
-            self.rmtsc.compute_ext_dist(n, num['support'], x.flatten(), dx2)
-            dx2 = dx2.reshape((n * num['support'], num['x']))
-            print('extrapppp', np.linalg.norm(dx-dx2))
+            dx = np.empty(n * num['support'] * num['x'])
+            self.rmtsc.compute_ext_dist(n, num['support'], x.flatten(), dx)
+            dx = dx.reshape((n * num['support'], num['x']))
 
             isexternal = np.array(np.array(dx, bool), float)
 
