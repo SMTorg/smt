@@ -24,6 +24,7 @@ if os.name == 'nt':
     install_requires=[
     'scikit-learn',
     'pyDOE',
+    'Cython',
     ],
     zip_safe=False,
     ext_modules=ext,
