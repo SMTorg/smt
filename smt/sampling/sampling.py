@@ -13,10 +13,10 @@ class Sampling(object):
     def __init__(self, **kwargs):
         self.options = OptionsDictionary()
         self.options.declare('xlimits', types=np.ndarray)
-        self._declare_options()
+        self.initialize()
         self.options.update(kwargs)
 
-    def _declare_options(self):
+    def initialize(self):
         pass
 
     def __call__(self, n):

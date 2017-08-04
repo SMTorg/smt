@@ -85,10 +85,10 @@ class LinearSolver(object):
         self.options = OptionsDictionary()
         self.options.declare('print_init', True, types=bool)
         self.options.declare('print_solve', True, types=bool)
-        self._declare_options()
+        self.initialize()
         self.options.update(kwargs)
 
-    def _declare_options(self):
+    def initialize(self):
         pass
 
     def _initialize(self, mtx, printer, mg_matrices=[]):
@@ -169,7 +169,7 @@ class DenseLUSolver(LinearSolver):
 
 class DirectSolver(LinearSolver):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('alg', 'lu', values=['lu', 'ilu'])
 
     def _initialize(self, mtx, printer, mg_matrices=[]):
@@ -204,7 +204,7 @@ class DirectSolver(LinearSolver):
 
 class KrylovSolver(LinearSolver):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'cg', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
         self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg', 'dense'],
@@ -286,7 +286,7 @@ class KrylovSolver(LinearSolver):
 
 class StationarySolver(LinearSolver):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'gs', values=['gs', 'jacobi'])
         self.options.declare('damping', 1.0, types=(int, float))
@@ -372,7 +372,7 @@ class StationarySolver(LinearSolver):
 
 class MultigridSolver(LinearSolver):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('interval', 1, types=int)
         self.options.declare('mg_cycles', 0, types=int)
         self.options.declare('solver', 'null', values=['null', 'gs', 'jacobi', 'krylov'],

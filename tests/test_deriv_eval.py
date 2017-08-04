@@ -11,7 +11,7 @@ from smt.sampling import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-
+from smt.utils import compute_rms_error
 from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
@@ -73,16 +73,15 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt)
+        sm.set_training_values(xt, yt)
 
         with Silence():
             sm.train()
 
-        t_error = sm.compute_rms_error()
-        e_error = sm.compute_rms_error(xe, ye)
-        e_error0 = sm.compute_rms_error(xe, dye[0], 0)
-        e_error1 = sm.compute_rms_error(xe, dye[1], 1)
+        t_error = compute_rms_error(sm)
+        e_error = compute_rms_error(sm, xe, ye)
+        e_error0 = compute_rms_error(sm, xe, dye[0], 0)
+        e_error1 = compute_rms_error(sm, xe, dye[1], 1)
 
         if print_output:
             print('%8s %6s %18.9e %18.9e %18.9e %18.9e'

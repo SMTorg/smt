@@ -16,7 +16,7 @@ from smt.problems.problem import Problem
 
 class WingWeight(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'WingWeight', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 10

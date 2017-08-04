@@ -1,6 +1,8 @@
 from numpy.distutils.core import setup, Extension
 import os
 from subprocess import call
+from Cython.Build import cythonize
+import numpy as np
 
 
 if os.name == 'nt':
@@ -39,7 +41,31 @@ else:
             sources=['src_f/rmtc.f95', 'src_f/utils.f95']),
         Extension(name='smt.methods.RMTBlib', extra_compile_args=['-fbounds-check'],
             sources=['src_f/rmtb.f95', 'src_f/utils.f95']),
-    ]
+    ] + cythonize(
+        Extension("smt.methods.rbfclib",
+        sources=[
+            'smt/src/rbf/rbf.cpp',
+            'smt/src/rbf/rbfclib.pyx',
+        ],
+        language="c++", extra_compile_args=['-std=c++11'],
+        include_dirs=[np.get_include(),
+    ])) + cythonize(
+        Extension("smt.methods.idwclib",
+        sources=[
+            'smt/src/idw/idw.cpp',
+            'smt/src/idw/idwclib.pyx',
+        ],
+        language="c++", extra_compile_args=['-std=c++11'],
+        include_dirs=[np.get_include(),
+    ])) + cythonize(
+        Extension("smt.methods.rmtsclib",
+        sources=[
+            'smt/src/rmts/rmts.cpp',
+            'smt/src/rmts/rmtsclib.pyx',
+        ],
+        language="c++", extra_compile_args=['-std=c++11'],
+        include_dirs=[np.get_include(),
+    ]))
     setup(name='smt',
     version='0.1',
     description='The Surrogate Model Toolbox (SMT)',

@@ -14,14 +14,14 @@ class Problem(object):
         self.options = OptionsDictionary()
         self.options.declare('ndim', 1, types=int)
         self.options.declare('return_complex', False, types=bool)
-        self._declare_options()
+        self.initialize()
         self.options.update(kwargs)
 
         self.xlimits = np.zeros((self.options['ndim'], 2))
 
         self._initialize()
 
-    def _declare_options(self):
+    def initialize(self):
         pass
 
     def _initialize(self):

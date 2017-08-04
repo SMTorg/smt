@@ -14,9 +14,10 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTClib
 
+
 class RMTC(RMTS):
     """
-    Regularized Minimal-energy Tensor-product Spline (RMTC) interpolant.
+    Regularized Minimal-energy Tensor-product Cubic hermite spline (RMTC) interpolant.
 
     RMTC divides the n-dimensional space using n-dimensional box elements.
     Each n-D box is represented using a tensor-product of cubic functions,
@@ -35,18 +36,18 @@ class RMTC(RMTS):
     - The user must choose the number of elements in each dimension
     """
 
-    def _declare_options(self):
-        super(RMTC, self)._declare_options()
+    def initialize(self):
+        super(RMTC, self).initialize()
         declare = self.options.declare
 
         declare('num_elements', 4, types=(Integral, list, np.ndarray),
                 desc='# elements in each dimension - ndarray [nx]')
 
         self.name = 'RMTC'
-        
+
     def _initialize(self):
         options = self.options
-        nx = self.training_points['exact'][0][0].shape[1]
+        nx = self.training_points[None][0][0].shape[1]
 
         for name in ['smoothness', 'num_elements']:
             if isinstance(options[name], (int, float)):
@@ -57,8 +58,8 @@ class RMTC(RMTS):
 
         num = {}
         # number of inputs and outputs
-        num['x'] = self.training_points['exact'][0][0].shape[1]
-        num['y'] = self.training_points['exact'][0][1].shape[1]
+        num['x'] = self.training_points[None][0][0].shape[1]
+        num['y'] = self.training_points[None][0][1].shape[1]
         # number of elements
         num['elem_list'] = np.array(options['num_elements'], int)
         num['elem'] = np.prod(num['elem_list'])
@@ -70,8 +71,8 @@ class RMTC(RMTS):
         num['uniq'] = np.prod(num['uniq_list'])
         # total number of training points (function values and derivatives)
         num['t'] = 0
-        for kx in self.training_points['exact']:
-            num['t'] += self.training_points['exact'][kx][0].shape[0]
+        for kx in self.training_points[None]:
+            num['t'] += self.training_points[None][kx][0].shape[0]
         # for RMT
         num['coeff'] = num['term'] * num['elem']
         num['support'] = num['term']

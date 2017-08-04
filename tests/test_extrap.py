@@ -34,8 +34,8 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTC'] = RMTC(num_elements=6)
-            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10)
+            sms['RMTC'] = RMTC(num_elements=6, extrapolate=True)
+            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10, extrapolate=True)
 
         self.nt = nt
         self.ne = ne
@@ -62,16 +62,15 @@ class Test(SMTestCase):
         x[0, :] = prob.xlimits[:, 1] + 1.0
         y = prob(x)
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt)
+        sm.set_training_values(xt, yt)
         if extrap_train:
-            sm.add_training_points_values('exact', x, y)
+            sm.set_training_values(x, y)
 
         with Silence():
             sm.train()
 
         if extrap_predict:
-            sm.predict_value(x)
+            sm.predict_values(x)
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_RMTC(self):

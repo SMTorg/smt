@@ -13,7 +13,7 @@ from smt.problems.problem import Problem
 
 class RobotArm(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'RobotArm', types=str)
 
     def _initialize(self):

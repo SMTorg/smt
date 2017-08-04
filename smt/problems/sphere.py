@@ -12,7 +12,7 @@ from smt.problems.problem import Problem
 
 class Sphere(Problem):
 
-    def _declare_options(self):
+    def initialize(self):
         self.options.declare('name', 'Sphere', types=str)
 
     def _initialize(self):

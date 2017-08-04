@@ -14,6 +14,7 @@ from sklearn import linear_model
 from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
+
 class LS(SM):
 
     """
@@ -22,15 +23,15 @@ class LS(SM):
     Default-parameters from scikit-learn are used herein.
     """
 
-    def _declare_options(self):
-        super(LS, self)._declare_options()
+    def initialize(self):
+        super(LS, self).initialize()
         declare = self.options.declare
 
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'LS'
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -42,10 +43,10 @@ class LS(SM):
         """
         pts = self.training_points
 
-        if 0 in pts['exact']:
-            x = pts['exact'][0][0]
-            y = pts['exact'][0][1]
-        
+        if 0 in pts[None]:
+            x = pts[None][0][0]
+            y = pts[None][0][1]
+
         self.mod = linear_model.LinearRegression()
         self.mod.fit(x,y)
 
@@ -61,8 +62,8 @@ class LS(SM):
                 self._new_train()
                 #outputs['sol'] = self.sol
 
-    def _predict_value(self,x):
-        '''
+    def _predict_values(self,x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -74,12 +75,12 @@ class LS(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         y = self.mod.predict(x)
         return y
-        
-    def _predict_derivative(self, x, kx):
-        '''
+
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -93,10 +94,10 @@ class LS(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
-        
+        """
+
         # Initialization
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval,1)) * self.mod.coef_[0,kx]
-        
+
         return y

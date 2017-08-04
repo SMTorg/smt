@@ -17,6 +17,8 @@ Scikit-learn  >= Version 0.13.1
 
 pyDOE >= Version 0.3.8
 
+Cython
+
 # Installation
 Clone the repository from github then run:
 

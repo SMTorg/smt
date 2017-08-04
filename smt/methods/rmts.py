@@ -14,15 +14,18 @@ from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 
 from smt.methods import RMTSlib
+from smt.methods.rmtsclib import PyRMTS
+
 
 class RMTS(SM):
     """
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.
     """
 
-    def _declare_options(self):
-        super(RMTS, self)._declare_options()
+    def initialize(self):
+        super(RMTS, self).initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
@@ -57,6 +60,9 @@ class RMTS(SM):
         declare('max_print_depth', 5, types=Integral,
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
+        supports['training_derivatives'] = True
+        supports['derivatives'] = True
+
     def _initialize_hessian(self):
         diag = self.options['reg_dv'] * np.ones(self.num['dof'])
         arange = np.arange(self.num['dof'])
@@ -79,8 +85,8 @@ class RMTS(SM):
         xlimits = self.options['xlimits']
 
         full_jac_dict = {}
-        for kx in self.training_points['exact']:
-            xt, yt = self.training_points['exact'][kx]
+        for kx in self.training_points[None]:
+            xt, yt = self.training_points[None][kx]
 
             xmin = np.min(xt, axis=0)
             xmax = np.max(xt, axis=0)
@@ -140,7 +146,7 @@ class RMTS(SM):
 
     def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
         func = 0.5 * np.dot(sol, full_hess * sol)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
             func += 0.5 * c * np.sum((full_jac * sol - yt) ** p)
@@ -149,7 +155,7 @@ class RMTS(SM):
 
     def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
         grad = full_hess * sol
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
             grad += 0.5 * c * full_jac_T * p * (full_jac * sol - yt) ** (p - 1)
@@ -164,7 +170,7 @@ class RMTS(SM):
 
     def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
         hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             yt = yt_dict[kx]
 
@@ -204,7 +210,7 @@ class RMTS(SM):
         p = 2
 
         hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_points['exact']:
+        for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
             hess += 0.5 * c * p * (p - 1) * full_jac_T * full_jac
 
@@ -233,8 +239,8 @@ class RMTS(SM):
 
     def _get_yt_dict(self, ind_y):
         yt_dict = {}
-        for kx in self.training_points['exact']:
-            xt, yt = self.training_points['exact'][kx]
+        for kx in self.training_points[None]:
+            xt, yt = self.training_points[None][kx]
             yt_dict[kx] = yt[:, ind_y]
         return yt_dict
 
@@ -349,16 +355,27 @@ class RMTS(SM):
         """
         self._initialize()
 
+        nx = self.training_points[None][0][0].shape[1]
+        self.rmtsc = PyRMTS()
+        self.rmtsc.setup(nx,
+            np.array(self.options['xlimits'][:, 0]),
+            np.array(self.options['xlimits'][:, 1]))
+
+        tmp = self.rmtsc
+        self.rmtsc = None
+
         inputs = {'self': self}
         with cached_operation(inputs, self.options['data_dir']) as outputs:
+            self.rmtsc = tmp
+
             if outputs:
                 self.sol = outputs['sol']
             else:
                 self._new_train()
                 outputs['sol'] = self.sol
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -370,12 +387,12 @@ class RMTS(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
+        """
         y = self._predict(x, 0)
         return y
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -389,7 +406,7 @@ class RMTS(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         y = self._predict(x, kx + 1)
         return y
 
@@ -438,8 +455,10 @@ class RMTS(SM):
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.
-            ndx = n * num['support']
-            dx = RMTSlib.compute_ext_dist(num['x'], n, ndx, options['xlimits'], x)
+            dx = np.empty(n * num['support'] * num['x'])
+            self.rmtsc.compute_ext_dist(n, num['support'], x.flatten(), dx)
+            dx = dx.reshape((n * num['support'], num['x']))
+
             isexternal = np.array(np.array(dx, bool), float)
 
             for ix in range(num['x']):
@@ -457,5 +476,5 @@ class RMTS(SM):
 
         mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['coeff']))
         y = mtx.dot(self.sol)
-        
+
         return y

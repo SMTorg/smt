@@ -13,21 +13,22 @@ import scipy
 from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
+
 class PA2(SM):
 
     """
     Square polynomial approach
     """
 
-    def _declare_options(self):
-        super(PA2, self)._declare_options()
+    def initialize(self):
+        super(PA2, self).initialize()
         declare = self.options.declare
 
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'PA2'
-        
+
     ############################################################################
     # Model functions
     ############################################################################
@@ -38,9 +39,9 @@ class PA2(SM):
         Train the model
         """
 
-        if 0 in self.training_points['exact']:
-            x = self.training_points['exact'][0][0]
-            y = self.training_points['exact'][0][1]
+        if 0 in self.training_points[None]:
+            x = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
 
         if x.shape[0] < (self.dim+1)*(self.dim+2)/2.:
             raise Exception("Number of training points should be greater or equal to %d."
@@ -91,8 +92,8 @@ class PA2(SM):
         return M.T
         
 
-    def _predict_derivative(self, x, kx):
-        '''
+    def _predict_derivatives(self, x, kx):
+        """
         Evaluates the derivatives at a set of points.
 
         Arguments
@@ -106,7 +107,7 @@ class PA2(SM):
         -------
         y : np.ndarray
             Derivative values.
-        '''
+        """
         dim = self.dim    
         
         linear_coef = self.coef[1+kx,0]
@@ -123,8 +124,8 @@ class PA2(SM):
         y = (linear_coef+quad_coef+cross_coef).reshape((x.shape[0],1))
         return y
 
-    def _predict_value(self, x):
-        '''
+    def _predict_values(self, x):
+        """
         Evaluates the model at a set of points.
 
         Arguments
@@ -136,8 +137,8 @@ class PA2(SM):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        '''
-        
+        """
+
         M=self._response_surface(x)
         y = np.dot(M,self.coef).T
 

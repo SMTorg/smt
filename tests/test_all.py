@@ -11,7 +11,7 @@ from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-
+from smt.utils import compute_rms_error
 from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
@@ -110,16 +110,15 @@ class Test(SMTestCase):
             sm.options['xlimits'] = prob.xlimits
         sm.options['print_global'] = False
 
-        sm.training_points = {'exact': {}}
-        sm.add_training_points_values('exact', xt, yt[:, 0])
+        sm.set_training_values(xt, yt[:, 0])
         for i in range(self.ndim):
-            sm.add_training_points_derivatives('exact',xt,yt[:, i+1],kx=i)
+            sm.set_training_derivatives(xt,yt[:, i+1],i)
 
         with Silence():
             sm.train()
 
-        t_error = sm.compute_rms_error()
-        e_error = sm.compute_rms_error(xe, ye)
+        t_error = compute_rms_error(sm)
+        e_error = compute_rms_error(sm, xe, ye)
 
     # --------------------------------------------------------------------
     # Function: sphere
@@ -172,7 +171,7 @@ class Test(SMTestCase):
 
     def test_exp_KPLS(self):
         self.run_test()
-    
+
     def test_exp_KPLSK(self):
         self.run_test()
 
@@ -209,13 +208,13 @@ class Test(SMTestCase):
 
     def test_tanh_KPLS(self):
         self.run_test()
-        
+
     def test_tanh_KPLSK(self):
         self.run_test()
-        
+
     #def test_tanh_GEKPLS(self):
     #    self.run_test()
-        
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):
         self.run_test()
@@ -246,13 +245,13 @@ class Test(SMTestCase):
 
     def test_cos_KPLS(self):
         self.run_test()
-        
+
     def test_cos_KPLSK(self):
         self.run_test()
-        
+
     def test_cos_GEKPLS(self):
         self.run_test()
-        
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
         self.run_test()

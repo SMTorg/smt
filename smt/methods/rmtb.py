@@ -14,9 +14,10 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTBlib
 
+
 class RMTB(RMTS):
     """
-    Regularized Minimal-energy Tensor-product B-Spline (RMTB) interpolant.
+    Regularized Minimal-energy Tensor-product B-spline (RMTB) interpolant.
 
     RMTB builds an approximation from a tensor product of B-spline curves.
     In 1-D it is a B-spline curve, in 2-D it is a B-spline surface, in 3-D
@@ -36,8 +37,8 @@ class RMTB(RMTS):
     training points
     """
 
-    def _declare_options(self):
-        super(RMTB, self)._declare_options()
+    def initialize(self):
+        super(RMTB, self).initialize()
         declare = self.options.declare
 
         declare('order', 3, types=(Integral, tuple, list, np.ndarray),
@@ -46,10 +47,10 @@ class RMTB(RMTS):
                 desc='# B-spline control points in each dimension - length [nx]')
 
         self.name = 'RMTB'
-        
+
     def _initialize(self):
         options = self.options
-        nx = self.training_points['exact'][0][0].shape[1]
+        nx = self.training_points[None][0][0].shape[1]
 
         for name in ['smoothness', 'num_ctrl_pts', 'order']:
             if isinstance(options[name], (int, float)):
@@ -60,8 +61,8 @@ class RMTB(RMTS):
 
         num = {}
         # number of inputs and outputs
-        num['x'] = self.training_points['exact'][0][0].shape[1]
-        num['y'] = self.training_points['exact'][0][1].shape[1]
+        num['x'] = self.training_points[None][0][0].shape[1]
+        num['y'] = self.training_points[None][0][1].shape[1]
         num['order_list'] = np.array(options['order'], int)
         num['order'] = np.prod(num['order_list'])
         num['ctrl_list'] = np.array(options['num_ctrl_pts'], int)
@@ -72,8 +73,8 @@ class RMTB(RMTS):
         num['knots'] = np.sum(num['knots_list'])
         # total number of training points (function values and derivatives)
         num['t'] = 0
-        for kx in self.training_points['exact']:
-            num['t'] += self.training_points['exact'][kx][0].shape[0]
+        for kx in self.training_points[None]:
+            num['t'] += self.training_points[None][kx][0].shape[0]
         # for RMT
         num['coeff'] = num['ctrl']
         num['support'] = num['order']
