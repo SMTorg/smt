@@ -15,7 +15,7 @@ RBF::~RBF() {
   delete[] xt;
 }
 
-void RBF::setup(int nx, int nt, int num_dof, int poly_degree, double * d0, double * xt){
+void RBF::setup(int nx, int nt, int num_dof, int poly_degree, double * d0, double * xt) {
   this->nx = nx;
   this->nt = nt;
   this->num_dof = num_dof;
@@ -27,14 +27,15 @@ void RBF::setup(int nx, int nt, int num_dof, int poly_degree, double * d0, doubl
   memcpy(this->xt, xt, nt * nx * sizeof(*xt));
 }
 
-void RBF::compute_jac(int n, double* x, double* jac){
-  double r2;
+void RBF::compute_jac(int n, double* x, double* jac) {
+  double r2, d;
 
-  for (int i = 0; i < n; i++){
-    for (int it = 0; it < nt; it++){
+  for (int i = 0; i < n; i++) {
+    for (int it = 0; it < nt; it++) {
       r2 = 0.;
-      for (int ix = 0; ix < nx; ix++){
-        r2 += pow((xt[it * nx + ix] - x[i * nx + ix]) / d0[ix], 2);
+      for (int ix = 0; ix < nx; ix++) {
+        d = x[i * nx + ix] - xt[it * nx + ix];
+        r2 += pow(d / d0[ix], 2);
       }
 
       jac[i * num_dof + it] = exp(-r2);
@@ -42,27 +43,27 @@ void RBF::compute_jac(int n, double* x, double* jac){
   }
 
   if (poly_degree >= 0) {
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
       jac[i * num_dof + nt] = 1.;
     }
   }
 
   if (poly_degree == 1) {
-    for (int i = 0; i < n; i++){
-      for (int ix = 0; ix < nx; ix++){
+    for (int i = 0; i < n; i++) {
+      for (int ix = 0; ix < nx; ix++) {
         jac[i * num_dof + nt + 1 + ix] = x[i * nx + ix];
       }
     }
   }
 }
 
-void RBF::compute_jac_derivs(int n, int kx, double* x, double* jac){
+void RBF::compute_jac_derivs(int n, int kx, double* x, double* jac) {
   double r2, dr2_dx, d;
 
-  for (int i = 0; i < n; i++){
-    for (int it = 0; it < nt; it++){
+  for (int i = 0; i < n; i++) {
+    for (int it = 0; it < nt; it++) {
       r2 = 0.;
-      for (int ix = 0; ix < nx; ix++){
+      for (int ix = 0; ix < nx; ix++) {
         d = x[i * nx + ix] - xt[it * nx + ix];
         r2 += pow(d / d0[ix], 2);
       }
@@ -75,14 +76,14 @@ void RBF::compute_jac_derivs(int n, int kx, double* x, double* jac){
   }
 
   if (poly_degree >= 0) {
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
       jac[i * num_dof + nt] = 0.;
     }
   }
 
   if (poly_degree == 1) {
-    for (int i = 0; i < n; i++){
-      for (int ix = 0; ix < nx; ix++){
+    for (int i = 0; i < n; i++) {
+      for (int ix = 0; ix < nx; ix++) {
         jac[i * num_dof + nt + 1 + ix] = 0.;
       }
       jac[i * num_dof + nt + 1 + kx] = 1.;

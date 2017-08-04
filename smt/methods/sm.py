@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.utils.checks import check_support, check_x_shape
+from smt.utils.checks import check_support, check_nx, check_2d_array
 
 
 class SM(object):
@@ -75,18 +75,9 @@ class SM(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        if not isinstance(xt, np.ndarray):
-            raise ValueError('xt must be a NumPy array')
-        if not isinstance(yt, np.ndarray):
-            raise ValueError('yt must be a NumPy array')
+        xt = check_2d_array(xt, 'xt')
+        yt = check_2d_array(yt, 'yt')
 
-        xt = np.atleast_2d(xt.T).T
-        yt = np.atleast_2d(yt.T).T
-
-        if len(xt.shape) != 2:
-            raise ValueError('xt must have a rank of 1 or 2')
-        if len(yt.shape) != 2:
-            raise ValueError('yt must have a rank of 1 or 2')
         if xt.shape[0] != yt.shape[0]:
             raise ValueError('the first dimension of xt and yt must have the same length')
 
@@ -115,22 +106,14 @@ class SM(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        if not isinstance(xt, np.ndarray):
-            raise ValueError('xt must be a NumPy array')
-        if not isinstance(dyt_dxt, np.ndarray):
-            raise ValueError('dyt_dxt must be a NumPy array')
-        if not isinstance(kx, int):
-            raise ValueError('kx must be an int')
+        xt = check_2d_array(xt, 'xt')
+        dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
 
-        xt = np.atleast_2d(xt.T).T
-        dyt_dxt = np.atleast_2d(dyt_dxt.T).T
-
-        if len(xt.shape) != 2:
-            raise ValueError('xt must have a rank of 1 or 2')
-        if len(dyt_dxt.shape) != 2:
-            raise ValueError('dyt_dxt must have a rank of 1 or 2')
         if xt.shape[0] != dyt_dxt.shape[0]:
             raise ValueError('the first dimension of xt and dyt_dxt must have the same length')
+
+        if not isinstance(kx, int):
+            raise ValueError('kx must be an int')
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
@@ -174,7 +157,8 @@ class SM(object):
         y : np.ndarray[n, ny]
             Output values at the prediction points.
         """
-        check_x_shape(self.nx, x)
+        x = check_2d_array(x, 'x')
+        check_nx(self.nx, x)
 
         n = x.shape[0]
 
@@ -216,14 +200,11 @@ class SM(object):
             Derivatives.
         """
         check_support(self, 'derivatives')
-        check_x_shape(self.nx, x)
+
+        x = check_2d_array(x, 'x')
+        check_nx(self.nx, x)
 
         n = x.shape[0]
-        if x.shape[1] != self.nx:
-            if self.nx == 1:
-                raise ValueError('x should have shape [:, 1] or [:]')
-            else:
-                raise ValueError('x should have shape [:, {}]'.format(self.nx))
 
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
@@ -261,7 +242,7 @@ class SM(object):
             Variances.
         """
         check_support(self, 'variances')
-        check_x_shape(self.nx, x)
+        check_nx(self.nx, x)
 
         n = x.shape[0]
         s2 = self._predict_variances(x)
@@ -282,7 +263,7 @@ class SM(object):
             Output derivatives.
         """
         check_support(self, 'output_derivatives')
-        check_x_shape(self.nx, x)
+        check_nx(self.nx, x)
 
         n = x.shape[0]
         dy_dyt = self._predict_output_derivatives(x)

@@ -48,8 +48,16 @@ else:
             'smt/src/rbf/rbfclib.pyx',
         ],
         language="c++", extra_compile_args=['-std=c++11'],
-        include_dirs=[np.get_include()]
-    ))
+        include_dirs=[np.get_include(),
+    ])) + cythonize(
+        Extension("smt.methods.idwclib",
+        sources=[
+            'smt/src/idw/idw.cpp',
+            'smt/src/idw/idwclib.pyx',
+        ],
+        language="c++", extra_compile_args=['-std=c++11'],
+        include_dirs=[np.get_include(),
+    ]))
     setup(name='smt',
     version='0.1',
     description='The Surrogate Model Toolbox (SMT)',

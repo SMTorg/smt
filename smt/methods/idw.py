@@ -13,7 +13,7 @@ from scipy.sparse import csc_matrix
 from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
-from smt.methods import IDWlib
+from smt.methods.idwclib import PyIDW
 
 
 class IDW(SM):
@@ -29,12 +29,23 @@ class IDW(SM):
     def initialize(self):
         super(IDW, self).initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('p', 2.5, types=(int, float), desc='order of distance norm')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        supports['derivatives'] = True
+
         self.name = 'IDW'
+
+    def _initialize(self):
+        xt = self.training_points[None][0][0]
+        nt = xt.shape[0]
+        nx = xt.shape[1]
+
+        self.idwc = PyIDW()
+        self.idwc.setup(nx, nt, self.options['p'], xt.flatten())
 
     ############################################################################
     # Model functions
@@ -50,8 +61,15 @@ class IDW(SM):
         """
         Train the model
         """
+        self._initialize()
+
+        tmp = self.idwc
+        self.idwc = None
+
         inputs = {'self': self}
         with cached_operation(inputs, self.options['data_dir']) as outputs:
+            self.idwc = tmp
+
             if outputs:
                 self.sol = outputs['sol']
             else:
@@ -62,17 +80,42 @@ class IDW(SM):
         """
         This function is used by _predict function. See _predict for more details.
         """
-        n_evals = x.shape[0]
-        xt_list = []
-        yt_list = []
-        if 0 in self.training_points[None]:
-            xt_list.append(self.training_points[None][0][0])
-            yt_list.append(self.training_points[None][0][1])
+        n = x.shape[0]
+        nt = self.nt
 
-        xt = np.vstack(xt_list)
-        yt = np.vstack(yt_list)
+        yt = self.training_points[None][0][1]
 
-        mtx = IDWlib.compute_jac(self.dim, n_evals, self.nt, self.options['p'], x, xt)
+        jac = np.empty(n * nt)
+        self.idwc.compute_jac(n, x.flatten(), jac)
+        jac = jac.reshape((n, nt))
 
-        y = mtx.dot(yt)
+        y = jac.dot(yt)
         return y
+
+    def _predict_derivatives(self, x, kx):
+        """
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        dy_dx : np.ndarray
+            Derivative values.
+        """
+        n = x.shape[0]
+        nt = self.nt
+
+        yt = self.training_points[None][0][1]
+
+        jac = np.empty(n * nt)
+        self.idwc.compute_jac_derivs(n, kx, x.flatten(), jac)
+        jac = jac.reshape((n, nt))
+
+        dy_dx = jac.dot(yt)
+        return dy_dx
