@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from smt.problems import Sphere
 from smt.problems import NdimCantileverBeam, NdimRobotArm
 from smt.sampling import LHS
-from smt.methods import RMTC, RMTB
+from smt.methods import RMTC, RMTB, RBF
 from smt.utils import compute_rms_error
 
 ndim = 3
@@ -20,6 +20,7 @@ ndim = prob.options['ndim']
 
 sm = RMTC(xlimits=prob.xlimits)#, min_energy=False, nln_max_iter=0)
 sm = RMTB(xlimits=prob.xlimits, min_energy=True, nln_max_iter=20)
+sm = RBF(poly_degree=0)
 
 nt = 1000
 ne = int(nt / 2)
@@ -61,5 +62,7 @@ for ix in range(ndim):
     plt.subplot(nr, nc, ix + 1)
     plt.plot(xe[:, ix], ye, '-or')
     plt.plot(xe[:, ix], ye2, '-ob')
+
+_ = sm.predict_derivatives(xe, 0)
 
 plt.show()

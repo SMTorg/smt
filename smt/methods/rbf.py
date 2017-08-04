@@ -12,7 +12,7 @@ from smt.methods.sm import SM
 from smt.utils.linear_solvers import get_solver
 from smt.utils.caching import cached_operation
 
-from smt.methods import RBFlib
+from smt.methods.rbfclib import PyRBF
 
 
 class RBF(SM):
@@ -68,25 +68,32 @@ class RBF(SM):
 
         self.num = num
 
+        nt = self.training_points[None][0][0].shape[0]
+        xt, yt = self.training_points[None][0]
+
+        self.rbfc = PyRBF()
+        self.rbfc.setup(
+            num['x'], nt, num['dof'], options['poly_degree'], options['d0'], xt.flatten())
+
     def _new_train(self):
-        options = self.options
         num = self.num
 
         xt, yt = self.training_points[None][0]
-        jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], num['radial'],
-            num['radial'], num['dof'], options['d0'], xt, xt)
+        jac = np.empty(num['radial'] * num['dof'])
+        self.rbfc.compute_jac(num['radial'], xt.flatten(), jac)
+        jac = jac.reshape((num['radial'], num['dof']))
 
         mtx = np.zeros((num['dof'], num['dof']))
         mtx[:num['radial'], :] = jac
         mtx[:, :num['radial']] = jac.T
-        mtx[np.arange(num['radial']), np.arange(num['radial'])] += options['reg']
+        mtx[np.arange(num['radial']), np.arange(num['radial'])] += self.options['reg']
 
         rhs = np.zeros((num['dof'], num['y']))
         rhs[:num['radial'], :] = yt
 
         sol = np.zeros((num['dof'], num['y']))
 
-        solver = get_solver('dense-chol')
+        solver = get_solver('dense-lu')
         with self.printer._timed_context('Initializing linear solver'):
             solver._initialize(mtx, self.printer)
 
@@ -102,8 +109,13 @@ class RBF(SM):
         """
         self._initialize()
 
+        tmp = self.rbfc
+        self.rbfc = None
+
         inputs = {'self': self}
         with cached_operation(inputs, self.options['data_dir']) as outputs:
+            self.rbfc = tmp
+
             if outputs:
                 self.sol = outputs['sol']
             else:
@@ -125,13 +137,11 @@ class RBF(SM):
             Evaluation point output variable values
         """
         n = x.shape[0]
-
         num = self.num
-        options = self.options
 
-        xt = self.training_points[None][0][0]
-        jac = RBFlib.compute_jac(0, options['poly_degree'], num['x'], n,
-            num['radial'], num['dof'], options['d0'], x, xt)
+        jac = np.empty(n * num['dof'])
+        self.rbfc.compute_jac(n, x.flatten(), jac)
+        jac = jac.reshape((n, num['dof']))
 
         y = jac.dot(self.sol)
         return y
@@ -149,19 +159,15 @@ class RBF(SM):
 
         Returns
         -------
-        y : np.ndarray
+        dy_dx : np.ndarray
             Derivative values.
         """
-        kx += 1
-
         n = x.shape[0]
-
         num = self.num
-        options = self.options
 
-        xt = self.training_points[None][0][0]
-        jac = RBFlib.compute_jac(kx, options['poly_degree'], num['x'], n,
-            num['radial'], num['dof'], options['d0'], x, xt)
+        jac = np.empty(n * num['dof'])
+        self.rbfc.compute_jac_derivs(n, kx, x.flatten(), jac)
+        jac = jac.reshape((n, num['dof']))
 
-        y = jac.dot(self.sol)
-        return y
+        dy_dx = jac.dot(self.sol)
+        return dy_dx

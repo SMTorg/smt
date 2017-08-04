@@ -7,3 +7,4 @@
 *.sm
 *.out
 .DS_Store
+smt/src/rbfclib.cpp
