@@ -57,6 +57,14 @@ else:
         ],
         language="c++", extra_compile_args=['-std=c++11'],
         include_dirs=[np.get_include(),
+    ])) + cythonize(
+        Extension("smt.methods.rmtsclib",
+        sources=[
+            'smt/src/rmts/rmts.cpp',
+            'smt/src/rmts/rmtsclib.pyx',
+        ],
+        language="c++", extra_compile_args=['-std=c++11'],
+        include_dirs=[np.get_include(),
     ]))
     setup(name='smt',
     version='0.1',
