@@ -44,8 +44,8 @@ else:
     ] + cythonize(
         Extension("smt.methods.rbfclib",
         sources=[
-            'smt/src/rbf.cpp',
-            'smt/src/rbfclib.pyx',
+            'smt/src/rbf/rbf.cpp',
+            'smt/src/rbf/rbfclib.pyx',
         ],
         language="c++", extra_compile_args=['-std=c++11'],
         include_dirs=[np.get_include()]
