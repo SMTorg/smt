@@ -87,6 +87,7 @@ class RMTC(RMTS):
             np.array(self.options['xlimits'][:, 0]),
             np.array(self.options['xlimits'][:, 1]),
             np.array(num['elem_list'], np.int32),
+            np.array(num['term_list'], np.int32),
         )
 
     def _compute_jac_raw(self, ix1, ix2, x):

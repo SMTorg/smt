@@ -10,18 +10,22 @@ using namespace std;
 
 RMTC::RMTC() {
   elem_list = NULL;
+  term_list = NULL;
 }
 
 RMTC::~RMTC() {
   delete[] elem_list;
+  delete[] term_list;
 }
 
-void RMTC::setup(int nx, double * lower, double * upper, int * elem_list) {
+void RMTC::setup(int nx, double * lower, double * upper, int * elem_list, int * term_list) {
   RMTS::setup(nx, lower, upper);
 
   this->elem_list = new int[nx];
+  this->term_list = new int[nx];
 
   memcpy(this->elem_list, elem_list, nx * sizeof(*elem_list));
+  memcpy(this->term_list, term_list, nx * sizeof(*term_list));
 }
 
 // void RMTB::compute_jac(
