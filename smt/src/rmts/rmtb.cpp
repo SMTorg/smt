@@ -14,7 +14,7 @@ void compute_knot_vector_uniform(int order, int ncp, double * knots) {
   }
 }
 
-int compute_basis_0(int order, int ncp, double param, double * knots, double * basis0_vec) {
+int compute_i_start(int order, int ncp, double param, double * knots) {
   int istart = -1;
 
   for (int i = order - 1; i < ncp; i++) {
@@ -23,14 +23,20 @@ int compute_basis_0(int order, int ncp, double param, double * knots, double * b
     }
   }
 
+  if (param == knots[order + ncp - 1]) {
+    istart = ncp - order;
+  }
+
+  return istart;
+}
+
+int compute_basis_0(int order, int ncp, double param, double * knots, double * basis0_vec) {
+  int istart = compute_i_start(order, ncp, param, knots);
+
   for (int i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
-
-  if (param == knots[order + ncp - 1]) {
-    istart = ncp - order;
-  }
 
   for (int i = 1; i < order; i++) {
     int j1 = order - i - 1;
@@ -64,24 +70,14 @@ int compute_basis_0(int order, int ncp, double param, double * knots, double * b
 }
 
 int compute_basis_1(int order, int ncp, double param, double * knots, double * basis1_vec) {
-  int istart = -1;
+  int istart = compute_i_start(order, ncp, param, knots);
   double basis0_vec[order];
-
-  for (int i = order - 1; i < ncp; i++) {
-    if ((knots[i] <= param) && (param < knots[i + 1])) {
-      istart = i - order + 1;
-    }
-  }
 
   for (int i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
     basis1_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
-
-  if (param == knots[order + ncp - 1]) {
-    istart = ncp - order;
-  }
 
   for (int i = 1; i < order; i++) {
     int j1 = order - i - 1;
@@ -115,15 +111,9 @@ int compute_basis_1(int order, int ncp, double param, double * knots, double * b
 }
 
 int compute_basis_2(int order, int ncp, double param, double * knots, double * basis2_vec) {
-  int istart = -1;
+  int istart = compute_i_start(order, ncp, param, knots);
   double basis0_vec[order];
   double basis1_vec[order];
-
-  for (int i = order - 1; i < ncp; i++) {
-    if ((knots[i] <= param) && (param < knots[i + 1])) {
-      istart = i - order + 1;
-    }
-  }
 
   for (int i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
@@ -131,10 +121,6 @@ int compute_basis_2(int order, int ncp, double param, double * knots, double * b
     basis2_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
-
-  if (param == knots[order + ncp - 1]) {
-    istart = ncp - order;
-  }
 
   for (int i = 1; i < order; i++) {
     int j1 = order - i - 1;
@@ -197,12 +183,6 @@ void RMTB::setup(int nx, double * lower, double * upper, int * order_list, int *
 void RMTB::compute_jac(
     int ix1, int ix2, int n, double * params,
     double * data, int * rows, int * cols) {
-  // int order, ncp, na;
-  // int iP, iB, iC;
-  // int i, kx, ia, ik, i0, rem;
-  // double * d;
-  // double * B;
-
   int nnz_row = 1;
 
   for (int ix = 0; ix < nx; ix++) {
