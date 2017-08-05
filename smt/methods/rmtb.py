@@ -12,8 +12,6 @@ from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.methods.rmts import RMTS
 
-from smt.methods import RMTBlib
-
 from smt.methods.rmtsclib import PyRMTB
 
 
