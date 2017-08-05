@@ -1,5 +1,5 @@
 #include "rmts.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 #include <assert.h>
 #include <math.h>
 #include <iostream>

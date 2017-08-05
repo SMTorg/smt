@@ -14,6 +14,8 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTBlib
 
+from smt.methods.rmtsclib import PyRMTB
+
 
 class RMTB(RMTS):
     """
@@ -82,6 +84,14 @@ class RMTB(RMTS):
 
         self.num = num
 
+        self.rmtsc = PyRMTB()
+        self.rmtsc.setup(num['x'],
+            np.array(self.options['xlimits'][:, 0]),
+            np.array(self.options['xlimits'][:, 1]),
+            np.array(num['order_list'], np.int32),
+            np.array(num['ctrl_list'], np.int32),
+        )
+
     def _compute_jac_raw(self, ix1, ix2, x):
         xlimits = self.options['xlimits']
 
@@ -94,8 +104,14 @@ class RMTB(RMTS):
 
         n = x.shape[0]
         nnz = n * self.num['order']
-        data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
-            self.num['order_list'], self.num['ctrl_list'], t)
+        # data, rows, cols = RMTBlib.compute_jac(ix1, ix2, self.num['x'], n, nnz,
+        #     self.num['order_list'], self.num['ctrl_list'], t)
+
+        data = np.empty(nnz)
+        rows = np.empty(nnz, dtype=np.int32)
+        cols = np.empty(nnz, dtype=np.int32)
+        self.rmtsc.compute_jac(ix1 - 1, ix2 - 1, n, t.flatten(), data, rows, cols)
+
         if ix1 != 0:
             data /= xlimits[ix1-1, 1] - xlimits[ix1-1, 0]
         if ix2 != 0:

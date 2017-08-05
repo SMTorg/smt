@@ -13,8 +13,6 @@ from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_
 from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 
-from smt.methods.rmtsclib import PyRMTS
-
 
 class RMTS(SM):
     """
@@ -356,12 +354,6 @@ class RMTS(SM):
         Train the model
         """
         self._initialize()
-
-        nx = self.training_points[None][0][0].shape[1]
-        self.rmtsc = PyRMTS()
-        self.rmtsc.setup(nx,
-            np.array(self.options['xlimits'][:, 0]),
-            np.array(self.options['xlimits'][:, 1]))
 
         tmp = self.rmtsc
         self.rmtsc = None

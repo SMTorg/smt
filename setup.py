@@ -61,6 +61,7 @@ else:
         Extension("smt.methods.rmtsclib",
         sources=[
             'smt/src/rmts/rmtsclib.pyx',
+            'smt/src/rmts/utils.cpp',
             'smt/src/rmts/rmts.cpp',
             'smt/src/rmts/rmtb.cpp',
         ],

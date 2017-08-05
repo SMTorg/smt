@@ -11,7 +11,7 @@ public:
   void compute_ext_dist(int n, int nterm, double * x, double * dx);
   void compute_quadrature_points(int n, int * nelem_list, double * x);
 
-private:
+protected:
   int nx;
   double * lower;
   double * upper;
