@@ -64,6 +64,7 @@ else:
             'smt/src/rmts/utils.cpp',
             'smt/src/rmts/rmts.cpp',
             'smt/src/rmts/rmtb.cpp',
+            'smt/src/rmts/rmtc.cpp',
         ],
         language="c++", extra_compile_args=['-std=c++11'],
         include_dirs=[np.get_include(),

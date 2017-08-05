@@ -14,6 +14,8 @@ from smt.methods.rmts import RMTS
 
 from smt.methods import RMTClib
 
+from smt.methods.rmtsclib import PyRMTC
+
 
 class RMTC(RMTS):
     """
@@ -79,6 +81,13 @@ class RMTC(RMTS):
         num['dof'] = num['uniq'] * 2 ** num['x']
 
         self.num = num
+
+        self.rmtsc = PyRMTC()
+        self.rmtsc.setup(num['x'],
+            np.array(self.options['xlimits'][:, 0]),
+            np.array(self.options['xlimits'][:, 1]),
+            np.array(num['elem_list'], np.int32),
+        )
 
     def _compute_jac_raw(self, ix1, ix2, x):
         n = x.shape[0]
