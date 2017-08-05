@@ -1,8 +1,3 @@
-#ifndef __utils_CPP__
-#define __utils_CPP__
-
-void expand_index(int nx, int * nlist, int index, int * ilist);
-
 void expand_index(int nx, int * nlist, int index, int * ilist) {
   int rem = index;
 
@@ -24,5 +19,3 @@ void expand_index(int nx, int * nlist, int index, int * ilist) {
     rem -= ilist[ix] * prod;
   }
 }
-
-#endif

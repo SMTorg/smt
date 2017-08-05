@@ -124,10 +124,10 @@ class RMTS(SM):
                 sq_mtx = outputs['sq_mtx']
             else:
                 n = np.prod(2 * num['elem_list'])
-                x2 = np.empty(n * num['x'])
+                x = np.empty(n * num['x'])
                 self.rmtsc.compute_quadrature_points(
-                    n, np.array(2 * num['elem_list'], dtype=np.int32), x2)
-                x2 = x2.reshape((n, num['x']))
+                    n, np.array(2 * num['elem_list'], dtype=np.int32), x)
+                x = x.reshape((n, num['x']))
 
                 sq_mtx = [None] * num['x']
                 for kx in range(num['x']):

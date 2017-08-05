@@ -1,3 +1,6 @@
+#ifndef __RMTS__
+#define __RMTS__
+
 #include <iostream>
 
 class RMTS {
@@ -13,3 +16,5 @@ private:
   double * lower;
   double * upper;
 };
+
+#endif
