@@ -12,8 +12,6 @@ from smt.utils.linear_solvers import get_solver
 from smt.utils.line_search import get_line_search_class
 from smt.methods.rmts import RMTS
 
-from smt.methods import RMTClib
-
 from smt.methods.rmtsclib import PyRMTC
 
 
@@ -93,8 +91,11 @@ class RMTC(RMTS):
     def _compute_jac_raw(self, ix1, ix2, x):
         n = x.shape[0]
         nnz = n * self.num['term']
-        return RMTClib.compute_jac(ix1, ix2, nnz, self.num['x'], n,
-            self.num['elem_list'], self.options['xlimits'], x)
+        data = np.empty(nnz)
+        rows = np.empty(nnz, np.int32)
+        cols = np.empty(nnz, np.int32)
+        self.rmtsc.compute_jac(ix1 - 1, ix2 - 1, n, x.flatten(), data, rows, cols)
+        return data, rows, cols
 
     def _compute_dof2coeff(self):
         num = self.num
@@ -104,7 +105,10 @@ class RMTC(RMTS):
         # yields the list of function and derivative values at the element nodes.
         # We need the inverse, but the matrix size is small enough to invert since
         # RMTC is normally only used for 1 <= nx <= 4 in most cases.
-        elem_coeff2nodal = RMTClib.compute_coeff2nodal(num['x'], num['term'])
+        elem_coeff2nodal = np.zeros(num['term'] * num['term'])
+        self.rmtsc.compute_coeff2nodal(elem_coeff2nodal)
+        elem_coeff2nodal = elem_coeff2nodal.reshape((num['term'], num['term']))
+
         elem_nodal2coeff = np.linalg.inv(elem_coeff2nodal)
 
         # This computes a num_coeff_elem x num_coeff_uniq permutation matrix called
@@ -112,18 +116,25 @@ class RMTC(RMTS):
         # derivative values to the same function and derivative values, but ordered
         # by element, with repetition.
         nnz = num['elem'] * num['term']
+        data = np.empty(nnz)
+        rows = np.empty(nnz, np.int32)
+        cols = np.empty(nnz, np.int32)
+        self.rmtsc.compute_uniq2elem(data, rows, cols)
+
         num_coeff_elem = num['term'] * num['elem']
         num_coeff_uniq = num['uniq'] * 2 ** num['x']
-        data, rows, cols = RMTClib.compute_uniq2elem(nnz, num['x'], num['elem_list'])
         full_uniq2elem = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff_elem, num_coeff_uniq))
 
         # This computes the matrix full_dof2coeff, which maps the unique
         # degrees of freedom to the list of coefficients ordered by element.
         nnz = num['term'] ** 2 * num['elem']
+        data = np.empty(nnz)
+        rows = np.empty(nnz, np.int32)
+        cols = np.empty(nnz, np.int32)
+        self.rmtsc.compute_full_from_block(elem_nodal2coeff.flatten(), data, rows, cols)
+
         num_coeff = num['term'] * num['elem']
-        data, rows, cols = RMTClib.compute_full_from_block(
-            nnz, num['term'], num['elem'], elem_nodal2coeff)
         full_nodal2coeff = scipy.sparse.csc_matrix((data, (rows, cols)),
             shape=(num_coeff, num_coeff))
 

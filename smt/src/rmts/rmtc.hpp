@@ -8,12 +8,17 @@ class RMTC : public RMTS {
 public:
   RMTC();
   ~RMTC();
-  void setup(int nx, double * lower, double * upper, int * elem_list, int * term_list);
-  // void compute_jac(int ix1, int ix2, int n, double * t, double * data, int * rows, int * cols);
+  void setup(int nx, double * lower, double * upper, int * nelem_list, int * nterm_list);
+  void compute_coeff2nodal(double * mtx);
+  void compute_uniq2elem(double * data, int * rows, int * cols);
+  void compute_full_from_block(double * mtx, double * data, int * rows, int * cols);
+  void compute_jac(int ix1, int ix2, int n, double * x, double * data, int * rows, int * cols);
 
 private:
-  int * elem_list;
-  int * term_list;
+  void find_interval(int ix, int num, double x, int * index, double * xbar);
+  int * nelem_list;
+  int * nterm_list;
+  int nelem, nterm;
 };
 
 #endif

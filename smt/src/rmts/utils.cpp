@@ -11,13 +11,16 @@ void expand_index(int nx, int * nlist, int index, int * ilist) {
     ilist[ix] = rem / prod;
     rem -= ilist[ix] * prod;
   }
+}
 
-  // for (int ix = nx - 1; ix >= 0; ix--) {
-  //   int prod = 1;
-  //   for (int kx = 0; kx < ix; kx++) {
-  //     prod *= nlist[kx];
-  //   }
-  //   ilist[ix] = rem / prod;
-  //   rem -= ilist[ix] * prod;
-  // }
+int contract_index(int nx, int * nlist, int * ilist) {
+  int index = 0;
+  int prod = 1;
+
+  for (int ix = nx - 1; ix >= 0; ix--) {
+    index += ilist[ix] * prod;
+    prod *= nlist[ix];
+  }
+
+  return index;
 }
