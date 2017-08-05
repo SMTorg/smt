@@ -30,18 +30,7 @@ if os.name == 'nt':
 )
 else:
     # If OS is OS X or Linux, assume Fortran compilers are available
-    ext = [
-        Extension(name='smt.methods.IDWlib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/idw.f95']),
-        Extension(name='smt.methods.RBFlib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/rbf.f95']),
-        Extension(name='smt.methods.RMTSlib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/rmts.f95', 'src_f/utils.f95']),
-        Extension(name='smt.methods.RMTClib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/rmtc.f95', 'src_f/utils.f95']),
-        Extension(name='smt.methods.RMTBlib', extra_compile_args=['-fbounds-check'],
-            sources=['src_f/rmtb.f95', 'src_f/utils.f95']),
-    ] + cythonize(
+    ext = cythonize(
         Extension("smt.methods.rbfclib",
         sources=[
             'smt/src/rbf/rbf.cpp',
@@ -90,11 +79,3 @@ else:
     zip_safe=False,
     ext_modules=ext,
 )
-
-
-
-for lib_name in ['IDWlib', 'RBFlib', 'RMTSlib', 'RMTClib', 'RMTBlib']:
-    try:
-        call(['mv', 'smt/%s.cpython-36m-darwin.so' % lib_name, 'smt/%s.so' % lib_name])
-    except:
-        pass
