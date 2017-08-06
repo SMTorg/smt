@@ -38,6 +38,7 @@ class RBF(SM):
                 desc='Maximum depth (level of nesting) to print operation descriptions and times')
 
         supports['derivatives'] = True
+        supports['output_derivatives'] = True
 
         self.name = 'RBF'
 
@@ -87,6 +88,8 @@ class RBF(SM):
         mtx[:num['radial'], :] = jac
         mtx[:, :num['radial']] = jac.T
         mtx[np.arange(num['radial']), np.arange(num['radial'])] += self.options['reg']
+
+        self.mtx = mtx
 
         rhs = np.zeros((num['dof'], num['y']))
         rhs[:num['radial'], :] = yt
@@ -171,3 +174,21 @@ class RBF(SM):
 
         dy_dx = jac.dot(self.sol)
         return dy_dx
+
+    def _predict_output_derivatives(self, x):
+        n = x.shape[0]
+        nt = self.nt
+        num = self.num
+
+        dy_dstates = np.empty(n * num['dof'])
+        self.rbfc.compute_jac(n, x.flatten(), dy_dstates)
+        dy_dstates = dy_dstates.reshape((n, num['dof']))
+
+        dstates_dytl = np.linalg.inv(self.mtx)
+
+        ones = np.ones(self.nt)
+        arange = np.arange(self.nt)
+        dytl_dyt = csc_matrix((ones, (arange, arange)), shape=(num['dof'], self.nt))
+
+        dy_dyt = (dytl_dyt.T.dot(dstates_dytl.T).dot(dy_dstates.T)).T
+        return {None: dy_dyt}

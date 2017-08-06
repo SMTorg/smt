@@ -59,6 +59,7 @@ class RMTS(SM):
 
         supports['training_derivatives'] = True
         supports['derivatives'] = True
+        supports['output_derivatives'] = True
 
     def _initialize_hessian(self):
         diag = self.options['reg_dv'] * np.ones(self.num['dof'])
@@ -264,6 +265,8 @@ class RMTS(SM):
                     yt_dict = self._get_yt_dict(ind_y)
                     rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
                                                     full_jac_dict, yt_dict)
+                self.mtx = mtx
+                self.full_jac_dict = full_jac_dict
 
             with self.printer._timed_context('Initializing linear solver'):
                 solver._initialize(mtx, self.printer)
@@ -382,7 +385,9 @@ class RMTS(SM):
         y : np.ndarray
             Evaluation point output variable values
         """
-        y = self._predict(x, 0)
+        mtx = self._compute_prediction_mtx(x, 0)
+        y = mtx.dot(self.sol)
+
         return y
 
     def _predict_derivatives(self, x, kx):
@@ -401,26 +406,12 @@ class RMTS(SM):
         y : np.ndarray
             Derivative values.
         """
-        y = self._predict(x, kx + 1)
+        mtx = self._compute_prediction_mtx(x, kx + 1)
+        y = mtx.dot(self.sol)
+
         return y
 
-    def _predict(self, x, kx):
-        """
-        Evaluate the surrogate model at x.
-
-        Parameters
-        ----------
-        x : np.ndarray[n_eval,dim]
-            An array giving the point(s) at which the prediction(s) should be made.
-        kx : int
-            0    for the interpolant.
-            > 0  for the derivative with respect to the kx^{th} input variable (kx is 1-based).
-
-        Returns
-        -------
-        y : np.ndarray[n_eval,1]
-            - An array with the output values at x.
-        """
+    def _compute_prediction_mtx(self, x, kx):
         n = x.shape[0]
 
         num = self.num
@@ -469,6 +460,36 @@ class RMTS(SM):
                 data += data_tmp
 
         mtx = scipy.sparse.csc_matrix((data, (rows, cols)), shape=(n, num['coeff']))
-        y = mtx.dot(self.sol)
+        return mtx
 
-        return y
+    def _predict_output_derivatives(self, x):
+        n = x.shape[0]
+
+        dy_dstates = self._compute_prediction_mtx(x, 0)
+        if self.full_dof2coeff is not None:
+            dy_dstates = dy_dstates * self.full_dof2coeff
+        dy_dstates = dy_dstates.todense()
+
+        drhs_dstates = self.mtx
+
+        solver = get_solver(self.options['solver'])
+        solver._initialize(drhs_dstates, self.printer)
+        dy_drhs = np.zeros(dy_dstates.shape)
+
+        rhs = np.zeros(dy_drhs.shape[1])
+        sol = np.zeros(dy_drhs.shape[1])
+        for ind in range(n):
+            rhs[:] = dy_dstates[ind, :]
+            solver._solve(rhs, sol, ind_y=ind)
+            dy_drhs[ind, :] = sol
+
+        dy_dyt = {}
+        for kx in self.training_points[None]:
+            full_jac, full_jac_T, c = self.full_jac_dict[kx]
+            drhs_dyt = c * full_jac_T
+            if kx == 0:
+                dy_dyt[None] = drhs_dyt.T.dot(dy_drhs.T).T
+            else:
+                dy_dyt[kx - 1] = drhs_dyt.T.dot(dy_drhs.T).T
+
+        return dy_dyt

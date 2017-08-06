@@ -29,4 +29,4 @@ class SMTestCase(unittest.TestCase):
             rel_error = abs_error
         if abs_error > atol and rel_error > rtol:
             self.fail('computed %s, desired %s, abs error %s, rel error %s, atol %s, rtol %s'
-                      % (computed, desired, abs_error, rel_error, atol, rtol))
+                % (np.linalg.norm(computed), np.linalg.norm(desired), abs_error, rel_error, atol, rtol))

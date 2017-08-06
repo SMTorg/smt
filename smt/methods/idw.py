@@ -36,6 +36,7 @@ class IDW(SM):
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         supports['derivatives'] = True
+        supports['output_derivatives'] = True
 
         self.name = 'IDW'
 
@@ -119,3 +120,14 @@ class IDW(SM):
 
         dy_dx = jac.dot(yt)
         return dy_dx
+
+    def _predict_output_derivatives(self, x):
+        n = x.shape[0]
+        nt = self.nt
+
+        jac = np.empty(n * nt)
+        self.idwc.compute_jac(n, x.flatten(), jac)
+        jac = jac.reshape((n, nt))
+
+        dy_dyt = {None: jac}
+        return dy_dyt

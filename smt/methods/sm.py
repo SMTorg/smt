@@ -90,6 +90,35 @@ class SM(object):
 
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
+    def update_training_values(self, yt, name=None):
+        """
+        Update the training data (values) at the previously set input values.
+
+        Arguments
+        ---------
+        yt : np.ndarray[nt, ny] or np.ndarray[nt]
+            The output values for the nt training points.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
+        """
+        yt = check_2d_array(yt, 'yt')
+
+        kx = 0
+
+        if kx not in self.training_points[name]:
+            raise ValueError(
+                'The training points must be set first with set_training_values ' +
+                'before calling update_training_values.')
+
+        xt = self.training_points[name][kx][0]
+        if xt.shape[0] != yt.shape[0]:
+            raise ValueError(
+                'The number of training points does not agree with the earlier call of ' +
+                'set_training_values.')
+
+        self.training_points[name][kx][1] = np.array(yt)
+
     def set_training_derivatives(self, xt, dyt_dxt, kx, name=None):
         """
         Set training data (derivatives).
@@ -116,6 +145,35 @@ class SM(object):
             raise ValueError('kx must be an int')
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
+
+    def update_training_derivatives(self, dyt_dxt, kx, name=None):
+        """
+        Update the training data (values) at the previously set input values.
+
+        Arguments
+        ---------
+        dyt_dxt : np.ndarray[nt, ny] or np.ndarray[nt]
+            The derivatives values for the nt training points.
+        kx : int
+            0-based index of the derivatives being set.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
+        """
+        dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
+
+        if kx not in self.training_points[name]:
+            raise ValueError(
+                'The training points must be set first with set_training_values ' +
+                'before calling update_training_values.')
+
+        xt = self.training_points[name][kx][0]
+        if xt.shape[0] != dyt_dxt.shape[0]:
+            raise ValueError(
+                'The number of training points does not agree with the earlier call of ' +
+                'set_training_values.')
+
+        self.training_points[name][kx + 1][1] = np.array(dyt_dxt)
 
     def train(self):
         """
@@ -259,12 +317,12 @@ class SM(object):
 
         Returns
         -------
-        dy_dyt : dict[ny] of np.ndarray[n, nt]
-            Output derivatives.
+        dy_dyt : dict of np.ndarray[n, nt]
+            Dictionary of output derivatives.
+            Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
         check_support(self, 'output_derivatives')
         check_nx(self.nx, x)
 
-        n = x.shape[0]
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
