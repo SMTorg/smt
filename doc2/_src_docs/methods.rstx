@@ -1,0 +1,43 @@
+Surrogate modeling methods
+==========================
+
+SMT contains the surrogate modeling methods listed below.
+
+.. toctree::
+   :maxdepth: 1
+
+   methods/rbf
+   methods/idw
+   methods/rmtb
+   methods/rmtc
+   methods/ls
+   methods/pa2
+   methods/krg
+
+Examples
+--------
+
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rbf
+
+API
+---
+
+All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
+
+.. autoclass:: smt.methods.sm.SM
+
+  .. automethod:: smt.methods.sm.SM.__init__
+
+  .. automethod:: smt.methods.sm.SM.set_training_values
+
+  .. automethod:: smt.methods.sm.SM.set_training_derivatives
+
+  .. automethod:: smt.methods.sm.SM.train
+
+  .. automethod:: smt.methods.sm.SM.predict_values
+
+  .. automethod:: smt.methods.sm.SM.predict_derivatives
+
+  .. automethod:: smt.methods.sm.SM.predict_output_derivatives
+
+  .. automethod:: smt.methods.sm.SM.predict_variances

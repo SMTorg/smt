@@ -19,17 +19,36 @@ from smt.utils.checks import check_support, check_nx, check_2d_array
 
 class SM(object):
     """
-    Base class for all model methods.
+    Base class for all surrogate models.
+
+    Attributes
+    ----------
+    options : dict
+        Dictionary of options. Options values can be set on this attribute directly
+        or they can be passed in as keyword arguments during instantiation.
+
+    Examples
+    --------
+    >>> from smt.methods import RBF
+    >>> sm = RBF(print_training=False)
+    >>> sm.options['print_prediction'] = False
     """
 
     def __init__(self, **kwargs):
         """
-        Constructor.
+        Constructor where values of options can be passed in.
 
-        Arguments
-        ---------
+        For the list of options, see the documentation for the surrogate model being used.
+
+        Parameters
+        ----------
         **kwargs : named arguments
             Set of options that can be optionally set; each option must have been declared.
+
+        Examples
+        --------
+        >>> from smt.methods import RBF
+        >>> sm = RBF(print_global=False)
         """
         self.options = OptionsDictionary()
 
@@ -65,8 +84,8 @@ class SM(object):
         """
         Set training data (values).
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         xt : np.ndarray[nt, nx] or np.ndarray[nt]
             The input values for the nt training points.
         yt : np.ndarray[nt, ny] or np.ndarray[nt]
@@ -94,8 +113,8 @@ class SM(object):
         """
         Update the training data (values) at the previously set input values.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         yt : np.ndarray[nt, ny] or np.ndarray[nt]
             The output values for the nt training points.
         name : str or None
@@ -123,8 +142,8 @@ class SM(object):
         """
         Set training data (derivatives).
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         xt : np.ndarray[nt, nx] or np.ndarray[nt]
             The input values for the nt training points.
         dyt_dxt : np.ndarray[nt, ny] or np.ndarray[nt]
@@ -150,8 +169,8 @@ class SM(object):
         """
         Update the training data (values) at the previously set input values.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         dyt_dxt : np.ndarray[nt, ny] or np.ndarray[nt]
             The derivatives values for the nt training points.
         kx : int
@@ -205,8 +224,8 @@ class SM(object):
         """
         Predict the output values at a set of points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : np.ndarray[n, nx] or np.ndarray[n]
             Input values for the prediction points.
 
@@ -245,8 +264,8 @@ class SM(object):
         """
         Predict the dy_dx derivatives at a set of points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : np.ndarray[n, nx] or np.ndarray[n]
             Input values for the prediction points.
         kx : int
@@ -289,8 +308,8 @@ class SM(object):
         """
         Predict the variances at a set of points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : np.ndarray[n, nx] or np.ndarray[n]
             Input values for the prediction points.
 
@@ -310,8 +329,8 @@ class SM(object):
         """
         Predict the derivatives dy_dyt at a set of points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : np.ndarray[n, nx] or np.ndarray[n]
             Input values for the prediction points.
 

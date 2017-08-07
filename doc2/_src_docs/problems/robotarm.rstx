@@ -1,0 +1,6 @@
+Robot arm function
+==================
+
+.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_robot_arm
+
+.. embed-options-table-problem :: RobotArm

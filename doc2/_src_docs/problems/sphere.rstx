@@ -1,0 +1,6 @@
+Sphere function
+===============
+
+.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_sphere
+
+.. embed-options-table-problem :: Sphere
