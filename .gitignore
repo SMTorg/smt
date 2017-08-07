@@ -6,6 +6,7 @@
 *.so.*
 *.sm
 *.out
+*__pycache__*
 .DS_Store
 smt/src/rbf/rbfclib.cpp
 smt/src/idw/idwclib.cpp

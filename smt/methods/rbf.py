@@ -48,7 +48,7 @@ class RBF(SM):
         nx = self.training_points[None][0][0].shape[1]
         if isinstance(options['d0'], (int, float)):
             options['d0'] = [options['d0']] * nx
-        options['d0'] = np.atleast_1d(options['d0'])
+        options['d0'] = np.array(np.atleast_1d(options['d0']), dtype=float)
 
         self.printer.max_print_depth = options['max_print_depth']
 

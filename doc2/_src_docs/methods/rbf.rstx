@@ -1,0 +1,6 @@
+Radial basis functions
+======================
+
+.. embed-test-plot-print :: _src_docs/methods/test_simple.py , Test , test_rbf
+
+.. embed-options-table :: RBF
