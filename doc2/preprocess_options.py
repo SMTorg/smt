@@ -3,6 +3,14 @@ from six import iteritems
 
 def process_options(file_path, iline, line):
     embed_num_indent = line.find('.. embed-options-table')
+
+    if 'embed-options-table-method' in line:
+        type_ = 'methods'
+    elif 'embed-options-table-problem' in line:
+        type_ = 'problems'
+    else:
+        raise Exception('embed-options-table is an invalid name')
+
     if line[:embed_num_indent] != ' ' * embed_num_indent:
         return line
 
@@ -13,7 +21,7 @@ def process_options(file_path, iline, line):
 
     class_name = split_line[1]
 
-    exec('from smt.methods import {}'.format(class_name), globals())
+    exec('from smt.{} import {}'.format(type_, class_name), globals())
     exec('sm_class = {}'.format(class_name), globals())
 
     sm = sm_class()
@@ -27,15 +35,17 @@ def process_options(file_path, iline, line):
         types = option_data['types']
         desc = option_data['desc']
 
-        if not isinstance(types, (tuple, list)):
-            types = (types,)
+        if types is not None:
+            if not isinstance(types, (tuple, list)):
+                types = (types,)
 
-        types = [type_.__name__ for type_ in types]
+            types = [type_.__name__ for type_ in types]
 
-        if not isinstance(values, (tuple, list)):
-            values = (values,)
+        if values is not None:
+            if not isinstance(values, (tuple, list)):
+                values = (values,)
 
-        values = [value for value in values]
+            values = [value for value in values]
 
         outputs.append([name, default, values, types, desc])
 

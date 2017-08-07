@@ -22,9 +22,46 @@ Radial basis functions
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
-  plt.ylabel('x')
+  plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+                                      RBF
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 5
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+        Initializing linear solver ...
+           Performing LU fact. (5 x 5 mtx) ...
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001218
+        Initializing linear solver - done. Time (sec):  0.0001738
+        Solving linear system (col. 0) ...
+           Back solving (5 x 5 mtx) ...
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0001299
+        Solving linear system (col. 0) - done. Time (sec):  0.0001721
+     Training - done. Time (sec):  0.0008609
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000560
+     
+     Prediction time/pt. (sec) :  0.0000006
+     
   
 .. plot::
 
@@ -47,46 +84,9 @@ Radial basis functions
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
-  plt.ylabel('x')
+  plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-  
-::
-
-  ___________________________________________________________________________
-     
-                                      RBF
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 5
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-        Initializing linear solver ...
-           Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001419
-        Initializing linear solver - done. Time (sec):  0.0004151
-        Solving linear system (col. 0) ...
-           Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0002060
-        Solving linear system (col. 0) - done. Time (sec):  0.0002871
-     Training - done. Time (sec):  0.0012901
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000439
-     
-     Prediction time/pt. (sec) :  0.0000004
-     
   
 
 .. list-table:: List of options
@@ -101,32 +101,32 @@ Radial basis functions
      -  Description
   *  -  print_global
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
   *  -  print_training
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print training information
   *  -  print_prediction
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print prediction information
   *  -  print_problem
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print problem information
   *  -  print_solver
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print solver information
   *  -  d0
      -  1.0
-     -  [None]
+     -  None
      -  ['int', 'float', 'list', 'ndarray']
      -  basis function scaling parameter in exp(-d^2 / d0^2)
   *  -  poly_degree
@@ -136,16 +136,16 @@ Radial basis functions
      -  -1 means no global polynomial, 0 means constant, 1 means linear trend
   *  -  data_dir
      -  None
-     -  [None]
+     -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
   *  -  reg
      -  1e-10
-     -  [None]
+     -  None
      -  ['int', 'float']
      -  Regularization coeff.
   *  -  max_print_depth
      -  5
-     -  [None]
+     -  None
      -  ['int']
      -  Maximum depth (level of nesting) to print operation descriptions and times

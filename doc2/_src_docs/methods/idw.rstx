@@ -1,6 +1,6 @@
 Inverse-distance weighting
 ==========================
 
-.. embed-test-plot-print :: _src_docs/methods/test_simple.py , Test , test_idw
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_idw
 
-.. embed-options-table :: IDW
+.. embed-options-table-method :: IDW

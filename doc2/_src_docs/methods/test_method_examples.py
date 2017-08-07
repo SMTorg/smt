@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -112,7 +112,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -136,7 +136,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -160,7 +160,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
@@ -184,7 +184,7 @@ class Test(unittest.TestCase):
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
-        plt.ylabel('x')
+        plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 

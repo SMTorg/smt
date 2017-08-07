@@ -15,6 +15,7 @@ class RobotArm(Problem):
 
     def initialize(self):
         self.options.declare('name', 'RobotArm', types=str)
+        self.options.declare('ndim', 2, types=int)
 
     def _initialize(self):
         assert self.options['ndim'] % 2 == 0, 'ndim must be divisible by 2'

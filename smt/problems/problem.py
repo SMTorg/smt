@@ -6,11 +6,27 @@ Base class for benchmarking/test problems.
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
+from smt.utils.checks import check_2d_array
 
 
 class Problem(object):
 
     def __init__(self, **kwargs):
+        """
+        Constructor where values of options can be passed in.
+
+        For the list of options, see the documentation for the problem being used.
+
+        Parameters
+        ----------
+        **kwargs : named arguments
+            Set of options that can be optionally set; each option must have been declared.
+
+        Examples
+        --------
+        >>> from smt.problems import Sphere
+        >>> prob = Sphere(ndim=3)
+        """
         self.options = OptionsDictionary()
         self.options.declare('ndim', 1, types=int)
         self.options.declare('return_complex', False, types=bool)
@@ -29,22 +45,24 @@ class Problem(object):
 
     def __call__(self, x, kx=None):
         """
-        Arguments
-        ---------
-        x : ndarray[ne, nx]
-            Evaluation points.
+        Evaluate the function.
+
+        Parameters
+        ----------
+        x : ndarray[n, nx]
+            Evaluation points where n is the number of evaluation points.
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
             None means return function value rather than derivative.
 
         Returns
         -------
-        ndarray[ne, 1]
+        ndarray[n, 1]
             Functions values if kx=None or derivative values if kx is an int.
         """
-        if not isinstance(x, np.ndarray) or len(x.shape) != 2:
-            raise TypeError('x should be a rank-2 array.')
-        elif x.shape[1] != self.options['ndim']:
+        x = check_2d_array(x, 'x')
+
+        if x.shape[1] != self.options['ndim']:
             raise ValueError('The second dimension of x should be %i' % self.options['ndim'])
 
         if kx is not None:

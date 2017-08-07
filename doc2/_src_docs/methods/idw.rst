@@ -22,9 +22,38 @@ Inverse-distance weighting
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
-  plt.ylabel('x')
+  plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+                                      IDW
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 5
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.0001891
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000560
+     
+     Prediction time/pt. (sec) :  0.0000006
+     
   
 .. plot::
 
@@ -47,38 +76,9 @@ Inverse-distance weighting
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
-  plt.ylabel('x')
+  plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-  
-::
-
-  ___________________________________________________________________________
-     
-                                      IDW
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 5
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.0001831
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000508
-     
-     Prediction time/pt. (sec) :  0.0000005
-     
   
 
 .. list-table:: List of options
@@ -93,36 +93,36 @@ Inverse-distance weighting
      -  Description
   *  -  print_global
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
   *  -  print_training
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print training information
   *  -  print_prediction
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print prediction information
   *  -  print_problem
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print problem information
   *  -  print_solver
      -  True
-     -  [None]
+     -  None
      -  ['bool']
      -  Whether to print solver information
   *  -  p
      -  2.5
-     -  [None]
+     -  None
      -  ['int', 'float']
      -  order of distance norm
   *  -  data_dir
      -  None
-     -  [None]
+     -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load

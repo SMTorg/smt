@@ -1,6 +1,6 @@
 Second-order polynomial approximation
 =====================================
 
-.. embed-test-plot-print :: _src_docs/methods/test_simple.py , Test , test_pa2
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_pa2
 
-.. embed-options-table :: PA2
+.. embed-options-table-method :: PA2

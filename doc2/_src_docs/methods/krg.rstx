@@ -1,6 +1,6 @@
 Kriging
 =======
 
-.. embed-test-plot-print :: _src_docs/methods/test_simple.py , Test , test_krg
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_krg
 
-.. embed-options-table :: KRG
+.. embed-options-table-method :: KRG

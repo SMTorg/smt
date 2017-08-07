@@ -60,35 +60,40 @@ def process_test(file_path, iline, line):
     first_line = method_lines[0]
     py_num_indent = first_line.find(first_line.strip())
 
-    # for ind in range(len(method_lines)):
     for imethod_line, method_line in enumerate(method_lines):
         method_lines[imethod_line] = method_line[py_num_indent:]
 
     replacement_lines = []
+
     replacement_lines.append(' ' * embed_num_indent + '.. code-block:: python\n')
     replacement_lines.append('\n')
     replacement_lines.extend([
         ' ' * embed_num_indent + ' ' * 2 + method_line + '\n'
         for method_line in method_lines
     ])
+
+    if include_print_output:
+        with stdoutIO() as s:
+            joined_method_lines = '\n'.join(method_lines)
+            exec(joined_method_lines)
+            # for method_line in method_lines:
+            #     exec(method_line)
+        output_lines = s.getvalue().split('\n')
+
+        if len(output_lines) > 1:
+            replacement_lines.append(' ' * embed_num_indent + '::\n')
+            replacement_lines.append('\n')
+            replacement_lines.extend([
+                ' ' * embed_num_indent + ' ' * 2 + output_line + '\n'
+                for output_line in output_lines
+            ])
+
     if include_plot_output:
         replacement_lines.append(' ' * embed_num_indent + '.. plot::\n')
         replacement_lines.append('\n')
         replacement_lines.extend([
             ' ' * embed_num_indent + ' ' * 2 + method_line + '\n'
             for method_line in method_lines
-        ])
-    if include_print_output:
-        with stdoutIO() as s:
-            for method_line in method_lines:
-                exec(method_line)
-        output_lines = s.getvalue().split('\n')
-
-        replacement_lines.append(' ' * embed_num_indent + '::\n')
-        replacement_lines.append('\n')
-        replacement_lines.extend([
-            ' ' * embed_num_indent + ' ' * 2 + output_line + '\n'
-            for output_line in output_lines
         ])
 
     return replacement_lines
