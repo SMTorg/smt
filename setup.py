@@ -24,6 +24,7 @@ if os.name == 'nt':
     install_requires=[
     'scikit-learn',
     'pyDOE',
+    'matplotlib'
     ],
     zip_safe=False,
     ext_modules=ext,
@@ -75,6 +76,7 @@ else:
     'scikit-learn',
     'pyDOE',
     'pyamg',
+    'matplotlib'
     ],
     zip_safe=False,
     ext_modules=ext,

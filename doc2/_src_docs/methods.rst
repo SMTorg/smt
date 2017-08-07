@@ -60,13 +60,13 @@ Examples
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000851
-        Initializing linear solver - done. Time (sec):  0.0001087
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000861
+        Initializing linear solver - done. Time (sec):  0.0001180
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000851
-        Solving linear system (col. 0) - done. Time (sec):  0.0001051
-     Training - done. Time (sec):  0.0005450
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000989
+        Solving linear system (col. 0) - done. Time (sec):  0.0001202
+     Training - done. Time (sec):  0.0005720
   ___________________________________________________________________________
      
    Evaluation
@@ -74,7 +74,7 @@ Examples
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000350
+     Predicting - done. Time (sec):  0.0000381
      
      Prediction time/pt. (sec) :  0.0000004
      

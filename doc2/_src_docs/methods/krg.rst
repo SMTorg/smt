@@ -42,7 +42,7 @@ Kriging
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0105748
+     Training - done. Time (sec):  0.0113080
   ___________________________________________________________________________
      
    Evaluation
@@ -50,9 +50,9 @@ Kriging
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002451
+     Predicting - done. Time (sec):  0.0003326
      
-     Prediction time/pt. (sec) :  0.0000025
+     Prediction time/pt. (sec) :  0.0000033
      
   
 .. plot::

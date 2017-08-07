@@ -44,13 +44,13 @@ Radial basis functions
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001218
-        Initializing linear solver - done. Time (sec):  0.0001738
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001152
+        Initializing linear solver - done. Time (sec):  0.0001550
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0001299
-        Solving linear system (col. 0) - done. Time (sec):  0.0001721
-     Training - done. Time (sec):  0.0008609
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000689
+        Solving linear system (col. 0) - done. Time (sec):  0.0000908
+     Training - done. Time (sec):  0.0006909
   ___________________________________________________________________________
      
    Evaluation
@@ -58,9 +58,9 @@ Radial basis functions
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000560
+     Predicting - done. Time (sec):  0.0000300
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000003
      
   
 .. plot::
