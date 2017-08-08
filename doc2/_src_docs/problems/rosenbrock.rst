@@ -1,10 +1,8 @@
 Rosenbrock function
 ===================
 
-::
-  \begin{equation}
+.. math ::
   \sum\limits_{i=1}^{d-1}\left[(x_{i+1}-x_i^2)^2+(x_i-1)^2\right],\quad-2\leq x_i\leq 2,\quad\text{ for }i=1,\ldots,d.
-  \end{equation}
 
 Usage
 -----
