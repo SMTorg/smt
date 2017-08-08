@@ -8,7 +8,6 @@ import scipy.sparse.linalg
 import scipy.linalg
 from six.moves import range
 import contextlib
-import pyamg.krylov
 
 from smt.utils.options_dictionary import OptionsDictionary
 
@@ -206,7 +205,7 @@ class KrylovSolver(LinearSolver):
 
     def initialize(self):
         self.options.declare('interval', 10, types=int)
-        self.options.declare('solver', 'cg', values=['cg', 'bicgstab', 'gmres', 'fgmres'])
+        self.options.declare('solver', 'cg', values=['cg', 'bicgstab', 'gmres'])
         self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg', 'dense'],
                              types=LinearSolver)
         self.options.declare('ilimit', 100, types=int)
@@ -248,15 +247,6 @@ class KrylovSolver(LinearSolver):
                 self.solver_kwargs = {'tol': self.options['atol'],
                                       'maxiter': self.options['ilimit'],
                                       'restart': min(self.options['ilimit'], mtx.shape[0])}
-            elif self.options['solver'] == 'fgmres':
-                self.solver = pyamg.krylov.fgmres
-                self.callback_func = self.callback._print_sol
-                self.solver_kwargs = {'tol': self.options['rtol'],
-                                      'maxiter': self.options['ilimit'],
-                                      'restrt': 1,
-                                      # 'restrt': min(self.options['ilimit'], mtx.shape[0]),
-                                      # 'maxiter': 1, 'restrt': 300,
-                                      }
 
     def _solve(self, rhs, sol=None, ind_y=0):
         with self._active(self.options['print_solve']) as printer:

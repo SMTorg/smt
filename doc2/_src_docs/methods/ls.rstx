@@ -7,7 +7,7 @@ The Least Squares method fits a linear model with coefficients :math:`{\bf \beta
 Mathematically it solves a problem of the form:
 
 .. math ::
-  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,.. math 
+  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
 
 where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
 

@@ -80,7 +80,6 @@ else:
     install_requires=[
         'scikit-learn',
         'pyDOE',
-        'pyamg',
         'matplotlib',
         'numpydoc',
     ],
