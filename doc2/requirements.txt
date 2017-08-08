@@ -1,3 +1,4 @@
 Cython
 numpydoc
 scikit-learn
+pyDOE
