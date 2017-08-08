@@ -1,7 +1,7 @@
 Welded beam function
 ====================
 
-.. math::
+::
   \begin{equation*}
   \sqrt{\frac{\tau'^2+\tau''^2+l\tau'\tau''}{\sqrt{0.25\left(l^2+(h+t)^2\right)}}},
   \end{equation*}

@@ -1,7 +1,7 @@
 Sphere function
 ===============
 
-.. math::
+::
   \begin{equation}
   \sum\limits_{i=1}^dx_i^2,\quad-10\leq x_i\leq 10,\quad\text{ for }i=1,\ldots,d.
   \end{equation}

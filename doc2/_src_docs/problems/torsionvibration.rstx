@@ -1,7 +1,7 @@
 Torsion vibration function
 ==========================
 
-.. math::
+::
   \begin{equation*}
   \frac{1}{2\pi}\sqrt{\frac{-b-\sqrt{b^2-4ac}}{2a}},
   \end{equation*}

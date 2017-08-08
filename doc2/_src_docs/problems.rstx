@@ -9,6 +9,14 @@ These are listed below.
    :titlesonly:
 
    problems/sphere
+   problems/rosenbrock
+   problems/tensorproduct
+   problems/cantileverbeam
+   problems/robotarm
+   problems/torsionvibration
+   problems/waterflow
+   problems/weldedbeam
+   problems/wingweight
 
 Usage
 -----
