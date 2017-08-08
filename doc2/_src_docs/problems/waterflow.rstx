@@ -5,7 +5,7 @@ Water flow function
   \begin{equation*}
   \frac{2\pi T_u\left(H_u-H_l\right)}{\ln\left(\frac{r}{r_w}\right)\left[1+\frac{2LT_u}{\ln\left(\frac{r}{r_w}\right)r_w^2K_w}+\frac{T_u}{T_l}\right]},\quad 0.05\leq r_w\leq 0.15,\quad 100\leq r\leq 50000,\quad 63070\leq T_u\leq 115600,\quad 990 \leq H_u \leq 1110, \quad 63.1 \leq T_l \leq 116, \quad 700 \leq H_l \leq 820, \quad 1120 \leq L \leq 1680,\quad \text{and}\quad  9855 \leq K_w \leq 12045.
   \end{equation*}
-  
+
 Usage
 -----
 
