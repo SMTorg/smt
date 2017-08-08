@@ -111,8 +111,9 @@ class Test(SMTestCase):
         sm.options['print_global'] = False
 
         sm.set_training_values(xt, yt[:, 0])
-        for i in range(self.ndim):
-            sm.set_training_derivatives(xt,yt[:, i+1],i)
+        if sm.supports['training_derivatives']:
+            for i in range(self.ndim):
+                sm.set_training_derivatives(xt,yt[:, i+1],i)
 
         with Silence():
             sm.train()

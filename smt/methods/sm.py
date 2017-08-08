@@ -23,9 +23,11 @@ class SM(object):
 
     Attributes
     ----------
-    options : dict
+    options : OptionsDictionary
         Dictionary of options. Options values can be set on this attribute directly
         or they can be passed in as keyword arguments during instantiation.
+    supports : dict
+        Dictionary containing information about what this surrogate model supports.
 
     Examples
     --------

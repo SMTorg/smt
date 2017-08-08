@@ -239,6 +239,8 @@ class GEKPLS(SM):
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
+        self.supports['training_derivatives'] = True
+
         self.name = 'GEKPLS'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
