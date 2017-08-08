@@ -3,26 +3,20 @@ Kriging
 
 Kriging is an interpolating model that is a linear combination of a known function :math:`f_i({\bf x})` which is added to a realization of a stochastic process :math:`Z({\bf x})`
 
-::
-  \begin{equation}
+.. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
-  \end{equation}
 
 :math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
 
-::
-  \begin{equation}
+.. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
-  \end{equation}
 
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
 Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions
 
-::
-  \begin{equation}
+.. math ::
   \prod\limits_{l=1}^d\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^d\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
   \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
-  \end{equation}
 
 These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
 
@@ -77,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0067952
+     Training - done. Time (sec):  0.0086789
   ___________________________________________________________________________
      
    Evaluation
@@ -85,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001361
+     Predicting - done. Time (sec):  0.0004330
      
-     Prediction time/pt. (sec) :  0.0000014
+     Prediction time/pt. (sec) :  0.0000043
      
   
 .. figure:: krg.png

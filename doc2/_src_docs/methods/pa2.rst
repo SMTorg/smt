@@ -3,14 +3,12 @@ Second-order polynomial approximation
 
 The square polynomial model can be expressed by
 
-::
-  \begin{equation}
+.. math ::
   {\bf y} = {\bf X\beta} + {\bf \epsilon},
-  \end{equation}
+
 where :math:`{\bf \epsilon}` is a vector of random errors and
 
-::
-  \begin{equation}
+.. math ::
   {\bf X} =
   \begin{bmatrix}
       1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
@@ -19,14 +17,11 @@ where :math:`{\bf \epsilon}` is a vector of random errors and
       1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
       d}^{(n)}}^2 \\
   \end{bmatrix}.
-  \end{equation}
 
 The vector of estimated polynomial regression coefficients using ordinary least square estimation is
 
-::
-  \begin{equation}
+.. math ::
   {\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
-  \end{equation}
 
 Usage
 -----
@@ -72,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002277
+     Training - done. Time (sec):  0.0002921
   ___________________________________________________________________________
      
    Evaluation
@@ -80,9 +75,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000288
+     Predicting - done. Time (sec):  0.0000403
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: pa2.png

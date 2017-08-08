@@ -6,10 +6,8 @@ The following description is taken from scikit-learn version 0.18.2 [1]_.
 The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_d\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
 Mathematically it solves a problem of the form:
 
-::
-  \begin{equation}
-  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
-  \end{equation}
+.. math ::
+  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,.. math 
 
 where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
 
@@ -59,7 +57,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0008769
+     Training - done. Time (sec):  0.0009727
   ___________________________________________________________________________
      
    Evaluation
@@ -67,9 +65,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000551
+     Predicting - done. Time (sec):  0.0000844
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000008
      
   
 .. figure:: ls.png
