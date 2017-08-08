@@ -5,8 +5,7 @@ The inverse distance weighting model is an interpolating method and the unknown 
 
 The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
 
-::
-  \begin{equation}
+.. math ::
   \hat{y}=
   \left\{
   \begin{array}{ll}
@@ -14,7 +13,6 @@ The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` usin
   y_i&\text{if}\quad d({\bf x},{\bf x}^{(i)})= 0
   \end{array}
   \right.
-  \end{equation}
 
 where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
 
@@ -62,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001419
+     Training - done. Time (sec):  0.0001440
   ___________________________________________________________________________
      
    Evaluation
@@ -70,7 +68,7 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000379
+     Predicting - done. Time (sec):  0.0000389
      
      Prediction time/pt. (sec) :  0.0000004
      
