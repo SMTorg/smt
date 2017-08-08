@@ -12,8 +12,8 @@ def check_2d_array(array, name):
 
     return array
 
-def check_support(sm, name):
-    if not sm.supports[name]:
+def check_support(sm, name, fail=False):
+    if not sm.supports[name] or fail:
         class_name = sm.__class__.__name__
         raise NotImplementedError('{} does not support {}'.format(class_name, name))
 

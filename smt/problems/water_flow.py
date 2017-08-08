@@ -15,12 +15,12 @@ from smt.problems.problem import Problem
 
 class WaterFlow(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'WaterFlow', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 8
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] == 8, 'ndim must be 8'
 
         self.xlimits[:, 0] = [0.05,100,63070,990,63.1,700,1120,9855]

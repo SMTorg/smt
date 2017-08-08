@@ -30,17 +30,24 @@ class Problem(object):
         self.options = OptionsDictionary()
         self.options.declare('ndim', 1, types=int)
         self.options.declare('return_complex', False, types=bool)
-        self.initialize()
+        self._initialize()
         self.options.update(kwargs)
 
         self.xlimits = np.zeros((self.options['ndim'], 2))
 
-        self._initialize()
-
-    def initialize(self):
-        pass
+        self._setup()
 
     def _initialize(self):
+        """
+        Implemented by problems to declare options (optional).
+
+        Examples
+        --------
+        self.options.declare('option_name', default_value, types=(bool, int), desc='description')
+        """
+        pass
+
+    def _setup(self):
         pass
 
     def __call__(self, x, kx=None):
@@ -49,7 +56,7 @@ class Problem(object):
 
         Parameters
         ----------
-        x : ndarray[n, nx]
+        x : ndarray[n, nx] or ndarray[n]
             Evaluation points where n is the number of evaluation points.
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
@@ -75,3 +82,22 @@ class Problem(object):
             return y
         else:
             return np.real(y)
+
+    def _evaluate(self, x, kx=None):
+        """
+        Implemented by surrogate models to evaluate the function.
+
+        Parameters
+        ----------
+        x : ndarray[n, nx]
+            Evaluation points where n is the number of evaluation points.
+        kx : int or None
+            Index of derivative (0-based) to return values with respect to.
+            None means return function value rather than derivative.
+
+        Returns
+        -------
+        ndarray[n, 1]
+            Functions values if kx=None or derivative values if kx is an int.
+        """
+        raise Exception('This problem has not been implemented correctly')

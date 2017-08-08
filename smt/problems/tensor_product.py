@@ -11,12 +11,12 @@ from smt.problems.problem import Problem
 
 class TensorProduct(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'TP', types=str)
         self.options.declare('func', values=['cos', 'exp', 'tanh', 'gaussian'])
         self.options.declare('width', 1., types=(float, int))
 
-    def _initialize(self):
+    def _setup(self):
         self.xlimits[:, 0] = -1.
         self.xlimits[:, 1] =  1.
 

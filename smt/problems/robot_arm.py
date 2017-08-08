@@ -13,11 +13,11 @@ from smt.problems.problem import Problem
 
 class RobotArm(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'RobotArm', types=str)
         self.options.declare('ndim', 2, types=int)
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] % 2 == 0, 'ndim must be divisible by 2'
 
         # Length L

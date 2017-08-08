@@ -40,6 +40,7 @@ Documentation contents
    _src_docs/methods
    _src_docs/problems
    _src_docs/sampling
+   _src_docs/dev_docs
 
 
 Indices and tables

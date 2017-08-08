@@ -222,8 +222,8 @@ class GEKPLS(SM):
         'abs_exp': abs_exp,
         'squar_exp': squar_exp}
 
-    def initialize(self):
-        super(GEKPLS, self).initialize()
+    def _initialize(self):
+        super(GEKPLS, self)._initialize()
         declare = self.options.declare
 
         declare('xlimits', types=np.ndarray,

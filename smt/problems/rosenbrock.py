@@ -11,10 +11,10 @@ from smt.problems.problem import Problem
 
 class Rosenbrock(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'Rosenbrock', types=str)
 
-    def _initialize(self):
+    def _setup(self):
         self.xlimits[:, 0] = -2.
         self.xlimits[:, 1] =  2.
 

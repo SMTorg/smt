@@ -10,12 +10,12 @@ from scipy.misc import derivative
 from smt.problems.problem import Problem
 
 class WeldedBeam(Problem):
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'WeldedBeam', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 3
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] == 3, 'ndim must be 3'        # t, h, l
         self.xlimits[:, 0] = [5,0.125,5]
         self.xlimits[:, 1] = [10,1,10]

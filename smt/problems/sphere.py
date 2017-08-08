@@ -12,10 +12,10 @@ from smt.problems.problem import Problem
 
 class Sphere(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'Sphere', types=str)
 
-    def _initialize(self):
+    def _setup(self):
         self.xlimits[:, 0] = -10.
         self.xlimits[:, 1] =  10.
 

@@ -52,7 +52,7 @@ Options
      -  None
      -  None
      -  ['ndarray']
-     -  
+     -  The interval of the domain in each dimension with shape nx x 2 (required)
   *  -  weights
      -  None
      -  [None]
