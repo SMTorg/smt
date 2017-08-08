@@ -12,7 +12,7 @@ from smt.sampling.sampling import Sampling
 
 class FullFactorial(Sampling):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('weights', values=[None], types=[list, np.ndarray])
         self.options.declare('clip', types=bool)
 

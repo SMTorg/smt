@@ -26,8 +26,8 @@ class IDW(SM):
     is computed with respect to the distance between x and the training points.
     """
 
-    def initialize(self):
-        super(IDW, self).initialize()
+    def _initialize(self):
+        super(IDW, self)._initialize()
         declare = self.options.declare
         supports = self.supports
 
@@ -40,7 +40,7 @@ class IDW(SM):
 
         self.name = 'IDW'
 
-    def _initialize(self):
+    def _setup(self):
         xt = self.training_points[None][0][0]
         nt = xt.shape[0]
         nx = xt.shape[1]
@@ -62,7 +62,7 @@ class IDW(SM):
         """
         Train the model
         """
-        self._initialize()
+        self._setup()
 
         tmp = self.idwc
         self.idwc = None

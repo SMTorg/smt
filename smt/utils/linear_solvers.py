@@ -84,13 +84,13 @@ class LinearSolver(object):
         self.options = OptionsDictionary()
         self.options.declare('print_init', True, types=bool)
         self.options.declare('print_solve', True, types=bool)
-        self.initialize()
+        self._initialize()
         self.options.update(kwargs)
 
-    def initialize(self):
+    def _initialize(self):
         pass
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         pass
 
     def _solve(self, rhs, sol=None, ind_y=0):
@@ -118,7 +118,7 @@ class NullSolver(LinearSolver):
 
 class DenseCholeskySolver(LinearSolver):
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
@@ -144,7 +144,7 @@ class DenseCholeskySolver(LinearSolver):
 
 class DenseLUSolver(LinearSolver):
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
@@ -168,10 +168,10 @@ class DenseLUSolver(LinearSolver):
 
 class DirectSolver(LinearSolver):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('alg', 'lu', values=['lu', 'ilu'])
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
@@ -203,7 +203,7 @@ class DirectSolver(LinearSolver):
 
 class KrylovSolver(LinearSolver):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'cg', values=['cg', 'bicgstab', 'gmres'])
         self.options.declare('pc', None, values=[None, 'ilu', 'lu', 'gs', 'jacobi', 'mg', 'dense'],
@@ -212,7 +212,7 @@ class KrylovSolver(LinearSolver):
         self.options.declare('atol', 1e-15, types=(int, float))
         self.options.declare('rtol', 1e-15, types=(int, float))
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
@@ -220,7 +220,7 @@ class KrylovSolver(LinearSolver):
             pc_solver = get_solver(self.options['pc'])
 
             if pc_solver is not None:
-                pc_solver._initialize(mtx, printer, mg_matrices=mg_matrices)
+                pc_solver._setup(mtx, printer, mg_matrices=mg_matrices)
                 self.pc_solver = pc_solver
                 self.pc_op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=pc_solver._solve)
             else:
@@ -276,13 +276,13 @@ class KrylovSolver(LinearSolver):
 
 class StationarySolver(LinearSolver):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('interval', 10, types=int)
         self.options.declare('solver', 'gs', values=['gs', 'jacobi'])
         self.options.declare('damping', 1.0, types=(int, float))
         self.options.declare('ilimit', 10, types=int)
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
@@ -362,20 +362,20 @@ class StationarySolver(LinearSolver):
 
 class MultigridSolver(LinearSolver):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('interval', 1, types=int)
         self.options.declare('mg_cycles', 0, types=int)
         self.options.declare('solver', 'null', values=['null', 'gs', 'jacobi', 'krylov'],
                              types=LinearSolver)
 
-    def _initialize(self, mtx, printer, mg_matrices=[]):
+    def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options['print_init']) as printer:
             self.mtx = mtx
 
             solver = get_solver(self.options['solver'])
             mg_solver = solver._clone()
-            mg_solver._initialize(mtx, printer)
+            mg_solver._setup(mtx, printer)
 
             self.mg_mtx = [mtx]
             self.mg_sol = [np.zeros(self.mtx.shape[0])]
@@ -389,7 +389,7 @@ class MultigridSolver(LinearSolver):
                 mg_rhs = mg_op.T.dot(self.mg_rhs[-1])
 
                 mg_solver = solver._clone()
-                mg_solver._initialize(mg_mtx, printer)
+                mg_solver._setup(mg_mtx, printer)
 
                 self.mg_mtx.append(mg_mtx)
                 self.mg_sol.append(mg_sol)
@@ -399,7 +399,7 @@ class MultigridSolver(LinearSolver):
 
             mg_mtx = self.mg_mtx[-1]
             mg_solver = DirectSolver()
-            mg_solver._initialize(mg_mtx, printer)
+            mg_solver._setup(mg_mtx, printer)
             self.mg_solvers[-1] = mg_solver
 
             self.callback = Callback(mtx.shape[0], 'Multigrid solver',

@@ -21,8 +21,8 @@ class RBF(SM):
     Radial basis function interpolant with global polynomial trend.
     """
 
-    def initialize(self):
-        super(RBF, self).initialize()
+    def _initialize(self):
+        super(RBF, self)._initialize()
         declare = self.options.declare
         supports = self.supports
 
@@ -42,7 +42,7 @@ class RBF(SM):
 
         self.name = 'RBF'
 
-    def _initialize(self):
+    def _setup(self):
         options = self.options
 
         nx = self.training_points[None][0][0].shape[1]
@@ -98,7 +98,7 @@ class RBF(SM):
 
         solver = get_solver('dense-lu')
         with self.printer._timed_context('Initializing linear solver'):
-            solver._initialize(mtx, self.printer)
+            solver._setup(mtx, self.printer)
 
         for ind_y in range(rhs.shape[1]):
             with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
@@ -110,7 +110,7 @@ class RBF(SM):
         """
         Train the model
         """
-        self._initialize()
+        self._setup()
 
         tmp = self.rbfc
         self.rbfc = None

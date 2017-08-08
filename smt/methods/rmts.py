@@ -19,8 +19,8 @@ class RMTS(SM):
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.
     """
 
-    def initialize(self):
-        super(RMTS, self).initialize()
+    def _initialize(self):
+        super(RMTS, self)._initialize()
         declare = self.options.declare
         supports = self.supports
 
@@ -61,7 +61,7 @@ class RMTS(SM):
         supports['derivatives'] = True
         supports['output_derivatives'] = True
 
-    def _initialize_hessian(self):
+    def _setup_hessian(self):
         diag = self.options['reg_dv'] * np.ones(self.num['dof'])
         arange = np.arange(self.num['dof'])
         full_hess = scipy.sparse.csc_matrix((diag, (arange, arange)))
@@ -269,7 +269,7 @@ class RMTS(SM):
                 self.full_jac_dict = full_jac_dict
 
             with self.printer._timed_context('Initializing linear solver'):
-                solver._initialize(mtx, self.printer)
+                solver._setup(mtx, self.printer)
 
             for ind_y in range(rhs.shape[1]):
                 with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
@@ -298,7 +298,7 @@ class RMTS(SM):
                                                             full_jac_dict, yt_dict)
 
                         with self.printer._timed_context('Initializing linear solver'):
-                            solver._initialize(mtx, self.printer)
+                            solver._setup(mtx, self.printer)
 
                         with self.printer._timed_context('Solving linear system'):
                             solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
@@ -335,7 +335,7 @@ class RMTS(SM):
                 self.full_dof2coeff = self._compute_dof2coeff()
 
             with self.printer._timed_context('Initializing Hessian', 'init_hess'):
-                full_hess = self._initialize_hessian()
+                full_hess = self._setup_hessian()
 
             if self.options['min_energy']:
                 with self.printer._timed_context('Computing energy terms', 'energy'):
@@ -356,7 +356,7 @@ class RMTS(SM):
         """
         Train the model
         """
-        self._initialize()
+        self._setup()
 
         tmp = self.rmtsc
         self.rmtsc = None
@@ -473,7 +473,7 @@ class RMTS(SM):
         drhs_dstates = self.mtx
 
         solver = get_solver(self.options['solver'])
-        solver._initialize(drhs_dstates, self.printer)
+        solver._setup(drhs_dstates, self.printer)
         dy_drhs = np.zeros(dy_dstates.shape)
 
         rhs = np.zeros(dy_drhs.shape[1])

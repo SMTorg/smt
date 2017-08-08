@@ -28,16 +28,26 @@ class Sampling(object):
         >>> sampling = Random(xlimits=np.arange(2).reshape((1, 2)))
         """
         self.options = OptionsDictionary()
-        self.options.declare('xlimits', types=np.ndarray)
-        self.initialize()
+        self.options.declare('xlimits', types=np.ndarray,
+            desc='The interval of the domain in each dimension with shape nx x 2 (required)')
+        self._initialize()
         self.options.update(kwargs)
 
-    def initialize(self):
+    def _initialize(self):
+        """
+        Implemented by sampling methods to declare options (optional).
+
+        Examples
+        --------
+        self.options.declare('option_name', default_value, types=(bool, int), desc='description')
+        """
         pass
 
     def __call__(self, n):
         """
         Compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
         Arguments
         ---------
@@ -57,3 +67,21 @@ class Sampling(object):
             x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
 
         return x
+
+    def _compute(self, n):
+        """
+        Implemented by sampling methods to compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
+
+        Arguments
+        ---------
+        n : int
+            Number of points requested.
+
+        Returns
+        -------
+        ndarray[n, nx]
+            The sampling locations in the input space.
+        """
+        raise Exception('This sampling method has not been implemented correctly')

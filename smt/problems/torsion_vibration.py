@@ -15,12 +15,12 @@ from smt.problems.problem import Problem
 
 class TorsionVibration(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'TorsionVibration', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 15
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] == 15, 'ndim must be 15'
 
         self.xlimits[:, 0] = \

@@ -16,12 +16,12 @@ from smt.problems.problem import Problem
 
 class WingWeight(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'WingWeight', types=str)
         self.options.declare('use_FD', False, types=bool)
         self.options['ndim'] = 10
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] == 10, 'ndim must be 10'
 
         self.xlimits[:, 0] = [150,220,6,-10,16,0.5,0.08,2.5,1700,0.025]

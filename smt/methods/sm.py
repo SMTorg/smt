@@ -23,9 +23,11 @@ class SM(object):
 
     Attributes
     ----------
-    options : dict
+    options : OptionsDictionary
         Dictionary of options. Options values can be set on this attribute directly
         or they can be passed in as keyword arguments during instantiation.
+    supports : dict
+        Dictionary containing information about what this surrogate model supports.
 
     Examples
     --------
@@ -59,14 +61,6 @@ class SM(object):
         supports['adjoint_api'] = False
         supports['variances'] = False
 
-        self.initialize()
-        self.options.update(kwargs)
-
-        self.training_points = defaultdict(dict)
-
-        self.printer = Printer()
-
-    def initialize(self):
         declare = self.options.declare
 
         declare('print_global', True, types=bool,
@@ -79,6 +73,13 @@ class SM(object):
                 desc='Whether to print problem information')
         declare('print_solver', True, types=bool,
                 desc='Whether to print solver information')
+
+        self._initialize()
+        self.options.update(kwargs)
+
+        self.training_points = defaultdict(dict)
+
+        self.printer = Printer()
 
     def set_training_values(self, xt, yt, name=None):
         """
@@ -154,6 +155,8 @@ class SM(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
+        check_support(self, 'training_derivatives')
+
         xt = check_2d_array(xt, 'xt')
         dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
 
@@ -179,6 +182,8 @@ class SM(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
+        check_support(self, 'training_derivatives')
+
         dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
 
         if kx not in self.training_points[name]:
@@ -302,28 +307,7 @@ class SM(object):
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
 
-        return y.reshape(n, self.ny)
-
-    def predict_variances(self, x):
-        """
-        Predict the variances at a set of points.
-
-        Parameters
-        ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
-            Input values for the prediction points.
-
-        Returns
-        -------
-        s2 : np.ndarray[n, ny]
-            Variances.
-        """
-        check_support(self, 'variances')
-        check_nx(self.nx, x)
-
-        n = x.shape[0]
-        s2 = self._predict_variances(x)
-        return s2.reshape(n, self.ny)
+        return y.reshape((n, self.ny))
 
     def predict_output_derivatives(self, x):
         """
@@ -345,3 +329,129 @@ class SM(object):
 
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
+
+    def predict_variances(self, x):
+        """
+        Predict the variances at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        s2 : np.ndarray[n, ny]
+            Variances.
+        """
+        check_support(self, 'variances')
+        check_nx(self.nx, x)
+
+        n = x.shape[0]
+        s2 = self._predict_variances(x)
+        return s2.reshape((n, self.ny))
+
+    def _initialize(self):
+        """
+        Implemented by surrogate models to declare options and declare what they support (optional).
+
+        Examples
+        --------
+        self.options.declare('option_name', default_value, types=(bool, int), desc='description')
+        self.supports['derivatives'] = True
+        """
+        pass
+
+    def _train(self):
+        """
+        Implemented by surrogate models to perform training (optional, but typically implemented).
+        """
+        pass
+
+    def _predict_values(self, x):
+        """
+        Implemented by surrogate models to predict the output values.
+
+        Parameters
+        ----------
+        x : np.ndarray[n, nx]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        y : np.ndarray[n, ny]
+            Output values at the prediction points.
+        """
+        raise Exception('This surrogate model is incorrectly implemented')
+
+    def _predict_derivatives(self, x, kx):
+        """
+        Implemented by surrogate models to predict the dy_dx derivatives (optional).
+
+        If this method is implemented, the surrogate model should have
+
+        ::
+            self.supports['derivatives'] = True
+
+        in the _initialize() implementation.
+
+        Parameters
+        ----------
+        x : np.ndarray[n, nx]
+            Input values for the prediction points.
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        dy_dx : np.ndarray[n, ny]
+            Derivatives.
+        """
+        check_support(self, 'derivatives', fail=True)
+
+    def _predict_output_derivatives(self, x):
+        """
+        Implemented by surrogate models to predict the dy_dyt derivatives (optional).
+
+        If this method is implemented, the surrogate model should have
+
+        ::
+            self.supports['output_derivatives'] = True
+
+        in the _initialize() implementation.
+
+        Parameters
+        ----------
+        x : np.ndarray[n, nx]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        dy_dyt : dict of np.ndarray[n, nt]
+            Dictionary of output derivatives.
+            Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
+        """
+        check_support(self, 'output_derivatives', fail=True)
+
+    def _predict_variances(self, x):
+        """
+        Implemented by surrogate models to predict the variances at a set of points (optional).
+
+        If this method is implemented, the surrogate model should have
+
+        ::
+            self.supports['variances'] = True
+
+        in the _initialize() implementation.
+
+        Parameters
+        ----------
+        x : np.ndarray[n, nx]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        s2 : np.ndarray[n, ny]
+            Variances.
+        """
+        check_support(self, 'variances', fail=True)

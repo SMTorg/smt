@@ -37,8 +37,8 @@ class RMTB(RMTS):
     training points
     """
 
-    def initialize(self):
-        super(RMTB, self).initialize()
+    def _initialize(self):
+        super(RMTB, self)._initialize()
         declare = self.options.declare
 
         declare('order', 3, types=(Integral, tuple, list, np.ndarray),
@@ -48,7 +48,7 @@ class RMTB(RMTS):
 
         self.name = 'RMTB'
 
-    def _initialize(self):
+    def _setup(self):
         options = self.options
         nx = self.training_points[None][0][0].shape[1]
 

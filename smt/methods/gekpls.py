@@ -222,8 +222,8 @@ class GEKPLS(SM):
         'abs_exp': abs_exp,
         'squar_exp': squar_exp}
 
-    def initialize(self):
-        super(GEKPLS, self).initialize()
+    def _initialize(self):
+        super(GEKPLS, self)._initialize()
         declare = self.options.declare
 
         declare('xlimits', types=np.ndarray,
@@ -238,6 +238,8 @@ class GEKPLS(SM):
                 desc='type of corr. func.')
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
+
+        self.supports['training_derivatives'] = True
 
         self.name = 'GEKPLS'
         self.best_iteration_fail = None

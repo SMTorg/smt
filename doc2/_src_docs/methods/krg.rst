@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0094681
+     Training - done. Time (sec):  0.0069413
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003781
+     Predicting - done. Time (sec):  0.0002210
      
-     Prediction time/pt. (sec) :  0.0000038
+     Prediction time/pt. (sec) :  0.0000022
      
   
 .. figure:: krg.png

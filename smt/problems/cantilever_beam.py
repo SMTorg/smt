@@ -13,14 +13,14 @@ from smt.problems.problem import Problem
 
 class CantileverBeam(Problem):
 
-    def initialize(self):
+    def _initialize(self):
         self.options.declare('name', 'CantileverBeam', types=str)
         self.options.declare('ndim', 3, types=int)
         self.options.declare('P', 50e3, types=(int, float), desc='Tip load (50 kN)')
         self.options.declare('E', 200e9, types=(int, float), desc='Modulus of elast. (200 GPa)')
         self.options.declare('s_a', 350e6, types=(int, float), desc='Stress allowable (350 MPa)')
 
-    def _initialize(self):
+    def _setup(self):
         assert self.options['ndim'] % 3 == 0, 'ndim must be divisible by 3'
 
         # Width b
