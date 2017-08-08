@@ -3,13 +3,13 @@ Second-order polynomial approximation
 
 The square polynomial model can be expressed by
 
-.. math ::
+::
   \begin{equation}
   {\bf y} = {\bf X\beta} + {\bf \epsilon},
   \end{equation}
 where :math:`{\bf \epsilon}` is a vector of random errors and
 
-.. math ::
+::
   \begin{equation}
   {\bf X} =
   \begin{bmatrix}
@@ -23,7 +23,7 @@ where :math:`{\bf \epsilon}` is a vector of random errors and
 
 The vector of estimated polynomial regression coefficients using ordinary least square estimation is
 
-.. math ::
+::
   \begin{equation}
   {\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
   \end{equation}
