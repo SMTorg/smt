@@ -4,6 +4,11 @@ from subprocess import call
 from Cython.Build import cythonize
 import numpy as np
 
+import pip
+
+
+pip.main(['install', 'Cython'])
+
 
 if os.name == 'nt':
     # If OS is Windows, don't compile Fortran code
