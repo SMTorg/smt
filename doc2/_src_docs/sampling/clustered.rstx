@@ -1,0 +1,12 @@
+Clustered sampling
+==================
+
+Usage
+-----
+
+.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_clustered
+
+Options
+-------
+
+.. embed-options-table-sampling :: Clustered

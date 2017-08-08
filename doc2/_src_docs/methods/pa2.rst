@@ -1,6 +1,36 @@
 Second-order polynomial approximation
 =====================================
 
+The square polynomial model can be expressed by
+
+.. math ::
+  \begin{equation}
+  {\bf y} = {\bf X\beta} + {\bf \epsilon},
+  \end{equation}
+where :math:`{\bf \epsilon}` is a vector of random errors and
+
+.. math ::
+  \begin{equation}
+  {\bf X} =
+  \begin{bmatrix}
+      1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
+      d}^{(1)}}^2 \\
+      \vdots&\vdots & \dots&\vdots & \vdots & \dots  & \vdots&\vdots & \vdots\\
+      1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
+      d}^{(n)}}^2 \\
+  \end{bmatrix}.
+  \end{equation}
+
+The vector of estimated polynomial regression coefficients using ordinary least square estimation is
+
+.. math ::
+  \begin{equation}
+  {\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
+  \end{equation}
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -42,7 +72,7 @@ Second-order polynomial approximation
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002863
+     Training - done. Time (sec):  0.0003090
   ___________________________________________________________________________
      
    Evaluation
@@ -50,14 +80,17 @@ Second-order polynomial approximation
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000429
+     Predicting - done. Time (sec):  0.0000460
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000005
      
   
 .. figure:: pa2.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

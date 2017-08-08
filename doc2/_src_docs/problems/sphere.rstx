@@ -1,6 +1,17 @@
 Sphere function
 ===============
 
+.. math::
+  \begin{equation}
+  \sum\limits_{i=1}^dx_i^2,\quad-10\leq x_i\leq 10,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+Usage
+-----
+
 .. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_sphere
+
+Options
+-------
 
 .. embed-options-table-problem :: Sphere

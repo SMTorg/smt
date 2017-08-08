@@ -16,7 +16,7 @@ class Clustered(Sampling):
 
     def initialize(self):
         self.options.declare('kernel', types=Sampling)
-        self.options.declare('spacing', types=[''])
+        self.options.declare('spacing')
 
     def __call__(self, n):
         """

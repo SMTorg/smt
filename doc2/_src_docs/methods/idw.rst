@@ -1,6 +1,26 @@
 Inverse-distance weighting
 ==========================
 
+The inverse distance weighting model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
+
+The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
+
+.. math::
+  \begin{equation}
+  \hat{y}=
+  \left\{
+  \begin{array}{ll}
+  \frac{\sum\limits_{i=1}^n\beta_iy_i}{\sum\limits_{i=1}^n\beta_i},&\text{if}\quad d({\bf x},{\bf x}^{(i)})\neq 0 \quad \forall i\\
+  y_i&\text{if}\quad d({\bf x},{\bf x}^{(i)})= 0
+  \end{array}
+  \right.
+  \end{equation}
+  
+where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -42,7 +62,7 @@ Inverse-distance weighting
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001738
+     Training - done. Time (sec):  0.0002160
   ___________________________________________________________________________
      
    Evaluation
@@ -50,14 +70,17 @@ Inverse-distance weighting
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000432
+     Predicting - done. Time (sec):  0.0000570
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: idw.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

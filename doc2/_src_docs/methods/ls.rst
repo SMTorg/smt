@@ -1,6 +1,23 @@
 Least-squares approximation
 ===========================
 
+The following description is taken from scikit-learn version 0.18.2 [1]_.
+
+The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_d\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
+Mathematically it solves a problem of the form:
+
+.. math ::
+  \begin{equation}
+  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
+  \end{equation}
+  
+where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
+
+.. [1] http://scikit-learn.org/stable/modules/linear_model.html
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -42,7 +59,7 @@ Least-squares approximation
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0004981
+     Training - done. Time (sec):  0.0009673
   ___________________________________________________________________________
      
    Evaluation
@@ -50,14 +67,17 @@ Least-squares approximation
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000420
+     Predicting - done. Time (sec):  0.0000768
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000008
      
   
 .. figure:: ls.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

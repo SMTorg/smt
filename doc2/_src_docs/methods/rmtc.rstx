@@ -1,6 +1,12 @@
 Regularized minimal-energy tensor-product cubic splines
 =======================================================
 
+Usage
+-----
+
 .. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtc
+
+Options
+-------
 
 .. embed-options-table-method :: RMTC

@@ -1,6 +1,12 @@
 Regularized minimal-energy tensor-product B-splines
 ===================================================
 
+Usage
+-----
+
 .. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtb
+
+Options
+-------
 
 .. embed-options-table-method :: RMTB

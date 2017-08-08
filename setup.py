@@ -2,6 +2,10 @@ from numpy.distutils.core import setup, Extension
 import os
 from subprocess import call
 import numpy as np
+
+import pip
+pip.main(['install', 'Cython'])
+
 from Cython.Build import cythonize
 
 

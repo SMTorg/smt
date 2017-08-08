@@ -1,6 +1,9 @@
 Radial basis functions
 ======================
 
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -44,13 +47,13 @@ Radial basis functions
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000598
-        Initializing linear solver - done. Time (sec):  0.0000808
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000639
+        Initializing linear solver - done. Time (sec):  0.0000870
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
            Back solving (5 x 5 mtx) - done. Time (sec):  0.0000479
-        Solving linear system (col. 0) - done. Time (sec):  0.0000648
-     Training - done. Time (sec):  0.0003870
+        Solving linear system (col. 0) - done. Time (sec):  0.0000660
+     Training - done. Time (sec):  0.0004079
   ___________________________________________________________________________
      
    Evaluation
@@ -66,6 +69,9 @@ Radial basis functions
 .. figure:: rbf.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

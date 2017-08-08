@@ -1,0 +1,14 @@
+Random sampling
+===============
+
+This class creates random samples from a uniform distribution over the design space.
+
+Usage
+-----
+
+.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_random
+
+Options
+-------
+
+.. embed-options-table-sampling :: Random

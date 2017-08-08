@@ -1,6 +1,12 @@
 Radial basis functions
 ======================
 
+Usage
+-----
+
 .. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rbf
+
+Options
+-------
 
 .. embed-options-table-method :: RBF

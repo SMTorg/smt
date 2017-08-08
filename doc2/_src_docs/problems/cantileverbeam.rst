@@ -1,6 +1,9 @@
 Cantilever beam function
 ========================
 
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -38,6 +41,9 @@ Cantilever beam function
 .. figure:: cantileverbeam.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

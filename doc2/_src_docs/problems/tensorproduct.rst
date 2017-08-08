@@ -1,6 +1,37 @@
 Tensor-product function
 =======================
 
+.. rubric :: cos
+
+.. math::
+  \begin{equation}
+  \prod\limits_{i=1}^{d}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+.. rubric :: exp
+
+.. math::
+  \begin{equation}
+  \prod\limits_{i=1}^{d}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+.. rubric :: tanh
+
+.. math::
+  \begin{equation}
+  \prod\limits_{i=1}^{d}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+.. rubric :: gaussian
+
+.. math::
+  \begin{equation}
+  \prod\limits_{i=1}^{d}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -37,6 +68,9 @@ Tensor-product function
 .. figure:: tensorproduct.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

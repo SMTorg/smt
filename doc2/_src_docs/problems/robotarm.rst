@@ -1,6 +1,15 @@
 Robot arm function
 ==================
 
+.. math::
+  \begin{equation*}
+  \sqrt{\left(\sum\limits_{i=1}^4L_i\cos\left(\sum\limits_{j=1}^i\theta_j\right)\right)^2+\left(\sum\limits_{i=1}^4L_i\sin\left(\sum\limits_{j=1}^i\theta_j\right)
+  \right)^2},\quad L_i \in [0,1] \quad \text{for}\quad i=1,\dotsc,4 \quad \text{and}\quad \theta_j \in [0,2\pi]\quad\text{for}\quad j=1,\dotsc,4.
+  \end{equation*}
+  
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -37,6 +46,9 @@ Robot arm function
 .. figure:: robotarm.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

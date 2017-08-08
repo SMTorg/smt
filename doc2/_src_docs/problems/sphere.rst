@@ -1,6 +1,14 @@
 Sphere function
 ===============
 
+.. math::
+  \begin{equation}
+  \sum\limits_{i=1}^dx_i^2,\quad-10\leq x_i\leq 10,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -37,6 +45,9 @@ Sphere function
 .. figure:: sphere.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

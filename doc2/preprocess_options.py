@@ -3,13 +3,15 @@ from six import iteritems
 
 def process_options(root, file_name, iline, line):
     file_path = root + '/' + file_name
-    
+
     embed_num_indent = line.find('.. embed-options-table')
 
     if 'embed-options-table-method' in line:
         type_ = 'methods'
     elif 'embed-options-table-problem' in line:
         type_ = 'problems'
+    elif 'embed-options-table-sampling' in line:
+        type_ = 'sampling'
     else:
         raise Exception('embed-options-table is an invalid name')
 

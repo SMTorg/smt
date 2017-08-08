@@ -1,6 +1,14 @@
 Rosenbrock function
 ===================
 
+.. math::
+  \begin{equation}
+  \sum\limits_{i=1}^{d-1}\left[(x_{i+1}-x_i^2)^2+(x_i-1)^2\right],\quad-2\leq x_i\leq 2,\quad\text{ for }i=1,\ldots,d.
+  \end{equation}
+  
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -37,6 +45,9 @@ Rosenbrock function
 .. figure:: rosenbrock.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1

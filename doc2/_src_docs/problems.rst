@@ -19,7 +19,7 @@ These are listed below.
    problems/wingweight
 
 Usage
-~~~~~
+-----
 
 .. code-block:: python
 
@@ -59,7 +59,7 @@ Usage
   :align: center
 
 Problem class API
-~~~~~~~~~~~~~~~~~
+-----------------
 
 .. autoclass:: smt.problems.problem.Problem
 

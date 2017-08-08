@@ -1,0 +1,29 @@
+Sampling methods
+================
+
+SMT contains a library of sampling methods used to generate sets of points in the input space,
+either for training or for prediction.
+These are listed below.
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   sampling/random
+   sampling/lhs
+   sampling/full_factorial
+   sampling/clustered
+
+Usage
+-----
+
+.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_random
+
+Problem class API
+-----------------
+
+.. autoclass:: smt.sampling.sampling.Sampling
+
+  .. automethod:: smt.sampling.sampling.Sampling.__init__
+
+  .. automethod:: smt.sampling.sampling.Sampling.__call__

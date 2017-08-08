@@ -1,6 +1,17 @@
 Welded beam function
 ====================
 
+.. math::
+  \begin{equation*}
+  \sqrt{\frac{\tau'^2+\tau''^2+l\tau'\tau''}{\sqrt{0.25\left(l^2+(h+t)^2\right)}}},
+  \end{equation*}
+
+where
+:math:`\tau'=\frac{6000}{\sqrt{2}hl}, \quad\tau''=\frac{6000(14+0.5l)\sqrt{0.25\left(l^2+(h+t)^2\right)}}{2\left[0.707hl\left(\frac{l^2}{12}+0.25(h+t)^2\right)\right]},\quad \text{for}\quad h\in[0.125,1],\quad l,t\in[5,10]`
+
+Usage
+-----
+
 .. code-block:: python
 
   import numpy as np
@@ -38,6 +49,9 @@ Welded beam function
 .. figure:: weldedbeam.png
   :scale: 80 %
   :align: center
+
+Options
+-------
 
 .. list-table:: List of options
   :header-rows: 1
