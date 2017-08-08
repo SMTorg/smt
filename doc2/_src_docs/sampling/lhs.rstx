@@ -12,11 +12,10 @@ The LHS method uses the pyDOE package (Design of Experiments for Python) [1]_. F
 - Minimize the maximum correlation coefficient.
 - Optimize the design using the Enhanced Stochastic Evolutionary algorithm (ESE).
 
-The four first criteria are the same than in pyDOE (for more details, see [2]). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [3]).
+The four first criteria are the same than in pyDOE (for more details, see [1]_). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [2]_).
 
 .. [1] https://pythonhosted.org/pyDOE/index.html
-.. [2] https://pythonhosted.org/pyDOE/index.html
-.. [3] R. Jin, W. Chen and A. Sudjianto (2005), "An efficient algorithm for constructing optimal design of computer experiments." Journal of Statistical Planning and Inference, 134:268-287.
+.. [2] R. Jin, W. Chen and A. Sudjianto (2005), "An efficient algorithm for constructing optimal design of computer experiments." Journal of Statistical Planning and Inference, 134:268-287.
 
 Usage
 -----
