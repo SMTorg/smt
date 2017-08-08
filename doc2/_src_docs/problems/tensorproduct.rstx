@@ -3,31 +3,23 @@ Tensor-product function
 
 .. rubric :: cos
 
-::
-  \begin{equation}
+.. math ::
   \prod\limits_{i=1}^{d}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-  \end{equation}
 
 .. rubric :: exp
 
-::
-  \begin{equation}
+.. math ::
   \prod\limits_{i=1}^{d}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-  \end{equation}
 
 .. rubric :: tanh
 
-::
-  \begin{equation}
+.. math ::
   \prod\limits_{i=1}^{d}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-  \end{equation}
 
 .. rubric :: gaussian
 
-::
-  \begin{equation}
+.. math ::
   \prod\limits_{i=1}^{d}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
-  \end{equation}
 
 Usage
 -----
