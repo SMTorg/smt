@@ -35,35 +35,9 @@ Cantilever beam function
   (100, 1)
   (100, 3)
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.problems import CantileverBeam
-  
-  ndim = 3
-  problem = CantileverBeam(ndim=ndim)
-  
-  num = 100
-  x = np.ones((num, ndim))
-  x[:, 0] = np.linspace(0.01, 0.05, num)
-  x[:, 1] = 0.5
-  x[:, 2] = 0.5
-  y = problem(x)
-  
-  yd = np.empty((num, ndim))
-  for i in range(ndim):
-      yd[:, i] = problem(x, kx=i).flatten()
-  
-  print(y.shape)
-  print(yd.shape)
-  
-  plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.show()
-  
+.. figure:: cantileverbeam.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

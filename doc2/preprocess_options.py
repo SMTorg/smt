@@ -1,7 +1,9 @@
 from six import iteritems
 
 
-def process_options(file_path, iline, line):
+def process_options(root, file_name, iline, line):
+    file_path = root + '/' + file_name
+    
     embed_num_indent = line.find('.. embed-options-table')
 
     if 'embed-options-table-method' in line:

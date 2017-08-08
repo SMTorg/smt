@@ -35,35 +35,9 @@ Water flow function
   (100, 1)
   (100, 8)
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.problems import WaterFlow
-  
-  ndim = 8
-  problem = WaterFlow(ndim=ndim)
-  
-  num = 100
-  x = np.ones((num, ndim))
-  for i in range(ndim):
-      x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-  x[:, 0] = np.linspace(0.05, 0.15, num)
-  y = problem(x)
-  
-  yd = np.empty((num, ndim))
-  for i in range(ndim):
-      yd[:, i] = problem(x, kx=i).flatten()
-  
-  print(y.shape)
-  print(yd.shape)
-  
-  plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.show()
-  
+.. figure:: waterflow.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

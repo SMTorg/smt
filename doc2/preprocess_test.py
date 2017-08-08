@@ -4,6 +4,10 @@ import importlib
 import contextlib
 from io import StringIO
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 @contextlib.contextmanager
 def stdoutIO(stdout=None):
@@ -15,7 +19,9 @@ def stdoutIO(stdout=None):
     sys.stdout = old
 
 
-def process_test(file_path, iline, line):
+def process_test(root, file_name, iline, line):
+    file_path = root + '/' + file_name
+
     embed_num_indent = line.find('.. embed-test')
     if line[:embed_num_indent] != ' ' * embed_num_indent:
         return line
@@ -73,11 +79,10 @@ def process_test(file_path, iline, line):
     ])
 
     if include_print_output:
+        joined_method_lines = '\n'.join(method_lines)
         with stdoutIO() as s:
-            joined_method_lines = '\n'.join(method_lines)
             exec(joined_method_lines)
-            # for method_line in method_lines:
-            #     exec(method_line)
+
         output_lines = s.getvalue().split('\n')
 
         if len(output_lines) > 1:
@@ -89,11 +94,17 @@ def process_test(file_path, iline, line):
             ])
 
     if include_plot_output:
-        replacement_lines.append(' ' * embed_num_indent + '.. plot::\n')
-        replacement_lines.append('\n')
-        replacement_lines.extend([
-            ' ' * embed_num_indent + ' ' * 2 + method_line + '\n'
-            for method_line in method_lines
-        ])
+        joined_method_lines = '\n'.join(method_lines)
+        plt.clf()
+        with stdoutIO() as s:
+            exec(joined_method_lines)
+
+        abs_plot_name = file_path[:-5] + '.png'
+        plt.savefig(abs_plot_name)
+
+        rel_plot_name = file_name[:-5] + '.png'
+        replacement_lines.append(' ' * embed_num_indent + '.. figure:: {}\n'.format(rel_plot_name))
+        replacement_lines.append(' ' * embed_num_indent + '  :scale: 80 %\n')
+        replacement_lines.append(' ' * embed_num_indent + '  :align: center\n')
 
     return replacement_lines

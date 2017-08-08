@@ -34,34 +34,9 @@ Tensor-product function
   (100, 1)
   (100, 2)
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.problems import TensorProduct
-  
-  ndim = 2
-  problem = TensorProduct(ndim=ndim, func='cos')
-  
-  num = 100
-  x = np.ones((num, ndim))
-  x[:, 0] = np.linspace(-1, 1., num)
-  x[:, 1] = 0.
-  y = problem(x)
-  
-  yd = np.empty((num, ndim))
-  for i in range(ndim):
-      yd[:, i] = problem(x, kx=i).flatten()
-  
-  print(y.shape)
-  print(yd.shape)
-  
-  plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.show()
-  
+.. figure:: tensorproduct.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

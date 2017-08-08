@@ -42,7 +42,7 @@ Kriging
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0113080
+     Training - done. Time (sec):  0.0119994
   ___________________________________________________________________________
      
    Evaluation
@@ -50,36 +50,14 @@ Kriging
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003326
+     Predicting - done. Time (sec):  0.0002449
      
-     Prediction time/pt. (sec) :  0.0000033
+     Prediction time/pt. (sec) :  0.0000024
      
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.methods import KRG
-  
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
-  
-  sm = KRG(theta0=[1e-2])
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0., 4., num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, 'o')
-  plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
-  plt.show()
-  
+.. figure:: krg.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

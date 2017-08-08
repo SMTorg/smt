@@ -44,13 +44,13 @@ Radial basis functions
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001152
-        Initializing linear solver - done. Time (sec):  0.0001550
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000641
+        Initializing linear solver - done. Time (sec):  0.0000861
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000689
-        Solving linear system (col. 0) - done. Time (sec):  0.0000908
-     Training - done. Time (sec):  0.0006909
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000482
+        Solving linear system (col. 0) - done. Time (sec):  0.0000660
+     Training - done. Time (sec):  0.0004060
   ___________________________________________________________________________
      
    Evaluation
@@ -58,36 +58,14 @@ Radial basis functions
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000300
+     Predicting - done. Time (sec):  0.0000250
      
      Prediction time/pt. (sec) :  0.0000003
      
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.methods import RBF
-  
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
-  
-  sm = RBF(d0=5)
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0., 4., num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, 'o')
-  plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
-  plt.show()
-  
+.. figure:: rbf.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

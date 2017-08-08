@@ -35,35 +35,9 @@ Torsion vibration function
   (100, 1)
   (100, 15)
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.problems import TorsionVibration
-  
-  ndim = 15
-  problem = TorsionVibration(ndim=ndim)
-  
-  num = 100
-  x = np.ones((num, ndim))
-  for i in range(ndim):
-      x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-  x[:, 0] = np.linspace(1.8, 2.2, num)
-  y = problem(x)
-  
-  yd = np.empty((num, ndim))
-  for i in range(ndim):
-      yd[:, i] = problem(x, kx=i).flatten()
-  
-  print(y.shape)
-  print(yd.shape)
-  
-  plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.show()
-  
+.. figure:: torsionvibration.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

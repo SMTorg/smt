@@ -60,13 +60,13 @@ Examples
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000861
-        Initializing linear solver - done. Time (sec):  0.0001180
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000997
+        Initializing linear solver - done. Time (sec):  0.0001440
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000989
-        Solving linear system (col. 0) - done. Time (sec):  0.0001202
-     Training - done. Time (sec):  0.0005720
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000820
+        Solving linear system (col. 0) - done. Time (sec):  0.0001130
+     Training - done. Time (sec):  0.0006742
   ___________________________________________________________________________
      
    Evaluation
@@ -74,36 +74,14 @@ Examples
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000381
+     Predicting - done. Time (sec):  0.0000441
      
      Prediction time/pt. (sec) :  0.0000004
      
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.methods import RBF
-  
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
-  
-  sm = RBF(d0=5)
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0., 4., num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, 'o')
-  plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
-  plt.show()
-  
+.. figure:: methods.png
+  :scale: 80 %
+  :align: center
 
 API
 ---

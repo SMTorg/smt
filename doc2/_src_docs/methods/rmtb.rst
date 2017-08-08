@@ -46,75 +46,75 @@ Regularized minimal-energy tensor-product B-splines
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000052
+           Computing dof2coeff - done. Time (sec):  0.0000029
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0014679
+           Initializing Hessian - done. Time (sec):  0.0003457
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0037699
+           Computing energy terms - done. Time (sec):  0.0010221
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0008173
-        Pre-computing matrices - done. Time (sec):  0.0062902
+           Computing approximation terms - done. Time (sec):  0.0003989
+        Pre-computing matrices - done. Time (sec):  0.0018289
         Solving for degrees of freedom ...
            Solving initial linear problem (n=20) ...
               Assembling linear system ...
-              Assembling linear system - done. Time (sec):  0.0008843
+              Assembling linear system - done. Time (sec):  0.0004423
               Initializing linear solver ...
-              Initializing linear solver - done. Time (sec):  0.0000520
+              Initializing linear solver - done. Time (sec):  0.0000210
               Solving linear system (col. 0) ...
                  Running cg Krylov solver (20 x 20 mtx) ...
-                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0038650
-              Solving linear system (col. 0) - done. Time (sec):  0.0039179
-           Solving initial linear problem (n=20) - done. Time (sec):  0.0049212
+                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0017402
+              Solving linear system (col. 0) - done. Time (sec):  0.0017622
+           Solving initial linear problem (n=20) - done. Time (sec):  0.0022559
            Solving nonlinear problem (col. 0) ...
               Nonlinear (itn, iy, grad. norm, func.) :   0   0 2.646675829e-15 1.135884197e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0015869
+                 Assembling linear system - done. Time (sec):  0.0009179
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000441
+                 Initializing linear solver - done. Time (sec):  0.0000241
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0063922
+                 Solving linear system - done. Time (sec):  0.0029960
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0012410
+                 Performing line search - done. Time (sec):  0.0020149
               Nonlinear (itn, iy, grad. norm, func.) :   1   0 2.645350434e-15 1.135864523e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0009060
+                 Assembling linear system - done. Time (sec):  0.0016069
+                 Initializing linear solver ...
+                 Initializing linear solver - done. Time (sec):  0.0000618
+                 Solving linear system ...
+                 Solving linear system - done. Time (sec):  0.0036678
+                 Performing line search ...
+                 Performing line search - done. Time (sec):  0.0000472
+              Nonlinear (itn, iy, grad. norm, func.) :   2   0 1.031646202e-13 1.121194897e-15
+                 Assembling linear system ...
+                 Assembling linear system - done. Time (sec):  0.0007949
                  Initializing linear solver ...
                  Initializing linear solver - done. Time (sec):  0.0000279
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0027041
+                 Solving linear system - done. Time (sec):  0.0023489
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000441
-              Nonlinear (itn, iy, grad. norm, func.) :   2   0 1.031646202e-13 1.121194897e-15
-                 Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0010209
-                 Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000288
-                 Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0032630
-                 Performing line search ...
-                 Performing line search - done. Time (sec):  0.0001211
+                 Performing line search - done. Time (sec):  0.0000718
               Nonlinear (itn, iy, grad. norm, func.) :   3   0 6.290036340e-14 1.120519659e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0020881
+                 Assembling linear system - done. Time (sec):  0.0007720
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000749
+                 Initializing linear solver - done. Time (sec):  0.0000241
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0046539
+                 Solving linear system - done. Time (sec):  0.0029969
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000668
+                 Performing line search - done. Time (sec):  0.0000579
               Nonlinear (itn, iy, grad. norm, func.) :   4   0 1.842014446e-14 1.119761776e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0012438
+                 Assembling linear system - done. Time (sec):  0.0014789
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000300
+                 Initializing linear solver - done. Time (sec):  0.0000610
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0028369
+                 Solving linear system - done. Time (sec):  0.0024707
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000701
+                 Performing line search - done. Time (sec):  0.0000479
               Nonlinear (itn, iy, grad. norm, func.) :   5   0 5.266062400e-15 1.119620437e-15
-           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0328469
-        Solving for degrees of freedom - done. Time (sec):  0.0378861
-     Training - done. Time (sec):  0.0478911
+           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0266120
+        Solving for degrees of freedom - done. Time (sec):  0.0289319
+     Training - done. Time (sec):  0.0311060
   ___________________________________________________________________________
      
    Evaluation
@@ -122,38 +122,14 @@ Regularized minimal-energy tensor-product B-splines
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005960
+     Predicting - done. Time (sec):  0.0003700
      
-     Prediction time/pt. (sec) :  0.0000060
+     Prediction time/pt. (sec) :  0.0000037
      
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.methods import RMTB
-  
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
-  
-  xlimits = np.array([[0., 4.]])
-  
-  sm = RMTB(xlimits=xlimits, order=4, num_ctrl_pts=20, reg_dv=1e-15, reg_cons=1e-15)
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0., 4., num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, 'o')
-  plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
-  plt.show()
-  
+.. figure:: rmtb.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1

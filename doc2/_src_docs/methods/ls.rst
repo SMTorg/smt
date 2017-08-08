@@ -42,7 +42,7 @@ Least-squares approximation
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0016482
+     Training - done. Time (sec):  0.0007501
   ___________________________________________________________________________
      
    Evaluation
@@ -50,36 +50,14 @@ Least-squares approximation
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000961
+     Predicting - done. Time (sec):  0.0000620
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000006
      
   
-.. plot::
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.methods import LS
-  
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
-  
-  sm = LS()
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0., 4., num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, 'o')
-  plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
-  plt.show()
-  
+.. figure:: ls.png
+  :scale: 80 %
+  :align: center
 
 .. list-table:: List of options
   :header-rows: 1
