@@ -42,7 +42,7 @@ Second-order polynomial approximation
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002589
+     Training - done. Time (sec):  0.0002863
   ___________________________________________________________________________
      
    Evaluation
@@ -50,9 +50,9 @@ Second-order polynomial approximation
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000279
+     Predicting - done. Time (sec):  0.0000429
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: pa2.png

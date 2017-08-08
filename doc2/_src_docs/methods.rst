@@ -5,6 +5,7 @@ SMT contains the surrogate modeling methods listed below.
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
    methods/rbf
    methods/idw
@@ -14,8 +15,8 @@ SMT contains the surrogate modeling methods listed below.
    methods/pa2
    methods/krg
 
-Examples
---------
+Usage
+-----
 
 .. code-block:: python
 
@@ -60,13 +61,13 @@ Examples
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000997
-        Initializing linear solver - done. Time (sec):  0.0001440
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001140
+        Initializing linear solver - done. Time (sec):  0.0001609
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000820
-        Solving linear system (col. 0) - done. Time (sec):  0.0001130
-     Training - done. Time (sec):  0.0006742
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000930
+        Solving linear system (col. 0) - done. Time (sec):  0.0001271
+     Training - done. Time (sec):  0.0009789
   ___________________________________________________________________________
      
    Evaluation
@@ -74,17 +75,17 @@ Examples
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000441
+     Predicting - done. Time (sec):  0.0000470
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000005
      
   
 .. figure:: methods.png
   :scale: 80 %
   :align: center
 
-API
----
+SM class API
+------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 

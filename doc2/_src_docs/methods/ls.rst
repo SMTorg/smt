@@ -42,7 +42,7 @@ Least-squares approximation
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0007501
+     Training - done. Time (sec):  0.0004981
   ___________________________________________________________________________
      
    Evaluation
@@ -50,9 +50,9 @@ Least-squares approximation
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000620
+     Predicting - done. Time (sec):  0.0000420
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: ls.png

@@ -6,6 +6,7 @@ These are listed below.
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
    problems/sphere
    problems/rosenbrock
@@ -17,8 +18,8 @@ These are listed below.
    problems/weldedbeam
    problems/wingweight
 
-Examples
---------
+Usage
+~~~~~
 
 .. code-block:: python
 
@@ -57,8 +58,8 @@ Examples
   :scale: 80 %
   :align: center
 
-API
----
+Problem class API
+~~~~~~~~~~~~~~~~~
 
 .. autoclass:: smt.problems.problem.Problem
 

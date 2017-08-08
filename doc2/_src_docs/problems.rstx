@@ -6,6 +6,7 @@ These are listed below.
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
    problems/sphere
    problems/rosenbrock
@@ -17,13 +18,13 @@ These are listed below.
    problems/weldedbeam
    problems/wingweight
 
-Examples
---------
+Usage
+-----
 
 .. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_sphere
 
-API
----
+Problem class API
+-----------------
 
 .. autoclass:: smt.problems.problem.Problem
 

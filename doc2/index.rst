@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 SMT: Surrogate Modeling Toolbox
-===============================
+-------------------------------
 
 The surrogate model toolbox (SMT) is an open-source Python package consisting of libraries of surrogate modeling methods (e.g., radial basis functions, kriging), sampling methods, and benchmarking problems.
 SMT is designed to make it easy for developers to implement new surrogate models in a well-tested and well-document platform, and for users to have a library of surrogate modeling methods with which to use and compare methods.
@@ -35,6 +35,7 @@ Documentation contents
 
 .. toctree::
    :maxdepth: 2
+   :titlesonly:
 
    _src_docs/methods
    _src_docs/problems
