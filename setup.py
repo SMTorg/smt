@@ -22,9 +22,10 @@ if os.name == 'nt':
         'smt/utils',
     ],
     install_requires=[
-    'scikit-learn',
-    'pyDOE',
-    'matplotlib'
+        'scikit-learn',
+        'pyDOE',
+        'matplotlib',
+        'numpydoc',
     ],
     zip_safe=False,
     ext_modules=ext,
@@ -73,10 +74,11 @@ else:
         'smt/utils',
     ],
     install_requires=[
-    'scikit-learn',
-    'pyDOE',
-    'pyamg',
-    'matplotlib'
+        'scikit-learn',
+        'pyDOE',
+        'pyamg',
+        'matplotlib',
+        'numpydoc',
     ],
     zip_safe=False,
     ext_modules=ext,
