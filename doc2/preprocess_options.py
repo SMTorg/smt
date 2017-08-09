@@ -70,7 +70,7 @@ def process_options(root, file_name, iline, line):
     replacement_lines.append(' ' * embed_num_indent
         + ' ' * 2 + '   -  Acceptable values\n')
     replacement_lines.append(' ' * embed_num_indent
-        + ' ' * 2 + '   -  Acceptable values\n')
+        + ' ' * 2 + '   -  Acceptable types\n')
     replacement_lines.append(' ' * embed_num_indent
         + ' ' * 2 + '   -  Description\n')
 

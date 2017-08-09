@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002451
+     Training - done. Time (sec):  0.0002599
   ___________________________________________________________________________
      
    Evaluation
@@ -95,7 +95,7 @@ Options
   *  -  Option
      -  Default
      -  Acceptable values
-     -  Acceptable values
+     -  Acceptable types
      -  Description
   *  -  print_global
      -  True
