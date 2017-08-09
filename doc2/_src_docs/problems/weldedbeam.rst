@@ -59,7 +59,7 @@ Options
   *  -  Option
      -  Default
      -  Acceptable values
-     -  Acceptable values
+     -  Acceptable types
      -  Description
   *  -  ndim
      -  1
