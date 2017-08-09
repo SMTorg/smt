@@ -6,6 +6,12 @@ from smt.methods import LS, PA2, KPLS, KPLSK, GEKPLS, KRG, IDW
 from smt.problems import Sphere
 from smt.sampling import LHS
 
+try:
+    import matplotlib.pyplot as plt
+    plot_status = True
+except:
+    plot_status = False
+    
 # Initialization of the problem
 ndim = 10
 ndoe = int(10*ndim)

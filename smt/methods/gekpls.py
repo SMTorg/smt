@@ -18,7 +18,6 @@ import warnings
 
 import numpy as np
 from scipy import linalg, optimize
-from pyDOE import *
 from types import FunctionType
 from smt.utils.caching import cached_operation
 
@@ -26,180 +25,7 @@ from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 from smt.utils.pls import pls as _pls
 from smt.utils.kriging_utils import abs_exp, squar_exp, constant, linear, quadratic, \
-    standardization, l1_cross_distances
-
-
-def componentwise_distance(D,corr,n_comp,dim,coeff_pls):
-
-    """
-    Computes the nonzero componentwise cross-spatial-correlation-distance
-    between the vectors in X.
-
-    Parameters
-    ----------
-
-    D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The L1 cross-distances between the vectors in X.
-
-    corr: str
-            - Name of the correlation function used.
-              squar_exp or abs_exp.
-
-    n_comp: int
-            - Number of principal components used.
-
-    dim: int
-            - Number of dimension.
-
-    coeff_pls: np.ndarray [dim, n_comp]
-            - The PLS-coefficients.
-
-    Returns
-    -------
-
-    D_corr: np.ndarray [n_obs * (n_obs - 1) / 2, n_comp]
-            - The componentwise cross-spatial-correlation-distance between the
-              vectors in X.
-
-    """
-    #Manage the memory.
-    limit=int(1e4)
-
-    D_corr = np.zeros((D.shape[0],n_comp))
-    i,nb_limit  = 0,int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == 'squar_exp':
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(D[i*nb_limit:
-                            (i+1)*nb_limit,:]** 2,coeff_pls**2)
-            else:
-                # abs_exp
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
-                        nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
-            i+=1
-
-
-def compute_pls(X,y,n_comp,pts=None,delta_x=None,xlimits=None,extra_points=0):
-
-    """
-    Computes the PLS-coefficients.
-
-    Parameters
-    ----------
-
-    X: np.ndarray [n_obs,dim]
-            - - The input variables.
-
-    y: np.ndarray [n_obs,1]
-            - The output variable
-
-    n_comp: int
-            - Number of principal components used.
-
-    pts: dict()
-            - The gradient values.
-
-    delta_x: real
-            - The step used in the FOTA.
-
-    xlimits: np.ndarray[dim, 2]
-            - The upper and lower var bounds.
-
-    extra_points: int
-            - The number of extra points per each training point.
-
-    Returns
-    -------
-
-    Coeff_pls: np.ndarray[dim, n_comp]
-            - The PLS-coefficients.
-
-    XX: np.ndarray[extra_points*nt, dim]
-            - Extra points added (when extra_points > 0)
-
-    yy: np.ndarray[extra_points*nt, 1]
-            - Extra points added (when extra_points > 0)
-
-    """
-    nt,dim = X.shape
-    XX = np.empty(shape = (0,dim))
-    yy = np.empty(shape = (0,1))
-    pls = _pls(n_comp)
-
-    coeff_pls = np.zeros((nt,dim,n_comp))
-    for i in range(nt):
-        if dim >= 3:
-            sign = np.roll(bbdesign(dim,center=1),1,axis=0)
-            _X = np.zeros((sign.shape[0],dim))
-            _y = np.zeros((sign.shape[0],1))
-            sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
-            _X = X[i,:]+ sign
-            for j in range(1,dim+1):
-                sign[:,j-1] = sign[:,j-1]*pts[None][j][1][i,0]
-            _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
-        else:
-            _X = np.zeros((9,dim))
-            _y = np.zeros((9,1))
-            # center
-            _X[:,:] = X[i,:].copy()
-            _y[0,0] = y[i,0].copy()
-            # right
-            _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[1,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])
-            # up
-            _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[2,0] = _y[0,0].copy()+ pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left
-            _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[3,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])
-            # down
-            _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[4,0] = _y[0,0].copy()-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # right up
-            _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[5,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left up
-            _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[6,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left down
-            _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[7,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # right down
-            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[3,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-
-        pls.fit(_X.copy(),_y.copy())
-        coeff_pls[i,:,:] = pls.x_rotations_
-        #Add additional points
-        if extra_points != 0:
-            max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
-            for ii in max_coeff:
-                XX = np.vstack((XX,X[i,:]))
-                XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
-                yy = np.vstack((yy,y[i,0]))
-                yy[-1,0] += pts[None][1+ii][1][i,0]*delta_x*(
-                    xlimits[ii,1]-xlimits[ii,0])
-    return np.abs(coeff_pls).mean(axis=0), XX, yy
-
+    standardization, l1_cross_distances, componentwise_distance_PLS, ge_compute_pls
 
 """
 The KPLS class.
@@ -264,7 +90,7 @@ class GEKPLS(SM):
         y = self.training_points[None][0][1]
 
         if 0 in self.training_points[None]:
-            self.coeff_pls, XX, yy = compute_pls(X.copy(),y.copy(),self.options['n_comp'],
+            self.coeff_pls, XX, yy = ge_compute_pls(X.copy(),y.copy(),self.options['n_comp'],
                 self.training_points,self.options['delta_x'],self.options['xlimits'],
                 self.options['extra_points'])
             if self.options['extra_points'] != 0:
@@ -440,8 +266,8 @@ class GEKPLS(SM):
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,
-                    self.options['n_comp'],self.dim,self.coeff_pls)
+        d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.coeff_pls)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
 
@@ -481,8 +307,8 @@ class GEKPLS(SM):
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,
-                    self.options['n_comp'],self.dim,self.coeff_pls)
+        d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.coeff_pls)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
 
@@ -520,8 +346,8 @@ class GEKPLS(SM):
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
-        d = componentwise_distance(dx,self.options['corr'].__name__,
-                    self.options['n_comp'],self.dim,self.coeff_pls)
+        d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
+                    self.options['n_comp'],self.coeff_pls)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
 
@@ -579,8 +405,8 @@ class GEKPLS(SM):
 
         # Compute D which is the componentwise distances between locations
         #  x and x' at which the correlation model should be evaluated.
-        self.D = componentwise_distance(D,self.options['corr'].__name__,
-                    self.options['n_comp'],self.dim,self.coeff_pls)
+        self.D = componentwise_distance_PLS(D,self.options['corr'].__name__,
+                    self.options['n_comp'],self.coeff_pls)
 
         # Initialization
         k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
