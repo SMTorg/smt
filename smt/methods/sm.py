@@ -280,7 +280,7 @@ class SM(object):
         -------
         dy_dx : np.ndarray[n, ny]
             Derivatives.
-        """
+        """        
         check_support(self, 'derivatives')
 
         x = check_2d_array(x, 'x')

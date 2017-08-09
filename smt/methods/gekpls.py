@@ -225,6 +225,7 @@ class GEKPLS(SM):
     def _initialize(self):
         super(GEKPLS, self)._initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('xlimits', types=np.ndarray,
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
@@ -244,6 +245,8 @@ class GEKPLS(SM):
         self.name = 'GEKPLS'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
+        supports['derivatives'] = True
+        supports['variances'] = True
 
     ############################################################################
     # Model functions

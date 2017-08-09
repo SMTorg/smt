@@ -92,6 +92,7 @@ class KRG(SM):
     def _initialize(self):
         super(KRG, self)._initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('poly', 'constant',types=FunctionType,values=('constant', 'linear', 'quadratic'),
@@ -104,6 +105,8 @@ class KRG(SM):
         self.name = 'Kriging'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
+        supports['derivatives'] = True
+        supports['variances'] = True
 
     ############################################################################
     # Model functions

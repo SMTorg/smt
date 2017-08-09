@@ -23,11 +23,13 @@ class PA2(SM):
     def _initialize(self):
         super(PA2, self)._initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'PA2'
+        supports['derivatives'] = True
 
     ############################################################################
     # Model functions

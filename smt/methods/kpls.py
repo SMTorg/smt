@@ -130,6 +130,7 @@ class KPLS(SM):
     def _initialize(self):
         super(KPLS, self)._initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('n_comp', 1, types=int, desc='Number of principal components')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
@@ -143,6 +144,8 @@ class KPLS(SM):
         self.name = 'KPLS'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
+        supports['derivatives'] = True
+        supports['variances'] = True        
 
     ############################################################################
     # Model functions

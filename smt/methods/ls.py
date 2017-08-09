@@ -26,16 +26,17 @@ class LS(SM):
     def _initialize(self):
         super(LS, self)._initialize()
         declare = self.options.declare
+        supports = self.supports
 
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
         self.name = 'LS'
+        supports['derivatives'] = True
 
     ############################################################################
     # Model functions
     ############################################################################
-
 
     def _new_train(self):
         """

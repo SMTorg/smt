@@ -30,6 +30,15 @@ sampling = LHS(xlimits=fun.xlimits)
 xtest = sampling(ntest)
 ytest = fun(xtest)
 
+########### The IDW model
+t = IDW()
+t.set_training_values(xt,yt[:,0])
+t.train()
+y = t.predict_values(xtest)
+
+print('IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+            1)))/linalg.norm(ytest.reshape((ntest,1)))))
+
 ########### The LS model
 
 # Initialization of the model
@@ -70,16 +79,6 @@ for i in range(ndim):
 print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
-
-########### The IDW model
-t = IDW()
-t.set_training_values(xt,yt[:,0])
-t.train()
-y = t.predict_values(xtest)
-
-print('IDW,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
-            1)))/linalg.norm(ytest.reshape((ntest,1)))))
-
 ########### The Kriging model
 # The variable 'theta0' is a list of length ndim.
 t = KRG(theta0=[1e-2]*ndim)
@@ -103,7 +102,7 @@ for i in range(ndim):
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variances(xtest)    
+variability = t.predict_variances(xtest)
 
 ########### The KPLS model
 # The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
@@ -125,13 +124,13 @@ print("***************************************************************")
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    
+
 # Variability of the model for any x
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variances(xtest)    
-    
+variability = t.predict_variances(xtest)
+
 ########### The KPLSK model
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 t = KPLSK(n_comp=2, theta0=[1e-2,1e-2])
@@ -154,15 +153,15 @@ for i in range(ndim):
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variances(xtest)    
-    
+variability = t.predict_variances(xtest)
+
 ########### The GEKPLS model using 1 approximating points
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-4,extra_points= 1)
 t.set_training_values(xt,yt[:,0])
 # Add the gradient information
 for i in range(ndim):
-    t.set_training_values(xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
+    t.set_training_derivatives(xt,yt[:, 1+i].reshape((yt.shape[0],1)),i)
 
 t.train()
 y = t.predict_values(xtest)
@@ -182,7 +181,7 @@ for i in range(ndim):
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variances(xtest)    
+variability = t.predict_variances(xtest)
 
 ########### The GEKPLS model using 2 approximating points
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
@@ -191,7 +190,7 @@ t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-4,
 t.set_training_values(xt,yt[:,0])
 # Add the gradient information
 for i in range(ndim):
-    t.set_training_values(xt,yt[:, 1+i].reshape((yt.shape[0],1)),kx=i)
+    t.set_training_derivatives(xt,yt[:, 1+i].reshape((yt.shape[0],1)),i)
 
 t.train()
 y = t.predict_values(xtest)
@@ -211,4 +210,4 @@ for i in range(ndim):
 print("***************************************************************")
 print("***Variability of the model***")
 print("***************************************************************")
-variability = t.predict_variances(xtest)    
+variability = t.predict_variances(xtest)
