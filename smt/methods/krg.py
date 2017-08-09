@@ -24,55 +24,7 @@ from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 from smt.utils.pairwise import manhattan_distances
 from smt.utils.kriging_utils import abs_exp, squar_exp, constant, linear, quadratic, \
-    standardization, l1_cross_distances
-
-
-def componentwise_distance(D,corr,dim):
-
-    """
-    Computes the nonzero componentwise cross-spatial-correlation-distance
-    between the vectors in X.
-
-    Parameters
-    ----------
-
-    D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The L1 cross-distances between the vectors in X.
-
-    corr: str
-            - Name of the correlation function used.
-              squar_exp or abs_exp.
-
-    dim: int
-            - Number of dimension.
-
-    Returns
-    -------
-
-    D_corr: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The componentwise cross-spatial-correlation-distance between the
-              vectors in X.
-
-    """
-    #Manage the memory.
-    limit=int(1e4)
-
-    D_corr = np.zeros((D.shape[0],dim))
-    i,nb_limit  = 0,int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == 'squar_exp':
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = D[i*nb_limit:(i+1)*
-                                                      nb_limit,:]**2
-            else:
-                # abs_exp
-                D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.abs(D[i*nb_limit:
-                                                    (i+1)*nb_limit,:])
-            i+=1
-
+    standardization, l1_cross_distances, componentwise_distance
 
 """
 The kriging class.
