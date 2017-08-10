@@ -14,21 +14,21 @@ from smt.methods.sm import SM
 from smt.utils.caching import cached_operation
 
 
-class PA2(SM):
+class QP(SM):
 
     """
     Square polynomial approach
     """
 
     def _initialize(self):
-        super(PA2, self)._initialize()
+        super(QP, self)._initialize()
         declare = self.options.declare
         supports = self.supports
 
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
-        self.name = 'PA2'
+        self.name = 'QP'
         supports['derivatives'] = True
 
     ############################################################################

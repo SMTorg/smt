@@ -12,7 +12,7 @@ from smt.sampling import LHS
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.methods import LS, PA2, KPLS, KRG
+from smt.methods import LS, QP, KPLS, KRG
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
@@ -37,20 +37,20 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         sms['LS'] = LS()
-        sms['PA2'] = PA2()
+        sms['QP'] = QP()
         if compiled_available:
             sms['RMTC'] = RMTC(num_elements=20, reg_cons=1e-10)
             sms['RMTB'] = RMTB(num_ctrl_pts=40, reg_cons=1e-10)
 
         t_errors = {}
         t_errors['LS'] = 1.0
-        t_errors['PA2'] = 1.0
+        t_errors['QP'] = 1.0
         t_errors['RMTC'] = 1e-2
         t_errors['RMTB'] = 1e-2
 
         e_errors = {}
         e_errors['LS'] = 1.5
-        e_errors['PA2'] = 1.5
+        e_errors['QP'] = 1.5
         e_errors['RMTC'] = 1e-2
         e_errors['RMTB'] = 1e-2
 
@@ -106,7 +106,7 @@ class Test(SMTestCase):
     def test_sphere_LS(self):
         self.run_test()
 
-    def test_sphere_PA2(self):
+    def test_sphere_QP(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -123,7 +123,7 @@ class Test(SMTestCase):
     def test_exp_LS(self):
         self.run_test()
 
-    def test_exp_PA2(self):
+    def test_exp_QP(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -140,7 +140,7 @@ class Test(SMTestCase):
     def test_tanh_LS(self):
         self.run_test()
 
-    def test_tanh_PA2(self):
+    def test_tanh_QP(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
@@ -157,7 +157,7 @@ class Test(SMTestCase):
     def test_cos_LS(self):
         self.run_test()
 
-    def test_cos_PA2(self):
+    def test_cos_QP(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
