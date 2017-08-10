@@ -1,0 +1,409 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Regularized minimal-energy tensor-product B-splines &#8212; SMT 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Regularized minimal-energy tensor-product cubic splines" href="rmtc.html" />
+    <link rel="prev" title="Inverse-distance weighting" href="idw.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="rmtc.html" title="Regularized minimal-energy tensor-product cubic splines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="idw.html" title="Inverse-distance weighting"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SMT 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../methods.html" accesskey="U">Surrogate modeling methods</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Regularized minimal-energy tensor-product B-splines</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#options">Options</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="idw.html"
+                        title="previous chapter">Inverse-distance weighting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="rmtc.html"
+                        title="next chapter">Regularized minimal-energy tensor-product cubic splines</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/_src_docs/methods/rmtb.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="regularized-minimal-energy-tensor-product-b-splines">
+<h1>Regularized minimal-energy tensor-product B-splines<a class="headerlink" href="#regularized-minimal-energy-tensor-product-b-splines" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">smt.methods</span> <span class="kn">import</span> <span class="n">RMTB</span>
+
+<span class="n">xt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">])</span>
+<span class="n">yt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+<span class="n">xlimits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">]])</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">RMTB</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">xlimits</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_ctrl_pts</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">reg_dv</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">,</span> <span class="n">reg_cons</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">set_training_values</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+<span class="n">num</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">predict_values</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Training data&#39;</span><span class="p">,</span> <span class="s1">&#39;Prediction&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">___________________________________________________________________________</span>
+
+                                   <span class="n">RMTB</span>
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Problem</span> <span class="n">size</span>
+
+      <span class="c1"># training points.        : 5</span>
+
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Training</span>
+
+   <span class="n">Training</span> <span class="o">...</span>
+      <span class="n">Pre</span><span class="o">-</span><span class="n">computing</span> <span class="n">matrices</span> <span class="o">...</span>
+         <span class="n">Computing</span> <span class="n">dof2coeff</span> <span class="o">...</span>
+         <span class="n">Computing</span> <span class="n">dof2coeff</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000021</span>
+         <span class="n">Initializing</span> <span class="n">Hessian</span> <span class="o">...</span>
+         <span class="n">Initializing</span> <span class="n">Hessian</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0003438</span>
+         <span class="n">Computing</span> <span class="n">energy</span> <span class="n">terms</span> <span class="o">...</span>
+         <span class="n">Computing</span> <span class="n">energy</span> <span class="n">terms</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0010412</span>
+         <span class="n">Computing</span> <span class="n">approximation</span> <span class="n">terms</span> <span class="o">...</span>
+         <span class="n">Computing</span> <span class="n">approximation</span> <span class="n">terms</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0004013</span>
+      <span class="n">Pre</span><span class="o">-</span><span class="n">computing</span> <span class="n">matrices</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0018470</span>
+      <span class="n">Solving</span> <span class="k">for</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="o">...</span>
+         <span class="n">Solving</span> <span class="n">initial</span> <span class="n">linear</span> <span class="n">problem</span> <span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="o">...</span>
+            <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+            <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0004411</span>
+            <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+            <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000200</span>
+            <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">...</span>
+               <span class="n">Running</span> <span class="n">cg</span> <span class="n">Krylov</span> <span class="n">solver</span> <span class="p">(</span><span class="mi">20</span> <span class="n">x</span> <span class="mi">20</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">...</span>
+               <span class="n">Running</span> <span class="n">cg</span> <span class="n">Krylov</span> <span class="n">solver</span> <span class="p">(</span><span class="mi">20</span> <span class="n">x</span> <span class="mi">20</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0017631</span>
+            <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0017841</span>
+         <span class="n">Solving</span> <span class="n">initial</span> <span class="n">linear</span> <span class="n">problem</span> <span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0022731</span>
+         <span class="n">Solving</span> <span class="n">nonlinear</span> <span class="n">problem</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">...</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">0</span>   <span class="mi">0</span> <span class="mf">2.646675829e-15</span> <span class="mf">1.135884197e-15</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0007544</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000160</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0026579</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">...</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0004480</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">1</span>   <span class="mi">0</span> <span class="mf">2.645350434e-15</span> <span class="mf">1.135864523e-15</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0013487</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000398</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0034418</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">...</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000780</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">2</span>   <span class="mi">0</span> <span class="mf">1.031646202e-13</span> <span class="mf">1.121194897e-15</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0008161</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000272</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0023470</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">...</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000682</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">3</span>   <span class="mi">0</span> <span class="mf">6.290036340e-14</span> <span class="mf">1.120519659e-15</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0007601</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000179</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0023260</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">...</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000401</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">4</span>   <span class="mi">0</span> <span class="mf">1.842014446e-14</span> <span class="mf">1.119761776e-15</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Assembling</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0007322</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+               <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000160</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">...</span>
+               <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0021482</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">...</span>
+               <span class="n">Performing</span> <span class="n">line</span> <span class="n">search</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000398</span>
+            <span class="n">Nonlinear</span> <span class="p">(</span><span class="n">itn</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">grad</span><span class="o">.</span> <span class="n">norm</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="p">)</span> <span class="p">:</span>   <span class="mi">5</span>   <span class="mi">0</span> <span class="mf">5.266062400e-15</span> <span class="mf">1.119620437e-15</span>
+         <span class="n">Solving</span> <span class="n">nonlinear</span> <span class="n">problem</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0208280</span>
+      <span class="n">Solving</span> <span class="k">for</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0231600</span>
+   <span class="n">Training</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0253439</span>
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Evaluation</span>
+
+      <span class="c1"># eval points. : 100</span>
+
+   <span class="n">Predicting</span> <span class="o">...</span>
+   <span class="n">Predicting</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0003459</span>
+
+   <span class="n">Prediction</span> <span class="n">time</span><span class="o">/</span><span class="n">pt</span><span class="o">.</span> <span class="p">(</span><span class="n">sec</span><span class="p">)</span> <span class="p">:</span>  <span class="mf">0.0000035</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../../_images/rmtb.png"><img alt="../../_images/rmtb.png" src="../../_images/rmtb.png" style="width: 512.0px; height: 384.0px;" /></a>
+</div>
+</div>
+<div class="section" id="options">
+<h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="colwidths-given docutils" id="id1">
+<caption><span class="caption-text">List of options</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="16%" />
+<col width="11%" />
+<col width="21%" />
+<col width="21%" />
+<col width="32%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Acceptable values</th>
+<th class="head">Acceptable types</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>print_global</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Global print toggle. If False, all printing is suppressed</td>
+</tr>
+<tr class="row-odd"><td>print_training</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to print training information</td>
+</tr>
+<tr class="row-even"><td>print_prediction</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to print prediction information</td>
+</tr>
+<tr class="row-odd"><td>print_problem</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to print problem information</td>
+</tr>
+<tr class="row-even"><td>print_solver</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to print solver information</td>
+</tr>
+<tr class="row-odd"><td>xlimits</td>
+<td>None</td>
+<td>None</td>
+<td>[‘ndarray’]</td>
+<td>Lower/upper bounds in each dimension - ndarray [nx, 2]</td>
+</tr>
+<tr class="row-even"><td>smoothness</td>
+<td>1.0</td>
+<td>None</td>
+<td>[‘Integral’, ‘float’, ‘tuple’, ‘list’, ‘ndarray’]</td>
+<td>Smoothness parameter in each dimension - length nx. None implies uniform</td>
+</tr>
+<tr class="row-odd"><td>reg_dv</td>
+<td>1e-10</td>
+<td>None</td>
+<td>[‘Integral’, ‘float’]</td>
+<td>Regularization coeff. for system degrees of freedom. This ensures there is always a unique solution</td>
+</tr>
+<tr class="row-even"><td>reg_cons</td>
+<td>0.0001</td>
+<td>None</td>
+<td>[‘Integral’, ‘float’]</td>
+<td>Negative of the regularization coeff. of the Lagrange mult. block The weight of the energy terms (and reg_dv) relative to the approx terms</td>
+</tr>
+<tr class="row-odd"><td>extrapolate</td>
+<td>False</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to perform linear extrapolation for external evaluation points</td>
+</tr>
+<tr class="row-even"><td>min_energy</td>
+<td>True</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to perform energy minimization</td>
+</tr>
+<tr class="row-odd"><td>approx_order</td>
+<td>4</td>
+<td>None</td>
+<td>[‘Integral’]</td>
+<td>Exponent in the approximation term</td>
+</tr>
+<tr class="row-even"><td>mtx_free</td>
+<td>False</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to solve the linear system in a matrix-free way</td>
+</tr>
+<tr class="row-odd"><td>solver</td>
+<td>krylov</td>
+<td>[‘krylov-dense’, ‘dense-lu’, ‘dense-chol’, ‘lu’, ‘ilu’, ‘krylov’, ‘krylov-lu’, ‘krylov-mg’, ‘gs’, ‘jacobi’, ‘mg’, ‘null’]</td>
+<td>[‘LinearSolver’]</td>
+<td>Linear solver</td>
+</tr>
+<tr class="row-even"><td>grad_weight</td>
+<td>0.5</td>
+<td>None</td>
+<td>[‘Integral’, ‘float’]</td>
+<td>Weight on gradient training data</td>
+</tr>
+<tr class="row-odd"><td>nln_max_iter</td>
+<td>5</td>
+<td>None</td>
+<td>[‘Integral’]</td>
+<td>maximum number of nonlinear iterations</td>
+</tr>
+<tr class="row-even"><td>line_search</td>
+<td>backtracking</td>
+<td>[‘backtracking’, ‘bracketed’, ‘quadratic’, ‘cubic’, ‘null’]</td>
+<td>[‘LineSearch’]</td>
+<td>Line search algorithm</td>
+</tr>
+<tr class="row-odd"><td>save_energy_terms</td>
+<td>False</td>
+<td>None</td>
+<td>[‘bool’]</td>
+<td>Whether to cache energy terms in the data_dir directory</td>
+</tr>
+<tr class="row-even"><td>data_dir</td>
+<td>None</td>
+<td>[None]</td>
+<td>[‘str’]</td>
+<td>Directory for loading / saving cached data; None means do not save or load</td>
+</tr>
+<tr class="row-odd"><td>max_print_depth</td>
+<td>5</td>
+<td>None</td>
+<td>[‘Integral’]</td>
+<td>Maximum depth (level of nesting) to print operation descriptions and times</td>
+</tr>
+<tr class="row-even"><td>order</td>
+<td>3</td>
+<td>None</td>
+<td>[‘Integral’, ‘tuple’, ‘list’, ‘ndarray’]</td>
+<td>B-spline order in each dimension - length [nx]</td>
+</tr>
+<tr class="row-odd"><td>num_ctrl_pts</td>
+<td>15</td>
+<td>None</td>
+<td>[‘Integral’, ‘tuple’, ‘list’, ‘ndarray’]</td>
+<td># B-spline control points in each dimension - length [nx]</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="rmtc.html" title="Regularized minimal-energy tensor-product cubic splines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="idw.html" title="Inverse-distance weighting"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SMT 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../methods.html" >Surrogate modeling methods</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, John Hwang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

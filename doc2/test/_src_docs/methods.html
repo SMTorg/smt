@@ -1,0 +1,421 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Surrogate modeling methods &#8212; SMT 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Radial basis functions" href="methods/rbf.html" />
+    <link rel="prev" title="SMT: Surrogate Modeling Toolbox" href="../index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="methods/rbf.html" title="Radial basis functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="SMT: Surrogate Modeling Toolbox"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Surrogate modeling methods</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#sm-class-api">SM class API</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">SMT: Surrogate Modeling Toolbox</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="methods/rbf.html"
+                        title="next chapter">Radial basis functions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_src_docs/methods.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="surrogate-modeling-methods">
+<h1>Surrogate modeling methods<a class="headerlink" href="#surrogate-modeling-methods" title="Permalink to this headline">¶</a></h1>
+<p>SMT contains the surrogate modeling methods listed below.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="methods/rbf.html">Radial basis functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/idw.html">Inverse-distance weighting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/rmtb.html">Regularized minimal-energy tensor-product B-splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/rmtc.html">Regularized minimal-energy tensor-product cubic splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/ls.html">Least-squares approximation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/qp.html">Second-order polynomial approximation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methods/krg.html">Kriging</a></li>
+</ul>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">smt.methods</span> <span class="kn">import</span> <span class="n">RBF</span>
+
+<span class="n">xt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">])</span>
+<span class="n">yt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">(</span><span class="n">d0</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">set_training_values</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+<span class="n">num</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">predict_values</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Training data&#39;</span><span class="p">,</span> <span class="s1">&#39;Prediction&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">___________________________________________________________________________</span>
+
+                                    <span class="n">RBF</span>
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Problem</span> <span class="n">size</span>
+
+      <span class="c1"># training points.        : 5</span>
+
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Training</span>
+
+   <span class="n">Training</span> <span class="o">...</span>
+      <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">...</span>
+         <span class="n">Performing</span> <span class="n">LU</span> <span class="n">fact</span><span class="o">.</span> <span class="p">(</span><span class="mi">5</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">...</span>
+         <span class="n">Performing</span> <span class="n">LU</span> <span class="n">fact</span><span class="o">.</span> <span class="p">(</span><span class="mi">5</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000761</span>
+      <span class="n">Initializing</span> <span class="n">linear</span> <span class="n">solver</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0001051</span>
+      <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">...</span>
+         <span class="n">Back</span> <span class="n">solving</span> <span class="p">(</span><span class="mi">5</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">...</span>
+         <span class="n">Back</span> <span class="n">solving</span> <span class="p">(</span><span class="mi">5</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">mtx</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000608</span>
+      <span class="n">Solving</span> <span class="n">linear</span> <span class="n">system</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000820</span>
+   <span class="n">Training</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0004942</span>
+<span class="n">___________________________________________________________________________</span>
+
+ <span class="n">Evaluation</span>
+
+      <span class="c1"># eval points. : 100</span>
+
+   <span class="n">Predicting</span> <span class="o">...</span>
+   <span class="n">Predicting</span> <span class="o">-</span> <span class="n">done</span><span class="o">.</span> <span class="n">Time</span> <span class="p">(</span><span class="n">sec</span><span class="p">):</span>  <span class="mf">0.0000281</span>
+
+   <span class="n">Prediction</span> <span class="n">time</span><span class="o">/</span><span class="n">pt</span><span class="o">.</span> <span class="p">(</span><span class="n">sec</span><span class="p">)</span> <span class="p">:</span>  <span class="mf">0.0000003</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/methods.png"><img alt="../_images/methods.png" src="../_images/methods.png" style="width: 512.0px; height: 384.0px;" /></a>
+</div>
+</div>
+<div class="section" id="sm-class-api">
+<h2>SM class API<a class="headerlink" href="#sm-class-api" title="Permalink to this headline">¶</a></h2>
+<p>All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.</p>
+<dl class="class">
+<dt id="smt.methods.sm.SM">
+<em class="property">class </em><code class="descclassname">smt.methods.sm.</code><code class="descname">SM</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for all surrogate models.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">smt.methods</span> <span class="k">import</span> <span class="n">RBF</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">(</span><span class="n">print_training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;print_prediction&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>options</strong></td>
+<td>(OptionsDictionary) Dictionary of options. Options values can be set on this attribute directly or they can be passed in as keyword arguments during instantiation.</td>
+</tr>
+<tr class="row-even"><td><strong>supports</strong></td>
+<td>(dict) Dictionary containing information about what this surrogate model supports.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="smt.methods.sm.SM.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor where values of options can be passed in.</p>
+<p>For the list of options, see the documentation for the surrogate model being used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>**kwargs</strong> : named arguments</p>
+<blockquote class="last">
+<div><p>Set of options that can be optionally set; each option must have been declared.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">smt.methods</span> <span class="k">import</span> <span class="n">RBF</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">(</span><span class="n">print_global</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.set_training_values">
+<code class="descname">set_training_values</code><span class="sig-paren">(</span><em>xt</em>, <em>yt</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.set_training_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.set_training_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set training data (values).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xt</strong> : np.ndarray[nt, nx] or np.ndarray[nt]</p>
+<blockquote>
+<div><p>The input values for the nt training points.</p>
+</div></blockquote>
+<p><strong>yt</strong> : np.ndarray[nt, ny] or np.ndarray[nt]</p>
+<blockquote>
+<div><p>The output values for the nt training points.</p>
+</div></blockquote>
+<p><strong>name</strong> : str or None</p>
+<blockquote class="last">
+<div><p>An optional label for the group of training points being set.
+This is only used in special situations (e.g., multi-fidelity applications).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.set_training_derivatives">
+<code class="descname">set_training_derivatives</code><span class="sig-paren">(</span><em>xt</em>, <em>dyt_dxt</em>, <em>kx</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.set_training_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.set_training_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set training data (derivatives).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xt</strong> : np.ndarray[nt, nx] or np.ndarray[nt]</p>
+<blockquote>
+<div><p>The input values for the nt training points.</p>
+</div></blockquote>
+<p><strong>dyt_dxt</strong> : np.ndarray[nt, ny] or np.ndarray[nt]</p>
+<blockquote>
+<div><p>The derivatives values for the nt training points.</p>
+</div></blockquote>
+<p><strong>kx</strong> : int</p>
+<blockquote>
+<div><p>0-based index of the derivatives being set.</p>
+</div></blockquote>
+<p><strong>name</strong> : str or None</p>
+<blockquote class="last">
+<div><p>An optional label for the group of training points being set.
+This is only used in special situations (e.g., multi-fidelity applications).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.train">
+<code class="descname">train</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the model</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.predict_values">
+<code class="descname">predict_values</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.predict_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.predict_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the output values at a set of points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx] or np.ndarray[n]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>y</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Output values at the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.predict_derivatives">
+<code class="descname">predict_derivatives</code><span class="sig-paren">(</span><em>x</em>, <em>kx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.predict_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.predict_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the dy_dx derivatives at a set of points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx] or np.ndarray[n]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+<p><strong>kx</strong> : int</p>
+<blockquote>
+<div><p>The 0-based index of the input variable with respect to which derivatives are desired.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dy_dx</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Derivatives.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.predict_output_derivatives">
+<code class="descname">predict_output_derivatives</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.predict_output_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.predict_output_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the derivatives dy_dyt at a set of points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx] or np.ndarray[n]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dy_dyt</strong> : dict of np.ndarray[n, nt]</p>
+<blockquote class="last">
+<div><p>Dictionary of output derivatives.
+Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM.predict_variances">
+<code class="descname">predict_variances</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/methods/sm.html#SM.predict_variances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM.predict_variances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the variances at a set of points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx] or np.ndarray[n]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>s2</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Variances.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="methods/rbf.html" title="Radial basis functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="SMT: Surrogate Modeling Toolbox"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, John Hwang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

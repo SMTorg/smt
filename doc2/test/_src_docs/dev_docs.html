@@ -1,0 +1,156 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Developer documentation &#8212; SMT 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developer API for surrogate models" href="dev_docs/dev_methods.html" />
+    <link rel="prev" title="Clustered sampling" href="sampling/clustered.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dev_docs/dev_methods.html" title="Developer API for surrogate models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sampling/clustered.html" title="Clustered sampling"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developer documentation</a><ul>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+<li><a class="reference internal" href="#building-the-documentation">Building the documentation</a></li>
+<li><a class="reference internal" href="#developer-api">Developer API</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sampling/clustered.html"
+                        title="previous chapter">Clustered sampling</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dev_docs/dev_methods.html"
+                        title="next chapter">Developer API for surrogate models</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_src_docs/dev_docs.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-documentation">
+<h1>Developer documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this headline">¶</a></h1>
+<p>This part of the documentation is meant for developers who want to contribute new surrogate models, problems, or sampling methods.</p>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>Contributing one of these consists of the following steps:</p>
+<ul class="simple">
+<li>Fork SMT to make a version of the SMT repo separate from the main one</li>
+<li>Write the class following the developer API given in the section below, and add it to the right folder, e.g., in smt/methods/new_method.py.</li>
+<li>Add the import statement in the corresponding __init__.py file, e.g., smt/methods/__init__.py.</li>
+<li>Add tests to the top-level <code class="docutils literal"><span class="pre">tests</span></code> directory following the existing examples.</li>
+<li>Add a documentation page in the appropriate directory, e.g., doc2/_src_docs/methods/new_method.rstx, using the existing docs as a reference.</li>
+<li>Add an entry in the table of contents so that readers can find the documentation page, e.g., in doc2/_src_docs/methods.rstx.</li>
+<li>Commit the changes, push to the forked version of SMT and issue a pull request for review and comments from the other developers of SMT and the larger community</li>
+</ul>
+</div>
+<div class="section" id="building-the-documentation">
+<h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h2>
+<p>Users can read the docs online at <code class="docutils literal"><span class="pre">smt.readthedocs.io</span></code>, but developers who contribute to the docs should build the docs locally to view the output.
+This is especially necessary because most of the docs in SMT contain code, code print output, and plots that are dynamically generated and embedded during the doc building process.
+The docs are written using reStructuredText, and there are a few custom directives we have added for this embedding of dynamically-generated content.</p>
+<p>To build the docs, the user should run go to the <code class="docutils literal"><span class="pre">doc</span></code> directory and run <code class="docutils literal"><span class="pre">make</span> <span class="pre">html</span></code> to build the html docs.
+The landing page for the built docs can then be found at <code class="docutils literal"><span class="pre">doc/_build/html/index.html</span></code>, and this is the same page that readers first see when they load <code class="docutils literal"><span class="pre">smt.readthedocs.io</span></code>.</p>
+</div>
+<div class="section" id="developer-api">
+<h2>Developer API<a class="headerlink" href="#developer-api" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_docs/dev_methods.html">Developer API for surrogate models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_docs/dev_problems.html">Developer API for benchmarking problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_docs/dev_sampling.html">Developer API for sampling methods</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dev_docs/dev_methods.html" title="Developer API for surrogate models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sampling/clustered.html" title="Clustered sampling"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, John Hwang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,278 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Developer API for surrogate models &#8212; SMT 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Developer API for benchmarking problems" href="dev_problems.html" />
+    <link rel="prev" title="Developer documentation" href="../dev_docs.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dev_problems.html" title="Developer API for benchmarking problems"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../dev_docs.html" title="Developer documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SMT 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev_docs.html" accesskey="U">Developer documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../dev_docs.html"
+                        title="previous chapter">Developer documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dev_problems.html"
+                        title="next chapter">Developer API for benchmarking problems</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/_src_docs/dev_docs/dev_methods.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-api-for-surrogate-models">
+<h1>Developer API for surrogate models<a class="headerlink" href="#developer-api-for-surrogate-models" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="smt.methods.sm.SM">
+<em class="property">class </em><code class="descclassname">smt.methods.sm.</code><code class="descname">SM</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for all surrogate models.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">smt.methods</span> <span class="k">import</span> <span class="n">RBF</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">(</span><span class="n">print_training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;print_prediction&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>options</strong></td>
+<td>(OptionsDictionary) Dictionary of options. Options values can be set on this attribute directly or they can be passed in as keyword arguments during instantiation.</td>
+</tr>
+<tr class="row-even"><td><strong>supports</strong></td>
+<td>(dict) Dictionary containing information about what this surrogate model supports.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="smt.methods.sm.SM._initialize">
+<code class="descname">_initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._initialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to declare options and declare what they support (optional).</p>
+<p class="rubric">Examples</p>
+<p>self.options.declare(‘option_name’, default_value, types=(bool, int), desc=’description’)
+self.supports[‘derivatives’] = True</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM._train">
+<code class="descname">_train</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to perform training (optional, but typically implemented).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM._predict_values">
+<code class="descname">_predict_values</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._predict_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._predict_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to predict the output values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>y</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Output values at the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM._predict_derivatives">
+<code class="descname">_predict_derivatives</code><span class="sig-paren">(</span><em>x</em>, <em>kx</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._predict_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._predict_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to predict the dy_dx derivatives (optional).</p>
+<p>If this method is implemented, the surrogate model should have</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd>self.supports[‘derivatives’] = True</dd>
+</dl>
+<p>in the _initialize() implementation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+<p><strong>kx</strong> : int</p>
+<blockquote>
+<div><p>The 0-based index of the input variable with respect to which derivatives are desired.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dy_dx</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Derivatives.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM._predict_output_derivatives">
+<code class="descname">_predict_output_derivatives</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._predict_output_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._predict_output_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to predict the dy_dyt derivatives (optional).</p>
+<p>If this method is implemented, the surrogate model should have</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd>self.supports[‘output_derivatives’] = True</dd>
+</dl>
+<p>in the _initialize() implementation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dy_dyt</strong> : dict of np.ndarray[n, nt]</p>
+<blockquote class="last">
+<div><p>Dictionary of output derivatives.
+Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.methods.sm.SM._predict_variances">
+<code class="descname">_predict_variances</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smt/methods/sm.html#SM._predict_variances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.methods.sm.SM._predict_variances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implemented by surrogate models to predict the variances at a set of points (optional).</p>
+<p>If this method is implemented, the surrogate model should have</p>
+<dl class="docutils">
+<dt>::</dt>
+<dd>self.supports[‘variances’] = True</dd>
+</dl>
+<p>in the _initialize() implementation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : np.ndarray[n, nx]</p>
+<blockquote>
+<div><p>Input values for the prediction points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>s2</strong> : np.ndarray[n, ny]</p>
+<blockquote class="last">
+<div><p>Variances.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dev_problems.html" title="Developer API for benchmarking problems"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../dev_docs.html" title="Developer documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SMT 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev_docs.html" >Developer documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, John Hwang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

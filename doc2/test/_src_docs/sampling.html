@@ -1,0 +1,218 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sampling methods &#8212; SMT 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Random sampling" href="sampling/random.html" />
+    <link rel="prev" title="Wing weight function" href="problems/wingweight.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sampling/random.html" title="Random sampling"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="problems/wingweight.html" title="Wing weight function"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sampling methods</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#problem-class-api">Problem class API</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="problems/wingweight.html"
+                        title="previous chapter">Wing weight function</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sampling/random.html"
+                        title="next chapter">Random sampling</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/_src_docs/sampling.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sampling-methods">
+<h1>Sampling methods<a class="headerlink" href="#sampling-methods" title="Permalink to this headline">¶</a></h1>
+<p>SMT contains a library of sampling methods used to generate sets of points in the input space,
+either for training or for prediction.
+These are listed below.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sampling/random.html">Random sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling/lhs.html">Latin Hypercube sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling/full_factorial.html">Full-factorial sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling/clustered.html">Clustered sampling</a></li>
+</ul>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="kn">import</span> <span class="n">Random</span>
+
+<span class="n">xlimits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">],</span>
+<span class="p">])</span>
+<span class="n">sampling</span> <span class="o">=</span> <span class="n">Random</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">xlimits</span><span class="p">)</span>
+
+<span class="n">num</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">sampling</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/sampling.png"><img alt="../_images/sampling.png" src="../_images/sampling.png" style="width: 512.0px; height: 384.0px;" /></a>
+</div>
+</div>
+<div class="section" id="problem-class-api">
+<h2>Problem class API<a class="headerlink" href="#problem-class-api" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smt.sampling.sampling.Sampling">
+<em class="property">class </em><code class="descclassname">smt.sampling.sampling.</code><code class="descname">Sampling</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/sampling/sampling.html#Sampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.sampling.sampling.Sampling" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<dl class="method">
+<dt id="smt.sampling.sampling.Sampling.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/sampling/sampling.html#Sampling.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.sampling.sampling.Sampling.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor where values of options can be passed in.</p>
+<p>For the list of options, see the documentation for the problem being used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>**kwargs</strong> : named arguments</p>
+<blockquote class="last">
+<div><p>Set of options that can be optionally set; each option must have been declared.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">smt.sampling</span> <span class="k">import</span> <span class="n">Random</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sampling</span> <span class="o">=</span> <span class="n">Random</span><span class="p">(</span><span class="n">xlimits</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="smt.sampling.sampling.Sampling.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smt/sampling/sampling.html#Sampling.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smt.sampling.sampling.Sampling.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the requested number of sampling points.</p>
+<p>The number of dimensions (nx) is determined based on <cite>xlimits.shape[0]</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray[n, nx]</p>
+<blockquote class="last">
+<div><p>The sampling locations in the input space.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sampling/random.html" title="Random sampling"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="problems/wingweight.html" title="Wing weight function"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SMT 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, John Hwang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>
