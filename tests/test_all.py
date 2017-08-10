@@ -12,7 +12,7 @@ from smt.sampling import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.methods import LS, PA2, KPLS, KRG, KPLSK, GEKPLS
+from smt.methods import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 try:
     from smt.methods import IDW, RBF, RMTC, RMTB
     compiled_available = True
@@ -38,7 +38,7 @@ class Test(SMTestCase):
 
         sms = OrderedDict()
         sms['LS'] = LS()
-        sms['PA2'] = PA2()
+        sms['QP'] = QP()
         sms['KRG'] = KRG(theta0=[1e-2]*ndim)
         sms['KPLS'] = KPLS(theta0=[1e-2]*ncomp,n_comp=ncomp)
         sms['KPLSK'] = KPLSK(theta0=[1e-2]*ncomp,n_comp=ncomp)
@@ -51,7 +51,7 @@ class Test(SMTestCase):
 
         t_errors = {}
         t_errors['LS'] = 1.0
-        t_errors['PA2'] = 1.0
+        t_errors['QP'] = 1.0
         t_errors['KRG'] = 1e-5
         t_errors['KPLS'] = 1e-5
         t_errors['KPLSK'] = 1e-5
@@ -64,7 +64,7 @@ class Test(SMTestCase):
 
         e_errors = {}
         e_errors['LS'] = 1.5
-        e_errors['PA2'] = 1.5
+        e_errors['QP'] = 1.5
         e_errors['KRG'] = 1e-2
         e_errors['KPLS'] = 1e-2
         e_errors['KPLSK'] = 1e-2
@@ -127,7 +127,7 @@ class Test(SMTestCase):
     def test_sphere_LS(self):
         self.run_test()
 
-    def test_sphere_PA2(self):
+    def test_sphere_QP(self):
         self.run_test()
 
     def test_sphere_KRG(self):
@@ -164,7 +164,7 @@ class Test(SMTestCase):
     def test_exp_LS(self):
         self.run_test()
 
-    def test_exp_PA2(self):
+    def test_exp_QP(self):
         self.run_test()
 
     def test_exp_KRG(self):
@@ -201,7 +201,7 @@ class Test(SMTestCase):
     def test_tanh_LS(self):
         self.run_test()
 
-    def test_tanh_PA2(self):
+    def test_tanh_QP(self):
         self.run_test()
 
     def test_tanh_KRG(self):
@@ -238,7 +238,7 @@ class Test(SMTestCase):
     def test_cos_LS(self):
         self.run_test()
 
-    def test_cos_PA2(self):
+    def test_cos_QP(self):
         self.run_test()
 
     def test_cos_KRG(self):

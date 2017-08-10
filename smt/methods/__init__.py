@@ -1,5 +1,5 @@
 from .ls import LS
-from .pa2 import PA2
+from .qp import QP
 from .kpls import KPLS
 from .krg import KRG
 from .gekpls import GEKPLS
