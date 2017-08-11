@@ -57,3 +57,5 @@ install:
 
 script:
 - testflo
+- cd doc2
+- make html
