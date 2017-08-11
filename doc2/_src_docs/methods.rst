@@ -12,7 +12,7 @@ SMT contains the surrogate modeling methods listed below.
    methods/rmtb
    methods/rmtc
    methods/ls
-   methods/pa2
+   methods/qp
    methods/krg
 
 Usage

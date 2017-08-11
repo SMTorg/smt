@@ -2,10 +2,16 @@ from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 
-from smt.methods import LS, PA2, KPLS, KPLSK, GEKPLS, KRG, IDW
+from smt.methods import LS, QP, KPLS, KPLSK, GEKPLS, KRG, IDW
 from smt.problems import Sphere
 from smt.sampling import LHS
 
+try:
+    import matplotlib.pyplot as plt
+    plot_status = True
+except:
+    plot_status = False
+    
 # Initialization of the problem
 ndim = 10
 ndoe = int(10*ndim)
@@ -62,8 +68,8 @@ print('LS,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 
-########### The PA2 model
-t = PA2()
+########### The QP model
+t = QP()
 t.set_training_values(xt,yt[:,0])
 t.train()
 y = t.predict_values(xtest)
@@ -76,7 +82,7 @@ yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
 
-print('PA2,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
+print('QP,  err: '+str(linalg.norm(y.reshape((ntest,1))-ytest.reshape((ntest,
             1)))/linalg.norm(ytest.reshape((ntest,1)))))
 
 ########### The Kriging model

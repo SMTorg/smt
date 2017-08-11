@@ -26,9 +26,9 @@ The vector of estimated polynomial regression coefficients using ordinary least 
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_pa2
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_qp
 
 Options
 -------
 
-.. embed-options-table-method :: PA2
+.. embed-options-table-method :: QP

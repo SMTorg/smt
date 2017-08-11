@@ -31,12 +31,12 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.methods import PA2
+  from smt.methods import QP
   
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
   
-  sm = PA2()
+  sm = QP()
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -55,7 +55,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      PA2
+                                      QP
   ___________________________________________________________________________
      
    Problem size
@@ -80,7 +80,7 @@ Usage
      Prediction time/pt. (sec) :  0.0000003
      
   
-.. figure:: pa2.png
+.. figure:: qp.png
   :scale: 80 %
   :align: center
 

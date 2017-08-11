@@ -53,6 +53,7 @@ def process_test(root, file_name, iline, line):
     sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/' + py_root)
     py_module = importlib.import_module(py_file_name[:-3])
 
+    print py_module
     obj = getattr(py_module, class_name)()
     method = getattr(obj, method_name)
 

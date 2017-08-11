@@ -140,16 +140,16 @@ class Test(unittest.TestCase):
         plt.legend(['Training data', 'Prediction'])
         plt.show()
 
-    def test_pa2(self):
+    def test_qp(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import PA2
+        from smt.methods import QP
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
 
-        sm = PA2()
+        sm = QP()
         sm.set_training_values(xt, yt)
         sm.train()
 
