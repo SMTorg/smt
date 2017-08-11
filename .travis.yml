@@ -6,6 +6,7 @@ sudo: required
 
 os:
   - linux
+  - osx
 
 osx_image: xcode8.2
 
@@ -32,14 +33,14 @@ addons:
 before_install:
 - OS=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "MacOSX"; else echo "Linux"; fi)
 - if [ "$OS" = "MacOSX" ] && [ "$MPI" ]; then brew install openmpi; fi
-- wget "https://repo.continuum.io/miniconda/Miniconda-latest-$OS-x86_64.sh" -O miniconda.sh
+- if [ "$PY" = "2.7" ];  then wget "https://repo.continuum.io/miniconda/Miniconda2-latest-$OS-x86_64.sh" -O miniconda.sh; fi
+- if [ "$PY" = "3.4" ];  then wget "https://repo.continuum.io/miniconda/Miniconda3-latest-$OS-x86_64.sh" -O miniconda.sh; fi
 - chmod +x miniconda.sh
 - if [ "$OS" = "Linux" ]; then
     ./miniconda.sh -b  -p /home/travis/miniconda;
   fi
 - if [ "$OS" = "MacOSX" ]; then
     ./miniconda.sh -b  -p /Users/travis/miniconda;
-    brew install gfortran;
   fi
 - PATHPREFIX=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "/Users/travis/miniconda/bin"; else echo "/home/travis/miniconda/bin"; fi)
 - export PATH=$PATHPREFIX:$PATH
