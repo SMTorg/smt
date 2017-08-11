@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0049360
+     Training - done. Time (sec):  0.0068929
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001328
+     Predicting - done. Time (sec):  0.0001609
      
-     Prediction time/pt. (sec) :  0.0000013
+     Prediction time/pt. (sec) :  0.0000016
      
   
 .. figure:: krg.png
@@ -126,11 +126,6 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -146,3 +141,8 @@ Options
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
+  *  -  theta0
+     -  None
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
