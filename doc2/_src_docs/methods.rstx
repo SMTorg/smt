@@ -14,6 +14,7 @@ SMT contains the surrogate modeling methods listed below.
    methods/ls
    methods/pa2
    methods/krg
+   
 
 Usage
 -----
