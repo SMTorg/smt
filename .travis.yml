@@ -46,8 +46,8 @@ before_install:
 - export PATH=$PATHPREFIX:$PATH
 #- export OPENMDAO_TEST_DOCS=1
 #- conda update --yes conda
-- sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
-- sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++
+# - sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
+# - sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++
 
 install:
 - pip install --upgrade pip
