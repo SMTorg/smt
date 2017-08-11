@@ -2,7 +2,11 @@ import os, sys
 import inspect
 import importlib
 import contextlib
-from io import StringIO
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO
+
 
 import matplotlib
 matplotlib.use('Agg')
@@ -53,8 +57,7 @@ def process_test(root, file_name, iline, line):
     sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/' + py_root)
     py_module = importlib.import_module(py_file_name[:-3])
 
-    obj = getattr(py_module, class_name)()
-    print(root, file_name, iline)
+    obj = getattr(py_module, class_name)
     method = getattr(obj, method_name)
 
     method_lines = inspect.getsource(method).split('\n')
