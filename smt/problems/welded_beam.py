@@ -28,7 +28,7 @@ class WeldedBeam(Problem):
             Evaluation points.
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
-            None means return function value rather than derivative.        
+            None means return function value rather than derivative.
 
         Returns
         -------

@@ -8,7 +8,6 @@ import scipy.sparse
 import six
 from six.moves import range
 
-
 VALID_LINE_SEARCHES = ('backtracking', 'bracketed', 'quadratic', 'cubic', 'null')
 
 def get_line_search_class(line_search):
@@ -22,7 +21,6 @@ def get_line_search_class(line_search):
         return CubicLineSearch
     elif line_search == 'null':
         return NullLineSearch
-
 
 class LineSearch(object):
     """

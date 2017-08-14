@@ -14,7 +14,7 @@ class Test(SMTestCase):
 
     def run_test(self, problem):
         problem.options['return_complex'] = True
-        
+
         # Test xlimits
         ndim = problem.options['ndim']
         xlimits = problem.xlimits

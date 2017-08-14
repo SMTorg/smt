@@ -12,7 +12,6 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem
 from smt.problems.tensor_product import TensorProduct
 
-
 class NdimStepFunction(Problem):
 
     def __init__(self, ndim=1, width=10.0):

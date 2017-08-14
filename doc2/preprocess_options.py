@@ -1,6 +1,5 @@
 from six import iteritems
 
-
 def process_options(root, file_name, iline, line):
     file_path = root + '/' + file_name
 

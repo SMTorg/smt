@@ -9,7 +9,6 @@ from six.moves import range
 
 from smt.sampling.sampling import Sampling
 
-
 class FullFactorial(Sampling):
 
     def _initialize(self):

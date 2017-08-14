@@ -12,7 +12,6 @@ from scipy.misc import derivative
 
 from smt.problems.problem import Problem
 
-
 class WaterFlow(Problem):
 
     def _initialize(self):

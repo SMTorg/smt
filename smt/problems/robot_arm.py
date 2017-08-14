@@ -10,7 +10,6 @@ import numpy as np
 
 from smt.problems.problem import Problem
 
-
 class RobotArm(Problem):
 
     def _initialize(self):

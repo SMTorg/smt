@@ -2,7 +2,6 @@
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 """
 
-
 class OptionsDictionary(object):
     """
     Generalization of the dictionary that allows for declaring keys.

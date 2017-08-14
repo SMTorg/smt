@@ -17,7 +17,7 @@ class KRG(KRG_BASED):
 
     def _initialize(self):
         super(KRG, self)._initialize()
-        declare = self.options.declare    
+        declare = self.options.declare
         declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
         self.name = 'Kriging'
 

@@ -9,7 +9,6 @@ import numpy as np
 
 from smt.problems.problem import Problem
 
-
 class Sphere(Problem):
 
     def _initialize(self):

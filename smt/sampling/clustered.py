@@ -11,7 +11,6 @@ from six.moves import range
 from smt.sampling.sampling import Sampling
 from smt.sampling.full_factorial import FullFactorial
 
-
 class Clustered(Sampling):
 
     def _initialize(self):

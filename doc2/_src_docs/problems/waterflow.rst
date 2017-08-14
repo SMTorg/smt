@@ -63,6 +63,11 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
+     -  
   *  -  return_complex
      -  False
      -  None
@@ -72,9 +77,4 @@ Options
      -  WaterFlow
      -  None
      -  ['str']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  

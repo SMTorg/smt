@@ -8,7 +8,6 @@ import numpy as np
 
 from smt.problems.problem import Problem
 
-
 class Rosenbrock(Problem):
 
     def _initialize(self):

@@ -60,28 +60,28 @@ Options
      -  None
      -  ['int']
      -  
-  *  -  return_complex
-     -  False
+  *  -  E
+     -  2e+11
      -  None
-     -  ['bool']
-     -  
+     -  ['int', 'float']
+     -  Modulus of elast. (200 GPa)
   *  -  name
      -  CantileverBeam
      -  None
      -  ['str']
      -  
-  *  -  P
-     -  50000.0
-     -  None
-     -  ['int', 'float']
-     -  Tip load (50 kN)
-  *  -  E
-     -  200000000000.0
-     -  None
-     -  ['int', 'float']
-     -  Modulus of elast. (200 GPa)
   *  -  s_a
      -  350000000.0
      -  None
      -  ['int', 'float']
      -  Stress allowable (350 MPa)
+  *  -  P
+     -  50000.0
+     -  None
+     -  ['int', 'float']
+     -  Tip load (50 kN)
+  *  -  return_complex
+     -  False
+     -  None
+     -  ['bool']
+     -  

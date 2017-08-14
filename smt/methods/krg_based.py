@@ -78,7 +78,7 @@ class KRG_BASED(SM):
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name != 'Kriging':
             X,y = self._compute_pls(X.copy(),y.copy())
-        
+
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
             self.y_std = standardization(X,y)
@@ -318,11 +318,11 @@ class KRG_BASED(SM):
         else:
             theta = self.optimal_theta
         y = (df_dx[0]-2*theta[kx-1]*np.dot(d_dx*r,gamma))*self.y_std/self.X_std[kx-1]
-        
+
         return y
 
     def _predict_variances(self, x):
-        
+
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -330,7 +330,7 @@ class KRG_BASED(SM):
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=
                                  False)
         d = self._componentwise_distance(dx)
-        
+
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
 
@@ -392,7 +392,7 @@ class KRG_BASED(SM):
                 constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
 
             # Compute D which is the componentwise distances between locations
-            #  x and x' at which the correlation model should be evaluated.            
+            #  x and x' at which the correlation model should be evaluated.
             self.D = self._componentwise_distance(D,opt=ii)
 
             # Initialization
@@ -501,7 +501,7 @@ class KRG_BASED(SM):
             d = self.dim
         else:
             d = self.options['n_comp']
-            
+
         if len(self.options['theta0']) != d:
             raise Exception('the number of %s should be equal to the length of theta0., (d)')
 
@@ -531,5 +531,3 @@ class KRG_BASED(SM):
             raise Exception(("Ordinary least squares problem is undetermined "
                              "n_samples=%d must be greater than the "
                              "regression model size p=%d.") % (self.nt, p))
-
-

@@ -11,7 +11,6 @@ import contextlib
 
 from smt.utils.options_dictionary import OptionsDictionary
 
-
 VALID_SOLVERS = ('krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu',
                  'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null')
 
@@ -40,7 +39,6 @@ def get_solver(solver):
         return NullSolver()
     elif solver == None:
         return None
-
 
 class Callback(object):
 

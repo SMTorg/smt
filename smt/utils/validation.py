@@ -14,21 +14,17 @@ from scipy import sparse
 import six as six
 from smt.utils.fixes import safe_copy
 
-
 class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
-
 warnings.simplefilter("always", DataConversionWarning)
-
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
         raise ValueError("Array contains NaN or infinity.")
-
 
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
@@ -39,7 +35,6 @@ def assert_all_finite(X):
     # there everything is finite; fall back to O(n) space np.isfinite to
     # prevent false positives from overflow in sum method.
     _assert_all_finite(X.data if sparse.issparse(X) else X)
-
 
 def safe_asarray(X, dtype=None, order=None, copy=False):
     """Convert X to an array or sparse matrix.
@@ -53,7 +48,6 @@ def safe_asarray(X, dtype=None, order=None, copy=False):
         X = np.array(X, dtype=dtype, order=order, copy=copy)
         assert_all_finite(X)
     return X
-
 
 def as_float_array(X, copy=True):
     """Converts an array-like to an array of floats
@@ -98,7 +92,6 @@ def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
         X_2d = safe_copy(X_2d)
     return X_2d
 
-
 def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
                          force_all_finite):
     if sparse.issparse(X):
@@ -116,7 +109,6 @@ def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
             _assert_all_finite(X)
     return X
 
-
 def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
                      force_all_finite=True):
     """Like numpy.atleast_2d, but converts sparse matrices to CSC format.
@@ -125,7 +117,6 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
     """
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csc_matrix,
                                 "tocsc", force_all_finite)
-
 
 def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
                      force_all_finite=True):
@@ -136,13 +127,11 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csr_matrix,
                                 "tocsr", force_all_finite)
 
-
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         raise TypeError("Expected sequence or array-like, got %r" % x)
     return x.shape[0] if hasattr(x, 'shape') else len(x)
-
 
 def check_arrays(*arrays, **options):
     """Check that all arrays have consistent first dimensions.
@@ -241,7 +230,6 @@ def check_arrays(*arrays, **options):
 
     return checked_arrays
 
-
 def column_or_1d(y, warn=False):
     """ Ravel column or 1d numpy array, else raises an error
 
@@ -267,7 +255,6 @@ def column_or_1d(y, warn=False):
 
     raise ValueError("bad input shape {0}".format(shape))
 
-
 def warn_if_not_float(X, estimator='This algorithm'):
     """Warning utility function to check that data type is floating point.
 
@@ -281,7 +268,6 @@ def warn_if_not_float(X, estimator='This algorithm'):
                       "got %s" % (estimator, X.dtype))
         return True
     return False
-
 
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance

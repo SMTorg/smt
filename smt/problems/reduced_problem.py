@@ -11,7 +11,6 @@ from smt.problems.problem import Problem
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem
 
-
 class ReducedProblem(Problem):
 
     def __init__(self, problem, dims, w=0.2):
