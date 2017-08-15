@@ -19,7 +19,7 @@ In the following example, a KPLS-Gaussian kernel function :math:`k_{\text{KPLS}}
 
 Subsequently, the hyperparameters point :math:`\left(\eta_1=\sum_{k=1}^h\theta_k^*{w^{(k)}_1}^2,\dots,\eta_d=\sum_{k=1}^h\theta_k^*{w^{(k)}_d}^2\right)` is used as a starting point for a gradient-based optimization applied on a standard kriging method.
 
-.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., and Morlier, J., An Improved Approach for Estimating the Hyperparameters of the Kriging Model for High-Dimensional Problems through the Partial Least Squares Method," Mathematical Problems in Engineering, Vol. 2016, 2016.
+.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., and Morlier, J., An Improved Approach for Estimating the Hyperparameters of the Kriging Model for High-Dimensional Problems through the Partial Least Squares Method," Mathematical Problems in Engineering, vol. 2016, Article ID 6723410, 2016.
 
 Usage
 -----
@@ -65,7 +65,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0126460
+     Training - done. Time (sec):  0.0155361
   ___________________________________________________________________________
      
    Evaluation
@@ -73,9 +73,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001960
+     Predicting - done. Time (sec):  0.0002451
      
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000025
      
   ___________________________________________________________________________
      
@@ -84,9 +84,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001719
+     Predicting - done. Time (sec):  0.0002220
      
-     Prediction time/pt. (sec) :  0.0000344
+     Prediction time/pt. (sec) :  0.0000444
      
   
 .. figure:: kplsk.png

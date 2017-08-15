@@ -1,17 +1,5 @@
-Least-squares approximation
-===========================
-
-The following description is taken from scikit-learn version 0.18.2 [1]_.
-
-The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_d\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
-Mathematically it solves a problem of the form:
-
-.. math ::
-  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
-
-where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
-
-.. [1] http://scikit-learn.org/stable/modules/linear_model.html
+Radial basis functions
+======================
 
 Usage
 -----
@@ -21,12 +9,12 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.methods import LS
+  from smt.methods import RBF
   
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
   
-  sm = LS()
+  sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -45,7 +33,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      LS
+                                      RBF
   ___________________________________________________________________________
      
    Problem size
@@ -57,7 +45,15 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0007608
+        Initializing linear solver ...
+           Performing LU fact. (5 x 5 mtx) ...
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000761
+        Initializing linear solver - done. Time (sec):  0.0001190
+        Solving linear system (col. 0) ...
+           Back solving (5 x 5 mtx) ...
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000710
+        Solving linear system (col. 0) - done. Time (sec):  0.0001152
+     Training - done. Time (sec):  0.0007598
   ___________________________________________________________________________
      
    Evaluation
@@ -65,12 +61,12 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000548
+     Predicting - done. Time (sec):  0.0000551
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000006
      
   
-.. figure:: ls.png
+.. figure:: rbf.png
   :scale: 80 %
   :align: center
 
@@ -107,11 +103,31 @@ Options
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
+  *  -  poly_degree
+     -  -1
+     -  [-1, 0, 1]
+     -  ['int']
+     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
+  *  -  max_print_depth
+     -  5
+     -  None
+     -  ['int']
+     -  Maximum depth (level of nesting) to print operation descriptions and times
   *  -  print_training
      -  True
      -  None
      -  ['bool']
      -  Whether to print training information
+  *  -  reg
+     -  1e-10
+     -  None
+     -  ['int', 'float']
+     -  Regularization coeff.
+  *  -  d0
+     -  1.0
+     -  None
+     -  ['int', 'float', 'list', 'ndarray']
+     -  basis function scaling parameter in exp(-d^2 / d0^2)
   *  -  print_prediction
      -  True
      -  None

@@ -1,5 +1,27 @@
-Radial basis functions
-======================
+Second-order polynomial approximation
+=====================================
+
+The square polynomial model can be expressed by
+
+.. math ::
+  {\bf y} = {\bf X\beta} + {\bf \epsilon},
+
+where :math:`{\bf \epsilon}` is a vector of random errors and
+
+.. math ::
+  {\bf X} =
+  \begin{bmatrix}
+      1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
+      d}^{(1)}}^2 \\
+      \vdots&\vdots & \dots&\vdots & \vdots & \dots  & \vdots&\vdots & \vdots\\
+      1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
+      d}^{(n)}}^2 \\
+  \end{bmatrix}.
+
+The vector of estimated polynomial regression coefficients using ordinary least square estimation is
+
+.. math ::
+  {\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
 
 Usage
 -----
@@ -9,12 +31,12 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.methods import RBF
+  from smt.methods import QP
   
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
   
-  sm = RBF(d0=5)
+  sm = QP()
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -33,7 +55,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      RBF
+                                      QP
   ___________________________________________________________________________
      
    Problem size
@@ -45,15 +67,7 @@ Usage
    Training
      
      Training ...
-        Initializing linear solver ...
-           Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000808
-        Initializing linear solver - done. Time (sec):  0.0001171
-        Solving linear system (col. 0) ...
-           Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000651
-        Solving linear system (col. 0) - done. Time (sec):  0.0001040
-     Training - done. Time (sec):  0.0007629
+     Training - done. Time (sec):  0.0003641
   ___________________________________________________________________________
      
    Evaluation
@@ -61,12 +75,12 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000460
+     Predicting - done. Time (sec):  0.0000470
      
      Prediction time/pt. (sec) :  0.0000005
      
   
-.. figure:: rbf.png
+.. figure:: qp.png
   :scale: 80 %
   :align: center
 
@@ -103,31 +117,11 @@ Options
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  poly_degree
-     -  -1
-     -  [-1, 0, 1]
-     -  ['int']
-     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
-  *  -  max_print_depth
-     -  5
-     -  None
-     -  ['int']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
   *  -  print_training
      -  True
      -  None
      -  ['bool']
      -  Whether to print training information
-  *  -  reg
-     -  1e-10
-     -  None
-     -  ['int', 'float']
-     -  Regularization coeff.
-  *  -  d0
-     -  1.0
-     -  None
-     -  ['int', 'float', 'list', 'ndarray']
-     -  basis function scaling parameter in exp(-d^2 / d0^2)
   *  -  print_prediction
      -  True
      -  None

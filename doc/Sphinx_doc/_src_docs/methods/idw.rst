@@ -1,27 +1,22 @@
-Second-order polynomial approximation
-=====================================
+Inverse-distance weighting
+==========================
 
-The square polynomial model can be expressed by
+The inverse distance weighting [1]_ model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
 
-.. math ::
-  {\bf y} = {\bf X\beta} + {\bf \epsilon},
-
-where :math:`{\bf \epsilon}` is a vector of random errors and
+The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
 
 .. math ::
-  {\bf X} =
-  \begin{bmatrix}
-      1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
-      d}^{(1)}}^2 \\
-      \vdots&\vdots & \dots&\vdots & \vdots & \dots  & \vdots&\vdots & \vdots\\
-      1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
-      d}^{(n)}}^2 \\
-  \end{bmatrix}.
+  \hat{y}=
+  \left\{
+  \begin{array}{ll}
+  \frac{\sum\limits_{i=1}^n\beta_iy_i}{\sum\limits_{i=1}^n\beta_i},&\text{if}\quad d({\bf x},{\bf x}^{(i)})\neq 0 \quad \forall i\\
+  y_i&\text{if}\quad d({\bf x},{\bf x}^{(i)})= 0
+  \end{array}
+  \right.
 
-The vector of estimated polynomial regression coefficients using ordinary least square estimation is
+where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
 
-.. math ::
-  {\bf \beta} = {\bf X^TX}^{-1} {\bf X^Ty}.
+.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
 Usage
 -----
@@ -31,12 +26,12 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.methods import QP
+  from smt.methods import IDW
   
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
   
-  sm = QP()
+  sm = IDW(p=2)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -55,7 +50,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      QP
+                                      IDW
   ___________________________________________________________________________
      
    Problem size
@@ -67,7 +62,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0003111
+     Training - done. Time (sec):  0.0002539
   ___________________________________________________________________________
      
    Evaluation
@@ -75,12 +70,12 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000370
+     Predicting - done. Time (sec):  0.0000429
      
      Prediction time/pt. (sec) :  0.0000004
      
   
-.. figure:: qp.png
+.. figure:: idw.png
   :scale: 80 %
   :align: center
 
@@ -117,6 +112,11 @@ Options
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
+  *  -  p
+     -  2.5
+     -  None
+     -  ['int', 'float']
+     -  order of distance norm
   *  -  print_training
      -  True
      -  None

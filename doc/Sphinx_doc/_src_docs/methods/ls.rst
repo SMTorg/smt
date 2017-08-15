@@ -1,22 +1,17 @@
-Inverse-distance weighting
-==========================
+Least-squares approximation
+===========================
 
-The inverse distance weighting [1]_ model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
+The following description is taken from scikit-learn version 0.18.2 [1]_.
 
-The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
+The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_d\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
+Mathematically it solves a problem of the form:
 
 .. math ::
-  \hat{y}=
-  \left\{
-  \begin{array}{ll}
-  \frac{\sum\limits_{i=1}^n\beta_iy_i}{\sum\limits_{i=1}^n\beta_i},&\text{if}\quad d({\bf x},{\bf x}^{(i)})\neq 0 \quad \forall i\\
-  y_i&\text{if}\quad d({\bf x},{\bf x}^{(i)})= 0
-  \end{array}
-  \right.
+  \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
 
-where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
+where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
 
-.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
+.. [1] http://scikit-learn.org/stable/modules/linear_model.html
 
 Usage
 -----
@@ -26,12 +21,12 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.methods import IDW
+  from smt.methods import LS
   
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
   
-  sm = IDW(p=2)
+  sm = LS()
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -50,7 +45,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      IDW
+                                      LS
   ___________________________________________________________________________
      
    Problem size
@@ -62,7 +57,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002708
+     Training - done. Time (sec):  0.0009041
   ___________________________________________________________________________
      
    Evaluation
@@ -70,12 +65,12 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000429
+     Predicting - done. Time (sec):  0.0000741
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000007
      
   
-.. figure:: idw.png
+.. figure:: ls.png
   :scale: 80 %
   :align: center
 
@@ -112,11 +107,6 @@ Options
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  p
-     -  2.5
-     -  None
-     -  ['int', 'float']
-     -  order of distance norm
   *  -  print_training
      -  True
      -  None
