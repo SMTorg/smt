@@ -32,5 +32,6 @@ install:
 
 test_script:
   - testflo . -n 1
-  - cd doc2
+-   cd doc
+  - cd Sphinx_doc
   - make html
