@@ -43,7 +43,7 @@ class GEKPLS(KRG_BASED):
         return X,y
 
     def _componentwise_distance(self,dx,opt=0):
-        
+
         d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
                                        self.options['n_comp'],self.coeff_pls)
         return d

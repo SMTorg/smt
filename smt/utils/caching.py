@@ -8,7 +8,6 @@ except:
 import hashlib
 import contextlib
 
-
 @contextlib.contextmanager
 def cached_operation(inputs_dict, data_dir, desc=''):
     """
@@ -64,7 +63,7 @@ def _caching_checksum(obj):
         obj['self'].printer = None
     except:
         pass
-    
+
     self_pkl = pickle.dumps(obj)
     checksum = hashlib.md5(self_pkl).hexdigest()
 

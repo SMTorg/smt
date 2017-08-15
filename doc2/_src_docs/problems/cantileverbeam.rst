@@ -1,6 +1,11 @@
 Cantilever beam function
 ========================
 
+.. math ::
+  \frac{50}{600}\sum\limits_{i=1}^{17}\left[\frac{12}{b_ih_i^3}\left(\left(\sum\limits_{j=i}^{17}l_j\right)^3-\left(\sum\limits_{j=i+1}^{17}l_j\right)^3\right)\right],
+
+:math:`b_i\in [0.01,0.05], \quad h_i\in[0.3,0.65], \quad l_i\in[0.5,1]`
+
 Usage
 -----
 
@@ -60,6 +65,16 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  P
+     -  50000.0
+     -  None
+     -  ['int', 'float']
+     -  Tip load (50 kN)
+  *  -  E
+     -  2e+11
+     -  None
+     -  ['int', 'float']
+     -  Modulus of elast. (200 GPa)
   *  -  return_complex
      -  False
      -  None
@@ -70,18 +85,3 @@ Options
      -  None
      -  ['str']
      -  
-  *  -  P
-     -  50000.0
-     -  None
-     -  ['int', 'float']
-     -  Tip load (50 kN)
-  *  -  E
-     -  200000000000.0
-     -  None
-     -  ['int', 'float']
-     -  Modulus of elast. (200 GPa)
-  *  -  s_a
-     -  350000000.0
-     -  None
-     -  ['int', 'float']
-     -  Stress allowable (350 MPa)

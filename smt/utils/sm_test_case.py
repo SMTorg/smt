@@ -4,7 +4,6 @@ Base test class.
 import numpy as np
 import unittest
 
-
 class SMTestCase(unittest.TestCase):
 
     def assert_error(self, computed, desired, atol=1e-15, rtol=1e-15):

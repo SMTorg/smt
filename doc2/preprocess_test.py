@@ -7,11 +7,9 @@ try:
 except:
     from io import StringIO
 
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
 
 @contextlib.contextmanager
 def stdoutIO(stdout=None):
@@ -21,7 +19,6 @@ def stdoutIO(stdout=None):
     sys.stdout = stdout
     yield stdout
     sys.stdout = old
-
 
 def process_test(root, file_name, iline, line):
     file_path = root + '/' + file_name

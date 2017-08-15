@@ -1,5 +1,6 @@
 import numpy as np
-
+from smt.utils.checks import check_2d_array
+from smt.utils.validation import array2d
 
 def compute_rms_error(sm, xe=None, ye=None, kx=None):
     """
@@ -17,7 +18,9 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
         If None, we are checking the output values.
         If int, we are checking the derivs. w.r.t. the kx^{th} input variable (0-based).
     """
+
     if xe is not None and ye is not None:
+        ye = ye.reshape((xe.shape[0],1))
         if kx == None:
             ye2 = sm.predict_values(xe)
         else:

@@ -7,7 +7,6 @@ import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 
-
 class Sampling(object):
 
     def __init__(self, **kwargs):

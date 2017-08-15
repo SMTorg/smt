@@ -58,7 +58,6 @@ def lsqr(X, y, tol=1e-3):
         residues = y - safe_sparse_dot(X, coef)
         return coef, None, None, residues
 
-
 def _unique(ar, return_index=False, return_inverse=False):
     """A replacement for the np.unique that appeared in numpy 1.4.
 

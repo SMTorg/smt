@@ -92,7 +92,7 @@ class QP(SM):
                 M[k,:] = x[i,:]*x[j,:]
 
         return M.T
-        
+
 
     def _predict_derivatives(self, x, kx):
         """
@@ -110,8 +110,8 @@ class QP(SM):
         y : np.ndarray
             Derivative values.
         """
-        dim = self.dim    
-        
+        dim = self.dim
+
         linear_coef = self.coef[1+kx,0]
         quad_coef = 2 * self.coef[1+dim+kx,0] * x[:,kx]
         cross_coef = 0
@@ -122,7 +122,7 @@ class QP(SM):
             elif i < kx:
                 k = int(2*dim+2+(i)*dim-((i+1)*(i))/2+(kx-(i+2)))
                 cross_coef += self.coef[k,0]* x[:,i]
-                
+
         y = (linear_coef+quad_coef+cross_coef).reshape((x.shape[0],1))
         return y
 

@@ -11,7 +11,6 @@ import numpy as np
 
 from smt.sampling.sampling import Sampling
 
-
 class LHS(Sampling):
 
     def _initialize(self):
@@ -44,7 +43,7 @@ class LHS(Sampling):
     def _maximinESE(self, X, T0=None, outer_loop=None, inner_loop=None, J=20,
                tol=1e-3, p=10, return_hist=False, fixed_index=[]):
         """
-        
+
         Returns an optimized design starting from design X. For more information,
         see R. Jin, W. Chen and A. Sudjianto (2005):
         An efficient algorithm for constructing optimal design of computer
@@ -189,7 +188,7 @@ class LHS(Sampling):
     def _PhiP(self,X, p=10):
         """
         Calculates the PhiP criterion of the design X with power p.
-        
+
         X : array_like
         The design where to calculate PhiP
         p : integer
@@ -268,4 +267,3 @@ class LHS(Sampling):
         P, historic = self._maximinESE(P0, outer_loop=outer_loop, inner_loop=inner_loop,
                                  J=J, tol=1e-3, p=10, return_hist=True)
         return P
-

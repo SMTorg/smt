@@ -9,7 +9,6 @@ from six.moves import range
 
 from smt.sampling.sampling import Sampling
 
-
 class Random(Sampling):
 
     def _compute(self, n):

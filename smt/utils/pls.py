@@ -12,7 +12,6 @@ from scipy import linalg
 
 __all__ = ['PLSRegression']
 
-
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
                                  norm_y_weights=False):
     """Inner loop of the iterative NIPALS algorithm.

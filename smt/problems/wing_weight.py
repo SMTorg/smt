@@ -13,7 +13,6 @@ from scipy.misc import derivative
 
 from smt.problems.problem import Problem
 
-
 class WingWeight(Problem):
 
     def _initialize(self):

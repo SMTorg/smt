@@ -6,7 +6,6 @@ from __future__ import print_function
 import time
 import contextlib
 
-
 class Printer(object):
     """
     Tool for formatting printing and measuring wall times.

@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 class Silence:
     """Context manager which uses low-level file descriptors to suppress
     output to stdout/stderr, optionally redirecting to the named file(s).
