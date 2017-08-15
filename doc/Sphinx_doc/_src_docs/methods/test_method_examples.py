@@ -268,8 +268,8 @@ class Test(unittest.TestCase):
         X, Y = np.meshgrid(X, Y)        
         Z = np.zeros((X.shape[0],X.shape[1]))
 
-        for i in xrange(X.shape[0]):
-            for j in xrange(X.shape[1]):
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
                 Z[i,j] = sm.predict_values(np.hstack((X[i,j],Y[i,j])).reshape((1,2)))
         
         fig = plt.figure()
