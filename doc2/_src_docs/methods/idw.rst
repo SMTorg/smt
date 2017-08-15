@@ -1,7 +1,7 @@
 Inverse-distance weighting
 ==========================
 
-The inverse distance weighting model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
+The inverse distance weighting [1]_ model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
 
 The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
 
@@ -15,6 +15,8 @@ The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` usin
   \right.
 
 where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
+
+.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
 Usage
 -----
@@ -60,7 +62,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002241
+     Training - done. Time (sec):  0.0002708
   ___________________________________________________________________________
      
    Evaluation
@@ -68,9 +70,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000331
+     Predicting - done. Time (sec):  0.0000429
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: idw.png

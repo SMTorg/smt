@@ -25,7 +25,7 @@ These three types are available in SMT.
 
 More details about the kriging approach could be found in [1]_.
 
-.. [1] J. Sacks, S. B. Schiller, W. J. Welch, Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
+.. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
 
 Usage
 -----
@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0068591
+     Training - done. Time (sec):  0.0069289
   ___________________________________________________________________________
      
    Evaluation
@@ -79,7 +79,7 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001869
+     Predicting - done. Time (sec):  0.0001879
      
      Prediction time/pt. (sec) :  0.0000019
      
