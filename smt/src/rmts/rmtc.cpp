@@ -18,6 +18,23 @@ RMTC::~RMTC() {
   delete[] nterm_list;
 }
 
+void RMTC::setup(int nx, double * lower, double * upper, int * nelem_list, int * nterm_list) {
+  RMTS::setup(nx, lower, upper);
+
+  this->nelem_list = new int[nx];
+  this->nterm_list = new int[nx];
+
+  memcpy(this->nelem_list, nelem_list, nx * sizeof(*nelem_list));
+  memcpy(this->nterm_list, nterm_list, nx * sizeof(*nterm_list));
+
+  nelem = 1;
+  nterm = 1;
+  for (int ix = 0; ix < nx; ix++) {
+    nelem *= nelem_list[ix];
+    nterm *= nterm_list[ix];
+  }
+}
+
 void RMTC::find_interval(int ix, int num, double x, int * index, double * xbar) {
   double a = lower[ix];
   double b = upper[ix];
@@ -39,33 +56,20 @@ void RMTC::find_interval(int ix, int num, double x, int * index, double * xbar) 
   *index -= 1;
 }
 
-void RMTC::setup(int nx, double * lower, double * upper, int * nelem_list, int * nterm_list) {
-  RMTS::setup(nx, lower, upper);
-
-  this->nelem_list = new int[nx];
-  this->nterm_list = new int[nx];
-
-  memcpy(this->nelem_list, nelem_list, nx * sizeof(*nelem_list));
-  memcpy(this->nterm_list, nterm_list, nx * sizeof(*nterm_list));
-
-  nelem = 1;
-  nterm = 1;
-  for (int ix = 0; ix < nx; ix++) {
-    nelem *= nelem_list[ix];
-    nterm *= nterm_list[ix];
-  }
-}
-
 void RMTC::compute_coeff2nodal(double * mtx) {
   bool deriv_list[4] = { false , false , true , true };
   double xval_list[4] = { -1. , 1. , -1. , 1. };
 
   for (int iterm1 = 0; iterm1 < nterm; iterm1++) {
-    int iterm1_list[nx];
+    int * iterm1_list;
+    iterm1_list = work_int_nx_1;
+
     expand_index(nx, nterm_list, iterm1, iterm1_list);
 
     for (int iterm2 = 0; iterm2 < nterm; iterm2++) {
-      int iterm2_list[nx];
+      int * iterm2_list;
+      iterm2_list = work_int_nx_2;
+
       expand_index(nx, nterm_list, iterm2, iterm2_list);
 
       int prod = 1;
@@ -95,8 +99,12 @@ void RMTC::compute_uniq2elem(double * data, int * rows, int * cols) {
   int derv_map[4] = { 0 , 0 , 1 , 1 };
   int side_map[4] = { 0 , 1 , 0 , 1 };
 
-  int ndofs_list[nx];
-  int nuniq_list[nx];
+  int * ndofs_list;
+  ndofs_list = work_int_nx_1;
+
+  int * nuniq_list;
+  nuniq_list = work_int_nx_2;
+
   int ndofs = 1;
   int nuniq = 1;
   for (int ix = 0; ix < nx; ix++) {
@@ -109,16 +117,26 @@ void RMTC::compute_uniq2elem(double * data, int * rows, int * cols) {
   int inz = 0;
 
   for (int ielem = 0; ielem < nelem; ielem++) {
-    int ielem_list[nx];
+    int * ielem_list;
+    ielem_list = work_int_nx_3;
+
     expand_index(nx, nelem_list, ielem, ielem_list);
 
     for (int iterm = 0; iterm < nterm; iterm++) {
-      int iterm_list[nx];
+      int * iterm_list;
+      iterm_list = work_int_nx_4;
+
       expand_index(nx, nterm_list, iterm, iterm_list);
 
-      int iderv_list[nx];
-      int iside_list[nx];
-      int iuniq_list[nx];
+      int * iderv_list;
+      iderv_list = work_int_nx_5;
+
+      int * iside_list;
+      iside_list = work_int_nx_6;
+
+      int * iuniq_list;
+      iuniq_list = work_int_nx_7;
+
       int iderv, iuniq;
 
       for (int ix = 0; ix < nx; ix++) {
@@ -157,7 +175,8 @@ void RMTC::compute_jac(
     int ix1, int ix2, int n, double * x,
     double * data, int * rows, int * cols) {
 
-  double dxb_dx[nx];
+  double * dxb_dx;
+  dxb_dx = work_double_nx_1;
 
   for (int ix = 0; ix < nx; ix++) {
     double bma_d2 = (upper[ix] - lower[ix]) / nelem_list[ix] / 2.;
@@ -167,8 +186,11 @@ void RMTC::compute_jac(
   int inz = 0;
 
   for (int i = 0; i < n; i++) {
-    int ielem_list[nx];
-    double xbar[nx];
+    int * ielem_list;
+    ielem_list = work_int_nx_1;
+
+    double * xbar;
+    xbar = work_double_nx_2;
 
     for (int ix = 0; ix < nx; ix++) {
       find_interval(
@@ -178,7 +200,9 @@ void RMTC::compute_jac(
     int ielem = contract_index(nx, nelem_list, ielem_list);
 
     for (int iterm = 0; iterm < nterm; iterm++) {
-      int iterm_list[nx];
+      int * iterm_list;
+      iterm_list = work_int_nx_2;
+
       expand_index(nx, nterm_list, iterm, iterm_list);
 
       double prod = 1.;
