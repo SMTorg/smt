@@ -15,6 +15,15 @@ protected:
   int nx;
   double * lower;
   double * upper;
+  int * work_int_nx_1;
+  int * work_int_nx_2;
+  int * work_int_nx_3;
+  int * work_int_nx_4;
+  int * work_int_nx_5;
+  int * work_int_nx_6;
+  int * work_int_nx_7;
+  double * work_double_nx_1;
+  double * work_double_nx_2;
 };
 
 #endif

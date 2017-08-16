@@ -71,7 +71,8 @@ int compute_basis_0(int order, int ncp, double param, double * knots, double * b
 
 int compute_basis_1(int order, int ncp, double param, double * knots, double * basis1_vec) {
   int istart = compute_i_start(order, ncp, param, knots);
-  double basis0_vec[order];
+
+  double * basis0_vec = new double[order];
 
   for (int i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
@@ -107,13 +108,17 @@ int compute_basis_1(int order, int ncp, double param, double * knots, double * b
       basis1_vec[j] = f1 + f2;
     }
   }
+
+  delete[] basis0_vec;
+
   return istart;
 }
 
 int compute_basis_2(int order, int ncp, double param, double * knots, double * basis2_vec) {
   int istart = compute_i_start(order, ncp, param, knots);
-  double basis0_vec[order];
-  double basis1_vec[order];
+
+  double * basis0_vec = new double[order];
+  double * basis1_vec = new double[order];
 
   for (int i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
@@ -157,6 +162,10 @@ int compute_basis_2(int order, int ncp, double param, double * knots, double * b
       }
     }
   }
+
+  delete[] basis0_vec;
+  delete[] basis1_vec;
+
   return istart;
 }
 
@@ -201,8 +210,8 @@ void RMTB::compute_jac(
     int order = order_list[ix];
     int ncp = ncp_list[ix];
 
-    double knots[order + ncp];
-    double basis_vec[order];
+    double * knots = new double[order + ncp];
+    double * basis_vec = new double[order];
 
     compute_knot_vector_uniform(order, ncp, knots);
 
@@ -241,5 +250,8 @@ void RMTB::compute_jac(
         cols[inz] += (inz_dim + istart) * prod;
       }
     }
+
+    delete[] knots;
+    delete[] basis_vec;
   }
 }

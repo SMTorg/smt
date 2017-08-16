@@ -8,39 +8,46 @@ using namespace std;
 
 IDW::IDW() {
   xt = NULL;
+  w = NULL;
+  dw_dx = NULL;
 }
 
 IDW::~IDW() {
   delete[] xt;
+  delete[] w;
+  delete[] dw_dx;
 }
 
 void IDW::setup(int nx, int nt, double p, double * xt) {
   this->nx = nx;
   this->nt = nt;
   this->p = p;
+
   this->xt = new double[nt * nx];
+  this->w = new double[nt];
+  this->dw_dx = new double[nt];
 
   memcpy(this->xt, xt, nt * nx * sizeof(*xt));
 }
 
 void IDW::compute_jac(int n, double* x, double* jac) {
-  double w[nt], r2[nt], min_val, sum, d;
+  double r2, min_val, sum, d;
   int min_loc;
 
   for (int i = 0; i < n; i++) {
     min_val = 1.;
     min_loc = 0;
     for (int it = 0; it < nt; it++) {
-      r2[it] = 0.;
+      r2 = 0.;
       for (int ix = 0; ix < nx; ix++) {
         d = x[i * nx + ix] - xt[it * nx + ix];
-        r2[it] += pow(d, 2);
+        r2 += pow(d, 2);
       }
-      if (r2[it] < min_val) {
-        min_val = r2[it];
+      if (r2 < min_val) {
+        min_val = r2;
         min_loc = it;
       }
-      w[it] = pow(r2[it], -p / 2.);
+      w[it] = pow(r2, -p / 2.);
     }
 
     if (min_val == 0.) {
@@ -62,27 +69,27 @@ void IDW::compute_jac(int n, double* x, double* jac) {
 }
 
 void IDW::compute_jac_derivs(int n, int kx, double* x, double* jac) {
-  double w[nt], dw_dx[nt], r2[nt], dr2_dx[nt], min_val, sum, dsum_dx, d;
+  double r2, dr2_dx, min_val, sum, dsum_dx, d;
   int min_loc;
 
   for (int i = 0; i < n; i++) {
     min_val = 1.;
     min_loc = 0;
     for (int it = 0; it < nt; it++) {
-      r2[it] = 0.;
+      r2 = 0.;
       for (int ix = 0; ix < nx; ix++) {
         d = x[i * nx + ix] - xt[it * nx + ix];
-        r2[it] += pow(d, 2);
+        r2 += pow(d, 2);
       }
       d = x[i * nx + kx] - xt[it * nx + kx];
-      dr2_dx[it] = 2. * d;
+      dr2_dx = 2. * d;
 
-      if (r2[it] < min_val) {
-        min_val = r2[it];
+      if (r2 < min_val) {
+        min_val = r2;
         min_loc = it;
       }
-      w[it] = pow(r2[it], -p / 2.);
-      dw_dx[it] = -p / 2. * pow(r2[it], -p / 2. - 1.) * dr2_dx[it];
+      w[it] = pow(r2, -p / 2.);
+      dw_dx[it] = -p / 2. * pow(r2, -p / 2. - 1.) * dr2_dx;
     }
 
     if (min_val == 0.) {
