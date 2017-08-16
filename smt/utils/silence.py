@@ -1,7 +1,18 @@
 import os
 import sys
 
-class Silence:
+
+class Silence(object):
+
+    def __enter__(self):
+        sys.stdout = open(os.devnull, "w")
+
+    def __exit__(self, *args):
+        sys.stdout = sys.__stdout__
+        return False
+
+
+class Silence2:
     """Context manager which uses low-level file descriptors to suppress
     output to stdout/stderr, optionally redirecting to the named file(s).
 
