@@ -56,5 +56,5 @@ install:
 
 script:
 - testflo
-- cd doc2
+- cd doc/Sphinx_doc
 - make html
