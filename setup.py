@@ -9,7 +9,7 @@ pip.main(['install', 'Cython'])
 from Cython.Build import cythonize
 
 
-if os.name == 'nt':
+if os.name == 'nt' and 0:
     # If OS is Windows, don't compile Fortran code
     ext = []
     setup(name='smt',
