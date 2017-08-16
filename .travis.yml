@@ -6,6 +6,7 @@ sudo: required
 
 os:
   - linux
+  - osx
 
 osx_image: xcode8.2
 
@@ -29,28 +30,9 @@ addons:
     - gcc-5
     - g++-5
 
-before_install:
-- OS=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "MacOSX"; else echo "Linux"; fi)
-- if [ "$OS" = "MacOSX" ] && [ "$MPI" ]; then brew install openmpi; fi
-- if [ "$PY" = "2.7" ];  then wget "https://repo.continuum.io/miniconda/Miniconda2-latest-$OS-x86_64.sh" -O miniconda.sh; fi
-- if [ "$PY" = "3.4" ];  then wget "https://repo.continuum.io/miniconda/Miniconda3-latest-$OS-x86_64.sh" -O miniconda.sh; fi
-- chmod +x miniconda.sh
-- if [ "$OS" = "Linux" ]; then
-    ./miniconda.sh -b  -p /home/travis/miniconda;
-  fi
-- if [ "$OS" = "MacOSX" ]; then
-    ./miniconda.sh -b  -p /Users/travis/miniconda;
-  fi
-- PATHPREFIX=$(if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then echo "/Users/travis/miniconda/bin"; else echo "/home/travis/miniconda/bin"; fi)
-- export PATH=$PATHPREFIX:$PATH
-#- export OPENMDAO_TEST_DOCS=1
-#- conda update --yes conda
-# - sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
-# - sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++
-
 install:
 - pip install --upgrade pip
-- conda install --yes python=$PY numpy scipy nose Cython
+- pip install numpy scipy Cython
 - pip install git+https://github.com/OpenMDAO/testflo.git
 - pip install -e .
 
