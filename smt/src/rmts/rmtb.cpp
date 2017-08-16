@@ -210,8 +210,8 @@ void RMTB::compute_jac(
     int order = order_list[ix];
     int ncp = ncp_list[ix];
 
-    double knots[order + ncp];
-    double basis_vec[order];
+    double * knots = new double[order + ncp];
+    double * basis_vec = new double[order];
 
     compute_knot_vector_uniform(order, ncp, knots);
 
@@ -250,5 +250,8 @@ void RMTB::compute_jac(
         cols[inz] += (inz_dim + istart) * prod;
       }
     }
+
+    delete[] knots;
+    delete[] basis_vec;
   }
 }
