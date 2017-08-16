@@ -12,4 +12,6 @@ private:
   int nx, nt;
   double p;
   double * xt;
+  double * w;
+  double * dw_dx;
 };
