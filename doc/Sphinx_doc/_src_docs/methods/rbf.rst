@@ -48,12 +48,12 @@ Usage
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
            Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000598
-        Initializing linear solver - done. Time (sec):  0.0000808
+        Initializing linear solver - done. Time (sec):  0.0000830
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000467
-        Solving linear system (col. 0) - done. Time (sec):  0.0000639
-     Training - done. Time (sec):  0.0003803
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000494
+        Solving linear system (col. 0) - done. Time (sec):  0.0000660
+     Training - done. Time (sec):  0.0004461
   ___________________________________________________________________________
      
    Evaluation

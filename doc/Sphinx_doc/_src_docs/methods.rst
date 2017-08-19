@@ -9,8 +9,7 @@ SMT contains the surrogate modeling methods listed below.
 
    methods/rbf
    methods/idw
-   methods/rmtb
-   methods/rmtc
+   methods/rmts
    methods/ls
    methods/qp
    methods/krg
@@ -65,13 +64,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000820
-        Initializing linear solver - done. Time (sec):  0.0001121
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000799
+        Initializing linear solver - done. Time (sec):  0.0001049
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000920
-        Solving linear system (col. 0) - done. Time (sec):  0.0001128
-     Training - done. Time (sec):  0.0005579
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000892
+        Solving linear system (col. 0) - done. Time (sec):  0.0001080
+     Training - done. Time (sec):  0.0005410
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +78,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000350
+     Predicting - done. Time (sec):  0.0000341
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000003
      
   
 .. figure:: methods.png
