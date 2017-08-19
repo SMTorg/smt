@@ -37,6 +37,7 @@ Documentation contents
    :maxdepth: 2
    :titlesonly:
 
+   _src_docs/getting_started
    _src_docs/methods
    _src_docs/problems
    _src_docs/sampling

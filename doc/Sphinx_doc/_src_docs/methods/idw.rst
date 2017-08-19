@@ -70,9 +70,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003011
+     Predicting - done. Time (sec):  0.0000420
      
-     Prediction time/pt. (sec) :  0.0000030
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: idw.png
