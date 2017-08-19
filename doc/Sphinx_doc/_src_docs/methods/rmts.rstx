@@ -15,6 +15,7 @@ The prediction equation for RMTS is
 
 .. math ::
 
+  \newcommand\RR{\mathbb{R}}
   \newcommand\w{\mathbf{w}}
   \newcommand\H{\mathbf{H}}
   \newcommand\F{\mathbf{F}}
@@ -22,15 +23,14 @@ The prediction equation for RMTS is
   \newcommand\x{\mathbf{x}}
   \newcommand\yt{\mathbf{yt}}
   \newcommand\xt{\mathbf{xt}}
-  \y = \F(\x) \w
-  ,
+  y = \F(\x) \w ,
 
 where
-:math:`\x` is the vector of prediction inputs,
-:math:`\y` is the vector of prediction outputs,
-:math:`\w` is the vector of spline coefficients,
+:math:`\x \in \RR^{nx}` is the prediction input vector,
+:math:`y \in \RR` is the prediction output,
+:math:`\w \in \RR^{nw}` is the vector of spline coefficients,
 and
-:math:`\F(\x)` is the matrix mapping the spline coefficients to the prediction outputs.
+:math:`\F(\x) \in \RR^{nw}` is the vector mapping the spline coefficients to the prediction output.
 
 RMTS computes the coefficients of the splines, :math:`\w`, by solving an energy minimization problem
 subject to the conditions that the splines pass through the training points.
@@ -47,16 +47,14 @@ and another term for regularization:
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \left[ \F(\xt) \w - \yt \right]^T
-    \left[ \F(\xt) \w - \yt \right]
-  \end{array}
-  ,
+    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
+  \end{array} ,
 
 where
-:math:`\xt` is the vector of training inputs,
-:math:`\yt` is the vector of training outputs,
-:math:`\H` is the matrix containing the second derivatives,
-:math:`\F(\xt)` is the matrix mapping the spline coefficients to the training outputs,
+:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+:math:`yt_i \in \RR` is the output value for the :math:`i` th training point,
+:math:`\H \in \RR^{nw \times nw}` is the matrix containing the second derivatives,
+:math:`\F(\xt_i) \in \RR^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
 and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
 In problems with a large number of training points relative to the number of spline coefficients,
@@ -77,11 +75,11 @@ The nonlinear formulation is given by
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i \left[ \F(\xt) \w - \yt \right] ^ p_i
+    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ p
   \end{array}
   ,
 
-where :math:`p_i` is the order given by the approx_order option.
+where :math:`p` is the order given by the approx_order option.
 The number of Newton iterations can be specified via the :code:`nln_max_iter` option.
 
 RMTS is implemented in SMT with two choices of splines:

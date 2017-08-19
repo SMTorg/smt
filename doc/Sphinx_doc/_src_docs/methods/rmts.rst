@@ -15,6 +15,7 @@ The prediction equation for RMTS is
 
 .. math ::
 
+  \newcommand\RR{\mathbb{R}}
   \newcommand\w{\mathbf{w}}
   \newcommand\H{\mathbf{H}}
   \newcommand\F{\mathbf{F}}
@@ -22,15 +23,14 @@ The prediction equation for RMTS is
   \newcommand\x{\mathbf{x}}
   \newcommand\yt{\mathbf{yt}}
   \newcommand\xt{\mathbf{xt}}
-  \y = \F(\x) \w
-  ,
+  y = \F(\x) \w ,
 
 where
-:math:`\x` is the vector of prediction inputs,
-:math:`\y` is the vector of prediction outputs,
-:math:`\w` is the vector of spline coefficients,
+:math:`\x \in \RR^{nx}` is the prediction input vector,
+:math:`y \in \RR` is the prediction output,
+:math:`\w \in \RR^{nw}` is the vector of spline coefficients,
 and
-:math:`\F(\x)` is the matrix mapping the spline coefficients to the prediction outputs.
+:math:`\F(\x) \in \RR^{nw}` is the vector mapping the spline coefficients to the prediction output.
 
 RMTS computes the coefficients of the splines, :math:`\w`, by solving an energy minimization problem
 subject to the conditions that the splines pass through the training points.
@@ -47,16 +47,14 @@ and another term for regularization:
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \left[ \F(\xt) \w - \yt \right]^T
-    \left[ \F(\xt) \w - \yt \right]
-  \end{array}
-  ,
+    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
+  \end{array} ,
 
 where
-:math:`\xt` is the vector of training inputs,
-:math:`\yt` is the vector of training outputs,
-:math:`\H` is the matrix containing the second derivatives,
-:math:`\F(\xt)` is the matrix mapping the spline coefficients to the training outputs,
+:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+:math:`yt_i \in \RR` is the output value for the :math:`i` th training point,
+:math:`\H \in \RR^{nw \times nw}` is the matrix containing the second derivatives,
+:math:`\F(\xt_i) \in \RR^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
 and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
 In problems with a large number of training points relative to the number of spline coefficients,
@@ -77,11 +75,11 @@ The nonlinear formulation is given by
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i \left[ \F(\xt) \w - \yt \right] ^ p_i
+    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ p
   \end{array}
   ,
 
-where :math:`p_i` is the order given by the approx_order option.
+where :math:`p` is the order given by the approx_order option.
 The number of Newton iterations can be specified via the :code:`nln_max_iter` option.
 
 RMTS is implemented in SMT with two choices of splines:
@@ -145,75 +143,75 @@ Usage (RMTB)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000019
+           Computing dof2coeff - done. Time (sec):  0.0000031
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0003347
+           Initializing Hessian - done. Time (sec):  0.0003548
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0010221
+           Computing energy terms - done. Time (sec):  0.0010870
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0003972
-        Pre-computing matrices - done. Time (sec):  0.0018160
+           Computing approximation terms - done. Time (sec):  0.0003970
+        Pre-computing matrices - done. Time (sec):  0.0019078
         Solving for degrees of freedom ...
            Solving initial linear problem (n=20) ...
               Assembling linear system ...
-              Assembling linear system - done. Time (sec):  0.0004430
+              Assembling linear system - done. Time (sec):  0.0004551
               Initializing linear solver ...
-              Initializing linear solver - done. Time (sec):  0.0000200
+              Initializing linear solver - done. Time (sec):  0.0000219
               Solving linear system (col. 0) ...
                  Running cg Krylov solver (20 x 20 mtx) ...
-                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0018849
-              Solving linear system (col. 0) - done. Time (sec):  0.0019069
-           Solving initial linear problem (n=20) - done. Time (sec):  0.0023990
+                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0019248
+              Solving linear system (col. 0) - done. Time (sec):  0.0019479
+           Solving initial linear problem (n=20) - done. Time (sec):  0.0024531
            Solving nonlinear problem (col. 0) ...
               Nonlinear (itn, iy, grad. norm, func.) :   0   0 2.646068513e-15 1.135672323e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0007558
+                 Assembling linear system - done. Time (sec):  0.0007589
                  Initializing linear solver ...
                  Initializing linear solver - done. Time (sec):  0.0000148
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0061898
+                 Solving linear system - done. Time (sec):  0.0063949
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0005798
-              Nonlinear (itn, iy, grad. norm, func.) :   1   0 2.958916346e-15 1.135667790e-15
+                 Performing line search - done. Time (sec):  0.0010602
+              Nonlinear (itn, iy, grad. norm, func.) :   1   0 2.646086053e-15 1.135672321e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008099
+                 Assembling linear system - done. Time (sec):  0.0008008
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000298
+                 Initializing linear solver - done. Time (sec):  0.0000284
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0025580
+                 Solving linear system - done. Time (sec):  0.0019748
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000949
-              Nonlinear (itn, iy, grad. norm, func.) :   2   0 1.124756199e-13 1.130347200e-15
+                 Performing line search - done. Time (sec):  0.0002251
+              Nonlinear (itn, iy, grad. norm, func.) :   2   0 2.945795907e-14 1.135663464e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0009153
+                 Assembling linear system - done. Time (sec):  0.0007350
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000253
+                 Initializing linear solver - done. Time (sec):  0.0000172
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0022731
+                 Solving linear system - done. Time (sec):  0.0020559
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000398
-              Nonlinear (itn, iy, grad. norm, func.) :   3   0 3.301153444e-14 1.119917820e-15
+                 Performing line search - done. Time (sec):  0.0000391
+              Nonlinear (itn, iy, grad. norm, func.) :   3   0 9.225368607e-14 1.121276602e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0007453
+                 Assembling linear system - done. Time (sec):  0.0007341
                  Initializing linear solver ...
                  Initializing linear solver - done. Time (sec):  0.0000169
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0022330
+                 Solving linear system - done. Time (sec):  0.0022788
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000393
-              Nonlinear (itn, iy, grad. norm, func.) :   4   0 9.406540080e-15 1.119646967e-15
+                 Performing line search - done. Time (sec):  0.0000381
+              Nonlinear (itn, iy, grad. norm, func.) :   4   0 2.711738359e-14 1.119908145e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0007310
+                 Assembling linear system - done. Time (sec):  0.0010648
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000184
+                 Initializing linear solver - done. Time (sec):  0.0000281
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0020940
+                 Solving linear system - done. Time (sec):  0.0031550
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000670
-              Nonlinear (itn, iy, grad. norm, func.) :   5   0 7.257840806e-15 1.119637838e-15
-           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0228581
-        Solving for degrees of freedom - done. Time (sec):  0.0253141
-     Training - done. Time (sec):  0.0274532
+                 Performing line search - done. Time (sec):  0.0000432
+              Nonlinear (itn, iy, grad. norm, func.) :   5   0 7.833904678e-15 1.119647315e-15
+           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0240119
+        Solving for degrees of freedom - done. Time (sec):  0.0265262
+     Training - done. Time (sec):  0.0288038
   ___________________________________________________________________________
      
    Evaluation
@@ -221,9 +219,9 @@ Usage (RMTB)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003400
+     Predicting - done. Time (sec):  0.0003619
      
-     Prediction time/pt. (sec) :  0.0000034
+     Prediction time/pt. (sec) :  0.0000036
      
   
 .. figure:: rmts.png
@@ -278,75 +276,75 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0007989
+           Computing dof2coeff - done. Time (sec):  0.0007591
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0003872
+           Initializing Hessian - done. Time (sec):  0.0002558
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0011239
+           Computing energy terms - done. Time (sec):  0.0014379
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0005031
-        Pre-computing matrices - done. Time (sec):  0.0028827
+           Computing approximation terms - done. Time (sec):  0.0008960
+        Pre-computing matrices - done. Time (sec):  0.0034459
         Solving for degrees of freedom ...
            Solving initial linear problem (n=42) ...
               Assembling linear system ...
-              Assembling linear system - done. Time (sec):  0.0004439
+              Assembling linear system - done. Time (sec):  0.0007429
               Initializing linear solver ...
-              Initializing linear solver - done. Time (sec):  0.0000198
+              Initializing linear solver - done. Time (sec):  0.0000329
               Solving linear system (col. 0) ...
                  Running cg Krylov solver (42 x 42 mtx) ...
-                 Running cg Krylov solver (42 x 42 mtx) - done. Time (sec):  0.0022821
-              Solving linear system (col. 0) - done. Time (sec):  0.0023031
-           Solving initial linear problem (n=42) - done. Time (sec):  0.0027981
+                 Running cg Krylov solver (42 x 42 mtx) - done. Time (sec):  0.0046048
+              Solving linear system (col. 0) - done. Time (sec):  0.0046580
+           Solving initial linear problem (n=42) - done. Time (sec):  0.0054822
            Solving nonlinear problem (col. 0) ...
               Nonlinear (itn, iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0007589
+                 Assembling linear system - done. Time (sec):  0.0015061
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000153
+                 Initializing linear solver - done. Time (sec):  0.0000448
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0062158
+                 Solving linear system - done. Time (sec):  0.0095723
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0005889
-              Nonlinear (itn, iy, grad. norm, func.) :   1   0 3.630563558e-15 1.133570797e-15
+                 Performing line search - done. Time (sec):  0.0010390
+              Nonlinear (itn, iy, grad. norm, func.) :   1   0 3.083205110e-15 1.133564412e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008447
+                 Assembling linear system - done. Time (sec):  0.0012431
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000253
+                 Initializing linear solver - done. Time (sec):  0.0000300
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0048752
-                 Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000429
-              Nonlinear (itn, iy, grad. norm, func.) :   2   0 1.695886087e-14 1.117611568e-15
-                 Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0007381
-                 Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000179
-                 Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0060651
-                 Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000439
-              Nonlinear (itn, iy, grad. norm, func.) :   3   0 4.514073631e-15 1.117528217e-15
-                 Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008299
-                 Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000191
-                 Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0041389
-                 Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000451
-              Nonlinear (itn, iy, grad. norm, func.) :   4   0 1.009913860e-15 1.117516752e-15
-                 Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008199
-                 Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000210
-                 Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0038741
+                 Solving linear system - done. Time (sec):  0.0063512
                  Performing line search ...
                  Performing line search - done. Time (sec):  0.0000420
-              Nonlinear (itn, iy, grad. norm, func.) :   5   0 1.587034176e-16 1.117515739e-15
-           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0326569
-        Solving for degrees of freedom - done. Time (sec):  0.0355172
-     Training - done. Time (sec):  0.0387249
+              Nonlinear (itn, iy, grad. norm, func.) :   2   0 3.490262990e-14 1.117722944e-15
+                 Assembling linear system ...
+                 Assembling linear system - done. Time (sec):  0.0008931
+                 Initializing linear solver ...
+                 Initializing linear solver - done. Time (sec):  0.0000281
+                 Solving linear system ...
+                 Solving linear system - done. Time (sec):  0.0043740
+                 Performing line search ...
+                 Performing line search - done. Time (sec):  0.0001233
+              Nonlinear (itn, iy, grad. norm, func.) :   3   0 3.140328140e-14 1.117706632e-15
+                 Assembling linear system ...
+                 Assembling linear system - done. Time (sec):  0.0007892
+                 Initializing linear solver ...
+                 Initializing linear solver - done. Time (sec):  0.0000231
+                 Solving linear system ...
+                 Solving linear system - done. Time (sec):  0.0043151
+                 Performing line search ...
+                 Performing line search - done. Time (sec):  0.0000420
+              Nonlinear (itn, iy, grad. norm, func.) :   4   0 8.735151454e-15 1.117543997e-15
+                 Assembling linear system ...
+                 Assembling linear system - done. Time (sec):  0.0008810
+                 Initializing linear solver ...
+                 Initializing linear solver - done. Time (sec):  0.0000219
+                 Solving linear system ...
+                 Solving linear system - done. Time (sec):  0.0040228
+                 Performing line search ...
+                 Performing line search - done. Time (sec):  0.0000410
+              Nonlinear (itn, iy, grad. norm, func.) :   5   0 2.096963347e-15 1.117518317e-15
+           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0386209
+        Solving for degrees of freedom - done. Time (sec):  0.0441940
+     Training - done. Time (sec):  0.0480208
   ___________________________________________________________________________
      
    Evaluation
@@ -354,9 +352,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003159
+     Predicting - done. Time (sec):  0.0003462
      
-     Prediction time/pt. (sec) :  0.0000032
+     Prediction time/pt. (sec) :  0.0000035
      
   
 .. figure:: rmts.png

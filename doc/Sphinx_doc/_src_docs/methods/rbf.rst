@@ -1,6 +1,71 @@
 Radial basis functions
 ======================
 
+The radial basis function (RBF) surrogate model represents the interpolating function
+as a linear combination of basis functions, one for each training point.
+RBFs are named as such because the basis functions depend only on
+the distance from the prediction point to the training point for the basis function.
+The coefficients of the basis functions are computed during the training stage.
+RBFs are frequently augmented to global polynomials to capture the general trends.
+
+The prediction equation for RBFs is
+
+.. math ::
+
+  \newcommand\RR{\mathbb{R}}
+  \newcommand\y{\mathbf{y}}
+  \newcommand\x{\mathbf{x}}
+  \newcommand\a{\mathbf{a}}
+  \newcommand\b{\mathbf{b}}
+  \newcommand\p{\mathbf{p}}
+  \newcommand\xt{\mathbf{xt}}
+  \newcommand\yt{\mathbf{yt}}
+  \newcommand\wp{\mathbf{w_p}}
+  \newcommand\wr{\mathbf{w_r}}
+
+  y = \p(\x) \wp + \sum_i^{nt} \phi(\x, \xt_i) \wr ,
+
+where
+:math:`\x \in \RR^{nx}` is the prediction input vector,
+:math:`y \in \RR` is the prediction output,
+:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+:math:`\p(\x) \in \RR^{np}` is the vector mapping the polynomial coefficients to the prediction output,
+:math:`\phi(\x, \xt_i) \in \RR^{nt}` is the vector mapping the radial basis function coefficients to the prediction output,
+:math:`\wp \in \RR^{np}` is the vector of polynomial coefficients,
+and
+:math:`\wr \in \RR^{nt}` is the vector of radial basis function coefficients.
+
+The coefficients, :math:`\wp` and :math:`\wr`, are computed by solving the follow linear system:
+
+.. math ::
+
+  \begin{bmatrix}
+    \phi( \xt_1 , \xt_1 ) & \dots & \phi( \xt_1 , \xt_{nt} ) & \p( \xt_1 ) ^ T \\
+    \vdots & \ddots & \vdots & \vdots \\
+    \phi( \xt_{nt} , \xt_1 ) & \dots & \phi( \xt_{nt} , \xt_{nt} ) & \p( \xt_{nt} ) ^ T \\
+    \p( \xt_1 ) & \dots & \p( \xt_{nt} ) & \mathbf{0} \\
+  \end{bmatrix}
+  \begin{bmatrix}
+    \wr_1 \\
+    \vdots \\
+    \wr_{nt} \\
+    \wp \\
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    \yt_1 \\
+    \vdots \\
+    \yt_{nt} \\
+    0 \\
+  \end{bmatrix}
+
+At the moment, only Gaussian basis functions are implemented.
+These are given by:
+
+.. math ::
+
+  \phi( \x_i , \x_j ) = \exp \left( \frac{|| \x_i - \x_j || ^ 2}{d0^2} \right)
+
 Usage
 -----
 
@@ -47,13 +112,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000598
-        Initializing linear solver - done. Time (sec):  0.0000830
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000639
+        Initializing linear solver - done. Time (sec):  0.0000899
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000494
-        Solving linear system (col. 0) - done. Time (sec):  0.0000660
-     Training - done. Time (sec):  0.0004461
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000520
+        Solving linear system (col. 0) - done. Time (sec):  0.0000713
+     Training - done. Time (sec):  0.0004079
   ___________________________________________________________________________
      
    Evaluation
@@ -61,9 +126,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000250
+     Predicting - done. Time (sec):  0.0000248
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000002
      
   
 .. figure:: rbf.png
