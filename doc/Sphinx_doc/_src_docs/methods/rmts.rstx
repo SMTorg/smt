@@ -23,6 +23,7 @@ The prediction equation for RMTS is
   \newcommand\x{\mathbf{x}}
   \newcommand\yt{\mathbf{yt}}
   \newcommand\xt{\mathbf{xt}}
+  \newcommand\sumt{\sum_i^{nt}}
   y = \F(\x) \w ,
 
 where
@@ -47,7 +48,7 @@ and another term for regularization:
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
+    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
   \end{array} ,
 
 where
@@ -75,7 +76,7 @@ The nonlinear formulation is given by
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \F(\xt_i) \w - \yt_i \right] ^ p
+    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ p
   \end{array}
   ,
 

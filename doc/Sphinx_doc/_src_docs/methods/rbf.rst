@@ -22,8 +22,8 @@ The prediction equation for RBFs is
   \newcommand\yt{\mathbf{yt}}
   \newcommand\wp{\mathbf{w_p}}
   \newcommand\wr{\mathbf{w_r}}
-
-  y = \p(\x) \wp + \sum_i^{nt} \phi(\x, \xt_i) \wr ,
+  \newcommand\sumt{\sum_i^{nt}}
+  y = \p(\x) \wp + \sumt \phi(\x, \xt_i) \wr ,
 
 where
 :math:`\x \in \RR^{nx}` is the prediction input vector,
@@ -64,7 +64,7 @@ These are given by:
 
 .. math ::
 
-  \phi( \x_i , \x_j ) = \exp \left( \frac{|| \x_i - \x_j || ^ 2}{d0^2} \right)
+  \phi( \x_i , \x_j ) = \exp \left( \frac{|| \x_i - \x_j ||_2 ^ 2}{d0^2} \right)
 
 Usage
 -----
@@ -112,13 +112,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000639
-        Initializing linear solver - done. Time (sec):  0.0000899
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000651
+        Initializing linear solver - done. Time (sec):  0.0000889
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000520
-        Solving linear system (col. 0) - done. Time (sec):  0.0000713
-     Training - done. Time (sec):  0.0004079
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000513
+        Solving linear system (col. 0) - done. Time (sec):  0.0000691
+     Training - done. Time (sec):  0.0004148
   ___________________________________________________________________________
      
    Evaluation
@@ -126,9 +126,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000248
+     Predicting - done. Time (sec):  0.0000269
      
-     Prediction time/pt. (sec) :  0.0000002
+     Prediction time/pt. (sec) :  0.0000003
      
   
 .. figure:: rbf.png
