@@ -9,8 +9,7 @@ SMT contains the surrogate modeling methods listed below.
 
    methods/rbf
    methods/idw
-   methods/rmtb
-   methods/rmtc
+   methods/rmts
    methods/ls
    methods/qp
    methods/krg

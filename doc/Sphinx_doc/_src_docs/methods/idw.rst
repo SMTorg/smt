@@ -1,20 +1,43 @@
 Inverse-distance weighting
 ==========================
 
-The inverse distance weighting [1]_ model is an interpolating method and the unknown points are calculated with a weighted average of the sampling points.
+The inverse distance weighting [1]_ (IDW) model is an interpolating method
+and the unknown points are calculated with a weighted average of the sampling points.
 
-The prediction value :math:`\hat{y}` at a given unknown point :math:`\bf x` using the samples :math:`{\bf y}` is given by
+The prediction equation for IDW is
 
 .. math ::
-  \hat{y}=
+
+  \newcommand\RR{\mathbb{R}}
+  \newcommand\y{\mathbf{y}}
+  \newcommand\x{\mathbf{x}}
+  \newcommand\yt{\mathbf{yt}}
+  \newcommand\xt{\mathbf{xt}}
+  \newcommand\sumt{\sum_i^{nt}}
+  y =
   \left\{
   \begin{array}{ll}
-  \frac{\sum\limits_{i=1}^n\beta_iy_i}{\sum\limits_{i=1}^n\beta_i},&\text{if}\quad d({\bf x},{\bf x}^{(i)})\neq 0 \quad \forall i\\
-  y_i&\text{if}\quad d({\bf x},{\bf x}^{(i)})= 0
+    \frac{\sumt \beta(\x, \xt_i) \yt_i}{\sumt \beta(\x, \xt_i)},
+    & \text{if} \quad \x \neq \xt_i \quad \forall i\\
+    \yt_i
+    & \text{if} \quad \x = \xt_i \quad \text{for some} \; i\\
   \end{array}
-  \right.
+  \right. ,
 
-where :math:`\beta_i = \frac{1}{d({\bf x},{{\bf x}^{(i)}})^p}` with :math:`p` a positive real number, called the power parameter.
+where
+:math:`\x \in \RR^{nx}` is the prediction input vector,
+:math:`y \in \RR` is the prediction output,
+:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+and
+:math:`yt_i \in \RR` is the output value for the :math:`i` th training point.
+The weighting function :math:`\beta` is defined by
+
+.. math ::
+
+  \beta( \x_i , \x_j ) = || \x_i - \x_j ||_2 ^ {-p} ,
+
+where :math:`p` a positive real number, called the power parameter.
+This parameter must be strictly greater than 1 for the derivatives to be continuous.
 
 .. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
@@ -62,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001521
+     Training - done. Time (sec):  0.0001690
   ___________________________________________________________________________
      
    Evaluation
@@ -70,9 +93,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003011
+     Predicting - done. Time (sec):  0.0000448
      
-     Prediction time/pt. (sec) :  0.0000030
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: idw.png

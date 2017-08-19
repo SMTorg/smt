@@ -1,0 +1,117 @@
+Regularized minimal-energy tensor-product splines
+=================================================
+
+Regularized minimal-energy tensor-product splines (RMTS) is a type of surrogate model for
+low-dimensional problems with large datasets and where fast prediction is desired.
+The underlying mathematical functions are tensor-product splines,
+which limits RMTS to up to 4-D problems, or 5-D problems in certain cases.
+On the other hand, tensor-product splines enable a very fast prediction time
+that does not increase with the number of training points.
+Unlike other methods like Kriging and radial basis functions,
+RMTS is not susceptible to numerical issues when there is a large number of training points
+or when there are points that are too close together.
+
+The prediction equation for RMTS is
+
+.. math ::
+
+  \newcommand\RR{\mathbb{R}}
+  \newcommand\w{\mathbf{w}}
+  \newcommand\H{\mathbf{H}}
+  \newcommand\F{\mathbf{F}}
+  \newcommand\y{\mathbf{y}}
+  \newcommand\x{\mathbf{x}}
+  \newcommand\yt{\mathbf{yt}}
+  \newcommand\xt{\mathbf{xt}}
+  \newcommand\sumt{\sum_i^{nt}}
+  y = \F(\x) \w ,
+
+where
+:math:`\x \in \RR^{nx}` is the prediction input vector,
+:math:`y \in \RR` is the prediction output,
+:math:`\w \in \RR^{nw}` is the vector of spline coefficients,
+and
+:math:`\F(\x) \in \RR^{nw}` is the vector mapping the spline coefficients to the prediction output.
+
+RMTS computes the coefficients of the splines, :math:`\w`, by solving an energy minimization problem
+subject to the conditions that the splines pass through the training points.
+This is formulated as an unconstrained optimization problem
+where the objective function consists of a term containing the second derivatives of the splines,
+another term representing the approximation error for the training points,
+and another term for regularization:
+
+.. math ::
+
+  \begin{array}{r l}
+    \underset{\w}{\min} & \frac{1}{2} \w^T \H \w
+    + \frac{1}{2} \beta \w^T \w
+    \\
+    &
+    + \frac{1}{2} \frac{1}{\alpha}
+    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
+  \end{array} ,
+
+where
+:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+:math:`yt_i \in \RR` is the output value for the :math:`i` th training point,
+:math:`\H \in \RR^{nw \times nw}` is the matrix containing the second derivatives,
+:math:`\F(\xt_i) \in \RR^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
+and :math:`\alpha` and :math:`\beta` are regularization coefficients.
+
+In problems with a large number of training points relative to the number of spline coefficients,
+the energy minimization term is not necessary;
+this term can be zero-ed by setting the reg_cons option to zero.
+In problems with a small dataset, the energy minimization is necessary.
+When the true function has high curvature, the energy minimization can be counterproductive
+in the regions of high curvature.
+This can be addressed by increasing the quadratic approximation term to one of higher order,
+and using Newton's method to solve the nonlinear system that results.
+The nonlinear formulation is given by
+
+.. math::
+
+  \begin{array}{r l}
+    \underset{\w}{\min} & \frac{1}{2} \w^T \H \w
+    + \frac{1}{2} \beta \w^T \w
+    \\
+    &
+    + \frac{1}{2} \frac{1}{\alpha}
+    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ p
+  \end{array}
+  ,
+
+where :math:`p` is the order given by the approx_order option.
+The number of Newton iterations can be specified via the :code:`nln_max_iter` option.
+
+RMTS is implemented in SMT with two choices of splines:
+
+1. B-splines (RMTB): RMTB uses B-splines with a uniform knot vector in each dimension.
+The number of B-spline control points and the B-spline order in each dimension are options
+that trade off efficiency and precision of the interpolant.
+
+2. Cubic Hermite splines (RMTC): RMTC divides the domain into tensor-product cubic elements.
+For adjacent elements, the values and derivatives are continuous.
+The number of elements in each dimension is an option that trades off efficiency and precision.
+
+In general, RMTB is the better choice when training time is the most important,
+while RMTC is the better choice when accuracy of the interpolant is the most important.
+
+Usage (RMTB)
+------------
+
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtb
+
+Usage (RMTC)
+------------
+
+.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtc
+
+Options (RMTB)
+--------------
+
+.. embed-options-table-method :: RMTB
+
+Options (RMTC)
+--------------
+
+.. embed-options-table-method :: RMTC

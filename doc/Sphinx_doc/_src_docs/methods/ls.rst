@@ -57,7 +57,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0031819
+     Training - done. Time (sec):  0.0012269
   ___________________________________________________________________________
      
    Evaluation
@@ -65,7 +65,7 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000522
+     Predicting - done. Time (sec):  0.0000529
      
      Prediction time/pt. (sec) :  0.0000005
      
