@@ -26,12 +26,7 @@ Clone the repository from github then run:
 pip install -e name_folder
 ```
 
-# Usage
-
-For examples demonstrating how to use SMT, go to the 'examples' folder.
-
 # Tests
-
 To run tests, first install the python testing framework using:
 
 ```
@@ -43,6 +38,12 @@ and run
 ```
 testflo
 ```
+
+# Usage
+For examples demonstrating how to use SMT, go to the 'examples' folder.
+
+# Documentation
+http://smt.readthedocs.io
 
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
