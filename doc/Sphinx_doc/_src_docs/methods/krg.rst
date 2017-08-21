@@ -15,7 +15,7 @@ where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation
 Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions
 
 .. math ::
-  \prod\limits_{l=1}^d\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^d\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
   \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
 
 These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0050950
+     Training - done. Time (sec):  0.0085909
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001311
+     Predicting - done. Time (sec):  0.0002389
      
-     Prediction time/pt. (sec) :  0.0000013
+     Prediction time/pt. (sec) :  0.0000024
      
   
 .. figure:: krg.png
@@ -101,31 +101,31 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
+  *  -  theta0
      -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  data_dir
      -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print problem information
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
   *  -  print_solver
      -  True
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -136,13 +136,13 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['function']
      -  type of corr. func.
-  *  -  data_dir
+  *  -  print_training
+     -  True
      -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
+     -  ['bool']
+     -  Whether to print prediction information

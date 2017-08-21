@@ -11,11 +11,11 @@ where :math:`{\bf \epsilon}` is a vector of random errors and
 .. math ::
   {\bf X} =
   \begin{bmatrix}
-      1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
-      d}^{(1)}}^2 \\
+      1&x_{1}^{(1)} & \dots&x_{nx}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{nx-1}^{(1)}x_{nx}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
+      nx}^{(1)}}^2 \\
       \vdots&\vdots & \dots&\vdots & \vdots & \dots  & \vdots&\vdots & \vdots\\
-      1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
-      d}^{(n)}}^2 \\
+      1&x_{1}^{(nt)} & \dots&x_{nx}^{(nt)} & x_{1}^{(nt)}x_{2}^{(nt)} & \dots  & x_{nx-1}^{(nt)}x_{nx}^{(nt)}&{x_{1}^{(nt)}}^2 & \dots&{x_{
+      nx}^{(nt)}}^2 \\
   \end{bmatrix}.
 
 The vector of estimated polynomial regression coefficients using ordinary least square estimation is
@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002317
+     Training - done. Time (sec):  0.0003860
   ___________________________________________________________________________
      
    Evaluation
@@ -75,9 +75,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000322
+     Predicting - done. Time (sec):  0.0000470
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000005
      
   
 .. figure:: qp.png
@@ -97,6 +97,21 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
@@ -112,18 +127,3 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load

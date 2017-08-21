@@ -13,7 +13,7 @@ To install SMT, follow these two steps:
   - In terminal, navigate to the directory in which you want to download the source code
   and use the command :code:`git clone https://github.com/SMTorg/smt.git` to download.
 
-2. Go into the smt directory and use the command :code:`pip install .` to install SMT.
+2. Go into the smt directory and use the command :code:`pip install -e .` to install SMT.
 
 Uninstalling
 ------------

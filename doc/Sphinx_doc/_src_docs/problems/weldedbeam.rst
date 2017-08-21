@@ -5,7 +5,7 @@ Welded beam function
   \sqrt{\frac{\tau'^2+\tau''^2+l\tau'\tau''}{\sqrt{0.25\left(l^2+(h+t)^2\right)}}},
 
 where
-:math:`\tau'=\frac{6000}{\sqrt{2}hl}, \quad\tau''=\frac{6000(14+0.5l)\sqrt{0.25\left(l^2+(h+t)^2\right)}}{2\left[0.707hl\left(\frac{l^2}{12}+0.25(h+t)^2\right)\right]},\quad \text{for}\quad h\in[0.125,1],\quad l,t\in[5,10]`
+:math:`\tau'=\frac{6000}{\sqrt{2}hl}, \quad\tau''=\frac{6000(14+0.5l)\sqrt{0.25\left(l^2+(h+t)^2\right)}}{2\left[0.707hl\left(\frac{l^2}{12}+0.25(h+t)^2\right)\right]},\quad \text{for}\quad h\in[0.125,1],\quad l,t\in[5,10].`
 
 Usage
 -----
@@ -66,6 +66,11 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
+     -  
   *  -  return_complex
      -  False
      -  None
@@ -75,9 +80,4 @@ Options
      -  WeldedBeam
      -  None
      -  ['str']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  
