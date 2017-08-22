@@ -11,11 +11,11 @@ where :math:`{\bf \epsilon}` is a vector of random errors and
 .. math ::
   {\bf X} =
   \begin{bmatrix}
-      1&x_{1}^{(1)} & \dots&x_{d}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{d-1}^{(1)}x_{d}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
-      d}^{(1)}}^2 \\
+      1&x_{1}^{(1)} & \dots&x_{nx}^{(1)} & x_{1}^{(1)}x_{2}^{(1)} & \dots  & x_{nx-1}^{(1)}x_{nx}^{(1)}&{x_{1}^{(1)}}^2 & \dots&{x_{
+      nx}^{(1)}}^2 \\
       \vdots&\vdots & \dots&\vdots & \vdots & \dots  & \vdots&\vdots & \vdots\\
-      1&x_{1}^{(n)} & \dots&x_{d}^{(n)} & x_{1}^{(n)}x_{2}^{(n)} & \dots  & x_{d-1}^{(n)}x_{d}^{(n)}&{x_{1}^{(n)}}^2 & \dots&{x_{
-      d}^{(n)}}^2 \\
+      1&x_{1}^{(nt)} & \dots&x_{nx}^{(nt)} & x_{1}^{(nt)}x_{2}^{(nt)} & \dots  & x_{nx-1}^{(nt)}x_{nx}^{(nt)}&{x_{1}^{(nt)}}^2 & \dots&{x_{
+      nx}^{(nt)}}^2 \\
   \end{bmatrix}.
 
 The vector of estimated polynomial regression coefficients using ordinary least square estimation is

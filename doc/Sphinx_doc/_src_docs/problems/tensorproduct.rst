@@ -4,22 +4,22 @@ Tensor-product function
 .. rubric :: cos
 
 .. math ::
-  \prod\limits_{i=1}^{d}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \prod\limits_{i=1}^{nx}\cos(a\pi x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,nx.
 
 .. rubric :: exp
 
 .. math ::
-  \prod\limits_{i=1}^{d}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \prod\limits_{i=1}^{nx}\exp(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,nx.
 
 .. rubric :: tanh
 
 .. math ::
-  \prod\limits_{i=1}^{d}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \prod\limits_{i=1}^{nx}\tanh(x_i),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,nx.
 
 .. rubric :: gaussian
 
 .. math ::
-  \prod\limits_{i=1}^{d}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,d.
+  \prod\limits_{i=1}^{nx}\exp(-2 x_i^2),\quad-1\leq x_i\leq 1,\quad\text{ for }i=1,\ldots,nx.
 
 Usage
 -----
@@ -79,23 +79,23 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  width
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  
   *  -  return_complex
      -  False
      -  None
      -  ['bool']
-     -  
-  *  -  name
-     -  TP
-     -  None
-     -  ['str']
      -  
   *  -  func
      -  None
      -  ['cos', 'exp', 'tanh', 'gaussian']
      -  None
      -  
-  *  -  width
-     -  1.0
+  *  -  name
+     -  TP
      -  None
-     -  ['float', 'int']
+     -  ['str']
      -  

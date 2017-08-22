@@ -3,13 +3,13 @@ Least-squares approximation
 
 The following description is taken from scikit-learn version 0.18.2 [1]_.
 
-The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_d\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
+The Least Squares method fits a linear model with coefficients :math:`{\bf \beta} = \left(\beta_0, \beta_1,\dotsc,\beta_{nx}\right)` to minimize the residual sum of squares between the observed responses in the dataset, and the responses predicted by the linear approximation.
 Mathematically it solves a problem of the form:
 
 .. math ::
   \min_\limits{{\bf \beta}}||{\bf X\beta-y}||_2^2,
 
-where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(n)}}^T\right)^T` with dimensions (:math:`n\times d+1`).
+where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(nt)}}^T\right)^T` with dimensions (:math:`nt\times nx+1`).
 
 .. [1] http://scikit-learn.org/stable/modules/linear_model.html
 
@@ -57,7 +57,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0012269
+     Training - done. Time (sec):  0.0009341
   ___________________________________________________________________________
      
    Evaluation
@@ -65,9 +65,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000529
+     Predicting - done. Time (sec):  0.0000720
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000007
      
   
 .. figure:: ls.png
@@ -87,6 +87,21 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
@@ -102,18 +117,3 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load

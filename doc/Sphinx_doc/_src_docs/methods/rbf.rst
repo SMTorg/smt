@@ -112,13 +112,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000651
-        Initializing linear solver - done. Time (sec):  0.0000889
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000880
+        Initializing linear solver - done. Time (sec):  0.0001328
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000513
-        Solving linear system (col. 0) - done. Time (sec):  0.0000691
-     Training - done. Time (sec):  0.0004148
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000820
+        Solving linear system (col. 0) - done. Time (sec):  0.0001252
+     Training - done. Time (sec):  0.0007858
   ___________________________________________________________________________
      
    Evaluation
@@ -126,9 +126,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000269
+     Predicting - done. Time (sec):  0.0000560
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: rbf.png
@@ -148,53 +148,53 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  d0
-     -  1.0
-     -  None
-     -  ['int', 'float', 'list', 'ndarray']
-     -  basis function scaling parameter in exp(-d^2 / d0^2)
-  *  -  poly_degree
-     -  -1
-     -  [-1, 0, 1]
-     -  ['int']
-     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
-  *  -  reg
-     -  1e-10
+  *  -  print_solver
+     -  True
      -  None
-     -  ['int', 'float']
-     -  Regularization coeff.
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  poly_degree
+     -  -1
+     -  [-1, 0, 1]
+     -  ['int']
+     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
   *  -  max_print_depth
      -  5
      -  None
      -  ['int']
      -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  reg
+     -  1e-10
+     -  None
+     -  ['int', 'float']
+     -  Regularization coeff.
+  *  -  d0
+     -  1.0
+     -  None
+     -  ['int', 'float', 'list', 'ndarray']
+     -  basis function scaling parameter in exp(-d^2 / d0^2)
+  *  -  print_prediction
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print prediction information

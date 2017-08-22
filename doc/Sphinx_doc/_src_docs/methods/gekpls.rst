@@ -11,15 +11,15 @@ The key idea of GEKPLS consists in generating a set of approximating points arou
 Then, the PLS method is applied several times, each time on a different number of sampling points with the associated sampling points.
 Each PLS provides a set of coefficients that gives the contribution of each variable nearby the associated sampling point to the output.
 Finally, an average of all PLS coefficients is computed to get the global influence to the output.
-Denoting these coefficients by :math:`\left(w_1^{(k)},\dots,w_d^{(k)}\right)`, the GEKPLS Gaussian kernel function is given by:
+Denoting these coefficients by :math:`\left(w_1^{(k)},\dots,w_{nx}^{(k)}\right)`, the GEKPLS Gaussian kernel function is given by:
 
 .. math ::
-  k\left({\bf x^{(i)}},{\bf x^{(j)}}\right)=\sigma\prod\limits_{l=1}^d \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right)
+  k\left({\bf x^{(i)}},{\bf x^{(j)}}\right)=\sigma\prod\limits_{l=1}^{nx} \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right)
 
-This approach reduces the number of hyperparameters (reduced dimension) from :math:`d` to :math:`h` with :math:`d>>h`.
+This approach reduces the number of hyperparameters (reduced dimension) from :math:`nx` to :math:`h` with :math:`nx>>h`.
 
 As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point.
-The idea here is to add only m approximating points :math:`(m \in [1, d])` around each sampling point. 
+The idea here is to add only m approximating points :math:`(m \in [1, nx])` around each sampling point.
 Only the $m$ highest coefficients given by the first principal component are considered, which usually contains the most useful information. 
 More details of such approach are given in [2]_.
 
@@ -89,7 +89,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0153437
+     Training - done. Time (sec):  0.0371590
   
 .. figure:: gekpls.png
   :scale: 80 %
@@ -108,31 +108,41 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
+  *  -  n_comp
+     -  1
      -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
+     -  ['int']
+     -  Number of principal components
+  *  -  data_dir
      -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
   *  -  print_solver
      -  True
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  extra_points
+     -  0
+     -  None
+     -  ['int']
+     -  Number of extra points per training point
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -143,33 +153,23 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['function']
      -  type of corr. func.
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components
-  *  -  theta0
-     -  [0.01]
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
   *  -  delta_x
      -  0.0001
      -  None
      -  ['int', 'float']
      -  Step used in the FOTA
-  *  -  extra_points
-     -  0
+  *  -  xlimits
      -  None
-     -  ['int']
-     -  Number of extra points per training point
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print prediction information

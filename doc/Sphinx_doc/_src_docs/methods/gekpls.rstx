@@ -11,15 +11,15 @@ The key idea of GEKPLS consists in generating a set of approximating points arou
 Then, the PLS method is applied several times, each time on a different number of sampling points with the associated sampling points.
 Each PLS provides a set of coefficients that gives the contribution of each variable nearby the associated sampling point to the output.
 Finally, an average of all PLS coefficients is computed to get the global influence to the output.
-Denoting these coefficients by :math:`\left(w_1^{(k)},\dots,w_d^{(k)}\right)`, the GEKPLS Gaussian kernel function is given by:
+Denoting these coefficients by :math:`\left(w_1^{(k)},\dots,w_{nx}^{(k)}\right)`, the GEKPLS Gaussian kernel function is given by:
 
 .. math ::
-  k\left({\bf x^{(i)}},{\bf x^{(j)}}\right)=\sigma\prod\limits_{l=1}^d \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right)
+  k\left({\bf x^{(i)}},{\bf x^{(j)}}\right)=\sigma\prod\limits_{l=1}^{nx} \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right)
 
-This approach reduces the number of hyperparameters (reduced dimension) from :math:`d` to :math:`h` with :math:`d>>h`.
+This approach reduces the number of hyperparameters (reduced dimension) from :math:`nx` to :math:`h` with :math:`nx>>h`.
 
 As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point.
-The idea here is to add only m approximating points :math:`(m \in [1, d])` around each sampling point. 
+The idea here is to add only m approximating points :math:`(m \in [1, nx])` around each sampling point.
 Only the $m$ highest coefficients given by the first principal component are considered, which usually contains the most useful information. 
 More details of such approach are given in [2]_.
 
