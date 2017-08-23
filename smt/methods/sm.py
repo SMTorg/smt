@@ -1,8 +1,8 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
-        
-This package is distributed under BSD license
+
+This package is distributed under New BSD license.
 '''
 #TODO: Extend to multifidelity problems by adding training_points = {'approx': {}}
 #TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict)

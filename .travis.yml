@@ -39,5 +39,4 @@ install:
 script:
 - testflo
 - cd doc
-- cd Sphinx_doc
 - make html
