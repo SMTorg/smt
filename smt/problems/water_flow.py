@@ -2,7 +2,7 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang         <hwangjt@umich.edu>
 
-This package is distributed under BSD license
+This package is distributed under New BSD license.
 
 Water flow problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.

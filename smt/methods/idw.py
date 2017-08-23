@@ -2,7 +2,7 @@
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
         
-This package is distributed under BSD license
+This package is distributed under New BSD license.
 '''
 
 from __future__ import division
