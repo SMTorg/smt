@@ -3,10 +3,10 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) (Windows)
 
 # README
-This repository includes the codes for the surrogate model toolbox (SMT).
+This repository includes the codes for the surrogate model toolbox (SMT). SMT is a Python package and is distributed under the BSD license.
 
 # Version
-Version beta
+Version 0.1
 
 # Required packages
 Scipy    >= Version 0.15.1
