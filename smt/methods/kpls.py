@@ -1,6 +1,8 @@
-"""
-Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
-"""
+'''
+Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+        
+This package is distributed under BSD license
+'''
 
 from __future__ import division
 import warnings

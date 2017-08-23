@@ -2,7 +2,9 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang         <hwangjt@umich.edu>
 
-Carre function.
+This package is distributed under BSD license
+        
+Sphere function.
 """
 from __future__ import division
 import numpy as np

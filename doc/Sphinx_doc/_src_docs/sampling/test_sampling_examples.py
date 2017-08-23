@@ -1,3 +1,10 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 import unittest
 
 import matplotlib

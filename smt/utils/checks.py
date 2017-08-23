@@ -1,3 +1,9 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 import numpy as np
 
 def check_2d_array(array, name):

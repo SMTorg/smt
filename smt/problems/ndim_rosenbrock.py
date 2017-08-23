@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under BSD license
+
 N-dimensional Rosenbrock problem.
 """
 import numpy as np

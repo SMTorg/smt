@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under BSD license
+
 Base class for sampling algorithms.
 """
 import numpy as np

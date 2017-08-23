@@ -1,6 +1,9 @@
-"""
+'''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-"""
+        
+This package is distributed under BSD license
+'''
+
 from __future__ import print_function
 
 import numpy as np

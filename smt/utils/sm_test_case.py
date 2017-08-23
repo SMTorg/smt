@@ -1,6 +1,9 @@
-"""
-Base test class.
-"""
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 import numpy as np
 import unittest
 

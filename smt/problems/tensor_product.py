@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under BSD license
+
 Tensor-product of cos, exp, or tanh.
 """
 from __future__ import division

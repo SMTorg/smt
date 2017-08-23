@@ -1,3 +1,9 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 from six import iteritems
 
 def process_options(root, file_name, iline, line):

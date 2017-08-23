@@ -1,7 +1,8 @@
-"""
-Author: Dr. John T. Hwang         <hwangjt@umich.edu>
-
-"""
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
 
 from __future__ import division
 

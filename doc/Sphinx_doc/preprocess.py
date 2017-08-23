@@ -1,3 +1,9 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 import os
 
 from preprocess_test import process_test

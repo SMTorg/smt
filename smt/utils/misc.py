@@ -1,3 +1,9 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under BSD license
+'''
+
 import numpy as np
 from smt.utils.checks import check_2d_array
 from smt.utils.validation import array2d

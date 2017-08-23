@@ -1,6 +1,9 @@
-"""
+'''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-"""
+        
+This package is distributed under BSD license
+'''
+
 try:
     import cPickle as pickle
 except:

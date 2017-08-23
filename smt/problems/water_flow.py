@@ -2,6 +2,8 @@
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang         <hwangjt@umich.edu>
 
+This package is distributed under BSD license
+
 Water flow problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
 Morris, M. D., Mitchell, T. J., and Ylvisaker, D. Bayesian Design and Analysis of Computer Experiments: Use of Derivatives in Surface Prediction. Technometrics, 35(3), pp. 243-255. 1993.
