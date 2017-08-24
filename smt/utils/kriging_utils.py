@@ -1,8 +1,9 @@
-"""
-Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
+'''
+Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+        
+This package is distributed under New BSD license.
+'''
 
-The kriging-correlation model functions.
-"""
 import numpy as np
 from smt.utils.pls import pls as _pls
 from pyDOE import *

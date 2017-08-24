@@ -1,6 +1,8 @@
 """
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. Nathalie.bartoli      <nathalie@onera.fr>
+        
+This package is distributed under New BSD license.
 
 TO DO:
 - define outputs['sol'] = self.sol

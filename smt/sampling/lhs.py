@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under New BSD license.
+
 LHS sampling; uses the pyDOE package.
 """
 from __future__ import division

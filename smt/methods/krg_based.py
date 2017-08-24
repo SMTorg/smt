@@ -3,6 +3,8 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
+This package is distributed under New BSD license.
+
 TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol

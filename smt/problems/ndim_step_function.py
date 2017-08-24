@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under New BSD license.
+
 N-dimensional step function problem.
 """
 import numpy as np

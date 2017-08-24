@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under New BSD license.
+
 Full-factorial sampling.
 """
 from __future__ import division

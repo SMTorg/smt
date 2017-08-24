@@ -1,6 +1,8 @@
 """
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
+This package is distributed under New BSD license.
+
 Reduced problem class - selects a subset of input variables.
 """
 import numpy as np

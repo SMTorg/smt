@@ -1,6 +1,11 @@
+'''
+Author: Dr. John T. Hwang <hwangjt@umich.edu>
+        
+This package is distributed under New BSD license.
+'''
+
 import os
 import sys
-
 
 class Silence(object):
 
