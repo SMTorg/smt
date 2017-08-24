@@ -18,12 +18,12 @@ SMT is meant to be a general library for surrogate modeling (also known as metam
 A surrogate model can be represented mathematically as
 
 .. math ::
-  \newcommand\RR{\mathbb{R}}
-  \newcommand\y{y}
-  \newcommand\x{\mathbf{x}}
-  \newcommand\yt{\mathbf{yt}}
-  \newcommand\xt{\mathbf{xt}}
-  y = f(\x, \xt, \yt) ,
+  \newcommand{\RR}{\mathbb{R}}
+  \newcommand{\y}{y}
+  \newcommand{\x}{\mathbf{x}}
+  \newcommand{\yt}{\mathbf{yt}}
+  \newcommand{\xt}{\mathbf{xt}}
+  y = f(\x, \xt, \yt),
 
 where
 :math:`xt \in \RR^{nt \times nx}` contains the training inputs,
