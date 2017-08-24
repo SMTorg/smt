@@ -18,7 +18,6 @@ SMT is meant to be a general library for surrogate modeling (also known as metam
 A surrogate model can be represented mathematically as
 
 .. math ::
-
   \newcommand\RR{\mathbb{R}}
   \newcommand\y{y}
   \newcommand\x{\mathbf{x}}
