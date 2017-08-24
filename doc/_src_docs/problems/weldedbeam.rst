@@ -66,11 +66,6 @@ Options
      -  None
      -  ['int']
      -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
-     -  
   *  -  return_complex
      -  False
      -  None
@@ -80,4 +75,9 @@ Options
      -  WeldedBeam
      -  None
      -  ['str']
+     -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
      -  
