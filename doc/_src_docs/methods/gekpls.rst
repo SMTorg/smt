@@ -2,7 +2,7 @@ GEKPLS
 ======
 
 GEKPLS is a gradient-enhaced kriging with partial least squares approach.
-Gradient-enhaced kriging is an extention of kriging which supports gradient information [1]_.
+Gradient-enhaced kriging (GEK) is an extention of kriging which supports gradient information [1]_.
 GEK is usually more accurate than kriging, however, it is not computationally efficient when the number of inputs, the number of sampling points, or both, are high.
 This is mainly due to the size of the corresponding correlation matrix that increases proportionally with both the number of inputs and the number of sampling points.
 
