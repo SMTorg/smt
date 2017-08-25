@@ -8,33 +8,33 @@ The prediction equation for IDW is
 
 .. math ::
 
-  \newcommand\RR{\mathbb{R}}
-  \newcommand\y{\mathbf{y}}
-  \newcommand\x{\mathbf{x}}
-  \newcommand\yt{\mathbf{yt}}
-  \newcommand\xt{\mathbf{xt}}
+
+
+
+
+
   \newcommand\sumt{\sum_i^{nt}}
   y =
   \left\{
   \begin{array}{ll}
-    \frac{\sumt \beta(\x, \xt_i) \yt_i}{\sumt \beta(\x, \xt_i)},
-    & \text{if} \quad \x \neq \xt_i \quad \forall i\\
-    \yt_i
-    & \text{if} \quad \x = \xt_i \quad \text{for some} \; i\\
+    \frac{\sumt \beta(\mathbf{x}, \mathbf{xt}_i) \mathbf{yt}_i}{\sumt \beta(\mathbf{x}, \mathbf{xt}_i)},
+    & \text{if} \quad \mathbf{x} \neq \mathbf{xt}_i \quad \forall i\\
+    \mathbf{yt}_i
+    & \text{if} \quad \mathbf{x} = \mathbf{xt}_i \quad \text{for some} \; i\\
   \end{array}
   \right. ,
 
 where
-:math:`\x \in \RR^{nx}` is the prediction input vector,
-:math:`y \in \RR` is the prediction output,
-:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
 and
-:math:`yt_i \in \RR` is the output value for the :math:`i` th training point.
+:math:`yt_i \in \mathbb{R}` is the output value for the :math:`i` th training point.
 The weighting function :math:`\beta` is defined by
 
 .. math ::
 
-  \beta( \x_i , \x_j ) = || \x_i - \x_j ||_2 ^ {-p} ,
+  \beta( \mathbf{x}_i , \mathbf{x}_j ) = || \mathbf{x}_i - \mathbf{x}_j ||_2 ^ {-p} ,
 
 where :math:`p` a positive real number, called the power parameter.
 This parameter must be strictly greater than 1 for the derivatives to be continuous.
@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002091
+     Training - done. Time (sec):  0.0002010
   ___________________________________________________________________________
      
    Evaluation
@@ -93,7 +93,7 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000319
+     Predicting - done. Time (sec):  0.0000322
      
      Prediction time/pt. (sec) :  0.0000003
      
