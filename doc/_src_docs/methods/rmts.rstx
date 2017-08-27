@@ -15,25 +15,25 @@ The prediction equation for RMTS is
 
 .. math ::
 
-  \newcommand\RR{\mathbb{R}}
-  \newcommand\w{\mathbf{w}}
-  \newcommand\H{\mathbf{H}}
+
+
+
   \newcommand\F{\mathbf{F}}
-  \newcommand\y{\mathbf{y}}
-  \newcommand\x{\mathbf{x}}
-  \newcommand\yt{\mathbf{yt}}
-  \newcommand\xt{\mathbf{xt}}
-  \newcommand\sumt{\sum_i^{nt}}
-  y = \F(\x) \w ,
+
+
+
+
+
+  y = \F(\mathbf{x}) \mathbf{w} ,
 
 where
-:math:`\x \in \RR^{nx}` is the prediction input vector,
-:math:`y \in \RR` is the prediction output,
-:math:`\w \in \RR^{nw}` is the vector of spline coefficients,
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\mathbf{w} \in \mathbb{R}^{nw}` is the vector of spline coefficients,
 and
-:math:`\F(\x) \in \RR^{nw}` is the vector mapping the spline coefficients to the prediction output.
+:math:`\F(\mathbf{x}) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the prediction output.
 
-RMTS computes the coefficients of the splines, :math:`\w`, by solving an energy minimization problem
+RMTS computes the coefficients of the splines, :math:`\mathbf{w}`, by solving an energy minimization problem
 subject to the conditions that the splines pass through the training points.
 This is formulated as an unconstrained optimization problem
 where the objective function consists of a term containing the second derivatives of the splines,
@@ -43,19 +43,19 @@ and another term for regularization:
 .. math ::
 
   \begin{array}{r l}
-    \underset{\w}{\min} & \frac{1}{2} \w^T \H \w
-    + \frac{1}{2} \beta \w^T \w
+    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \H \mathbf{w}
+    + \frac{1}{2} \beta \mathbf{w}^T \mathbf{w}
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ 2
+    \sum_i^{nt} \left[ \F(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ 2
   \end{array} ,
 
 where
-:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
-:math:`yt_i \in \RR` is the output value for the :math:`i` th training point,
-:math:`\H \in \RR^{nw \times nw}` is the matrix containing the second derivatives,
-:math:`\F(\xt_i) \in \RR^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
+:math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
+:math:`yt_i \in \mathbb{R}` is the output value for the :math:`i` th training point,
+:math:`\H \in \mathbb{R}^{nw \times nw}` is the matrix containing the second derivatives,
+:math:`\F(\mathbf{xt}_i) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
 and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
 In problems with a large number of training points relative to the number of spline coefficients,
@@ -71,12 +71,12 @@ The nonlinear formulation is given by
 .. math::
 
   \begin{array}{r l}
-    \underset{\w}{\min} & \frac{1}{2} \w^T \H \w
-    + \frac{1}{2} \beta \w^T \w
+    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \H \mathbf{w}
+    + \frac{1}{2} \beta \mathbf{w}^T \mathbf{w}
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sumt \left[ \F(\xt_i) \w - \yt_i \right] ^ p
+    \sum_i^{nt} \left[ \F(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ p
   \end{array}
   ,
 

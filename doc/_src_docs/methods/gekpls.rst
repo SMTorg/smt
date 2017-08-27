@@ -20,7 +20,7 @@ This approach reduces the number of hyperparameters (reduced dimension) from :ma
 
 As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point.
 The idea here is to add only m approximating points :math:`(m \in [1, nx])` around each sampling point.
-Only the $m$ highest coefficients given by the first principal component are considered, which usually contains the most useful information. 
+Only the :math:`m` highest coefficients given by the first principal component are considered, which usually contains the most useful information. 
 More details of such approach are given in [2]_.
 
 .. [1] Forrester, I. J. and Sobester, A. and Keane, A. J., Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008 (Chapter 7).
@@ -89,7 +89,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0289130
+     Training - done. Time (sec):  0.0269740
   
 .. figure:: gekpls.png
   :scale: 80 %
