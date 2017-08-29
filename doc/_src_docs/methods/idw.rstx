@@ -34,7 +34,6 @@ where :math:`p` a positive real number, called the power parameter.
 This parameter must be strictly greater than 1 for the derivatives to be continuous.
 
 .. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
-.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
 Usage
 -----
