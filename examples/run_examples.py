@@ -76,7 +76,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('LS, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('LS, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -108,7 +108,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('QP, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('QP, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -141,7 +141,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('Kriging, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('Kriging, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -179,7 +179,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('KPLS, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('KPLS, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -215,7 +215,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('KPLSK, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('KPLSK, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -254,7 +254,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('GEKPLS1, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('GEKPLS1, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -294,7 +294,7 @@ if plot_status:
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
     yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-    print('GEKPLS2, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+    print('GEKPLS2, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
     if plot_status:
         plt.figure()
         plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -348,7 +348,7 @@ if compiled_available:
     yd_prediction = np.zeros((ntest,ndim))
     for i in range(ndim):
         yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-        print('RBF, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+        print('RBF, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
         if plot_status:
             plt.figure()
             plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -406,7 +406,7 @@ if compiled_available:
     yd_prediction = np.zeros((ntest,ndim))
     for i in range(ndim):
         yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-        print('RMTB, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+        print('RMTB, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
         if plot_status:
             plt.figure()
             plt.plot(ydtest[:,i],ydtest[:,i],'-.')
@@ -440,7 +440,7 @@ if compiled_available:
     yd_prediction = np.zeros((ntest,ndim))
     for i in range(ndim):
         yd_prediction[:,i] = t.predict_derivatives(xtest,kx=i).T
-        print('RMTC, err of the '+str(i)+'-th thderivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
+        print('RMTC, err of the '+str(i)+'-th derivative: '+ str(compute_rms_error(t,xtest,ydtest[:,i],kx=i)))
         if plot_status:
             plt.figure()
             plt.plot(ydtest[:,i],ydtest[:,i],'-.')
