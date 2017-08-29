@@ -8,16 +8,10 @@ The prediction equation for IDW is
 
 .. math ::
 
-
-
-
-
-
-  \newcommand\sumt{\sum_i^{nt}}
   y =
   \left\{
   \begin{array}{ll}
-    \frac{\sumt \beta(\mathbf{x}, \mathbf{xt}_i) \mathbf{yt}_i}{\sumt \beta(\mathbf{x}, \mathbf{xt}_i)},
+    \frac{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i) \mathbf{yt}_i}{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i)},
     & \text{if} \quad \mathbf{x} \neq \mathbf{xt}_i \quad \forall i\\
     \mathbf{yt}_i
     & \text{if} \quad \mathbf{x} = \mathbf{xt}_i \quad \text{for some} \; i\\
@@ -39,6 +33,7 @@ The weighting function :math:`\beta` is defined by
 where :math:`p` a positive real number, called the power parameter.
 This parameter must be strictly greater than 1 for the derivatives to be continuous.
 
+.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 .. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
 Usage
