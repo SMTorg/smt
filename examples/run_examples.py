@@ -21,7 +21,7 @@ except:
 
 try:
     import matplotlib.pyplot as plt
-    plot_status = False
+    plot_status = True
 except:
     plot_status = False
 
