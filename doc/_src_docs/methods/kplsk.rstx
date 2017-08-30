@@ -24,7 +24,7 @@ Subsequently, the hyperparameters point :math:`\left(\eta_1=\sum_{k=1}^h\theta_k
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_kplsk
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_kplsk , 80
 
 Options
 -------

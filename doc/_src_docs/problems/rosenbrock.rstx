@@ -7,7 +7,7 @@ Rosenbrock function
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_rosenbrock
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_rosenbrock , 80
 
 Options
 -------

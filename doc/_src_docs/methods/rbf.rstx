@@ -57,7 +57,7 @@ These are given by:
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf , 80
 
 Options
 -------

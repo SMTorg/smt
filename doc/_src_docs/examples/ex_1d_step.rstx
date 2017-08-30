@@ -4,9 +4,9 @@
 RMTB
 ----
 
-.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtb
+.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtb , 80
 
 RMTC
 ----
 
-.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtc
+.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtc , 80

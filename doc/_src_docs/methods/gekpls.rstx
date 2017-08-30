@@ -30,7 +30,7 @@ More details of such approach are given in [2]_.
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_gekpls
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_gekpls , 80
 
 Options
 -------

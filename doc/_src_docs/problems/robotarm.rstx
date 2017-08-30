@@ -8,7 +8,7 @@ Robot arm function
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_robot_arm
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_robot_arm , 80
 
 Options
 -------

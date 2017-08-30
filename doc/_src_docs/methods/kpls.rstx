@@ -17,7 +17,7 @@ More details about the KPLS approach could be found in these sources [2]_.
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_kpls
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_kpls , 80
 
 Options
 -------

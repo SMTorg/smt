@@ -9,7 +9,7 @@ Wing weight function
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_wing_weight
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_wing_weight , 80
 
 Options
 -------

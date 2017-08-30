@@ -10,7 +10,7 @@ where
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_welded_beam
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_welded_beam , 80
 
 Options
 -------

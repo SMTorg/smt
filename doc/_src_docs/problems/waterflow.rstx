@@ -9,7 +9,7 @@ Water flow function
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_water_flow
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_water_flow , 80
 
 Options
 -------
