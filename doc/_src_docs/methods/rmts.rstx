@@ -14,24 +14,14 @@ or when there are points that are too close together.
 The prediction equation for RMTS is
 
 .. math ::
-
-
-
-
-  \newcommand\F{\mathbf{F}}
-
-
-
-
-
-  y = \F(\mathbf{x}) \mathbf{w} ,
+  y = \mathbf{F}(\mathbf{x}) \mathbf{w} ,
 
 where
 :math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
 :math:`y \in \mathbb{R}` is the prediction output,
 :math:`\mathbf{w} \in \mathbb{R}^{nw}` is the vector of spline coefficients,
 and
-:math:`\F(\mathbf{x}) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the prediction output.
+:math:`\mathbf{F}(\mathbf{x}) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the prediction output.
 
 RMTS computes the coefficients of the splines, :math:`\mathbf{w}`, by solving an energy minimization problem
 subject to the conditions that the splines pass through the training points.
@@ -43,18 +33,18 @@ and another term for regularization:
 .. math ::
 
   \begin{array}{r l}
-    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \H \mathbf{w}
+    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \mathbf{H} \mathbf{w}
     + \frac{1}{2} \beta \mathbf{w}^T \mathbf{w}
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \F(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ 2
+    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ 2
   \end{array} ,
 
 where
 :math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
 :math:`yt_i \in \mathbb{R}` is the output value for the :math:`i` th training point,
-:math:`\H \in \mathbb{R}^{nw \times nw}` is the matrix containing the second derivatives,
+:math:`\mathbf{H} \in \mathbb{R}^{nw \times nw}` is the matrix containing the second derivatives,
 :math:`\F(\mathbf{xt}_i) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
 and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
@@ -71,12 +61,12 @@ The nonlinear formulation is given by
 .. math::
 
   \begin{array}{r l}
-    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \H \mathbf{w}
+    \underset{\mathbf{w}}{\min} & \frac{1}{2} \mathbf{w}^T \mathbf{H} \mathbf{w}
     + \frac{1}{2} \beta \mathbf{w}^T \mathbf{w}
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \F(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ p
+    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ p
   \end{array}
   ,
 

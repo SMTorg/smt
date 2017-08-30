@@ -11,51 +11,39 @@ RBFs are frequently augmented to global polynomials to capture the general trend
 The prediction equation for RBFs is
 
 .. math ::
-
-  \newcommand\RR{\mathbb{R}}
-  \newcommand\y{\mathbf{y}}
-  \newcommand\x{\mathbf{x}}
-  \newcommand\a{\mathbf{a}}
-  \newcommand\b{\mathbf{b}}
-  \newcommand\p{\mathbf{p}}
-  \newcommand\xt{\mathbf{xt}}
-  \newcommand\yt{\mathbf{yt}}
-  \newcommand\wp{\mathbf{w_p}}
-  \newcommand\wr{\mathbf{w_r}}
-  \newcommand\sumt{\sum_i^{nt}}
-  y = \p(\x) \wp + \sumt \phi(\x, \xt_i) \wr ,
+  y = \mathbf{p}(\mathbf{x}) \mathbf{w_p} + \sum_i^{nt} \mathbf{p}hi(\mathbf{x}, \mathbf{xt}_i) \mathbf{w_r} ,
 
 where
-:math:`\x \in \RR^{nx}` is the prediction input vector,
-:math:`y \in \RR` is the prediction output,
-:math:`\xt_i \in \RR^{nx}` is the input vector for the :math:`i` th training point,
-:math:`\p(\x) \in \RR^{np}` is the vector mapping the polynomial coefficients to the prediction output,
-:math:`\phi(\x, \xt_i) \in \RR^{nt}` is the vector mapping the radial basis function coefficients to the prediction output,
-:math:`\wp \in \RR^{np}` is the vector of polynomial coefficients,
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
+:math:`\mathbf{p}(\mathbf{x}) \in \mathbb{R}^{np}` is the vector mapping the polynomial coefficients to the prediction output,
+:math:`\mathbf{p}hi(\mathbf{x}, \mathbf{xt}_i) \in \mathbb{R}^{nt}` is the vector mapping the radial basis function coefficients to the prediction output,
+:math:`\mathbf{w_p} \in \mathbb{R}^{np}` is the vector of polynomial coefficients,
 and
-:math:`\wr \in \RR^{nt}` is the vector of radial basis function coefficients.
+:math:`\mathbf{w_r} \in \mathbb{R}^{nt}` is the vector of radial basis function coefficients.
 
-The coefficients, :math:`\wp` and :math:`\wr`, are computed by solving the follow linear system:
+The coefficients, :math:`\mathbf{w_p}` and :math:`\mathbf{w_r}`, are computed by solving the follow linear system:
 
 .. math ::
 
-  \begin{bmatrix}
-    \phi( \xt_1 , \xt_1 ) & \dots & \phi( \xt_1 , \xt_{nt} ) & \p( \xt_1 ) ^ T \\
+  \mathbf{b}egin{bmatrix}
+    \mathbf{p}hi( \mathbf{xt}_1 , \mathbf{xt}_1 ) & \dots & \mathbf{p}hi( \mathbf{xt}_1 , \mathbf{xt}_{nt} ) & \mathbf{p}( \mathbf{xt}_1 ) ^ T \\
     \vdots & \ddots & \vdots & \vdots \\
-    \phi( \xt_{nt} , \xt_1 ) & \dots & \phi( \xt_{nt} , \xt_{nt} ) & \p( \xt_{nt} ) ^ T \\
-    \p( \xt_1 ) & \dots & \p( \xt_{nt} ) & \mathbf{0} \\
+    \mathbf{p}hi( \mathbf{xt}_{nt} , \mathbf{xt}_1 ) & \dots & \mathbf{p}hi( \mathbf{xt}_{nt} , \mathbf{xt}_{nt} ) & \mathbf{p}( \mathbf{xt}_{nt} ) ^ T \\
+    \mathbf{p}( \mathbf{xt}_1 ) & \dots & \mathbf{p}( \mathbf{xt}_{nt} ) & \mathbf{0} \\
   \end{bmatrix}
-  \begin{bmatrix}
-    \wr_1 \\
+  \mathbf{b}egin{bmatrix}
+    \mathbf{w_r}_1 \\
     \vdots \\
-    \wr_{nt} \\
-    \wp \\
+    \mathbf{w_r}_{nt} \\
+    \mathbf{w_p} \\
   \end{bmatrix}
   =
-  \begin{bmatrix}
-    \yt_1 \\
+  \mathbf{b}egin{bmatrix}
+    \mathbf{yt}_1 \\
     \vdots \\
-    \yt_{nt} \\
+    \mathbf{yt}_{nt} \\
     0 \\
   \end{bmatrix}
 
@@ -64,7 +52,7 @@ These are given by:
 
 .. math ::
 
-  \phi( \x_i , \x_j ) = \exp \left( \frac{|| \x_i - \x_j ||_2 ^ 2}{d0^2} \right)
+  \mathbf{p}hi( \mathbf{x}_i , \mathbf{x}_j ) = \exp \left( \frac{|| \mathbf{x}_i - \mathbf{x}_j ||_2 ^ 2}{d0^2} \right)
 
 Usage
 -----
@@ -112,13 +100,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0001018
-        Initializing linear solver - done. Time (sec):  0.0001471
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000582
+        Initializing linear solver - done. Time (sec):  0.0000949
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000880
-        Solving linear system (col. 0) - done. Time (sec):  0.0001390
-     Training - done. Time (sec):  0.0008650
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000570
+        Solving linear system (col. 0) - done. Time (sec):  0.0000899
+     Training - done. Time (sec):  0.0006051
   ___________________________________________________________________________
      
    Evaluation
@@ -126,9 +114,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000532
+     Predicting - done. Time (sec):  0.0000439
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: rbf.png
