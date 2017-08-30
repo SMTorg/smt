@@ -11,7 +11,7 @@ The prediction equation for IDW is
   y =
   \left\{
   \begin{array}{ll}
-    \frac{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i) \mathbf{yt}_i}{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i)},
+    \frac{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i) yt_i}{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i)},
     & \text{if} \quad \mathbf{x} \neq \mathbf{xt}_i \quad \forall i\\
     yt_i
     & \text{if} \quad \mathbf{x} = \mathbf{xt}_i \quad \text{for some} \; i\\
