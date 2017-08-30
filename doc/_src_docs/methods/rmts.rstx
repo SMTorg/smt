@@ -38,14 +38,14 @@ and another term for regularization:
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ 2
+    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - yt_i \right] ^ 2
   \end{array} ,
 
 where
 :math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
 :math:`yt_i \in \mathbb{R}` is the output value for the :math:`i` th training point,
 :math:`\mathbf{H} \in \mathbb{R}^{nw \times nw}` is the matrix containing the second derivatives,
-:math:`\F(\mathbf{xt}_i) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output.
+:math:`\mathbf{F}(\mathbf{xt}_i) \in \mathbb{R}^{nw}` is the vector mapping the spline coefficients to the :math:`i` th training output,
 and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
 In problems with a large number of training points relative to the number of spline coefficients,
@@ -66,7 +66,7 @@ The nonlinear formulation is given by
     \\
     &
     + \frac{1}{2} \frac{1}{\alpha}
-    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - \mathbf{yt}_i \right] ^ p
+    \sum_i^{nt} \left[ \mathbf{F}(\mathbf{xt}_i) \mathbf{w} - yt_i \right] ^ p
   \end{array}
   ,
 

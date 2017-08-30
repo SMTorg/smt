@@ -13,7 +13,7 @@ The prediction equation for IDW is
   \begin{array}{ll}
     \frac{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i) \mathbf{yt}_i}{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i)},
     & \text{if} \quad \mathbf{x} \neq \mathbf{xt}_i \quad \forall i\\
-    \mathbf{yt}_i
+    yt_i
     & \text{if} \quad \mathbf{x} = \mathbf{xt}_i \quad \text{for some} \; i\\
   \end{array}
   \right. ,
@@ -33,7 +33,6 @@ The weighting function :math:`\beta` is defined by
 where :math:`p` a positive real number, called the power parameter.
 This parameter must be strictly greater than 1 for the derivatives to be continuous.
 
-.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 .. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
 
 Usage
@@ -80,7 +79,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0002100
+     Training - done. Time (sec):  0.0003939
   ___________________________________________________________________________
      
    Evaluation
@@ -88,9 +87,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000339
+     Predicting - done. Time (sec):  0.0000510
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000005
      
   
 .. figure:: idw.png

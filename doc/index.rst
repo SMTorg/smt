@@ -21,9 +21,9 @@ A surrogate model can be represented mathematically as
   y = f(\mathbf{x}, \mathbf{xt}, \mathbf{yt}),
 
 where
-:math:`xt \in \mathbb{R}^{nt \times nx}` contains the training inputs,
-:math:`yt \in \mathbb{R}^{nt}` contains the training outputs,
-:math:`x \in \mathbb{R}^{nx}` contains the prediction inputs,
+:math:`\mathbf{xt} \in \mathbb{R}^{nt \times nx}` contains the training inputs,
+:math:`\mathbf{yt} \in \mathbb{R}^{nt}` contains the training outputs,
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` contains the prediction inputs,
 and
 :math:`y \in \mathbb{R}` contains the prediction outputs.
 There are three types of derivatives of interest in SMT:
