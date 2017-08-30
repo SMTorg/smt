@@ -79,7 +79,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001719
+     Training - done. Time (sec):  0.0002580
   ___________________________________________________________________________
      
    Evaluation
@@ -87,9 +87,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000460
+     Predicting - done. Time (sec):  0.0000560
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: idw.png

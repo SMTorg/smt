@@ -41,9 +41,9 @@ The coefficients, :math:`\mathbf{w_p}` and :math:`\mathbf{w_r}`, are computed by
   \end{bmatrix}
   =
   \begin{bmatrix}
-    \mathbf{yt}_1 \\
+    yt_1 \\
     \vdots \\
-    \mathbf{yt}_{nt} \\
+    yt_{nt} \\
     0 \\
   \end{bmatrix}
 
@@ -100,13 +100,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000870
-        Initializing linear solver - done. Time (sec):  0.0001202
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000892
+        Initializing linear solver - done. Time (sec):  0.0001230
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000620
-        Solving linear system (col. 0) - done. Time (sec):  0.0000839
-     Training - done. Time (sec):  0.0005529
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000761
+        Solving linear system (col. 0) - done. Time (sec):  0.0001037
+     Training - done. Time (sec):  0.0006039
   ___________________________________________________________________________
      
    Evaluation
@@ -114,9 +114,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000319
+     Predicting - done. Time (sec):  0.0000372
      
-     Prediction time/pt. (sec) :  0.0000003
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: rbf.png
