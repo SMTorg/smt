@@ -38,9 +38,9 @@ This parameter must be strictly greater than 1 for the derivatives to be continu
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_idw
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_idw
 
 Options
 -------
 
-.. embed-options-table-method :: IDW
+.. embed-options-table :: smt.methods , IDW , options

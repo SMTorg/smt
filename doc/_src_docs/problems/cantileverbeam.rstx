@@ -9,9 +9,9 @@ Cantilever beam function
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_cantilever_beam
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_cantilever_beam
 
 Options
 -------
 
-.. embed-options-table-problem :: CantileverBeam
+.. embed-options-table :: smt.problems , CantileverBeam , options

@@ -6,9 +6,9 @@ This class creates random samples from a uniform distribution over the design sp
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_random
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_random
 
 Options
 -------
 
-.. embed-options-table-sampling :: Random
+.. embed-options-table :: smt.sampling , Random , options

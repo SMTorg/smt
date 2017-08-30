@@ -21,7 +21,7 @@ These are listed below.
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_sphere
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_sphere
 
 Problem class API
 -----------------

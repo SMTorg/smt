@@ -24,9 +24,9 @@ Tensor-product function
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_tensor_product
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_tensor_product
 
 Options
 -------
 
-.. embed-options-table-problem :: TensorProduct
+.. embed-options-table :: smt.problems , TensorProduct , options

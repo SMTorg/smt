@@ -1,0 +1,12 @@
+1-D step-like data set (RMTS)
+=============================
+
+RMTB
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtb
+
+RMTC
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_1d_step , Test , test_rmtc

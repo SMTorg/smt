@@ -20,9 +20,9 @@ The four first criteria are the same than in pyDOE (for more details, see [1]_).
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_lhs
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_lhs
 
 Options
 -------
 
-.. embed-options-table-sampling :: LHS
+.. embed-options-table :: smt.sampling , LHS , options
