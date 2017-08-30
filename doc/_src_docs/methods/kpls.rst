@@ -58,7 +58,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0070949
+     Training - done. Time (sec):  0.0071790
   ___________________________________________________________________________
      
    Evaluation
@@ -66,9 +66,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001950
+     Predicting - done. Time (sec):  0.0001929
      
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000019
      
   
 .. figure:: kpls.png

@@ -41,9 +41,9 @@ The coefficients, :math:`\mathbf{w_p}` and :math:`\mathbf{w_r}`, are computed by
   \end{bmatrix}
   =
   \begin{bmatrix}
-    \mathbf{yt}_1 \\
+    yt_1 \\
     \vdots \\
-    \mathbf{yt}_{nt} \\
+    yt_{nt} \\
     0 \\
   \end{bmatrix}
 
