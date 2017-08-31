@@ -3,7 +3,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. Nathalie.bartoli      <nathalie@onera.fr>
 
 This package is distributed under New BSD license.
-        
+
 TO DO:
 - define outputs['sol'] = self.sol
 """
@@ -47,9 +47,9 @@ class QP(SM):
             x = self.training_points[None][0][0]
             y = self.training_points[None][0][1]
 
-        if x.shape[0] < (self.dim+1)*(self.dim+2)/2.:
+        if x.shape[0] < (self.nx+1)*(self.nx+2)/2.:
             raise Exception("Number of training points should be greater or equal to %d."
-                            % ((self.dim+1)*(self.dim+2)/2.))
+                            % ((self.nx+1)*(self.nx+2)/2.))
 
         X = self._response_surface(x)
         self.coef = np.dot(np.linalg.inv(np.dot(X.T,X)),(np.dot(X.T,y)))
@@ -78,7 +78,7 @@ class QP(SM):
         M : np.ndarray
             Matrix of the surface
         """
-        dim = self.dim
+        dim = self.nx
         n = x.shape[0]
         n_app = int(scipy.special.binom(dim+2, dim))
         M = np.zeros((n_app,n))
@@ -112,7 +112,7 @@ class QP(SM):
         y : np.ndarray
             Derivative values.
         """
-        dim = self.dim
+        dim = self.nx
 
         linear_coef = self.coef[1+kx,0]
         quad_coef = 2 * self.coef[1+dim+kx,0] * x[:,kx]

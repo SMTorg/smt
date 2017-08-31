@@ -302,7 +302,7 @@ class KRG_BASED(SM):
         if self.options['poly'].__name__ == 'constant':
             df = np.array([0])
         elif self.options['poly'].__name__ == 'linear':
-            df = np.zeros((self.dim + 1, self.dim))
+            df = np.zeros((self.nx + 1, self.nx))
             df[1:,:] = 1
         else:
             raise ValueError(
@@ -475,7 +475,7 @@ class KRG_BASED(SM):
                     self.options['theta0'] = (best_optimal_theta*self.coeff_pls**2).sum(1)
                 else:
                     self.options['theta0'] = (best_optimal_theta*np.abs(self.coeff_pls)).sum(1)
-                self.options['n_comp'] = int(self.dim)
+                self.options['n_comp'] = int(self.nx)
                 limit = 10*self.options['n_comp']
                 self.best_iteration_fail = None
                 exit_function = True
@@ -500,7 +500,7 @@ class KRG_BASED(SM):
                                 self.options['poly']))
 
         if self.name == 'Kriging':
-            d = self.dim
+            d = self.nx
         else:
             d = self.options['n_comp']
 
