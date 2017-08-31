@@ -4,9 +4,9 @@ Clustered sampling
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_clustered
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_clustered , 80
 
 Options
 -------
 
-.. embed-options-table-sampling :: Clustered
+.. embed-options-table :: smt.sampling , Clustered , options

@@ -17,7 +17,7 @@ These are listed below.
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/sampling/test_sampling_examples.py , Test , test_random
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_random , 80
 
 Problem class API
 -----------------

@@ -7,9 +7,9 @@ Sphere function
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_sphere
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_sphere , 80
 
 Options
 -------
 
-.. embed-options-table-problem :: Sphere
+.. embed-options-table :: smt.problems , Sphere , options

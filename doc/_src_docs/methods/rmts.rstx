@@ -89,19 +89,19 @@ while RMTC is the better choice when accuracy of the interpolant is the most imp
 Usage (RMTB)
 ------------
 
-.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtb
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rmtb , 80
 
 Usage (RMTC)
 ------------
 
-.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_rmtc
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rmtc , 80
 
 Options (RMTB)
 --------------
 
-.. embed-options-table-method :: RMTB
+.. embed-options-table :: smt.methods , RMTB , options
 
 Options (RMTC)
 --------------
 
-.. embed-options-table-method :: RMTC
+.. embed-options-table :: smt.methods , RMTC , options

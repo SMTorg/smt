@@ -64,13 +64,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000830
-        Initializing linear solver - done. Time (sec):  0.0001259
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0008981
+        Initializing linear solver - done. Time (sec):  0.0009320
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000820
-        Solving linear system (col. 0) - done. Time (sec):  0.0001221
-     Training - done. Time (sec):  0.0007350
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0004060
+        Solving linear system (col. 0) - done. Time (sec):  0.0004449
+     Training - done. Time (sec):  0.0017250
   ___________________________________________________________________________
      
    Evaluation
@@ -78,9 +78,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000930
+     Predicting - done. Time (sec):  0.0000420
      
-     Prediction time/pt. (sec) :  0.0000009
+     Prediction time/pt. (sec) :  0.0000004
      
   
 .. figure:: methods.png

@@ -12,9 +12,9 @@ where
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/problems/test_problem_examples.py , Test , test_torsion_vibration
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_torsion_vibration , 80
 
 Options
 -------
 
-.. embed-options-table-problem :: TorsionVibration
+.. embed-options-table :: smt.problems , TorsionVibration , options

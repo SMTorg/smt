@@ -36,12 +36,12 @@ def process_test(root, file_name, iline, line):
     include_print_output = (
         'embed-test-print' in line or
         'embed-test-print-plot' in line or
-        'embed-test-plot-print' in line
+        'embed-test-print-plot' in line
     )
     include_plot_output = (
         'embed-test-plot' in line or
         'embed-test-print-plot' in line or
-        'embed-test-plot-print' in line
+        'embed-test-print-plot' in line
     )
 
     split_line = line.replace(' ', '').split(',')

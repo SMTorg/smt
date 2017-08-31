@@ -16,9 +16,9 @@ where :math:`{\bf X} = \left(1,{{\bf x}^{(1)}}^T,\dots,{{\bf x}^{(nt)}}^T\right)
 Usage
 -----
 
-.. embed-test-plot-print :: _src_docs/methods/test_method_examples.py , Test , test_ls
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_ls , 80
 
 Options
 -------
 
-.. embed-options-table-method :: LS
+.. embed-options-table :: smt.methods , LS , options

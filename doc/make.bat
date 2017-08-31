@@ -1,7 +1,5 @@
 @ECHO OFF
 
-python postprocess.py
-
 pushd %~dp0
 
 REM Command file for Sphinx documentation
