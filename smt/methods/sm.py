@@ -106,8 +106,6 @@ class SM(object):
         self.ny = yt.shape[1]
 
         kx = 0
-        self.dim = xt.shape[1]
-
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
     def update_training_values(self, yt, name=None):

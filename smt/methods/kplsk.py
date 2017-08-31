@@ -1,6 +1,6 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -34,7 +34,7 @@ class KPLSK(KRG_BASED):
     def _componentwise_distance(self,dx,opt=0):
         if opt == 0:
             # Kriging step
-            d = componentwise_distance(dx,self.options['corr'].__name__,self.dim)
+            d = componentwise_distance(dx,self.options['corr'].__name__,self.nx)
         else:
             # KPLS step
             d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
