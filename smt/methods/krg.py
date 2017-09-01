@@ -1,6 +1,6 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -25,5 +25,5 @@ class KRG(KRG_BASED):
 
     def _componentwise_distance(self,dx,opt=0):
         d = componentwise_distance(dx,self.options['corr'].__name__,
-                                   self.dim)
+                                   self.nx)
         return d
