@@ -47,9 +47,9 @@ ntest = 500
 sampling = LHS(xlimits=fun.xlimits)
 xtest = sampling(ntest)
 ytest = fun(xtest)
-ydtest = np.zeros((ntest,ndim))
+dytest = np.zeros((ntest,ndim))
 for i in range(ndim):
-    ydtest[:,i] = fun(xtest,kx=i).T
+    dytest[:,i] = fun(xtest,kx=i).T
 
 ########### The LS model
 
@@ -159,7 +159,7 @@ variability = t.predict_variances(xtest)
 # an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
 # an example using 2 principal components.
 
-t = KPLS( n_comp=2, theta0=[1e-2,1e-2],print_prediction = False)
+t = KPLS(n_comp=2, theta0=[1e-2,1e-2],print_prediction = False)
 t.set_training_values(xt,yt[:,0])
 
 t.train()

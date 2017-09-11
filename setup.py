@@ -31,6 +31,7 @@ if os.name == 'nt' and 0:
         'smt/problems',
         'smt/sampling',
         'smt/utils',
+        'smt/extensions',
     ],
     install_requires=[
         'scikit-learn',
@@ -83,6 +84,7 @@ else:
         'smt/problems',
         'smt/sampling',
         'smt/utils',
+        'smt/extensions',
     ],
     install_requires=[
         'scikit-learn',
