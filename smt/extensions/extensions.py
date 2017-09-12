@@ -1,12 +1,9 @@
 """
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
-TODO: - check documentation of __init__
-      - check documentation of _initialize
-      - apply_method
-      - analyse_results
-
+This package is distributed under New BSD license.
 """
+
 from __future__ import division
 from smt.utils.options_dictionary import OptionsDictionary
 
@@ -18,7 +15,7 @@ except:
     compiled_available = False
 
 class Extensions(object):
-    
+
     if compiled_available:
         _surrogate_type = {
             'KRG': KRG,'LS': LS,'QP': QP,'KPLS':KPLS,'KPLSK':KPLSK,'GEKPLS':GEKPLS,
@@ -40,15 +37,15 @@ class Extensions(object):
 
         Examples
         --------
-        >>> from smt.methods import RBF
-        >>> sm = RBF(print_global=False)
+        >>> from smt.extensions import VFM
+        >>> extension = VFM(type_bridge = 'Additive', name_model_LF = QP, name_model_bridge =
+                           LS, X_LF = xLF, y_LF = yLF, X_HF = xHF, y_HF = yHF, options_LF =
+                           dictOptionLFModel, options_bridge = dictOptionBridgeModel)
         """
         self.options = OptionsDictionary()
 
         self._initialize()
-        print self.options['options_LF']
         self.options.update(kwargs)
-        print self.options['options_LF']
 
     def _initialize(self):
         """
@@ -57,14 +54,21 @@ class Extensions(object):
         Examples
         --------
         self.options.declare('option_name', default_value, types=(bool, int), desc='description')
-        self.supports['derivatives'] = True
         """
         pass
 
     def apply_method(self):
-        # TODO some prints options
+        """
+        Run the complete algorithm of the SMT application; e.g.: VFM, ME, EGO...
+
+        """
         self._apply()
 
     def analyse_results(self, **kwargs):
-        # TODO some prints options
+        """
+        Get the final results; e.g., for VFM, two possible analysis are available:
+        - kwargs = {x = x, operation = 'predict_values'}
+        - kwargs = {x = x, operation = 'predict_derivatives, kx = i}
+
+        """
         return self._analyse_results(**kwargs)
