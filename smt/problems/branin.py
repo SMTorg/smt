@@ -15,15 +15,12 @@ class Branin(Problem):
     def _initialize(self):
         self.options.declare('ndim', 2, values=[2], types=int)
         self.options.declare('name', 'Branin', types=str)
-        self.options['ndim'] = 2
 
     def _setup(self):
         assert self.options['ndim'] == 2, 'ndim must be 2'
         
-        self.xlimits[0, 0] = -5.
-        self.xlimits[0, 1] = 10.
-        self.xlimits[1, 0] =  0.
-        self.xlimits[1, 1] = 15.
+        self.xlimits[0, :] = [-5., 10]
+        self.xlimits[1, :] = [0., 15]
 
     def _evaluate(self, x, kx):
         """
