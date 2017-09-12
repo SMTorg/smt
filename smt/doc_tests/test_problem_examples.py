@@ -115,6 +115,33 @@ class Test(unittest.TestCase):
         plt.ylabel('y')
         plt.show()
 
+    def test_branin(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.problems import Branin
+
+        ndim = 2
+        problem = Branin(ndim=ndim)
+
+        num = 100
+        x = np.ones((num, ndim))
+        x[:, 0] = np.linspace(-5., 10., num)
+        x[:, 1] = np.linspace(0., 15., num)
+        y = problem(x)
+
+        yd = np.empty((num, ndim))
+        for i in range(ndim):
+            yd[:, i] = problem(x, kx=i).flatten()
+
+        print(y.shape)
+        print(yd.shape)
+
+        plt.plot(x[:, 0], y[:, 0])
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show()
+
     def test_tensor_product(self):
         import numpy as np
         import matplotlib.pyplot as plt
