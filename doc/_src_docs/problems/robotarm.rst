@@ -41,7 +41,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: robotarm.png
+.. figure:: robotarm_Test_test_robot_arm.png
   :scale: 80 %
   :align: center
 
