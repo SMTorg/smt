@@ -79,7 +79,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001538
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -87,9 +87,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000448
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: idw.png
@@ -109,11 +109,31 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
+  *  -  p
+     -  2.5
+     -  None
+     -  ['int', 'float']
+     -  order of distance norm
   *  -  print_training
      -  True
      -  None
@@ -124,23 +144,3 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  p
-     -  2.5
-     -  None
-     -  ['int', 'float']
-     -  order of distance norm
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
