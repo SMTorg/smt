@@ -20,3 +20,20 @@ def get_one_d_step():
     xlimits = np.array([[0.0, 2.0]])
 
     return xt, yt, xlimits
+
+
+def plot_one_d_step(xt, yt, limits, interp):
+    import numpy as np
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    num = 500
+    x = np.linspace(0., 2., num)
+    y = interp.predict_values(x)[:, 0]
+
+    plt.plot(x, y)
+    plt.plot(xt, yt, 'o')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()

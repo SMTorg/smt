@@ -14,11 +14,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtb(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-
         from smt.methods import RMTB
-        from smt.examples.one_d_step import get_one_d_step
+        from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
         xt, yt, xlimits = get_one_d_step()
 
@@ -26,23 +23,12 @@ class Test(unittest.TestCase):
         interp.set_training_values(xt, yt)
         interp.train()
 
-        num = 500
-        x = np.linspace(0., 2., num)
-        y = interp.predict_values(x)[:, 0]
-
-        plt.plot(x, y)
-        plt.plot(xt, yt, 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
+        plot_one_d_step(xt, yt, xlimits, interp)
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtc(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-
         from smt.methods import RMTC
-        from smt.examples.one_d_step import get_one_d_step
+        from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
         xt, yt, xlimits = get_one_d_step()
 
@@ -50,12 +36,4 @@ class Test(unittest.TestCase):
         interp.set_training_values(xt, yt)
         interp.train()
 
-        num = 500
-        x = np.linspace(0., 2., num)
-        y = interp.predict_values(x)[:, 0]
-
-        plt.plot(x, y)
-        plt.plot(xt, yt, 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
+        plot_one_d_step(xt, yt, xlimits, interp)
