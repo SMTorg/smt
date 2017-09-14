@@ -44,7 +44,7 @@ Usage
   (100, 1)
   (100, 3)
   
-.. figure:: weldedbeam.png
+.. figure:: weldedbeam_Test_test_welded_beam.png
   :scale: 80 %
   :align: center
 

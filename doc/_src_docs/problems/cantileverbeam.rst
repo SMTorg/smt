@@ -43,7 +43,7 @@ Usage
   (100, 1)
   (100, 3)
   
-.. figure:: cantileverbeam.png
+.. figure:: cantileverbeam_Test_test_cantilever_beam.png
   :scale: 80 %
   :align: center
 

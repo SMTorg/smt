@@ -1,0 +1,14 @@
+RANS CRM wing 2-D data set
+==========================
+
+.. embed-module :: smt.examples.rans_crm_wing
+
+RMTB
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_rans_crm_wing , Test , test_rmtb , 60
+
+RMTC
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_rans_crm_wing , Test , test_rmtc , 60

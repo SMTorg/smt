@@ -43,7 +43,7 @@ Usage
   (100, 1)
   (100, 10)
   
-.. figure:: wingweight.png
+.. figure:: wingweight_Test_test_wing_weight.png
   :scale: 80 %
   :align: center
 
