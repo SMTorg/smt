@@ -1,11 +1,19 @@
-Welded beam function
-====================
+Branin function
+===================
 
 .. math ::
-  \sqrt{\frac{\tau'^2+\tau''^2+l\tau'\tau''}{\sqrt{0.25\left(l^2+(h+t)^2\right)}}},
+  f(x) = (x_2 - \frac{5.1}{4\pi^2}x_1^{2} + \frac{5}{\pi}x_1 - 6)^2 + 10(1-\frac{1}{8\pi})\cos(x_1) + 10,
 
 where
-:math:`\tau'=\frac{6000}{\sqrt{2}hl}, \quad\tau''=\frac{6000(14+0.5l)\sqrt{0.25\left(l^2+(h+t)^2\right)}}{2\left[0.707hl\left(\frac{l^2}{12}+0.25(h+t)^2\right)\right]},\quad \text{for}\quad h\in[0.125,1],\quad l,t\in[5,10].`
+:math:`x = (x_1, x_2)` 
+with 
+:math:`-5\leq x_1 \leq 10, 0 \leq x_2 \leq 15`
+
+The Branin function has three global minima:
+ 
+:math:`f(x^*) = 0.397887`, 
+at 
+:math:`x^* = (-\pi, 12.275), (\pi, 2.275)` and :math:`(9.42478, 2.475)`
 
 Usage
 -----
@@ -15,16 +23,15 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.problems import WeldedBeam
+  from smt.problems import Branin
   
-  ndim = 3
-  problem = WeldedBeam(ndim=ndim)
+  ndim = 2
+  problem = Branin(ndim=ndim)
   
   num = 100
   x = np.ones((num, ndim))
-  for i in range(ndim):
-      x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-  x[:, 0] = np.linspace(5., 10., num)
+  x[:, 0] = np.linspace(-5., 10., num)
+  x[:, 1] = np.linspace(0., 15., num)
   y = problem(x)
   
   yd = np.empty((num, ndim))
@@ -42,9 +49,9 @@ Usage
 ::
 
   (100, 1)
-  (100, 3)
+  (100, 2)
   
-.. figure:: weldedbeam_Test_test_welded_beam.png
+.. figure:: branin_Test_test_branin.png
   :scale: 80 %
   :align: center
 
@@ -62,14 +69,9 @@ Options
      -  Acceptable types
      -  Description
   *  -  ndim
-     -  1
-     -  None
+     -  2
+     -  [2]
      -  ['int']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  
   *  -  return_complex
      -  False
@@ -77,7 +79,7 @@ Options
      -  ['bool']
      -  
   *  -  name
-     -  WeldedBeam
+     -  Branin
      -  None
      -  ['str']
      -  

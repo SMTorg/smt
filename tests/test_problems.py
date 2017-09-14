@@ -10,7 +10,7 @@ import unittest
 
 from six.moves import range
 
-from smt.problems import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock
+from smt.problems import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock, Branin
 from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
 from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.utils.sm_test_case import SMTestCase
@@ -96,6 +96,9 @@ class Test(SMTestCase):
     def test_gaussian(self):
         self.run_test(TensorProduct(name='TP-gaussian', ndim=1, func='gaussian'))
         self.run_test(TensorProduct(name='TP-gaussian', ndim=3, func='gaussian'))
+
+    def test_branin(self):
+         self.run_test(Branin(ndim=2))
 
     def test_rosenbrock(self):
         self.run_test(Rosenbrock(ndim=2))

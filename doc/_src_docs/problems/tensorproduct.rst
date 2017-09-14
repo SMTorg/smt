@@ -79,23 +79,23 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  width
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  
   *  -  return_complex
      -  False
      -  None
      -  ['bool']
-     -  
-  *  -  name
-     -  TP
-     -  None
-     -  ['str']
      -  
   *  -  func
      -  None
      -  ['cos', 'exp', 'tanh', 'gaussian']
      -  None
      -  
-  *  -  width
-     -  1.0
+  *  -  name
+     -  TP
      -  None
-     -  ['float', 'int']
+     -  ['str']
      -  
