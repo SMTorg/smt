@@ -43,7 +43,7 @@ Usage
   (100, 1)
   (100, 8)
   
-.. figure:: waterflow.png
+.. figure:: waterflow_Test_test_water_flow.png
   :scale: 80 %
   :align: center
 

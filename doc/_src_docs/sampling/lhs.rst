@@ -48,7 +48,7 @@ Usage
 
   (50, 2)
   
-.. figure:: lhs.png
+.. figure:: lhs_Test_test_lhs.png
   :scale: 80 %
   :align: center
 

@@ -31,7 +31,7 @@ Usage
 
   (50, 2)
   
-.. figure:: clustered.png
+.. figure:: clustered_Test_test_clustered.png
   :scale: 80 %
   :align: center
 
