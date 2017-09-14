@@ -134,75 +134,75 @@ Usage (RMTB)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000029
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0003591
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0010471
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0004001
-        Pre-computing matrices - done. Time (sec):  0.0018709
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial linear problem (n=20) ...
               Assembling linear system ...
-              Assembling linear system - done. Time (sec):  0.0005929
+              Assembling linear system - done. Time (sec):  0.0000000
               Initializing linear solver ...
-              Initializing linear solver - done. Time (sec):  0.0000720
+              Initializing linear solver - done. Time (sec):  0.0000000
               Solving linear system (col. 0) ...
                  Running cg Krylov solver (20 x 20 mtx) ...
-                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0018349
-              Solving linear system (col. 0) - done. Time (sec):  0.0018771
-           Solving initial linear problem (n=20) - done. Time (sec):  0.0026071
+                 Running cg Krylov solver (20 x 20 mtx) - done. Time (sec):  0.0000000
+              Solving linear system (col. 0) - done. Time (sec):  0.0000000
+           Solving initial linear problem (n=20) - done. Time (sec):  0.0000000
            Solving nonlinear problem (col. 0) ...
-              Nonlinear (itn, iy, grad. norm, func.) :   0   0 2.646675829e-15 1.135884197e-15
+              Nonlinear (itn, iy, grad. norm, func.) :   0   0 2.644921323e-15 1.135687498e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008271
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000219
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0076160
+                 Solving linear system - done. Time (sec):  0.0150001
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0005870
-              Nonlinear (itn, iy, grad. norm, func.) :   1   0 2.642548609e-15 1.135883250e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   1   0 3.154667235e-15 1.135683706e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008233
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000288
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0032549
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0002861
-              Nonlinear (itn, iy, grad. norm, func.) :   2   0 8.788683409e-15 1.135850150e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   2   0 1.214327708e-14 1.135508311e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0010788
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000851
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0030043
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000820
-              Nonlinear (itn, iy, grad. norm, func.) :   3   0 2.094664976e-13 1.128524996e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   3   0 1.551772356e-13 1.122255977e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0008430
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000310
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0025501
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000420
-              Nonlinear (itn, iy, grad. norm, func.) :   4   0 6.165834946e-14 1.120518528e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   4   0 4.557757116e-14 1.120091368e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0014153
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000298
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0023379
+                 Solving linear system - done. Time (sec):  0.0160000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000429
-              Nonlinear (itn, iy, grad. norm, func.) :   5   0 1.786447093e-14 1.119755756e-15
-           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0281570
-        Solving for degrees of freedom - done. Time (sec):  0.0308359
-     Training - done. Time (sec):  0.0330710
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   5   0 1.311291751e-14 1.119677616e-15
+           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0310001
+        Solving for degrees of freedom - done. Time (sec):  0.0310001
+     Training - done. Time (sec):  0.0310001
   ___________________________________________________________________________
      
    Evaluation
@@ -210,9 +210,9 @@ Usage (RMTB)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004258
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000043
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: rmts_Test_test_rmtb.png
@@ -267,75 +267,75 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0012650
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0004489
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0019572
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0009170
-        Pre-computing matrices - done. Time (sec):  0.0047143
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial linear problem (n=42) ...
               Assembling linear system ...
-              Assembling linear system - done. Time (sec):  0.0008020
+              Assembling linear system - done. Time (sec):  0.0000000
               Initializing linear solver ...
-              Initializing linear solver - done. Time (sec):  0.0000350
+              Initializing linear solver - done. Time (sec):  0.0000000
               Solving linear system (col. 0) ...
                  Running cg Krylov solver (42 x 42 mtx) ...
-                 Running cg Krylov solver (42 x 42 mtx) - done. Time (sec):  0.0040829
-              Solving linear system (col. 0) - done. Time (sec):  0.0041311
-           Solving initial linear problem (n=42) - done. Time (sec):  0.0050218
+                 Running cg Krylov solver (42 x 42 mtx) - done. Time (sec):  0.0000000
+              Solving linear system (col. 0) - done. Time (sec):  0.0000000
+           Solving initial linear problem (n=42) - done. Time (sec):  0.0000000
            Solving nonlinear problem (col. 0) ...
               Nonlinear (itn, iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0015001
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0001700
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0096810
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0008860
-              Nonlinear (itn, iy, grad. norm, func.) :   1   0 3.083205110e-15 1.133564412e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   1   0 3.284382010e-15 1.133558586e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0014143
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000401
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0093999
+                 Solving linear system - done. Time (sec):  0.0159998
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000770
-              Nonlinear (itn, iy, grad. norm, func.) :   2   0 3.490262990e-14 1.117722944e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   2   0 2.662138680e-14 1.132689308e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0013881
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000389
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0073328
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0002241
-              Nonlinear (itn, iy, grad. norm, func.) :   3   0 3.140328140e-14 1.117706632e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   3   0 7.247538237e-15 1.117535692e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0016730
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000482
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0074761
+                 Solving linear system - done. Time (sec):  0.0000000
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000541
-              Nonlinear (itn, iy, grad. norm, func.) :   4   0 8.735151454e-15 1.117543997e-15
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   4   0 1.682549008e-15 1.117517393e-15
                  Assembling linear system ...
-                 Assembling linear system - done. Time (sec):  0.0009181
+                 Assembling linear system - done. Time (sec):  0.0000000
                  Initializing linear solver ...
-                 Initializing linear solver - done. Time (sec):  0.0000288
+                 Initializing linear solver - done. Time (sec):  0.0000000
                  Solving linear system ...
-                 Solving linear system - done. Time (sec):  0.0041919
+                 Solving linear system - done. Time (sec):  0.0150001
                  Performing line search ...
-                 Performing line search - done. Time (sec):  0.0000451
-              Nonlinear (itn, iy, grad. norm, func.) :   5   0 2.096963347e-15 1.117518317e-15
-           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0515192
-        Solving for degrees of freedom - done. Time (sec):  0.0566468
-     Training - done. Time (sec):  0.0619102
+                 Performing line search - done. Time (sec):  0.0000000
+              Nonlinear (itn, iy, grad. norm, func.) :   5   0 2.292243980e-16 1.117515741e-15
+           Solving nonlinear problem (col. 0) - done. Time (sec):  0.0309999
+        Solving for degrees of freedom - done. Time (sec):  0.0309999
+     Training - done. Time (sec):  0.0469999
   ___________________________________________________________________________
      
    Evaluation
@@ -343,9 +343,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003660
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000037
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: rmts_Test_test_rmtc.png
@@ -365,81 +365,41 @@ Options (RMTB)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
-  *  -  smoothness
-     -  1.0
-     -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
-  *  -  reg_dv
-     -  1e-10
-     -  None
-     -  ['Integral', 'float']
-     -  Regularization coeff. for system degrees of freedom. This ensures there is always a unique solution
-  *  -  reg_cons
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  Negative of the regularization coeff. of the Lagrange mult. block The weight of the energy terms (and reg_dv) relative to the approx terms
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
   *  -  min_energy
      -  True
      -  None
      -  ['bool']
      -  Whether to perform energy minimization
-  *  -  approx_order
-     -  4
+  *  -  reg_dv
+     -  1e-10
      -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
+     -  ['Integral', 'float']
+     -  Regularization coeff. for system degrees of freedom. This ensures there is always a unique solution
   *  -  mtx_free
      -  False
      -  None
      -  ['bool']
      -  Whether to solve the linear system in a matrix-free way
-  *  -  solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver
-  *  -  grad_weight
-     -  0.5
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['Integral', 'float']
-     -  Weight on gradient training data
+     -  ['bool']
+     -  Whether to print prediction information
+  *  -  num_ctrl_pts
+     -  15
+     -  None
+     -  ['Integral', 'tuple', 'list', 'ndarray']
+     -  # B-spline control points in each dimension - length [nx]
+  *  -  data_dir
+     -  None
+     -  [None]
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
   *  -  nln_max_iter
      -  5
      -  None
@@ -450,31 +410,71 @@ Options (RMTB)
      -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
      -  ['LineSearch']
      -  Line search algorithm
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
   *  -  save_energy_terms
      -  False
      -  None
      -  ['bool']
      -  Whether to cache energy terms in the data_dir directory
-  *  -  data_dir
+  *  -  print_problem
+     -  True
      -  None
-     -  [None]
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  approx_order
+     -  4
+     -  None
+     -  ['Integral']
+     -  Exponent in the approximation term
+  *  -  reg_cons
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  Negative of the regularization coeff. of the Lagrange mult. block The weight of the energy terms (and reg_dv) relative to the approx terms
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver
   *  -  max_print_depth
      -  5
      -  None
      -  ['Integral']
      -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  grad_weight
+     -  0.5
+     -  None
+     -  ['Integral', 'float']
+     -  Weight on gradient training data
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
   *  -  order
      -  3
      -  None
      -  ['Integral', 'tuple', 'list', 'ndarray']
      -  B-spline order in each dimension - length [nx]
-  *  -  num_ctrl_pts
-     -  15
-     -  None
-     -  ['Integral', 'tuple', 'list', 'ndarray']
-     -  # B-spline control points in each dimension - length [nx]
 
 Options (RMTC)
 --------------
@@ -489,91 +489,11 @@ Options (RMTC)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
-  *  -  smoothness
-     -  1.0
-     -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
-  *  -  reg_dv
-     -  1e-10
-     -  None
-     -  ['Integral', 'float']
-     -  Regularization coeff. for system degrees of freedom. This ensures there is always a unique solution
-  *  -  reg_cons
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  Negative of the regularization coeff. of the Lagrange mult. block The weight of the energy terms (and reg_dv) relative to the approx terms
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
-  *  -  min_energy
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to perform energy minimization
-  *  -  approx_order
+  *  -  num_elements
      -  4
      -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
-  *  -  mtx_free
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to solve the linear system in a matrix-free way
-  *  -  solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver
-  *  -  grad_weight
-     -  0.5
-     -  None
-     -  ['Integral', 'float']
-     -  Weight on gradient training data
-  *  -  nln_max_iter
-     -  5
-     -  None
-     -  ['Integral']
-     -  maximum number of nonlinear iterations
-  *  -  line_search
-     -  backtracking
-     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
-     -  ['LineSearch']
-     -  Line search algorithm
+     -  ['Integral', 'list', 'ndarray']
+     -  # elements in each dimension - ndarray [nx]
   *  -  save_energy_terms
      -  False
      -  None
@@ -584,13 +504,93 @@ Options (RMTC)
      -  [None]
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  nln_max_iter
+     -  5
+     -  None
+     -  ['Integral']
+     -  maximum number of nonlinear iterations
+  *  -  line_search
+     -  backtracking
+     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
+     -  ['LineSearch']
+     -  Line search algorithm
   *  -  max_print_depth
      -  5
      -  None
      -  ['Integral']
      -  Maximum depth (level of nesting) to print operation descriptions and times
-  *  -  num_elements
+  *  -  reg_dv
+     -  1e-10
+     -  None
+     -  ['Integral', 'float']
+     -  Regularization coeff. for system degrees of freedom. This ensures there is always a unique solution
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
+  *  -  approx_order
      -  4
      -  None
-     -  ['Integral', 'list', 'ndarray']
-     -  # elements in each dimension - ndarray [nx]
+     -  ['Integral']
+     -  Exponent in the approximation term
+  *  -  reg_cons
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  Negative of the regularization coeff. of the Lagrange mult. block The weight of the energy terms (and reg_dv) relative to the approx terms
+  *  -  min_energy
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to perform energy minimization
+  *  -  grad_weight
+     -  0.5
+     -  None
+     -  ['Integral', 'float']
+     -  Weight on gradient training data
+  *  -  mtx_free
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to solve the linear system in a matrix-free way
+  *  -  print_prediction
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print prediction information
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]

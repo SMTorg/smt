@@ -9,6 +9,7 @@ These are listed below.
    :titlesonly:
 
    problems/sphere
+   problems/branin
    problems/rosenbrock
    problems/tensorproduct
    problems/cantileverbeam

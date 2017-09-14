@@ -51,7 +51,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: branin.png
+.. figure:: branin_Test_test_branin.png
   :scale: 80 %
   :align: center
 
