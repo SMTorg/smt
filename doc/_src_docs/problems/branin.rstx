@@ -1,0 +1,26 @@
+Branin function
+===================
+
+.. math ::
+  f(x) = (x_2 - \frac{5.1}{4\pi^2}x_1^{2} + \frac{5}{\pi}x_1 - 6)^2 + 10(1-\frac{1}{8\pi})\cos(x_1) + 10,
+
+where
+:math:`x = (x_1, x_2)` 
+with 
+:math:`-5\leq x_1 \leq 10, 0 \leq x_2 \leq 15`
+
+The Branin function has three global minima:
+ 
+:math:`f(x^*) = 0.397887`, 
+at 
+:math:`x^* = (-\pi, 12.275), (\pi, 2.275)` and :math:`(9.42478, 2.475)`
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_branin , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.problems , Branin , options

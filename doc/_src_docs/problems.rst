@@ -9,6 +9,7 @@ These are listed below.
    :titlesonly:
 
    problems/sphere
+   problems/branin
    problems/rosenbrock
    problems/tensorproduct
    problems/cantileverbeam
@@ -54,7 +55,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: problems.png
+.. figure:: problems_Test_test_sphere.png
   :scale: 80 %
   :align: center
 

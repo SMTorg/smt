@@ -44,7 +44,7 @@ Usage
 
   (50, 2)
   
-.. figure:: sampling.png
+.. figure:: sampling_Test_test_random.png
   :scale: 80 %
   :align: center
 

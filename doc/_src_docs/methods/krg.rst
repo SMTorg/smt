@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0127821
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -79,12 +79,12 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003908
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000039
+     Prediction time/pt. (sec) :  0.0000000
      
   
-.. figure:: krg.png
+.. figure:: krg_Test_test_krg.png
   :scale: 80 %
   :align: center
 
@@ -101,31 +101,31 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
+  *  -  theta0
      -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  data_dir
      -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print problem information
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
   *  -  print_solver
      -  True
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -136,13 +136,13 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['function']
      -  type of corr. func.
-  *  -  data_dir
+  *  -  print_training
+     -  True
      -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
+     -  ['bool']
+     -  Whether to print prediction information

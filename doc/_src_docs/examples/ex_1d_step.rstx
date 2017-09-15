@@ -1,5 +1,7 @@
-1-D step-like data set (RMTS)
-=============================
+1-D step-like data set
+======================
+
+.. embed-module :: smt.examples.one_d_step
 
 RMTB
 ----

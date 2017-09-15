@@ -40,7 +40,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: sphere.png
+.. figure:: sphere_Test_test_sphere.png
   :scale: 80 %
   :align: center
 

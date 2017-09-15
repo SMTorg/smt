@@ -44,7 +44,7 @@ Usage
   (100, 1)
   (100, 3)
   
-.. figure:: weldedbeam.png
+.. figure:: weldedbeam_Test_test_welded_beam.png
   :scale: 80 %
   :align: center
 
@@ -66,6 +66,11 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
+     -  
   *  -  return_complex
      -  False
      -  None
@@ -75,9 +80,4 @@ Options
      -  WeldedBeam
      -  None
      -  ['str']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  

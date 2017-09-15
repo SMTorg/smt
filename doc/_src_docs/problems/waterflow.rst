@@ -43,7 +43,7 @@ Usage
   (100, 1)
   (100, 8)
   
-.. figure:: waterflow.png
+.. figure:: waterflow_Test_test_water_flow.png
   :scale: 80 %
   :align: center
 
@@ -65,6 +65,11 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
+     -  
   *  -  return_complex
      -  False
      -  None
@@ -74,9 +79,4 @@ Options
      -  WaterFlow
      -  None
      -  ['str']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  

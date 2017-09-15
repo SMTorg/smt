@@ -46,7 +46,7 @@ Usage
   (100, 1)
   (100, 15)
   
-.. figure:: torsionvibration.png
+.. figure:: torsionvibration_Test_test_torsion_vibration.png
   :scale: 80 %
   :align: center
 
@@ -68,6 +68,11 @@ Options
      -  None
      -  ['int']
      -  
+  *  -  use_FD
+     -  False
+     -  None
+     -  ['bool']
+     -  
   *  -  return_complex
      -  False
      -  None
@@ -77,9 +82,4 @@ Options
      -  TorsionVibration
      -  None
      -  ['str']
-     -  
-  *  -  use_FD
-     -  False
-     -  None
-     -  ['bool']
      -  

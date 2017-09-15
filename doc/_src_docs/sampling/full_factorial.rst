@@ -31,7 +31,7 @@ Usage
 
   (50, 2)
   
-.. figure:: full_factorial.png
+.. figure:: full_factorial_Test_test_full_factorial.png
   :scale: 80 %
   :align: center
 
@@ -48,11 +48,6 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  The interval of the domain in each dimension with shape nx x 2 (required)
   *  -  weights
      -  None
      -  [None]
@@ -63,3 +58,8 @@ Options
      -  None
      -  ['bool']
      -  
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  The interval of the domain in each dimension with shape nx x 2 (required)

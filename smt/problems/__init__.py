@@ -1,3 +1,4 @@
+from .branin import Branin
 from .cantilever_beam import CantileverBeam
 from .sphere import Sphere
 from .reduced_problem import ReducedProblem
