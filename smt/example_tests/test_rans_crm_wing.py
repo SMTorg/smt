@@ -19,7 +19,7 @@ class Test(unittest.TestCase):
 
         xt, yt, xlimits = get_rans_crm_wing()
 
-        interp = RMTB(num_ctrl_pts=20, xlimits=xlimits, nln_max_iter=20, reg_cons=1e-12)
+        interp = RMTB(num_ctrl_pts=20, xlimits=xlimits, nln_max_iter=100, energy_weight=1e-12)
         interp.set_training_values(xt, yt)
         interp.train()
 
@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
 
         xt, yt, xlimits = get_rans_crm_wing()
 
-        interp = RMTC(num_elements=20, xlimits=xlimits, nln_max_iter=20, reg_cons=1e-10)
+        interp = RMTC(num_elements=20, xlimits=xlimits, nln_max_iter=100, energy_weight=1e-10)
         interp.set_training_values(xt, yt)
         interp.train()
 

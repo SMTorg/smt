@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -38,8 +38,8 @@ class Test(SMTestCase):
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
-            sms['RMTB'] = RMTB(min_energy=False, nln_max_iter=0)
-            sms['RMTC'] = RMTC(min_energy=False, nln_max_iter=0)
+            sms['RMTB'] = RMTB(min_energy=False, nln_max_iter=0, approx_order=2)
+            sms['RMTC'] = RMTC(min_energy=False, nln_max_iter=0, approx_order=2)
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
@@ -84,6 +84,7 @@ class Test(SMTestCase):
 
             jac_fd[:, ind] = (ye - ye0)[:, 0] / h
 
+        jac_fd = jac_fd.reshape((self.ne, self.nt, 1))
         jac_an = sm.predict_output_derivatives(xe)[None]
 
         if print_output:
