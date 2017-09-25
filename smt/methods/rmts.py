@@ -45,11 +45,13 @@ class RMTS(SM):
                 desc='Exponent in the approximation term')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
+        declare('derivative_solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
+                desc='Linear solver used for computing output derivatives (dy_dyt)')
         declare('grad_weight', 0.5, types=(Integral, float),
                 desc='Weight on gradient training data')
         declare('solver_tolerance', 1e-12, types=(Integral, float),
                 desc='Convergence tolerance for the nonlinear solver')
-        declare('nln_max_iter', 10, types=Integral,
+        declare('nonlinear_maxiter', 10, types=Integral,
                 desc='Maximum number of nonlinear solver iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')
@@ -239,7 +241,7 @@ class RMTS(SM):
                     % (0, ind_y, norm, fval))
 
                 iter_count = 0
-                while iter_count < options['nln_max_iter'] and norm > options['solver_tolerance']:
+                while iter_count < options['nonlinear_maxiter'] and norm > options['solver_tolerance']:
                     with self.printer._timed_context():
                         with self.printer._timed_context('Assembling linear system'):
                             mtx = self._opt_hess(sol[:, ind_y], p, yt_dict)
@@ -285,14 +287,14 @@ class RMTS(SM):
         with self.printer._timed_context('Solving initial startup problem (n=%i)' % total_size):
 
             approx_order = options['approx_order']
-            nln_max_iter = options['nln_max_iter']
+            nonlinear_maxiter = options['nonlinear_maxiter']
             options['approx_order'] = 2
-            options['nln_max_iter'] = 1
+            options['nonlinear_maxiter'] = 1
 
             self._run_newton_solver(sol)
 
             options['approx_order'] = approx_order
-            options['nln_max_iter'] = nln_max_iter
+            options['nonlinear_maxiter'] = nonlinear_maxiter
 
         with self.printer._timed_context('Solving nonlinear problem (n=%i)' % total_size):
 
@@ -382,7 +384,7 @@ class RMTS(SM):
             Derivative values.
         """
         mtx = self._compute_prediction_mtx(x, kx + 1)
-        y = mtx.dot(self.sol)
+        y = mtx.dot(self.sol_coeff)
 
         return y
 
@@ -463,7 +465,7 @@ class RMTS(SM):
                 yt_dict = self._get_yt_dict(ind_y)
                 dR_dyt[:, :, ind_y] = self._opt_dgrad_dyt(self.sol[:, ind_y], p, yt_dict, kx)
 
-            solver = get_solver(self.options['solver'])
+            solver = get_solver(self.options['derivative_solver'])
             solver._setup(dR_dw, self.printer)
 
             dw_dyt = np.zeros((nw, nt, ny))

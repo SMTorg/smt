@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -45,8 +45,8 @@ class Test(SMTestCase):
         sms['LS'] = LS()
         sms['QP'] = QP()
         if compiled_available:
-            sms['RMTC'] = RMTC(num_elements=20, reg_cons=1e-10)
-            sms['RMTB'] = RMTB(num_ctrl_pts=40, reg_cons=1e-10)
+            sms['RMTC'] = RMTC(num_elements=20, energy_weight=1e-10)
+            sms['RMTB'] = RMTB(num_ctrl_pts=40, energy_weight=1e-10)
 
         t_errors = {}
         t_errors['LS'] = 1.0

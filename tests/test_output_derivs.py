@@ -38,8 +38,8 @@ class Test(SMTestCase):
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
-            sms['RMTB'] = RMTB(min_energy=False, nln_max_iter=0, approx_order=2)
-            sms['RMTC'] = RMTC(min_energy=False, nln_max_iter=0, approx_order=2)
+            sms['RMTB'] = RMTB(min_energy=False, nonlinear_maxiter=100, solver_tolerance=1e-16)
+            sms['RMTC'] = RMTC(min_energy=False, nonlinear_maxiter=100, solver_tolerance=1e-16)
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
