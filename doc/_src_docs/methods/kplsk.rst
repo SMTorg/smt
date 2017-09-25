@@ -41,7 +41,7 @@ Usage
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-  yy = sm.predict_derivatives(xt,0)        
+  yy = sm.predict_derivatives(xt,0)
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
@@ -65,7 +65,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0150001
+     Training - done. Time (sec):  0.0152991
   ___________________________________________________________________________
      
    Evaluation
@@ -73,9 +73,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0001571
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000016
      
   ___________________________________________________________________________
      
@@ -84,9 +84,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0001206
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000241
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -106,46 +106,11 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  theta0
-     -  [0.01]
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
-  *  -  poly
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
-  *  -  corr
-     -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
   *  -  print_training
      -  True
      -  None
@@ -156,3 +121,38 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  poly
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['function']
+     -  regr. term
+  *  -  corr
+     -  squar_exp
+     -  ['abs_exp', 'squar_exp']
+     -  ['function']
+     -  type of corr. func.
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters

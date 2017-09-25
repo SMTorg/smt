@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -179,6 +179,7 @@ class RBF(SM):
     def _predict_output_derivatives(self, x):
         n = x.shape[0]
         nt = self.nt
+        ny = self.training_points[None][0][1].shape[1]
         num = self.num
 
         dy_dstates = np.empty(n * num['dof'])
@@ -192,4 +193,5 @@ class RBF(SM):
         dytl_dyt = csc_matrix((ones, (arange, arange)), shape=(num['dof'], self.nt))
 
         dy_dyt = (dytl_dyt.T.dot(dstates_dytl.T).dot(dy_dstates.T)).T
+        dy_dyt = np.einsum('ij,k->ijk', dy_dyt, np.ones(ny))
         return {None: dy_dyt}

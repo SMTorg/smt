@@ -71,7 +71,7 @@ The nonlinear formulation is given by
   ,
 
 where :math:`p` is the order given by the approx_order option.
-The number of Newton iterations can be specified via the :code:`nln_max_iter` option.
+The number of Newton iterations can be specified via the :code:`nonlinear_maxiter` option.
 
 RMTS is implemented in SMT with two choices of splines:
 

@@ -384,7 +384,7 @@ if compiled_available:
 
     ########### The RMTB model
 
-    t = RMTB(xlimits=fun.xlimits, min_energy=True, nln_max_iter=20,print_prediction = False)
+    t = RMTB(xlimits=fun.xlimits, min_energy=True, nonlinear_maxiter=20,print_prediction = False)
     t.set_training_values(xt,yt[:,0])
     # Add the gradient information
     for i in range(ndim):
@@ -417,7 +417,7 @@ if compiled_available:
 
     ########### The RMTC model
 
-    t = RMTC(xlimits=fun.xlimits, min_energy=True, nln_max_iter=20,print_prediction = False)
+    t = RMTC(xlimits=fun.xlimits, min_energy=True, nonlinear_maxiter=20,print_prediction = False)
     t.set_training_values(xt,yt[:,0])
     # Add the gradient information
     for i in range(ndim):

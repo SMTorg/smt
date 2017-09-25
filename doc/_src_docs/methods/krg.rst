@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0071671
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0001459
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000015
      
   
 .. figure:: krg_Test_test_krg.png
@@ -101,41 +101,11 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  poly
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
-  *  -  corr
-     -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
   *  -  print_training
      -  True
      -  None
@@ -146,3 +116,33 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  poly
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['function']
+     -  regr. term
+  *  -  corr
+     -  squar_exp
+     -  ['abs_exp', 'squar_exp']
+     -  ['function']
+     -  type of corr. func.
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  theta0
+     -  None
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
