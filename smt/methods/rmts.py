@@ -343,10 +343,16 @@ class RMTS(SM):
             self.rmtsc = tmp
 
             if outputs:
-                self.sol_coeff = outputs['sol']
+                self.sol_coeff = outputs['sol_coeff']
+                self.sol = outputs['sol']
+                self.mtx = outputs['mtx']
+                self.full_dof2coeff = outputs['full_dof2coeff']
             else:
                 self._new_train()
-                outputs['sol'] = self.sol_coeff
+                outputs['sol_coeff'] = self.sol_coeff
+                outputs['sol'] = self.sol
+                outputs['mtx'] = self.mtx
+                outputs['full_dof2coeff'] = self.full_dof2coeff
 
     def _predict_values(self, x):
         """
