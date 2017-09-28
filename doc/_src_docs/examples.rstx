@@ -11,3 +11,4 @@ The intent is to provide examples to help guide the choice of options for the va
 
    examples/ex_1d_step
    examples/rans_crm_wing
+   examples/b777_engine
