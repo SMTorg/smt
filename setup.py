@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 
 from setuptools import setup, Extension
 import os
+import sys
 from subprocess import call
 import numpy as np
 
@@ -18,6 +19,9 @@ except ImportError:
 
 from Cython.Build import cythonize
 
+extra_compile_args=[]
+if not sys.platform.startswith('win'):
+    extra_compile_args.append('-std=c++11')
 
 ext = cythonize(
     Extension("smt.methods.rbfclib",
@@ -25,7 +29,7 @@ ext = cythonize(
         'smt/src/rbf/rbf.cpp',
         'smt/src/rbf/rbfclib.pyx',
     ],
-    language="c++", extra_compile_args=['-std=c++11'],
+    language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
     Extension("smt.methods.idwclib",
@@ -33,7 +37,7 @@ ext = cythonize(
         'smt/src/idw/idw.cpp',
         'smt/src/idw/idwclib.pyx',
     ],
-    language="c++", extra_compile_args=['-std=c++11'],
+    language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
     Extension("smt.methods.rmtsclib",
@@ -44,7 +48,7 @@ ext = cythonize(
         'smt/src/rmts/rmtb.cpp',
         'smt/src/rmts/rmtc.cpp',
     ],
-    language="c++", extra_compile_args=['-std=c++11'],
+    language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ]))
 
