@@ -5,7 +5,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 '''
 
-from numpy.distutils.core import setup, Extension
+from setuptools import setup, Extension
 import os
 from subprocess import call
 import numpy as np
