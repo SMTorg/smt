@@ -19,7 +19,8 @@ class Test(unittest.TestCase):
 
         xt, yt, xlimits = get_one_d_step()
 
-        interp = RMTB(num_ctrl_pts=100, xlimits=xlimits, nln_max_iter=20, reg_cons=1e-14)
+        interp = RMTB(num_ctrl_pts=100, xlimits=xlimits, nonlinear_maxiter=20,
+            solver_tolerance=1e-16, energy_weight=1e-14, regularization_weight=0.)
         interp.set_training_values(xt, yt)
         interp.train()
 
@@ -32,7 +33,8 @@ class Test(unittest.TestCase):
 
         xt, yt, xlimits = get_one_d_step()
 
-        interp = RMTC(num_elements=40, xlimits=xlimits, nln_max_iter=20, reg_cons=1e-14)
+        interp = RMTC(num_elements=40, xlimits=xlimits, nonlinear_maxiter=20,
+            solver_tolerance=1e-16, energy_weight=1e-14, regularization_weight=0.)
         interp.set_training_values(xt, yt)
         interp.train()
 

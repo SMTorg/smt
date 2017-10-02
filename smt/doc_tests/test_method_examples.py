@@ -74,7 +74,7 @@ class Test(unittest.TestCase):
 
         xlimits = np.array([[0., 4.]])
 
-        sm = RMTB(xlimits=xlimits, order=4, num_ctrl_pts=20, reg_dv=1e-15, reg_cons=1e-15)
+        sm = RMTB(xlimits=xlimits, order=4, num_ctrl_pts=20, energy_weight=1e-15, regularization_weight=0.)
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -101,7 +101,7 @@ class Test(unittest.TestCase):
 
         xlimits = np.array([[0., 4.]])
 
-        sm = RMTC(xlimits=xlimits, num_elements=20, reg_dv=1e-15, reg_cons=1e-15)
+        sm = RMTC(xlimits=xlimits, num_elements=20, energy_weight=1e-15, regularization_weight=0.)
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -228,7 +228,7 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0., 4., num)
         y = sm.predict_values(x)
-        yy = sm.predict_derivatives(xt,0)        
+        yy = sm.predict_derivatives(xt,0)
         plt.plot(xt, yt, 'o')
         plt.plot(x, y)
         plt.xlabel('x')
@@ -265,17 +265,17 @@ class Test(unittest.TestCase):
         # Test the model
         X = np.arange(fun.xlimits[0,0], fun.xlimits[0,1], .25)
         Y = np.arange(fun.xlimits[1,0], fun.xlimits[1,1], .25)
-        X, Y = np.meshgrid(X, Y)        
+        X, Y = np.meshgrid(X, Y)
         Z = np.zeros((X.shape[0],X.shape[1]))
 
         for i in range(X.shape[0]):
             for j in range(X.shape[1]):
                 Z[i,j] = sm.predict_values(np.hstack((X[i,j],Y[i,j])).reshape((1,2)))
-        
+
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         surf = ax.plot_surface(X, Y, Z)
- 
+
         plt.show()
 
 if __name__ == '__main__':

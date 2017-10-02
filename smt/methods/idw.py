@@ -1,7 +1,7 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -123,10 +123,12 @@ class IDW(SM):
     def _predict_output_derivatives(self, x):
         n = x.shape[0]
         nt = self.nt
+        ny = self.training_points[None][0][1].shape[1]
 
         jac = np.empty(n * nt)
         self.idwc.compute_jac(n, x.flatten(), jac)
         jac = jac.reshape((n, nt))
+        jac = np.einsum('ij,k->ijk', jac, np.ones(ny))
 
         dy_dyt = {None: jac}
         return dy_dyt

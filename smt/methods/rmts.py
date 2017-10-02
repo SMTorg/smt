@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -31,26 +31,28 @@ class RMTS(SM):
                 desc='Lower/upper bounds in each dimension - ndarray [nx, 2]')
         declare('smoothness', 1.0, types=(Integral, float, tuple, list, np.ndarray),
                 desc='Smoothness parameter in each dimension - length nx. None implies uniform')
-        declare('reg_dv', 1e-10, types=(Integral, float),
-                desc='Regularization coeff. for system degrees of freedom. ' +
-                     'This ensures there is always a unique solution')
-        declare('reg_cons', 1e-4, types=(Integral, float),
-                desc='Negative of the regularization coeff. of the Lagrange mult. block ' +
-                     'The weight of the energy terms (and reg_dv) relative to the approx terms')
+        declare('regularization_weight', 1e-14, types=(Integral, float),
+                desc='Weight of the term penalizing the norm of the spline coefficients.' +
+                    ' This is useful as an alternative to energy minimization ' +
+                    ' when energy minimization makes the training time too long.')
+        declare('energy_weight', 1e-4, types=(Integral, float),
+                desc='The weight of the energy minimization terms')
         declare('extrapolate', False, types=bool,
                 desc='Whether to perform linear extrapolation for external evaluation points')
         declare('min_energy', True, types=bool,
                 desc='Whether to perform energy minimization')
         declare('approx_order', 4, types=Integral,
                 desc='Exponent in the approximation term')
-        declare('mtx_free', False, types=bool,
-                desc='Whether to solve the linear system in a matrix-free way')
         declare('solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
                 desc='Linear solver')
+        declare('derivative_solver', 'krylov', values=VALID_SOLVERS, types=LinearSolver,
+                desc='Linear solver used for computing output derivatives (dy_dyt)')
         declare('grad_weight', 0.5, types=(Integral, float),
                 desc='Weight on gradient training data')
-        declare('nln_max_iter', 5, types=Integral,
-                desc='maximum number of nonlinear iterations')
+        declare('solver_tolerance', 1e-12, types=(Integral, float),
+                desc='Convergence tolerance for the nonlinear solver')
+        declare('nonlinear_maxiter', 10, types=Integral,
+                desc='Maximum number of nonlinear solver iterations')
         declare('line_search', 'backtracking', values=VALID_LINE_SEARCHES, types=LineSearch,
                 desc='Line search algorithm')
         declare('save_energy_terms', False, types=bool,
@@ -65,7 +67,7 @@ class RMTS(SM):
         supports['output_derivatives'] = True
 
     def _setup_hessian(self):
-        diag = self.options['reg_dv'] * np.ones(self.num['dof'])
+        diag = np.ones(self.num['dof'])
         arange = np.arange(self.num['dof'])
         full_hess = scipy.sparse.csc_matrix((diag, (arange, arange)))
         return full_hess
@@ -148,7 +150,10 @@ class RMTS(SM):
 
         return full_hess
 
-    def _opt_func(self, sol, p, full_hess, full_jac_dict, yt_dict):
+    def _opt_func(self, sol, p, yt_dict):
+        full_hess = self.full_hess
+        full_jac_dict = self.full_jac_dict
+
         func = 0.5 * np.dot(sol, full_hess * sol)
         for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
@@ -157,7 +162,10 @@ class RMTS(SM):
 
         return func
 
-    def _opt_grad(self, sol, p, full_hess, full_jac_dict, yt_dict):
+    def _opt_grad(self, sol, p, yt_dict):
+        full_hess = self.full_hess
+        full_jac_dict = self.full_jac_dict
+
         grad = full_hess * sol
         for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
@@ -166,13 +174,23 @@ class RMTS(SM):
 
         return grad
 
-    def _opt_hess(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        if self.options['mtx_free']:
-            return self._opt_hess_op(sol, p, full_hess, full_jac_dict, yt_dict)
-        else:
-            return self._opt_hess_mtx(sol, p, full_hess, full_jac_dict, yt_dict)
+    def _opt_dgrad_dyt(self, sol, p, yt_dict, kx):
+        full_hess = self.full_hess
+        full_jac_dict = self.full_jac_dict
 
-    def _opt_hess_mtx(self, sol, p, full_hess, full_jac_dict, yt_dict):
+        full_jac, full_jac_T, c = full_jac_dict[kx]
+        yt = yt_dict[kx]
+
+        diag_vec = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
+        diag_mtx = scipy.sparse.diags(diag_vec, format='csc')
+        mtx = 0.5 * c * full_jac_T.dot(diag_mtx)
+
+        return -mtx.todense()
+
+    def _opt_hess(self, sol, p, yt_dict):
+        full_hess = self.full_hess
+        full_jac_dict = self.full_jac_dict
+
         hess = scipy.sparse.csc_matrix(full_hess)
         for kx in self.training_points[None]:
             full_jac, full_jac_T, c = full_jac_dict[kx]
@@ -184,61 +202,11 @@ class RMTS(SM):
 
         return hess
 
-    def _opt_hess_op(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        class SpMatrix(object):
-            def __init__(self):
-                self.shape = full_hess.shape
-                self.diag_vec = {}
-                for kx in full_jac_dict:
-                    full_jac, full_jac_T, c = full_jac_dict[kx]
-                    yt = yt_dict[kx]
-                    self.diag_vec[kx] = p * (p - 1) * (full_jac * sol - yt) ** (p - 2)
-            def dot(self, other):
-                vec = full_hess * other
-                for kx in full_jac_dict:
-                    full_jac, full_jac_T, c = full_jac_dict[kx]
-                    vec += 0.5 * c * full_jac_T * (self.diag_vec[kx] * (full_jac * other))
-                return vec
+    def _opt_norm(self, sol, p, yt_dict):
+        full_hess = self.full_hess
+        full_jac_dict = self.full_jac_dict
 
-        mtx = SpMatrix()
-        op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
-        return op
-
-    def _opt_hess_2(self, full_hess, full_jac_dict):
-        if self.options['mtx_free']:
-            return self._opt_hess_op_2(full_hess, full_jac_dict)
-        else:
-            return self._opt_hess_mtx_2(full_hess, full_jac_dict)
-
-    def _opt_hess_mtx_2(self, full_hess, full_jac_dict):
-        p = 2
-
-        hess = scipy.sparse.csc_matrix(full_hess)
-        for kx in self.training_points[None]:
-            full_jac, full_jac_T, c = full_jac_dict[kx]
-            hess += 0.5 * c * p * (p - 1) * full_jac_T * full_jac
-
-        return hess
-
-    def _opt_hess_op_2(self, full_hess, full_jac_dict):
-        p = 2
-
-        class SpMatrix(object):
-            def __init__(self):
-                self.shape = full_hess.shape
-            def dot(self, other):
-                vec = full_hess * other
-                for kx in full_jac_dict:
-                    full_jac, full_jac_T, c = full_jac_dict[kx]
-                    vec += 0.5 * c * p * (p - 1) * full_jac_T * (full_jac * other)
-                return vec
-
-        mtx = SpMatrix()
-        op = scipy.sparse.linalg.LinearOperator(mtx.shape, matvec=mtx.dot)
-        return op
-
-    def _opt_norm(self, sol, p, full_hess, full_jac_dict, yt_dict):
-        grad = self._opt_grad(sol, p, full_hess, full_jac_dict, yt_dict)
+        grad = self._opt_grad(sol, p, yt_dict)
         return np.linalg.norm(grad)
 
     def _get_yt_dict(self, ind_y):
@@ -248,7 +216,63 @@ class RMTS(SM):
             yt_dict[kx] = yt[:, ind_y]
         return yt_dict
 
-    def _solve(self, full_hess, full_jac_dict):
+    def _run_newton_solver(self, sol):
+        num = self.num
+        options = self.options
+
+        solver = get_solver(options['solver'])
+        ls_class = get_line_search_class(options['line_search'])
+
+        total_size = int(num['dof'])
+        rhs = np.zeros((total_size, num['y']))
+        d_sol = np.zeros((total_size, num['y']))
+
+        p = self.options['approx_order']
+        for ind_y in range(rhs.shape[1]):
+
+            with self.printer._timed_context('Solving for output %i' % ind_y):
+
+                yt_dict = self._get_yt_dict(ind_y)
+
+                norm = self._opt_norm(sol[:, ind_y], p, yt_dict)
+                fval = self._opt_func(sol[:, ind_y], p, yt_dict)
+                self.printer(
+                    'Iteration (num., iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
+                    % (0, ind_y, norm, fval))
+
+                iter_count = 0
+                while iter_count < options['nonlinear_maxiter'] and norm > options['solver_tolerance']:
+                    with self.printer._timed_context():
+                        with self.printer._timed_context('Assembling linear system'):
+                            mtx = self._opt_hess(sol[:, ind_y], p, yt_dict)
+                            rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, yt_dict)
+
+                        with self.printer._timed_context('Initializing linear solver'):
+                            solver._setup(mtx, self.printer)
+
+                        with self.printer._timed_context('Solving linear system'):
+                            solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
+
+                        func = lambda x: self._opt_func(x, p, yt_dict)
+                        grad = lambda x: self._opt_grad(x, p, yt_dict)
+
+                        # sol[:, ind_y] += d_sol[:, ind_y]
+
+                        ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
+                        with self.printer._timed_context('Performing line search'):
+                            sol[:, ind_y] = ls(1.0)
+
+                    norm = self._opt_norm(sol[:, ind_y], p, yt_dict)
+                    fval = self._opt_func(sol[:, ind_y], p, yt_dict)
+                    self.printer(
+                        'Iteration (num., iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
+                        % (iter_count, ind_y, norm, fval))
+
+                    self.mtx = mtx
+
+                    iter_count += 1
+
+    def _solve(self):
         num = self.num
         options = self.options
 
@@ -260,71 +284,21 @@ class RMTS(SM):
         sol = np.zeros((total_size, num['y']))
         d_sol = np.zeros((total_size, num['y']))
 
-        with self.printer._timed_context('Solving initial linear problem (n=%i)' % total_size):
+        with self.printer._timed_context('Solving initial startup problem (n=%i)' % total_size):
 
-            with self.printer._timed_context('Assembling linear system'):
-                mtx = self._opt_hess_2(full_hess, full_jac_dict)
-                for ind_y in range(num['y']):
-                    yt_dict = self._get_yt_dict(ind_y)
-                    rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], 2, full_hess,
-                                                    full_jac_dict, yt_dict)
-                self.mtx = mtx
-                self.full_jac_dict = full_jac_dict
+            approx_order = options['approx_order']
+            nonlinear_maxiter = options['nonlinear_maxiter']
+            options['approx_order'] = 2
+            options['nonlinear_maxiter'] = 1
 
-            with self.printer._timed_context('Initializing linear solver'):
-                solver._setup(mtx, self.printer)
+            self._run_newton_solver(sol)
 
-            for ind_y in range(rhs.shape[1]):
-                with self.printer._timed_context('Solving linear system (col. %i)' % ind_y):
-                    solver._solve(rhs[:, ind_y], sol[:, ind_y], ind_y=ind_y)
+            options['approx_order'] = approx_order
+            options['nonlinear_maxiter'] = nonlinear_maxiter
 
-        p = self.options['approx_order']
-        for ind_y in range(rhs.shape[1]):
+        with self.printer._timed_context('Solving nonlinear problem (n=%i)' % total_size):
 
-            with self.printer._timed_context('Solving nonlinear problem (col. %i)' % ind_y):
-
-                yt_dict = self._get_yt_dict(ind_y)
-
-                if options['nln_max_iter'] > 0:
-                    norm = self._opt_norm(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                    fval = self._opt_func(sol[:, ind_y], p, full_hess, full_jac_dict, yt_dict)
-                    self.printer(
-                        'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
-                        % (0, ind_y, norm, fval))
-
-                for nln_iter in range(options['nln_max_iter']):
-                    with self.printer._timed_context():
-                        with self.printer._timed_context('Assembling linear system'):
-                            mtx = self._opt_hess(sol[:, ind_y], p, full_hess,
-                                                    full_jac_dict, yt_dict)
-                            rhs[:, ind_y] = -self._opt_grad(sol[:, ind_y], p, full_hess,
-                                                            full_jac_dict, yt_dict)
-
-                        with self.printer._timed_context('Initializing linear solver'):
-                            solver._setup(mtx, self.printer)
-
-                        with self.printer._timed_context('Solving linear system'):
-                            solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
-
-                        func = lambda x: self._opt_func(x, p, full_hess,
-                                                        full_jac_dict, yt_dict)
-                        grad = lambda x: self._opt_grad(x, p, full_hess,
-                                                        full_jac_dict, yt_dict)
-
-                        ls = ls_class(sol[:, ind_y], d_sol[:, ind_y], func, grad)
-                        with self.printer._timed_context('Performing line search'):
-                            sol[:, ind_y] = ls(1.0)
-
-                    norm = self._opt_norm(sol[:, ind_y], p, full_hess,
-                                          full_jac_dict, yt_dict)
-                    fval = self._opt_func(sol[:, ind_y], p, full_hess,
-                                          full_jac_dict, yt_dict)
-                    self.printer(
-                        'Nonlinear (itn, iy, grad. norm, func.) : %3i %3i %15.9e %15.9e'
-                        % (nln_iter + 1, ind_y, norm, fval))
-
-                    if norm < 1e-16:
-                        break
+            self._run_newton_solver(sol)
 
         return sol
 
@@ -338,22 +312,22 @@ class RMTS(SM):
                 self.full_dof2coeff = self._compute_dof2coeff()
 
             with self.printer._timed_context('Initializing Hessian', 'init_hess'):
-                full_hess = self._setup_hessian()
+                self.full_hess = self._setup_hessian() * self.options['regularization_weight']
 
             if self.options['min_energy']:
                 with self.printer._timed_context('Computing energy terms', 'energy'):
-                    full_hess += self._compute_energy_terms()
+                    self.full_hess += self._compute_energy_terms() * self.options['energy_weight']
 
             with self.printer._timed_context('Computing approximation terms', 'approx'):
-                full_jac_dict = self._compute_approx_terms()
-
-            full_hess *= self.options['reg_cons']
+                self.full_jac_dict = self._compute_approx_terms()
 
         with self.printer._timed_context('Solving for degrees of freedom', 'total_solution'):
-            self.sol = self._solve(full_hess, full_jac_dict)
+            self.sol = self._solve()
 
         if self.full_dof2coeff is not None:
-            self.sol = self.full_dof2coeff * self.sol
+            self.sol_coeff = self.full_dof2coeff * self.sol
+        else:
+            self.sol_coeff = self.sol
 
     def _train(self):
         """
@@ -369,10 +343,20 @@ class RMTS(SM):
             self.rmtsc = tmp
 
             if outputs:
+                self.sol_coeff = outputs['sol_coeff']
                 self.sol = outputs['sol']
+                self.mtx = outputs['mtx']
+                self.full_dof2coeff = outputs['full_dof2coeff']
+                self.full_hess = outputs['full_hess']
+                self.full_jac_dict = outputs['full_jac_dict']
             else:
                 self._new_train()
+                outputs['sol_coeff'] = self.sol_coeff
                 outputs['sol'] = self.sol
+                outputs['mtx'] = self.mtx
+                outputs['full_dof2coeff'] = self.full_dof2coeff
+                outputs['full_hess'] = self.full_hess
+                outputs['full_jac_dict'] = self.full_jac_dict
 
     def _predict_values(self, x):
         """
@@ -389,7 +373,7 @@ class RMTS(SM):
             Evaluation point output variable values
         """
         mtx = self._compute_prediction_mtx(x, 0)
-        y = mtx.dot(self.sol)
+        y = mtx.dot(self.sol_coeff)
 
         return y
 
@@ -410,7 +394,7 @@ class RMTS(SM):
             Derivative values.
         """
         mtx = self._compute_prediction_mtx(x, kx + 1)
-        y = mtx.dot(self.sol)
+        y = mtx.dot(self.sol_coeff)
 
         return y
 
@@ -466,33 +450,46 @@ class RMTS(SM):
         return mtx
 
     def _predict_output_derivatives(self, x):
+        # dy_dyt = dy_dw * (dR_dw)^{-1} * dR_dyt
+
         n = x.shape[0]
+        nw = self.mtx.shape[0]
+        nx = x.shape[1]
+        ny = self.sol.shape[1]
 
-        dy_dstates = self._compute_prediction_mtx(x, 0)
+        p = self.options['approx_order']
+
+        dy_dw = self._compute_prediction_mtx(x, 0)
         if self.full_dof2coeff is not None:
-            dy_dstates = dy_dstates * self.full_dof2coeff
-        dy_dstates = dy_dstates.todense()
+            dy_dw = dy_dw * self.full_dof2coeff
+        dy_dw = dy_dw.todense()
 
-        drhs_dstates = self.mtx
-
-        solver = get_solver(self.options['solver'])
-        solver._setup(drhs_dstates, self.printer)
-        dy_drhs = np.zeros(dy_dstates.shape)
-
-        rhs = np.zeros(dy_drhs.shape[1])
-        sol = np.zeros(dy_drhs.shape[1])
-        for ind in range(n):
-            rhs[:] = dy_dstates[ind, :]
-            solver._solve(rhs, sol, ind_y=ind)
-            dy_drhs[ind, :] = sol
+        dR_dw = self.mtx
 
         dy_dyt = {}
         for kx in self.training_points[None]:
-            full_jac, full_jac_T, c = self.full_jac_dict[kx]
-            drhs_dyt = c * full_jac_T
+            nt = self.training_points[None][kx][0].shape[0]
+
+            dR_dyt = np.zeros((nw, nt, ny))
+            for ind_y in range(ny):
+                yt_dict = self._get_yt_dict(ind_y)
+                dR_dyt[:, :, ind_y] = self._opt_dgrad_dyt(self.sol[:, ind_y], p, yt_dict, kx)
+
+            solver = get_solver(self.options['derivative_solver'])
+            solver._setup(dR_dw, self.printer)
+
+            dw_dyt = np.zeros((nw, nt, ny))
+            for ind_t in range(nt):
+                for ind_y in range(ny):
+                    solver._solve(
+                        dR_dyt[:, ind_t, ind_y],
+                        dw_dyt[:, ind_t, ind_y],
+                        ind_y=ind_y)
+                    dw_dyt[:, ind_t, ind_y] *= -1.
+
             if kx == 0:
-                dy_dyt[None] = drhs_dyt.T.dot(dy_drhs.T).T
+                dy_dyt[None] = np.einsum('ij,jkl->ikl', dy_dw, dw_dyt)
             else:
-                dy_dyt[kx - 1] = drhs_dyt.T.dot(dy_drhs.T).T
+                dy_dyt[kx-1] = np.einsum('ij,jkl->ikl', dy_dw, dw_dyt)
 
         return dy_dyt
