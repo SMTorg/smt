@@ -73,4 +73,6 @@ setup(name='smt',
     ],
     zip_safe=False,
     ext_modules=ext,
+    url = 'https://github.com/SMTorg/smt', # use the URL to the github repo
+    download_url = 'https://github.com/SMTorg/smt/archive/v0.1.tar.gz',
 )
