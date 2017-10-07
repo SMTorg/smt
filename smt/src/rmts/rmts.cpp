@@ -41,6 +41,20 @@ RMTS::~RMTS() {
 }
 
 void RMTS::setup(int nx, double * lower, double * upper) {
+  delete[] this->lower;
+  delete[] this->upper;
+
+  delete[] this->work_int_nx_1;
+  delete[] this->work_int_nx_2;
+  delete[] this->work_int_nx_3;
+  delete[] this->work_int_nx_4;
+  delete[] this->work_int_nx_5;
+  delete[] this->work_int_nx_6;
+  delete[] this->work_int_nx_7;
+
+  delete[] this->work_double_nx_1;
+  delete[] this->work_double_nx_2;
+
   this->nx = nx;
   this->lower = new double[nx];
   this->upper = new double[nx];
@@ -80,7 +94,7 @@ void RMTS::compute_ext_dist(int n, int nterm, double * x, double * dx) {
 void RMTS::compute_quadrature_points(int n, int * nelem_list, double * x) {
   int * ielem_list;
   ielem_list = work_int_nx_1;
-  
+
   double t;
 
   for (int i = 0; i < n; i++) {
