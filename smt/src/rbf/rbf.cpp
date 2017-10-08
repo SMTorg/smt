@@ -17,6 +17,9 @@ RBF::~RBF() {
 }
 
 void RBF::setup(int nx, int nt, int num_dof, int poly_degree, double * d0, double * xt) {
+  delete[] this->d0;
+  delete[] this->xt;
+
   this->nx = nx;
   this->nt = nt;
   this->num_dof = num_dof;
