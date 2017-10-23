@@ -66,6 +66,7 @@ setup(name='smt',
         'smt/utils',
     ],
     install_requires=[
+        'six',
         'scikit-learn',
         'pyDOE',
         'matplotlib',
