@@ -8,16 +8,17 @@ Mixture of Experts
 
 from __future__ import division
 import numpy as np
+import warnings
+from sklearn import mixture
+from sklearn import cluster
+from scipy import stats as sct
+from scipy.linalg import solve_triangular, cholesky
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.extensions2.extensions import Extensions
-
-from smt.mixture.cluster import create_clustering, sort_values_by_cluster, create_multivar_normal_dis, proba_cluster
-from smt.mixture.utils import sum_x, cut_list, concat_except
-from smt.mixture.error import Error
-#from smt.mixture.factory import ModelFactory
+from smt.extensions.extensions import Extensions
 from smt.utils.misc import compute_rms_error
-from statsmodels.tools.eval_measures import rmse
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class MOE(Extensions):
     
@@ -28,8 +29,14 @@ class MOE(Extensions):
         declare('X', None, types=np.ndarray, desc='Training inputs')
         declare('y', None, types=np.ndarray, desc='Training outputs')
         declare('c', None, types=np.ndarray, desc='Clustering training outputs')
-        declare('number_cluster', 0, types=int, desc='Number of cluster')
+        declare('number_cluster', 1, types=int, desc='Number of cluster')
         declare('hard_recombination', True, types=bool, desc='Steep cluster transition')
+
+    def train(self):
+        super(MOE, self).apply_method()
+
+    def predict_values(self, x):
+        return super(MOE, self).analyse_results(x=x, operation='predict_values')        
 
     def _apply(self):
         """
@@ -65,8 +72,6 @@ class MOE(Extensions):
         Maximum number of clusters. Default to None (tenth of the length of x)
         - cluster_model: func
         Model used to find the best number of cluster
-        - reset: Boolean
-        Reset the best model list and the clustering if True. Default to True
         """
         if self.options['X'] is not None and self.options['y'] is not None:
             x = self.options['X']
@@ -84,99 +89,116 @@ class MOE(Extensions):
         self.x = x
         self.y = y
         self.c = c
+
         self.scale_factor=1.
         self.hard = self.options['hard_recombination']
         dimension = x.shape[1]
-        reset = True
         median = True
         valid = None
         max_number_cluster = None
         heaviside = False
 
-        if reset:
-            self.model_list = []
-            self.model_list_name = []
-            self.model_list_param = []
+        self.model_list = []
+        self.model_list_name = []
+        self.model_list_param = []
 
         # choice of test values and trained values
         self.values = np.c_[x, y, c]
 
         if valid is None:
             cut_values = cut_list(self.values, 10)  # cut space in 10 parts
-            training_values = np.vstack(concat_except(cut_values, 0))  # assemble 9 parts
-            test_values = np.vstack(cut_values[0])
+            self.training_values = np.vstack(concat_except(cut_values, 0))  # assemble 9 parts
+            self.test_values = np.vstack(cut_values[0])
         else:
-            training_values = self.values
-            test_values = valid
+            self.training_values = self.values
+            self.test_values = valid
 
-        self.test_values = test_values
-        self.training_values = training_values
-
-        total_length = training_values.shape[1]
-        x_trained = training_values[:, 0:dimension]
-        y_trained = training_values[:, dimension]
-        c_trained = training_values[:, dimension + 1:total_length]
+        total_length = self.training_values.shape[1]
+        x_trained = self.training_values[:, 0:dimension]
+        y_trained = self.training_values[:, dimension]
+        c_trained = self.training_values[:, (dimension+1):total_length]
 
         # choice of number of cluster
-        if reset:
-            if max_number_cluster is None:
-                max_number_cluster = int(len(x) / 10) + 1
+        if max_number_cluster is None:
+            max_number_cluster = int(len(x) / 10) + 1
 
-            if number_cluster is 0:
-                self._default_number_cluster(dimension, x, y, c,
-                                             median=median, max_number_cluster=max_number_cluster)
-            else:
-                self.number_cluster = number_cluster
+        if number_cluster is 0:
+            self._default_number_cluster(dimension, x, y, c,
+                                         median=median, max_number_cluster=max_number_cluster)
+        else:
+            self.number_cluster = number_cluster
 
-            if self.number_cluster > max_number_cluster:
-                print 'Number of clusters should be inferior to {0}'.format(max_number_cluster)
-                raise ValueError(
-                    'The number of clusters is too high considering the number of points')
+        if self.number_cluster > max_number_cluster:
+            print 'Number of clusters should be inferior to {0}'.format(max_number_cluster)
+            raise ValueError(
+                'The number of clusters is too high considering the number of points')
 
         # Cluster space
-        if reset:
-            self.cluster = create_clustering(
-                x_trained, c_trained, n_component=self.number_cluster, method='GMM')
-            while self._check_number_cluster(x_trained, y_trained, c_trained) is False:
-                self.number_cluster = self.number_cluster - 1
-                warnings.warn(
-                    "The number of cluster had to be reduced in order to have enough points by cluster")
-                self.cluster = create_clustering(
-                    x_trained, c_trained, n_component=self.number_cluster, method='GMM')
-                print 'The new number of clusters is {0}'.format(self.number_cluster)
+        self.cluster = mixture.GMM(n_components=self.number_cluster,
+                                   covariance_type='full', n_init=20)
+        self.cluster.fit(np.c_[x_trained, c_trained])        
 
         # Choice of the models and training
-        self._fit_without_clustering(
-            dimension, x_trained, y_trained, c_trained, new_model=reset)
+        self._fit_without_clustering(dimension, x_trained, y_trained, c_trained)
 
         # choice of heaviside factor
         if heaviside and self.number_cluster > 1:
             self._best_scale_factor(
-                test_values[:, 0:dimension], test_values[:, dimension], detail=detail, plot=plot)
+                self.test_values[:, 0:dimension], self.test_values[:, dimension], detail=detail, plot=plot)
 
         self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
                                                     self.scale_factor * self.cluster.covars_)
 
         # Validation
-        self._valid(test_values[:, 0:dimension], test_values[:, dimension])
-
-        if self.valid_hard.l_two_rel > self.valid_smooth.l_two_rel:
-            if self.hard is None:
-                self.hard = False
-        else:
-            if self.hard is None:
-                self.hard = True
+        # xv, yv = test_values[:, 0:dimension], test_values[:, dimension]
+        # ys = self._predict_smooth_output(xv)
+        # yh = self._predict_hard_output(xv)
+        # #self.valid_hard = self._rmse(np.atleast_2d(yv).T, yh)
+        # #self.valid_smooth = self._rmse(np.atleast_2d(yv).T, ys)
+        # self.valid_hard = Error(yv, yh)
+        # self.valid_smooth = Error(yv, ys)
+        # print "VAMID HARD", self.valid_hard 
+        self._valid(self.test_values[:, 0:dimension], self.test_values[:, dimension])
 
         # once the validation is done, the model is trained again on all the
         # space
         if valid is None:
             self._fit_without_clustering(dimension, x, y, c, new_model=False)
 
-        #gc.collect()
+
+    def _analyse_results(self, x, operation='predict_values', kx=None):
+        if operation == 'predict_values':
+            if self.hard:
+                y = self._predict_hard_output(x)
+            else:
+                y = self._predict_smooth_output(x)
+            return y 
+        else:
+            raise ValueError("MoE supports predict_values operation only.")
+        return y
     
-    def _analyse_results(self,x,operation = 'predict_values',kx=None):
-        pass 
+    def _valid(self, x, y):
+        """
+        Valid the Moe with the input samples
+        Parameters:
+        -----------
+        - x: array_like
+        Input testing samples
+        - y : array_like
+        Output testing samples
+        """
+        ys = self._predict_smooth_output(x)
+        yh = self._predict_hard_output(x)
+        self.valid_hard = Error(np.atleast_2d(y).T, yh)
+        self.valid_smooth = Error(np.atleast_2d(y).T, ys)
     
+    @staticmethod
+    def _rmse(expected, actual):
+        l_two = np.linalg.norm(expected - actual)
+        l_two_rel = l_two / np.linalg.norm(expected)
+        mse = (l_two**2) / len(expected)
+        rmse = mse ** 0.5
+        return rmse
 
     def _check_input_data(self, x, y, c):
         """
@@ -198,228 +220,6 @@ class MOE(Extensions):
         if y.shape[0] != c.shape[0]:
             raise ValueError("The number of output points %d doesn t match with the number of criterion weights %d."
                              % (y.shape[0], c.shape[0]))
-
-
-    def _default_number_cluster(self, dim, x, y, c, available_models=None, max_number_cluster=None, median=True):
-        """
-        Find the best number of clusters thanks to a cross-validation.
-        Parameters :
-        ------------
-        - dim: int
-        Dimension of the problem
-        - x: array_like
-        Inputs Training values
-        - y: array_like
-        Target Values
-        - c:array_like
-        Clustering Criterion
-        Optional :
-        ------------
-        - available_models: dictionary
-        Model to apply for each cluster. Default to PA2 if dim <=9 else RadBF (arbitrary choice)
-        - max_number_cluster:int
-        The maximal number of clusters. Default to tenth of the X_train length
-        - median: boolean
-        Find the best number of clusters with the median of cross-validations set to True.
-        Find the best number of clusters with the MSE of cross-validations set to False.
-        Returns :
-        ----------
-        - cluster: int
-        The best number of clusters 'by default'
-        """
-        val = np.c_[x, y, c]
-        total_length = len(val[0])
-        val_cut = cut_list(val, 5)
-
-        # Stock
-        errori = []
-        erroris = []
-        posi = []
-        b_ic = []
-        a_ic = []
-        error_h = []
-        error_s = []
-        median_eh = []
-        median_es = []
-
-        # Init Output Loop
-        auxkh = 0
-        auxkph = 0
-        auxkpph = 0
-        auxks = 0
-        auxkps = 0
-        auxkpps = 0
-        ok1 = True
-        ok2 = True
-        i = 0
-        exit_ = True
-
-        # Find error for each cluster
-        while i < max_number_cluster and exit_:
-            if available_models is None:
-                if dim > 9:
-                    #available_models = [{'type': 'RadBF'}]
-                    available_models = [{'type': 'QP', 'degree': 2}]
-                else:
-                    available_models = [{'type': 'QP', 'degree': 2}]
-
-            # Stock
-            errorc = []
-            errors = []
-            bic_c = []
-            aic_c = []
-            ok = True  # Say if this number of cluster is possible
-
-            # Cross Validation
-            for c in range(5):
-                if ok:
-                    # Create training and test samples
-                    val_train = np.vstack(concat_except(val_cut, c))
-                    val_test = np.vstack(val_cut[c])
-                    # Create the MoE for the cross validation
-                    mixture = MOE()
-                    mixture._surrogate_type = {'QP': mixture._surrogate_type['QP']}
-                    mixture.cluster = create_clustering(
-                        val_train[:, 0:dim], val_train[:, dim + 1:total_length], i + 1, 'GMM')  # Clustering
-                    valc = np.c_[
-                        val_train[:, 0:dim], val_train[:, dim + 1:total_length]]
-                    sort = mixture.cluster.predict(valc)
-                    clus_train = sort_values_by_cluster(
-                        val_train[:, 0:dim + 1], i + 1, sort)
-                    bic_c.append(
-                        mixture.cluster.bic(np.c_[val_test[:, 0:dim], val_test[:, dim + 1:total_length]]))
-                    aic_c.append(
-                        mixture.cluster.aic(np.c_[val_test[:, 0:dim], val_test[:, dim + 1:total_length]]))
-                    for j in range(i + 1):
-                        # If there is at least one point
-                        if len(clus_train[j]) < 4:
-                            ok = False
-
-                    if ok:
-                        # calculate error
-                        try:
-                            # Train the MoE for the cross validation
-                            mixture._fit_without_clustering(dim, val_train[:, 0:dim], val_train[:, dim],
-                                                           val_train[:, dim + 1:total_length])
-                            # errors Of the MoE
-                            errorcc = error.Error(val_test[:, dim],
-                                                  mixture._predict_hard_output(val_test[:, 0:dim]))
-                            errorsc = error.Error(val_test[:, dim],
-                                                  mixture._predict_smooth_output(val_test[:, 0:dim]))
-                            errors.append(errorsc.l_two_rel)
-                            errorc.append(errorcc.l_two_rel)
-                        except:
-                            errorc.append(1.)  # extrem value
-                            errors.append(1.)
-                    else:
-                        errorc.append(1.)  # extrem value
-                        errors.append(1.)
-
-            # Stock for box plot
-            b_ic.append(bic_c)
-            a_ic.append(aic_c)
-            error_s.append(errors)
-            error_h.append(errorc)
-
-            # Stock median
-            median_eh.append(np.median(errorc))
-            median_es.append(np.median(errors))
-
-            # Stock possible numbers of cluster
-            if ok:
-                posi.append(i)
-
-            # Stock mean errors
-            errori.append(np.mean(errorc))
-            erroris.append(np.mean(errors))
-
-#             if detail:  # pragma: no cover
-#                 # Print details about the clustering
-#                 print 'Number of cluster:', i + 1, '| Possible:', ok, '| Error(hard):', np.mean(errorc), '| Error(smooth):', np.mean(errors), '| Median (hard):', np.median(errorc), '| Median (smooth):', np.median(errors)
-#                 print '#######'
-
-            if i > 3:
-                # Stop the search if the clustering can not be performed three
-                # times
-                ok2 = ok1
-                ok1 = ok
-                if ok1 is False and ok is False and ok2 is False:
-                    exit_ = False
-            if median:
-                # Stop the search if the median increases three times
-                if i > 3:
-                    auxkh = median_eh[i - 2]
-                    auxkph = median_eh[i - 1]
-                    auxkpph = median_eh[i]
-                    auxks = median_es[i - 2]
-                    auxkps = median_es[i - 1]
-                    auxkpps = median_es[i]
-
-                    if auxkph >= auxkh and auxkps >= auxks and auxkpph >= auxkph and auxkpps >= auxkps:
-                        exit_ = False
-            else:
-                if i > 3:
-                    # Stop the search if the means of errors increase three
-                    # times
-                    auxkh = errori[i - 2]
-                    auxkph = errori[i - 1]
-                    auxkpph = errori[i]
-                    auxks = erroris[i - 2]
-                    auxkps = erroris[i - 1]
-                    auxkpps = erroris[i]
-
-                    if auxkph >= auxkh and auxkps >= auxks and auxkpph >= auxkph and auxkpps >= auxkps:
-                        exit_ = False
-            i = i + 1
-
-        # Find The best number of cluster
-        cluster_mse = 1
-        cluster_mses = 1
-        if median:
-            min_err = median_eh[posi[0]]
-            min_errs = median_es[posi[0]]
-        else:
-            min_err = errori[posi[0]]
-            min_errs = erroris[posi[0]]
-        for k in posi:
-            if median:
-                if min_err > median_eh[k]:
-                    min_err = median_eh[k]
-                    cluster_mse = k + 1
-                if min_errs > median_es[k]:
-                    min_errs = median_es[k]
-                    cluster_mses = k + 1
-            else:
-                if min_err > errori[k]:
-                    min_err = errori[k]
-                    cluster_mse = k + 1
-                if min_errs > erroris[k]:
-                    min_errs = erroris[k]
-                    cluster_mses = k + 1
-
-        # Choose between hard or smooth recombination
-        if median:
-            if median_eh[cluster_mse - 1] < median_es[cluster_mses - 1]:
-                cluster = cluster_mse
-                hardi = True
-
-            else:
-                cluster = cluster_mses
-                hardi = False
-        else:
-            if errori[cluster_mse - 1] < erroris[cluster_mses - 1]:
-                cluster = cluster_mse
-                hardi = True
-            else:
-                cluster = cluster_mses
-                hardi = False
-
-        self.number_cluster = cluster
-
-        if median:
-            method = '| Method: Minimum of Median errors'
-        else:
-            method = '| Method: Minimum of relative L2'
 
     def _fit_without_clustering(self, dimension, x_trained, y_trained, c_trained, new_model=True):
         """
@@ -448,6 +248,7 @@ class MOE(Extensions):
                                                 self.scale_factor * self.cluster.covars_)
 
         sort_cluster = self.cluster.predict(np.c_[x_trained, c_trained])
+        print(sort_cluster)
 
         # sort trained_values for each cluster
         trained_cluster = sort_values_by_cluster(
@@ -459,17 +260,17 @@ class MOE(Extensions):
             if new_model:
 
                 if len(self._surrogate_type) == 1:
-                    x_trained = np.array(trained_cluster[clus])[:, 0:dimension]
-                    y_trained = np.array(trained_cluster[clus])[:, dimension]
-                    model = self.use_model()
-                    model.set_training_values(x_trained, y_trained)
-                    model.train()
+                    pass
+                    # #
+                    # x_trained = np.array(trained_cluster[clus])[:, 0:dimension]
+                    # y_trained = np.array(trained_cluster[clus])[:, dimension]
+                    # model = self.use_model()
+                    # model.set_training_values(x_trained, y_trained)
+                    # model.train()
                 else:
                     model = self._find_best_model(trained_cluster[clus])
 
                 self.model_list.append(model)
-                #self.model_list_name.append(model.name)
-                #self.model_list_param.append(param)
 
             else:  # Train on the overall domain
                 trained_values = np.array(trained_cluster[clus])
@@ -477,68 +278,6 @@ class MOE(Extensions):
                 y_trained = trained_values[:, dimension]
                 self.model_list[clus].set_training_values(x_trained, y_trained)
                 self.model_list[clus].train()
-
-        #gc.collect()
-
-    def _check_number_cluster(self, x_trained, y_trained, c_trained):
-        """
-        This function checks the number of cluster isn't too high
-        so that it will allow to have enough points by cluster.
-        Parameters:
-        -----------
-        - x_trained: array_like
-        input sample trained
-        - y_trained: array_like
-        output sample trained
-        - c_trained: array_like
-        input sample weights trained
-        Return:
-        -----------
-        - ok: boolean
-        True if the number of cluster is ok else False
-        """
-
-        ok = True
-        sort_cluster = self.cluster.predict(np.c_[x_trained, c_trained])
-        trained_cluster = sort_values_by_cluster(
-            np.c_[x_trained, y_trained], self.number_cluster, sort_cluster)
-
-#         for model in self.factory.available_models:
-# 
-#             if model['type'] == 'PA':
-#                 min_number_point = np.math.factorial(self.dimension + model['degree']) / (
-#                     np.math.factorial(self.dimension) * np.math.factorial(model['degree']))
-#                 ok = self._check_number_points(
-#                     trained_cluster, min_number_point)
-# 
-#             if model['type'] == 'PA2' or model['type'] == 'PA2smt':
-#                 min_number_point = np.math.factorial(self.dimension + 2) / (
-#                     np.math.factorial(self.dimension) * np.math.factorial(2))
-#                 ok = self._check_number_points(
-#                     trained_cluster, min_number_point)
-# 
-#             if model['type'] == 'LS':
-#                 min_number_point = 1 + self.dimension
-#                 ok = self._check_number_points(
-#                     trained_cluster, min_number_point)
-# 
-#             if model['type'] in ['Krig', 'KrigPLS', 'KrigPLSK']:
-# 
-#                 if model['regr'] == 'linear':
-#                     min_number_point = 1 + self.dimension
-#                     ok = self._check_number_points(
-#                         trained_cluster, min_number_point)
-# 
-#                 if model['regr'] == 'quadratic':
-#                     min_number_point = np.math.factorial(self.dimension + 2) / (
-#                         np.math.factorial(self.dimension) * np.math.factorial(2))
-#                     ok = self._check_number_points(
-#                         trained_cluster, min_number_point)
-# 
-#             if ok is False:
-#                 return False
-
-        return True
     
     def _find_best_model(self, sorted_trained_values):
         """
@@ -567,15 +306,22 @@ class MOE(Extensions):
         sms = {}
 
         for name, sm_class in self._surrogate_type.iteritems():
-            print name
-            if name == 'RMTC' or name == 'RMTB' or name == 'GEKPLS' or name == 'KRG':
+            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
                 continue
             
             sm = sm_class()
+            sm.options['print_global']=False
             sm.set_training_values(sorted_trained_values[:, 0:dimension], sorted_trained_values[:, dimension])
             sm.train()
             
-            rmses[sm.name] = compute_rms_error(sm)
+            expected = self.test_values[:, dimension]
+            actual = sm.predict_values(self.test_values[:, 0:dimension])
+            l_two = np.linalg.norm(expected - actual, 2)
+            l_two_rel = l_two / np.linalg.norm(expected, 2)
+            mse = (l_two**2) / len(expected)
+            rmse = mse ** 0.5
+            rmses[sm.name] = rmse
+            print(name, rmse)
             sms[sm.name] = sm
             
         best_name=None
@@ -583,50 +329,9 @@ class MOE(Extensions):
         for name, rmse in rmses.iteritems():
             if best_rmse is None or rmse < best_rmse:
                 best_name, best_rmse = name, rmse              
-            
+        
+        print "BEST = ", best_name
         return sms[best_name]
-
-        # Training for each model
-#         for i, params in enumerate(self.factory.available_models):
-# #             try:
-#             model, param = self.factory.create_trained_model(
-#                 sorted_trained_values[:, 0:dimension], sorted_trained_values[:, dimension], dimension, params)  # Training
-#             erreurm = error.Error(self.test_values[:, dimension], model.predict_output(
-#                 self.test_values[:, 0:dimension]))  # errors
-#             model_list.append(model)
-#             param_model_list.append(param)
-#             error_list_by_model.append(erreurm.l_two_rel)
-#             name_model_list.append(
-#                 self.factory.available_models[i]['type'])
-
-#             except NameError:
-#                 if detail:  # pragma: no cover
-#                     print self.factory.available_models[i]['type'] + " can not be performed"
-
-        # find minimum error
-#        min_error_index = error_list_by_model.index(min(error_list_by_model))
-
-#         # find best model and train it with all the training samples
-#         model = model_list[min_error_index]
-#         param = param_model_list[min_error_index]
-#         model_name = name_model_list[min_error_index]
-# 
-#         return model, param, model_name 
-
-    def _valid(self, x, y):
-        """
-        Valid the Moe with the input samples
-        Parameters:
-        -----------
-        - x: array_like
-        Input testing samples
-        - y : array_like
-        Output testing samples
-        """
-        ys = self._predict_smooth_output(x)
-        yh = self._predict_hard_output(x)
-        self.valid_hard = Error(np.atleast_2d(y).T, yh)
-        self.valid_smooth = Error(np.atleast_2d(y).T, ys)
         
     def _predict_hard_output(self, x):
         """
@@ -651,8 +356,6 @@ class MOE(Extensions):
 
         return predicted_values
 
-###################################################################
-
     def _predict_smooth_output(self, x):
         """
         This method predicts the output of a x samples for a smooth recombination
@@ -668,6 +371,7 @@ class MOE(Extensions):
         predicted_values = []
         sort_proba = proba_cluster(
             self.dimension, self.cluster.weights_, self.gauss, x)[0]
+
         for i in range(len(sort_proba)):
             recombined_value = 0
 
@@ -680,3 +384,362 @@ class MOE(Extensions):
         predicted_values = np.array(predicted_values)
 
         return predicted_values
+
+"""
+Functions used for the clustering
+"""
+
+def sort_values_by_cluster(values, number_cluster, sort_cluster):
+    """
+    Sort values in each cluster
+    Parameters
+    ---------
+    - values: array_like
+    Samples to sort
+    - number_cluster: int
+    Number of cluster
+    - sort_cluster: array_like
+    Cluster corresponding to each point of value in the same order
+    Returns:
+    --------
+    - sorted_values: array_like
+    Samples sort by cluster
+    Example:
+    ---------
+    values:
+    [[  1.67016597e-01   5.42927264e-01   9.25779645e+00]
+    [  5.20618344e-01   9.88223010e-01   1.51596837e+02]
+    [  6.09979830e-02   2.66824984e-01   1.17890707e+02]
+    [  9.62783472e-01   7.36979149e-01   7.37641826e+01]
+    [  2.65769081e-01   8.09156235e-01   3.43656373e+01]
+    [  8.49975570e-01   4.20496285e-01   3.48434265e+01]
+    [  3.01194132e-01   8.58084068e-02   4.88696602e+01]
+    [  6.40398203e-01   6.91090937e-01   8.91963162e+01]
+    [  7.90710374e-01   1.40464471e-01   1.89390766e+01]
+    [  4.64498124e-01   3.61009635e-01   1.04779656e+01]]
+
+    number_cluster:
+    3
+
+    sort_cluster:
+    [1 0 0 2 1 1 1 2 1 1]
+
+    sorted_values
+    [[array([   0.52061834,    0.98822301,  151.59683723]),
+      array([  6.09979830e-02,   2.66824984e-01,   1.17890707e+02])]
+     [array([ 0.1670166 ,  0.54292726,  9.25779645]),
+      array([  0.26576908,   0.80915623,  34.36563727]),
+      array([  0.84997557,   0.42049629,  34.8434265 ]),
+      array([  0.30119413,   0.08580841,  48.86966023]),
+      array([  0.79071037,   0.14046447,  18.93907662]),
+      array([  0.46449812,   0.36100964,  10.47796563])]
+     [array([  0.96278347,   0.73697915,  73.76418261]),
+      array([  0.6403982 ,   0.69109094,  89.19631619])]]
+    """
+    sorted_values = []
+    for i in range(number_cluster):
+        sorted_values.append([])
+    for i in range(len(sort_cluster)):
+        sorted_values[sort_cluster[i]].append(values[i].tolist())
+    return np.array(sorted_values)
+
+
+def create_multivar_normal_dis(dim, means, cov):
+    """
+    Create an array of frozen multivariate normal distributions
+    Parameters
+    ---------
+    - dim: integer
+    Dimension of the problem
+    - means: array_like
+    Array of means
+    - cov: array_like
+    Array of covariances
+    Returns:
+    --------
+    - gauss_array: array_like
+    Array of frozen multivariate normal distributions with means and covariances of the input
+    """
+    gauss_array = []
+    for k in range(len(means)):
+        meansk = means[k][0:dim]
+        covk = cov[k][0:dim, 0:dim]
+        rv = sct.multivariate_normal(meansk, covk, True)
+        gauss_array.append(rv)
+    return gauss_array
+
+
+def _proba_cluster_one_sample(weight, gauss_list, x):
+    """
+    Calculate membership probabilities to each cluster for one sample
+    Parameters :
+    ------------
+    - weight: array_like
+    Weight of each cluster
+    - gauss_list : multivariate_normal object
+    Array of frozen multivariate normal distributions
+    - x: array_like
+    The point where probabilities must be calculated
+    Returns :
+    ----------
+    - prob: array_like
+    Membership probabilities to each cluster for one input
+    - clus: int
+    Membership to one cluster for one input
+    """
+    prob = []
+    rad = 0
+
+    for k in range(len(weight)):
+        rv = gauss_list[k].pdf(x)
+        val = weight[k] * (rv)
+        rad = rad + val
+        prob.append(val)
+
+    if rad != 0:
+        for k in range(len(weight)):
+            prob[k] = prob[k] / rad
+
+    clus = prob.index(max(prob))
+    return prob, clus
+
+
+def _derive_proba_cluster_one_sample(weight, gauss_list, x):
+    """
+    Calculate the derivation term of the membership probabilities to each cluster for one sample
+    Parameters :
+    ------------
+    - weight: array_like
+    Weight of each cluster
+    - gauss_list : multivariate_normal object
+    Array of frozen multivariate normal distributions
+    - x: array_like
+    The point where probabilities must be calculated
+    Returns :
+    ----------
+    - derive_prob: array_like
+    Derivation term of the membership probabilities to each cluster for one input
+    """
+    derive_prob = []
+    v = 0
+    vprime = 0
+
+    for k in range(len(weight)):
+        v = v + weight[k] * gauss_list[k].pdf(x)
+        sigma = gauss_list[k].cov
+        invSigma = np.linalg.inv(sigma)
+        der = np.dot((x - gauss_list[k].mean), invSigma)
+        vprime = vprime - weight[k] * gauss_list[k].pdf(
+            x) * der
+
+    for k in range(len(weight)):
+        u = weight[k] * gauss_list[k].pdf(
+            x)
+        sigma = gauss_list[k].cov
+        invSigma = np.linalg.inv(sigma)
+        der = np.dot((x - gauss_list[k].mean), invSigma)
+        uprime = - u * der
+        derive_prob.append((v * uprime - u * vprime) / (v**2))
+
+    return derive_prob
+
+
+def proba_cluster(dim, weight, gauss_list, x):
+    """
+    Calculate membership probabilities to each cluster for each sample
+    Parameters :
+    ------------
+    - dimension:int
+    Dimension of Input samples
+    - weight: array_like
+    Weight of each cluster
+    - gauss_list : multivariate_normal object
+    Array of frozen multivariate normal distributions
+    - x: array_like
+    Samples where probabilities must be calculated
+    Returns :
+    ----------
+    - prob: array_like
+    Membership probabilities to each cluster for each sample
+    - clus: array_like
+    Membership to one cluster for each sample
+    Examples :
+    ----------
+    weight:
+    [ 0.60103817  0.39896183]
+
+    x:
+    [[ 0.  0.]
+     [ 0.  1.]
+     [ 1.  0.]
+     [ 1.  1.]]
+
+    prob:
+    [[  1.49050563e-02   9.85094944e-01]
+     [  9.90381299e-01   9.61870088e-03]
+     [  9.99208990e-01   7.91009759e-04]
+     [  1.48949963e-03   9.98510500e-01]]
+
+    clus:
+    [1 0 0 1]
+
+    """
+    n = len(weight)
+    prob = []
+    clus = []
+
+    for i in range(len(x)):
+
+        if n == 1:
+            prob.append([1])
+            clus.append(0)
+
+        else:
+            proba, cluster = _proba_cluster_one_sample(
+                weight, gauss_list, x[i])
+            prob.append(proba)
+            clus.append(cluster)
+
+    return np.array(prob), np.array(clus)
+
+
+def derive_proba_cluster(dim, weight, gauss_list, x):
+    """
+    Calculate the derivation term of the  membership probabilities to each cluster for each sample
+    Parameters :
+    ------------
+    - dim:int
+    Dimension of Input samples
+    - weight: array_like
+    Weight of each cluster
+    - gauss_list : multivariate_normal object
+    Array of frozen multivariate normal distributions
+    - x: array_like
+    Samples where probabilities must be calculated
+    Returns :
+    ----------
+    - der_prob: array_like
+    Derivation term of the membership probabilities to each cluster for each sample
+    """
+    n = len(weight)
+    der_prob = []
+
+    for i in range(len(x)):
+
+        if n == 1:
+            der_prob.append([0])
+
+        else:
+            der_proba = _derive_proba_cluster_one_sample(
+                weight, gauss_list, x[i])
+            der_prob.append(der_proba)
+
+    return np.array(der_prob)
+
+def sum_x(n):
+    """
+    Compute the sum from 0 to n
+    Parameters:
+    -----------
+    - n : int
+    Last integer to sum
+    Return:
+    -------
+    Sum of the first integer until n
+    """
+    if n > 0:
+        return n * (n + 1) / 2
+    else:
+        return 0
+
+def cut_list(list_, n):
+    """
+    Cut a list_ in n lists with the same number of samples
+    Parameters:
+    -----------
+    - list_ : Array_like
+    The list_ to cut
+    - n : int
+    Number of lists needed
+    Return:
+    -------
+    - n_list : array_like
+    List of n lists
+    """
+    n_list = []
+    for i in range(n):
+        n_list.append([])
+    i = 0
+    length = len(list_)
+    while i < length:
+        j = 0
+        while i < length and j < n:
+            n_list[j].append(list_[i])
+            i = i + 1
+            j = j + 1
+    return n_list
+
+
+def concat_except(list_, n):
+    """
+    Concatenate a list_ of N lists except the n_th list
+    Parameters:
+    -----------
+    - list_ : Array_like
+    A list_ of N lists
+    - n : int
+    The number of the list to eliminate
+    Return:
+    -------
+    - nlist : array_like
+    The concatenated list
+    """
+    nlist = []
+    for i in range(len(list_)):
+        if i != n:
+            nlist = nlist + list_[i]
+    return nlist
+
+class Error(object):
+    """
+    This Class contains errors :
+    - l_two : float
+    L2 error
+    - l_two_rel : float
+    relative L2 error
+    - mse : float
+    mse error
+    - rmse : float
+    rmse error
+    - lof : float
+    lof error
+    - r_two : float
+    Residual
+    - err_rel: array_like
+    relative errors table
+    - err_rel_mean : float
+    mean of err_rel
+    -err_rel_max : float
+    max of err_rel
+    -err_abs_max: flot
+    max of err_abs (norm inf)
+    """
+
+    def __init__(self, y_array_true, y_array_calc):
+        length = len(y_array_true)
+        self.l_two = np.linalg.norm((y_array_true - y_array_calc), 2)
+        self.l_two_rel = self.l_two / np.linalg.norm((y_array_true), 2)
+        self.mse = (self.l_two**2) / length
+        self.rmse = self.mse ** 5
+        err = np.abs((y_array_true - y_array_calc) / y_array_true)
+        self.err_rel = 100 * err
+        self.err_rel_mean = np.mean(self.err_rel)
+        self.err_rel_max = max(self.err_rel)
+        self.err_abs_max = np.linalg.norm((y_array_true - y_array_calc), np.inf)
+        #self.quant = QuantError(err)
+        if abs(np.var(y_array_true)) > 1e-10:
+            self.lof = 100 * self.mse / np.var(y_array_true)
+            self.r_two = (1 - self.lof / 100)
+        else:
+            self.lof = None
+            self.r_two = None
