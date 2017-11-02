@@ -9,7 +9,7 @@ This repository includes the codes for the surrogate model toolbox (SMT). SMT is
 Version 0.1
 
 # Required packages
-Scipy    >= Version 0.15.1
+Scipy    >= Version 1.0.0
 
 Numpy    >= Version 1.9.2
 
