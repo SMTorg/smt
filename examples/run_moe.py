@@ -2,9 +2,8 @@
 Test all the functions
 """
 import unittest
-import os
-import csv
 import numpy as np
+from sys import argv
 
 from smt.extensions import MOE
 from smt.utils.sm_test_case import SMTestCase
@@ -19,6 +18,7 @@ class TestMOE(SMTestCase):
     """
     Test class
     """
+    plot = None
 
     #@unittest.skip('disabled')
     def test_norm1_d2_200(self):
@@ -36,8 +36,8 @@ class TestMOE(SMTestCase):
 
         # mixture of experts
         mix = MOE(hard_recombination=True, number_cluster=3)
-        mix.options['X'] = xt
-        mix.options['y'] = yt
+        mix.options['xt'] = xt
+        mix.options['yt'] = yt
         mix.apply_method()
 
         # validation data
@@ -48,19 +48,18 @@ class TestMOE(SMTestCase):
         rms_error = compute_rms_error(mix, xe, ye)
         self.assert_error(rms_error, 0., 1e-1)
 
-        y = mix.predict_values(xe)
-        plt.figure(1)
-        plt.plot(ye, ye,'-.')
-        plt.plot(ye, y, '.')
-        plt.xlabel(r'$y$ True')
-        plt.ylabel(r'$y$ prediction')
+        if TestMOE.plot:
+            y = mix.predict_values(xe)
+            plt.figure(1)
+            plt.plot(ye, ye,'-.')
+            plt.plot(ye, y, '.')
+            plt.xlabel(r'$y$ actual')
+            plt.ylabel(r'$y$ prediction')
 
-        fig = plt.figure(2)
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(xt[:,0], xt[:,1], yt)
-        #ax.scatter(xe[:,0], xe[:,1], y)
-        plt.show()
-
+            fig = plt.figure(2)
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(xt[:,0], xt[:,1], yt)
+            plt.show()
 
     #@unittest.skip('disabled')
     def test_branin_d2_100(self):
@@ -78,8 +77,8 @@ class TestMOE(SMTestCase):
 
         # mixture of experts
         mix = MOE(hard_recombination=True, number_cluster=6)
-        mix.options['X'] = xt
-        mix.options['y'] = yt
+        mix.options['xt'] = xt
+        mix.options['yt'] = yt
         mix.apply_method()
 
         # validation data
@@ -90,18 +89,20 @@ class TestMOE(SMTestCase):
         rms_error = compute_rms_error(mix, xe, ye)
         self.assert_error(rms_error, 0., 1e-1)
 
-        y = mix.analyse_results(x=xe, operation='predict_values')
-        plt.figure(1)
-        plt.plot(ye, ye,'-.')
-        plt.plot(ye, y, '.')
-        plt.xlabel(r'$y$ True')
-        plt.ylabel(r'$y$ prediction')
+        if TestMOE.plot:
+            y = mix.analyse_results(x=xe, operation='predict_values')
+            plt.figure(1)
+            plt.plot(ye, ye,'-.')
+            plt.plot(ye, y, '.')
+            plt.xlabel(r'$y$ actual')
+            plt.ylabel(r'$y$ prediction')
 
-        fig = plt.figure(2)
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(xt[:,0], xt[:,1], yt)
-        plt.show()
+            fig = plt.figure(2)
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(xt[:,0], xt[:,1], yt)
+            plt.show()
 
 		
 if __name__ == '__main__':
+    TestMOE.plot = '--plot' in argv
     unittest.main()

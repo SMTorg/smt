@@ -25,12 +25,24 @@ class MOE(Extensions):
     def _initialize(self):
         super(MOE, self)._initialize()
         declare = self.options.declare
+
+        declare('sms', )
         
-        declare('X', None, types=np.ndarray, desc='Training inputs')
-        declare('y', None, types=np.ndarray, desc='Training outputs')
+        declare('xt', None, types=np.ndarray, desc='Training inputs')
+        declare('yt', None, types=np.ndarray, desc='Training outputs')
         declare('c', None, types=np.ndarray, desc='Clustering training outputs')
+
+        declare('xtest', None, types=np.ndarray, desc='Test inputs')
+        declare('ytest', None, types=np.ndarray, desc='Test outputs')
+
         declare('number_cluster', 1, types=int, desc='Number of cluster')
         declare('hard_recombination', True, types=bool, desc='Steep cluster transition')
+        declare('heaviside', False, types=bool, desc='Heaviside')
+
+        for name, smclass in self._surrogate_type.iteritems():
+            sm_options = smclass().options
+            declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
+        #print self.options._dict
 
     def train(self):
         super(MOE, self).apply_method()
@@ -41,129 +53,66 @@ class MOE(Extensions):
     def _apply(self):
         """
         Train the MoE with 90 percent of the input samples if valid is None
-        The last 10 percent are used to valid the model
-        Parameters :
-        ------------
-        - dimension: int
-        Dimension of input samples
-        - x: array_like
-        Input training samples
-        - y:array_like
-        Output training samples
-        Optional :
-        ------------
-        - c: array_like
-        Clustering training samples. Default to None. In this case, c=y.
-        - valid : array_like
-        Validating samples if they exist. Default to None (10%)
-        - detail: Boolean
-        Set True to see details of the Moe creation
-        - plot: Boolean
-        Set True to see comparison between real and predicted values
-        - heaviside: Boolean
-        Set True to optimize the heaviside factor
-        - number_cluster:int
-        Number of clusters. Default to 0 to find the best number of clusters
-        - median:boolean
-        Set True to find the best number of clusters with the median criteria.
-        Set False to find the best number of clusters with means of criteria
-        Default to True.
-        - max_number_cluster:int
-        Maximum number of clusters. Default to None (tenth of the length of x)
-        - cluster_model: func
-        Model used to find the best number of cluster
+        The last 10 percent are used to valid the model.
         """
-        if self.options['X'] is not None and self.options['y'] is not None:
-            x = self.options['X']
-            y = self.options['y']
-            c = self.options['c']
-            number_cluster = self.options['number_cluster']
-        else:
-            raise ValueError('Check X, y')
-        
-        if c is None:
-            c = y
+        self.x = x = self.options['xt']
+        self.y = y = self.options['yt']
+        self.c = c = self.options['c']
+        if not self.c:
+            self.c = c = y
 
-        self._check_input_data(x, y, c)
-
-        self.x = x
-        self.y = y
-        self.c = c
-
-        self.scale_factor=1.
         self.hard = self.options['hard_recombination']
+        self.number_cluster = self.options['number_cluster']
+        self.heaviside = self.options['heaviside']
+        self.scale_factor=1.
+
+        self._check_inputs()
+
         dimension = x.shape[1]
-        median = True
-        valid = None
-        max_number_cluster = None
-        heaviside = False
+        self.xtest = self.options['xtest']
+        self.ytest = self.options['ytest']
+        test_data_present = self.xtest is not None and self.ytest is not None
 
         self.model_list = []
         self.model_list_name = []
         self.model_list_param = []
 
-        # choice of test values and trained values
+        # Set test values and trained values
         self.values = np.c_[x, y, c]
-
-        if valid is None:
-            cut_values = cut_list(self.values, 10)  # cut space in 10 parts
-            self.training_values = np.vstack(concat_except(cut_values, 0))  # assemble 9 parts
-            self.test_values = np.vstack(cut_values[0])
-        else:
+        if test_data_present:
             self.training_values = self.values
-            self.test_values = valid
+            self.test_values = np.c_[xtest, ytest] 
+        else:
+            self.test_values, self.training_values = self.extract_part(self.values, 10)
 
         total_length = self.training_values.shape[1]
         x_trained = self.training_values[:, 0:dimension]
         y_trained = self.training_values[:, dimension]
         c_trained = self.training_values[:, (dimension+1):total_length]
 
-        # choice of number of cluster
-        if max_number_cluster is None:
-            max_number_cluster = int(len(x) / 10) + 1
-
-        if number_cluster is 0:
-            self._default_number_cluster(dimension, x, y, c,
-                                         median=median, max_number_cluster=max_number_cluster)
-        else:
-            self.number_cluster = number_cluster
-
-        if self.number_cluster > max_number_cluster:
-            print 'Number of clusters should be inferior to {0}'.format(max_number_cluster)
-            raise ValueError(
-                'The number of clusters is too high considering the number of points')
-
-        # Cluster space
+        # Clustering
         self.cluster = mixture.GMM(n_components=self.number_cluster,
                                    covariance_type='full', n_init=20)
         self.cluster.fit(np.c_[x_trained, c_trained])        
 
-        # Choice of the models and training
-        self._fit_without_clustering(dimension, x_trained, y_trained, c_trained)
+        # Fit: choice of the models and training
+        self._fit(dimension, x_trained, y_trained, c_trained)
 
-        # choice of heaviside factor
-        if heaviside and self.number_cluster > 1:
+        # Heaviside factor
+        if self.heaviside and self.number_cluster > 1:
             self._best_scale_factor(
                 self.test_values[:, 0:dimension], self.test_values[:, dimension], detail=detail, plot=plot)
 
         self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
-                                                    self.scale_factor * self.cluster.covars_)
+                                                self.scale_factor * self.cluster.covars_)
 
-        # Validation
-        # xv, yv = test_values[:, 0:dimension], test_values[:, dimension]
-        # ys = self._predict_smooth_output(xv)
-        # yh = self._predict_hard_output(xv)
-        # #self.valid_hard = self._rmse(np.atleast_2d(yv).T, yh)
-        # #self.valid_smooth = self._rmse(np.atleast_2d(yv).T, ys)
-        # self.valid_hard = Error(yv, yh)
-        # self.valid_smooth = Error(yv, ys)
-        # print "VAMID HARD", self.valid_hard 
-        self._valid(self.test_values[:, 0:dimension], self.test_values[:, dimension])
+        self.compute_error(self.test_values[:, 0:dimension], self.test_values[:, dimension])
 
         # once the validation is done, the model is trained again on all the
         # space
-        if valid is None:
-            self._fit_without_clustering(dimension, x, y, c, new_model=False)
+        if not test_data_present:
+            self._fit(dimension, x, y, c, new_model=False)
+
 
 
     def _analyse_results(self, x, operation='predict_values', kx=None):
@@ -177,7 +126,7 @@ class MOE(Extensions):
             raise ValueError("MoE supports predict_values operation only.")
         return y
     
-    def _valid(self, x, y):
+    def compute_error(self, x, y):
         """
         Valid the Moe with the input samples
         Parameters:
@@ -200,28 +149,28 @@ class MOE(Extensions):
         rmse = mse ** 0.5
         return rmse
 
-    def _check_input_data(self, x, y, c):
+    def _check_inputs(self):
         """
-        Check that the data given by a user is correct
-        Parameters:
-        -----------
-        - dimension: int
-        dimension of the problem
-        - x: array_like
-        input points
-        - y: array_like
-        output points
-        - c: array_like
-        cluster criterion weights
+        Check the input data given by the client is correct.
+        raise Value error with relevant message
         """
-        if x.shape[0] != y.shape[0]:
+        if self.x is None or self.y is None:
+            raise ValueError("check x and y values")
+        if self.x.shape[0] != self.y.shape[0]:
             raise ValueError("The number of input points %d doesn t match with the number of output points %d."
-                             % (x.shape[0], y.shape[0]))
-        if y.shape[0] != c.shape[0]:
+                             % (self.x.shape[0], self.y.shape[0]))
+        if self.y.shape[0] != self.c.shape[0]:
             raise ValueError("The number of output points %d doesn t match with the number of criterion weights %d."
-                             % (y.shape[0], c.shape[0]))
+                             % (self.y.shape[0], self.c.shape[0]))
+        # choice of number of cluster
+        max_number_cluster = int(len(self.x) / 10) + 1
+        if self.number_cluster > max_number_cluster:
+            print 'Number of clusters should be inferior to {0}'.format(max_number_cluster)
+            raise ValueError(
+                'The number of clusters is too high considering the number of points')
 
-    def _fit_without_clustering(self, dimension, x_trained, y_trained, c_trained, new_model=True):
+
+    def _fit(self, dimension, x_trained, y_trained, c_trained, new_model=True):
         """
         Find the best model for each cluster (clustering already done) and train it if new_model is True
         Else train the points given (choice of best models by cluster already done)
@@ -240,8 +189,6 @@ class MOE(Extensions):
         - new_model : bool
         Set true to search the best local model
         """
-        self._check_input_data(x_trained, y_trained, c_trained)
-
         self.dimension = dimension
 
         self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
@@ -384,6 +331,30 @@ class MOE(Extensions):
         predicted_values = np.array(predicted_values)
 
         return predicted_values
+
+    @staticmethod
+    def extract_part(values, quantile):
+        """
+        Divide the values list in quantile parts to return one part
+        of (num/quantile) values out of num values.
+
+        Arguments
+        ----------
+        - values : np.ndarray[num, -1]
+            the values list to extract from
+        - quantile : int
+            the quantile
+
+        Returns
+        -------
+        - extracted, remaining: np.ndarray, np.ndarray
+            the extracted values part, the remaining values
+        """
+        num = values.shape[0]
+        indices = np.arange(0, num, quantile) # uniformly distributed
+        mask = np.zeros(num, dtype=bool)
+        mask[indices] = True
+        return values[mask], values[~mask]
 
 """
 Functions used for the clustering
@@ -651,54 +622,6 @@ def sum_x(n):
         return n * (n + 1) / 2
     else:
         return 0
-
-def cut_list(list_, n):
-    """
-    Cut a list_ in n lists with the same number of samples
-    Parameters:
-    -----------
-    - list_ : Array_like
-    The list_ to cut
-    - n : int
-    Number of lists needed
-    Return:
-    -------
-    - n_list : array_like
-    List of n lists
-    """
-    n_list = []
-    for i in range(n):
-        n_list.append([])
-    i = 0
-    length = len(list_)
-    while i < length:
-        j = 0
-        while i < length and j < n:
-            n_list[j].append(list_[i])
-            i = i + 1
-            j = j + 1
-    return n_list
-
-
-def concat_except(list_, n):
-    """
-    Concatenate a list_ of N lists except the n_th list
-    Parameters:
-    -----------
-    - list_ : Array_like
-    A list_ of N lists
-    - n : int
-    The number of the list to eliminate
-    Return:
-    -------
-    - nlist : array_like
-    The concatenated list
-    """
-    nlist = []
-    for i in range(len(list_)):
-        if i != n:
-            nlist = nlist + list_[i]
-    return nlist
 
 class Error(object):
     """
