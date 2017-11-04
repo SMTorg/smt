@@ -38,6 +38,7 @@ class TestMOE(SMTestCase):
         mix = MOE(hard_recombination=True, number_cluster=3)
         mix.options['xt'] = xt
         mix.options['yt'] = yt
+        mix.options['heaviside'] = True       
         mix.apply_method()
 
         # validation data

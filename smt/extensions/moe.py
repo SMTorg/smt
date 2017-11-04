@@ -9,10 +9,8 @@ Mixture of Experts
 from __future__ import division
 import numpy as np
 import warnings
-from sklearn import mixture
-from sklearn import cluster
+from sklearn import mixture, cluster
 from scipy import stats as sct
-from scipy.linalg import solve_triangular, cholesky
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.extensions.extensions import Extensions
@@ -86,33 +84,34 @@ class MOE(Extensions):
             self.test_values, self.training_values = self.extract_part(self.values, 10)
 
         total_length = self.training_values.shape[1]
-        x_trained = self.training_values[:, 0:dimension]
-        y_trained = self.training_values[:, dimension]
-        c_trained = self.training_values[:, (dimension+1):total_length]
+        xt = self.training_values[:, 0:dimension]
+        yt = self.training_values[:, dimension]
+        ct = self.training_values[:, (dimension+1):total_length]
 
         # Clustering
         self.cluster = mixture.GMM(n_components=self.number_cluster,
                                    covariance_type='full', n_init=20)
-        self.cluster.fit(np.c_[x_trained, c_trained])        
+        self.cluster.fit(np.c_[xt, ct])        
 
         # Fit: choice of the models and training
-        self._fit(dimension, x_trained, y_trained, c_trained)
+        self._fit(dimension, xt, yt, ct)
 
         # Heaviside factor
+        xtest = self.test_values[:, 0:dimension]
+        ytest = self.test_values[:, dimension:dimension+1]
         if self.heaviside and self.number_cluster > 1:
-            self._best_scale_factor(
-                self.test_values[:, 0:dimension], self.test_values[:, dimension], detail=detail, plot=plot)
+            self._best_scale_factor(xtest, ytest)
+            print('BEST SCALE=',self.scale_factor)
 
         self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
                                                 self.scale_factor * self.cluster.covars_)
 
-        self.compute_error(self.test_values[:, 0:dimension], self.test_values[:, dimension])
+        self.compute_error(xtest, ytest)
 
         # once the validation is done, the model is trained again on all the
         # space
         if not test_data_present:
             self._fit(dimension, x, y, c, new_model=False)
-
 
 
     def _analyse_results(self, x, operation='predict_values', kx=None):
@@ -123,7 +122,7 @@ class MOE(Extensions):
                 y = self._predict_smooth_output(x)
             return y 
         else:
-            raise ValueError("MoE supports predict_values operation only.")
+            raise ValueError("MOE supports predict_values operation only.")
         return y
     
     def compute_error(self, x, y):
@@ -138,8 +137,8 @@ class MOE(Extensions):
         """
         ys = self._predict_smooth_output(x)
         yh = self._predict_hard_output(x)
-        self.valid_hard = Error(np.atleast_2d(y).T, yh)
-        self.valid_smooth = Error(np.atleast_2d(y).T, ys)
+        self.valid_hard = Error(y, yh)
+        self.valid_smooth = Error(y, ys)
     
     @staticmethod
     def _rmse(expected, actual):
@@ -355,6 +354,40 @@ class MOE(Extensions):
         mask = np.zeros(num, dtype=bool)
         mask[indices] = True
         return values[mask], values[~mask]
+
+    def _best_scale_factor(self, x, y):
+        """
+        Find the best heaviside factor for smooth approximated values
+        Parameters:
+        -----------
+        - x: array_like
+        Input training samples
+        - y: array_like
+        Output training samples
+        """
+        if self.cluster.n_components == 1:
+            self.scale_factor = 1
+        else:
+            scale_factors_array = np.linspace(0.1, 2.1, num=21)
+            errors_list_by_scale_factor = []
+
+            for i in scale_factors_array:
+                self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
+                                                        i * self.cluster.covars_)
+                predicted_values = self._predict_smooth_output(x)
+                errors_list_by_scale_factor.append(
+                    Error(y, predicted_values).l_two_rel)
+
+            min_error_index = errors_list_by_scale_factor.index(
+                min(errors_list_by_scale_factor))
+
+            if max(errors_list_by_scale_factor) < 1e-6:
+                scale_factor = 1
+
+            else:
+                scale_factor = scale_factors_array[min_error_index]
+
+            self.scale_factor = scale_factor
 
 """
 Functions used for the clustering
