@@ -33,25 +33,46 @@ class MOE(Extensions):
         declare('xtest', None, types=np.ndarray, desc='Test inputs')
         declare('ytest', None, types=np.ndarray, desc='Test outputs')
 
-        declare('number_cluster', 1, types=int, desc='Number of cluster')
-        declare('hard_recombination', True, types=bool, desc='Steep cluster transition')
-        declare('heaviside', False, types=bool, desc='Heaviside')
+        declare('number_cluster', 2, types=int, desc='Number of cluster')
+        declare('smooth_recombination', True, types=bool, desc='Continuous cluster transition')
+        declare('heaviside_optimization', False, types=bool, 
+                desc='Optimize Heaviside scaling factor in cas eof smooth recombination')
+        declare('derivatives_support', False, types=bool, 
+                desc='Use only experts that support derivatives prediction')        
+        declare('variances_support', False, types=bool, 
+                desc='Use only experts that support variance prediction')
 
         for name, smclass in self._surrogate_type.iteritems():
             sm_options = smclass().options
             declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
-        #print self.options._dict
+
+        self.x = None
+        self.y = None
+        self.c = None
+
+        self.number_cluster = None
+        self.smooth_recombination = None
+        self.heaviside_optimization = None
+        self.heaviside_factor = 1.
+
+        self.experts = None
+        self.model_list = []
 
     def train(self):
+        """
+        Supports SM api
+        """
         super(MOE, self).apply_method()
 
     def predict_values(self, x):
+        """
+        Supports SM api
+        """
         return super(MOE, self).analyse_results(x=x, operation='predict_values')        
 
     def _apply(self):
         """
-        Train the MoE with 90 percent of the input samples if valid is None
-        The last 10 percent are used to valid the model.
+        Build and train the mixture of experts
         """
         self.x = x = self.options['xt']
         self.y = y = self.options['yt']
@@ -59,67 +80,62 @@ class MOE(Extensions):
         if not self.c:
             self.c = c = y
 
-        self.hard = self.options['hard_recombination']
         self.number_cluster = self.options['number_cluster']
-        self.heaviside = self.options['heaviside']
-        self.scale_factor=1.
+        self.smooth_recombination = not self.options['smooth_recombination']
+        self.heaviside_optimization = self.options['smooth_recombination'] and self.options['heaviside_optimization']
+        self.heaviside_factor = 1.
 
         self._check_inputs()
 
-        dimension = x.shape[1]
-        self.xtest = self.options['xtest']
-        self.ytest = self.options['ytest']
-        test_data_present = self.xtest is not None and self.ytest is not None
-
+        self.expert_types = self._select_expert_types()
         self.model_list = []
-        self.model_list_name = []
-        self.model_list_param = []
 
         # Set test values and trained values
-        self.values = np.c_[x, y, c]
+        xtest = self.options['xtest']
+        ytest = self.options['ytest']
+        values = np.c_[x, y, c]
+        test_data_present = xtest is not None and ytest is not None
         if test_data_present:
-            self.training_values = self.values
             self.test_values = np.c_[xtest, ytest] 
+            self.training_values = values
         else:
-            self.test_values, self.training_values = self.extract_part(self.values, 10)
+            self.test_values, self.training_values = self._extract_part(values, 10)
 
-        total_length = self.training_values.shape[1]
-        xt = self.training_values[:, 0:dimension]
-        yt = self.training_values[:, dimension]
-        ct = self.training_values[:, (dimension+1):total_length]
+        self.ndim = nx = x.shape[1]
+        xt = self.training_values[:, 0:nx]
+        yt = self.training_values[:, nx:nx+1]
+        ct = self.training_values[:, nx+1:]
 
         # Clustering
         self.cluster = mixture.GMM(n_components=self.number_cluster,
                                    covariance_type='full', n_init=20)
         self.cluster.fit(np.c_[xt, ct])        
 
-        # Fit: choice of the models and training
-        self._fit(dimension, xt, yt, ct)
+        # Choice of the experts and training
+        self._fit(xt, yt, ct)
+
+        xtest = self.test_values[:, 0:nx]
+        ytest = self.test_values[:, nx:nx+1]
 
         # Heaviside factor
-        xtest = self.test_values[:, 0:dimension]
-        ytest = self.test_values[:, dimension:dimension+1]
-        if self.heaviside and self.number_cluster > 1:
-            self._best_scale_factor(xtest, ytest)
-            print('BEST SCALE=',self.scale_factor)
-
-        self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
-                                                self.scale_factor * self.cluster.covars_)
+        if self.heaviside_optimization and self.number_cluster > 1:
+            self.heaviside_factor = self._find_best_heaviside_factor(xtest, ytest)
+            print('BEST HEAVISIDE =', self.heaviside_factor)
+            self.gauss = self._create_multivar_normal_dis(self.heaviside_factor)
 
         self.compute_error(xtest, ytest)
 
-        # once the validation is done, the model is trained again on all the
-        # space
         if not test_data_present:
-            self._fit(dimension, x, y, c, new_model=False)
+            # if we have used part of data to validate
+            self._fit(x, y, c, new_model=False)
 
 
     def _analyse_results(self, x, operation='predict_values', kx=None):
         if operation == 'predict_values':
-            if self.hard:
-                y = self._predict_hard_output(x)
-            else:
+            if self.smooth_recombination:
                 y = self._predict_smooth_output(x)
+            else:
+                y = self._predict_hard_output(x)
             return y 
         else:
             raise ValueError("MOE supports predict_values operation only.")
@@ -168,8 +184,18 @@ class MOE(Extensions):
             raise ValueError(
                 'The number of clusters is too high considering the number of points')
 
+    def _select_expert_types(self):
+        """
+        Select relevant surrogate models (experts) regarding MOE options
+        """
+        prototypes = {name: smclass() for name, smclass in self._surrogate_type.iteritems()}
+        if self.options['derivatives_support']:
+            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
+        if self.options['variances_support']:
+            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
+        return {name: self._surrogate_type[name] for name in prototypes}
 
-    def _fit(self, dimension, x_trained, y_trained, c_trained, new_model=True):
+    def _fit(self, x_trained, y_trained, c_trained, new_model=True):
         """
         Find the best model for each cluster (clustering already done) and train it if new_model is True
         Else train the points given (choice of best models by cluster already done)
@@ -188,16 +214,13 @@ class MOE(Extensions):
         - new_model : bool
         Set true to search the best local model
         """
-        self.dimension = dimension
-
-        self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
-                                                self.scale_factor * self.cluster.covars_)
+        self.gauss = self._create_multivar_normal_dis(self.heaviside_factor)
 
         sort_cluster = self.cluster.predict(np.c_[x_trained, c_trained])
         print(sort_cluster)
 
         # sort trained_values for each cluster
-        trained_cluster = sort_values_by_cluster(
+        trained_cluster = self._sort_values_by_cluster(
             np.c_[x_trained, y_trained], self.number_cluster, sort_cluster)
 
         # find model for each cluster
@@ -208,8 +231,8 @@ class MOE(Extensions):
                 if len(self._surrogate_type) == 1:
                     pass
                     # #
-                    # x_trained = np.array(trained_cluster[clus])[:, 0:dimension]
-                    # y_trained = np.array(trained_cluster[clus])[:, dimension]
+                    # x_trained = np.array(trained_cluster[clus])[:, 0:self.ndim]
+                    # y_trained = np.array(trained_cluster[clus])[:, self.ndim]
                     # model = self.use_model()
                     # model.set_training_values(x_trained, y_trained)
                     # model.train()
@@ -220,64 +243,10 @@ class MOE(Extensions):
 
             else:  # Train on the overall domain
                 trained_values = np.array(trained_cluster[clus])
-                x_trained = trained_values[:, 0:dimension]
-                y_trained = trained_values[:, dimension]
+                x_trained = trained_values[:, 0:self.ndim]
+                y_trained = trained_values[:, self.ndim]
                 self.model_list[clus].set_training_values(x_trained, y_trained)
                 self.model_list[clus].train()
-    
-    def _find_best_model(self, sorted_trained_values):
-        """
-        Find the best model which minimizes the errors
-        Parameters :
-        ------------
-        - sorted_trained_values: array_like
-        Training samples [[X1,X2, ..., Xn, Y], ... ]
-        Optional:
-        -----------
-        - detail: Boolean
-        Set True to see details of the search
-        Returns :
-        ---------
-        - model : Regression_model
-        Best model to apply
-        - param : dictionary
-        Dictionary of its parameters
-        - model_name : str
-        Name of the model
-        """
-        dimension = self.dimension
-        sorted_trained_values = np.array(sorted_trained_values)
-        
-        rmses = {}
-        sms = {}
-
-        for name, sm_class in self._surrogate_type.iteritems():
-            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
-                continue
-            
-            sm = sm_class()
-            sm.options['print_global']=False
-            sm.set_training_values(sorted_trained_values[:, 0:dimension], sorted_trained_values[:, dimension])
-            sm.train()
-            
-            expected = self.test_values[:, dimension]
-            actual = sm.predict_values(self.test_values[:, 0:dimension])
-            l_two = np.linalg.norm(expected - actual, 2)
-            l_two_rel = l_two / np.linalg.norm(expected, 2)
-            mse = (l_two**2) / len(expected)
-            rmse = mse ** 0.5
-            rmses[sm.name] = rmse
-            print(name, rmse)
-            sms[sm.name] = sm
-            
-        best_name=None
-        best_rmse=None
-        for name, rmse in rmses.iteritems():
-            if best_rmse is None or rmse < best_rmse:
-                best_name, best_rmse = name, rmse              
-        
-        print "BEST = ", best_name
-        return sms[best_name]
         
     def _predict_hard_output(self, x):
         """
@@ -292,8 +261,8 @@ class MOE(Extensions):
         predicted output
         """
         predicted_values = []
-        sort_cluster = proba_cluster(
-            self.dimension, self.cluster.weights_, self.gauss, x)[1]
+        sort_cluster = self._proba_cluster(
+            self.ndim, self.cluster.weights_, self.gauss, x)[1]
 
         for i in range(len(sort_cluster)):
             model = self.model_list[sort_cluster[i]]
@@ -302,25 +271,26 @@ class MOE(Extensions):
 
         return predicted_values
 
-    def _predict_smooth_output(self, x):
+    def _predict_smooth_output(self, x, gauss=None):
         """
-        This method predicts the output of a x samples for a smooth recombination
+        This method predicts the output of x with a smooth recombination
         Parameters:
         ----------
-        - x: Array_like
+        - x: np.ndarray
         x samples
-        Return :
-        ----------
+        - gauss: 
+        array of frozen multivariate normal distributions (see)
+        Returns 
+        -------
         - predicted_values : array_like
         predicted output
         """
         predicted_values = []
-        sort_proba = proba_cluster(
-            self.dimension, self.cluster.weights_, self.gauss, x)[0]
+        g = gauss or self.gauss
+        sort_proba, _ = self._proba_cluster(self.ndim, self.cluster.weights_, g, x)
 
         for i in range(len(sort_proba)):
             recombined_value = 0
-
             for j in range(len(self.model_list)):
                 recombined_value = recombined_value + \
                     self.model_list[j].predict_values(np.atleast_2d(x[i]))[0] * sort_proba[i][j]
@@ -328,11 +298,10 @@ class MOE(Extensions):
             predicted_values.append(recombined_value)
 
         predicted_values = np.array(predicted_values)
-
         return predicted_values
 
     @staticmethod
-    def extract_part(values, quantile):
+    def _extract_part(values, quantile):
         """
         Divide the values list in quantile parts to return one part
         of (num/quantile) values out of num values.
@@ -353,312 +322,352 @@ class MOE(Extensions):
         indices = np.arange(0, num, quantile) # uniformly distributed
         mask = np.zeros(num, dtype=bool)
         mask[indices] = True
+        print (values.shape[0], values[mask])
         return values[mask], values[~mask]
 
-    def _best_scale_factor(self, x, y):
+    def _find_best_model(self, sorted_trained_values):
+        """
+        Find the best model which minimizes the errors
+        Parameters :
+        ------------
+        - sorted_trained_values: array_like
+        Training samples [[X1,X2, ..., Xn, Y], ... ]
+        Optional:
+        -----------
+        - detail: Boolean
+        Set True to see details of the search
+        Returns :
+        ---------
+        - model : Regression_model
+        Best model to apply
+        - param : dictionary
+        Dictionary of its parameters
+        - model_name : str
+        Name of the model
+        """
+        dim = self.ndim
+        sorted_trained_values = np.array(sorted_trained_values)
+        
+        rmses = {}
+        sms = {}
+
+        # validation with 10% of the training data
+        test_values, training_values = self._extract_part(sorted_trained_values, 10)
+
+        for name, sm_class in self._surrogate_type.iteritems():
+            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
+                continue
+            
+            sm = sm_class()
+            sm.options['print_global']=False
+            sm.set_training_values(training_values[:, 0:dim], training_values[:, dim])
+            sm.train()
+            
+            expected = self.test_values[:, dim]
+            actual = sm.predict_values(self.test_values[:, 0:dim])
+            l_two = np.linalg.norm(expected - actual, 2)
+            l_two_rel = l_two / np.linalg.norm(expected, 2)
+            mse = (l_two**2) / len(expected)
+            rmse = mse ** 0.5
+            rmses[sm.name] = rmse
+            print(name, rmse)
+            sms[sm.name] = sm
+            
+        best_name=None
+        best_rmse=None
+        for name, rmse in rmses.iteritems():
+            if best_rmse is None or rmse < best_rmse:
+                best_name, best_rmse = name, rmse              
+        
+        print "BEST = ", best_name
+        return sms[best_name]
+
+    def _find_best_heaviside_factor(self, x, y):
         """
         Find the best heaviside factor for smooth approximated values
-        Parameters:
-        -----------
+        Arguments
+        ---------
         - x: array_like
         Input training samples
         - y: array_like
         Output training samples
+
+        Returns
+        -------
+        hfactor : float
+        best heaviside factor wrt given samples
         """
-        if self.cluster.n_components == 1:
-            self.scale_factor = 1
-        else:
-            scale_factors_array = np.linspace(0.1, 2.1, num=21)
-            errors_list_by_scale_factor = []
+        heaviside_factor = 1.
+        if self.cluster.n_components > 1:
+            heaviside_factors_array = np.linspace(0.1, 2.1, num=21)
+            errors_list_by_heaviside_factor = []
 
-            for i in scale_factors_array:
-                self.gauss = create_multivar_normal_dis(self.dimension, self.cluster.means_,
-                                                        i * self.cluster.covars_)
-                predicted_values = self._predict_smooth_output(x)
-                errors_list_by_scale_factor.append(
-                    Error(y, predicted_values).l_two_rel)
+            for hfactor in heaviside_factors_array:
+                gauss = self._create_multivar_normal_dis(hfactor)
+                predicted_values = self._predict_smooth_output(x, gauss)
+                errors_list_by_heaviside_factor.append(Error(y, predicted_values).l_two_rel)
 
-            min_error_index = errors_list_by_scale_factor.index(
-                min(errors_list_by_scale_factor))
+            min_error_index = errors_list_by_heaviside_factor.index(
+                min(errors_list_by_heaviside_factor))
 
-            if max(errors_list_by_scale_factor) < 1e-6:
-                scale_factor = 1
+            if max(errors_list_by_heaviside_factor) < 1e-6:
+                heaviside_factor = 1.
+            else:
+                heaviside_factor = heaviside_factors_array[min_error_index]
+        return heaviside_factor
+
+    """
+    Functions related to clustering
+    """
+    def _create_multivar_normal_dis(self, heaviside_factor=1.):
+        """
+        Create an array of frozen multivariate normal distributions.
+
+        Arguments
+        ---------
+        - heaviside_factor: float
+            Heaviside factor used toscla covariance matrices
+
+        Returns:
+        --------
+        - gauss_array: array_like
+            Array of frozen multivariate normal distributions with means and covariances of the input
+        """
+        gauss_array = []
+        dim= self.ndim
+        means = self.cluster.means_
+        cov = heaviside_factor*self.cluster.covars_
+        for k in range(len(means)):
+            meansk = means[k][0:dim]
+            covk = cov[k][0:dim, 0:dim]
+            rv = sct.multivariate_normal(meansk, covk, True)
+            gauss_array.append(rv)
+        return gauss_array
+
+    @staticmethod
+    def _sort_values_by_cluster(values, number_cluster, sort_cluster):
+        """
+        Sort values in each cluster
+        Parameters
+        ---------
+        - values: array_like
+        Samples to sort
+        - number_cluster: int
+        Number of cluster
+        - sort_cluster: array_like
+        Cluster corresponding to each point of value in the same order
+        Returns:
+        --------
+        - sorted_values: array_like
+        Samples sort by cluster
+        Example:
+        ---------
+        values:
+        [[  1.67016597e-01   5.42927264e-01   9.25779645e+00]
+        [  5.20618344e-01   9.88223010e-01   1.51596837e+02]
+        [  6.09979830e-02   2.66824984e-01   1.17890707e+02]
+        [  9.62783472e-01   7.36979149e-01   7.37641826e+01]
+        [  2.65769081e-01   8.09156235e-01   3.43656373e+01]
+        [  8.49975570e-01   4.20496285e-01   3.48434265e+01]
+        [  3.01194132e-01   8.58084068e-02   4.88696602e+01]
+        [  6.40398203e-01   6.91090937e-01   8.91963162e+01]
+        [  7.90710374e-01   1.40464471e-01   1.89390766e+01]
+        [  4.64498124e-01   3.61009635e-01   1.04779656e+01]]
+
+        number_cluster:
+        3
+
+        sort_cluster:
+        [1 0 0 2 1 1 1 2 1 1]
+
+        sorted_values
+        [[array([   0.52061834,    0.98822301,  151.59683723]),
+          array([  6.09979830e-02,   2.66824984e-01,   1.17890707e+02])]
+         [array([ 0.1670166 ,  0.54292726,  9.25779645]),
+          array([  0.26576908,   0.80915623,  34.36563727]),
+          array([  0.84997557,   0.42049629,  34.8434265 ]),
+          array([  0.30119413,   0.08580841,  48.86966023]),
+          array([  0.79071037,   0.14046447,  18.93907662]),
+          array([  0.46449812,   0.36100964,  10.47796563])]
+         [array([  0.96278347,   0.73697915,  73.76418261]),
+          array([  0.6403982 ,   0.69109094,  89.19631619])]]
+        """
+        sorted_values = []
+        for i in range(number_cluster):
+            sorted_values.append([])
+        for i in range(len(sort_cluster)):
+            sorted_values[sort_cluster[i]].append(values[i].tolist())
+        return np.array(sorted_values)
+
+
+    @staticmethod
+    def _proba_cluster_one_sample(weight, gauss_list, x):
+        """
+        Calculate membership probabilities to each cluster for one sample
+        Parameters :
+        ------------
+        - weight: array_like
+        Weight of each cluster
+        - gauss_list : multivariate_normal object
+        Array of frozen multivariate normal distributions
+        - x: array_like
+        The point where probabilities must be calculated
+        Returns :
+        ----------
+        - prob: array_like
+        Membership probabilities to each cluster for one input
+        - clus: int
+        Membership to one cluster for one input
+        """
+        prob = []
+        rad = 0
+
+        for k in range(len(weight)):
+            rv = gauss_list[k].pdf(x)
+            val = weight[k] * (rv)
+            rad = rad + val
+            prob.append(val)
+
+        if rad != 0:
+            for k in range(len(weight)):
+                prob[k] = prob[k] / rad
+
+        clus = prob.index(max(prob))
+        return prob, clus
+
+    @staticmethod
+    def _derive_proba_cluster_one_sample(weight, gauss_list, x):
+        """
+        Calculate the derivation term of the membership probabilities to each cluster for one sample
+        Parameters :
+        ------------
+        - weight: array_like
+        Weight of each cluster
+        - gauss_list : multivariate_normal object
+        Array of frozen multivariate normal distributions
+        - x: array_like
+        The point where probabilities must be calculated
+        Returns :
+        ----------
+        - derive_prob: array_like
+        Derivation term of the membership probabilities to each cluster for one input
+        """
+        derive_prob = []
+        v = 0
+        vprime = 0
+
+        for k in range(len(weight)):
+            v = v + weight[k] * gauss_list[k].pdf(x)
+            sigma = gauss_list[k].cov
+            invSigma = np.linalg.inv(sigma)
+            der = np.dot((x - gauss_list[k].mean), invSigma)
+            vprime = vprime - weight[k] * gauss_list[k].pdf(
+                x) * der
+
+        for k in range(len(weight)):
+            u = weight[k] * gauss_list[k].pdf(
+                x)
+            sigma = gauss_list[k].cov
+            invSigma = np.linalg.inv(sigma)
+            der = np.dot((x - gauss_list[k].mean), invSigma)
+            uprime = - u * der
+            derive_prob.append((v * uprime - u * vprime) / (v**2))
+
+        return derive_prob
+
+    @staticmethod
+    def _proba_cluster(dim, weight, gauss_list, x):
+        """
+        Calculate membership probabilities to each cluster for each sample
+        Parameters :
+        ------------
+        - dimension:int
+        Dimension of Input samples
+        - weight: array_like
+        Weight of each cluster
+        - gauss_list : multivariate_normal object
+        Array of frozen multivariate normal distributions
+        - x: array_like
+        Samples where probabilities must be calculated
+        Returns :
+        ----------
+        - prob: array_like
+        Membership probabilities to each cluster for each sample
+        - clus: array_like
+        Membership to one cluster for each sample
+        Examples :
+        ----------
+        weight:
+        [ 0.60103817  0.39896183]
+
+        x:
+        [[ 0.  0.]
+         [ 0.  1.]
+         [ 1.  0.]
+         [ 1.  1.]]
+
+        prob:
+        [[  1.49050563e-02   9.85094944e-01]
+         [  9.90381299e-01   9.61870088e-03]
+         [  9.99208990e-01   7.91009759e-04]
+         [  1.48949963e-03   9.98510500e-01]]
+
+        clus:
+        [1 0 0 1]
+
+        """
+        n = len(weight)
+        prob = []
+        clus = []
+
+        for i in range(len(x)):
+            if n == 1:
+                prob.append([1])
+                clus.append(0)
+            else:
+                proba, cluster = MOE._proba_cluster_one_sample(weight, gauss_list, x[i])
+                prob.append(proba)
+                clus.append(cluster)
+
+        return np.array(prob), np.array(clus)
+
+    @staticmethod
+    def _derive_proba_cluster(dim, weight, gauss_list, x):
+        """
+        Calculate the derivation term of the  membership probabilities to each cluster for each sample
+        Parameters :
+        ------------
+        - dim:int
+        Dimension of Input samples
+        - weight: array_like
+        Weight of each cluster
+        - gauss_list : multivariate_normal object
+        Array of frozen multivariate normal distributions
+        - x: array_like
+        Samples where probabilities must be calculated
+        Returns :
+        ----------
+        - der_prob: array_like
+        Derivation term of the membership probabilities to each cluster for each sample
+        """
+        n = len(weight)
+        der_prob = []
+
+        for i in range(len(x)):
+
+            if n == 1:
+                der_prob.append([0])
 
             else:
-                scale_factor = scale_factors_array[min_error_index]
+                der_proba = _derive_proba_cluster_one_sample(
+                    weight, gauss_list, x[i])
+                der_prob.append(der_proba)
 
-            self.scale_factor = scale_factor
-
-"""
-Functions used for the clustering
-"""
-
-def sort_values_by_cluster(values, number_cluster, sort_cluster):
-    """
-    Sort values in each cluster
-    Parameters
-    ---------
-    - values: array_like
-    Samples to sort
-    - number_cluster: int
-    Number of cluster
-    - sort_cluster: array_like
-    Cluster corresponding to each point of value in the same order
-    Returns:
-    --------
-    - sorted_values: array_like
-    Samples sort by cluster
-    Example:
-    ---------
-    values:
-    [[  1.67016597e-01   5.42927264e-01   9.25779645e+00]
-    [  5.20618344e-01   9.88223010e-01   1.51596837e+02]
-    [  6.09979830e-02   2.66824984e-01   1.17890707e+02]
-    [  9.62783472e-01   7.36979149e-01   7.37641826e+01]
-    [  2.65769081e-01   8.09156235e-01   3.43656373e+01]
-    [  8.49975570e-01   4.20496285e-01   3.48434265e+01]
-    [  3.01194132e-01   8.58084068e-02   4.88696602e+01]
-    [  6.40398203e-01   6.91090937e-01   8.91963162e+01]
-    [  7.90710374e-01   1.40464471e-01   1.89390766e+01]
-    [  4.64498124e-01   3.61009635e-01   1.04779656e+01]]
-
-    number_cluster:
-    3
-
-    sort_cluster:
-    [1 0 0 2 1 1 1 2 1 1]
-
-    sorted_values
-    [[array([   0.52061834,    0.98822301,  151.59683723]),
-      array([  6.09979830e-02,   2.66824984e-01,   1.17890707e+02])]
-     [array([ 0.1670166 ,  0.54292726,  9.25779645]),
-      array([  0.26576908,   0.80915623,  34.36563727]),
-      array([  0.84997557,   0.42049629,  34.8434265 ]),
-      array([  0.30119413,   0.08580841,  48.86966023]),
-      array([  0.79071037,   0.14046447,  18.93907662]),
-      array([  0.46449812,   0.36100964,  10.47796563])]
-     [array([  0.96278347,   0.73697915,  73.76418261]),
-      array([  0.6403982 ,   0.69109094,  89.19631619])]]
-    """
-    sorted_values = []
-    for i in range(number_cluster):
-        sorted_values.append([])
-    for i in range(len(sort_cluster)):
-        sorted_values[sort_cluster[i]].append(values[i].tolist())
-    return np.array(sorted_values)
-
-
-def create_multivar_normal_dis(dim, means, cov):
-    """
-    Create an array of frozen multivariate normal distributions
-    Parameters
-    ---------
-    - dim: integer
-    Dimension of the problem
-    - means: array_like
-    Array of means
-    - cov: array_like
-    Array of covariances
-    Returns:
-    --------
-    - gauss_array: array_like
-    Array of frozen multivariate normal distributions with means and covariances of the input
-    """
-    gauss_array = []
-    for k in range(len(means)):
-        meansk = means[k][0:dim]
-        covk = cov[k][0:dim, 0:dim]
-        rv = sct.multivariate_normal(meansk, covk, True)
-        gauss_array.append(rv)
-    return gauss_array
-
-
-def _proba_cluster_one_sample(weight, gauss_list, x):
-    """
-    Calculate membership probabilities to each cluster for one sample
-    Parameters :
-    ------------
-    - weight: array_like
-    Weight of each cluster
-    - gauss_list : multivariate_normal object
-    Array of frozen multivariate normal distributions
-    - x: array_like
-    The point where probabilities must be calculated
-    Returns :
-    ----------
-    - prob: array_like
-    Membership probabilities to each cluster for one input
-    - clus: int
-    Membership to one cluster for one input
-    """
-    prob = []
-    rad = 0
-
-    for k in range(len(weight)):
-        rv = gauss_list[k].pdf(x)
-        val = weight[k] * (rv)
-        rad = rad + val
-        prob.append(val)
-
-    if rad != 0:
-        for k in range(len(weight)):
-            prob[k] = prob[k] / rad
-
-    clus = prob.index(max(prob))
-    return prob, clus
-
-
-def _derive_proba_cluster_one_sample(weight, gauss_list, x):
-    """
-    Calculate the derivation term of the membership probabilities to each cluster for one sample
-    Parameters :
-    ------------
-    - weight: array_like
-    Weight of each cluster
-    - gauss_list : multivariate_normal object
-    Array of frozen multivariate normal distributions
-    - x: array_like
-    The point where probabilities must be calculated
-    Returns :
-    ----------
-    - derive_prob: array_like
-    Derivation term of the membership probabilities to each cluster for one input
-    """
-    derive_prob = []
-    v = 0
-    vprime = 0
-
-    for k in range(len(weight)):
-        v = v + weight[k] * gauss_list[k].pdf(x)
-        sigma = gauss_list[k].cov
-        invSigma = np.linalg.inv(sigma)
-        der = np.dot((x - gauss_list[k].mean), invSigma)
-        vprime = vprime - weight[k] * gauss_list[k].pdf(
-            x) * der
-
-    for k in range(len(weight)):
-        u = weight[k] * gauss_list[k].pdf(
-            x)
-        sigma = gauss_list[k].cov
-        invSigma = np.linalg.inv(sigma)
-        der = np.dot((x - gauss_list[k].mean), invSigma)
-        uprime = - u * der
-        derive_prob.append((v * uprime - u * vprime) / (v**2))
-
-    return derive_prob
-
-
-def proba_cluster(dim, weight, gauss_list, x):
-    """
-    Calculate membership probabilities to each cluster for each sample
-    Parameters :
-    ------------
-    - dimension:int
-    Dimension of Input samples
-    - weight: array_like
-    Weight of each cluster
-    - gauss_list : multivariate_normal object
-    Array of frozen multivariate normal distributions
-    - x: array_like
-    Samples where probabilities must be calculated
-    Returns :
-    ----------
-    - prob: array_like
-    Membership probabilities to each cluster for each sample
-    - clus: array_like
-    Membership to one cluster for each sample
-    Examples :
-    ----------
-    weight:
-    [ 0.60103817  0.39896183]
-
-    x:
-    [[ 0.  0.]
-     [ 0.  1.]
-     [ 1.  0.]
-     [ 1.  1.]]
-
-    prob:
-    [[  1.49050563e-02   9.85094944e-01]
-     [  9.90381299e-01   9.61870088e-03]
-     [  9.99208990e-01   7.91009759e-04]
-     [  1.48949963e-03   9.98510500e-01]]
-
-    clus:
-    [1 0 0 1]
-
-    """
-    n = len(weight)
-    prob = []
-    clus = []
-
-    for i in range(len(x)):
-
-        if n == 1:
-            prob.append([1])
-            clus.append(0)
-
-        else:
-            proba, cluster = _proba_cluster_one_sample(
-                weight, gauss_list, x[i])
-            prob.append(proba)
-            clus.append(cluster)
-
-    return np.array(prob), np.array(clus)
-
-
-def derive_proba_cluster(dim, weight, gauss_list, x):
-    """
-    Calculate the derivation term of the  membership probabilities to each cluster for each sample
-    Parameters :
-    ------------
-    - dim:int
-    Dimension of Input samples
-    - weight: array_like
-    Weight of each cluster
-    - gauss_list : multivariate_normal object
-    Array of frozen multivariate normal distributions
-    - x: array_like
-    Samples where probabilities must be calculated
-    Returns :
-    ----------
-    - der_prob: array_like
-    Derivation term of the membership probabilities to each cluster for each sample
-    """
-    n = len(weight)
-    der_prob = []
-
-    for i in range(len(x)):
-
-        if n == 1:
-            der_prob.append([0])
-
-        else:
-            der_proba = _derive_proba_cluster_one_sample(
-                weight, gauss_list, x[i])
-            der_prob.append(der_proba)
-
-    return np.array(der_prob)
-
-def sum_x(n):
-    """
-    Compute the sum from 0 to n
-    Parameters:
-    -----------
-    - n : int
-    Last integer to sum
-    Return:
-    -------
-    Sum of the first integer until n
-    """
-    if n > 0:
-        return n * (n + 1) / 2
-    else:
-        return 0
+        return np.array(der_prob)
 
 class Error(object):
     """
-    This Class contains errors :
+    A class to handle various errors:
     - l_two : float
     L2 error
     - l_two_rel : float

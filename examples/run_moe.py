@@ -35,10 +35,9 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        mix = MOE(hard_recombination=True, number_cluster=3)
+        mix = MOE(smooth_recombination=False, number_cluster=3)
         mix.options['xt'] = xt
-        mix.options['yt'] = yt
-        mix.options['heaviside'] = True       
+        mix.options['yt'] = yt     
         mix.apply_method()
 
         # validation data
@@ -63,7 +62,7 @@ class TestMOE(SMTestCase):
             plt.show()
 
     #@unittest.skip('disabled')
-    def test_branin_d2_100(self):
+    def test_branin_d2_200(self):
         self.ndim = 2
         self.nt = 200
         self.ne = 200
@@ -77,9 +76,10 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        mix = MOE(hard_recombination=True, number_cluster=6)
+        mix = MOE(number_cluster=6)
         mix.options['xt'] = xt
         mix.options['yt'] = yt
+        mix.options['heaviside_optimization'] = True    
         mix.apply_method()
 
         # validation data
