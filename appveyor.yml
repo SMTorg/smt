@@ -7,7 +7,6 @@ platform:
 
 environment:
   matrix:
-    - PYTHON: 3.4  
     - PYTHON: 2.7
 
 init:
