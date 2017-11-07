@@ -22,7 +22,7 @@ init:
   #conda update -q --yes conda
   #- conda env create -f appvoyer.yml
   #- conda update conda
-  - anaconda search -t conda vc 14.*
+  - conda search -t conda vc 14.*
   - conda install numpy scipy nose hdf5 --quiet
   - conda install Cython
   - IF "%ARCH%"=="64" (call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64)
