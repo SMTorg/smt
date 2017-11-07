@@ -7,8 +7,8 @@ platform:
 
 environment:
   matrix:
+    - PYTHON: 3.4  
     - PYTHON: 2.7
-    - PYTHON: 3.4
 
 init:
   - set CONDA=Miniconda
@@ -18,10 +18,13 @@ init:
 
 install:
   - set PATH=C:\%CONDA%;C:\%CONDA%\Scripts;%PATH%
-  - conda config --set always_yes yes
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  #- conda config --set always_yes yes
 
   # We need to do this first as other commands may not work with older versions of conda.
-  - conda update conda
+  #- conda update conda
   - conda install numpy scipy nose hdf5 --quiet
   - conda install Cython
   - IF "%ARCH%"=="64" (call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64)
