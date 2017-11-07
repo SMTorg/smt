@@ -22,7 +22,7 @@ install:
   
   # We need to do this first as other commands may not work with older versions of conda.
   - conda update -q --yes conda
-  #- conda update conda
+  # - conda update conda
   - conda install numpy scipy nose hdf5 --quiet
   - conda install Cython
   - IF "%ARCH%"=="64" (call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64)
