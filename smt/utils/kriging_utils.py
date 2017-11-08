@@ -435,7 +435,7 @@ def ge_compute_pls(X,y,n_comp,pts,delta_x,xlimits,extra_points):
     coeff_pls = np.zeros((nt,dim,n_comp))
     for i in range(nt):
         if dim >= 3:
-            sign = np.roll(bbdesign(dim,center=1),1,axis=0)
+            sign = np.roll(bbdesign(int(dim),center=1),1,axis=0)
             _X = np.zeros((sign.shape[0],dim))
             _y = np.zeros((sign.shape[0],1))
             sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
