@@ -13,8 +13,8 @@ osx_image: xcode8.2
 language: generic
 
 env:
-- PY=2.7
 - PY=3.4
+- PY=2.7
 
 
 addons:
