@@ -70,6 +70,8 @@ setup(name='smt',
         'pyDOE',
         'matplotlib',
         'numpydoc',
+        'six>=1.10',
+        'scipy>=1.0.0'
     ],
     zip_safe=False,
     ext_modules=ext,

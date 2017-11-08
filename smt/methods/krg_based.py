@@ -405,7 +405,7 @@ class KRG_BASED(SM):
                 try:
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
                         minus_reduced_likelihood_function,np.log10(theta0), \
-                        constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit,iprint=0)
+                        constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
 
                     optimal_rlf_value, optimal_par = \
                         self._reduced_likelihood_function(theta=optimal_theta)
