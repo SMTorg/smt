@@ -15,7 +15,6 @@ language: generic
 env:
 - PY=2.7
 
-
 addons:
   apt:
     sources:
