@@ -47,9 +47,9 @@ ntest = 500
 sampling = LHS(xlimits=fun.xlimits)
 xtest = sampling(ntest)
 ytest = fun(xtest)
-dytest = np.zeros((ntest,ndim))
+ydtest = np.zeros((ntest,ndim))
 for i in range(ndim):
-    dytest[:,i] = fun(xtest,kx=i).T
+    ydtest[:,i] = fun(xtest,kx=i).T
 
 ########### The LS model
 
