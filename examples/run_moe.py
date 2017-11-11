@@ -17,6 +17,8 @@ from smt.utils.misc import compute_rms_error
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from smt.extensions.moe_plotter import MOEPlotter
+
 class TestMOE(SMTestCase):
     """
     Test class
@@ -35,42 +37,41 @@ class TestMOE(SMTestCase):
     #@unittest.skip('disabled')
     def test_1d_50(self):
         self.ndim = 1
-        self.nt = 30
-        self.ne = 30 
+        self.nt = 50
+        self.ne = 50 
 
         np.random.seed(0)
         xt = np.random.sample(self.nt)
         yt = self.function_test_1d(xt)
-        mix = MOE(smooth_recombination=True, 
-                  heaviside_optimization=False, 
+        moe = MOE(smooth_recombination=True, 
+                  heaviside_optimization=True, 
                   n_clusters=3)
-        mix.options['xt'] = xt.reshape((-1, 1))
-        mix.options['yt'] = yt     
-        mix.train()
+        moe.options['xt'] = xt.reshape((-1, 1))
+        moe.options['yt'] = yt     
+        moe.train()
 
         # validation data
         np.random.seed(1)
         xe = np.random.sample(self.ne)
         ye = self.function_test_1d(xe)
 
-        rms_error = compute_rms_error(mix, xe, ye)
-        #self.assert_error(rms_error, 0., 1e-1)
+        rms_error = compute_rms_error(moe, xe, ye)
+        self.assert_error(rms_error, 0., 3e-1)
         if TestMOE.plot:
-            y = mix.predict_values(xe)
-            # plt.figure(1)
-            # plt.plot(xt, yt,'x')
-            # plt.plot(xe, y,'o')
-            # plt.figure(2)
-            # plt.plot(ye, y,'o')
-            # from scipy.stats import multivariate_normal
-            # plt.figure(1)
-            # for g in mix.gauss:
-            #     x = np.linspace(0, 1, 100)
-            #     y = multivariate_normal.pdf(x, mean=g.mean, cov=g.cov)
-            #     plt.plot(x, y)
-            # plt.show()
+            y = moe.predict_values(xe)
+            plt.figure(1)
+            plt.plot(ye, ye,'-.')
+            plt.plot(ye, y, '.')
+            plt.xlabel(r'$y$ actual')
+            plt.ylabel(r'$y$ prediction')
+            plt.figure(2)
+            xv = np.linspace(0, 1, 100)
+            yv = self.function_test_1d(xv)
+            plt.plot(xv, yv, '-.')
+            plt.plot(xe, y, 'o')
+            plt.show()
 
-    @unittest.skip('disabled')
+    #@unittest.skip('disabled')
     def test_norm1_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -84,22 +85,22 @@ class TestMOE(SMTestCase):
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        # mixture of experts
-        mix = MOE(smooth_recombination=False, n_clusters=5)
-        mix.options['xt'] = xt
-        mix.options['yt'] = yt     
-        mix.train()
+        # moeture of experts
+        moe = MOE(smooth_recombination=False, n_clusters=5)
+        moe.options['xt'] = xt
+        moe.options['yt'] = yt     
+        moe.train()
 
         # validation data
         np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        rms_error = compute_rms_error(mix, xe, ye)
+        rms_error = compute_rms_error(moe, xe, ye)
         self.assert_error(rms_error, 0., 1e-1)
 
         if TestMOE.plot:
-            y = mix.predict_values(xe)
+            y = moe.predict_values(xe)
             plt.figure(1)
             plt.plot(ye, ye,'-.')
             plt.plot(ye, y, '.')
@@ -109,9 +110,10 @@ class TestMOE(SMTestCase):
             fig = plt.figure(2)
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(xt[:,0], xt[:,1], yt)
+            plt.title('L1 Norm')
             plt.show()
 
-    @unittest.skip('disabled')
+    #@unittest.skip('disabled')
     def test_branin_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -125,23 +127,23 @@ class TestMOE(SMTestCase):
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        # mixture of experts
-        mix = MOE(n_clusters=6)
-        mix.options['xt'] = xt
-        mix.options['yt'] = yt
-        mix.options['heaviside_optimization'] = True    
-        mix.train()
+        # moeture of experts
+        moe = MOE(n_clusters=6)
+        moe.options['xt'] = xt
+        moe.options['yt'] = yt
+        moe.options['heaviside_optimization'] = True    
+        moe.train()
 
         # validation data
         np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        rms_error = compute_rms_error(mix, xe, ye)
+        rms_error = compute_rms_error(moe, xe, ye)
         self.assert_error(rms_error, 0., 1e-1)
 
         if TestMOE.plot:
-            y = mix.analyse_results(x=xe, operation='predict_values')
+            y = moe.analyse_results(x=xe, operation='predict_values')
             plt.figure(1)
             plt.plot(ye, ye,'-.')
             plt.plot(ye, y, '.')
@@ -151,6 +153,7 @@ class TestMOE(SMTestCase):
             fig = plt.figure(2)
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(xt[:,0], xt[:,1], yt)
+            plt.title('Branin function')
             plt.show()
 
 		

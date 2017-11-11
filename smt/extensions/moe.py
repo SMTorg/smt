@@ -11,7 +11,7 @@ import six
 import numpy as np
 import warnings
 from sklearn import mixture, cluster
-from scipy import stats as sct
+from scipy.stats import multivariate_normal
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.extensions.extensions import Extensions
@@ -122,7 +122,7 @@ class MOE(Extensions):
         if self.heaviside_optimization and self.n_clusters > 1:
             self.heaviside_factor = self._find_best_heaviside_factor(xtest, ytest)
             print('BEST HEAVISIDE =', self.heaviside_factor)
-            self.gauss = self._create_multivariate_normal(self.heaviside_factor)
+            self.distribs = self._create_clusters_distributions(self.heaviside_factor)
 
         # if nx == 1:
         #     Maxi = max(values[:, 0])
@@ -135,7 +135,7 @@ class MOE(Extensions):
         #     Mini[0] = min(values[:, 0])
         #     Mini[1] = min(values[:, 1])
 
-        # self.plotClusterGMM(Maxi, Mini, x, y, heaviside=self.heaviside_factor)
+        # self.plotClusterGMM(Maxi, Mini, x, y)
 
         self.compute_error(xtest, ytest)
 
@@ -228,7 +228,7 @@ class MOE(Extensions):
         - new_model : bool
         Set true to search the best local model
         """
-        self.gauss = self._create_multivariate_normal(self.heaviside_factor)
+        self.distribs = self._create_clusters_distributions(self.heaviside_factor)
 
         cluster_classifier = self.cluster.predict(np.c_[x_trained, c_trained])
 
@@ -272,8 +272,8 @@ class MOE(Extensions):
         predicted output
         """
         predicted_values = []
-        _, sort_cluster = self._proba_cluster(
-            self.ndim, self.cluster.weights_, self.gauss, x)
+        probs = self._proba_cluster(x)
+        sort_cluster = np.apply_along_axis(np.argmax, 1, probs)
 
         for i in range(len(sort_cluster)):
             model = self.experts[sort_cluster[i]]
@@ -282,14 +282,14 @@ class MOE(Extensions):
 
         return predicted_values
 
-    def _predict_smooth_output(self, x, gauss=None):
+    def _predict_smooth_output(self, x, distribs=None):
         """
         This method predicts the output of x with a smooth recombination
         Parameters:
         ----------
         - x: np.ndarray
         x samples
-        - gauss: 
+        - distribs: 
         array of frozen multivariate normal distributions (see)
         Returns 
         -------
@@ -297,9 +297,9 @@ class MOE(Extensions):
         predicted output
         """
         predicted_values = []
-        if gauss is None:
-            gauss = self.gauss
-        sort_proba, _ = self._proba_cluster(self.ndim, self.cluster.weights_, gauss, x)
+        if distribs is None:
+            distribs = self.distribs
+        sort_proba = self._proba_cluster(x, distribs)
 
         for i in range(len(sort_proba)):
             recombined_value = 0
@@ -336,12 +336,12 @@ class MOE(Extensions):
         mask[indices] = True
         return values[mask], values[~mask]
 
-    def _find_best_model(self, sorted_trained_values):
+    def _find_best_model(self, clustered_values):
         """
         Find the best model which minimizes the errors
         Parameters :
         ------------
-        - sorted_trained_values: array_like
+        - clustered_values: array_like
         Training samples [[X1,X2, ..., Xn, Y], ... ]
         Optional:
         -----------
@@ -357,13 +357,13 @@ class MOE(Extensions):
         Name of the model
         """
         dim = self.ndim
-        sorted_trained_values = np.array(sorted_trained_values)
+        clustered_values = np.array(clustered_values)
         
         rmses = {}
         sms = {}
 
         # validation with 10% of the training data
-        test_values, training_values = self._extract_part(sorted_trained_values, 10)
+        test_values, training_values = self._extract_part(clustered_values, 10)
 
         for name, sm_class in self._surrogate_type.iteritems():
             if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
@@ -390,7 +390,7 @@ class MOE(Extensions):
             if best_rmse is None or rmse < best_rmse:
                 best_name, best_rmse = name, rmse              
         
-        print "BEST = ", best_name
+        print("Best Expert on cluster = {}".format(best_name))
         return sms[best_name]
 
     def _find_best_heaviside_factor(self, x, y):
@@ -413,8 +413,8 @@ class MOE(Extensions):
             hfactors = np.linspace(0.1, 2.1, num=21)
             errors = []
             for hfactor in hfactors:
-                gauss = self._create_multivariate_normal(hfactor)
-                predicted_values = self._predict_smooth_output(x, gauss)
+                distribs = self._create_clusters_distributions(hfactor)
+                predicted_values = self._predict_smooth_output(x, distribs)
                 errors.append(Error(y, predicted_values).l_two_rel)
             if max(errors) < 1e-6:
                 heaviside_factor = 1.
@@ -426,9 +426,9 @@ class MOE(Extensions):
     """
     Functions related to clustering
     """
-    def _create_multivariate_normal(self, heaviside_factor=1.):
+    def _create_clusters_distributions(self, heaviside_factor=1.):
         """
-        Create an array of frozen multivariate normal distributions.
+        Create an array of frozen multivariate normal distributions (distribs).
 
         Arguments
         ---------
@@ -437,19 +437,20 @@ class MOE(Extensions):
 
         Returns:
         --------
-        - gauss_array: array_like
-            Array of frozen multivariate normal distributions with means and covariances of the input
+        - distribs: array_like
+            Array of frozen multivariate normal distributions 
+            with clusters means and covariances 
         """
-        gauss_array = []
+        distribs = []
         dim= self.ndim
         means = self.cluster.means_
         cov = heaviside_factor*self.cluster.covars_
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]
-            rv = sct.multivariate_normal(meansk, covk, True)
-            gauss_array.append(rv)
-        return gauss_array
+            mvn = multivariate_normal(meansk, covk)
+            distribs.append(mvn)
+        return distribs
 
     
     def _cluster_values(self, values, classifier):
@@ -501,16 +502,14 @@ class MOE(Extensions):
             clusters[classifier[i]].append(values[i])
         return clusters
 
-
-    @staticmethod
-    def _proba_cluster_one_sample(weight, gauss_list, x):
+    def _proba_cluster_one_sample(self, x, distribs):
         """
         Calculate membership probabilities to each cluster for one sample
         Parameters :
         ------------
         - weight: array_like
         Weight of each cluster
-        - gauss_list : multivariate_normal object
+        - distribs_list : multivariate_normal object
         Array of frozen multivariate normal distributions
         - x: array_like
         The point where probabilities must be calculated
@@ -521,64 +520,17 @@ class MOE(Extensions):
         - clus: int
         Membership to one cluster for one input
         """
-        prob = []
-        rad = 0
+        weights = np.array(self.cluster.weights_)
+        rvs = np.array([distribs[k].pdf(x) for k in range(len(weights))])
 
-        for k in range(len(weight)):
-            rv = gauss_list[k].pdf(x)
-            val = weight[k] * (rv)
-            rad = rad + val
-            prob.append(val)
+        probs = weights * rvs
+        rad = np.sum(probs)
 
-        if rad != 0:
-            for k in range(len(weight)):
-                prob[k] = prob[k] / rad
+        if rad > 0:
+            probs = probs/rad
+        return probs
 
-        clus = prob.index(max(prob))
-        return prob, clus
-
-    @staticmethod
-    def _derive_proba_cluster_one_sample(weight, gauss_list, x):
-        """
-        Calculate the derivation term of the membership probabilities to each cluster for one sample
-        Parameters :
-        ------------
-        - weight: array_like
-        Weight of each cluster
-        - gauss_list : multivariate_normal object
-        Array of frozen multivariate normal distributions
-        - x: array_like
-        The point where probabilities must be calculated
-        Returns :
-        ----------
-        - derive_prob: array_like
-        Derivation term of the membership probabilities to each cluster for one input
-        """
-        derive_prob = []
-        v = 0
-        vprime = 0
-
-        for k in range(len(weight)):
-            v = v + weight[k] * gauss_list[k].pdf(x)
-            sigma = gauss_list[k].cov
-            invSigma = np.linalg.inv(sigma)
-            der = np.dot((x - gauss_list[k].mean), invSigma)
-            vprime = vprime - weight[k] * gauss_list[k].pdf(
-                x) * der
-
-        for k in range(len(weight)):
-            u = weight[k] * gauss_list[k].pdf(
-                x)
-            sigma = gauss_list[k].cov
-            invSigma = np.linalg.inv(sigma)
-            der = np.dot((x - gauss_list[k].mean), invSigma)
-            uprime = - u * der
-            derive_prob.append((v * uprime - u * vprime) / (v**2))
-
-        return derive_prob
-
-    @staticmethod
-    def _proba_cluster(dim, weight, gauss_list, x):
+    def _proba_cluster(self, x, distribs=None):
         """
         Calculate membership probabilities to each cluster for each sample
         Parameters :
@@ -587,7 +539,7 @@ class MOE(Extensions):
         Dimension of Input samples
         - weight: array_like
         Weight of each cluster
-        - gauss_list : multivariate_normal object
+        - distribs_list : multivariate_normal object
         Array of frozen multivariate normal distributions
         - x: array_like
         Samples where probabilities must be calculated
@@ -618,145 +570,16 @@ class MOE(Extensions):
         [1 0 0 1]
 
         """
+        weight = self.cluster.weights_
+        if distribs is None:
+            distribs = self.distribs
         n = len(weight)
-        prob = []
-        clus = []
+        if n == 1:
+            probs = np.ones((x.shape[0], 1))
+        else:
+            probs = np.array([self._proba_cluster_one_sample(x[i], distribs) for i in range(len(x))])
 
-        for i in range(len(x)):
-            if n == 1:
-                prob.append([1])
-                clus.append(0)
-            else:
-                proba, cluster = MOE._proba_cluster_one_sample(weight, gauss_list, x[i])
-                prob.append(proba)
-                clus.append(cluster)
-
-        return np.array(prob), np.array(clus)
-
-    @staticmethod
-    def _derive_proba_cluster(dim, weight, gauss_list, x):
-        """
-        Calculate the derivation term of the  membership probabilities to each cluster for each sample
-        Parameters :
-        ------------
-        - dim:int
-        Dimension of Input samples
-        - weight: array_like
-        Weight of each cluster
-        - gauss_list : multivariate_normal object
-        Array of frozen multivariate normal distributions
-        - x: array_like
-        Samples where probabilities must be calculated
-        Returns :
-        ----------
-        - der_prob: array_like
-        Derivation term of the membership probabilities to each cluster for each sample
-        """
-        n = len(weight)
-        der_prob = []
-
-        for i in range(len(x)):
-
-            if n == 1:
-                der_prob.append([0])
-
-            else:
-                der_proba = _derive_proba_cluster_one_sample(
-                    weight, gauss_list, x[i])
-                der_prob.append(der_proba)
-
-        return np.array(der_prob)
-
-
-    ################################################################################
-    def plotClusterGMM(self, Max, Min, x_, y_, heaviside=False):
-        """
-        Plot gaussian cluster
-        Parameters:
-        -----------
-        GMM : mixture.GMM
-        Cluster to plot
-        Max: array_like
-        Maximum for each dimension
-        Min: array_like
-        Minimum for each dimension
-        x_: array_like
-        Input training samples
-        y_: array_like
-        Output training samples
-        Optionnals:
-        -----------
-        heaviside: float
-        Heaviside factor. Default to False
-        """
-        from matplotlib import colors
-        import matplotlib.pyplot as plt
-        
-        GMM=self.cluster
-
-        if GMM.n_components > 1:
-            if heaviside == False:
-                heaviside = 1
-
-            colors_ = list(six.iteritems(colors.cnames))
-
-            if isinstance(Max, int) or isinstance(Max, np.float64) or isinstance(Max, float):
-                dim = 1
-            else:
-                dim = len(Max)
-            weight = GMM.weights_
-            mean = GMM.means_
-            cov = GMM.covars_
-            gauss = self._create_multivariate_normal(heaviside)
-            prob_, sort = self._proba_cluster(dim, weight, gauss, x_)
-            if dim == 1:
-                fig = plt.figure()
-                x = np.linspace(Min, Max)
-                prob, clus = self._proba_cluster(dim, weight, gauss, x)
-                for i in range(len(weight)):
-                    plt.plot(x, prob[:, i], ls='--')
-                plt.xlabel('Input Values')
-                plt.ylabel('Membership probabilities')
-                plt.title('Cluster Map')
-
-                fig = plt.figure()
-                for i in range(len(sort)):
-                    color_ind = int(((len(colors_) - 1) / sort.max()) * sort[i])
-                    color = colors_[color_ind][0]
-                    plt.plot(x_[i], y_[i], c=color, marker='o')
-                plt.xlabel('Input Values')
-                plt.ylabel('Output Values')
-                plt.title('Samples with clusters')
-
-            if dim == 2:
-                x0 = np.linspace(-5, 10, 20)
-                x1 = np.linspace(0, 15, 20)
-                xv, yv = np.meshgrid(x0, x1)
-                x = np.array(zip(xv.reshape((-1,)), yv.reshape((-1,))))
-                print(x)
-                prob, clus = self._proba_cluster(dim, weight, gauss, x)
-
-                fig = plt.figure()
-                ax1 = fig.add_subplot(111, projection='3d')
-                for i in range(len(weight)):
-                    color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
-                    ax1.plot_trisurf(x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0,
-                                     color=color)
-                plt.title('Cluster Map 3D')
-
-                fig1 = plt.figure()
-                for i in range(len(weight)):
-                    color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
-                    plt.tricontour(x[:, 0], x[:, 1], prob[:, i], 1, colors=color, linewidths=3)
-                plt.title('Cluster Map 2D')
-
-                fig = plt.figure()
-                ax2 = fig.add_subplot(111, projection='3d')
-                for i in range(len(sort)):
-                    color = colors_[int(((len(colors_) - 1) / sort.max()) * sort[i])][0]
-                    ax2.scatter(x_[i][0], x_[i][1], y_[i], c=color)
-                plt.title('Samples with clusters')
-            plt.show()
+        return probs
 
 
 class Error(object):
