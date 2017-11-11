@@ -6,6 +6,15 @@ This package is distributed under New BSD license.
 Mixture of Experts
 """
 
+#TODO : choice of the surrogate model experts to be used
+#TODO : add parameters for KRG, RMTB, RMTC, KRG ?
+#TODO : add derivative support
+#TODO : add variance support
+#TODO : support for best number of clusters
+#TODO : add factory to get proper surrogate model object
+#TODO : implement verbosity 'print_global'
+#TODO : documentation
+
 from __future__ import division
 import six
 import numpy as np
@@ -60,19 +69,20 @@ class MOE(Extensions):
 
     def train(self):
         """
-        Supports SM api
+        Supports for surrogate model API.
         """
         super(MOE, self).apply_method()
 
     def predict_values(self, x):
         """
-        Supports SM api
+        Support for surrogate model API.
         """
         return super(MOE, self).analyse_results(x=x, operation='predict_values')        
 
     def _apply(self):
         """
-        Build and train the mixture of experts
+        Build and train the mixture of experts surrogate.
+        This method is called by Extension apply() method
         """
         self.x = x = self.options['xt']
         self.y = y = self.options['yt']
@@ -121,30 +131,36 @@ class MOE(Extensions):
         # Heaviside factor
         if self.heaviside_optimization and self.n_clusters > 1:
             self.heaviside_factor = self._find_best_heaviside_factor(xtest, ytest)
-            print('BEST HEAVISIDE =', self.heaviside_factor)
+            print('Best Heaviside factor = {}'.format(self.heaviside_factor))
             self.distribs = self._create_clusters_distributions(self.heaviside_factor)
 
-        # if nx == 1:
-        #     Maxi = max(values[:, 0])
-        #     Mini = min(values[:, 0])
-        # if nx == 2:
-        #     Maxi = np.zeros(2)
-        #     Mini = np.zeros(2)
-        #     Maxi[0] = max(values[:, 0])
-        #     Maxi[1] = max(values[:, 1])
-        #     Mini[0] = min(values[:, 0])
-        #     Mini[1] = min(values[:, 1])
-
-        # self.plotClusterGMM(Maxi, Mini, x, y)
-
-        self.compute_error(xtest, ytest)
-
         if not test_data_present:
-            # if we have used part of data to validate
+            # if we have used part of data to validate, fit on overall data
             self._fit(x, y, c, new_model=False)
 
 
     def _analyse_results(self, x, operation='predict_values', kx=None):
+        """
+        Analyse the mixture of experts at the given samples x wrt the specified operation.
+        This method is called by Extension analyse_results() method.
+
+        Arguments
+        ----------
+        x : np.ndarray[n, nx] or np.ndarray[n]
+            Input values for the prediction result analysis.
+
+        operation: str
+            Type of the analysis. A value is available: 'predict_values'
+
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Return
+        ------
+        y: np.ndarray
+            Output values at the prediction value/derivative points.
+
+        """
         if operation == 'predict_values':
             if self.smooth_recombination:
                 y = self._predict_smooth_output(x)
@@ -154,29 +170,6 @@ class MOE(Extensions):
         else:
             raise ValueError("MOE supports predict_values operation only.")
         return y
-    
-    def compute_error(self, x, y):
-        """
-        Valid the Moe with the input samples
-        Parameters:
-        -----------
-        - x: array_like
-        Input testing samples
-        - y : array_like
-        Output testing samples
-        """
-        ys = self._predict_smooth_output(x)
-        yh = self._predict_hard_output(x)
-        self.valid_hard = Error(y, yh)
-        self.valid_smooth = Error(y, ys)
-    
-    @staticmethod
-    def _rmse(expected, actual):
-        l_two = np.linalg.norm(expected - actual)
-        l_two_rel = l_two / np.linalg.norm(expected)
-        mse = (l_two**2) / len(expected)
-        rmse = mse ** 0.5
-        return rmse
 
     def _check_inputs(self):
         """
@@ -212,21 +205,19 @@ class MOE(Extensions):
     def _fit(self, x_trained, y_trained, c_trained, new_model=True):
         """
         Find the best model for each cluster (clustering already done) and train it if new_model is True
-        Else train the points given (choice of best models by cluster already done)
-        Parameters:
-        -----------
+        otherwise train the points given (choice of best models by cluster already done)
+
+        Arguments
+        ---------
         - x_trained: array_like
-        Input training samples
+            Input training samples
         - y_trained: array_like
-        Output training samples
+            Output training samples
         - c_trained: array_like
-        Clustering training samples
-        Optional:
-        -----------
-        - detail: Boolean
-        Set True to see detail of the search
-        - new_model : bool
-        Set true to search the best local model
+            Clustering training samples
+        - new_model : bool (optional)
+            Set true to search the best local model
+
         """
         self.distribs = self._create_clusters_distributions(self.heaviside_factor)
 
@@ -237,22 +228,10 @@ class MOE(Extensions):
 
         # find model for each cluster
         for i in range(self.n_clusters):
-
             if new_model:
-                if len(self._surrogate_type) == 1:
-                    pass
-                    # #
-                    # x_trained = np.array(trained_cluster[clus])[:, 0:self.ndim]
-                    # y_trained = np.array(trained_cluster[clus])[:, self.ndim]
-                    # model = self.use_model()
-                    # model.set_training_values(x_trained, y_trained)
-                    # model.train()
-                else:
-                    model = self._find_best_model(clusters[i])
-
+                model = self._find_best_model(clusters[i])
                 self.experts.append(model)
-
-            else:  # Train on the overall domain
+            else:  # retrain the experts with the 
                 trained_values = np.array(clusters[i])
                 x_trained = trained_values[:, 0:self.ndim]
                 y_trained = trained_values[:, self.ndim]
@@ -261,15 +240,19 @@ class MOE(Extensions):
         
     def _predict_hard_output(self, x):
         """
-        This method predicts the output of a x samples for a hard recombination
-        Parameters:
-        ----------
-        - x: Array_like
-        x samples
-        Return :
-        ----------
+        This method predicts the output of a x samples for a 
+        discontinuous recombination.
+
+        Arguments
+        ---------
+        - x : array_like
+            x samples
+
+        Return
+        ------
         - predicted_values : array_like
-        predicted output
+            predicted output
+
         """
         predicted_values = []
         probs = self._proba_cluster(x)
@@ -284,17 +267,20 @@ class MOE(Extensions):
 
     def _predict_smooth_output(self, x, distribs=None):
         """
-        This method predicts the output of x with a smooth recombination
-        Parameters:
+        This method predicts the output of x with a smooth recombination.
+
+        Arguments:
         ----------
         - x: np.ndarray
-        x samples
-        - distribs: 
-        array of frozen multivariate normal distributions (see)
+            x samples
+        - distribs: distribution list (optional)
+            array of membership distributions (use self ones if None)
+
         Returns 
         -------
         - predicted_values : array_like
-        predicted output
+            predicted output
+
         """
         predicted_values = []
         if distribs is None:
@@ -327,8 +313,9 @@ class MOE(Extensions):
 
         Returns
         -------
-        - extracted, remaining: np.ndarray, np.ndarray
+        - extracted, remaining : np.ndarray, np.ndarray
             the extracted values part, the remaining values
+
         """
         num = values.shape[0]
         indices = np.arange(0, num, quantile) # uniformly distributed
@@ -338,23 +325,18 @@ class MOE(Extensions):
 
     def _find_best_model(self, clustered_values):
         """
-        Find the best model which minimizes the errors
-        Parameters :
+        Find the best model which minimizes the errors.
+
+        Arguments :
         ------------
         - clustered_values: array_like
-        Training samples [[X1,X2, ..., Xn, Y], ... ]
-        Optional:
-        -----------
-        - detail: Boolean
-        Set True to see details of the search
+            training samples [[X1,X2, ..., Xn, Y], ... ]
+
         Returns :
         ---------
-        - model : Regression_model
-        Best model to apply
-        - param : dictionary
-        Dictionary of its parameters
-        - model_name : str
-        Name of the model
+        - model : surrogate model
+            best trained surrogate model
+
         """
         dim = self.ndim
         clustered_values = np.array(clustered_values)
@@ -364,7 +346,7 @@ class MOE(Extensions):
 
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
-
+        
         for name, sm_class in self._surrogate_type.iteritems():
             if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
                 continue
@@ -381,7 +363,7 @@ class MOE(Extensions):
             mse = (l_two**2) / len(expected)
             rmse = mse ** 0.5
             rmses[sm.name] = rmse
-            print(name, rmse)
+            print(name, rmse, mse)
             sms[sm.name] = sm
             
         best_name=None
@@ -390,23 +372,25 @@ class MOE(Extensions):
             if best_rmse is None or rmse < best_rmse:
                 best_name, best_rmse = name, rmse              
         
-        print("Best Expert on cluster = {}".format(best_name))
+        print("Best expert on cluster = {}".format(best_name))
         return sms[best_name]
 
     def _find_best_heaviside_factor(self, x, y):
         """
-        Find the best heaviside factor for smooth approximated values
+        Find the best heaviside factor to smooth approximated values.
+
         Arguments
         ---------
         - x: array_like
-        Input training samples
+            input training samples
         - y: array_like
-        Output training samples
+            output training samples
 
         Returns
         -------
         hfactor : float
-        best heaviside factor wrt given samples
+            best heaviside factor wrt given samples
+
         """
         heaviside_factor = 1.
         if self.n_clusters > 1:
@@ -440,6 +424,7 @@ class MOE(Extensions):
         - distribs: array_like
             Array of frozen multivariate normal distributions 
             with clusters means and covariances 
+
         """
         distribs = []
         dim= self.ndim
@@ -484,7 +469,7 @@ class MOE(Extensions):
         cluster_classifier:
         [1 0 0 2 1 2 1 1]
 
-        clustered
+        clustered:
         [[array([   0.52061834,    0.98822301,  151.59683723]),
           array([  6.09979830e-02,   2.66824984e-01,   1.17890707e+02])]
          [array([ 0.1670166 ,  0.54292726,  9.25779645]),
@@ -504,21 +489,19 @@ class MOE(Extensions):
 
     def _proba_cluster_one_sample(self, x, distribs):
         """
-        Calculate membership probabilities to each cluster for one sample
-        Parameters :
-        ------------
-        - weight: array_like
-        Weight of each cluster
-        - distribs_list : multivariate_normal object
-        Array of frozen multivariate normal distributions
+        Compute membership probabilities to each cluster for one sample.
+
+        Arguments
+        ---------
         - x: array_like
-        The point where probabilities must be calculated
-        Returns :
-        ----------
+            a sample for which probabilities must be calculated
+        - distribs: multivariate_normal objects list
+            array of normal distributions
+
+        Returns
+        -------
         - prob: array_like
-        Membership probabilities to each cluster for one input
-        - clus: int
-        Membership to one cluster for one input
+            x membership probability for each cluster 
         """
         weights = np.array(self.cluster.weights_)
         rvs = np.array([distribs[k].pdf(x) for k in range(len(weights))])
@@ -533,27 +516,21 @@ class MOE(Extensions):
     def _proba_cluster(self, x, distribs=None):
         """
         Calculate membership probabilities to each cluster for each sample
-        Parameters :
-        ------------
-        - dimension:int
-        Dimension of Input samples
-        - weight: array_like
-        Weight of each cluster
-        - distribs_list : multivariate_normal object
-        Array of frozen multivariate normal distributions
+        Arguments
+        ---------
         - x: array_like
-        Samples where probabilities must be calculated
-        Returns :
-        ----------
-        - prob: array_like
-        Membership probabilities to each cluster for each sample
-        - clus: array_like
-        Membership to one cluster for each sample
+            samples where probabilities must be calculated
+
+        - distribs : multivariate_normal objects list (optional)
+            array of membership distributions. If None, use self ones.
+
+        Returns
+        -------
+        - probs: array_like
+            x membership probabilities to each cluster.
+
         Examples :
         ----------
-        weight:
-        [ 0.60103817  0.39896183]
-
         x:
         [[ 0.  0.]
          [ 0.  1.]
@@ -565,16 +542,11 @@ class MOE(Extensions):
          [  9.90381299e-01   9.61870088e-03]
          [  9.99208990e-01   7.91009759e-04]
          [  1.48949963e-03   9.98510500e-01]]
-
-        clus:
-        [1 0 0 1]
-
         """
-        weight = self.cluster.weights_
+
         if distribs is None:
             distribs = self.distribs
-        n = len(weight)
-        if n == 1:
+        if self.n_clusters == 1:
             probs = np.ones((x.shape[0], 1))
         else:
             probs = np.array([self._proba_cluster_one_sample(x[i], distribs) for i in range(len(x))])

@@ -85,7 +85,7 @@ class TestMOE(SMTestCase):
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        # moeture of experts
+        # mixture of experts
         moe = MOE(smooth_recombination=False, n_clusters=5)
         moe.options['xt'] = xt
         moe.options['yt'] = yt     
@@ -127,7 +127,7 @@ class TestMOE(SMTestCase):
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        # moeture of experts
+        # mixture of experts
         moe = MOE(n_clusters=6)
         moe.options['xt'] = xt
         moe.options['yt'] = yt
