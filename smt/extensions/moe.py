@@ -348,7 +348,8 @@ class MOE(Extensions):
         test_values, training_values = self._extract_part(clustered_values, 10)
         
         for name, sm_class in self._surrogate_type.iteritems():
-            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:
+            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:  
+                # SMs not used for now because require some parameterization
                 continue
             
             sm = sm_class()
@@ -372,7 +373,7 @@ class MOE(Extensions):
             if best_rmse is None or rmse < best_rmse:
                 best_name, best_rmse = name, rmse              
         
-        print("Best expert on cluster = {}".format(best_name))
+        print("Best expert = {}".format(best_name))
         return sms[best_name]
 
     def _find_best_heaviside_factor(self, x, y):
@@ -398,8 +399,9 @@ class MOE(Extensions):
             errors = []
             for hfactor in hfactors:
                 distribs = self._create_clusters_distributions(hfactor)
-                predicted_values = self._predict_smooth_output(x, distribs)
-                errors.append(Error(y, predicted_values).l_two_rel)
+                ypred = self._predict_smooth_output(x, distribs)
+                err_rel = np.linalg.norm(y - ypred, 2) / np.linalg.norm(y, 2)
+                errors.append(err_rel)
             if max(errors) < 1e-6:
                 heaviside_factor = 1.
             else:
@@ -552,49 +554,4 @@ class MOE(Extensions):
             probs = np.array([self._proba_cluster_one_sample(x[i], distribs) for i in range(len(x))])
 
         return probs
-
-
-class Error(object):
-    """
-    A class to handle various errors:
-    - l_two : float
-    L2 error
-    - l_two_rel : float
-    relative L2 error
-    - mse : float
-    mse error
-    - rmse : float
-    rmse error
-    - lof : float
-    lof error
-    - r_two : float
-    Residual
-    - err_rel: array_like
-    relative errors table
-    - err_rel_mean : float
-    mean of err_rel
-    -err_rel_max : float
-    max of err_rel
-    -err_abs_max: flot
-    max of err_abs (norm inf)
-    """
-
-    def __init__(self, y_array_true, y_array_calc):
-        length = len(y_array_true)
-        self.l_two = np.linalg.norm((y_array_true - y_array_calc), 2)
-        self.l_two_rel = self.l_two / np.linalg.norm((y_array_true), 2)
-        self.mse = (self.l_two**2) / length
-        self.rmse = self.mse ** 5
-        err = np.abs((y_array_true - y_array_calc) / y_array_true)
-        self.err_rel = 100 * err
-        self.err_rel_mean = np.mean(self.err_rel)
-        self.err_rel_max = max(self.err_rel)
-        self.err_abs_max = np.linalg.norm((y_array_true - y_array_calc), np.inf)
-        #self.quant = QuantError(err)
-        if abs(np.var(y_array_true)) > 1e-10:
-            self.lof = 100 * self.mse / np.var(y_array_true)
-            self.r_two = (1 - self.lof / 100)
-        else:
-            self.lof = None
-            self.r_two = None
 
