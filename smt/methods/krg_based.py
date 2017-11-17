@@ -16,6 +16,7 @@ TODO:
 
 from __future__ import division
 import warnings
+warnings.filterwarnings("ignore")
 
 import numpy as np
 from scipy import linalg, optimize
@@ -25,7 +26,6 @@ from smt.utils.caching import cached_operation
 from smt.methods.sm import SM
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
-#from smt.utils.pairwise import manhattan_distances
 from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
 
 """
