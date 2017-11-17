@@ -2,7 +2,6 @@ from six import iteritems
 
 from sphinx_auto_embed.directive import Directive
 
-
 class DirectiveEmbedOptions(Directive):
     """
     Directive for embedding a table from an OptionsDictionary instance.

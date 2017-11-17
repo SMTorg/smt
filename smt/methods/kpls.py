@@ -1,6 +1,6 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -9,7 +9,8 @@ import warnings
 import numpy as np
 
 from smt.methods.krg_based import KRG_BASED
-from smt.utils.kriging_utils import componentwise_distance_PLS, compute_pls
+from smt.utils.kriging_utils import componentwise_distance_PLS
+from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 
 """
 The KPLS class.
@@ -28,7 +29,9 @@ class KPLS(KRG_BASED):
         self.name = 'KPLS'
 
     def _compute_pls(self,X,y):
-        self.coeff_pls = compute_pls(X.copy(),y.copy(),self.options['n_comp'])
+        _pls = pls(self.options['n_comp'])
+        self.coeff_pls = _pls.fit(X.copy(),y.copy()).x_rotations_
+
         return X,y
 
     def _componentwise_distance(self,dx,opt=0):

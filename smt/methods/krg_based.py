@@ -16,6 +16,7 @@ TODO:
 
 from __future__ import division
 import warnings
+warnings.filterwarnings("ignore")
 
 import numpy as np
 from scipy import linalg, optimize
@@ -23,12 +24,13 @@ from types import FunctionType
 from smt.utils.caching import cached_operation
 
 from smt.methods.sm import SM
-from smt.utils.pairwise import manhattan_distances
-from smt.utils.kriging_utils import abs_exp, squar_exp, constant, linear, quadratic, \
-    standardization, l1_cross_distances
+from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.gaussian_process.regression_models import constant, linear, quadratic
+from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
 
 """
 The kriging class.
+
 """
 
 class KRG_BASED(SM):
@@ -55,7 +57,6 @@ class KRG_BASED(SM):
         declare('data_dir', values=None, types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
 
-        #self.name = 'Kriging'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports['derivatives'] = True

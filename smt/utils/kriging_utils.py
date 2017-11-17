@@ -1,11 +1,11 @@
 '''
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
 import numpy as np
-from smt.utils.pls import pls as _pls
+from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 from pyDOE import *
 
 def standardization(X,y,copy=False):
@@ -68,7 +68,6 @@ def standardization(X,y,copy=False):
         X = (X - X_mean) / X_std
         y = (y - y_mean) / y_std
         return X, y, X_mean, y_mean, X_std, y_std
-
 
 def l1_cross_distances(X):
 
@@ -177,88 +176,123 @@ def squar_exp(theta, d):
             i+=1
 
 
-"""
-The built-in regression models subroutine for the KPLS module.
-"""
-
-def constant(x):
+def ge_compute_pls(X,y,n_comp,pts,delta_x,xlimits,extra_points):
 
     """
-    Zero order polynomial (constant, p = 1) regression model.
-
-    x --> f(x) = 1
+    Gradient-enhanced PLS-coefficients.
 
     Parameters
     ----------
-    x: np.ndarray[n_obs,dim]
-            - An array giving the locations x at which the regression model
-              should be evaluated.
+
+    X: np.ndarray [n_obs,dim]
+            - - The input variables.
+
+    y: np.ndarray [n_obs,1]
+            - The output variable
+
+    n_comp: int
+            - Number of principal components used.
+
+    pts: dict()
+            - The gradient values.
+
+    delta_x: real
+            - The step used in the FOTA.
+
+    xlimits: np.ndarray[dim, 2]
+            - The upper and lower var bounds.
+
+    extra_points: int
+            - The number of extra points per each training point.
 
     Returns
     -------
-    f: np.ndarray[n_obs,p]
-            - An array with the values of the regression model.
-    """
 
-    x = np.asarray(x, dtype=np.float)
-    n_eval = x.shape[0]
-    f = np.ones([n_eval, 1])
+    Coeff_pls: np.ndarray[dim, n_comp]
+            - The PLS-coefficients.
 
-    return f
+    XX: np.ndarray[extra_points*nt, dim]
+            - Extra points added (when extra_points > 0)
 
-
-def linear(x):
-    """
-    First order polynomial (linear, p = n+1) regression model.
-
-    x --> f(x) = [ 1, x_1, ..., x_n ].T
-
-    Parameters
-    ----------
-    x: np.ndarray[n_obs,dim]
-            - An array giving the locations x at which the regression model
-              should be evaluated.
-
-    Returns
-    -------
-    f: np.ndarray[n_obs,p]
-            - An array with the values of the regression model.
-    """
-
-    x = np.asarray(x, dtype=np.float)
-    n_eval = x.shape[0]
-    f = np.hstack([np.ones([n_eval, 1]), x])
-
-    return f
-
-
-def quadratic(x):
+    yy: np.ndarray[extra_points*nt, 1]
+            - Extra points added (when extra_points > 0)
 
     """
-    Second order polynomial (quadratic, p = n*(n-1)/2+n+1) regression model.
+    nt,dim = X.shape
+    XX = np.empty(shape = (0,dim))
+    yy = np.empty(shape = (0,1))
+    _pls = pls(n_comp)
 
-    x --> f(x) = [ 1, { x_i, i = 1,...,n }, { x_i * x_j,  (i,j) = 1,...,n } ].T
-                                                          i > j
+    coeff_pls = np.zeros((nt,dim,n_comp))
+    for i in range(nt):
+        if dim >= 3:
+            sign = np.roll(bbdesign(int(dim),center=1),1,axis=0)
+            _X = np.zeros((sign.shape[0],dim))
+            _y = np.zeros((sign.shape[0],1))
+            sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
+            _X = X[i,:]+ sign
+            for j in range(1,dim+1):
+                sign[:,j-1] = sign[:,j-1]*pts[None][j][1][i,0]
+            _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
+        else:
+            _X = np.zeros((9,dim))
+            _y = np.zeros((9,1))
+            # center
+            _X[:,:] = X[i,:].copy()
+            _y[0,0] = y[i,0].copy()
+            # right
+            _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[1,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # up
+            _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[2,0] = _y[0,0].copy()+ pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left
+            _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _y[3,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])
+            # down
+            _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[4,0] = _y[0,0].copy()-pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right up
+            _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[5,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left up
+            _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[6,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # left down
+            _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[7,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
+            # right down
+            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[3,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
+                xlimits[1,1]-xlimits[1,0])
 
-    Parameters
-    ----------
-    x: np.ndarray[n_obs,dim]
-            - An array giving the locations x at which the regression model
-              should be evaluated.
-
-    Returns
-    -------
-    f: np.ndarray[n_obs,p]
-            - An array with the values of the regression model.
-    """
-
-    x = np.asarray(x, dtype=np.float)
-    n_eval, n_features = x.shape
-    f = np.hstack([np.ones([n_eval, 1]), x])
-    for k in range(n_features):
-        f = np.hstack([f, x[:, k, np.newaxis] * x[:, k:]])
-
-    return f
+        _pls.fit(_X.copy(),_y.copy())
+        coeff_pls[i,:,:] = _pls.x_rotations_
+        #Add additional points
+        if extra_points != 0:
+            max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
+            for ii in max_coeff:
+                XX = np.vstack((XX,X[i,:]))
+                XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
+                yy = np.vstack((yy,y[i,0]))
+                yy[-1,0] += pts[None][1+ii][1][i,0]*delta_x*(
+                    xlimits[ii,1]-xlimits[ii,0])
+    return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 def componentwise_distance(D,corr,dim):
 
@@ -270,7 +304,7 @@ def componentwise_distance(D,corr,dim):
     ----------
 
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The L1 cross-distances between the vectors in X.
+            - The cross-distances between the vectors in X depending of the correlation function.
 
     corr: str
             - Name of the correlation function used.
@@ -354,151 +388,3 @@ def componentwise_distance_PLS(D,corr,n_comp,coeff_pls):
                 D_corr[i*nb_limit:(i+1)*nb_limit,:] = np.dot(np.abs(D[i*
                                 nb_limit:(i+1)*nb_limit,:]),np.abs(coeff_pls))
             i+=1
-
-def compute_pls(X,y,n_comp):
-
-    """
-    Computes the PLS-coefficients.
-
-    Parameters
-    ----------
-
-    X: np.ndarray [n_obs,dim]
-            - - The input variables.
-
-    y: np.ndarray [n_obs,1]
-            - The output variable
-
-    n_comp: int
-            - Number of principal components used.
-
-    Returns
-    -------
-
-    Coeff_pls: np.ndarray[dim, n_comp]
-            - The PLS-coefficients.
-
-    """
-    nt,dim = X.shape
-    pls = _pls(n_comp)
-
-    pls.fit(X,y)
-    return np.abs(pls.x_rotations_)
-
-def ge_compute_pls(X,y,n_comp,pts,delta_x,xlimits,extra_points):
-
-    """
-    Gradient-enhanced PLS-coefficients.
-
-    Parameters
-    ----------
-
-    X: np.ndarray [n_obs,dim]
-            - - The input variables.
-
-    y: np.ndarray [n_obs,1]
-            - The output variable
-
-    n_comp: int
-            - Number of principal components used.
-
-    pts: dict()
-            - The gradient values.
-
-    delta_x: real
-            - The step used in the FOTA.
-
-    xlimits: np.ndarray[dim, 2]
-            - The upper and lower var bounds.
-
-    extra_points: int
-            - The number of extra points per each training point.
-
-    Returns
-    -------
-
-    Coeff_pls: np.ndarray[dim, n_comp]
-            - The PLS-coefficients.
-
-    XX: np.ndarray[extra_points*nt, dim]
-            - Extra points added (when extra_points > 0)
-
-    yy: np.ndarray[extra_points*nt, 1]
-            - Extra points added (when extra_points > 0)
-
-    """
-    nt,dim = X.shape
-    XX = np.empty(shape = (0,dim))
-    yy = np.empty(shape = (0,1))
-    pls = _pls(n_comp)
-
-    coeff_pls = np.zeros((nt,dim,n_comp))
-    for i in range(nt):
-        if dim >= 3:
-            sign = np.roll(bbdesign(dim,center=1),1,axis=0)
-            _X = np.zeros((sign.shape[0],dim))
-            _y = np.zeros((sign.shape[0],1))
-            sign = sign * delta_x*(xlimits[:,1]-xlimits[:,0])
-            _X = X[i,:]+ sign
-            for j in range(1,dim+1):
-                sign[:,j-1] = sign[:,j-1]*pts[None][j][1][i,0]
-            _y = y[i,:]+ np.sum(sign,axis=1).reshape((sign.shape[0],1))
-        else:
-            _X = np.zeros((9,dim))
-            _y = np.zeros((9,1))
-            # center
-            _X[:,:] = X[i,:].copy()
-            _y[0,0] = y[i,0].copy()
-            # right
-            _X[1,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[1,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])
-            # up
-            _X[2,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[2,0] = _y[0,0].copy()+ pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left
-            _X[3,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _y[3,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])
-            # down
-            _X[4,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[4,0] = _y[0,0].copy()-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # right up
-            _X[5,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[5,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[5,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left up
-            _X[6,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[6,1] +=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[6,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])+pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # left down
-            _X[7,0] -=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[7,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[7,0] = _y[0,0].copy()- pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-            # right down
-            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[3,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
-                xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
-                xlimits[1,1]-xlimits[1,0])
-
-        pls.fit(_X.copy(),_y.copy())
-        coeff_pls[i,:,:] = pls.x_rotations_
-        #Add additional points
-        if extra_points != 0:
-            max_coeff = np.argsort(np.abs(coeff_pls[i,:,0]))[-extra_points:]
-            for ii in max_coeff:
-                XX = np.vstack((XX,X[i,:]))
-                XX[-1,ii] += delta_x*(xlimits[ii,1]-xlimits[ii,0])
-                yy = np.vstack((yy,y[i,0]))
-                yy[-1,0] += pts[None][1+ii][1][i,0]*delta_x*(
-                    xlimits[ii,1]-xlimits[ii,0])
-    return np.abs(coeff_pls).mean(axis=0), XX, yy
