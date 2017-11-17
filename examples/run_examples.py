@@ -193,11 +193,12 @@ if plot_status:
     plt.show()
 
 ########### The KPLS model
+
 # The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
 # an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
 # an example using 2 principal components.
 
-t = KPLS( n_comp=2, theta0=[1e-2,1e-2],print_prediction = False)
+t = KPLS(n_comp=2, theta0=[1e-2,1e-2],print_prediction = False)
 t.set_training_values(xt,yt[:,0])
 
 t.train()
@@ -221,7 +222,6 @@ if plot_status:
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle('Validation of the KPLS model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10')
 
-
 # Prediction of the derivatives with regards to each direction space
 yd_prediction = np.zeros((ntest,ndim))
 for i in range(ndim):
@@ -241,6 +241,7 @@ if plot_status:
     plt.show()
 
 ########### The KPLSK model
+
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 
 t = KPLSK(n_comp=2, theta0=[1e-2,1e-2],print_prediction = False)
@@ -287,6 +288,7 @@ if plot_status:
     plt.show()
 
 ########### The GEKPLS model using 1 approximating points
+
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 
 t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-2,extra_points= 1,print_prediction = False)
@@ -336,6 +338,7 @@ if plot_status:
     plt.show()
 
 ########### The GEKPLS model using 2 approximating points
+
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
 
 t = GEKPLS(n_comp=1, theta0=[1e-2], xlimits=fun.xlimits,delta_x=1e-4,
@@ -450,6 +453,7 @@ if compiled_available:
         plt.show()
 
     ########### The RMTB and RMTC models are suitable for low-dimensional problems
+    
     # Initialization of the problem
     ndim = 3
     ndoe = int(250*ndim)
