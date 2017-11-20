@@ -1,6 +1,7 @@
 branches:
   only:
     - master
+    - ft-mixture-of-experts
 
 sudo: required
 
