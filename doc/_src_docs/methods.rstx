@@ -23,25 +23,25 @@ Usage
 
 .. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf , 80
 
-SM class API
+Methods class API
 ------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 
-.. autoclass:: smt.methods.sm.SM
+.. autoclass:: smt.methods.methods.Methods
 
-  .. automethod:: smt.methods.sm.SM.__init__
+  .. automethod:: smt.methods.methods.Methods.__init__
 
-  .. automethod:: smt.methods.sm.SM.set_training_values
+  .. automethod:: smt.methods.methods.Methods.set_training_values
 
-  .. automethod:: smt.methods.sm.SM.set_training_derivatives
+  .. automethod:: smt.methods.methods.Methods.set_training_derivatives
 
-  .. automethod:: smt.methods.sm.SM.train
+  .. automethod:: smt.methods.methods.Methods.train
 
-  .. automethod:: smt.methods.sm.SM.predict_values
+  .. automethod:: smt.methods.methods.Methods.predict_values
 
-  .. automethod:: smt.methods.sm.SM.predict_derivatives
+  .. automethod:: smt.methods.methods.Methods.predict_derivatives
 
-  .. automethod:: smt.methods.sm.SM.predict_output_derivatives
+  .. automethod:: smt.methods.methods.Methods.predict_output_derivatives
 
-  .. automethod:: smt.methods.sm.SM.predict_variances
+  .. automethod:: smt.methods.methods.Methods.predict_variances

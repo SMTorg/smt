@@ -9,13 +9,13 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.methods.sm import SM
+from smt.methods.methods import Methods
 from smt.utils.caching import cached_operation
 
 from smt.methods.idwclib import PyIDW
 
 
-class IDW(SM):
+class IDW(Methods):
 
     """
     Inverse distance weighting interpolant

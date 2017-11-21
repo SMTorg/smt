@@ -3,15 +3,15 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang         <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-        
+
 Sphere function.
 """
 from __future__ import division
 import numpy as np
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class Sphere(Problem):
+class Sphere(Problems):
 
     def _initialize(self):
         self.options.declare('name', 'Sphere', types=str)

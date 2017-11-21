@@ -26,35 +26,35 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-  
+
   from smt.problems import Sphere
-  
+
   ndim = 2
   problem = Sphere(ndim=ndim)
-  
+
   num = 100
   x = np.ones((num, ndim))
   x[:, 0] = np.linspace(-10, 10., num)
   x[:, 1] = 0.
   y = problem(x)
-  
+
   yd = np.empty((num, ndim))
   for i in range(ndim):
       yd[:, i] = problem(x, kx=i).flatten()
-  
+
   print(y.shape)
   print(yd.shape)
-  
+
   plt.plot(x[:, 0], y[:, 0])
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-  
+
 ::
 
   (100, 1)
   (100, 2)
-  
+
 .. figure:: problems_Test_test_sphere.png
   :scale: 80 %
   :align: center
@@ -62,8 +62,8 @@ Usage
 Problem class API
 -----------------
 
-.. autoclass:: smt.problems.problem.Problem
+.. autoclass:: smt.problems.problems.Problems
 
-  .. automethod:: smt.problems.problem.Problem.__init__
+  .. automethod:: smt.problems.problems.Problems.__init__
 
-  .. automethod:: smt.problems.problem.Problem.__call__
+  .. automethod:: smt.problems.problems.Problems.__call__

@@ -17,7 +17,7 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_support, check_nx, check_2d_array
 
 
-class SM(object):
+class Methods(object):
     """
     Base class for all surrogate models.
 

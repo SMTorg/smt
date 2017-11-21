@@ -8,13 +8,13 @@ N-dimensional step function problem.
 import numpy as np
 from six.moves import range
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 from smt.problems.tensor_product import TensorProduct
 
-class NdimStepFunction(Problem):
+class NdimStepFunction(Problems):
 
     def __init__(self, ndim=1, width=10.0):
         self.problem = TensorProduct(ndim=ndim, func='tanh', width=width)
