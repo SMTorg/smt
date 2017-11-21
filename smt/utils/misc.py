@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -13,7 +13,7 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
 
     Arguments
     ---------
-    sm : SM
+    sm : Methods
         Surrogate model instance.
     xe : np.ndarray[ne, dim] or None
         Input values. If None, the input values at the training points are used instead.

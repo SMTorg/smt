@@ -8,12 +8,12 @@ Reduced problem class - selects a subset of input variables.
 import numpy as np
 from six.moves import range
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class ReducedProblem(Problem):
+class ReducedProblem(Problems):
 
     def __init__(self, problem, dims, w=0.2):
         """

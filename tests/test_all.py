@@ -1,7 +1,7 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         Dr. Mohamed A. Bouhlel <mbouhlel@umich>
-        
+
 This package is distributed under New BSD license.
 '''
 

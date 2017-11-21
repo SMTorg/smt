@@ -8,9 +8,9 @@ Multi-dimensional Rosenbrock function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class Rosenbrock(Problem):
+class Rosenbrock(Problems):
 
     def _initialize(self):
         self.options.declare('name', 'Rosenbrock', types=str)

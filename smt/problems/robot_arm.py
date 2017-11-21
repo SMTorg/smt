@@ -10,9 +10,9 @@ An, J., and Owen, A. Quasi-Regression. Journal of complexity, 17(4), pp. 588-607
 from __future__ import division
 import numpy as np
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class RobotArm(Problem):
+class RobotArm(Problems):
 
     def _initialize(self):
         self.options.declare('name', 'RobotArm', types=str)

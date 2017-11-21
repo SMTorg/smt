@@ -8,7 +8,7 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.methods.sm import SM
+from smt.methods.methods import Methods
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.caching import cached_operation
@@ -16,7 +16,7 @@ from smt.utils.caching import cached_operation
 from smt.methods.rbfclib import PyRBF
 
 
-class RBF(SM):
+class RBF(Methods):
 
     """
     Radial basis function interpolant with global polynomial trend.

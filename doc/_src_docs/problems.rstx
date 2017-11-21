@@ -27,8 +27,8 @@ Usage
 Problem class API
 -----------------
 
-.. autoclass:: smt.problems.problem.Problem
+.. autoclass:: smt.problems.problems.Problems
 
-  .. automethod:: smt.problems.problem.Problem.__init__
+  .. automethod:: smt.problems.problems.Problems.__init__
 
-  .. automethod:: smt.problems.problem.Problem.__call__
+  .. automethod:: smt.problems.problems.Problems.__call__
