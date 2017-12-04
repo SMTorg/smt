@@ -182,6 +182,9 @@ RMTB::~RMTB() {
 void RMTB::setup(int nx, double * lower, double * upper, int * order_list, int * ncp_list) {
   RMTS::setup(nx, lower, upper);
 
+  delete[] this->order_list;
+  delete[] this->ncp_list;
+
   this->order_list = new int[nx];
   this->ncp_list = new int[nx];
 

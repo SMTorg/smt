@@ -1,0 +1,14 @@
+Boeing 777 engine data set
+==========================
+
+.. embed-module :: smt.examples.b777_engine
+
+RMTB
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_b777_engine , Test , test_rmtb , 60
+
+RMTC
+----
+
+.. embed-test-print-plot :: smt.example_tests.test_b777_engine , Test , test_rmtc , 60

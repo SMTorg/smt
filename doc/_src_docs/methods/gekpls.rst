@@ -60,7 +60,7 @@ Usage
   # Test the model
   X = np.arange(fun.xlimits[0,0], fun.xlimits[0,1], .25)
   Y = np.arange(fun.xlimits[1,0], fun.xlimits[1,1], .25)
-  X, Y = np.meshgrid(X, Y)        
+  X, Y = np.meshgrid(X, Y)
   Z = np.zeros((X.shape[0],X.shape[1]))
   
   for i in range(X.shape[0]):
@@ -89,9 +89,9 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0216920
+     Training - done. Time (sec):  0.0351360
   
-.. figure:: gekpls.png
+.. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
   :align: center
 

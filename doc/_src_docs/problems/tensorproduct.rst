@@ -57,7 +57,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: tensorproduct.png
+.. figure:: tensorproduct_Test_test_tensor_product.png
   :scale: 80 %
   :align: center
 

@@ -40,7 +40,7 @@ Usage
   (100, 1)
   (100, 2)
   
-.. figure:: rosenbrock.png
+.. figure:: rosenbrock_Test_test_rosenbrock.png
   :scale: 80 %
   :align: center
 

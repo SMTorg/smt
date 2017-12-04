@@ -1,6 +1,7 @@
 branches:
   only:
     - master
+    - ft-mixture-of-experts
 
 sudo: required
 
@@ -32,10 +33,10 @@ addons:
 
 install:
 - pip install --upgrade pip
-- pip install numpy scipy Cython
-- pip install git+https://github.com/OpenMDAO/testflo.git
-- pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
-- pip install -e .
+- sudo pip install numpy scipy Cython
+- sudo pip install git+https://github.com/OpenMDAO/testflo.git
+- sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+- sudo pip install -e .
 
 script:
 - testflo

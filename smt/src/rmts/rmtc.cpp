@@ -5,6 +5,7 @@
 #include <math.h>
 #include <iostream>
 #include <cstring>
+#include <algorithm>
 
 using namespace std;
 
@@ -20,6 +21,9 @@ RMTC::~RMTC() {
 
 void RMTC::setup(int nx, double * lower, double * upper, int * nelem_list, int * nterm_list) {
   RMTS::setup(nx, lower, upper);
+
+  delete[] this->nelem_list;
+  delete[] this->nterm_list;
 
   this->nelem_list = new int[nx];
   this->nterm_list = new int[nx];

@@ -19,6 +19,10 @@ IDW::~IDW() {
 }
 
 void IDW::setup(int nx, int nt, double p, double * xt) {
+  delete[] this->xt;
+  delete[] this->w;
+  delete[] this->dw_dx;
+
   this->nx = nx;
   this->nt = nt;
   this->p = p;
