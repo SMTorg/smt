@@ -17,8 +17,6 @@ from smt.utils.misc import compute_rms_error
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from smt.extensions.moe_plotter import MOEPlotter
-
 class TestMOE(SMTestCase):
     """
     Test class
