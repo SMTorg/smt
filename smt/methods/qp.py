@@ -12,11 +12,11 @@ from __future__ import division
 
 import numpy as np
 import scipy
-from smt.methods.sm import SM
+from smt.methods.methods import Methods
 from smt.utils.caching import cached_operation
 
 
-class QP(SM):
+class QP(Methods):
 
     """
     Square polynomial approach

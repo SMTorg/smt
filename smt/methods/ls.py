@@ -1,7 +1,7 @@
 """
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
         Dr. Nathalie.bartoli      <nathalie@onera.fr>
-        
+
 This package is distributed under New BSD license.
 
 TO DO:
@@ -13,11 +13,11 @@ from __future__ import division
 import numpy as np
 
 from sklearn import linear_model
-from smt.methods.sm import SM
+from smt.methods.methods import Methods
 from smt.utils.caching import cached_operation
 
 
-class LS(SM):
+class LS(Methods):
 
     """
     Least square model.

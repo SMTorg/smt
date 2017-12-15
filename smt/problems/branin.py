@@ -8,9 +8,9 @@ Branin function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class Branin(Problem):
+class Branin(Problems):
 
     def _initialize(self):
         self.options.declare('ndim', 2, values=[2], types=int)
@@ -18,7 +18,7 @@ class Branin(Problem):
 
     def _setup(self):
         assert self.options['ndim'] == 2, 'ndim must be 2'
-        
+
         self.xlimits[0, :] = [-5., 10]
         self.xlimits[1, :] = [0., 15]
 
@@ -58,4 +58,3 @@ class Branin(Problem):
                 y[:, 0] = 2*u
 
         return y
-

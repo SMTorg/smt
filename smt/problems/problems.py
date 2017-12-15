@@ -10,7 +10,7 @@ import numpy as np
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_2d_array
 
-class Problem(object):
+class Problems(object):
 
     def __init__(self, **kwargs):
         """
