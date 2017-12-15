@@ -8,9 +8,9 @@ Norm function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problem import Problem
+from smt.problems.problems import Problems
 
-class LpNorm(Problem):
+class LpNorm(Problems):
 
     def _initialize(self, ndim=1):
         self.options.declare('order', default=2, types=int)
