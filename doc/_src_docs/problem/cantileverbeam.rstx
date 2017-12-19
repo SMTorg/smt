@@ -1,0 +1,17 @@
+Cantilever beam function
+========================
+
+.. math ::
+  \frac{50}{600}\sum\limits_{i=1}^{17}\left[\frac{12}{b_ih_i^3}\left(\left(\sum\limits_{j=i}^{17}l_j\right)^3-\left(\sum\limits_{j=i+1}^{17}l_j\right)^3\right)\right],
+
+:math:`b_i\in [0.01,0.05], \quad h_i\in[0.3,0.65], \quad l_i\in[0.5,1].`
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_cantilever_beam , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.problem , CantileverBeam , options

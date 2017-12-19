@@ -1,0 +1,65 @@
+Radial basis functions
+======================
+
+The radial basis function (RBF) surrogate model represents the interpolating function
+as a linear combination of basis functions, one for each training point.
+RBFs are named as such because the basis functions depend only on
+the distance from the prediction point to the training point for the basis function.
+The coefficients of the basis functions are computed during the training stage.
+RBFs are frequently augmented to global polynomials to capture the general trends.
+
+The prediction equation for RBFs is
+
+.. math ::
+  y = \mathbf{p}(\mathbf{x}) \mathbf{w_p} + \sum_i^{nt} \phi(\mathbf{x}, \mathbf{xt}_i) \mathbf{w_r} ,
+
+where
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
+:math:`\mathbf{p}(\mathbf{x}) \in \mathbb{R}^{np}` is the vector mapping the polynomial coefficients to the prediction output,
+:math:`\phi(\mathbf{x}, \mathbf{xt}_i) \in \mathbb{R}^{nt}` is the vector mapping the radial basis function coefficients to the prediction output,
+:math:`\mathbf{w_p} \in \mathbb{R}^{np}` is the vector of polynomial coefficients,
+and
+:math:`\mathbf{w_r} \in \mathbb{R}^{nt}` is the vector of radial basis function coefficients.
+
+The coefficients, :math:`\mathbf{w_p}` and :math:`\mathbf{w_r}`, are computed by solving the follow linear system:
+
+.. math ::
+
+  \begin{bmatrix}
+    \phi( \mathbf{xt}_1 , \mathbf{xt}_1 ) & \dots & \phi( \mathbf{xt}_1 , \mathbf{xt}_{nt} ) & \mathbf{p}(\mathbf{xt}_1) ^ T \\
+    \vdots & \ddots & \vdots & \vdots \\
+    \phi( \mathbf{xt}_{nt} , \mathbf{xt}_1 ) & \dots & \phi( \mathbf{xt}_{nt} , \mathbf{xt}_{nt} ) & \mathbf{p}( \mathbf{xt}_{nt} ) ^ T \\
+    \mathbf{p}( \mathbf{xt}_1 ) & \dots & \mathbf{p}( \mathbf{xt}_{nt} ) & \mathbf{0} \\
+  \end{bmatrix}
+  \begin{bmatrix}
+    \mathbf{w_r}_1 \\
+    \vdots \\
+    \mathbf{w_r}_{nt} \\
+    \mathbf{w_p} \\
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    yt_1 \\
+    \vdots \\
+    yt_{nt} \\
+    0 \\
+  \end{bmatrix}
+
+Only Gaussian basis functions are currently implemented.
+These are given by:
+
+.. math ::
+
+  \phi( \mathbf{x}_i , \mathbf{x}_j ) = \exp \left( \frac{|| \mathbf{x}_i - \mathbf{x}_j ||_2 ^ 2}{d0^2} \right)
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate , RBF , options

@@ -1,0 +1,46 @@
+Inverse-distance weighting
+==========================
+
+The inverse distance weighting [1]_ (IDW) model is an interpolating method
+and the unknown points are calculated with a weighted average of the sampling points.
+
+The prediction equation for IDW is
+
+.. math ::
+
+  y =
+  \left\{
+  \begin{array}{ll}
+    \frac{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i) yt_i}{\sum_i^{nt} \beta(\mathbf{x}, \mathbf{xt}_i)},
+    & \text{if} \quad \mathbf{x} \neq \mathbf{xt}_i \quad \forall i\\
+    yt_i
+    & \text{if} \quad \mathbf{x} = \mathbf{xt}_i \quad \text{for some} \; i\\
+  \end{array}
+  \right. ,
+
+where
+:math:`\mathbf{x} \in \mathbb{R}^{nx}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` is the input vector for the :math:`i` th training point,
+and
+:math:`yt_i \in \mathbb{R}` is the output value for the :math:`i` th training point.
+The weighting function :math:`\beta` is defined by
+
+.. math ::
+
+  \beta( \mathbf{x}_i , \mathbf{x}_j ) = || \mathbf{x}_i - \mathbf{x}_j ||_2 ^ {-p} ,
+
+where :math:`p` a positive real number, called the power parameter.
+This parameter must be strictly greater than 1 for the derivatives to be continuous.
+
+.. [1] Shepard, D., A Two-dimensional Interpolation Function for Irregularly-spaced Data, Proceedings of the 1968 23rd ACM National Conference, 1968, pp. 517--524.
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_idw , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate , IDW , options

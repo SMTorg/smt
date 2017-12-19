@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 try:
-    from smt.methods import RMTB, RMTC
+    from smt.surrogate import RMTB, RMTC
     compiled_available = True
 except:
     compiled_available = False
@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtb(self):
-        from smt.methods import RMTB
+        from smt.surrogate import RMTB
         from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
 
         xt, yt, xlimits = get_rans_crm_wing()
@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtc(self):
-        from smt.methods import RMTC
+        from smt.surrogate import RMTC
         from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
 
         xt, yt, xlimits = get_rans_crm_wing()

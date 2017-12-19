@@ -1,0 +1,47 @@
+Surrogate modeling methods
+==========================
+
+SMT contains the surrogate modeling methods listed below.
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   surrogate/rbf
+   surrogate/idw
+   surrogate/rmts
+   surrogate/ls
+   surrogate/qp
+   surrogate/krg
+   surrogate/kpls
+   surrogate/kplsk
+   surrogate/gekpls
+
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf , 80
+
+Surrogate class API
+------------
+
+All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
+
+.. autoclass:: smt.surrogate.surrogate.Surrogate
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.__init__
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.set_training_values
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.set_training_derivatives
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.train
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_values
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_derivatives
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_output_derivatives
+
+  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_variances

@@ -10,11 +10,11 @@ Contributing one of these consists of the following steps:
 
 - Fork SMT to make a version of the SMT repo separate from the main one.
 - Download *sphinx_auto_embed* by running ``pip install git+https://github.com/hwangjt/sphinx_auto_embed.git``.
-- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in smt/methods/new_method.py.
-- Add the import statement in the corresponding __init__.py file, e.g., smt/methods/__init__.py.
+- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in smt/surrogate/new_method.py.
+- Add the import statement in the corresponding __init__.py file, e.g., smt/surrogate/__init__.py.
 - Add tests to the top-level ``tests`` directory following the existing examples.
-- Add a documentation page in the appropriate directory, e.g., doc/_src_docs/methods/new_method.rstx, using the existing docs as a reference.
-- Add an entry in the table of contents so that readers can find the documentation page, e.g., in doc/_src_docs/methods.rstx.
+- Add a documentation page in the appropriate directory, e.g., doc/_src_docs/surrogate/new_method.rstx, using the existing docs as a reference.
+- Add an entry in the table of contents so that readers can find the documentation page, e.g., in doc/_src_docs/surrogate.rstx.
 - Commit the changes, push to the forked version of SMT and issue a pull request for review and comments from the other developers of SMT and the larger community
 
 Building the documentation
@@ -35,6 +35,6 @@ Developer API
    :maxdepth: 1
    :titlesonly:
 
-   dev_docs/dev_methods
-   dev_docs/dev_problems
+   dev_docs/dev_surrogate
+   dev_docs/dev_problem
    dev_docs/dev_sampling

@@ -42,8 +42,8 @@ Documentation contents
    :titlesonly:
 
    _src_docs/getting_started
-   _src_docs/methods
-   _src_docs/problems
+   _src_docs/surrogate
+   _src_docs/problem
    _src_docs/sampling
    _src_docs/examples
    _src_docs/dev_docs

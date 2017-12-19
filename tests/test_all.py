@@ -13,15 +13,15 @@ import inspect
 from six import iteritems
 from collections import OrderedDict
 
-from smt.problems import Sphere, TensorProduct
+from smt.problem import TensorProduct
 from smt.sampling import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.methods import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.surrogate import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -38,7 +38,6 @@ class Test(SMTestCase):
         ncomp = 1
 
         problems = OrderedDict()
-        problems['sphere'] = Sphere(ndim=ndim)
         problems['exp'] = TensorProduct(ndim=ndim, func='exp')
         problems['tanh'] = TensorProduct(ndim=ndim, func='tanh')
         problems['cos'] = TensorProduct(ndim=ndim, func='cos')
@@ -48,7 +47,7 @@ class Test(SMTestCase):
         sms['QP'] = QP()
         sms['KRG'] = KRG(theta0=[1e-2]*ndim)
         sms['KPLS'] = KPLS(theta0=[1e-2]*ncomp,n_comp=ncomp)
-        sms['KPLSK'] = KPLSK(theta0=[1e-2]*ncomp,n_comp=ncomp)
+        sms['KPLSK'] = KPLSK(theta0=[1]*ncomp,n_comp=ncomp)
         sms['GEKPLS'] = GEKPLS(theta0=[1e-2]*ncomp,n_comp=ncomp,delta_x=1e-1)
         if compiled_available:
             sms['IDW'] = IDW()
@@ -129,43 +128,6 @@ class Test(SMTestCase):
         e_error = compute_rms_error(sm, xe, ye)
 
     # --------------------------------------------------------------------
-    # Function: sphere
-
-    def test_sphere_LS(self):
-        self.run_test()
-
-    def test_sphere_QP(self):
-        self.run_test()
-
-    def test_sphere_KRG(self):
-        self.run_test()
-
-    def test_sphere_KPLS(self):
-        self.run_test()
-
-    def test_sphere_KPLSK(self):
-        self.run_test()
-
-    def test_sphere_GEKPLS(self):
-        self.run_test()
-
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_sphere_IDW(self):
-        self.run_test()
-
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_sphere_RBF(self):
-        self.run_test()
-
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_sphere_RMTC(self):
-        self.run_test()
-
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
-    def test_sphere_RMTB(self):
-        self.run_test()
-
-    # --------------------------------------------------------------------
     # Function: exp
 
     def test_exp_LS(self):
@@ -220,8 +182,8 @@ class Test(SMTestCase):
     def test_tanh_KPLSK(self):
         self.run_test()
 
-    #def test_tanh_GEKPLS(self):
-    #    self.run_test()
+    def test_tanh_GEKPLS(self):
+        self.run_test()
 
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):

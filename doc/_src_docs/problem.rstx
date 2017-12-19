@@ -1,0 +1,34 @@
+  Benchmarking problem
+=====================
+
+SMT contains a library of analytical and engineering problems to be used for benchmarking purposes.
+These are listed below.
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   problem/sphere
+   problem/branin
+   problem/rosenbrock
+   problem/tensorproduct
+   problem/cantileverbeam
+   problem/robotarm
+   problem/torsionvibration
+   problem/waterflow
+   problem/weldedbeam
+   problem/wingweight
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_sphere , 80
+
+Problem class API
+-----------------
+
+.. autoclass:: smt.problem.problem.Problem
+
+  .. automethod:: smt.problem.problem.Problem.__init__
+
+  .. automethod:: smt.problem.problem.Problem.__call__

@@ -24,7 +24,7 @@ if not sys.platform.startswith('win'):
     extra_compile_args.append('-std=c++11')
 
 ext = cythonize(
-    Extension("smt.methods.rbfclib",
+    Extension("smt.surrogate.rbfclib",
     sources=[
         'smt/src/rbf/rbf.cpp',
         'smt/src/rbf/rbfclib.pyx',
@@ -32,7 +32,7 @@ ext = cythonize(
     language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
-    Extension("smt.methods.idwclib",
+    Extension("smt.surrogate.idwclib",
     sources=[
         'smt/src/idw/idw.cpp',
         'smt/src/idw/idwclib.pyx',
@@ -40,7 +40,7 @@ ext = cythonize(
     language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
-    Extension("smt.methods.rmtsclib",
+    Extension("smt.surrogate.rmtsclib",
     sources=[
         'smt/src/rmts/rmtsclib.pyx',
         'smt/src/rmts/utils.cpp',
@@ -60,8 +60,8 @@ setup(name='smt',
     license='BSD-3',
     packages=[
         'smt',
-        'smt/methods',
-        'smt/problems',
+        'smt/surrogate',
+        'smt/problem',
         'smt/sampling',
         'smt/utils',
     ],

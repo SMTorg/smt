@@ -10,11 +10,11 @@ import numpy as np
 from scipy import linalg
 from smt.utils import compute_rms_error
 
-from smt.problems import Sphere, NdimRobotArm
+from smt.problem import Sphere, NdimRobotArm
 from smt.sampling import LHS
-from smt.methods import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.surrogate import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
@@ -453,7 +453,7 @@ if compiled_available:
         plt.show()
 
     ########### The RMTB and RMTC models are suitable for low-dimensional problems
-    
+
     # Initialization of the problem
     ndim = 3
     ndoe = int(250*ndim)

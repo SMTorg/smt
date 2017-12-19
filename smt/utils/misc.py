@@ -13,7 +13,7 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
 
     Arguments
     ---------
-    sm : Methods
+    sm : Surrogate
         Surrogate model instance.
     xe : np.ndarray[ne, dim] or None
         Input values. If None, the input values at the training points are used instead.
