@@ -16,7 +16,7 @@ from smt.sampling_methods.full_factorial import FullFactorial
 class Clustered(SamplingMethod):
 
     def _initialize(self):
-        self.options.declare('kernel', types=Sampling)
+        self.options.declare('kernel', types=SamplingMethod)
         self.options.declare('spacing')
 
     def __call__(self, n):
