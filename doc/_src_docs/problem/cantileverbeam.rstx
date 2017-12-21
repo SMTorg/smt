@@ -14,4 +14,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , CantileverBeam , options
+.. embed-options-table :: smt.problems , CantileverBeam , options

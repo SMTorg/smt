@@ -1,16 +1,16 @@
 Developer API for surrogate models
 ==================================
 
-.. autoclass:: smt.surrogate.surrogate.Surrogate
+.. autoclass:: smt.surrogate_models.surrogate_models.SurrogateModel
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._initialize
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._initialize
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._train
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._train
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._predict_values
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._predict_values
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._predict_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._predict_derivatives
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._predict_output_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._predict_output_derivatives
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate._predict_variances
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel._predict_variances

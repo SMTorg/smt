@@ -22,4 +22,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , KPLS , options
+.. embed-options-table :: smt.surrogate_models , KPLS , options

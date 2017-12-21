@@ -35,4 +35,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , KRG , options
+.. embed-options-table :: smt.surrogate_models , KRG , options

@@ -99,9 +99,9 @@ Usage (RMTC)
 Options (RMTB)
 --------------
 
-.. embed-options-table :: smt.surrogate , RMTB , options
+.. embed-options-table :: smt.surrogate_models , RMTB , options
 
 Options (RMTC)
 --------------
 
-.. embed-options-table :: smt.surrogate , RMTC , options
+.. embed-options-table :: smt.surrogate_models , RMTC , options

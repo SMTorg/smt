@@ -9,4 +9,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.sampling , FullFactorial , options
+.. embed-options-table :: smt.sampling_methods , FullFactorial , options

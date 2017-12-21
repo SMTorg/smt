@@ -31,4 +31,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , QP , options
+.. embed-options-table :: smt.surrogate_models , QP , options

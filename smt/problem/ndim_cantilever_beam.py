@@ -9,9 +9,9 @@ import numpy as np
 from six.moves import range
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problem.problem import Problem
-from smt.problem.reduced_problem import ReducedProblem
-from smt.problem.cantilever_beam import CantileverBeam
+from smt.problems.problems import Problem
+from smt.problems.reduced_problem import ReducedProblem
+from smt.problems.cantilever_beam import CantileverBeam
 
 
 class NdimCantileverBeam(Problem):

@@ -12,7 +12,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import Sphere
+  from smt.problems import Sphere
 
   ndim = 2
   problem = Sphere(ndim=ndim)

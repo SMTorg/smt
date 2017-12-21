@@ -94,7 +94,7 @@ Usage (RMTB)
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.surrogate import RMTB
+  from smt.surrogate_models import RMTB
 
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -180,7 +180,7 @@ Usage (RMTC)
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.surrogate import RMTC
+  from smt.surrogate_models import RMTC
 
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])

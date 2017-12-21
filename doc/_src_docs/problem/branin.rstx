@@ -23,4 +23,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , Branin , options
+.. embed-options-table :: smt.problems , Branin , options

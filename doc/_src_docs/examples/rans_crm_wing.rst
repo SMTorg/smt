@@ -188,7 +188,7 @@ RMTB
 
 .. code-block:: python
 
-  from smt.surrogate import RMTB
+  from smt.surrogate_models import RMTB
   from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
 
   xt, yt, xlimits = get_rans_crm_wing()
@@ -476,7 +476,7 @@ RMTC
 
 .. code-block:: python
 
-  from smt.surrogate import RMTC
+  from smt.surrogate_models import RMTC
   from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
 
   xt, yt, xlimits = get_rans_crm_wing()

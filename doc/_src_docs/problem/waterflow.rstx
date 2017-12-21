@@ -14,4 +14,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , WaterFlow , options
+.. embed-options-table :: smt.problems , WaterFlow , options

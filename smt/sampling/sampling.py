@@ -25,7 +25,7 @@ class Sampling(object):
         Examples
         --------
         >>> import numpy as np
-        >>> from smt.sampling import Random
+        >>> from smt.sampling_methods import Random
         >>> sampling = Random(xlimits=np.arange(2).reshape((1, 2)))
         """
         self.options = OptionsDictionary()

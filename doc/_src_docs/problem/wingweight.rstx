@@ -14,4 +14,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , WingWeight , options
+.. embed-options-table :: smt.problems , WingWeight , options

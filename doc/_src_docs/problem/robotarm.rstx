@@ -13,4 +13,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , RobotArm , options
+.. embed-options-table :: smt.problems , RobotArm , options

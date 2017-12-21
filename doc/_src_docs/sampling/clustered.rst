@@ -8,29 +8,29 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-  
-  from smt.sampling import Clustered, Random
-  
+
+  from smt.sampling_methods import Clustered, Random
+
   xlimits = np.array([
       [0., 4.],
       [0., 3.],
   ])
   sampling = Clustered(kernel=Random(xlimits=xlimits))
-  
+
   num = 50
   x = sampling(num)
-  
+
   print(x.shape)
-  
+
   plt.plot(x[:, 0], x[:, 1], 'o')
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-  
+
 ::
 
   (50, 2)
-  
+
 .. figure:: clustered_Test_test_clustered.png
   :scale: 80 %
   :align: center
@@ -57,9 +57,9 @@ Options
      -  None
      -  None
      -  ['Sampling']
-     -  
+     -
   *  -  spacing
      -  None
      -  None
      -  None
-     -  
+     -

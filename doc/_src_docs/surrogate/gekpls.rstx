@@ -35,4 +35,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , GEKPLS , options
+.. embed-options-table :: smt.surrogate_models , GEKPLS , options

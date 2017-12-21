@@ -17,7 +17,7 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_support, check_nx, check_2d_array
 
 
-class Surrogate(object):
+class SurrogateModel(object):
     """
     Base class for all surrogate models.
 
@@ -31,7 +31,7 @@ class Surrogate(object):
 
     Examples
     --------
-    >>> from smt.surrogate import RBF
+    >>> from smt.surrogate_models import RBF
     >>> sm = RBF(print_training=False)
     >>> sm.options['print_prediction'] = False
     """
@@ -49,7 +49,7 @@ class Surrogate(object):
 
         Examples
         --------
-        >>> from smt.surrogate import RBF
+        >>> from smt.surrogate_models import RBF
         >>> sm = RBF(print_global=False)
         """
         self.options = OptionsDictionary()

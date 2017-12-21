@@ -14,7 +14,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import WaterFlow
+  from smt.problems import WaterFlow
 
   ndim = 8
   problem = WaterFlow(ndim=ndim)

@@ -9,9 +9,9 @@ from __future__ import division
 import numpy as np
 from six.moves import range
 
-from smt.sampling.sampling import Sampling
+from smt.sampling_methods.sampling_methods import SamplingMethod
 
-class Random(Sampling):
+class Random(SamplingMethod):
 
     def _compute(self, n):
         """

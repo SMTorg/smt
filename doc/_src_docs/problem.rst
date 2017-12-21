@@ -8,16 +8,16 @@ These are listed below.
    :maxdepth: 1
    :titlesonly:
 
-   problem/sphere
-   problem/branin
-   problem/rosenbrock
-   problem/tensorproduct
-   problem/cantileverbeam
-   problem/robotarm
-   problem/torsionvibration
-   problem/waterflow
-   problem/weldedbeam
-   problem/wingweight
+   problems/sphere
+   problems/branin
+   problems/rosenbrock
+   problems/tensorproduct
+   problems/cantileverbeam
+   problems/robotarm
+   problems/torsionvibration
+   problems/waterflow
+   problems/weldedbeam
+   problems/wingweight
 
 Usage
 -----
@@ -27,7 +27,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import Sphere
+  from smt.problems import Sphere
 
   ndim = 2
   problem = Sphere(ndim=ndim)
@@ -62,8 +62,8 @@ Usage
 Problem class API
 -----------------
 
-.. autoclass:: smt.problem.problem.Problem
+.. autoclass:: smt.problems.problems.Problem
 
-  .. automethod:: smt.problem.problem.Problem.__init__
+  .. automethod:: smt.problems.problems.Problem.__init__
 
-  .. automethod:: smt.problem.problem.Problem.__call__
+  .. automethod:: smt.problems.problems.Problem.__call__

@@ -10,11 +10,11 @@ import numpy as np
 from scipy import linalg
 from smt.utils import compute_rms_error
 
-from smt.problem import Sphere, NdimRobotArm
-from smt.sampling import LHS
-from smt.surrogate import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.problems import Sphere, NdimRobotArm
+from smt.sampling_methods import LHS
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 try:
-    from smt.surrogate import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False

@@ -12,11 +12,11 @@ def process_options(root, file_name, iline, line):
     embed_num_indent = line.find('.. embed-options-table')
 
     if 'embed-options-table-method' in line:
-        type_ = 'surrogate'
+        type_ = 'surrogate_models'
     elif 'embed-options-table-problem' in line:
-        type_ = 'problem'
+        type_ = 'problems'
     elif 'embed-options-table-sampling' in line:
-        type_ = 'sampling'
+        type_ = 'sampling_methods'
     else:
         raise Exception('embed-options-table is an invalid name')
 

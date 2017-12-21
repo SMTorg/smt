@@ -12,7 +12,7 @@ from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 
-from smt.problem.problem import Problem
+from smt.problems.problems import Problem
 
 class WaterFlow(Problem):
 

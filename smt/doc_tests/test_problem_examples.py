@@ -10,7 +10,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import CantileverBeam
+        from smt.problems import CantileverBeam
 
         ndim = 3
         problem = CantileverBeam(ndim=ndim)
@@ -38,7 +38,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import RobotArm
+        from smt.problems import RobotArm
 
         ndim = 2
         problem = RobotArm(ndim=ndim)
@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import Rosenbrock
+        from smt.problems import Rosenbrock
 
         ndim = 2
         problem = Rosenbrock(ndim=ndim)
@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import Sphere
+        from smt.problems import Sphere
 
         ndim = 2
         problem = Sphere(ndim=ndim)
@@ -119,7 +119,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import Branin
+        from smt.problems import Branin
 
         ndim = 2
         problem = Branin(ndim=ndim)
@@ -146,7 +146,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import TensorProduct
+        from smt.problems import TensorProduct
 
         ndim = 2
         problem = TensorProduct(ndim=ndim, func='cos')
@@ -173,7 +173,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import TorsionVibration
+        from smt.problems import TorsionVibration
 
         ndim = 15
         problem = TorsionVibration(ndim=ndim)
@@ -201,7 +201,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import WaterFlow
+        from smt.problems import WaterFlow
 
         ndim = 8
         problem = WaterFlow(ndim=ndim)
@@ -229,7 +229,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import WeldedBeam
+        from smt.problems import WeldedBeam
 
         ndim = 3
         problem = WeldedBeam(ndim=ndim)
@@ -257,7 +257,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.problem import WingWeight
+        from smt.problems import WingWeight
 
         ndim = 10
         problem = WingWeight(ndim=ndim)

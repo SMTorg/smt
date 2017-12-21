@@ -8,7 +8,7 @@ Tensor-product of cos, exp, or tanh.
 from __future__ import division
 import numpy as np
 
-from smt.problem.problem import Problem
+from smt.problems.problems import Problem
 
 class TensorProduct(Problem):
 

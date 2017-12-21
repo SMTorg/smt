@@ -14,7 +14,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import WingWeight
+  from smt.problems import WingWeight
 
   ndim = 10
   problem = WingWeight(ndim=ndim)

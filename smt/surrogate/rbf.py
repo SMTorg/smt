@@ -8,15 +8,15 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.surrogate.surrogate import Surrogate
+from smt.surrogate_models.surrogate_models import SurrogateModel
 
 from smt.utils.linear_solvers import get_solver
 from smt.utils.caching import cached_operation
 
-from smt.surrogate.rbfclib import PyRBF
+from smt.surrogate_models.rbfclib import PyRBF
 
 
-class RBF(Surrogate):
+class RBF(SurrogateModel):
 
     """
     Radial basis function interpolant with global polynomial trend.

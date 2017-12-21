@@ -17,7 +17,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import TorsionVibration
+  from smt.problems import TorsionVibration
 
   ndim = 15
   problem = TorsionVibration(ndim=ndim)

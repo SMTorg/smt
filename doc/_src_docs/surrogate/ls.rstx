@@ -21,4 +21,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , LS , options
+.. embed-options-table :: smt.surrogate_models , LS , options

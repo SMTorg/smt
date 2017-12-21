@@ -11,7 +11,7 @@ Deb, K. An Efficient Constraint Handling Method for Genetic Algorithms. Computer
 from __future__ import division
 import numpy as np
 from scipy.misc import derivative
-from smt.problem.problem import Problem
+from smt.problems.problems import Problem
 
 class WeldedBeam(Problem):
     def _initialize(self):

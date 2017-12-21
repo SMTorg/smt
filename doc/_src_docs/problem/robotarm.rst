@@ -13,7 +13,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import RobotArm
+  from smt.problems import RobotArm
 
   ndim = 2
   problem = RobotArm(ndim=ndim)

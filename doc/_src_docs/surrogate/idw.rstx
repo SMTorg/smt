@@ -43,4 +43,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , IDW , options
+.. embed-options-table :: smt.surrogate_models , IDW , options

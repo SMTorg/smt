@@ -29,4 +29,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , KPLSK , options
+.. embed-options-table :: smt.surrogate_models , KPLSK , options

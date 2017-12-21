@@ -17,4 +17,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , TorsionVibration , options
+.. embed-options-table :: smt.problems , TorsionVibration , options

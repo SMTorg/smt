@@ -15,4 +15,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , WeldedBeam , options
+.. embed-options-table :: smt.problems , WeldedBeam , options

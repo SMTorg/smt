@@ -11,9 +11,9 @@ from six.moves import range
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 
-from smt.sampling.sampling import Sampling
+from smt.sampling_methods.sampling_methods import SamplingMethod
 
-class LHS(Sampling):
+class LHS(SamplingMethod):
 
     def _initialize(self):
         self.options.declare('criterion', 'c', values=['center', 'maximin', 'centermaximin',

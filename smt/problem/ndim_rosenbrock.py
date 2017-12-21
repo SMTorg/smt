@@ -9,9 +9,9 @@ import numpy as np
 from six.moves import range
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problem.problem import Problem
-from smt.problem.reduced_problem import ReducedProblem
-from smt.problem.rosenbrock import Rosenbrock
+from smt.problems.problems import Problem
+from smt.problems.reduced_problem import ReducedProblem
+from smt.problems.rosenbrock import Rosenbrock
 
 
 class NdimRosenbrock(Problem):

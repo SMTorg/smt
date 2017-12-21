@@ -62,4 +62,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.surrogate , RBF , options
+.. embed-options-table :: smt.surrogate_models , RBF , options

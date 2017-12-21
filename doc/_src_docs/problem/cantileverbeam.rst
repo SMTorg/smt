@@ -14,7 +14,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import CantileverBeam
+  from smt.problems import CantileverBeam
 
   ndim = 3
   problem = CantileverBeam(ndim=ndim)

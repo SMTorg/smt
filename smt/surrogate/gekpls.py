@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 from __future__ import division
 import warnings
 import numpy as np
-from smt.surrogate.krg_based import KRG_BASED
+from smt.surrogate_models.krg_based import KRG_BASED
 from smt.utils.kriging_utils import componentwise_distance_PLS, ge_compute_pls
 
 """

@@ -23,7 +23,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import Branin
+  from smt.problems import Branin
 
   ndim = 2
   problem = Branin(ndim=ndim)

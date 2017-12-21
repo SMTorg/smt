@@ -43,7 +43,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.surrogate import IDW
+  from smt.surrogate_models import IDW
 
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])

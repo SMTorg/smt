@@ -26,4 +26,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.sampling , LHS , options
+.. embed-options-table :: smt.sampling_methods , LHS , options

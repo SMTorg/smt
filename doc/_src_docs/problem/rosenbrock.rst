@@ -12,7 +12,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import Rosenbrock
+  from smt.problems import Rosenbrock
 
   ndim = 2
   problem = Rosenbrock(ndim=ndim)

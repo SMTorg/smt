@@ -9,4 +9,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.sampling , Clustered , options
+.. embed-options-table :: smt.sampling_methods , Clustered , options

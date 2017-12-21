@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 try:
-    from smt.surrogate import RMTB, RMTC
+    from smt.surrogate_models import RMTB, RMTC
     compiled_available = True
 except:
     compiled_available = False
@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtb(self):
-        from smt.surrogate import RMTB
+        from smt.surrogate_models import RMTB
         from smt.examples.b777_engine import get_b777_engine, plot_b777_engine
 
         xt, yt, dyt_dxt, xlimits = get_b777_engine()
@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtc(self):
-        from smt.surrogate import RMTC
+        from smt.surrogate_models import RMTC
         from smt.examples.b777_engine import get_b777_engine, plot_b777_engine
 
         xt, yt, dyt_dxt, xlimits = get_b777_engine()

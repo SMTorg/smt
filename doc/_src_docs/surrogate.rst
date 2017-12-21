@@ -7,15 +7,15 @@ SMT contains the surrogate modeling methods listed below.
    :maxdepth: 1
    :titlesonly:
 
-   surrogate/rbf
-   surrogate/idw
-   surrogate/rmts
-   surrogate/ls
-   surrogate/qp
-   surrogate/krg
-   surrogate/kpls
-   surrogate/kplsk
-   surrogate/gekpls
+   surrogate_models/rbf
+   surrogate_models/idw
+   surrogate_models/rmts
+   surrogate_models/ls
+   surrogate_models/qp
+   surrogate_models/krg
+   surrogate_models/kpls
+   surrogate_models/kplsk
+   surrogate_models/gekpls
 
 
 Usage
@@ -26,7 +26,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.surrogate import RBF
+  from smt.surrogate_models import RBF
 
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -92,20 +92,20 @@ SM class API
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 
-.. autoclass:: smt.surrogate.surrogate.Surrogate
+.. autoclass:: smt.surrogate_models.surrogate_models.SurrogateModel
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.__init__
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.__init__
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.set_training_values
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.set_training_values
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.set_training_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.set_training_derivatives
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.train
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.train
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_values
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_values
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_derivatives
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_output_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_output_derivatives
 
-  .. automethod:: smt.surrogate.surrogate.Surrogate.predict_variances
+  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_variances

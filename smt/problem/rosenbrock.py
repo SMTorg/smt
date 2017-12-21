@@ -8,7 +8,7 @@ Multi-dimensional Rosenbrock function.
 from __future__ import division
 import numpy as np
 
-from smt.problem.problem import Problem
+from smt.problems.problems import Problem
 
 class Rosenbrock(Problem):
 

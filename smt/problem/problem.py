@@ -25,7 +25,7 @@ class Problem(object):
 
         Examples
         --------
-        >>> from smt.problem import Sphere
+        >>> from smt.problems import Sphere
         >>> prob = Sphere(ndim=3)
         """
         self.options = OptionsDictionary()

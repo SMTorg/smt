@@ -23,7 +23,7 @@ from scipy import linalg, optimize
 from types import FunctionType
 from smt.utils.caching import cached_operation
 
-from smt.surrogate.surrogate import Surrogate
+from smt.surrogate_models.surrogate_models import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
 from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
@@ -33,7 +33,7 @@ The kriging class.
 
 """
 
-class KRG_BASED(Surrogate):
+class KRG_BASED(SurrogateModel):
 
     _regression_types = {
         'constant': constant,

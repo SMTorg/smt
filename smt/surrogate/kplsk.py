@@ -8,7 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-from smt.surrogate.krg_based import KRG_BASED
+from smt.surrogate_models.krg_based import KRG_BASED
 from smt.utils.kriging_utils import  componentwise_distance_PLS, componentwise_distance
 
 """

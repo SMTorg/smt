@@ -24,7 +24,7 @@ if not sys.platform.startswith('win'):
     extra_compile_args.append('-std=c++11')
 
 ext = cythonize(
-    Extension("smt.surrogate.rbfclib",
+    Extension("smt.surrogate_models.rbfclib",
     sources=[
         'smt/src/rbf/rbf.cpp',
         'smt/src/rbf/rbfclib.pyx',
@@ -32,7 +32,7 @@ ext = cythonize(
     language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
-    Extension("smt.surrogate.idwclib",
+    Extension("smt.surrogate_models.idwclib",
     sources=[
         'smt/src/idw/idw.cpp',
         'smt/src/idw/idwclib.pyx',
@@ -40,7 +40,7 @@ ext = cythonize(
     language="c++", extra_compile_args=extra_compile_args,
     include_dirs=[np.get_include(),
 ])) + cythonize(
-    Extension("smt.surrogate.rmtsclib",
+    Extension("smt.surrogate_models.rmtsclib",
     sources=[
         'smt/src/rmts/rmtsclib.pyx',
         'smt/src/rmts/utils.cpp',
@@ -54,15 +54,15 @@ ext = cythonize(
 
 setup(name='smt',
     version='0.1',
-    description='The Surrogate Model Toolbox (SMT)',
+    description='The Surrogate Modeling Toolbox (SMT)',
     author='Mohamed Amine Bouhlel',
     author_email='mbouhlel@umich.edu',
     license='BSD-3',
     packages=[
         'smt',
-        'smt/surrogate',
-        'smt/problem',
-        'smt/sampling',
+        'smt/surrogate_models',
+        'smt/problems',
+        'smt/sampling_methods',
         'smt/utils',
     ],
     install_requires=[

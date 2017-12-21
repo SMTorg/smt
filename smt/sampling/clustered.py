@@ -10,10 +10,10 @@ import numpy as np
 import scipy.interpolate
 from six.moves import range
 
-from smt.sampling.sampling import Sampling
-from smt.sampling.full_factorial import FullFactorial
+from smt.sampling_methods.sampling_methods import SamplingMethod
+from smt.sampling_methods.full_factorial import FullFactorial
 
-class Clustered(Sampling):
+class Clustered(SamplingMethod):
 
     def _initialize(self):
         self.options.declare('kernel', types=Sampling)

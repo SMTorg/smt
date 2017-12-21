@@ -13,11 +13,11 @@ from __future__ import division
 import numpy as np
 
 from sklearn import linear_model
-from smt.surrogate.surrogate import Surrogate
+from smt.surrogate_models.surrogate_models import SurrogateModel
 from smt.utils.caching import cached_operation
 
 
-class LS(Surrogate):
+class LS(SurrogateModel):
 
     """
     Least square model.

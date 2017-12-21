@@ -12,4 +12,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problem , Rosenbrock , options
+.. embed-options-table :: smt.problems , Rosenbrock , options

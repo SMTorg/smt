@@ -15,7 +15,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
 
-  from smt.problem import WeldedBeam
+  from smt.problems import WeldedBeam
 
   ndim = 3
   problem = WeldedBeam(ndim=ndim)

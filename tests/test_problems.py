@@ -10,9 +10,9 @@ import unittest
 
 from six.moves import range
 
-from smt.problem import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock, Branin
-from smt.problem import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
-from smt.problem import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
+from smt.problems import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock, Branin
+from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
+from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
 from smt.utils.sm_test_case import SMTestCase
 
 

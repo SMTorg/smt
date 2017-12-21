@@ -49,7 +49,7 @@ RMTB
 
 .. code-block:: python
 
-  from smt.surrogate import RMTB
+  from smt.surrogate_models import RMTB
   from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
   xt, yt, xlimits = get_one_d_step()
@@ -142,7 +142,7 @@ RMTC
 
 .. code-block:: python
 
-  from smt.surrogate import RMTC
+  from smt.surrogate_models import RMTC
   from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
   xt, yt, xlimits = get_one_d_step()

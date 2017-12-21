@@ -36,9 +36,9 @@ Usage
   from mpl_toolkits.mplot3d import Axes3D
   import matplotlib.pyplot as plt
 
-  from smt.surrogate import GEKPLS
-  from smt.problem import Sphere
-  from smt.sampling import LHS
+  from smt.surrogate_models import GEKPLS
+  from smt.problems import Sphere
+  from smt.sampling_methods import LHS
 
   # Construction of the DOE
   fun = Sphere(ndim = 2)

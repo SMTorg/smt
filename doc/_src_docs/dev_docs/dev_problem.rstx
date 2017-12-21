@@ -1,8 +1,8 @@
 Developer API for benchmarking problem
 =======================================
 
-.. autoclass:: smt.problem.problem.Problem
+.. autoclass:: smt.problems.problems.Problem
 
-  .. automethod:: smt.problem.problem.Problem._initialize
+  .. automethod:: smt.problems.problems.Problem._initialize
 
-  .. automethod:: smt.problem.problem.Problem._evaluate
+  .. automethod:: smt.problems.problems.Problem._evaluate

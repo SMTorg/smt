@@ -9,7 +9,7 @@ import numpy as np
 from six.moves import range
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problem.problem import Problem
+from smt.problems.problems import Problem
 
 class ReducedProblem(Problem):
 

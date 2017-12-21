@@ -9,10 +9,10 @@ These are listed below.
    :maxdepth: 1
    :titlesonly:
 
-   sampling/random
-   sampling/lhs
-   sampling/full_factorial
-   sampling/clustered
+   sampling_methods/random
+   sampling_methods/lhs
+   sampling_methods/full_factorial
+   sampling_methods/clustered
 
 Usage
 -----
@@ -21,29 +21,29 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-  
-  from smt.sampling import Random
-  
+
+  from smt.sampling_methods import Random
+
   xlimits = np.array([
       [0., 4.],
       [0., 3.],
   ])
   sampling = Random(xlimits=xlimits)
-  
+
   num = 50
   x = sampling(num)
-  
+
   print(x.shape)
-  
+
   plt.plot(x[:, 0], x[:, 1], 'o')
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-  
+
 ::
 
   (50, 2)
-  
+
 .. figure:: sampling_Test_test_random.png
   :scale: 80 %
   :align: center
@@ -51,8 +51,8 @@ Usage
 Problem class API
 -----------------
 
-.. autoclass:: smt.sampling.sampling.Sampling
+.. autoclass:: smt.sampling_methods.sampling_methods.SamplingMethod
 
-  .. automethod:: smt.sampling.sampling.Sampling.__init__
+  .. automethod:: smt.sampling_methods.sampling_methods.SamplingMethod.__init__
 
-  .. automethod:: smt.sampling.sampling.Sampling.__call__
+  .. automethod:: smt.sampling_methods.sampling_methods.SamplingMethod.__call__
