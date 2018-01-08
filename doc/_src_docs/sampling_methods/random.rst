@@ -11,7 +11,7 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.sampling import Random
+  from smt.sampling_methods import Random
   
   xlimits = np.array([
       [0., 4.],
