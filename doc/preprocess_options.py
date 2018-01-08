@@ -11,11 +11,11 @@ def process_options(root, file_name, iline, line):
 
     embed_num_indent = line.find('.. embed-options-table')
 
-    if 'embed-options-table-method' in line:
+    if 'embed-options-table-surrogate_models' in line:
         type_ = 'surrogate_models'
-    elif 'embed-options-table-problem' in line:
+    elif 'embed-options-table-problems' in line:
         type_ = 'problems'
-    elif 'embed-options-table-sampling' in line:
+    elif 'embed-options-table-sampling_methods' in line:
         type_ = 'sampling_methods'
     else:
         raise Exception('embed-options-table is an invalid name')
@@ -29,7 +29,7 @@ def process_options(root, file_name, iline, line):
             file_path, iline + 1))
 
     class_name = split_line[1]
-    
+
     exec('from smt.{} import {}'.format(type_, class_name), globals())
     exec('sm_class = {}'.format(class_name), globals())
 
