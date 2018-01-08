@@ -11,10 +11,11 @@ class DirectiveEmbedOptions(Directive):
 
     NAME = 'embed-options-table'
     NUM_ARGS = 3
-
+    
     def run(self, file_dir, file_name, embed_num_indent, args):
         module_path, class_name, attribute_name = args
-
+        print module_path, class_name, attribute_name
+        stooop
         exec('from {} import {}'.format(module_path, class_name), globals())
         exec('obj = {}()'.format(class_name), globals())
 
