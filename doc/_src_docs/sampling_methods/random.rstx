@@ -11,4 +11,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.sampling , Random , options
+.. embed-options-table :: smt.sampling_methods , Random , options
