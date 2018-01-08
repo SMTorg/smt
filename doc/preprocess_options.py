@@ -29,7 +29,7 @@ def process_options(root, file_name, iline, line):
             file_path, iline + 1))
 
     class_name = split_line[1]
-
+    
     exec('from smt.{} import {}'.format(type_, class_name), globals())
     exec('sm_class = {}'.format(class_name), globals())
 

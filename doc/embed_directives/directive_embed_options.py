@@ -14,7 +14,8 @@ class DirectiveEmbedOptions(Directive):
 
     def run(self, file_dir, file_name, embed_num_indent, args):
         module_path, class_name, attribute_name = args
-
+        print class_name
+        xxx
         exec('from {} import {}'.format(module_path, class_name), globals())
         exec('obj = {}()'.format(class_name), globals())
 
