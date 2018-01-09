@@ -8,7 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 
-from smt.surrogate_models.krg_based import KRG_BASED
+from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
 from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 
@@ -16,7 +16,7 @@ from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 The KPLS class.
 """
 
-class KPLS(KRG_BASED):
+class KPLS(KrgBased):
 
     """
     - KPLS

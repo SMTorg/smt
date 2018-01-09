@@ -8,14 +8,14 @@ from __future__ import division
 import warnings
 import numpy as np
 
-from smt.surrogate_models.krg_based import KRG_BASED
+from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
 
 """
 The kriging class.
 """
 
-class KRG(KRG_BASED):
+class KRG(KrgBased):
 
     def _initialize(self):
         super(KRG, self)._initialize()

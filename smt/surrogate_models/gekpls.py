@@ -7,14 +7,14 @@ This package is distributed under New BSD license.
 from __future__ import division
 import warnings
 import numpy as np
-from smt.surrogate_models.krg_based import KRG_BASED
+from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS, ge_compute_pls
 
 """
 The KPLS class.
 """
 
-class GEKPLS(KRG_BASED):
+class GEKPLS(KrgBased):
 
     """
     - GEKPLS

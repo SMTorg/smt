@@ -33,7 +33,7 @@ The kriging class.
 
 """
 
-class KRG_BASED(SurrogateModel):
+class KrgBased(SurrogateModel):
 
     _regression_types = {
         'constant': constant,
@@ -45,7 +45,7 @@ class KRG_BASED(SurrogateModel):
         'squar_exp': squar_exp}
 
     def _initialize(self):
-        super(KRG_BASED, self)._initialize()
+        super(KrgBased, self)._initialize()
         declare = self.options.declare
         supports = self.supports
 
