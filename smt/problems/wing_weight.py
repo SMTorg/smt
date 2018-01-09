@@ -14,7 +14,7 @@ from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 
-from smt.problems.problems import Problem
+from smt.problems.problem import Problem
 
 class WingWeight(Problem):
 

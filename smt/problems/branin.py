@@ -8,7 +8,7 @@ Branin function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problems import Problem
+from smt.problems.problem import Problem
 
 class Branin(Problem):
 

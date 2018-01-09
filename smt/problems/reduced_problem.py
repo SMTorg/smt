@@ -9,7 +9,7 @@ import numpy as np
 from six.moves import range
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problems.problems import Problem
+from smt.problems.problem import Problem
 
 class ReducedProblem(Problem):
 
@@ -20,8 +20,8 @@ class ReducedProblem(Problem):
         problem : Problem
             Pointer to the Problem object being wrapped.
         dims : int or list/tuple of ints
-            Either the number of dimensions or a list of the dimension indices of problem
-            that this problem uses.
+            Either the number of dimensions or a list of the dimension indices that this
+            problem uses.
         w : float
             The value to use for all unaccounted for inputs where 0/1 is lower/upper bound.
         """

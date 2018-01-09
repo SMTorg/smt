@@ -10,7 +10,7 @@ Cheng, G. H., Younis, A., Hajikolaei, K. H., and Wang, G. G. Trust Region Based 
 from __future__ import division
 import numpy as np
 
-from smt.problems.problems import Problem
+from smt.problems.problem import Problem
 
 class CantileverBeam(Problem):
 

@@ -9,7 +9,7 @@ from __future__ import division
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.surrogate_models.surrogate_models import SurrogateModel
+from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.idwclib import PyIDW

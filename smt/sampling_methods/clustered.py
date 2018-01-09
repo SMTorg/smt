@@ -10,7 +10,7 @@ import numpy as np
 import scipy.interpolate
 from six.moves import range
 
-from smt.sampling_methods.sampling_methods import SamplingMethod
+from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.sampling_methods.full_factorial import FullFactorial
 
 class Clustered(SamplingMethod):

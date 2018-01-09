@@ -14,7 +14,7 @@ from numbers import Integral
 from smt.utils.linear_solvers import get_solver, LinearSolver, VALID_SOLVERS
 from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_SEARCHES
 from smt.utils.caching import cached_operation
-from smt.surrogate_models.surrogate_models import SurrogateModel
+from smt.surrogate_models.surrogate_model import SurrogateModel
 
 
 class RMTS(SurrogateModel):

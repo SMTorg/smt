@@ -11,7 +11,7 @@ from six.moves import range
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 
-from smt.sampling_methods.sampling_methods import SamplingMethod
+from smt.sampling_methods.sampling_method import SamplingMethod
 
 class LHS(SamplingMethod):
 

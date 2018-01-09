@@ -1,7 +1,7 @@
 Developer documentation
 =======================
 
-This part of the documentation is meant for developers who want to contribute new surrogate models, problem, or sampling methods.
+This part of the documentation is meant for developers who want to contribute new surrogate models, problems, or sampling methods.
 
 Contributing
 ------------
@@ -10,11 +10,11 @@ Contributing one of these consists of the following steps:
 
 - Fork SMT to make a version of the SMT repo separate from the main one.
 - Download *sphinx_auto_embed* by running ``pip install git+https://github.com/hwangjt/sphinx_auto_embed.git``.
-- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in smt/surrogate_models/surrogate_models.py.
+- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in smt/surrogate_models/surrogate_model.py.
 - Add the import statement in the corresponding __init__.py file, e.g., smt/surrogate_models/__init__.py.
 - Add tests to the top-level ``tests`` directory following the existing examples.
-- Add a documentation page in the appropriate directory, e.g., doc/_src_docs/surrogate_models/surrogate_models.rstx, using the existing docs as a reference.
-- Add an entry in the table of contents so that readers can find the documentation page, e.g., in doc/_src_docs/surrogate_models.rstx.
+- Add a documentation page in the appropriate directory, e.g., doc/_src_docs/surrogate_models/rbf.rstx, using the existing docs as a reference.
+- Add an entry in the table of contents so that readers can find the documentation page, e.g., in doc/_src_docs/surrogate_model.rstx.
 - Commit the changes, push to the forked version of SMT and issue a pull request for review and comments from the other developers of SMT and the larger community
 
 Building the documentation

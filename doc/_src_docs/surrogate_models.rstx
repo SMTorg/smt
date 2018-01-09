@@ -28,20 +28,20 @@ SurrogateModel class API
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 
-.. autoclass:: smt.surrogate_models.surrogate_models.SurrogateModel
+.. autoclass:: smt.surrogate_models.surrogate_model.SurrogateModel
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.__init__
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.__init__
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.set_training_values
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.set_training_values
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.set_training_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.set_training_derivatives
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.train
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.train
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_values
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_values
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_derivatives
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_output_derivatives
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_output_derivatives
 
-  .. automethod:: smt.surrogate_models.surrogate_models.SurrogateModel.predict_variances
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variances

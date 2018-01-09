@@ -12,7 +12,7 @@ from __future__ import division
 
 import numpy as np
 import scipy
-from smt.surrogate_models.surrogate_models import SurrogateModel
+from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
 
 
