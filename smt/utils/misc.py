@@ -9,7 +9,7 @@ from smt.utils.checks import check_2d_array
 
 def compute_rms_error(sm, xe=None, ye=None, kx=None):
     """
-    Returns the RMS error of the training points or the given points.
+    Returns a normalized RMS error of the training points or the given points.
 
     Arguments
     ---------
@@ -45,6 +45,6 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
             yt2 = sm.predict_values(xt)
         else:
             yt2 = sm.predict_derivatives(xt, kx)
-        num += np.linalg.norm(yt2 - yt) ** 2
-        den += np.linalg.norm(yt) ** 2
-        return num ** 0.5 / den ** 0.5
+        num = np.linalg.norm(yt2 - yt)
+        den = np.linalg.norm(yt)
+        return num / den

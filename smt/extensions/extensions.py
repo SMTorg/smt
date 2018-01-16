@@ -7,9 +7,9 @@ This package is distributed under New BSD license.
 from __future__ import division
 from smt.utils.options_dictionary import OptionsDictionary
 
-from smt.methods import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False
