@@ -6,7 +6,7 @@
 SMT: Surrogate Modeling Toolbox
 -------------------------------
 
-The surrogate model toolbox (SMT) is an open-source Python package consisting of libraries of surrogate modeling methods (e.g., radial basis functions, kriging), sampling methods, and benchmarking problems.
+The surrogate modeling toolbox (SMT) is an open-source Python package consisting of libraries of surrogate modeling methods (e.g., radial basis functions, kriging), sampling methods, and benchmarking problems.
 SMT is designed to make it easy for developers to implement new surrogate models in a well-tested and well-document platform, and for users to have a library of surrogate modeling methods with which to use and compare methods.
 
 The code is available open-source on `GitHub <https://github.com/SMTorg/SMT>`_.
@@ -16,6 +16,7 @@ Focus on derivatives
 
 SMT is meant to be a general library for surrogate modeling (also known as metamodeling, interpolation, and regression), but its distinguishing characteristic is its focus on derivatives, e.g., to be used for gradient-based optimization.
 A surrogate model can be represented mathematically as
+
 
 .. math ::
   y = f(\mathbf{x}, \mathbf{xt}, \mathbf{yt}),
@@ -42,9 +43,9 @@ Documentation contents
    :titlesonly:
 
    _src_docs/getting_started
-   _src_docs/methods
+   _src_docs/surrogate_models
    _src_docs/problems
-   _src_docs/sampling
+   _src_docs/sampling_methods
    _src_docs/examples
    _src_docs/dev_docs
 

@@ -13,14 +13,14 @@ from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
-from smt.sampling import LHS
+from smt.sampling_methods import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.methods import LS, QP, KPLS, KRG
+from smt.surrogate_models import LS, QP, KPLS, KRG
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False

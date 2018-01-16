@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -13,13 +13,13 @@ from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
-from smt.sampling import LHS
+from smt.sampling_methods import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False

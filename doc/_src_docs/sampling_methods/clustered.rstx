@@ -1,0 +1,12 @@
+Clustered sampling
+==================
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_clustered , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.sampling_methods , Clustered , options

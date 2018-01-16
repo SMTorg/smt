@@ -8,15 +8,13 @@ N-dimensional cantilever beam problem.
 import numpy as np
 from six.moves import range
 
-from smt.problems.problems import Problems
-
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 from smt.problems.reduced_problem import ReducedProblem
 from smt.problems.cantilever_beam import CantileverBeam
 
 
-class NdimCantileverBeam(Problems):
+class NdimCantileverBeam(Problem):
 
     def __init__(self, ndim=1, w=0.2):
         self.problem = ReducedProblem(CantileverBeam(ndim=3*ndim), np.arange(1, 3*ndim, 3), w=w)

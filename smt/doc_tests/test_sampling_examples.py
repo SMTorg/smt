@@ -10,7 +10,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.sampling import Random
+        from smt.sampling_methods import Random
 
         xlimits = np.array([
             [0., 4.],
@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.sampling import LHS
+        from smt.sampling_methods import LHS
 
         xlimits = np.array([
             [0., 4.],
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.sampling import FullFactorial
+        from smt.sampling_methods import FullFactorial
 
         xlimits = np.array([
             [0., 4.],
@@ -76,7 +76,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.sampling import Clustered, Random
+        from smt.sampling_methods import Clustered, Random
 
         xlimits = np.array([
             [0., 4.],

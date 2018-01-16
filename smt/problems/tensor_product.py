@@ -8,9 +8,9 @@ Tensor-product of cos, exp, or tanh.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 
-class TensorProduct(Problems):
+class TensorProduct(Problem):
 
     def _initialize(self):
         self.options.declare('name', 'TP', types=str)

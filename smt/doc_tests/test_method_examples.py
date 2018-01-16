@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 try:
-    from smt.methods import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
     compiled_available = True
 except:
     compiled_available = False
@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import IDW
+        from smt.surrogate_models import IDW
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import RBF
+        from smt.surrogate_models import RBF
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import RMTB
+        from smt.surrogate_models import RMTB
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -94,7 +94,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import RMTC
+        from smt.surrogate_models import RMTC
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import LS
+        from smt.surrogate_models import LS
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -144,7 +144,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import QP
+        from smt.surrogate_models import QP
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import KRG
+        from smt.surrogate_models import KRG
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -192,7 +192,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import KPLS
+        from smt.surrogate_models import KPLS
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -216,7 +216,7 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.methods import KPLSK
+        from smt.surrogate_models import KPLSK
 
         xt = np.array([0., 1., 2., 3., 4.])
         yt = np.array([0., 1., 1.5, 0.5, 1.0])
@@ -241,9 +241,9 @@ class Test(unittest.TestCase):
         from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
 
-        from smt.methods import GEKPLS
+        from smt.surrogate_models import GEKPLS
         from smt.problems import Sphere
-        from smt.sampling import LHS
+        from smt.sampling_methods import LHS
 
         # Construction of the DOE
         fun = Sphere(ndim = 2)

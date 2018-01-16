@@ -12,12 +12,12 @@ import inspect
 from collections import OrderedDict
 
 from smt.problems import Sphere
-from smt.sampling import FullFactorial
+from smt.sampling_methods import FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 try:
-    from smt.methods import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
 except:
     compiled_available = False

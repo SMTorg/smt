@@ -1,6 +1,6 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        
+
 This package is distributed under New BSD license.
 '''
 
@@ -11,12 +11,12 @@ def process_options(root, file_name, iline, line):
 
     embed_num_indent = line.find('.. embed-options-table')
 
-    if 'embed-options-table-method' in line:
-        type_ = 'methods'
-    elif 'embed-options-table-problem' in line:
+    if 'embed-options-table-surrogate_models' in line:
+        type_ = 'surrogate_models'
+    elif 'embed-options-table-problems' in line:
         type_ = 'problems'
-    elif 'embed-options-table-sampling' in line:
-        type_ = 'sampling'
+    elif 'embed-options-table-sampling_methods' in line:
+        type_ = 'sampling_methods'
     else:
         raise Exception('embed-options-table is an invalid name')
 

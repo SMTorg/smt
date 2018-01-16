@@ -13,36 +13,36 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-  
+
   from smt.problems import CantileverBeam
-  
+
   ndim = 3
   problem = CantileverBeam(ndim=ndim)
-  
+
   num = 100
   x = np.ones((num, ndim))
   x[:, 0] = np.linspace(0.01, 0.05, num)
   x[:, 1] = 0.5
   x[:, 2] = 0.5
   y = problem(x)
-  
+
   yd = np.empty((num, ndim))
   for i in range(ndim):
       yd[:, i] = problem(x, kx=i).flatten()
-  
+
   print(y.shape)
   print(yd.shape)
-  
+
   plt.plot(x[:, 0], y[:, 0])
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-  
+
 ::
 
   (100, 1)
   (100, 3)
-  
+
 .. figure:: cantileverbeam_Test_test_cantilever_beam.png
   :scale: 80 %
   :align: center
@@ -64,17 +64,17 @@ Options
      -  3
      -  None
      -  ['int']
-     -  
+     -
   *  -  return_complex
      -  False
      -  None
      -  ['bool']
-     -  
+     -
   *  -  name
      -  CantileverBeam
      -  None
      -  ['str']
-     -  
+     -
   *  -  P
      -  50000.0
      -  None
