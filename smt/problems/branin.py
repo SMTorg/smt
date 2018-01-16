@@ -8,9 +8,9 @@ Branin function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 
-class Branin(Problems):
+class Branin(Problem):
 
     def _initialize(self):
         self.options.declare('ndim', 2, values=[2], types=int)

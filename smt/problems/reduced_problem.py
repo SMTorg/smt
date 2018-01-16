@@ -8,12 +8,10 @@ Reduced problem class - selects a subset of input variables.
 import numpy as np
 from six.moves import range
 
-from smt.problems.problems import Problems
-
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 
-class ReducedProblem(Problems):
+class ReducedProblem(Problem):
 
     def __init__(self, problem, dims, w=0.2):
         """
@@ -22,8 +20,8 @@ class ReducedProblem(Problems):
         problem : Problem
             Pointer to the Problem object being wrapped.
         dims : int or list/tuple of ints
-            Either the number of dimensions or a list of the dimension indices of problem
-            that this problem uses.
+            Either the number of dimensions or a list of the dimension indices that this
+            problem uses.
         w : float
             The value to use for all unaccounted for inputs where 0/1 is lower/upper bound.
         """

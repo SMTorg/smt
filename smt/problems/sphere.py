@@ -9,9 +9,9 @@ Sphere function.
 from __future__ import division
 import numpy as np
 
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 
-class Sphere(Problems):
+class Sphere(Problem):
 
     def _initialize(self):
         self.options.declare('name', 'Sphere', types=str)

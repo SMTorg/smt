@@ -6,7 +6,6 @@ sudo: required
 
 os:
   - linux
-  - osx
 
 osx_image: xcode8.2
 

@@ -1,0 +1,14 @@
+Random sampling
+===============
+
+This class creates random samples from a uniform distribution over the design space.
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_random , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.sampling_methods , Random , options

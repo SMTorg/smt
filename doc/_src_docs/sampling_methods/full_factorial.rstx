@@ -1,0 +1,12 @@
+Full-factorial sampling
+=======================
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_full_factorial , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.sampling_methods , FullFactorial , options

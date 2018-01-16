@@ -1,4 +1,4 @@
-Benchmarking problems
+Benchmarking problem
 =====================
 
 SMT contains a library of analytical and engineering problems to be used for benchmarking purposes.
@@ -55,15 +55,15 @@ Usage
   (100, 1)
   (100, 2)
 
-.. figure:: problems_Test_test_sphere.png
+.. figure:: problem_Test_test_sphere.png
   :scale: 80 %
   :align: center
 
 Problem class API
 -----------------
 
-.. autoclass:: smt.problems.problems.Problems
+.. autoclass:: smt.problems.problem.Problem
 
-  .. automethod:: smt.problems.problems.Problems.__init__
+  .. automethod:: smt.problems.problem.Problem.__init__
 
-  .. automethod:: smt.problems.problems.Problems.__call__
+  .. automethod:: smt.problems.problem.Problem.__call__

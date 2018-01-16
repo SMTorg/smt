@@ -4,8 +4,8 @@ RANS CRM wing 2-D data set
 .. code-block:: python
 
   import numpy as np
-  
-  
+
+
   raw = np.array([
       [2.000000000000000000e+00 ,  4.500000000000000111e-01 ,  1.536799999999999972e-02 ,  3.674239999999999728e-01 ,  5.592279999999999474e-01 , -1.258039999999999992e-01 , -1.248699999999999984e-02],
       [3.500000000000000000e+00 ,  4.500000000000000111e-01 ,  1.985100000000000059e-02 ,  4.904470000000000218e-01 ,  7.574600000000000222e-01 , -1.615260000000000029e-01 ,  8.987000000000000197e-03],
@@ -43,125 +43,125 @@ RANS CRM wing 2-D data set
       [3.000000000000000000e+00 ,  8.599999999999999867e-01 ,  3.178899999999999781e-02 ,  6.081849999999999756e-01 ,  9.510380000000000500e-01 , -2.252020000000000133e-01 ,  1.540799999999999982e-02],
       [4.000000000000000000e+00 ,  8.599999999999999867e-01 ,  4.744199999999999806e-02 ,  6.846989999999999466e-01 ,  1.042564000000000046e+00 , -2.333600000000000119e-01 ,  2.035400000000000056e-02],
   ])
-  
-  
+
+
   def get_rans_crm_wing():
       # data structure:
       # alpha, mach, cd, cl, cmx, cmy, cmz
-  
+
       deg2rad = np.pi / 180.
-  
+
       xt = np.array(raw[:, 0:2])
       yt = np.array(raw[:, 2:4])
       xlimits = np.array([
           [-3., 10.],
           [0.4, 0.90],
       ])
-  
+
       xt[:, 0] *= deg2rad
       xlimits[0, :] *= deg2rad
-  
+
       return xt, yt, xlimits
-  
-  
+
+
   def plot_rans_crm_wing(xt, yt, limits, interp):
       import numpy as np
       import matplotlib
       matplotlib.use('Agg')
       import matplotlib.pyplot as plt
-  
+
       rad2deg = 180. / np.pi
-  
+
       num = 500
       num_a = 50
       num_M = 50
-  
+
       x = np.zeros((num, 2))
       colors = ['b', 'g', 'r', 'c', 'm', 'k', 'y']
-  
+
       nrow = 3
       ncol = 2
-  
+
       plt.close()
       plt.figure(figsize=(15, 15))
-  
+
       # -----------------------------------------------------------------------------
-  
+
       mach_numbers = [0.45, 0.68, 0.80, 0.86]
       legend_entries = []
-  
+
       alpha_sweep = np.linspace(0., 8., num)
-  
+
       for ind, mach in enumerate(mach_numbers):
           x[:, 0] = alpha_sweep / rad2deg
           x[:, 1] = mach
           CD = interp.predict_values(x)[:, 0]
           CL = interp.predict_values(x)[:, 1]
-  
+
           plt.subplot(nrow, ncol, 1)
-  
+
           mask = np.abs(xt[:, 1] - mach) < 1e-10
           plt.plot(xt[mask, 0] * rad2deg, yt[mask, 0], 'o' + colors[ind])
           plt.plot(alpha_sweep, CD, colors[ind])
-  
+
           plt.subplot(nrow, ncol, 2)
-  
+
           mask = np.abs(xt[:, 1] - mach) < 1e-10
           plt.plot(xt[mask, 0] * rad2deg, yt[mask, 1], 'o' + colors[ind])
           plt.plot(alpha_sweep, CL, colors[ind])
-  
+
           legend_entries.append('M={}'.format(mach))
           legend_entries.append('exact')
-  
+
       plt.subplot(nrow, ncol, 1)
       plt.xlabel('alpha (deg)')
       plt.ylabel('CD')
       plt.legend(legend_entries)
-  
+
       plt.subplot(nrow, ncol, 2)
       plt.xlabel('alpha (deg)')
       plt.ylabel('CL')
       plt.legend(legend_entries)
-  
+
       # -----------------------------------------------------------------------------
-  
+
       alphas = [2., 4., 6.]
       legend_entries = []
-  
+
       mach_sweep = np.linspace(0.45, 0.86, num)
-  
+
       for ind, alpha in enumerate(alphas):
           x[:, 0] = alpha / rad2deg
           x[:, 1] = mach_sweep
           CD = interp.predict_values(x)[:, 0]
           CL = interp.predict_values(x)[:, 1]
-  
+
           plt.subplot(nrow, ncol, 3)
           plt.plot(mach_sweep, CD, colors[ind])
-  
+
           plt.subplot(nrow, ncol, 4)
           plt.plot(mach_sweep, CL, colors[ind])
-  
+
           legend_entries.append('alpha={}'.format(alpha))
-  
+
       plt.subplot(nrow, ncol, 3)
       plt.xlabel('Mach number')
       plt.ylabel('CD')
       plt.legend(legend_entries)
-  
+
       plt.subplot(nrow, ncol, 4)
       plt.xlabel('Mach number')
       plt.ylabel('CL')
       plt.legend(legend_entries)
-  
+
       # -----------------------------------------------------------------------------
-  
+
       x = np.zeros((num_a, num_M, 2))
       x[:, :, 0] = np.outer(np.linspace(0., 8., num_a), np.ones(num_M)) / rad2deg
       x[:, :, 1] = np.outer(np.ones(num_a), np.linspace(0.45, 0.86, num_M))
       CD = interp.predict_values(x.reshape((num_a * num_M, 2)))[:, 0].reshape((num_a, num_M))
       CL = interp.predict_values(x.reshape((num_a * num_M, 2)))[:, 1].reshape((num_a, num_M))
-  
+
       plt.subplot(nrow, ncol, 5)
       plt.plot(xt[:, 1], xt[:, 0] * rad2deg, 'o')
       plt.contour(x[:, :, 1], x[:, :, 0] * rad2deg, CD, 20)
@@ -170,7 +170,7 @@ RANS CRM wing 2-D data set
       plt.ylabel('alpha (deg)')
       plt.title('CD')
       plt.colorbar()
-  
+
       plt.subplot(nrow, ncol, 6)
       plt.plot(xt[:, 1], xt[:, 0] * rad2deg, 'o')
       plt.contour(x[:, :, 1], x[:, :, 0] * rad2deg, CL, 20)
@@ -179,41 +179,41 @@ RANS CRM wing 2-D data set
       plt.ylabel('alpha (deg)')
       plt.title('CL')
       plt.colorbar()
-  
+
       plt.show()
-  
+
 
 RMTB
 ----
 
 .. code-block:: python
 
-  from smt.methods import RMTB
+  from smt.surrogate_models import RMTB
   from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
-  
+
   xt, yt, xlimits = get_rans_crm_wing()
-  
+
   interp = RMTB(num_ctrl_pts=20, xlimits=xlimits, nonlinear_maxiter=100, energy_weight=1e-12)
   interp.set_training_values(xt, yt)
   interp.train()
-  
+
   plot_rans_crm_wing(xt, yt, xlimits, interp)
-  
+
 ::
 
   ___________________________________________________________________________
-     
+
                                      RMTB
   ___________________________________________________________________________
-     
+
    Problem size
-     
+
         # training points.        : 35
-     
+
   ___________________________________________________________________________
-     
+
    Training
-     
+
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
@@ -291,182 +291,182 @@ RMTB
         Solving for degrees of freedom - done. Time (sec):  0.5494699
      Training - done. Time (sec):  0.5567780
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007591
-     
+
      Prediction time/pt. (sec) :  0.0000015
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006530
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0008020
-     
+
      Prediction time/pt. (sec) :  0.0000016
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006700
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007701
-     
+
      Prediction time/pt. (sec) :  0.0000015
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006652
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007789
-     
+
      Prediction time/pt. (sec) :  0.0000016
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006652
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0008450
-     
+
      Prediction time/pt. (sec) :  0.0000017
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007091
-     
+
      Prediction time/pt. (sec) :  0.0000014
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007932
-     
+
      Prediction time/pt. (sec) :  0.0000016
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006630
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0008280
-     
+
      Prediction time/pt. (sec) :  0.0000017
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0006714
-     
+
      Prediction time/pt. (sec) :  0.0000013
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 2500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0024140
-     
+
      Prediction time/pt. (sec) :  0.0000010
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 2500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0025442
-     
+
      Prediction time/pt. (sec) :  0.0000010
-     
-  
+
+
 .. figure:: rans_crm_wing_Test_test_rmtb.png
   :scale: 60 %
   :align: center
@@ -476,32 +476,32 @@ RMTC
 
 .. code-block:: python
 
-  from smt.methods import RMTC
+  from smt.surrogate_models import RMTC
   from smt.examples.rans_crm_wing import get_rans_crm_wing, plot_rans_crm_wing
-  
+
   xt, yt, xlimits = get_rans_crm_wing()
-  
+
   interp = RMTC(num_elements=20, xlimits=xlimits, nonlinear_maxiter=100, energy_weight=1e-10)
   interp.set_training_values(xt, yt)
   interp.train()
-  
+
   plot_rans_crm_wing(xt, yt, xlimits, interp)
-  
+
 ::
 
   ___________________________________________________________________________
-     
+
                                      RMTC
   ___________________________________________________________________________
-     
+
    Problem size
-     
+
         # training points.        : 35
-     
+
   ___________________________________________________________________________
-     
+
    Training
-     
+
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
@@ -684,182 +684,182 @@ RMTC
         Solving for degrees of freedom - done. Time (sec):  3.0791078
      Training - done. Time (sec):  3.1140378
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010891
-     
+
      Prediction time/pt. (sec) :  0.0000022
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010471
-     
+
      Prediction time/pt. (sec) :  0.0000021
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0023139
-     
+
      Prediction time/pt. (sec) :  0.0000046
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0021777
-     
+
      Prediction time/pt. (sec) :  0.0000044
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0012019
-     
+
      Prediction time/pt. (sec) :  0.0000024
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0011749
-     
+
      Prediction time/pt. (sec) :  0.0000023
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0011609
-     
+
      Prediction time/pt. (sec) :  0.0000023
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010812
-     
+
      Prediction time/pt. (sec) :  0.0000022
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0011621
-     
+
      Prediction time/pt. (sec) :  0.0000023
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010831
-     
+
      Prediction time/pt. (sec) :  0.0000022
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0011621
-     
+
      Prediction time/pt. (sec) :  0.0000023
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010798
-     
+
      Prediction time/pt. (sec) :  0.0000022
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0011032
-     
+
      Prediction time/pt. (sec) :  0.0000022
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0010729
-     
+
      Prediction time/pt. (sec) :  0.0000021
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 2500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0050230
-     
+
      Prediction time/pt. (sec) :  0.0000020
-     
+
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 2500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0042500
-     
+
      Prediction time/pt. (sec) :  0.0000017
-     
-  
+
+
 .. figure:: rans_crm_wing_Test_test_rmtc.png
   :scale: 60 %
   :align: center

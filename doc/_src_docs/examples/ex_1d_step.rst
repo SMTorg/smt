@@ -4,8 +4,8 @@
 .. code-block:: python
 
   import numpy as np
-  
-  
+
+
   def get_one_d_step():
       xt = np.array([
           0.0000,    0.4000,    0.6000,    0.7000,    0.7500,
@@ -21,61 +21,61 @@
           0.0366,     0.0396,     0.0410,     0.0403,   0.0390,
           0.0360,     0.0350,     0.0345,
       ], dtype=np.float64)
-  
+
       xlimits = np.array([[0.0, 2.0]])
-  
+
       return xt, yt, xlimits
-  
-  
+
+
   def plot_one_d_step(xt, yt, limits, interp):
       import numpy as np
       import matplotlib
       matplotlib.use('Agg')
       import matplotlib.pyplot as plt
-  
+
       num = 500
       x = np.linspace(0., 2., num)
       y = interp.predict_values(x)[:, 0]
-  
+
       plt.plot(x, y)
       plt.plot(xt, yt, 'o')
       plt.xlabel('x')
       plt.ylabel('y')
       plt.show()
-  
+
 
 RMTB
 ----
 
 .. code-block:: python
 
-  from smt.methods import RMTB
+  from smt.surrogate_models import RMTB
   from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
-  
+
   xt, yt, xlimits = get_one_d_step()
-  
+
   interp = RMTB(num_ctrl_pts=100, xlimits=xlimits, nonlinear_maxiter=20,
       solver_tolerance=1e-16, energy_weight=1e-14, regularization_weight=0.)
   interp.set_training_values(xt, yt)
   interp.train()
-  
+
   plot_one_d_step(xt, yt, xlimits, interp)
-  
+
 ::
 
   ___________________________________________________________________________
-     
+
                                      RMTB
   ___________________________________________________________________________
-     
+
    Problem size
-     
+
         # training points.        : 23
-     
+
   ___________________________________________________________________________
-     
+
    Training
-     
+
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
@@ -122,17 +122,17 @@ RMTB
         Solving for degrees of freedom - done. Time (sec):  0.2460611
      Training - done. Time (sec):  0.2484272
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0007849
-     
+
      Prediction time/pt. (sec) :  0.0000016
-     
-  
+
+
 .. figure:: ex_1d_step_Test_test_rmtb.png
   :scale: 80 %
   :align: center
@@ -142,33 +142,33 @@ RMTC
 
 .. code-block:: python
 
-  from smt.methods import RMTC
+  from smt.surrogate_models import RMTC
   from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
-  
+
   xt, yt, xlimits = get_one_d_step()
-  
+
   interp = RMTC(num_elements=40, xlimits=xlimits, nonlinear_maxiter=20,
       solver_tolerance=1e-16, energy_weight=1e-14, regularization_weight=0.)
   interp.set_training_values(xt, yt)
   interp.train()
-  
+
   plot_one_d_step(xt, yt, xlimits, interp)
-  
+
 ::
 
   ___________________________________________________________________________
-     
+
                                      RMTC
   ___________________________________________________________________________
-     
+
    Problem size
-     
+
         # training points.        : 23
-     
+
   ___________________________________________________________________________
-     
+
    Training
-     
+
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
@@ -207,17 +207,17 @@ RMTC
         Solving for degrees of freedom - done. Time (sec):  0.0934823
      Training - done. Time (sec):  0.0971231
   ___________________________________________________________________________
-     
+
    Evaluation
-     
+
         # eval points. : 500
-     
+
      Predicting ...
      Predicting - done. Time (sec):  0.0005312
-     
+
      Prediction time/pt. (sec) :  0.0000011
-     
-  
+
+
 .. figure:: ex_1d_step_Test_test_rmtc.png
   :scale: 80 %
   :align: center

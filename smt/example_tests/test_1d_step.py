@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 try:
-    from smt.methods import RMTB, RMTC
+    from smt.surrogate_models import RMTB, RMTC
     compiled_available = True
 except:
     compiled_available = False
@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtb(self):
-        from smt.methods import RMTB
+        from smt.surrogate_models import RMTB
         from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
         xt, yt, xlimits = get_one_d_step()
@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtc(self):
-        from smt.methods import RMTC
+        from smt.surrogate_models import RMTC
         from smt.examples.one_d_step import get_one_d_step, plot_one_d_step
 
         xt, yt, xlimits = get_one_d_step()

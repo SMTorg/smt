@@ -12,9 +12,9 @@ from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 
-from smt.problems.problems import Problems
+from smt.problems.problem import Problem
 
-class WaterFlow(Problems):
+class WaterFlow(Problem):
 
     def _initialize(self):
         self.options.declare('name', 'WaterFlow', types=str)
