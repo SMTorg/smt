@@ -11,7 +11,7 @@ from sys import argv
 from smt.extensions import MOE
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
-from smt.sampling import FullFactorial
+from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_rms_error
 
 import matplotlib.pyplot as plt
@@ -39,13 +39,12 @@ class TestMOE(SMTestCase):
         self.ne = 50 
 
         np.random.seed(0)
-        xt = np.random.sample(self.nt)
+        xt = np.random.sample(self.nt).reshape((-1, 1))
         yt = self.function_test_1d(xt)
         moe = MOE(smooth_recombination=True, 
                   heaviside_optimization=True, 
-                  n_clusters=3)
-        moe.options['xt'] = xt.reshape((-1, 1))
-        moe.options['yt'] = yt     
+                  n_clusters=3,
+                  xt=xt, yt=yt)   
         moe.train()
 
         # validation data
@@ -84,9 +83,7 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        moe = MOE(smooth_recombination=False, n_clusters=5)
-        moe.options['xt'] = xt
-        moe.options['yt'] = yt     
+        moe = MOE(smooth_recombination=False, n_clusters=5, xt=xt, yt=yt)     
         moe.train()
 
         # validation data
