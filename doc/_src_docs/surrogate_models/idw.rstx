@@ -38,7 +38,7 @@ This parameter must be strictly greater than 1 for the derivatives to be continu
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_idw , 80
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_idw , 80
 
 Options
 -------

@@ -42,56 +42,56 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import IDW
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = IDW(p=2)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                       IDW
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
-     Training - done. Time (sec):  0.0002468
+     Training - done. Time (sec):  0.0002401
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0000668
-
-     Prediction time/pt. (sec) :  0.0000007
-
-
+     Predicting - done. Time (sec):  0.0000629
+     
+     Prediction time/pt. (sec) :  0.0000006
+     
+  
 .. figure:: idw_Test_test_idw.png
   :scale: 80 %
   :align: center

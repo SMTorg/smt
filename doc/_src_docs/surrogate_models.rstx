@@ -21,7 +21,7 @@ SMT contains the surrogate modeling methods listed below.
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rbf , 80
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rbf , 80
 
 SurrogateModel class API
 ------------

@@ -22,7 +22,7 @@ These are listed below.
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_sphere , 80
+.. embed-test-print-plot :: smt.problems.tests.test_problem_examples , Test , test_sphere , 80
 
 Problem class API
 -----------------

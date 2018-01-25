@@ -5,30 +5,30 @@ Boeing 777 engine data set
 
   import numpy as np
   import os
-
+  
   def get_b777_engine():
       this_dir = os.path.split(__file__)[0]
-
+  
       nt = 12 * 11 * 8
       xt = np.loadtxt(os.path.join(this_dir, 'b777_engine_inputs.dat')).reshape((nt, 3))
       yt = np.loadtxt(os.path.join(this_dir, 'b777_engine_outputs.dat')).reshape((nt, 2))
       dyt_dxt = np.loadtxt(os.path.join(this_dir, 'b777_engine_derivs.dat')).reshape((nt, 2, 3))
-
+  
       xlimits = np.array([
           [0, 0.9],
           [0, 15],
           [0, 1.],
       ])
-
+  
       return xt, yt, dyt_dxt, xlimits
-
-
+  
+  
   def plot_b777_engine(xt, yt, limits, interp):
       import numpy as np
       import matplotlib
       matplotlib.use('Agg')
       import matplotlib.pyplot as plt
-
+  
       val_M = np.array([
           0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
           0.7, 0.75, 0.8, 0.85, 0.9]) # 12
@@ -37,10 +37,10 @@ Boeing 777 engine data set
           7.62, 9.144, 10.668, 11.8872, 13.1064]) # 11
       val_t = np.array([
           0.05, 0.2, 0.3, 0.4, 0.6, 0.8, 0.9, 1.0]) # 8
-
+  
       def get_pts(xt, yt, iy, ind_M=None, ind_h=None, ind_t=None):
           eps = 1e-5
-
+  
           if ind_M is not None:
               M = val_M[ind_M]
               keep = abs(xt[:, 0] - M) < eps
@@ -56,27 +56,27 @@ Boeing 777 engine data set
               keep = abs(xt[:, 2] - t) < eps
               xt = xt[keep, :]
               yt = yt[keep, :]
-
+  
           if ind_M is None:
               data = xt[:, 0], yt[:, iy]
           elif ind_h is None:
               data = xt[:, 1], yt[:, iy]
           elif ind_t is None:
               data = xt[:, 2], yt[:, iy]
-
+  
           if iy == 0:
               data = data[0], data[1] / 1e6
           elif iy == 1:
               data = data[0], data[1] / 1e-4
-
+  
           return data
-
+  
       num = 100
       x = np.zeros((num, 3))
       lins_M = np.linspace(0., 0.9, num)
       lins_h = np.linspace(0., 13.1064, num)
       lins_t = np.linspace(0.05, 1., num)
-
+  
       def get_x(ind_M=None, ind_h=None, ind_t=None):
           x = np.zeros((num, 3))
           x[:, 0] = lins_M
@@ -89,102 +89,102 @@ Boeing 777 engine data set
           if ind_t:
               x[:, 2] = val_t[ind_t]
           return x
-
+  
       nrow = 6
       ncol = 2
-
+  
       ind_M_1 = -2
       ind_M_2 = -5
-
+  
       ind_t_1 = 1
       ind_t_2 = -1
-
+  
       plt.close()
       plt.figure(figsize=(15, 25))
       plt.subplots_adjust(hspace=.5)
-
+  
       # --------------------
-
+  
       plt.subplot(nrow, ncol, 1)
       plt.title('M={}'.format(val_M[ind_M_1]))
       plt.xlabel('throttle')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 2)
       plt.title('M={}'.format(val_M[ind_M_1]))
       plt.xlabel('throttle')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       plt.subplot(nrow, ncol, 3)
       plt.title('M={}'.format(val_M[ind_M_2]))
       plt.xlabel('throttle')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 4)
       plt.title('M={}'.format(val_M[ind_M_2]))
       plt.xlabel('throttle')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       # --------------------
-
+  
       plt.subplot(nrow, ncol, 5)
       plt.title('throttle={}'.format(val_t[ind_t_1]))
       plt.xlabel('altitude (km)')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 6)
       plt.title('throttle={}'.format(val_t[ind_t_1]))
       plt.xlabel('altitude (km)')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       plt.subplot(nrow, ncol, 7)
       plt.title('throttle={}'.format(val_t[ind_t_2]))
       plt.xlabel('altitude (km)')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 8)
       plt.title('throttle={}'.format(val_t[ind_t_2]))
       plt.xlabel('altitude (km)')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       # --------------------
-
+  
       plt.subplot(nrow, ncol,  9)
       plt.title('throttle={}'.format(val_t[ind_t_1]))
       plt.xlabel('Mach number')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 10)
       plt.title('throttle={}'.format(val_t[ind_t_1]))
       plt.xlabel('Mach number')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       plt.subplot(nrow, ncol, 11)
       plt.title('throttle={}'.format(val_t[ind_t_2]))
       plt.xlabel('Mach number')
       plt.ylabel('thrust (x 1e6 N)')
-
+  
       plt.subplot(nrow, ncol, 12)
       plt.title('throttle={}'.format(val_t[ind_t_2]))
       plt.xlabel('Mach number')
       plt.ylabel('SFC (x 1e-3 N/N/s)')
-
+  
       ind_h_list = [0, 4, 7, 10]
       ind_h_list = [4, 7, 10]
-
+  
       ind_M_list = [0, 3, 6, 11]
       ind_M_list = [3, 6, 11]
-
+  
       colors = ['b', 'r', 'g', 'c', 'm']
-
+  
       # -----------------------------------------------------------------------------
-
+  
       # Throttle slices
       for k, ind_h in enumerate(ind_h_list):
           ind_M = ind_M_1
           x = get_x(ind_M=ind_M, ind_h=ind_h)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol, 1)
           xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_h=ind_h)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -193,11 +193,11 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_h=ind_h)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_t, y[:, 1] / 1e-4, colors[k])
-
+  
           ind_M = ind_M_2
           x = get_x(ind_M=ind_M, ind_h=ind_h)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol, 3)
           xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_h=ind_h)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -206,15 +206,15 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_h=ind_h)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_t, y[:, 1] / 1e-4, colors[k])
-
+  
       # -----------------------------------------------------------------------------
-
+  
       # Altitude slices
       for k, ind_M in enumerate(ind_M_list):
           ind_t = ind_t_1
           x = get_x(ind_M=ind_M, ind_t=ind_t)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol, 5)
           xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -223,11 +223,11 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_h, y[:, 1] / 1e-4, colors[k])
-
+  
           ind_t = ind_t_2
           x = get_x(ind_M=ind_M, ind_t=ind_t)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol, 7)
           xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -236,15 +236,15 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_h, y[:, 1] / 1e-4, colors[k])
-
+  
       # -----------------------------------------------------------------------------
-
+  
       # Mach number slices
       for k, ind_h in enumerate(ind_h_list):
           ind_t = ind_t_1
           x = get_x(ind_t=ind_t, ind_h=ind_h)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol,  9)
           xt_, yt_ = get_pts(xt, yt, 0, ind_h=ind_h, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -253,11 +253,11 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_h=ind_h, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_M, y[:, 1] / 1e-4, colors[k])
-
+  
           ind_t = ind_t_2
           x = get_x(ind_t=ind_t, ind_h=ind_h)
           y = interp.predict_values(x)
-
+  
           plt.subplot(nrow, ncol, 11)
           xt_, yt_ = get_pts(xt, yt, 0, ind_h=ind_h, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
@@ -266,31 +266,31 @@ Boeing 777 engine data set
           xt_, yt_ = get_pts(xt, yt, 1, ind_h=ind_h, ind_t=ind_t)
           plt.plot(xt_, yt_, 'o' + colors[k])
           plt.plot(lins_M, y[:, 1] / 1e-4, colors[k])
-
+  
       # -----------------------------------------------------------------------------
-
+  
       for k in range(4):
           legend_entries = []
           for ind_h in ind_h_list:
               legend_entries.append('h={}'.format(val_h[ind_h]))
               legend_entries.append('')
-
+  
           plt.subplot(nrow, ncol, k + 1)
           plt.legend(legend_entries)
-
+  
           plt.subplot(nrow, ncol, k + 9)
           plt.legend(legend_entries)
-
+  
           legend_entries = []
           for ind_M in ind_M_list:
               legend_entries.append('M={}'.format(val_M[ind_M]))
               legend_entries.append('')
-
+  
           plt.subplot(nrow, ncol, k + 5)
           plt.legend(legend_entries)
-
+  
       plt.show()
-
+  
 
 RMTB
 ----
@@ -298,10 +298,10 @@ RMTB
 .. code-block:: python
 
   from smt.surrogate_models import RMTB
-  from smt.examples.b777_engine import get_b777_engine, plot_b777_engine
-
+  from smt.examples.b777_engine.b777_engine import get_b777_engine, plot_b777_engine
+  
   xt, yt, dyt_dxt, xlimits = get_b777_engine()
-
+  
   interp = RMTB(num_ctrl_pts=15, xlimits=xlimits, nonlinear_maxiter=20, approx_order=2,
       energy_weight=0e-14, regularization_weight=0e-18, extrapolate=True,
   )
@@ -310,46 +310,46 @@ RMTB
   interp.set_training_derivatives(xt, dyt_dxt[:, :, 1], 1)
   interp.set_training_derivatives(xt, dyt_dxt[:, :, 2], 2)
   interp.train()
-
+  
   plot_b777_engine(xt, yt, xlimits, interp)
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      RMTB
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 1056
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000110
+           Computing dof2coeff - done. Time (sec):  0.0000038
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0009708
+           Initializing Hessian - done. Time (sec):  0.0005488
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.3916061
+           Computing energy terms - done. Time (sec):  0.3332891
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0191801
-        Pre-computing matrices - done. Time (sec):  0.4118757
+           Computing approximation terms - done. Time (sec):  0.0111072
+        Pre-computing matrices - done. Time (sec):  0.3450768
         Solving for degrees of freedom ...
            Solving initial startup problem (n=3375) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 4.857178281e+07 2.642628384e+13
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.234984740e+05 6.974516396e+09
-              Solving for output 0 - done. Time (sec):  0.0812252
+              Solving for output 0 - done. Time (sec):  0.1823189
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 3.711896708e-01 7.697335516e-04
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.246807765e-03 3.529171559e-07
-              Solving for output 1 - done. Time (sec):  0.1535559
-           Solving initial startup problem (n=3375) - done. Time (sec):  0.2349360
+              Solving for output 1 - done. Time (sec):  0.1514699
+           Solving initial startup problem (n=3375) - done. Time (sec):  0.3339479
            Solving nonlinear problem (n=3375) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.234984740e+05 6.974516396e+09
@@ -373,7 +373,7 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  17   0 2.561911028e+03 1.498878373e+08
                  Iteration (num., iy, grad. norm, func.) :  18   0 2.123788159e+03 1.496919068e+08
                  Iteration (num., iy, grad. norm, func.) :  19   0 2.225862180e+03 1.496527226e+08
-              Solving for output 0 - done. Time (sec):  1.8896661
+              Solving for output 0 - done. Time (sec):  2.5003772
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.246807765e-03 3.529171559e-07
                  Iteration (num., iy, grad. norm, func.) :   0   1 3.292895615e-04 6.204303482e-08
@@ -396,210 +396,210 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  17   1 6.640517948e-06 1.154281811e-09
                  Iteration (num., iy, grad. norm, func.) :  18   1 9.597293263e-06 1.140163993e-09
                  Iteration (num., iy, grad. norm, func.) :  19   1 5.230124283e-06 1.138469758e-09
-              Solving for output 1 - done. Time (sec):  1.6166122
-           Solving nonlinear problem (n=3375) - done. Time (sec):  3.5063670
-        Solving for degrees of freedom - done. Time (sec):  3.7414129
-     Training - done. Time (sec):  4.1545191
+              Solving for output 1 - done. Time (sec):  2.6521809
+           Solving nonlinear problem (n=3375) - done. Time (sec):  5.1526577
+        Solving for degrees of freedom - done. Time (sec):  5.4867518
+     Training - done. Time (sec):  5.8335350
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0013380
-
-     Prediction time/pt. (sec) :  0.0000134
-
+     Predicting - done. Time (sec):  0.0033469
+     
+     Prediction time/pt. (sec) :  0.0000335
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012391
-
-     Prediction time/pt. (sec) :  0.0000124
-
+     Predicting - done. Time (sec):  0.0013840
+     
+     Prediction time/pt. (sec) :  0.0000138
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012805
-
-     Prediction time/pt. (sec) :  0.0000128
-
+     Predicting - done. Time (sec):  0.0011210
+     
+     Prediction time/pt. (sec) :  0.0000112
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0015781
-
-     Prediction time/pt. (sec) :  0.0000158
-
+     Predicting - done. Time (sec):  0.0014760
+     
+     Prediction time/pt. (sec) :  0.0000148
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012231
-
-     Prediction time/pt. (sec) :  0.0000122
-
+     Predicting - done. Time (sec):  0.0038781
+     
+     Prediction time/pt. (sec) :  0.0000388
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0011239
+     
+     Prediction time/pt. (sec) :  0.0000112
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0014369
+     
+     Prediction time/pt. (sec) :  0.0000144
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0020530
+     
+     Prediction time/pt. (sec) :  0.0000205
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
      Predicting ...
      Predicting - done. Time (sec):  0.0012259
-
+     
      Prediction time/pt. (sec) :  0.0000123
-
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012481
-
-     Prediction time/pt. (sec) :  0.0000125
-
+     Predicting - done. Time (sec):  0.0011160
+     
+     Prediction time/pt. (sec) :  0.0000112
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012600
-
-     Prediction time/pt. (sec) :  0.0000126
-
+     Predicting - done. Time (sec):  0.0031600
+     
+     Prediction time/pt. (sec) :  0.0000316
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0017269
-
-     Prediction time/pt. (sec) :  0.0000173
-
+     Predicting - done. Time (sec):  0.0011199
+     
+     Prediction time/pt. (sec) :  0.0000112
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0013001
-
-     Prediction time/pt. (sec) :  0.0000130
-
+     Predicting - done. Time (sec):  0.0011439
+     
+     Prediction time/pt. (sec) :  0.0000114
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012310
-
-     Prediction time/pt. (sec) :  0.0000123
-
+     Predicting - done. Time (sec):  0.0028050
+     
+     Prediction time/pt. (sec) :  0.0000280
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012710
-
-     Prediction time/pt. (sec) :  0.0000127
-
+     Predicting - done. Time (sec):  0.0012031
+     
+     Prediction time/pt. (sec) :  0.0000120
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0013001
-
-     Prediction time/pt. (sec) :  0.0000130
-
+     Predicting - done. Time (sec):  0.0011241
+     
+     Prediction time/pt. (sec) :  0.0000112
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0012400
-
-     Prediction time/pt. (sec) :  0.0000124
-
+     Predicting - done. Time (sec):  0.0011001
+     
+     Prediction time/pt. (sec) :  0.0000110
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0013731
-
-     Prediction time/pt. (sec) :  0.0000137
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0013092
-
-     Prediction time/pt. (sec) :  0.0000131
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0013828
-
-     Prediction time/pt. (sec) :  0.0000138
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0012412
-
-     Prediction time/pt. (sec) :  0.0000124
-
-
-.. figure:: b777_engine_Test_test_rmtb.png
+     Predicting - done. Time (sec):  0.0016630
+     
+     Prediction time/pt. (sec) :  0.0000166
+     
+  
+.. figure:: b777_engine.png
   :scale: 60 %
   :align: center
 
@@ -609,10 +609,10 @@ RMTC
 .. code-block:: python
 
   from smt.surrogate_models import RMTC
-  from smt.examples.b777_engine import get_b777_engine, plot_b777_engine
-
+  from smt.examples.b777_engine.b777_engine import get_b777_engine, plot_b777_engine
+  
   xt, yt, dyt_dxt, xlimits = get_b777_engine()
-
+  
   interp = RMTC(num_elements=6, xlimits=xlimits, nonlinear_maxiter=20, approx_order=2,
       energy_weight=0., regularization_weight=0., extrapolate=True,
   )
@@ -621,46 +621,46 @@ RMTC
   interp.set_training_derivatives(xt, dyt_dxt[:, :, 1], 1)
   interp.set_training_derivatives(xt, dyt_dxt[:, :, 2], 2)
   interp.train()
-
+  
   plot_b777_engine(xt, yt, xlimits, interp)
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      RMTC
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 1056
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0933142
+           Computing dof2coeff - done. Time (sec):  0.0273540
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0005410
+           Initializing Hessian - done. Time (sec):  0.0005009
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.1681938
+           Computing energy terms - done. Time (sec):  0.1629732
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0800378
-        Pre-computing matrices - done. Time (sec):  0.3421862
+           Computing approximation terms - done. Time (sec):  0.0697489
+        Pre-computing matrices - done. Time (sec):  0.2607331
         Solving for degrees of freedom ...
            Solving initial startup problem (n=2744) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 7.864862172e+07 2.642628384e+13
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.981017847e+05 2.020326181e+09
-              Solving for output 0 - done. Time (sec):  0.1864810
+              Solving for output 0 - done. Time (sec):  0.2027919
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 8.095040141e-01 7.697335516e-04
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.244441570e-03 1.322573038e-07
-              Solving for output 1 - done. Time (sec):  0.1845260
-           Solving initial startup problem (n=2744) - done. Time (sec):  0.3711140
+              Solving for output 1 - done. Time (sec):  0.2042062
+           Solving initial startup problem (n=2744) - done. Time (sec):  0.4071162
            Solving nonlinear problem (n=2744) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.981017847e+05 2.020326181e+09
@@ -684,7 +684,7 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  17   0 4.316109815e+02 3.298130630e+08
                  Iteration (num., iy, grad. norm, func.) :  18   0 4.530462331e+02 3.298043354e+08
                  Iteration (num., iy, grad. norm, func.) :  19   0 3.940613817e+02 3.298018710e+08
-              Solving for output 0 - done. Time (sec):  3.6397781
+              Solving for output 0 - done. Time (sec):  3.9913750
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.244441570e-03 1.322573038e-07
                  Iteration (num., iy, grad. norm, func.) :   0   1 4.055867854e-04 9.505691755e-09
@@ -707,209 +707,209 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  17   1 8.696899565e-06 2.924053149e-09
                  Iteration (num., iy, grad. norm, func.) :  18   1 6.417628621e-06 2.922817325e-09
                  Iteration (num., iy, grad. norm, func.) :  19   1 1.096394519e-05 2.919976024e-09
-              Solving for output 1 - done. Time (sec):  3.6529422
-           Solving nonlinear problem (n=2744) - done. Time (sec):  7.2928228
-        Solving for degrees of freedom - done. Time (sec):  7.6640182
-     Training - done. Time (sec):  8.0093153
+              Solving for output 1 - done. Time (sec):  4.0906639
+           Solving nonlinear problem (n=2744) - done. Time (sec):  8.0821362
+        Solving for degrees of freedom - done. Time (sec):  8.4893410
+     Training - done. Time (sec):  8.7531688
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0028362
-
-     Prediction time/pt. (sec) :  0.0000284
-
+     Predicting - done. Time (sec):  0.0023868
+     
+     Prediction time/pt. (sec) :  0.0000239
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0026572
-
-     Prediction time/pt. (sec) :  0.0000266
-
+     Predicting - done. Time (sec):  0.0025437
+     
+     Prediction time/pt. (sec) :  0.0000254
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0039959
-
-     Prediction time/pt. (sec) :  0.0000400
-
+     Predicting - done. Time (sec):  0.0027819
+     
+     Prediction time/pt. (sec) :  0.0000278
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0027621
-
-     Prediction time/pt. (sec) :  0.0000276
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0025461
-
+     Predicting - done. Time (sec):  0.0025520
+     
      Prediction time/pt. (sec) :  0.0000255
-
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0025482
-
-     Prediction time/pt. (sec) :  0.0000255
-
+     Predicting - done. Time (sec):  0.0032401
+     
+     Prediction time/pt. (sec) :  0.0000324
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0022240
-
-     Prediction time/pt. (sec) :  0.0000222
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0022891
-
-     Prediction time/pt. (sec) :  0.0000229
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0026181
-
-     Prediction time/pt. (sec) :  0.0000262
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0026629
-
-     Prediction time/pt. (sec) :  0.0000266
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0022383
-
-     Prediction time/pt. (sec) :  0.0000224
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0023038
-
-     Prediction time/pt. (sec) :  0.0000230
-
-  ___________________________________________________________________________
-
-   Evaluation
-
-        # eval points. : 100
-
-     Predicting ...
-     Predicting - done. Time (sec):  0.0025270
-
+     Predicting - done. Time (sec):  0.0025251
+     
      Prediction time/pt. (sec) :  0.0000253
-
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0025818
-
-     Prediction time/pt. (sec) :  0.0000258
-
+     Predicting - done. Time (sec):  0.0021400
+     
+     Prediction time/pt. (sec) :  0.0000214
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0025930
-
-     Prediction time/pt. (sec) :  0.0000259
-
+     Predicting - done. Time (sec):  0.0038588
+     
+     Prediction time/pt. (sec) :  0.0000386
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0025983
-
-     Prediction time/pt. (sec) :  0.0000260
-
+     Predicting - done. Time (sec):  0.0025198
+     
+     Prediction time/pt. (sec) :  0.0000252
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0024769
-
-     Prediction time/pt. (sec) :  0.0000248
-
+     Predicting - done. Time (sec):  0.0024002
+     
+     Prediction time/pt. (sec) :  0.0000240
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0025568
-
-     Prediction time/pt. (sec) :  0.0000256
-
-
-.. figure:: b777_engine_Test_test_rmtc.png
+     Predicting - done. Time (sec):  0.0019610
+     
+     Prediction time/pt. (sec) :  0.0000196
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0020132
+     
+     Prediction time/pt. (sec) :  0.0000201
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0029900
+     
+     Prediction time/pt. (sec) :  0.0000299
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0025191
+     
+     Prediction time/pt. (sec) :  0.0000252
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0022988
+     
+     Prediction time/pt. (sec) :  0.0000230
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0023563
+     
+     Prediction time/pt. (sec) :  0.0000236
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0022171
+     
+     Prediction time/pt. (sec) :  0.0000222
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0023260
+     
+     Prediction time/pt. (sec) :  0.0000233
+     
+  
+.. figure:: b777_engine.png
   :scale: 60 %
   :align: center

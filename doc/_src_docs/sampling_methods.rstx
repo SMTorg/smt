@@ -17,7 +17,7 @@ These are listed below.
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_random , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_random , 80
 
 Problem class API
 -----------------

@@ -17,7 +17,6 @@ Focus on derivatives
 SMT is meant to be a general library for surrogate modeling (also known as metamodeling, interpolation, and regression), but its distinguishing characteristic is its focus on derivatives, e.g., to be used for gradient-based optimization.
 A surrogate model can be represented mathematically as
 
-
 .. math ::
   y = f(\mathbf{x}, \mathbf{xt}, \mathbf{yt}),
 

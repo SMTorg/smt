@@ -21,30 +21,30 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.sampling_methods import Random
-
+  
   xlimits = np.array([
       [0., 4.],
       [0., 3.],
   ])
   sampling = Random(xlimits=xlimits)
-
+  
   num = 50
   x = sampling(num)
-
+  
   print(x.shape)
-
+  
   plt.plot(x[:, 0], x[:, 1], 'o')
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-
+  
 ::
 
   (50, 2)
-
-.. figure:: sampling_Test_test_random.png
+  
+.. figure:: sampling_methods_Test_test_random.png
   :scale: 80 %
   :align: center
 
