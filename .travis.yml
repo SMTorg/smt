@@ -31,7 +31,7 @@ install:
 - pip install --upgrade pip
 - sudo pip install numpy scipy Cython
 - sudo pip install git+https://github.com/OpenMDAO/testflo.git
-- sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git==0.1.1
+- sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
 - sudo pip install -e .
 
 script:

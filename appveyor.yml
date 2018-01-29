@@ -27,7 +27,7 @@ install:
   - pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
   #Grab testflo for running test, to ensure examples are run
   - pip install git+https://github.com/OpenMDAO/testflo.git
-  - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git==0.1.1
+  - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e .
 
 test_script:
