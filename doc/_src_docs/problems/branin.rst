@@ -22,35 +22,35 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.problems import Branin
-
+  
   ndim = 2
   problem = Branin(ndim=ndim)
-
+  
   num = 100
   x = np.ones((num, ndim))
   x[:, 0] = np.linspace(-5., 10., num)
   x[:, 1] = np.linspace(0., 15., num)
   y = problem(x)
-
+  
   yd = np.empty((num, ndim))
   for i in range(ndim):
       yd[:, i] = problem(x, kx=i).flatten()
-
+  
   print(y.shape)
   print(yd.shape)
-
+  
   plt.plot(x[:, 0], y[:, 0])
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-
+  
 ::
 
   (100, 1)
   (100, 2)
-
+  
 .. figure:: branin_Test_test_branin.png
   :scale: 80 %
   :align: center
@@ -72,14 +72,14 @@ Options
      -  2
      -  [2]
      -  ['int']
-     -
+     -  
   *  -  return_complex
      -  False
      -  None
      -  ['bool']
-     -
+     -  
   *  -  name
      -  Branin
      -  None
      -  ['str']
-     -
+     -  

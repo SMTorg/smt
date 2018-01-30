@@ -25,29 +25,29 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.sampling_methods import LHS
-
+  
   xlimits = np.array([
       [0., 4.],
       [0., 3.],
   ])
   sampling = LHS(xlimits=xlimits)
-
+  
   num = 50
   x = sampling(num)
-
+  
   print(x.shape)
-
+  
   plt.plot(x[:, 0], x[:, 1], 'o')
   plt.xlabel('x')
   plt.ylabel('y')
   plt.show()
-
+  
 ::
 
   (50, 2)
-
+  
 .. figure:: lhs_Test_test_lhs.png
   :scale: 80 %
   :align: center
@@ -65,13 +65,13 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  The interval of the domain in each dimension with shape nx x 2 (required)
   *  -  criterion
      -  c
      -  ['center', 'maximin', 'centermaximin', 'correlation', 'c', 'm', 'cm', 'corr', 'ese']
      -  ['str']
      -  criterion used to construct the LHS design c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  The interval of the domain in each dimension with shape nx x 2 (required)

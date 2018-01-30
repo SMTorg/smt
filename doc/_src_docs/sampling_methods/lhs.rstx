@@ -21,7 +21,7 @@ The four first criteria are the same than in pyDOE (for more details, see [1]_).
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_sampling_examples , Test , test_lhs , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_lhs , 80
 
 Options
 -------

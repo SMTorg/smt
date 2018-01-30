@@ -30,56 +30,56 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import QP
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = QP()
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                       QP
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
-     Training - done. Time (sec):  0.0002589
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0000348
-
-     Prediction time/pt. (sec) :  0.0000003
-
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
 .. figure:: qp_Test_test_qp.png
   :scale: 80 %
   :align: center
@@ -97,6 +97,21 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
@@ -112,18 +127,3 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load

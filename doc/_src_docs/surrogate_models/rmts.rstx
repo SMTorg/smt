@@ -89,12 +89,12 @@ while RMTC is the better choice when accuracy of the interpolant is the most imp
 Usage (RMTB)
 ------------
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rmtb , 80
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rmtb , 80
 
 Usage (RMTC)
 ------------
 
-.. embed-test-print-plot :: smt.doc_tests.test_method_examples , Test , test_rmtc , 80
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rmtc , 80
 
 Options (RMTB)
 --------------

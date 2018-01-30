@@ -61,64 +61,64 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import RBF
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                       RBF
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000730
-        Initializing linear solver - done. Time (sec):  0.0001013
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Initializing linear solver - done. Time (sec):  0.0000000
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000629
-        Solving linear system (col. 0) - done. Time (sec):  0.0000830
-     Training - done. Time (sec):  0.0004959
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Solving linear system (col. 0) - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0000298
-
-     Prediction time/pt. (sec) :  0.0000003
-
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
 .. figure:: rbf_Test_test_rbf.png
   :scale: 80 %
   :align: center
@@ -136,53 +136,53 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  d0
-     -  1.0
-     -  None
-     -  ['int', 'float', 'list', 'ndarray']
-     -  basis function scaling parameter in exp(-d^2 / d0^2)
-  *  -  poly_degree
-     -  -1
-     -  [-1, 0, 1]
-     -  ['int']
-     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
-  *  -  reg
-     -  1e-10
+  *  -  print_solver
+     -  True
      -  None
-     -  ['int', 'float']
-     -  Regularization coeff.
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  poly_degree
+     -  -1
+     -  [-1, 0, 1]
+     -  ['int']
+     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
   *  -  max_print_depth
      -  5
      -  None
      -  ['int']
      -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  reg
+     -  1e-10
+     -  None
+     -  ['int', 'float']
+     -  Regularization coeff.
+  *  -  d0
+     -  1.0
+     -  None
+     -  ['int', 'float', 'list', 'ndarray']
+     -  basis function scaling parameter in exp(-d^2 / d0^2)
+  *  -  print_prediction
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print prediction information

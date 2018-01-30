@@ -28,16 +28,16 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import KPLSK
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = KPLSK(theta0=[1e-2])
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
@@ -48,47 +48,47 @@ Usage
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      KPLSK
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
-     Training - done. Time (sec):  0.0109172
+     Training - done. Time (sec):  0.0160000
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002379
-
-     Prediction time/pt. (sec) :  0.0000024
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 5
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002089
-
-     Prediction time/pt. (sec) :  0.0000418
-
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
 .. figure:: kplsk_Test_test_kplsk.png
   :scale: 80 %
   :align: center
@@ -106,31 +106,36 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
+  *  -  n_comp
+     -  1
      -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
+     -  ['int']
+     -  Number of principal components
+  *  -  data_dir
      -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
      -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
   *  -  print_solver
      -  True
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -141,18 +146,13 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['function']
      -  type of corr. func.
-  *  -  data_dir
+  *  -  print_training
+     -  True
      -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components
-  *  -  theta0
-     -  [0.01]
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
+     -  ['bool']
+     -  Whether to print prediction information

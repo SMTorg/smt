@@ -93,81 +93,81 @@ Usage (RMTB)
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import RMTB
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   xlimits = np.array([[0., 4.]])
-
+  
   sm = RMTB(xlimits=xlimits, order=4, num_ctrl_pts=20, energy_weight=1e-15, regularization_weight=0.)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      RMTB
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000029
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0003970
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0012140
+           Computing energy terms - done. Time (sec):  0.0150001
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0004361
-        Pre-computing matrices - done. Time (sec):  0.0021131
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0150001
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 8.537139939e-16 1.135672323e-15
-              Solving for output 0 - done. Time (sec):  0.0045800
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0046821
+                 Iteration (num., iy, grad. norm, func.) :   0   0 7.336585421e-16 1.135414154e-15
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.646068513e-15 1.135672323e-15
-              Solving for output 0 - done. Time (sec):  0.0002470
-           Solving nonlinear problem (n=20) - done. Time (sec):  0.0003133
-        Solving for degrees of freedom - done. Time (sec):  0.0050609
-     Training - done. Time (sec):  0.0075142
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.646589194e-15 1.135414154e-15
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0150001
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0003598
-
-     Prediction time/pt. (sec) :  0.0000036
-
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
 .. figure:: rmts_Test_test_rmtb.png
   :scale: 80 %
   :align: center
@@ -179,81 +179,81 @@ Usage (RMTC)
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import RMTC
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   xlimits = np.array([[0., 4.]])
-
+  
   sm = RMTC(xlimits=xlimits, num_elements=20, energy_weight=1e-15, regularization_weight=0.)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      RMTC
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0008202
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0003312
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0012748
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0005581
-        Pre-computing matrices - done. Time (sec):  0.0030441
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.907534842e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0040710
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0041323
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.964773039e-15 1.133573309e-15
+              Solving for output 0 - done. Time (sec):  0.0150001
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0150001
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0001862
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0002241
-        Solving for degrees of freedom - done. Time (sec):  0.0044110
-     Training - done. Time (sec):  0.0078180
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0150001
+     Training - done. Time (sec):  0.0150001
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0003221
-
-     Prediction time/pt. (sec) :  0.0000032
-
-
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
 .. figure:: rmts_Test_test_rmtc.png
   :scale: 80 %
   :align: center
@@ -271,81 +271,11 @@ Options (RMTB)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
-  *  -  smoothness
-     -  1.0
-     -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
-  *  -  regularization_weight
-     -  1e-14
-     -  None
-     -  ['Integral', 'float']
-     -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
-  *  -  energy_weight
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  The weight of the energy minimization terms
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
   *  -  min_energy
      -  True
      -  None
      -  ['bool']
      -  Whether to perform energy minimization
-  *  -  approx_order
-     -  4
-     -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
-  *  -  solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver
-  *  -  derivative_solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver used for computing output derivatives (dy_dyt)
-  *  -  grad_weight
-     -  0.5
-     -  None
-     -  ['Integral', 'float']
-     -  Weight on gradient training data
   *  -  solver_tolerance
      -  1e-12
      -  None
@@ -356,36 +286,106 @@ Options (RMTB)
      -  None
      -  ['Integral']
      -  Maximum number of nonlinear solver iterations
-  *  -  line_search
-     -  backtracking
-     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
-     -  ['LineSearch']
-     -  Line search algorithm
-  *  -  save_energy_terms
-     -  False
+  *  -  energy_weight
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  The weight of the energy minimization terms
+  *  -  print_prediction
+     -  True
      -  None
      -  ['bool']
-     -  Whether to cache energy terms in the data_dir directory
-  *  -  data_dir
-     -  None
-     -  [None]
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  max_print_depth
-     -  5
-     -  None
-     -  ['Integral']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
-  *  -  order
-     -  3
-     -  None
-     -  ['Integral', 'tuple', 'list', 'ndarray']
-     -  B-spline order in each dimension - length [nx]
+     -  Whether to print prediction information
   *  -  num_ctrl_pts
      -  15
      -  None
      -  ['Integral', 'tuple', 'list', 'ndarray']
      -  # B-spline control points in each dimension - length [nx]
+  *  -  data_dir
+     -  None
+     -  [None]
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  line_search
+     -  backtracking
+     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
+     -  ['LineSearch']
+     -  Line search algorithm
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
+  *  -  save_energy_terms
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to cache energy terms in the data_dir directory
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  approx_order
+     -  4
+     -  None
+     -  ['Integral']
+     -  Exponent in the approximation term
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  regularization_weight
+     -  1e-14
+     -  None
+     -  ['Integral', 'float']
+     -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
+  *  -  solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver
+  *  -  derivative_solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver used for computing output derivatives (dy_dyt)
+  *  -  max_print_depth
+     -  5
+     -  None
+     -  ['Integral']
+     -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  grad_weight
+     -  0.5
+     -  None
+     -  ['Integral', 'float']
+     -  Weight on gradient training data
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  order
+     -  3
+     -  None
+     -  ['Integral', 'tuple', 'list', 'ndarray']
+     -  B-spline order in each dimension - length [nx]
 
 Options (RMTC)
 --------------
@@ -400,81 +400,11 @@ Options (RMTC)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  print_global
-     -  True
-     -  None
-     -  ['bool']
-     -  Global print toggle. If False, all printing is suppressed
-  *  -  print_training
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print training information
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
-  *  -  smoothness
-     -  1.0
-     -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
-  *  -  regularization_weight
-     -  1e-14
-     -  None
-     -  ['Integral', 'float']
-     -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
-  *  -  energy_weight
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  The weight of the energy minimization terms
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
   *  -  min_energy
      -  True
      -  None
      -  ['bool']
      -  Whether to perform energy minimization
-  *  -  approx_order
-     -  4
-     -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
-  *  -  solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver
-  *  -  derivative_solver
-     -  krylov
-     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
-     -  ['LinearSolver']
-     -  Linear solver used for computing output derivatives (dy_dyt)
-  *  -  grad_weight
-     -  0.5
-     -  None
-     -  ['Integral', 'float']
-     -  Weight on gradient training data
   *  -  solver_tolerance
      -  1e-12
      -  None
@@ -485,28 +415,98 @@ Options (RMTC)
      -  None
      -  ['Integral']
      -  Maximum number of nonlinear solver iterations
-  *  -  line_search
-     -  backtracking
-     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
-     -  ['LineSearch']
-     -  Line search algorithm
-  *  -  save_energy_terms
-     -  False
+  *  -  energy_weight
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  The weight of the energy minimization terms
+  *  -  print_prediction
+     -  True
      -  None
      -  ['bool']
-     -  Whether to cache energy terms in the data_dir directory
-  *  -  data_dir
-     -  None
-     -  [None]
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  max_print_depth
-     -  5
-     -  None
-     -  ['Integral']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
+     -  Whether to print prediction information
   *  -  num_elements
      -  4
      -  None
      -  ['Integral', 'list', 'ndarray']
      -  # elements in each dimension - ndarray [nx]
+  *  -  data_dir
+     -  None
+     -  [None]
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  line_search
+     -  backtracking
+     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
+     -  ['LineSearch']
+     -  Line search algorithm
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
+  *  -  save_energy_terms
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to cache energy terms in the data_dir directory
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  approx_order
+     -  4
+     -  None
+     -  ['Integral']
+     -  Exponent in the approximation term
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  regularization_weight
+     -  1e-14
+     -  None
+     -  ['Integral', 'float']
+     -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
+  *  -  solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver
+  *  -  derivative_solver
+     -  krylov
+     -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
+     -  ['LinearSolver']
+     -  Linear solver used for computing output derivatives (dy_dyt)
+  *  -  max_print_depth
+     -  5
+     -  None
+     -  ['Integral']
+     -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  grad_weight
+     -  0.5
+     -  None
+     -  ['Integral', 'float']
+     -  Weight on gradient training data
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
