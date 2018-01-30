@@ -18,7 +18,7 @@ at
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_branin , 80
+.. embed-test-print-plot :: smt.problems.tests.test_problem_examples , Test , test_branin , 80
 
 Options
 -------

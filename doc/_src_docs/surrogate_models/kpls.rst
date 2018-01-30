@@ -21,56 +21,56 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import KPLS
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = KPLS(theta0=[1e-2])
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      KPLS
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
-     Training - done. Time (sec):  0.0057349
+     Training - done. Time (sec):  0.0055161
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0001428
-
-     Prediction time/pt. (sec) :  0.0000014
-
-
+     Predicting - done. Time (sec):  0.0001490
+     
+     Prediction time/pt. (sec) :  0.0000015
+     
+  
 .. figure:: kpls_Test_test_kpls.png
   :scale: 80 %
   :align: center

@@ -25,69 +25,69 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import RBF
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                       RBF
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0006263
-        Initializing linear solver - done. Time (sec):  0.0006621
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000751
+        Initializing linear solver - done. Time (sec):  0.0000992
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0003493
-        Solving linear system (col. 0) - done. Time (sec):  0.0003829
-     Training - done. Time (sec):  0.0015471
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000761
+        Solving linear system (col. 0) - done. Time (sec):  0.0000951
+     Training - done. Time (sec):  0.0004938
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0000391
-
-     Prediction time/pt. (sec) :  0.0000004
-
-
-.. figure:: surrogate_Test_test_rbf.png
+     Predicting - done. Time (sec):  0.0000312
+     
+     Prediction time/pt. (sec) :  0.0000003
+     
+  
+.. figure:: surrogate_models_Test_test_rbf.png
   :scale: 80 %
   :align: center
 
-SM class API
+SurrogateModel class API
 ------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.

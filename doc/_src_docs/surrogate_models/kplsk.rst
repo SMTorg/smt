@@ -28,16 +28,16 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import KPLSK
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = KPLSK(theta0=[1e-2])
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
@@ -48,47 +48,47 @@ Usage
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                      KPLSK
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
-     Training - done. Time (sec):  0.0109172
+     Training - done. Time (sec):  0.0096040
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002379
-
-     Prediction time/pt. (sec) :  0.0000024
-
+     Predicting - done. Time (sec):  0.0001500
+     
+     Prediction time/pt. (sec) :  0.0000015
+     
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 5
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002089
-
-     Prediction time/pt. (sec) :  0.0000418
-
-
+     Predicting - done. Time (sec):  0.0001280
+     
+     Prediction time/pt. (sec) :  0.0000256
+     
+  
 .. figure:: kplsk_Test_test_kplsk.png
   :scale: 80 %
   :align: center

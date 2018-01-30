@@ -1,0 +1,14 @@
+1-D step-like data set
+======================
+
+.. embed-module :: smt.examples.one_D_step.one_D_step
+
+RMTB
+----
+
+.. embed-module-print-plot :: smt.examples.one_D_step.run_one_D_step_rmtb , 80
+
+RMTC
+----
+
+.. embed-module-print-plot :: smt.examples.one_D_step.run_one_D_step_rmtc , 80

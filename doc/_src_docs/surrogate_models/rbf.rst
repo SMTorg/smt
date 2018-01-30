@@ -61,64 +61,64 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-
+  
   from smt.surrogate_models import RBF
-
+  
   xt = np.array([0., 1., 2., 3., 4.])
   yt = np.array([0., 1., 1.5, 0.5, 1.0])
-
+  
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
   sm.train()
-
+  
   num = 100
   x = np.linspace(0., 4., num)
   y = sm.predict_values(x)
-
+  
   plt.plot(xt, yt, 'o')
   plt.plot(x, y)
   plt.xlabel('x')
   plt.ylabel('y')
   plt.legend(['Training data', 'Prediction'])
   plt.show()
-
+  
 ::
 
   ___________________________________________________________________________
-
+     
                                       RBF
   ___________________________________________________________________________
-
+     
    Problem size
-
+     
         # training points.        : 5
-
+     
   ___________________________________________________________________________
-
+     
    Training
-
+     
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000730
-        Initializing linear solver - done. Time (sec):  0.0001013
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000629
+        Initializing linear solver - done. Time (sec):  0.0000858
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000629
-        Solving linear system (col. 0) - done. Time (sec):  0.0000830
-     Training - done. Time (sec):  0.0004959
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000551
+        Solving linear system (col. 0) - done. Time (sec):  0.0000720
+     Training - done. Time (sec):  0.0004101
   ___________________________________________________________________________
-
+     
    Evaluation
-
+     
         # eval points. : 100
-
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0000298
-
+     Predicting - done. Time (sec):  0.0000253
+     
      Prediction time/pt. (sec) :  0.0000003
-
-
+     
+  
 .. figure:: rbf_Test_test_rbf.png
   :scale: 80 %
   :align: center
