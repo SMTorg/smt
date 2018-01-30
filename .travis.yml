@@ -7,8 +7,9 @@ sudo: required
 
 os:
   - linux
+  - osx
 
-osx_image: xcode8.2
+osx_image: xcode7.3
 
 language: generic
 
@@ -29,11 +30,11 @@ addons:
     - g++-5
 
 install:
-- pip install --upgrade pip
-- sudo pip install numpy scipy Cython
-- sudo pip install git+https://github.com/OpenMDAO/testflo.git
-- sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
-- sudo pip install -e .
+- pip2 install --upgrade pip
+- sudo pip2 install numpy scipy Cython
+- sudo pip2 install git+https://github.com/OpenMDAO/testflo.git
+- sudo pip2 install git+https://github.com/hwangjt/sphinx_auto_embed.git
+- sudo pip2 install -e .
 
 script:
 - testflo
