@@ -138,23 +138,23 @@ Usage (RMTB)
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0150001
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0150001
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 7.336585421e-16 1.135414154e-15
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0000000
+              Solving for output 0 - done. Time (sec):  0.0150001
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0150001
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.646589194e-15 1.135414154e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0150001
      Training - done. Time (sec):  0.0150001
   ___________________________________________________________________________
      
@@ -233,15 +233,15 @@ Usage (RMTC)
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.964773039e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0150001
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0150001
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0150001
-     Training - done. Time (sec):  0.0150001
+        Solving for degrees of freedom - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation

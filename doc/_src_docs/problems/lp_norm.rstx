@@ -7,7 +7,7 @@ Lp norm function
 Usage
 -----
 
-.. embed-test-print-plot :: smt.doc_tests.test_problem_examples , Test , test_lp_norm , 80
+.. embed-test-print-plot :: smt.problems.tests.test_problem_examples , Test , test_lp_norm , 80
 
 Options
 -------
