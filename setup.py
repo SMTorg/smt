@@ -53,7 +53,7 @@ ext = cythonize(
 ]))
 
 setup(name='smt',
-    version='0.1',
+    version='0.2',
     description='The Surrogate Modeling Toolbox (SMT)',
     author='Mohamed Amine Bouhlel',
     author_email='mbouhlel@umich.edu',
