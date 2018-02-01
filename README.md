@@ -6,7 +6,7 @@
 This repository includes the codes for the surrogate model toolbox (SMT). SMT is a Python package and is distributed under the BSD license.
 
 # Version
-Version 0.1
+Version 0.2
 
 # Required packages
 Numpy    >= Version 1.9.2

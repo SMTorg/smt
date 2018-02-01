@@ -53,7 +53,7 @@ ext = cythonize(
 ]))
 
 setup(name='smt',
-    version='0.1',
+    version='0.2',
     description='The Surrogate Modeling Toolbox (SMT)',
     author='Mohamed Amine Bouhlel',
     author_email='mbouhlel@umich.edu',
@@ -76,5 +76,5 @@ setup(name='smt',
     zip_safe=False,
     ext_modules=ext,
     url = 'https://github.com/SMTorg/smt', # use the URL to the github repo
-    download_url = 'https://github.com/SMTorg/smt/archive/v0.1.tar.gz',
+    download_url = 'https://github.com/SMTorg/smt/archive/v0.2.tar.gz',
 )
