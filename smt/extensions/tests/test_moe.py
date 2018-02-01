@@ -83,7 +83,8 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        moe = MOE(smooth_recombination=False, n_clusters=5, xt=xt, yt=yt)     
+        moe = MOE(smooth_recombination=False, n_clusters=5) 
+        moe.set_training_values(xt, yt)    
         moe.train()
 
         # validation data
@@ -124,8 +125,7 @@ class TestMOE(SMTestCase):
 
         # mixture of experts
         moe = MOE(n_clusters=6)
-        moe.options['xt'] = xt
-        moe.options['yt'] = yt
+        moe.set_training_values(xt, yt)
         moe.options['heaviside_optimization'] = True    
         moe.train()
 
@@ -151,9 +151,97 @@ class TestMOE(SMTestCase):
             plt.title('Branin function')
             plt.show()
 
-		
+    @staticmethod
+    def run_moe_example():
+        import numpy as np
+        import six
+        from smt.extensions import MOE
+        from smt.problems import LpNorm
+        from smt.sampling_methods import FullFactorial
+
+        import matplotlib.pyplot as plt
+        from matplotlib import colors
+        from mpl_toolkits.mplot3d import Axes3D
+        
+        ndim = 2
+        nt = 200
+        ne = 200
+
+        # Problem: L1 norm (dimension 2)
+        prob = LpNorm(ndim=ndim)
+
+        # Training data
+        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
+        np.random.seed(0)
+        xt = sampling(nt)
+        yt = prob(xt)
+
+        # Mixture of experts
+        moe = MOE(smooth_recombination=True, n_clusters=5)     
+        moe.set_training_values(xt, yt)
+        moe.train()
+
+        # Validation data
+        np.random.seed(1)
+        xe = sampling(ne)
+        ye = prob(xe)
+
+        # Prediction
+        y = moe.predict_values(xe)
+        fig = plt.figure(1)
+        fig.set_size_inches(12, 11)
+
+        # Cluster display
+        colors_ = list(six.iteritems(colors.cnames))
+        GMM=moe.cluster
+        weight = GMM.weights_
+        mean = GMM.means_
+        cov = GMM.covars_
+        prob_ = moe._proba_cluster(xt)
+        sort = np.apply_along_axis(np.argmax, 1, prob_)
+
+        xlim = prob.xlimits
+        x0 = np.linspace(xlim[0, 0], xlim[0, 1], 20)
+        x1 = np.linspace(xlim[1, 0], xlim[1, 1], 20)
+        xv, yv = np.meshgrid(x0, x1)
+        x = np.array(zip(xv.reshape((-1,)), yv.reshape((-1,))))
+        prob = moe._proba_cluster(x)
+
+        plt.subplot(221, projection='3d')
+        ax = plt.gca()
+        for i in range(len(sort)):
+            color = colors_[int(((len(colors_) - 1) / sort.max()) * sort[i])][0]
+            ax.scatter(xt[i][0], xt[i][1], yt[i], c=color)
+        plt.title('Clustered Samples')
+
+        plt.subplot(222, projection='3d')
+        ax = plt.gca()
+        for i in range(len(weight)):
+            color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
+            ax.plot_trisurf(x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0,
+                             color=color)
+        plt.title('Membership Probabilities')
+
+        plt.subplot(223)
+        for i in range(len(weight)):
+            color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
+            plt.tricontour(x[:, 0], x[:, 1], prob[:, i], 1, colors=color, linewidths=3)
+        plt.title('Cluster Map')
+
+        plt.subplot(224)
+        plt.plot(ye, ye,'-.')
+        plt.plot(ye, y, '.')
+        plt.xlabel('actual')
+        plt.ylabel('prediction')
+        plt.title('Predicted vs Actual')
+
+        plt.show()
+
 if __name__ == '__main__':
     if '--plot' in argv:
         TestMOE.plot = True
         argv.remove('--plot')
+    if '--example' in argv:
+        TestMOE.run_moe_example()
+        exit()
     unittest.main()

@@ -5,7 +5,7 @@ This package is distributed under New BSD license.
 
 Mixture of Experts
 """
-
+#TODO : MOE should be a true 'surrogate model' object
 #TODO : choice of the surrogate model experts to be used
 #TODO : add parameters for KRG, RMTB, RMTC, KRG ?
 #TODO : add derivative support
@@ -33,28 +33,29 @@ class MOE(Extensions):
     def _initialize(self):
         super(MOE, self)._initialize()
         declare = self.options.declare
-
-        declare('sms', )
         
         declare('xt', None, types=np.ndarray, desc='Training inputs')
         declare('yt', None, types=np.ndarray, desc='Training outputs')
-        declare('c', None, types=np.ndarray, desc='Clustering training outputs')
+        declare('ct', None, types=np.ndarray, desc='Training derivative outputs used for clustering')
 
         declare('xtest', None, types=np.ndarray, desc='Test inputs')
         declare('ytest', None, types=np.ndarray, desc='Test outputs')
 
-        declare('n_clusters', 2, types=int, desc='Number of cluster')
+        declare('n_clusters', 2, types=int, desc='Number of clusters')
         declare('smooth_recombination', True, types=bool, desc='Continuous cluster transition')
         declare('heaviside_optimization', False, types=bool, 
-                desc='Optimize Heaviside scaling factor in cas eof smooth recombination')
-        declare('derivatives_support', False, types=bool, 
-                desc='Use only experts that support derivatives prediction')        
-        declare('variances_support', False, types=bool, 
-                desc='Use only experts that support variance prediction')
+                desc='Optimize Heaviside scaling factor when smooth recombination is used')
 
-        for name, smclass in self._surrogate_type.iteritems():
-            sm_options = smclass().options
-            declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
+        # TODO: variance and derivative surrogates support 
+        # declare('derivatives_support', False, types=bool, 
+        #         desc='Use only experts that support derivatives prediction')        
+        # declare('variances_support', False, types=bool, 
+        #         desc='Use only experts that support variance prediction')
+
+        # TODO: should we add leaf surrogate models options?
+        # for name, smclass in self._surrogate_type.iteritems():
+        #     sm_options = smclass().options
+        #     declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
 
         self.x = None
         self.y = None
@@ -66,6 +67,15 @@ class MOE(Extensions):
         self.heaviside_factor = 1.
 
         self.experts = []
+        self.xt = None
+        self.yt = None
+
+    def set_training_values(self, xt, yt, name=None):
+        """
+        Supports for surrogate model API.
+        """        
+        self.xt = xt
+        self.yt = yt
 
     def train(self):
         """
@@ -84,9 +94,14 @@ class MOE(Extensions):
         Build and train the mixture of experts surrogate.
         This method is called by Extension apply() method
         """
-        self.x = x = self.options['xt']
-        self.y = y = self.options['yt']
-        self.c = c = self.options['c']
+        if self.xt is not None and self.yt is not None:  
+            # set_training_values has been called
+            self.x = x = self.xt
+            self.y = y = self.yt
+        else:
+            self.x = x = self.options['xt']
+            self.y = y = self.options['yt']
+        self.c = c = self.options['ct']
         if not self.c:
             self.c = c = y
 
@@ -196,10 +211,11 @@ class MOE(Extensions):
         Select relevant surrogate models (experts) regarding MOE options
         """
         prototypes = {name: smclass() for name, smclass in self._surrogate_type.iteritems()}
-        if self.options['derivatives_support']:
-            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
-        if self.options['variances_support']:
-            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
+        #TODO: options not handled yet
+        # if self.options['derivatives_support']:
+        #     prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
+        # if self.options['variances_support']:
+        #     prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
         return {name: self._surrogate_type[name] for name in prototypes}
 
     def _fit(self, x_trained, y_trained, c_trained, new_model=True):
@@ -341,7 +357,7 @@ class MOE(Extensions):
         dim = self.ndim
         clustered_values = np.array(clustered_values)
         
-        rmses = {}
+        scores = {}
         sms = {}
 
         # validation with 10% of the training data
@@ -349,7 +365,7 @@ class MOE(Extensions):
         
         for name, sm_class in self._surrogate_type.iteritems():
             if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:  
-                # SMs not used for now because require some parameterization
+                #TODO: SMs not used for now as it require some parameterization
                 continue
             
             sm = sm_class()
@@ -360,18 +376,18 @@ class MOE(Extensions):
             expected = test_values[:, dim]
             actual = sm.predict_values(test_values[:, 0:dim])
             l_two = np.linalg.norm(expected - actual, 2)
-            l_two_rel = l_two / np.linalg.norm(expected, 2)
-            mse = (l_two**2) / len(expected)
-            rmse = mse ** 0.5
-            rmses[sm.name] = rmse
-            print(name, rmse, mse)
+            # l_two_rel = l_two / np.linalg.norm(expected, 2)
+            # mse = (l_two**2) / len(expected)
+            # rmse = mse ** 0.5
+            scores[sm.name] = l_two
+            print(sm.name, l_two)
             sms[sm.name] = sm
             
         best_name=None
-        best_rmse=None
-        for name, rmse in rmses.iteritems():
-            if best_rmse is None or rmse < best_rmse:
-                best_name, best_rmse = name, rmse              
+        best_score=None
+        for name, rmse in scores.iteritems():
+            if best_score is None or rmse < best_score:
+                best_name, best_score = name, rmse              
         
         print("Best expert = {}".format(best_name))
         return sms[best_name]
