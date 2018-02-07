@@ -1,0 +1,15 @@
+Lp norm function
+===================
+
+.. math ::
+  f(x) = \left \| x \right \|_p = \sqrt[p]{\sum\limits_{i}^{nx}\left | x_i \right |^p},
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.problems.tests.test_problem_examples , Test , test_lp_norm , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.problems , LpNorm , options

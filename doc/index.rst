@@ -46,6 +46,7 @@ Documentation contents
    _src_docs/problems
    _src_docs/sampling_methods
    _src_docs/examples
+   _src_docs/extensions
    _src_docs/dev_docs
 
 

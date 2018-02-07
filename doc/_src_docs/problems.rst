@@ -10,6 +10,7 @@ These are listed below.
 
    problems/sphere
    problems/branin
+   problems/lp_norm
    problems/rosenbrock
    problems/tensorproduct
    problems/cantileverbeam

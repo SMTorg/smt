@@ -1,0 +1,12 @@
+Extensions
+==========
+
+Below is a set of methods using surrogates models provided by SMT.
+The data set, run script, and plot are shown.
+The intent is to provide applications of surrogate models in higher level methods.
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   extensions/moe
