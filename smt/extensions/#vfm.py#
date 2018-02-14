@@ -22,11 +22,11 @@ class VFM(Extensions):
 
         declare('name_model_LF',types=object,values=('KRG','LS','QP','KPLS',
                 'KPLSK','GEKPLS','RBF','RMTC','RMTB','IDW'), desc=
-                'Type of the low-fidelity model')
+                'Name of the low-fidelity model')
         declare('options_LF',{},types=dict,desc='Options for the low-fidelity model')
         declare('name_model_bridge', types=object, values=('KRG','LS','QP','KPLS',
                 'KPLSK','GEKPLS','RBF','RMTC','RMTB','IDW'), desc=
-                'Type of the bridge model')
+                'Name of the bridge model')
         declare('options_bridge', {},types=dict,desc='Options for the bridge model')
         declare('type_bridge', 'Additive',types=str,values=('Additive', 'Multiplicatif'), desc=
                 'Bridge function type')

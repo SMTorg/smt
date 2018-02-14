@@ -10,3 +10,6 @@ The intent is to provide applications of surrogate models in higher level method
    :titlesonly:
 
    extensions/moe
+   extensions/vfm
+
+
