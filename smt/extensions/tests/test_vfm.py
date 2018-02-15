@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 
 
 class TestVFM(unittest.TestCase):
-
+    @staticmethod
     def test_vfm_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
