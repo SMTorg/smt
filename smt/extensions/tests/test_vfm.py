@@ -11,7 +11,7 @@ matplotlib.use('Agg')
 
 class TestVFM(unittest.TestCase):
 
-    def test_vfm(self):
+    def test_vfm_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
         from scipy import linalg
