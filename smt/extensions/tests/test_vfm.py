@@ -1,5 +1,5 @@
 '''
-Author: Mohamed Amine Bouhlel <<hwangjt@umich.edu>>
+Author: Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 '''
