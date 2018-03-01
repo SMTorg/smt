@@ -202,7 +202,7 @@ class MOE(Extensions):
         # choice of number of cluster
         max_n_clusters = int(len(self.x) / 10) + 1
         if self.n_clusters > max_n_clusters:
-            print 'Number of clusters should be inferior to {0}'.format(max_n_clusters)
+            print('Number of clusters should be inferior to {0}'.format(max_n_clusters))
             raise ValueError(
                 'The number of clusters is too high considering the number of points')
 
@@ -210,7 +210,7 @@ class MOE(Extensions):
         """
         Select relevant surrogate models (experts) regarding MOE options
         """
-        prototypes = {name: smclass() for name, smclass in self._surrogate_type.iteritems()}
+        prototypes = {name: smclass() for name, smclass in six.iteritems(self._surrogate_type)}
         #TODO: options not handled yet
         # if self.options['derivatives_support']:
         #     prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
@@ -363,7 +363,7 @@ class MOE(Extensions):
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
         
-        for name, sm_class in self._surrogate_type.iteritems():
+        for name, sm_class in six.iteritems(self._surrogate_type):
             if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:  
                 #TODO: SMs not used for now as it require some parameterization
                 continue
@@ -385,7 +385,7 @@ class MOE(Extensions):
             
         best_name=None
         best_score=None
-        for name, rmse in scores.iteritems():
+        for name, rmse in six.iteritems(scores):
             if best_score is None or rmse < best_score:
                 best_name, best_score = name, rmse              
         
