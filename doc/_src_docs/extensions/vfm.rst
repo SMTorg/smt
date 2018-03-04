@@ -1,7 +1,7 @@
 Variable-fidelity modeling (VFM)
 ================================
 
-VFM is a variable-fidelity modeling method which can use additive, multiplicatif, or hybride bridge functions.
+VFM is a variable-fidelity modeling method which can use additive, multiplicative, or hybride bridge functions.
 SMT proposes only additive and multiplicatif options.
 
 In the additive method, high- and low-fidelity models, :math:`y_{\text{high}}({\bf x})` and :math:`y_{\text{low}}({\bf x})`, are calibrated by adding the low-fidelity model to a function :math:`\gamma({\bf x})`, also called bridge function
