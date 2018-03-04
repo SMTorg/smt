@@ -1,7 +1,7 @@
 Extensions
 ==========
 
-Extensions implements a set of methods using surrogate models provided by SMT.
+Extensions implement a set of methods using surrogate models provided by SMT.
 Two methods are available:
 
 .. toctree::
