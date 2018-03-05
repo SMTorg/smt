@@ -49,7 +49,7 @@ Usage
   deriv2 = True
   LF_candidate = 'QP'
   Bridge_candidate = 'KRG'
-  type_bridge = 'Multiplicatif'
+  type_bridge = 'Multiplicative'
   optionsLF = {}
   optionsB = {'theta0':[1e-2]*ndim,'print_prediction': False,'deriv':False}
 
@@ -182,7 +182,7 @@ Options
      -  Options for the bridge model
   *  -  type_bridge
      -  Additive
-     -  ['Additive', 'Multiplicatif']
+     -  ['Additive', 'Multiplicative']
      -  None
      -  Bridge function type
   *  -  X_LF
