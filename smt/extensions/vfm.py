@@ -4,7 +4,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 
 Variable-fidelity modeling: two types of bridge functions are available; i.e.,
-additive and multiplicatif
+additive and multiplicative
 """
 
 from __future__ import division
@@ -22,13 +22,13 @@ class VFM(Extensions):
 
         declare('name_model_LF',types=object,values=('KRG','LS','QP','KPLS',
                 'KPLSK','GEKPLS','RBF','RMTC','RMTB','IDW'), desc=
-                'Type of the surrogate model to use for low-fidelity data')
+                'Name of the low-fidelity model')
         declare('options_LF',{},types=dict,desc='Options for the low-fidelity model')
         declare('name_model_bridge', types=object, values=('KRG','LS','QP','KPLS',
                 'KPLSK','GEKPLS','RBF','RMTC','RMTB','IDW'), desc=
-                'Type of the surrogate model to use for the bridge data')
+                'Name of the bridge model')
         declare('options_bridge', {},types=dict,desc='Options for the bridge model')
-        declare('type_bridge', 'Additive',types=str,values=('Additive', 'Multiplicatif'), desc=
+        declare('type_bridge', 'Additive',types=str,values=('Additive', 'Multiplicative'), desc=
                 'Bridge function type')
         declare('X_LF', None,types=np.ndarray,desc='Low-fidelity inputs')
         declare('y_LF', None,types=np.ndarray,desc='Low-fidelity output')
@@ -72,7 +72,7 @@ class VFM(Extensions):
         sm_LF.train()
 
         # compute the bridge data
-        if self.options['type_bridge'] == 'Multiplicatif':
+        if self.options['type_bridge'] == 'Multiplicative':
             y_bridge = y_HF/sm_LF.predict_values(X_HF)
             self.B_deriv = self.options['options_bridge']['deriv']
             del self.options['options_bridge']['deriv']
@@ -92,7 +92,7 @@ class VFM(Extensions):
                     dy_bridge[:,i] = (dy_HF[:,i].reshape((y_HF.shape[0],1))- \
                                       sm_LF.predict_derivatives(X_HF,kx=i)).reshape((y_HF.shape[0]))
         else:
-            raise ValueError('Only Additive and Multiplicatif bridges are available')
+            raise ValueError('Only Additive and Multiplicative bridges are available')
 
         # Construct of the bridge function
         sm_bridge = self.options['name_model_bridge'](**self.options['options_bridge'])
@@ -104,7 +104,7 @@ class VFM(Extensions):
 
         # Construct the final model
         sm_HF = {}
-        if self.options['type_bridge'] == 'Multiplicatif':
+        if self.options['type_bridge'] == 'Multiplicative':
             sm_HF['predict_values'] = lambda x: sm_bridge.predict_values(x)*sm_LF.predict_values(x)
             if sm_bridge.supports['derivatives'] and sm_LF.supports['derivatives']:
                 sm_HF['predict_derivatives'] = []

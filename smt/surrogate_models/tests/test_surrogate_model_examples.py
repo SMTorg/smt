@@ -1,3 +1,9 @@
+'''
+Author: John Hwang <<hwangjt@umich.edu>>
+
+This package is distributed under New BSD license.
+'''
+
 import unittest
 
 import matplotlib
