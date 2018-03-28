@@ -71,7 +71,7 @@ setup(name='smt',
         'matplotlib',
         'numpydoc',
         'six>=1.10',
-        'scipy'
+        'scipy==1.0.1'
     ],
     zip_safe=False,
     ext_modules=ext,
