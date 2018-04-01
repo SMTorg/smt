@@ -30,7 +30,7 @@ addons:
     - g++-5
 
 install:
-- pip2 install --upgrade pip
+- sudo pip2 install --upgrade pip
 - sudo pip2 install numpy scipy Cython
 - sudo pip2 install git+https://github.com/OpenMDAO/testflo.git
 - sudo pip2 install git+https://github.com/hwangjt/sphinx_auto_embed.git
