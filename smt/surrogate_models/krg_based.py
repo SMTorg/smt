@@ -27,7 +27,8 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
 from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
-
+from sklearn.gaussian_process.correlation_models import squared_exponential
+from scipy.optimize import minimize
 """
 The kriging class.
 
@@ -42,7 +43,9 @@ class KrgBased(SurrogateModel):
 
     _correlation_types = {
         'abs_exp': abs_exp,
-        'squar_exp': squar_exp}
+        'squar_exp': squared_exponential,
+#        'squar_exp': squar_exp,
+        }  # TODO why squar_exp doesn't work
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
@@ -165,15 +168,18 @@ class KrgBased(SurrogateModel):
         # Initialize output
         reduced_likelihood_function_value = - np.inf
         par = {}
-
         # Set up R
-        r = self.options['corr'](theta, self.D)
+        
+    
+        r = self.options['corr'](theta, self.D).reshape(-1,1)
+        print "this is: ", r, theta
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
         R = np.eye(self.nt) * (1. + nugget)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:,0]
-
+        
+        
         # Cholesky decomposition of R
         try:
             C = linalg.cholesky(R, lower=True)
@@ -185,7 +191,7 @@ class KrgBased(SurrogateModel):
         Q, G = linalg.qr(Ft, mode='economic')
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
-
+        print rcondG
         if rcondG < 1e-10:
             # Check F
             sv = linalg.svd(self.F, compute_uv=False)
@@ -198,17 +204,27 @@ class KrgBased(SurrogateModel):
             else:
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
+        
         Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
         beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
         rho = Yt - np.dot(Ft, beta)
-        sigma2 = (rho ** 2.).sum(axis=0) / (self.nt)
+        
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2. / self.nt)).prod()
 
         # Compute/Organize output
-        reduced_likelihood_function_value = - sigma2.sum() * detR
+        if self.name == 'MFK':
+            n_samples = self.nt
+            p = self.p
+            q = self.q
+            sigma2 = (rho ** 2.).sum(axis=0) /(n_samples - p - q)
+            reduced_likelihood_function_value = -(n_samples - p - q)*np.log10(sigma2) \
+                    - n_samples*np.log10(detR)
+        else:
+            sigma2 = (rho ** 2.).sum(axis=0) / (self.nt)
+            reduced_likelihood_function_value = - sigma2.sum() * detR
         par['sigma2'] = sigma2 * self.y_std ** 2.
         par['beta'] = beta
         par['gamma'] = linalg.solve_triangular(C.T, rho)
@@ -222,15 +238,15 @@ class KrgBased(SurrogateModel):
 
             if (reduced_likelihood_function_value >  self.best_iteration_fail):
                  self.best_iteration_fail = reduced_likelihood_function_value
-                 self._thetaMemory = theta
+                 self._thetaMemory = np.array(theta)
 
         elif (self.best_iteration_fail is None) and \
             (not np.isinf(reduced_likelihood_function_value)):
              self.best_iteration_fail = reduced_likelihood_function_value
-             self._thetaMemory = theta
+             self._thetaMemory = np.array(theta)
 
         return reduced_likelihood_function_value, par
-
+    
     def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
@@ -375,10 +391,13 @@ class KrgBased(SurrogateModel):
         best_optimal_theta: list(n_comp) or list(dim)
             - The best hyperparameters found by the optimization.
         """
+        # reinitialize optimization best values
+        self.best_iteration_fail = None
+        self._thetaMemory = None
         # Initialize the hyperparameter-optimization
         def minus_reduced_likelihood_function(log10t):
+#            print "fval :", - self._reduced_likelihood_function(theta=10.**log10t)[0]
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
-
         limit, _rhobeg = 10*len(self.options['theta0']), 0.5
         exit_function = False
         if self.name == 'KPLSK':
@@ -392,25 +411,28 @@ class KrgBased(SurrogateModel):
 
             for i in range(len(self.options['theta0'])):
                 constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
-                constraints.append(lambda log10t,i=i:np.log10(10) - log10t[i])
+                constraints.append(lambda log10t,i=i:np.log10(100) - log10t[i])
 
-            # Compute D which is the componentwise distances between locations
-            #  x and x' at which the correlation model should be evaluated.
+            
             self.D = self._componentwise_distance(D,opt=ii)
-
+            
             # Initialization
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while (k < stop):
                 # Use specified starting point as first guess
                 theta0 = self.options['theta0']
+                
                 try:
+                
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
-                        minus_reduced_likelihood_function,np.log10(theta0), \
-                        constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
-
+                    minus_reduced_likelihood_function,np.log10(theta0), \
+                    constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
+                    optimal_rlf_value, optimal_par = \
+                    self._reduced_likelihood_function(theta=optimal_theta)
+                    
                     optimal_rlf_value, optimal_par = \
                         self._reduced_likelihood_function(theta=optimal_theta)
-
+                    
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -438,7 +460,7 @@ class KrgBased(SurrogateModel):
                                     best_optimal_rlf_value = optimal_rlf_value
                                     best_optimal_par = optimal_par
                                     best_optimal_theta = optimal_theta
-
+    
                             else:
                                 if self.best_iteration_fail > best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory.copy()
@@ -480,7 +502,6 @@ class KrgBased(SurrogateModel):
                 limit = 10*self.options['n_comp']
                 self.best_iteration_fail = None
                 exit_function = True
-
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
 
@@ -499,14 +520,22 @@ class KrgBased(SurrogateModel):
                 raise ValueError("regr should be one of %s or callable, "
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['poly']))
+        if self.name == 'MFK' and not callable(self.options['rho_regr']):
+            if self.options['rho_regr'] in self._regression_types:
+                self.options['rho_regr'] = self._regression_types[
+                    self.options['rho_regr']]
+            else:
+                raise ValueError("rho_regr should be one of %s or callable, "
+                                 "%s was given." % (self._regression_types.keys(),
+                                self.options['rho_regr']))
 
-        if self.name == 'Kriging':
+        if self.name == 'Kriging' or self.name == 'MFK':
             d = self.nx
         else:
             d = self.options['n_comp']
 
         if len(self.options['theta0']) != d:
-            raise Exception('the number of %s should be equal to the length of theta0., (d)')
+            raise Exception('the number of %s should be equal to the length of theta0.' %(d))
 
         if not callable(self.options['corr']):
             if self.options['corr'] in self._correlation_types:
