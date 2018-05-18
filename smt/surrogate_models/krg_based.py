@@ -27,8 +27,8 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
 from smt.utils.kriging_utils import abs_exp, standardization, l1_cross_distances
-from smt.utils.kriging_utils import squared_exp as squar_exp
-from sklearn.gaussian_process.correlation_models import squared_exponential
+from smt.utils.kriging_utils import squar_exp as squar_exp_faulty
+from sklearn.gaussian_process.correlation_models import squared_exponential as squar_exp
 from scipy.optimize import minimize
 """
 The kriging class.
@@ -174,11 +174,11 @@ class KrgBased(SurrogateModel):
         # Set up R
         
     
-        r = self.options['corr'](theta, self.D).reshape(-1,self.nx)
-        print "this is: ", r, theta
+        r = self.options['corr'](theta, self.D).reshape(-1,1)
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
         R = np.eye(self.nt) * (1. + nugget)
+        print r.shape, R.shape
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:,0]
         
@@ -424,8 +424,8 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 theta0 = self.options['theta0']
                 
-                try:
-                
+#                try:
+                if True:
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
                     minus_reduced_likelihood_function,np.log10(theta0), \
                     constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
@@ -467,7 +467,7 @@ class KrgBased(SurrogateModel):
                                         self._reduced_likelihood_function(theta= \
                                             best_optimal_theta)
                     k += 1
-                except ValueError as ve:
+#                except ValueError as ve:
                     # If iteration is max when fmin_cobyla fail is not reached
                     if (self.nb_ill_matrix > 0):
                         self.nb_ill_matrix -= 1

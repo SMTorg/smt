@@ -27,8 +27,8 @@ from smt.extensions import MFK
 sm = MFK(theta0=np.array(Xe.shape[1]*[1.]))
 
 
-sm.set_training_values(Xc, yc, name =0) #low-fidelity dataset
-sm.set_training_values(Xe, ye, name =1) #high-fidelity dataset
+sm.set_training_values(Xc, yc, name =0) #low-fidelity dataset names being integers from 0 to level-1
+sm.set_training_values(Xe, ye) #high-fidelity dataset without name
 sm.train()
 x = np.linspace(0, 1, 101, endpoint = True).reshape(-1,1)
 

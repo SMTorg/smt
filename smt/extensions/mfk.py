@@ -96,6 +96,8 @@ class MFK(KrgBased):
             xt.append(self.training_points[i][0][0])
             yt.append(self.training_points[i][0][1])
             i = i+1
+        xt.append(self.training_points[None][0][0])
+        yt.append(self.training_points[None][0][1])
             
         
         self._check_list_structure(xt, yt)
