@@ -201,7 +201,6 @@ class MFK(KrgBased):
         f = self.options['poly'](X)
         f0 = self.options['poly'](X)
         dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
-        dx = l1_cross_distances(X, Y=self.X[0])
 
         # Get regression function and correlation
         F = self.F_all[0]
@@ -238,9 +237,10 @@ class MFK(KrgBased):
         # scaled predictor
         for i in range(nlevel):# Predictor
             mu[:,i] = self.y_mean + self.y_std * mu[:,i]
-            
+           
+        self.mu_all = mu
         return mu[:,-1].reshape((n_eval,1))
-
+        
 
 
     def _predict_variances(self, X):
@@ -271,7 +271,6 @@ class MFK(KrgBased):
         f = self.options['poly'](X)
         f0 = self.options['poly'](X)
         dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
-        dx = l1_cross_distances(X, Y=self.X[0])
 
         # Get regression function and correlation
         F = self.F_all[0]
@@ -336,5 +335,6 @@ class MFK(KrgBased):
         for i in range(nlevel):# Predictor
             MSE[:,i] = self.y_std**2 * MSE[:,i]
       
+        self.MSE_all = MSE
         return MSE[:,-1].reshape((n_eval,1))
-    
+        

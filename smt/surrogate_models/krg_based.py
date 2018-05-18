@@ -26,7 +26,8 @@ from smt.utils.caching import cached_operation
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
-from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
+from smt.utils.kriging_utils import abs_exp, standardization, l1_cross_distances
+from smt.utils.kriging_utils import squared_exp as squar_exp
 from sklearn.gaussian_process.correlation_models import squared_exponential
 from scipy.optimize import minimize
 """
@@ -43,8 +44,10 @@ class KrgBased(SurrogateModel):
 
     _correlation_types = {
         'abs_exp': abs_exp,
-        'squar_exp': squared_exponential,
-#        'squar_exp': squar_exp,
+#        'squar_exp': squared_exponential,
+     
+        'squar_exp': squar_exp
+        
         }  # TODO why squar_exp doesn't work
 
     def _initialize(self):
@@ -171,7 +174,7 @@ class KrgBased(SurrogateModel):
         # Set up R
         
     
-        r = self.options['corr'](theta, self.D).reshape(-1,1)
+        r = self.options['corr'](theta, self.D).reshape(-1,self.nx)
         print "this is: ", r, theta
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
@@ -191,7 +194,6 @@ class KrgBased(SurrogateModel):
         Q, G = linalg.qr(Ft, mode='economic')
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
-        print rcondG
         if rcondG < 1e-10:
             # Check F
             sv = linalg.svd(self.F, compute_uv=False)
@@ -429,9 +431,6 @@ class KrgBased(SurrogateModel):
                     constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
                     optimal_rlf_value, optimal_par = \
                     self._reduced_likelihood_function(theta=optimal_theta)
-                    
-                    optimal_rlf_value, optimal_par = \
-                        self._reduced_likelihood_function(theta=optimal_theta)
                     
                     # Compare the new optimizer to the best previous one
                     if k > 0:
