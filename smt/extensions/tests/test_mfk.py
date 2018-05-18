@@ -23,7 +23,6 @@ yc = cheap(Xc)
 
 Xr = np.linspace(0,1, 100)
 from smt.extensions import MFK
-from sklearn.gaussian_process.correlation_models import squared_exponential
 
 sm = MFK(theta0=np.array(Xe.shape[1]*[1.]))
 
@@ -32,6 +31,7 @@ sm.set_training_values(Xc, yc, name =0) #low-fidelity dataset
 sm.set_training_values(Xe, ye, name =1) #high-fidelity dataset
 sm.train()
 x = np.linspace(0, 1, 101, endpoint = True).reshape(-1,1)
+
 y = sm.predict_values(x)
 MSE = sm.predict_variances(x)
 
