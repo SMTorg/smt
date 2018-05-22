@@ -37,7 +37,7 @@ MSE = sm.predict_variances(x)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.fill_between(np.ravel(x), np.ravel(y-10*np.sqrt(MSE)),np.ravel(y+10*np.sqrt(MSE)), facecolor ="grey", edgecolor="g" ,label ='tolerance +/- 3*sigma')
+ax.fill_between(np.ravel(x), np.ravel(y-10*np.sqrt(MSE)),np.ravel(y+10*np.sqrt(MSE)), facecolor ="grey", edgecolor="g" ,label ='tolerance +/- 10*sigma')
 ax.scatter(Xe, ye, label ='expensive')
 ax.scatter(Xc, yc, label ='cheap')
 ax.plot(x, y, label ='surrogate')

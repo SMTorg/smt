@@ -26,9 +26,8 @@ from smt.utils.caching import cached_operation
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.gaussian_process.regression_models import constant, linear, quadratic
-from smt.utils.kriging_utils import abs_exp, standardization, l1_cross_distances
-from smt.utils.kriging_utils import squar_exp as squar_exp_faulty
-from sklearn.gaussian_process.correlation_models import squared_exponential as squar_exp
+from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
+
 from scipy.optimize import minimize
 """
 The kriging class.
@@ -44,8 +43,6 @@ class KrgBased(SurrogateModel):
 
     _correlation_types = {
         'abs_exp': abs_exp,
-#        'squar_exp': squared_exponential,
-     
         'squar_exp': squar_exp
         
         }  # TODO why squar_exp doesn't work
@@ -178,7 +175,6 @@ class KrgBased(SurrogateModel):
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
         R = np.eye(self.nt) * (1. + nugget)
-        print r.shape, R.shape
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:,0]
         

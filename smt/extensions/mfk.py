@@ -32,7 +32,6 @@ class MFK(KrgBased):
         super(MFK, self)._initialize()
         declare = self.options.declare
         
-        
         declare('rho_regr', 'constant',types=FunctionType,\
                 values=('constant', 'linear', 'quadratic'), desc='regr. term')
         declare('theta0', None, types=(np.ndarray),\
@@ -203,7 +202,7 @@ class MFK(KrgBased):
         f = self.options['poly'](X)
         f0 = self.options['poly'](X)
         dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
-
+        d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]['C']
@@ -211,7 +210,7 @@ class MFK(KrgBased):
         beta = self.optimal_par[0]['beta']
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y[0], lower=True)
-        r_ = self.options['corr'](self.optimal_theta[0], dx).reshape(n_eval, self.nt_all[0])
+        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
         gamma = solve_triangular(C.T, yt - np.dot(Ft,beta), lower=False)
 
         # Scaled predictor
@@ -223,7 +222,8 @@ class MFK(KrgBased):
             C = self.optimal_par[i]['C']
             g = self.options['rho_regr'](X)
             dx = manhattan_distances(X, Y=self.X[i], sum_over_features=False)
-            r_ = self.options['corr'](self.optimal_theta[i], dx).reshape(n_eval, self.nt_all[i])
+            d = self._componentwise_distance(dx)
+            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
@@ -273,7 +273,7 @@ class MFK(KrgBased):
         f = self.options['poly'](X)
         f0 = self.options['poly'](X)
         dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
-
+        d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]['C']
@@ -281,7 +281,7 @@ class MFK(KrgBased):
         beta = self.optimal_par[0]['beta']
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y[0], lower=True)
-        r_ = self.options['corr'](self.optimal_theta[0], dx).reshape(n_eval, self.nt_all[0])
+        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
         gamma = solve_triangular(C.T, yt - np.dot(Ft,beta), lower=False)
 
         # Scaled predictor
@@ -303,7 +303,8 @@ class MFK(KrgBased):
             C = self.optimal_par[i]['C']
             g = self.options['rho_regr'](X)
             dx = manhattan_distances(X, Y=self.X[i], sum_over_features=False)
-            r_ = self.options['corr'](self.optimal_theta[i], dx).reshape(n_eval, self.nt_all[i])
+            d = self._componentwise_distance(dx)
+            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
