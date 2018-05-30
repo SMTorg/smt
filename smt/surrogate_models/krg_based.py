@@ -352,7 +352,7 @@ class KrgBased(SurrogateModel):
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
 
         C = self.optimal_par['C']
-        rt = linalg.solve_triangular(self.optimal_par['C'], r.T, lower=True)
+        rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(self.optimal_par['G'].T,np.dot(self.optimal_par['Ft'].T, rt) -
                              self.options['poly'](x).T)

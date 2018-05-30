@@ -15,16 +15,20 @@ def cheap(Xc):
 def expensive(Xe):
     return ((Xe*6-2)**2)*np.sin((Xe*6-2)*2)
 
-Xe = np.array([[0],[0.4],[1]])
-Xc = np.vstack((np.array([[0.1],[0.2],[0.3],[0.5],[0.6],[0.7],[0.8],[0.9]]),Xe))
+Xe = np.array([[0],[0.5],[1]])
+Xc = np.vstack((np.array([[0.2],[0.5],[0.8]]),Xe))
+
+n_doe = Xe.size
+n_cheap = Xc.size
 
 ye = expensive(Xe)
 yc = cheap(Xc)
 
 Xr = np.linspace(0,1, 100)
+Yr = expensive (Xr)
 from smt.extensions import MFK
 
-sm = MFK(theta0=np.array(Xe.shape[1]*[1.]))
+sm = MFK(theta0=np.array(Xe.shape[1]*[1.]), print_global = False)
 
 
 sm.set_training_values(Xc, yc, name =0) #low-fidelity dataset names being integers from 0 to level-1
@@ -35,14 +39,15 @@ x = np.linspace(0, 1, 101, endpoint = True).reshape(-1,1)
 y = sm.predict_values(x)
 MSE = sm.predict_variances(x)
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.fill_between(np.ravel(x), np.ravel(y-10*np.sqrt(MSE)),np.ravel(y+10*np.sqrt(MSE)), facecolor ="grey", edgecolor="g" ,label ='tolerance +/- 10*sigma')
-ax.scatter(Xe, ye, label ='expensive')
-ax.scatter(Xc, yc, label ='cheap')
-ax.plot(x, y, label ='surrogate')
-ax.plot(Xr, expensive(Xr), label ='reference')
+plt.figure()
 
-ax.legend(fontsize ='x-large')
+plt.plot(Xr, expensive(Xr), label ='reference')
+plt.plot(x, y, label ='mean_gp')
+plt.plot(Xe, ye, 'ko', label ='expensive doe')
+plt.plot(Xc, yc, 'g*', label ='cheap doe')
 
+plt.fill_between(np.ravel(x), np.ravel(y-3*np.sqrt(MSE)),np.ravel(y+3*np.sqrt(MSE)), facecolor ="lightgrey", edgecolor="g" ,label ='tolerance +/- 3*sigma')
+plt.legend(loc=0)
+plt.ylim(-10,17)
+plt.xlim(-0.1,1.1)
 plt.show()
