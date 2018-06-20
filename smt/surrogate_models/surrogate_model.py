@@ -51,16 +51,16 @@ class SurrogateModel(object):
         --------
         >>> from smt.surrogate_models import RBF
         >>> sm = RBF(print_global=False)
-        """
+        """        
         self.options = OptionsDictionary()
-
+        
         self.supports = supports = {}
         supports['training_derivatives'] = False
         supports['derivatives'] = False
         supports['output_derivatives'] = False
         supports['adjoint_api'] = False
         supports['variances'] = False
-
+        
         declare = self.options.declare
 
         declare('print_global', True, types=bool,
@@ -80,6 +80,7 @@ class SurrogateModel(object):
         self.training_points = defaultdict(dict)
 
         self.printer = Printer()
+        
 
     def set_training_values(self, xt, yt, name=None):
         """
@@ -237,6 +238,9 @@ class SurrogateModel(object):
         y : np.ndarray[n, ny]
             Output values at the prediction points.
         """
+        ### tests has to be changed
+#        print 'val', x
+#        x = x.reshape(-1,1) 
         x = check_2d_array(x, 'x')
         check_nx(self.nx, x)
 
@@ -260,7 +264,7 @@ class SurrogateModel(object):
         self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
-
+#        print "y", y 
         return y.reshape((n, self.ny))
 
     def predict_derivatives(self, x, kx):
@@ -341,7 +345,10 @@ class SurrogateModel(object):
         -------
         s2 : np.ndarray[n, ny]
             Variances.
-        """
+        """        
+        ### tests has to be changed
+#        print 'var', x
+#        x = x.reshape(-1,1) 
         check_support(self, 'variances')
         check_nx(self.nx, x)
 

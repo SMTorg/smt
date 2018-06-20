@@ -32,7 +32,7 @@ class MFK(KrgBased):
         
         declare('rho_regr', 'constant',types=FunctionType,\
                 values=('constant', 'linear', 'quadratic'), desc='regr. term')
-        declare('theta0', None, types=(np.ndarray), \
+        declare('theta0', None, types=(list, np.ndarray), \
                 desc='Initial hyperparameters')
         self.name = 'MFK'
     
