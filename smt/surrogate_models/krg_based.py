@@ -169,22 +169,36 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = - np.inf
         par = {}
         # Set up R
-        
-    
-        r = self.options['corr'](theta, self.D).reshape(-1,1)
         MACHINE_EPSILON = np.finfo(np.double).eps
         nugget = 10.*MACHINE_EPSILON
-        R = np.eye(self.nt) * (1. + nugget)
+        if self.name == 'MFK':
+            if self._lvl != self.nlvl:
+                # in the case of multi-fidelity optimization
+                # it is very probable that lower-fidelity correlation matrix
+                # becomes ill-conditionned 
+                nugget = 10.* nugget 
+        noise = 0.
+        tmp_var = theta 
+        if self.name == 'MFK':
+            if self.options['eval_noise']:
+                theta = tmp_var[:-1]
+                noise = tmp_var[-1]
+        
+        r = self.options['corr'](theta, self.D).reshape(-1,1)
+        
+        R = np.eye(self.nt) * (1. + nugget+ noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:,0]
         
         
         # Cholesky decomposition of R
         try:
+            
             C = linalg.cholesky(R, lower=True)
-        except linalg.LinAlgError:
+        except (linalg.LinAlgError, ValueError) as e:
+            print "exception : ", e
             return reduced_likelihood_function_value, par
-
+        
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
         Q, G = linalg.qr(Ft, mode='economic')
@@ -236,12 +250,12 @@ class KrgBased(SurrogateModel):
 
             if (reduced_likelihood_function_value >  self.best_iteration_fail):
                  self.best_iteration_fail = reduced_likelihood_function_value
-                 self._thetaMemory = np.array(theta)
+                 self._thetaMemory = np.array(tmp_var)
 
         elif (self.best_iteration_fail is None) and \
             (not np.isinf(reduced_likelihood_function_value)):
              self.best_iteration_fail = reduced_likelihood_function_value
-             self._thetaMemory = np.array(theta)
+             self._thetaMemory = np.array(tmp_var)
 
         return reduced_likelihood_function_value, par
     
@@ -396,7 +410,7 @@ class KrgBased(SurrogateModel):
         def minus_reduced_likelihood_function(log10t):
 #            print "fval :", - self._reduced_likelihood_function(theta=10.**log10t)[0]
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
-        limit, _rhobeg = 10*len(self.options['theta0']), 0.5
+        limit, _rhobeg = 100*len(self.options['theta0']), 0.5
         exit_function = False
         if self.name == 'KPLSK':
             n_iter = 1
@@ -410,7 +424,7 @@ class KrgBased(SurrogateModel):
             for i in range(len(self.options['theta0'])):
                 constraints.append(lambda log10t,i=i:log10t[i] - np.log10(1e-6))
                 constraints.append(lambda log10t,i=i:np.log10(100) - log10t[i])
-
+                
             
             self.D = self._componentwise_distance(D,opt=ii)
             
@@ -419,15 +433,20 @@ class KrgBased(SurrogateModel):
             while (k < stop):
                 # Use specified starting point as first guess
                 theta0 = self.options['theta0']
-                
-#                try:
-                if True:
+                if self.name=='MFK':
+                    if self.options['eval_noise']:
+#                         limit = 1000
+#                         print theta0, np.array([self.options['noise0']])
+                        theta0 = np.concatenate([theta0, np.array([self.options['noise0']])])
+                        constraints.append(lambda log10t:log10t[-1] + 16)
+                        constraints.append(lambda log10t:10 - log10t[-1])
+                try:
+#                 if True:
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
                     minus_reduced_likelihood_function,np.log10(theta0), \
                     constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
                     optimal_rlf_value, optimal_par = \
                     self._reduced_likelihood_function(theta=optimal_theta)
-                    
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -463,7 +482,7 @@ class KrgBased(SurrogateModel):
                                         self._reduced_likelihood_function(theta= \
                                             best_optimal_theta)
                     k += 1
-#                except ValueError as ve:
+                except ValueError as ve:
                     # If iteration is max when fmin_cobyla fail is not reached
                     if (self.nb_ill_matrix > 0):
                         self.nb_ill_matrix -= 1

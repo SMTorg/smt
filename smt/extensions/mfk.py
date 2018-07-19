@@ -30,10 +30,17 @@ class MFK(KrgBased):
         super(MFK, self)._initialize()
         declare = self.options.declare
         
-        declare('rho_regr', 'constant',types=FunctionType,\
+        declare('rho_regr', 'linear',types=FunctionType,\
                 values=('constant', 'linear', 'quadratic'), desc='regr. term')
         declare('theta0', None, types=(list, np.ndarray), \
                 desc='Initial hyperparameters')
+        declare('eval_noise', False, types = bool, \
+                values = (True, False), desc ='noise evaluation flag')
+        declare('noise0', 1e-6, types = float, \
+                desc ='Initial noise hyperparameter')
+        declare('optim_var', False, types = bool, \
+                values = (True, False), \
+                desc ='Turning this option to True, forces variance to zero at HF samples ')
         self.name = 'MFK'
     
 
@@ -108,7 +115,7 @@ class MFK(KrgBased):
         n_samples = self.nt_all
 
         # initialize lists
-        
+        self.noise = nlevel*[0]
         self.D_all = nlevel*[0]
         self.F_all = nlevel*[0]
         self.p_all = nlevel*[0]
@@ -132,7 +139,7 @@ class MFK(KrgBased):
             if lvl > 0:
                 F_rho = self.options['rho_regr'](X[lvl])
                 self.q_all[lvl] = F_rho.shape[1]
-                self.F_all[lvl] = np.hstack((F_rho*np.dot((self.y[lvl-1])[-n_samples[lvl]:],
+                self.F_all[lvl] = np.hstack((F_rho*np.dot(self._predict_intermediate_values(X[lvl], lvl),
                                               np.ones((1,self.q_all[lvl]))), self.F_all[lvl]))
             else:
                 self.q_all[lvl] = 0
@@ -151,10 +158,11 @@ class MFK(KrgBased):
                                  % (n_samples[i], self.p_all[lvl]+self.q_all[lvl]))
 
        
-        for lvl in range(nlevel):
+#         for lvl in range(nlevel):
             # Determine Gaussian Process model parameters
             self.F = self.F_all[lvl]
             D, self.ij = self.D_all[lvl]
+            self._lvl = lvl
 #            D = self.D_all[lvl]
             self.nt = self.nt_all[lvl]
             self.y_norma = self.y[lvl]
@@ -163,38 +171,47 @@ class MFK(KrgBased):
             self.p = self.p_all[lvl]
             self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[lvl] = \
                 self._optimize_hyperparam(D)
-            
+            if self.options['eval_noise']:
+                tmp_list = self.optimal_theta[lvl]
+                self.optimal_theta[lvl] = tmp_list[:-1]
+                self.noise[lvl] = tmp_list[-1]
             del self.y_norma, self.D
+        
+        if self.options['eval_noise'] and self.options['optim_var']:
+            for lvl in range(self.nlvl-1):
+                self.set_training_values(X[lvl], self._predict_intermediate_values(X[lvl], lvl+1), name = lvl)
+            self.set_training_values(X[-1], self._predict_intermediate_values(X[-1], self.nlvl))   
+            self.options['eval_noise'] = False
+            self._new_train()
             
-
     def _componentwise_distance(self,dx,opt=0):
         d = componentwise_distance(dx,self.options['corr'].__name__,
                                    self.nx)
         return d
-
-    def _predict_values(self, X):
+    
+    def _predict_intermediate_values(self, X, lvl):
         """
         Evaluates the model at a set of points.
+        Used for training the model at level lvl.
+        Allows to relax the order problem.
 
         Arguments
         ---------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        lvl : level at which the prediction is made
 
         Returns
         -------
         y : np.ndarray
             Evaluation point output variable values
         """
-        
-        # Initialization X = atleast_2d(X)
-        nlevel = self.nlvl
         n_eval, _ = X.shape
 #        if n_features_X != self.n_features:
 #            raise ValueError("Design must be an array of n_features columns.")
 
         # Calculate kriging mean and variance at level 0
-        mu = np.zeros((n_eval, nlevel))
+        mu = np.zeros((n_eval, lvl))
 #        if self.normalize:
 #            X = (X - self.X_mean) / self.X_std
 ##                X = (X - self.X_mean[0]) / self.X_std[0]
@@ -216,7 +233,7 @@ class MFK(KrgBased):
         mu[:,0]= (np.dot(f, beta) + np.dot(r_,gamma)).ravel()
 
         # Calculate recursively kriging mean and variance at level i
-        for i in range(1,nlevel):
+        for i in range(1,lvl):
             F = self.F_all[i]
             C = self.optimal_par[i]['C']
             g = self.options['rho_regr'](X)
@@ -235,12 +252,30 @@ class MFK(KrgBased):
                        + np.dot(r_t.T, yt - np.dot(Ft,beta))).ravel()
 
         # scaled predictor
-        for i in range(nlevel):# Predictor
+        for i in range(lvl):# Predictor
             mu[:,i] = self.y_mean + self.y_std * mu[:,i]
            
-        self.mu_all = mu
         return mu[:,-1].reshape((n_eval,1))
         
+        
+        
+
+    def _predict_values(self, X):
+        """
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        """
+        
+        return self._predict_intermediate_values( X, self.nlvl)
 
 
     def _predict_variances(self, X):
@@ -257,85 +292,7 @@ class MFK(KrgBased):
         y : np.ndarray
             Evaluation point output variable values
         """
-        # Initialization X = atleast_2d(X)
-        nlevel = self.nlvl
-        n_eval, n_features_X = X.shape
-#        if n_features_X != self.n_features:
-#            raise ValueError("Design must be an array of n_features columns.")
-
-        # Calculate kriging mean and variance at level 0
-        mu = np.zeros((n_eval, nlevel))
-#        if self.normalize:
-#            X = (X - self.X_mean) / self.X_std
-##                X = (X - self.X_mean[0]) / self.X_std[0]
-        f = self.options['poly'](X)
-        f0 = self.options['poly'](X)
-        dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
-        d = self._componentwise_distance(dx)
-        # Get regression function and correlation
-        F = self.F_all[0]
-        C = self.optimal_par[0]['C']
-
-        beta = self.optimal_par[0]['beta']
-        Ft = solve_triangular(C, F, lower=True)
-        yt = solve_triangular(C, self.y[0], lower=True)
-        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
-        gamma = solve_triangular(C.T, yt - np.dot(Ft,beta), lower=False)
-
-        # Scaled predictor
-        mu[:,0]= (np.dot(f, beta) + np.dot(r_,gamma)).ravel()
-
-    
-        self.sigma2_rho = nlevel*[None]
-        MSE = np.zeros((n_eval,nlevel))
-        r_t = solve_triangular(C, r_.T, lower=True)
-        G = self.optimal_par[0]['G']
-
-        u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
-        MSE[:,0] = self.optimal_par[0]['sigma2'] * (1 \
-                            - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0))
-
-        # Calculate recursively kriging mean and variance at level i
-        for i in range(1,nlevel):
-            F = self.F_all[i]
-            C = self.optimal_par[i]['C']
-            g = self.options['rho_regr'](X)
-            dx = manhattan_distances(X, Y=self.X[i], sum_over_features=False)
-            d = self._componentwise_distance(dx)
-            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
-            f = np.vstack((g.T*mu[:,i-1], f0.T))
-
-            Ft = solve_triangular(C, F, lower=True)
-            yt = solve_triangular(C, self.y[i], lower=True)
-            r_t = solve_triangular(C,r_.T, lower=True)
-            G = self.optimal_par[i]['G']
-            beta = self.optimal_par[i]['beta']
-
-            # scaled predictor
-            
-
-        
-            sigma2 = self.optimal_par[i]['sigma2'] 
-            q = self.q_all[i]
-            p = self.p_all[i]
-            Q_ = (np.dot((yt-np.dot(Ft,beta)).T, yt-np.dot(Ft,beta)))[0,0]
-            u_ = solve_triangular(G.T, f - np.dot(Ft.T, r_t), lower=True)
-            sigma2_rho = np.dot(g, \
-                sigma2*linalg.inv(np.dot(G.T,G))[:q,:q] \
-                    + np.dot(beta[:q], beta[:q].T))
-            sigma2_rho = (sigma2_rho * g).sum(axis=1)
-            MSE[:,i] = sigma2_rho * MSE[:,i-1] \
-                            + Q_/(2*(self.nt_all[i]-p-q)) \
-                            * (1 - (r_t**2).sum(axis=0)) \
-                            + sigma2 * (u_**2).sum(axis=0)
-
-                
-
-        # scaled predictor
-        for i in range(nlevel):# Predictor
-            MSE[:,i] = self.y_std**2 * MSE[:,i]
-      
-        return MSE[:,-1].reshape((n_eval,1))
+        return self.predict_variances_all_levels(X)[0][:,-1]
         
     def predict_variances_all_levels(self, X):
         """
@@ -387,8 +344,9 @@ class MFK(KrgBased):
         G = self.optimal_par[0]['G']
 
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
-        MSE[:,0] = self.optimal_par[0]['sigma2'] * (1 \
+        MSE[:,0] = self.optimal_par[0]['sigma2'] * (1 + self.noise[0]\
                             - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0))
+        
 
         # Calculate recursively kriging mean and variance at level i
         for i in range(1,nlevel):
@@ -420,9 +378,10 @@ class MFK(KrgBased):
                     + np.dot(beta[:q], beta[:q].T))
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
+            
             MSE[:,i] = sigma2_rho * MSE[:,i-1] \
                             + Q_/(2*(self.nt_all[i]-p-q)) \
-                            * (1 - (r_t**2).sum(axis=0)) \
+                            * (1 + self.noise[i] - (r_t**2).sum(axis=0)) \
                             + sigma2 * (u_**2).sum(axis=0)
 
                 
