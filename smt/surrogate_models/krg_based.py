@@ -413,7 +413,7 @@ class KrgBased(SurrogateModel):
         def minus_reduced_likelihood_function(log10t):
 #            print "fval :", - self._reduced_likelihood_function(theta=10.**log10t)[0]
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
-        limit, _rhobeg = 100*len(self.options['theta0']), 0.5
+        limit, _rhobeg = 10*len(self.options['theta0']), 0.5
         exit_function = False
         if self.name == 'KPLSK':
             n_iter = 1
