@@ -15,6 +15,7 @@ from smt.utils.kriging_utils import l1_cross_distances, componentwise_distance
 from scipy.linalg import solve_triangular
 from scipy import linalg
 from sklearn.metrics.pairwise import manhattan_distances
+import copy 
 
 """
 The MFK class.
@@ -30,14 +31,10 @@ class MFK(KrgBased):
         super(MFK, self)._initialize()
         declare = self.options.declare
         
-        declare('rho_regr', 'linear',types=FunctionType,\
+        declare('rho_regr', 'constant',types=FunctionType,\
                 values=('constant', 'linear', 'quadratic'), desc='regr. term')
         declare('theta0', None, types=(list, np.ndarray), \
                 desc='Initial hyperparameters')
-        declare('eval_noise', False, types = bool, \
-                values = (True, False), desc ='noise evaluation flag')
-        declare('noise0', 1e-6, types = float, \
-                desc ='Initial noise hyperparameter')
         declare('optim_var', False, types = bool, \
                 values = (True, False), \
                 desc ='Turning this option to True, forces variance to zero at HF samples ')
@@ -163,7 +160,6 @@ class MFK(KrgBased):
             self.F = self.F_all[lvl]
             D, self.ij = self.D_all[lvl]
             self._lvl = lvl
-#            D = self.D_all[lvl]
             self.nt = self.nt_all[lvl]
             self.y_norma = self.y[lvl]
             self.X_norma = self.X[lvl]
@@ -227,7 +223,8 @@ class MFK(KrgBased):
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y[0], lower=True)
         r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
-        gamma = solve_triangular(C.T, yt - np.dot(Ft,beta), lower=False)
+        gamma = self.optimal_par[0]['gamma']
+        
 
         # Scaled predictor
         mu[:,0]= (np.dot(f, beta) + np.dot(r_,gamma)).ravel()
@@ -241,15 +238,13 @@ class MFK(KrgBased):
             d = self._componentwise_distance(dx)
             r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
-
             Ft = solve_triangular(C, F, lower=True)
             yt = solve_triangular(C, self.y[i], lower=True)
-            r_t = solve_triangular(C,r_.T, lower=True)
             beta = self.optimal_par[i]['beta']
-
+            gamma = self.optimal_par[i]['gamma']
             # scaled predictor
             mu[:,i] = (np.dot(f.T, beta) \
-                       + np.dot(r_t.T, yt - np.dot(Ft,beta))).ravel()
+                       + np.dot(r_, gamma)).ravel()
 
         # scaled predictor
         for i in range(lvl):# Predictor
@@ -318,8 +313,6 @@ class MFK(KrgBased):
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
 #        if self.normalize:
-#            X = (X - self.X_mean) / self.X_std
-##                X = (X - self.X_mean[0]) / self.X_std[0]
         f = self.options['poly'](X)
         f0 = self.options['poly'](X)
         dx = manhattan_distances(X, Y=self.X[0], sum_over_features=False)
@@ -332,7 +325,7 @@ class MFK(KrgBased):
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y[0], lower=True)
         r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
-        gamma = solve_triangular(C.T, yt - np.dot(Ft,beta), lower=False)
+        gamma = self.optimal_par[0]['gamma']
 
         # Scaled predictor
         mu[:,0]= (np.dot(f, beta) + np.dot(r_,gamma)).ravel()
@@ -348,7 +341,7 @@ class MFK(KrgBased):
                             - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0))
         
 
-        # Calculate recursively kriging mean and variance at level i
+        # Calculate recursively kriging variance at level i
         for i in range(1,nlevel):
             F = self.F_all[i]
             C = self.optimal_par[i]['C']
@@ -365,9 +358,6 @@ class MFK(KrgBased):
             beta = self.optimal_par[i]['beta']
 
             # scaled predictor
-            
-
-        
             sigma2 = self.optimal_par[i]['sigma2'] 
             q = self.q_all[i]
             p = self.p_all[i]
@@ -391,3 +381,91 @@ class MFK(KrgBased):
             MSE[:,i] = self.y_std**2 * MSE[:,i]
       
         return MSE, sigma2_rhos
+    
+    
+    def _predict_derivatives(self, x, kx):
+        """
+        Evaluates the derivatives at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
+        Returns
+        -------
+        y : np.ndarray*self.y_std/self.X_std[kx])
+            Derivative values.
+        """
+        
+        
+        lvl =self.nlvl
+        # Initialization
+        
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_mean) / self.X_std
+        
+        dy_dx = np.zeros((n_eval, lvl))
+        
+        if self.options['corr'].__name__ != 'squar_exp':
+            raise ValueError(
+            'The derivative is only available for square exponential kernel')
+        if self.options['poly'].__name__ == 'constant':
+            df = np.zeros([n_eval,1])
+        elif self.options['poly'].__name__ == 'linear':
+            df = np.zeros((n_eval, self.nx + 1))
+            df[:,1:] = 1
+        else:
+            raise ValueError(
+                'The derivative is only available for ordinary kriging or '+
+                'universal kriging using a linear trend')
+        df0 = copy.deepcopy(df)
+        if self.options['rho_regr'].__name__ != 'constant' :
+            raise ValueError(
+                'The derivative is only available for regression rho constant')
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X[0], sum_over_features=
+                                 False)
+        d = self._componentwise_distance(dx)
+        # Compute the correlation function
+        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval,self.nt_all[0])
+
+        # Beta and gamma = R^-1(y-FBeta)
+        beta = self.optimal_par[0]['beta']
+        gamma = self.optimal_par[0]['gamma']
+
+        df_dx = np.dot(df, beta)
+        d_dx=x[:,kx].reshape((n_eval,1))-self.X[0][:,kx].reshape((1,self.nt_all[0]))
+        theta = self.optimal_theta[0]
+
+        dy_dx[:,0] = np.ravel((df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std[kx])
+
+
+
+        # Calculate recursively derivative at level i
+        for i in range(1,lvl):
+            F = self.F_all[i]
+            C = self.optimal_par[i]['C']
+            g = self.options['rho_regr'](x)
+            dx = manhattan_distances(x, Y=self.X[i], sum_over_features=False)
+            d = self._componentwise_distance(dx)
+            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
+            df = np.vstack((g.T*dy_dx[:,i-1], df0.T))
+
+            Ft = solve_triangular(C, F, lower=True)
+            yt = solve_triangular(C, self.y[i], lower=True)
+            beta = self.optimal_par[i]['beta']
+            gamma = self.optimal_par[i]['gamma']
+            
+            df_dx = np.dot(df.T, beta)
+            d_dx=x[:,kx].reshape((n_eval,1))-self.X[i][:,kx].reshape((1,self.nt_all[i]))
+            theta = self.optimal_theta[i]
+            # scaled predictor
+            dy_dx[:,i] = np.ravel(df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std[kx]
+       
+        
+           
+        return dy_dx[:,-1]
+        
