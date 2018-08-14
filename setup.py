@@ -70,7 +70,7 @@ setup(name='smt',
         'pyDOE',
         'matplotlib',
         'numpydoc',
-        'six>=1.10',
+        'six==1.10',
         'scipy'
     ],
     zip_safe=False,
