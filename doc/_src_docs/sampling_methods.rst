@@ -12,7 +12,6 @@ These are listed below.
    sampling_methods/random
    sampling_methods/lhs
    sampling_methods/full_factorial
-   sampling_methods/clustered
 
 Usage
 -----
