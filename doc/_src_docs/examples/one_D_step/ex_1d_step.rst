@@ -79,48 +79,48 @@ RMTB
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000000
+           Computing dof2coeff - done. Time (sec):  0.0000021
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0004480
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0009999
+           Computing energy terms - done. Time (sec):  0.0017099
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0020001
+           Computing approximation terms - done. Time (sec):  0.0005701
+        Pre-computing matrices - done. Time (sec):  0.0028081
         Solving for degrees of freedom ...
            Solving initial startup problem (n=100) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.032652876e-01 8.436300000e-03
-                 Iteration (num., iy, grad. norm, func.) :   0   0 4.801195655e-08 2.334012037e-13
-              Solving for output 0 - done. Time (sec):  0.0060000
-           Solving initial startup problem (n=100) - done. Time (sec):  0.0070000
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.825713981e-09 2.217815952e-13
+              Solving for output 0 - done. Time (sec):  0.0111849
+           Solving initial startup problem (n=100) - done. Time (sec):  0.0112500
            Solving nonlinear problem (n=100) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.453373643e-11 2.297930422e-13
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.284303425e-11 2.269770253e-13
-                 Iteration (num., iy, grad. norm, func.) :   1   0 4.589638783e-10 1.407667295e-13
-                 Iteration (num., iy, grad. norm, func.) :   2   0 3.403626670e-10 9.942133065e-14
-                 Iteration (num., iy, grad. norm, func.) :   3   0 1.032120050e-10 2.775019485e-14
-                 Iteration (num., iy, grad. norm, func.) :   4   0 2.993674882e-11 1.196201530e-14
-                 Iteration (num., iy, grad. norm, func.) :   5   0 8.283649219e-12 9.067876728e-15
-                 Iteration (num., iy, grad. norm, func.) :   6   0 2.030161663e-12 8.531007288e-15
-                 Iteration (num., iy, grad. norm, func.) :   7   0 3.563548349e-13 8.459283480e-15
-                 Iteration (num., iy, grad. norm, func.) :   8   0 3.204644635e-13 8.458993607e-15
-                 Iteration (num., iy, grad. norm, func.) :   9   0 2.583093587e-13 8.457968365e-15
-                 Iteration (num., iy, grad. norm, func.) :  10   0 5.345624535e-14 8.454274624e-15
-                 Iteration (num., iy, grad. norm, func.) :  11   0 4.315804707e-14 8.454042909e-15
-                 Iteration (num., iy, grad. norm, func.) :  12   0 1.198658550e-14 8.453479025e-15
-                 Iteration (num., iy, grad. norm, func.) :  13   0 3.630990861e-15 8.453310845e-15
-                 Iteration (num., iy, grad. norm, func.) :  14   0 1.000068980e-15 8.453272915e-15
-                 Iteration (num., iy, grad. norm, func.) :  15   0 8.208460651e-16 8.453272829e-15
-                 Iteration (num., iy, grad. norm, func.) :  16   0 6.840939871e-16 8.453272397e-15
-                 Iteration (num., iy, grad. norm, func.) :  17   0 5.111136355e-16 8.453271921e-15
-                 Iteration (num., iy, grad. norm, func.) :  18   0 5.140623998e-16 8.453271388e-15
-                 Iteration (num., iy, grad. norm, func.) :  19   0 1.750462375e-16 8.453270632e-15
-              Solving for output 0 - done. Time (sec):  0.1320000
-           Solving nonlinear problem (n=100) - done. Time (sec):  0.1320000
-        Solving for degrees of freedom - done. Time (sec):  0.1389999
-     Training - done. Time (sec):  0.1410000
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.552478064e-11 2.217739692e-13
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.398604938e-11 2.190065593e-13
+                 Iteration (num., iy, grad. norm, func.) :   1   0 4.568460900e-10 1.408376384e-13
+                 Iteration (num., iy, grad. norm, func.) :   2   0 3.695778954e-10 1.123176246e-13
+                 Iteration (num., iy, grad. norm, func.) :   3   0 1.093471806e-10 2.876640533e-14
+                 Iteration (num., iy, grad. norm, func.) :   4   0 6.776407500e-11 2.001901997e-14
+                 Iteration (num., iy, grad. norm, func.) :   5   0 5.303098517e-11 1.710293788e-14
+                 Iteration (num., iy, grad. norm, func.) :   6   0 1.515151561e-11 9.974345459e-15
+                 Iteration (num., iy, grad. norm, func.) :   7   0 4.058068330e-12 8.686676540e-15
+                 Iteration (num., iy, grad. norm, func.) :   8   0 9.167765353e-13 8.480951347e-15
+                 Iteration (num., iy, grad. norm, func.) :   9   0 1.973788463e-13 8.459739902e-15
+                 Iteration (num., iy, grad. norm, func.) :  10   0 5.417639479e-14 8.454609964e-15
+                 Iteration (num., iy, grad. norm, func.) :  11   0 3.262736039e-14 8.453956388e-15
+                 Iteration (num., iy, grad. norm, func.) :  12   0 9.376713988e-15 8.453393992e-15
+                 Iteration (num., iy, grad. norm, func.) :  13   0 5.567537262e-15 8.453322024e-15
+                 Iteration (num., iy, grad. norm, func.) :  14   0 3.915800764e-15 8.453293857e-15
+                 Iteration (num., iy, grad. norm, func.) :  15   0 3.160681038e-15 8.453291334e-15
+                 Iteration (num., iy, grad. norm, func.) :  16   0 7.900787119e-16 8.453275434e-15
+                 Iteration (num., iy, grad. norm, func.) :  17   0 3.493093271e-16 8.453271517e-15
+                 Iteration (num., iy, grad. norm, func.) :  18   0 3.493095441e-16 8.453271517e-15
+                 Iteration (num., iy, grad. norm, func.) :  19   0 3.493099781e-16 8.453271517e-15
+              Solving for output 0 - done. Time (sec):  0.2039640
+           Solving nonlinear problem (n=100) - done. Time (sec):  0.2040122
+        Solving for degrees of freedom - done. Time (sec):  0.2153280
+     Training - done. Time (sec):  0.2186990
   ___________________________________________________________________________
      
    Evaluation
@@ -128,9 +128,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009999
+     Predicting - done. Time (sec):  0.0005391
      
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000011
      
   
 .. figure:: ex_1d_step.png
@@ -172,43 +172,43 @@ RMTC
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0010002
+           Computing dof2coeff - done. Time (sec):  0.0012641
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0005240
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0009999
+           Computing energy terms - done. Time (sec):  0.0021732
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0009999
-        Pre-computing matrices - done. Time (sec):  0.0030000
+           Computing approximation terms - done. Time (sec):  0.0009310
+        Pre-computing matrices - done. Time (sec):  0.0049980
         Solving for degrees of freedom ...
            Solving initial startup problem (n=82) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.470849329e-01 8.436300000e-03
-                 Iteration (num., iy, grad. norm, func.) :   0   0 4.312755056e-12 2.493686438e-14
-              Solving for output 0 - done. Time (sec):  0.0060000
-           Solving initial startup problem (n=82) - done. Time (sec):  0.0060000
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.365376360e-10 2.493682992e-14
+              Solving for output 0 - done. Time (sec):  0.0139589
+           Solving initial startup problem (n=82) - done. Time (sec):  0.0140400
            Solving nonlinear problem (n=82) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 7.484146500e-12 2.493686322e-14
-                 Iteration (num., iy, grad. norm, func.) :   0   0 9.032461760e-12 2.483319861e-14
-                 Iteration (num., iy, grad. norm, func.) :   1   0 8.685193693e-11 2.389447567e-14
-                 Iteration (num., iy, grad. norm, func.) :   2   0 6.759024204e-11 1.951447473e-14
-                 Iteration (num., iy, grad. norm, func.) :   3   0 4.606277256e-11 1.520729527e-14
-                 Iteration (num., iy, grad. norm, func.) :   4   0 9.660287740e-12 1.149722383e-14
-                 Iteration (num., iy, grad. norm, func.) :   5   0 5.350804583e-12 1.128828757e-14
-                 Iteration (num., iy, grad. norm, func.) :   6   0 8.168719836e-13 1.110474728e-14
-                 Iteration (num., iy, grad. norm, func.) :   7   0 1.688728813e-13 1.109149617e-14
-                 Iteration (num., iy, grad. norm, func.) :   8   0 1.489722108e-13 1.109109613e-14
-                 Iteration (num., iy, grad. norm, func.) :   9   0 1.466495915e-13 1.109082624e-14
-                 Iteration (num., iy, grad. norm, func.) :  10   0 3.182788595e-14 1.108960411e-14
-                 Iteration (num., iy, grad. norm, func.) :  11   0 1.727238093e-14 1.108947747e-14
-                 Iteration (num., iy, grad. norm, func.) :  12   0 3.952132332e-15 1.108940943e-14
-                 Iteration (num., iy, grad. norm, func.) :  13   0 5.579782218e-16 1.108940356e-14
-                 Iteration (num., iy, grad. norm, func.) :  14   0 2.221817888e-17 1.108940340e-14
-              Solving for output 0 - done. Time (sec):  0.0970001
-           Solving nonlinear problem (n=82) - done. Time (sec):  0.0980000
-        Solving for degrees of freedom - done. Time (sec):  0.1040001
-     Training - done. Time (sec):  0.1070001
+                 Iteration (num., iy, grad. norm, func.) :   0   0 7.484138768e-12 2.493679513e-14
+                 Iteration (num., iy, grad. norm, func.) :   0   0 9.032452097e-12 2.483313104e-14
+                 Iteration (num., iy, grad. norm, func.) :   1   0 8.649861558e-11 2.385471045e-14
+                 Iteration (num., iy, grad. norm, func.) :   2   0 8.463306052e-11 2.108728233e-14
+                 Iteration (num., iy, grad. norm, func.) :   3   0 2.476214424e-11 1.285665016e-14
+                 Iteration (num., iy, grad. norm, func.) :   4   0 1.287993204e-11 1.181281675e-14
+                 Iteration (num., iy, grad. norm, func.) :   5   0 3.607090697e-12 1.120417686e-14
+                 Iteration (num., iy, grad. norm, func.) :   6   0 1.060038504e-12 1.111157211e-14
+                 Iteration (num., iy, grad. norm, func.) :   7   0 6.362787472e-13 1.110179625e-14
+                 Iteration (num., iy, grad. norm, func.) :   8   0 4.933044810e-13 1.109821782e-14
+                 Iteration (num., iy, grad. norm, func.) :   9   0 1.445626803e-13 1.109102057e-14
+                 Iteration (num., iy, grad. norm, func.) :  10   0 4.130423613e-14 1.108966863e-14
+                 Iteration (num., iy, grad. norm, func.) :  11   0 1.095957805e-14 1.108943666e-14
+                 Iteration (num., iy, grad. norm, func.) :  12   0 2.266037285e-15 1.108940544e-14
+                 Iteration (num., iy, grad. norm, func.) :  13   0 2.187923327e-16 1.108940342e-14
+                 Iteration (num., iy, grad. norm, func.) :  14   0 3.171473200e-18 1.108940339e-14
+              Solving for output 0 - done. Time (sec):  0.2069931
+           Solving nonlinear problem (n=82) - done. Time (sec):  0.2070560
+        Solving for degrees of freedom - done. Time (sec):  0.2211740
+     Training - done. Time (sec):  0.2268560
   ___________________________________________________________________________
      
    Evaluation
@@ -216,9 +216,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0006320
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000013
      
   
 .. figure:: ex_1d_step.png

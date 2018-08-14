@@ -72,28 +72,5 @@ class Test(unittest.TestCase):
         plt.ylabel('y')
         plt.show()
 
-    def test_clustered(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-
-        from smt.sampling_methods import Clustered, Random
-
-        xlimits = np.array([
-            [0., 4.],
-            [0., 3.],
-        ])
-        sampling = Clustered(kernel=Random(xlimits=xlimits))
-
-        num = 50
-        x = sampling(num)
-
-        print(x.shape)
-
-        plt.plot(x[:, 0], x[:, 1], 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
-
-
 if __name__ == '__main__':
     unittest.main()
