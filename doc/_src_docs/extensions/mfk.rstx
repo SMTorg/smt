@@ -1,4 +1,4 @@
-Variable-fidelity modeling (VFM)
+Multi-Fidelity Kriging (MFK)
 ================================
 
 MFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1).
@@ -7,7 +7,7 @@ SMT proposes only additive and multiplicative options.
 In the additive method, high- and low-fidelity models, :math:`y_{\text{high}}({\bf x})` and :math:`y_{\text{low}}({\bf x})`, are calibrated by adding the low-fidelity model to a function :math:`\gamma({\bf x})`, also called bridge function
 
 .. math ::
-        \y_\text{high}({\bf x})=\rho \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+        y_\text{high}({\bf x})=\rho \cdot y_\text{low}({\bf x}) + \delta({\bf x})
 
 where :math:`\rho` is a scaling/correlation factor and :math:`\delta(\cdot)` is a discrepancy function.
 

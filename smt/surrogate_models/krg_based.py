@@ -91,7 +91,7 @@ class KrgBased(SurrogateModel):
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
             self.y_std = standardization(X,y)
-
+        
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
         if (np.min(np.sum(D, axis=1)) == 0.):
