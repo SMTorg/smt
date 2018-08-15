@@ -11,3 +11,7 @@
 smt/src/rbf/rbfclib.cpp
 smt/src/idw/idwclib.cpp
 smt/src/rmts/rmtsclib.cpp
+.project
+.pydevproject
+.settings/
+.gitignore
