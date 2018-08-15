@@ -5,6 +5,7 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of 
 order 1 (AR1)
+## TODO : possible work on normalization
 """
 
 from __future__ import division
@@ -44,7 +45,14 @@ class MFK(KrgBased):
    
 
     def _check_list_structure(self, X, y):
-
+        """
+        checks if the data structure is compatible with MFK.
+        sets class attributes such as (number of levels of Fidelity, training points in each level, ...)
+        
+        Arguments :
+        X : list of arrays, each array corresponds to a fidelity level. starts from lowest to highest
+        y : same as X 
+        """
         
 
         if type(X) is not list:
@@ -81,13 +89,11 @@ class MFK(KrgBased):
         self.X = X[:]
         self.y = y[:]
         
-
-        return
     
     def _new_train(self):
         """
         Overrides KrgBased implementation
-        Train the model
+        Trains the Multi-Fidelity model
         """
         
         xt =[]
@@ -105,7 +111,7 @@ class MFK(KrgBased):
         self._check_param()
         X = self.X
         y = self.y
-        ## TODO : normilze
+        
         self.X_mean, self.y_mean, self.X_std, \
             self.y_std = np.array([0]), np.array([0]), np.array([1]), np.array([1])
         nlevel = self.nlvl
@@ -155,7 +161,6 @@ class MFK(KrgBased):
                                  % (n_samples[i], self.p_all[lvl]+self.q_all[lvl]))
 
        
-#         for lvl in range(nlevel):
             # Determine Gaussian Process model parameters
             self.F = self.F_all[lvl]
             D, self.ij = self.D_all[lvl]
@@ -440,7 +445,7 @@ class MFK(KrgBased):
         d_dx=x[:,kx].reshape((n_eval,1))-self.X[0][:,kx].reshape((1,self.nt_all[0]))
         theta = self.optimal_theta[0]
 
-        dy_dx[:,0] = np.ravel((df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std[kx])
+        dy_dx[:,0] = np.ravel((df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std)
 
 
 
@@ -463,7 +468,7 @@ class MFK(KrgBased):
             d_dx=x[:,kx].reshape((n_eval,1))-self.X[i][:,kx].reshape((1,self.nt_all[i]))
             theta = self.optimal_theta[i]
             # scaled predictor
-            dy_dx[:,i] = np.ravel(df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std[kx]
+            dy_dx[:,i] = np.ravel(df_dx-2*theta[kx]*np.dot(d_dx*r_,gamma))*self.y_std/self.X_std
        
         
            
