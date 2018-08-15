@@ -91,7 +91,7 @@ class KrgBased(SurrogateModel):
         # Center and scale X and y
         self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, \
             self.y_std = standardization(X,y)
-        print self.y_std
+            
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
         if (np.min(np.sum(D, axis=1)) == 0.):
@@ -212,7 +212,7 @@ class KrgBased(SurrogateModel):
             sv = linalg.svd(self.F, compute_uv=False)
             condF = sv[0] / sv[-1]
 
-            if False and condF > 1e15:
+            if condF > 1e15:
                 raise Exception("F is too ill conditioned. Poor combination "
                                 "of regression model and observations.")
 
