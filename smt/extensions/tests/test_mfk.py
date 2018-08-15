@@ -61,14 +61,11 @@ class TestMFK(unittest.TestCase):
         y = sm.predict_values(x)
         MSE = sm.predict_variances(x)
         der = sm.predict_derivatives(x, kx=0)
-        ysc = sm._predict_intermediate_values(x,1)
+        
         plt.figure()
          
         plt.plot(x, HF_function(x), label ='reference')
         plt.plot(x, y, linestyle = '-.' , label ='mean_gp')
-        plt.plot(x, der/60, linestyle = '-' , label ='derivative')
-        plt.axhline(0, linestyle = '-')
-        plt.plot(x, ysc, linestyle = '-.' , label ='cheap')
         plt.scatter(Xt_e, yt_e, marker = 'o' , color ='k', label ='HF doe')
         plt.scatter(Xt_c, yt_c, marker = '*' , color ='g', label ='LF doe')
          
