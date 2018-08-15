@@ -45,7 +45,7 @@ class TestMFK(unittest.TestCase):
         
         
         
-        sm = MFK(theta0=np.array(Xt_e.shape[1]*[1.]), print_global = False)
+        sm = MFK(theta0=np.array(Xt_e.shape[1]*[1.]))
         
         #low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(Xt_c, yt_c, name = 0) 

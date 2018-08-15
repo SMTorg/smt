@@ -5,6 +5,7 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of 
 order 1 (AR1)
+## TODO : possible work on normalization
 """
 
 from __future__ import division
@@ -116,7 +117,6 @@ class MFK(KrgBased):
         
         _, _, self.X_mean, self.y_mean, self.X_std, \
             self.y_std = standardization(np.concatenate(xt,axis=0), np.concatenate(yt,axis=0))
-#         print self.X_mean, self.y_mean, self.X_std, self.y_std
         
         
         nlevel = self.nlvl
