@@ -43,16 +43,13 @@ class KrgBased(SurrogateModel):
 
     _correlation_types = {
         'abs_exp': abs_exp,
-        'squar_exp': squar_exp
-        
-        }  # TODO why squar_exp doesn't work
+        'squar_exp': squar_exp        
+        }
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
         declare = self.options.declare
         supports = self.supports
-
-        #declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
         declare('poly', 'constant',types=FunctionType,values=('constant', 'linear', 'quadratic'),
                 desc='regr. term')
         declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
@@ -67,7 +64,6 @@ class KrgBased(SurrogateModel):
         self.nb_ill_matrix = 5
         supports['derivatives'] = True
         supports['variances'] = True
-
 
     ############################################################################
     # Model functions
@@ -193,10 +189,8 @@ class KrgBased(SurrogateModel):
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:,0]
         
-        
         # Cholesky decomposition of R
-        try:
-            
+        try:            
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print "exception : ", e
@@ -211,7 +205,6 @@ class KrgBased(SurrogateModel):
             # Check F
             sv = linalg.svd(self.F, compute_uv=False)
             condF = sv[0] / sv[-1]
-
             if condF > 1e15:
                 raise Exception("F is too ill conditioned. Poor combination "
                                 "of regression model and observations.")
@@ -222,8 +215,7 @@ class KrgBased(SurrogateModel):
         
         Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
         beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
-        rho = Yt - np.dot(Ft, beta)
-        
+        rho = Yt - np.dot(Ft, beta)        
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
@@ -285,12 +277,9 @@ class KrgBased(SurrogateModel):
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
-
         y = np.zeros(n_eval)
-
         # Compute the regression function
         f = self.options['poly'](x)
-
         # Scaled predictor
         y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
                     self.optimal_par['gamma'])
@@ -330,7 +319,6 @@ class KrgBased(SurrogateModel):
         if self.options['corr'].__name__ != 'squar_exp':
             raise ValueError(
             'The derivative is only available for square exponential kernel')
-
         if self.options['poly'].__name__ == 'constant':
             df = np.array([0])
         elif self.options['poly'].__name__ == 'linear':
@@ -344,7 +332,6 @@ class KrgBased(SurrogateModel):
         # Beta and gamma = R^-1(y-FBeta)
         beta = self.optimal_par['beta']
         gamma = self.optimal_par['gamma']
-
         df_dx = np.dot(df.T, beta)
         d_dx=x[:,kx-1].reshape((n_eval,1))-self.X_norma[:,kx-1].reshape((1,self.nt))
         if self.name != 'Kriging' and self.name != 'KPLSK':
@@ -411,7 +398,6 @@ class KrgBased(SurrogateModel):
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
         def minus_reduced_likelihood_function(log10t):
-#            print "fval :", - self._reduced_likelihood_function(theta=10.**log10t)[0]
             return - self._reduced_likelihood_function(theta=10.**log10t)[0]
         limit, _rhobeg = 10*len(self.options['theta0']), 0.5
         exit_function = False
@@ -437,13 +423,10 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 theta0 = self.options['theta0']
                 if self.options['eval_noise']:
-#                         limit = 1000
-#                         print theta0, np.array([self.options['noise0']])
                     theta0 = np.concatenate([theta0, np.array([self.options['noise0']])])
                     constraints.append(lambda log10t:log10t[-1] + 16)
                     constraints.append(lambda log10t:10 - log10t[-1])
                 try:
-#                 if True:
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
                     minus_reduced_likelihood_function,np.log10(theta0), \
                     constraints,rhobeg=_rhobeg,rhoend = 1e-4,maxfun=limit)
@@ -520,8 +503,6 @@ class KrgBased(SurrogateModel):
                 exit_function = True
         
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
-
-
 
     def _check_param(self):
 
