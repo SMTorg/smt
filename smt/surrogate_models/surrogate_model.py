@@ -76,12 +76,9 @@ class SurrogateModel(object):
 
         self._initialize()
         self.options.update(kwargs)
-
         self.training_points = defaultdict(dict)
-
         self.printer = Printer()
         
-
     def set_training_values(self, xt, yt, name=None):
         """
         Set training data (values).
@@ -105,7 +102,6 @@ class SurrogateModel(object):
         self.nt = xt.shape[0]
         self.nx = xt.shape[1]
         self.ny = yt.shape[1]
-
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
@@ -238,14 +234,9 @@ class SurrogateModel(object):
         y : np.ndarray[n, ny]
             Output values at the prediction points.
         """
-        ### tests has to be changed
-#        print 'val', x
-#        x = x.reshape(-1,1) 
         x = check_2d_array(x, 'x')
         check_nx(self.nx, x)
-
         n = x.shape[0]
-
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
         if self.name == 'MixExp':
@@ -264,7 +255,6 @@ class SurrogateModel(object):
         self.printer()
         self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
         self.printer()
-#        print "y", y 
         return y.reshape((n, self.ny))
 
     def predict_derivatives(self, x, kx):
@@ -284,12 +274,9 @@ class SurrogateModel(object):
             Derivatives.
         """
         check_support(self, 'derivatives')
-
         x = check_2d_array(x, 'x')
         check_nx(self.nx, x)
-
         n = x.shape[0]
-
         self.printer.active = self.options['print_global'] and self.options['print_prediction']
 
         if self.name == 'MixExp':
@@ -345,13 +332,9 @@ class SurrogateModel(object):
         -------
         s2 : np.ndarray[n, ny]
             Variances.
-        """        
-        ### tests has to be changed
-#        print 'var', x
-#        x = x.reshape(-1,1) 
+        """
         check_support(self, 'variances')
         check_nx(self.nx, x)
-
         n = x.shape[0]
         s2 = self._predict_variances(x)
         return s2.reshape((n, self.ny))
