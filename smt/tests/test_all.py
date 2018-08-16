@@ -20,6 +20,8 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.extensions import MFK
+from copy import deepcopy
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
     compiled_available = True
@@ -46,6 +48,7 @@ class Test(SMTestCase):
         sms['LS'] = LS()
         sms['QP'] = QP()
         sms['KRG'] = KRG(theta0=[1e-2]*ndim)
+        sms['MFK'] = MFK(theta0=[1e-2]*ndim)
         sms['KPLS'] = KPLS(theta0=[1e-2]*ncomp,n_comp=ncomp)
         sms['KPLSK'] = KPLSK(theta0=[1]*ncomp,n_comp=ncomp)
         sms['GEKPLS'] = GEKPLS(theta0=[1e-2]*ncomp,n_comp=ncomp,delta_x=1e-1)
@@ -59,6 +62,7 @@ class Test(SMTestCase):
         t_errors['LS'] = 1.0
         t_errors['QP'] = 1.0
         t_errors['KRG'] = 1e-5
+        t_errors['MFK'] = 1e-5
         t_errors['KPLS'] = 1e-5
         t_errors['KPLSK'] = 1e-5
         t_errors['GEKPLS'] = 1e-5
@@ -72,6 +76,7 @@ class Test(SMTestCase):
         e_errors['LS'] = 1.5
         e_errors['QP'] = 1.5
         e_errors['KRG'] = 1e-2
+        e_errors['MFK'] = 1e-2
         e_errors['KPLS'] = 1e-2
         e_errors['KPLSK'] = 1e-2
         e_errors['GEKPLS'] = 1e-2
@@ -126,7 +131,47 @@ class Test(SMTestCase):
 
         t_error = compute_rms_error(sm)
         e_error = compute_rms_error(sm, xe, ye)
+        
+    def run_MF_test(self):
+        method_name = inspect.stack()[1][3]
+        pname = method_name.split('_')[1]
+        sname = method_name.split('_')[2]
 
+        prob = self.problems[pname]
+        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
+
+        np.random.seed(0)
+        xt = sampling(self.nt)
+        yt = prob(xt)
+        print(prob(xt,kx=0).shape)
+        for i in range(self.ndim):
+            yt = np.concatenate((yt,prob(xt,kx=i)),axis=1)
+        
+        y_lf = 2*prob(xt) + 2
+        x_lf = deepcopy(xt) 
+        np.random.seed(1)
+        xe = sampling(self.ne)
+        ye = prob(xe)
+
+        sm0 = self.sms[sname]
+
+        sm = sm0.__class__()
+        sm.options = sm0.options.clone()
+        if sm.options.is_declared('xlimits'):
+            sm.options['xlimits'] = prob.xlimits
+        sm.options['print_global'] = False
+
+        sm.set_training_values(xt, yt[:, 0])
+        sm.set_training_values(x_lf, y_lf[:, 0], name = 0)
+        if sm.supports['training_derivatives']:
+            for i in range(self.ndim):
+                sm.set_training_derivatives(xt,yt[:, i+1],i)
+
+        with Silence():
+            sm.train()
+
+        t_error = compute_rms_error(sm)
+        e_error = compute_rms_error(sm, xe, ye)
     # --------------------------------------------------------------------
     # Function: exp
 
@@ -163,7 +208,10 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_RMTB(self):
         self.run_test()
-
+    
+    def test_exp_MFK(self):
+        self.run_MF_test()
+        
     # --------------------------------------------------------------------
     # Function: tanh
 
@@ -200,7 +248,9 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_RMTB(self):
         self.run_test()
-
+    
+    def test_tanh_MFK(self):
+        self.run_MF_test()
     # --------------------------------------------------------------------
     # Function: cos
 
@@ -237,7 +287,10 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_RMTB(self):
         self.run_test()
-
+    
+    def test_cos_MFK(self):
+        self.run_MF_test()
+    
 
 if __name__ == '__main__':
     print_output = True
