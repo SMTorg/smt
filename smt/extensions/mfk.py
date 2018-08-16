@@ -5,7 +5,6 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of 
 order 1 (AR1)
-## TODO : possible work on normalization
 """
 
 from __future__ import division
