@@ -14,4 +14,3 @@ smt/src/rmts/rmtsclib.cpp
 .project
 .pydevproject
 .settings/
-.gitignore
