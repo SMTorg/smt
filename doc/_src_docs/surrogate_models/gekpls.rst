@@ -6,7 +6,7 @@ Gradient-enhaced kriging (GEK) is an extention of kriging which supports gradien
 GEK is usually more accurate than kriging, however, it is not computationally efficient when the number of inputs, the number of sampling points, or both, are high.
 This is mainly due to the size of the corresponding correlation matrix that increases proportionally with both the number of inputs and the number of sampling points.
 
-To adress these issues, GEKPLS exploits the gradient information with a slight increase of the size of the correlation matrix and reduces the number of hyperparameters.
+To address these issues, GEKPLS exploits the gradient information with a slight increase of the size of the correlation matrix and reduces the number of hyperparameters.
 The key idea of GEKPLS consists in generating a set of approximating points around each sampling points using the first order Taylor approximation method.
 Then, the PLS method is applied several times, each time on a different number of sampling points with the associated sampling points.
 Each PLS provides a set of coefficients that gives the contribution of each variable nearby the associated sampling point to the output.
@@ -89,7 +89,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0190001
+     Training - done. Time (sec):  0.0253589
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
