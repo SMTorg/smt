@@ -1,0 +1,27 @@
+Multi-Fidelity Kriging (MFK)
+================================
+
+MFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1).
+
+.. math ::
+        y_\text{high}({\bf x})=\rho \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+
+where :math:`\rho` is a scaling/correlation factor and :math:`\delta(\cdot)` is a discrepancy function.
+
+The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1].
+The implementation here follows the one proposed by Le Gratiet [2]. It offers the advantage of being recursive and easily extended to :math:`n` level of fidelity.
+
+References
+----------
+.. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
+.. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.extensions.tests.test_mfk , TestMFK , run_mfk_example , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.extensions , MFK , options

@@ -27,4 +27,4 @@ def check_nx(nx, x):
         if nx == 1:
             raise ValueError('x should have shape [:, 1] or [:]')
         else:
-            raise ValueError('x should have shape [:, {}]'.format(nx))
+            raise ValueError('x should have shape [:, {}] and not {}'.format(nx, x.shape))

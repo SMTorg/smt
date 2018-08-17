@@ -7,7 +7,7 @@ SMT proposes only additive and multiplicative options.
 In the additive method, high- and low-fidelity models, :math:`y_{\text{high}}({\bf x})` and :math:`y_{\text{low}}({\bf x})`, are calibrated by adding the low-fidelity model to a function :math:`\gamma({\bf x})`, also called bridge function
 
 .. math ::
-        \y_\text{high}({\bf x})=y_\text{low}({\bf x}) + \gamma({\bf x})
+        y_\text{high}({\bf x})=y_\text{low}({\bf x}) + \gamma({\bf x})
  
 The additive bridge function was developed by Lewis and Nash [1]_.
 
