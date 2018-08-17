@@ -7,7 +7,7 @@ SMT proposes only additive and multiplicative options.
 In the additive method, high- and low-fidelity models, :math:`y_{\text{high}}({\bf x})` and :math:`y_{\text{low}}({\bf x})`, are calibrated by adding the low-fidelity model to a function :math:`\gamma({\bf x})`, also called bridge function
 
 .. math ::
-        \y_\text{high}({\bf x})=y_\text{low}({\bf x}) + \gamma({\bf x})
+        y_\text{high}({\bf x})=y_\text{low}({\bf x}) + \gamma({\bf x})
  
 The additive bridge function was developed by Lewis and Nash [1]_.
 
@@ -112,7 +112,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0968599
+     Training - done. Time (sec):  0.0512471
   ___________________________________________________________________________
      
    Evaluation
@@ -120,9 +120,9 @@ Usage
         # eval points. : 3
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002260
+     Predicting - done. Time (sec):  0.0002270
      
-     Prediction time/pt. (sec) :  0.0000753
+     Prediction time/pt. (sec) :  0.0000757
      
   ___________________________________________________________________________
      
@@ -138,8 +138,7 @@ Usage
    Training
      
      Training ...
-  [0.03690276]
-     Training - done. Time (sec):  0.0831010
+     Training - done. Time (sec):  0.0973098
   ___________________________________________________________________________
      
    Evaluation
@@ -147,9 +146,9 @@ Usage
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0085850
+     Predicting - done. Time (sec):  0.0104151
      
-     Prediction time/pt. (sec) :  0.0000172
+     Prediction time/pt. (sec) :  0.0000208
      
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
