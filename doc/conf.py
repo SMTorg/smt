@@ -54,7 +54,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'SMT'
 copyright = '2017, John Hwang'
-author = 'John Hwang'
+author = 'John Hwang, Mohamed Amine Bouhlel'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
