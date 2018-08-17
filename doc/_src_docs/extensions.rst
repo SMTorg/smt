@@ -12,6 +12,4 @@ Two methods are available:
    extensions/vfm
    extensions/mfk
 
-
-
 The intent is to provide applications of surrogate models in higher level methods.
