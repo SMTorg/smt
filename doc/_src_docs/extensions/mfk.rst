@@ -6,10 +6,10 @@ MFK is a multi-fidelity modeling method which uses an autoregressive model of or
 .. math ::
         y_\text{high}({\bf x})=\rho \cdot y_\text{low}({\bf x}) + \delta({\bf x})
 
-where :math:`\rho` is a scaling/correlation factor and :math:`\delta(\cdot)` is a discrepancy function.
+where :math:`\rho`(x) is a scaling/correlation factor (constant, linear or qudratic) and :math:`\delta(\cdot)` is a discrepancy function.
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1].
-The implementation here follows the one proposed by Le Gratiet [2]. It offers the advantage of being recursive and easily extended to :math:`n` level of fidelity.
+The implementation here follows the one proposed by Le Gratiet [2]. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.
 
 References
 ----------
