@@ -7,11 +7,12 @@ platform:
 
 environment:
   matrix:
+    - PYTHON: 3.6
     - PYTHON: 2.7
 
 init:
   - set CONDA=Miniconda
-  - if "%PYTHON%" == "3.4" (set CONDA=%CONDA%3)
+  - if "%PYTHON%" == "3.6" (set CONDA=%CONDA%3)
   - if "%PLATFORM%" == "x64" (set CONDA=%CONDA%-x64)
   - echo %CONDA%
   - set PATH=C:\%CONDA%;C:\%CONDA%\Scripts;%PATH%
