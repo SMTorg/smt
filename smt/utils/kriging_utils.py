@@ -6,7 +6,7 @@ This package is distributed under New BSD license.
 
 import numpy as np
 from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-from pyDOE import *
+from pyDOE2 import bbdesign
 
 def standardization(X,y,copy=False):
 

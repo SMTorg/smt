@@ -3,10 +3,10 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 
-LHS sampling; uses the pyDOE package.
+LHS sampling; uses the pyDOE2 package.
 """
 from __future__ import division
-import pyDOE
+from pyDOE2 import lhs
 from six.moves import range
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
@@ -38,7 +38,7 @@ class LHS(SamplingMethod):
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
         if self.options['criterion'] != 'ese':
-            return pyDOE.lhs(nx, samples=n, criterion=self.options['criterion'])
+            return lhs(nx, samples=n, criterion=self.options['criterion'])
         elif self.options['criterion'] == 'ese':
             return self._ese(nx,n)
 
