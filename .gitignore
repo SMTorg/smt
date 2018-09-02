@@ -1,3 +1,4 @@
+*.pyd
 *.pyc
 *~
 *build*

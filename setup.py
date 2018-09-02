@@ -67,7 +67,7 @@ setup(name='smt',
     ],
     install_requires=[
         'scikit-learn',
-        'pyDOE',
+        'pyDOE2',
         'matplotlib',
         'numpydoc',
         'six>=1.10',
