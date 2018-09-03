@@ -204,7 +204,7 @@ class TestMOE(SMTestCase):
         x0 = np.linspace(xlim[0, 0], xlim[0, 1], 20)
         x1 = np.linspace(xlim[1, 0], xlim[1, 1], 20)
         xv, yv = np.meshgrid(x0, x1)
-        x = np.array(zip(xv.reshape((-1,)), yv.reshape((-1,))))
+        x = np.array(list(zip(xv.reshape((-1,)), yv.reshape((-1,)))))
         prob = moe._proba_cluster(x)
 
         plt.subplot(221, projection='3d')

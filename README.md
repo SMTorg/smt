@@ -13,17 +13,7 @@ SMT is distributed under the New BSD license.
 Version 0.2
 
 # Required packages
-Numpy    >= Version 1.9.2
-
-Scikit-learn  >= Version 0.13.1
-
-pyDOE >= Version 0.3.8
-
-six
-
-Cython
-
-Scipy
+SMT depends on the following modules: numpy, scipy, sk-learn, pyDOE2 and Cython. 
 
 # Installation
 Clone the repository from github then run:

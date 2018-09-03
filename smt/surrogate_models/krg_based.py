@@ -193,7 +193,7 @@ class KrgBased(SurrogateModel):
         try:            
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
-            print "exception : ", e
+            print("exception : ", e)
             return reduced_likelihood_function_value, par
         
         # Get generalized least squares solution
