@@ -29,6 +29,20 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
+LONG_DESCRIPTION= """
+The surrogate modeling toolbox (SMT) is a Python package that contains 
+a collection of surrogate modeling methods, sampling techniques, and 
+benchmarking functions. This package provides a library of surrogate 
+models that is simple to use and facilitates the implementation of additional methods. 
+
+SMT is different from existing surrogate modeling libraries because of 
+its emphasis on derivatives, including training derivatives used for 
+gradient-enhanced modeling, prediction derivatives, and derivatives 
+with respect to the training data. It also includes new surrogate models 
+that are not available elsewhere: kriging by partial-least squares reduction 
+and energy-minimizing spline interpolation.
+"""
+
 try:
     import Cython
 except ImportError:
@@ -75,6 +89,7 @@ metadata = dict(
     name='smt',
     version='0.2.1',
     description='The Surrogate Modeling Toolbox (SMT)',
+    long_description=LONG_DESCRIPTION,
     author='Mohamed Amine Bouhlel et al.',
     author_email='mbouhlel@umich.edu',
     license='BSD-3',
@@ -98,7 +113,7 @@ metadata = dict(
     zip_safe=False,
     ext_modules=ext,
     url = 'https://github.com/SMTorg/smt', # use the URL to the github repo
-    download_url = 'https://github.com/SMTorg/smt/archive/v0.2.tar.gz',
+    download_url = 'https://github.com/SMTorg/smt/releases',
 )
 
 setup(**metadata)
