@@ -15,3 +15,6 @@ smt/src/rmts/rmtsclib.cpp
 .project
 .pydevproject
 .settings/
+/.coverage
+/coverage_html_report
+/dist

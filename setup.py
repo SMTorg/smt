@@ -1,6 +1,7 @@
 '''
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        Dr. Mohamed A. Bouhlel <mbouhlel@umich>
+        Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+        Remi Lafage <remi.lafage@onera.fr>
 
 This package is distributed under New BSD license.
 '''
@@ -10,6 +11,37 @@ import os
 import sys
 from subprocess import call
 import numpy as np
+
+CLASSIFIERS = """\
+Development Status :: 5 - Production/Stable
+Intended Audience :: Science/Research
+Intended Audience :: Developers
+License :: OSI Approved :: BSD License
+Programming Language :: C++
+Programming Language :: Python
+Programming Language :: Python :: 2.7
+Programming Language :: Python :: 3.6
+Programming Language :: Python :: Implementation :: CPython
+Topic :: Software Development
+Topic :: Scientific/Engineering
+Operating System :: Microsoft :: Windows
+Operating System :: Unix
+Operating System :: MacOS
+"""
+
+LONG_DESCRIPTION= """
+The surrogate modeling toolbox (SMT) is a Python package that contains 
+a collection of surrogate modeling methods, sampling techniques, and 
+benchmarking functions. This package provides a library of surrogate 
+models that is simple to use and facilitates the implementation of additional methods. 
+
+SMT is different from existing surrogate modeling libraries because of 
+its emphasis on derivatives, including training derivatives used for 
+gradient-enhanced modeling, prediction derivatives, and derivatives 
+with respect to the training data. It also includes new surrogate models 
+that are not available elsewhere: kriging by partial-least squares reduction 
+and energy-minimizing spline interpolation.
+"""
 
 try:
     import Cython
@@ -52,12 +84,16 @@ ext = cythonize(
     include_dirs=[np.get_include(),
 ]))
 
-setup(name='smt',
-    version='0.2',
+
+metadata = dict(
+    name='smt',
+    version='0.2.1',
     description='The Surrogate Modeling Toolbox (SMT)',
-    author='Mohamed Amine Bouhlel',
+    long_description=LONG_DESCRIPTION,
+    author='Mohamed Amine Bouhlel et al.',
     author_email='mbouhlel@umich.edu',
     license='BSD-3',
+    classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
     packages=[
         'smt',
         'smt/surrogate_models',
@@ -73,8 +109,11 @@ setup(name='smt',
         'six>=1.10',
         'scipy'
     ],
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*',
     zip_safe=False,
     ext_modules=ext,
     url = 'https://github.com/SMTorg/smt', # use the URL to the github repo
-    download_url = 'https://github.com/SMTorg/smt/archive/v0.2.tar.gz',
+    download_url = 'https://github.com/SMTorg/smt/releases',
 )
+
+setup(**metadata)

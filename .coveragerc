@@ -1,0 +1,13 @@
+[paths]
+source = 
+   smt
+
+[html]
+directory = coverage_html_report
+
+[run]
+omit =
+	*/tests/*
+	*/examples/*
+	*/__init__.py
+	*/setup.py
