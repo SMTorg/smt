@@ -136,7 +136,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'SMT.tex', 'SMT Documentation',
-     'John Hwang', 'manual'),
+     'John Hwang, Mohamed Amine Bouhlel', 'manual'),
 ]
 
 
