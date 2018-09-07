@@ -61,13 +61,13 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['QP'] = 1.0
-        t_errors['KRG'] = 1e-5
-        t_errors['MFK'] = 1e-5
-        t_errors['KPLS'] = 1e-5
-        t_errors['KPLSK'] = 1e-5
-        t_errors['GEKPLS'] = 1e-5
+        t_errors['KRG'] = 1e0
+        t_errors['MFK'] = 1e0
+        t_errors['KPLS'] = 1e0
+        t_errors['KPLSK'] = 1e0
+        t_errors['GEKPLS'] = 1e0
         if compiled_available:
-            t_errors['IDW'] = 1e-15
+            t_errors['IDW'] = 1e0
             t_errors['RBF'] = 1e-2
             t_errors['RMTC'] = 1e-1
             t_errors['RMTB'] = 1e-1
