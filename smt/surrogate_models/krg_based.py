@@ -55,11 +55,7 @@ class KrgBased(SurrogateModel):
         declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
                 desc='type of corr. func.')
         declare('data_dir', values=None, types=str,
-                desc='Directory for loading / saving cached data; None means do not save or load')
-        declare('eval_noise', False, types = bool, \
-                values = (True, False), desc ='noise evaluation flag')
-        declare('noise0', 1e-6, types = float, \
-                desc ='Initial noise hyperparameter')
+                desc='Directory for loading / saving cached data; None means do not save or load')        
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports['derivatives'] = True
@@ -105,8 +101,9 @@ class KrgBased(SurrogateModel):
         # Optimization
         self.optimal_rlf_value, self.optimal_par, self.optimal_theta = \
                 self._optimize_hyperparam(D)
-        if self.options['eval_noise']:
-            self.optimal_theta = self.optimal_theta[:-1]
+        if self.name == 'MFK':
+            if self.options['eval_noise']:
+                self.optimal_theta = self.optimal_theta[:-1]
         del self.y_norma, self.D
 
     def _train(self):
@@ -178,10 +175,11 @@ class KrgBased(SurrogateModel):
                 # becomes ill-conditionned 
                 nugget = 10.* nugget 
         noise = 0.
-        tmp_var = theta 
-        if self.options['eval_noise']:
-            theta = tmp_var[:-1]
-            noise = tmp_var[-1]
+        tmp_var = theta
+        if self.name == 'MFK':
+            if self.options['eval_noise']:
+                theta = tmp_var[:-1]
+                noise = tmp_var[-1]
     
         r = self.options['corr'](theta, self.D).reshape(-1,1)
         
@@ -422,10 +420,11 @@ class KrgBased(SurrogateModel):
             while (k < stop):
                 # Use specified starting point as first guess
                 theta0 = self.options['theta0']
-                if self.options['eval_noise']:
-                    theta0 = np.concatenate([theta0, np.array([self.options['noise0']])])
-                    constraints.append(lambda log10t:log10t[-1] + 16)
-                    constraints.append(lambda log10t:10 - log10t[-1])
+                if self.name == 'MFK':
+                    if self.options['eval_noise']:
+                        theta0 = np.concatenate([theta0, np.array([self.options['noise0']])])
+                        constraints.append(lambda log10t:log10t[-1] + 16)
+                        constraints.append(lambda log10t:10 - log10t[-1])
                 try:
                     optimal_theta = 10. ** optimize.fmin_cobyla( \
                     minus_reduced_likelihood_function,np.log10(theta0), \

@@ -41,6 +41,10 @@ class MFK(KrgBased):
         declare('optim_var', False, types = bool, \
                 values = (True, False), \
                 desc ='Turning this option to True, forces variance to zero at HF samples ')
+        declare('eval_noise', False, types = bool, \
+                values = (True, False), desc ='noise evaluation flag')
+        declare('noise0', 1e-6, types = float, \
+                desc ='Initial noise hyperparameter')
         self.name = 'MFK'
     
 
