@@ -102,7 +102,7 @@ metadata = dict(
         'smt/utils',
     ],
     install_requires=[
-        'scikit-learn == 0.19.0',
+        'scikit-learn>=0.19.0,<0.20.0',
         'pyDOE2',
         'matplotlib',
         'numpydoc',
