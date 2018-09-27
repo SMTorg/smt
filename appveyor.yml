@@ -19,15 +19,15 @@ init:
   - conda config --set always_yes yes
   # We need to do this first as other commands may not work with older versions of conda.
   - conda update conda
-  - conda install numpy scipy nose hdf5 --quiet
   - conda install Cython
   - IF "%ARCH%"=="64" (call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64)
   - IF "%ARCH%"=="64" (call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64)
 
 install:
   - python -m pip install --upgrade pip
+  - pip install numpy scipy
   # Grab testflo for running test, to ensure examples are run
-  - pip install git+https://github.com/OpenMDAO/testflo.git
+  - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e .
 
