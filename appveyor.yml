@@ -25,8 +25,8 @@ init:
   - IF "%ARCH%"=="64" (call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64)
 
 install:
-  #pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
-  #Grab testflo for running test, to ensure examples are run
+  - python -m pip install --upgrade pip
+  # Grab testflo for running test, to ensure examples are run
   - pip install git+https://github.com/OpenMDAO/testflo.git
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e .
