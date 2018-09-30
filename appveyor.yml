@@ -1,35 +1,26 @@
 build: false
-
-version: 0.1.{build}
-
+version: 0.2.{build}
 platform:
   - x64
 
 environment:
   matrix:
-    - PYTHON: 3.6
     - PYTHON: 2.7
+      CONDA: "C:\\Miniconda-x64"
 
-init:
-  - set CONDA=Miniconda
-  - if "%PYTHON%" == "3.6" (set CONDA=%CONDA%3)
-  - if "%PLATFORM%" == "x64" (set CONDA=%CONDA%-x64)
-  - echo %CONDA%
-  - set PATH=C:\%CONDA%;C:\%CONDA%\Scripts;%PATH%
-  - conda config --set always_yes yes
-  # We need to do this first as other commands may not work with older versions of conda.
-  - conda update conda
-  - conda install numpy scipy nose hdf5 --quiet
-  - conda install Cython
-  - IF "%ARCH%"=="64" (call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64)
-  - IF "%ARCH%"=="64" (call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64)
+    - PYTHON: 3.6
+      CONDA: "C:\\Miniconda36-x64"
 
 install:
-  #pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy
-  #Grab testflo for running test, to ensure examples are run
+  - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
+  - conda config --set always_yes yes
+  - conda update conda
+  - conda install python=%PYTHON% numpy scipy=1.0.1 mkl==2018.0.2 sphinx pip Cython
   - pip install git+https://github.com/OpenMDAO/testflo.git
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e .
+  - pip list
+  - conda list
 
 test_script:
   - testflo . -n 1
