@@ -14,7 +14,7 @@ language: generic
 
 env:
 - PY=2.7
-- PY=3.6
+- PY=3.6 COVERAGE=1
 
 addons:
   apt:
@@ -30,14 +30,22 @@ addons:
     - g++-5
 
 install:
-- sudo pip2 install --upgrade pip
-- sudo pip2 install numpy scipy Cython
-- sudo pip2 install git+https://github.com/OpenMDAO/testflo.git
-- sudo pip2 install git+https://github.com/hwangjt/sphinx_auto_embed.git
-- sudo pip2 install -e . --ignore-installed six
+- pip install --upgrade pip
+- pip install numpy scipy cython
+- pip install git+https://github.com/OpenMDAO/testflo.git
+- pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+- pip install -e . --ignore-installed six
+- pip install coverage;
+- pip install coveralls-python
 
 script:
-- testflo
+- testflo -n 1 smt --verbose --coverage --coverpkg=smt  
 - cd doc
 - sphinx_auto_embed
 - make html
+
+after_success:
+# again, only run coverage operations on the upload machine after success.
+- if [ "$COVERAGE" ]; then
+    coveralls
+  fi
