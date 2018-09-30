@@ -98,8 +98,8 @@ class Test(SMTestCase):
             print('%8s %6s %18.9e %18.9e %18.9e %18.9e'
                   % (pname[:6], sname, t_error, e_error, e_error0, e_error1))
 
-        self.assert_error(e_error0, 0., 1e-1)
-        self.assert_error(e_error1, 0., 1e-1)
+        self.assert_error(e_error0, 0., 2e-1)
+        self.assert_error(e_error1, 0., 2e-1)
       
     def run_MF_test(self):
         method_name = inspect.stack()[1][3]
