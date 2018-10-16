@@ -100,6 +100,7 @@ metadata = dict(
         'smt/problems',
         'smt/sampling_methods',
         'smt/utils',
+        'smt/extensions'
     ],
     install_requires=[
         'scikit-learn>=0.19.0,<0.20.0',
