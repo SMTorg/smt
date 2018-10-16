@@ -87,7 +87,7 @@ ext = cythonize(
 
 metadata = dict(
     name='smt',
-    version='0.2.1',
+    version='0.2.2',
     description='The Surrogate Modeling Toolbox (SMT)',
     long_description=LONG_DESCRIPTION,
     author='Mohamed Amine Bouhlel et al.',
