@@ -159,6 +159,7 @@ class TestMOE(SMTestCase):
         from smt.problems import LpNorm
         from smt.sampling_methods import FullFactorial
 
+        import sklearn
         import matplotlib.pyplot as plt
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
@@ -196,7 +197,10 @@ class TestMOE(SMTestCase):
         GMM=moe.cluster
         weight = GMM.weights_
         mean = GMM.means_
-        cov = GMM.covars_
+        if sklearn.__version__ < '0.20.0':
+            cov = GMM.covars_
+        else:
+            cov = GMM.covariances_
         prob_ = moe._proba_cluster(xt)
         sort = np.apply_along_axis(np.argmax, 1, prob_)
 
