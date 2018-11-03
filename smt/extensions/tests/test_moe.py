@@ -124,7 +124,7 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        moe = MOE(n_clusters=6)
+        moe = MOE(n_clusters=5)
         moe.set_training_values(xt, yt)
         moe.options['heaviside_optimization'] = True    
         moe.train()
