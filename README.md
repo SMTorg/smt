@@ -44,6 +44,4 @@ http://smt.readthedocs.io
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
 
-Email: mbouhlel@umich.edu
-
-       bouhlel.mohamed.amine@gmail.com
+Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com
