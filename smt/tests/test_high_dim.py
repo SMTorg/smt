@@ -57,7 +57,7 @@ class Test(SMTestCase):
         t_errors['RBF'] = 1e-2
 
         e_errors = {}
-        e_errors['LS'] = 1.5
+        e_errors['LS'] = 2.5
         e_errors['QP'] = 2.0
         e_errors['KRG'] = 2.0
         e_errors['IDW'] = 1.5

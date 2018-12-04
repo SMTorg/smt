@@ -32,14 +32,14 @@ addons:
 install:
 - sudo pip install --upgrade pip
 - sudo pip install numpy scipy cython
-- sudo pip install git+https://github.com/OpenMDAO/testflo.git
+- sudo pip install testflo
 - sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
 - sudo pip install -e . --ignore-installed six
 - sudo pip install coverage
-- sudo pip install coveralls --ignore-installed 
+- sudo pip install coveralls --ignore-installed
 
 script:
-- testflo -n 1 smt --verbose --coverage --coverpkg=smt  
+- testflo -n 1 smt --verbose --coverage --coverpkg=smt
 - cd doc
 - sphinx_auto_embed
 - make html
