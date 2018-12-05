@@ -14,7 +14,7 @@ language: generic
 
 env:
 - PY=2.7
-- PY=3.6
+- PY=3.6 COVERAGE=1
 
 addons:
   apt:
@@ -30,14 +30,22 @@ addons:
     - g++-5
 
 install:
-- sudo pip2 install --upgrade pip
-- sudo pip2 install numpy scipy Cython
-- sudo pip2 install testflo
-- sudo pip2 install git+https://github.com/hwangjt/sphinx_auto_embed.git
-- sudo pip2 install -e . --ignore-installed six
+- sudo pip install --upgrade pip
+- sudo pip install numpy scipy cython
+- sudo pip install testflo
+- sudo pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+- sudo pip install -e . --ignore-installed six
+- sudo pip install coverage
+- sudo pip install coveralls --ignore-installed
 
 script:
-- testflo -n 1 .
+- testflo -n 1 smt --verbose --coverage --coverpkg=smt
 - cd doc
 - sphinx_auto_embed
 - make html
+- cd ..
+
+after_success:
+- if [[ "$TRAVIS_OS_NAME" == "linux" && "$PY" == "3.6" ]]; then
+    coveralls;
+  fi
