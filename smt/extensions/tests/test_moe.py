@@ -109,7 +109,7 @@ class TestMOE(SMTestCase):
             plt.title('L1 Norm')
             plt.show()
 
-    #@unittest.skip('disabled')
+    @unittest.skip('disabled')
     def test_branin_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -118,9 +118,7 @@ class TestMOE(SMTestCase):
         prob = Branin(ndim=self.ndim)
 
         # training data
-        print("before FullFactorial")
         sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
-        print("after FullFactorial")
         np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
@@ -129,18 +127,14 @@ class TestMOE(SMTestCase):
         moe = MOE(n_clusters=5)
         moe.set_training_values(xt, yt)
         moe.options['heaviside_optimization'] = True    
-        print("before MOE train")
         moe.train()
-        print("after MOE train")
 
         # validation data
         np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        print("before compute_rms_error")
         rms_error = compute_rms_error(moe, xe, ye)
-        print("after compute_rms_error")
         self.assert_error(rms_error, 0., 1e-1)
 
         if TestMOE.plot:
