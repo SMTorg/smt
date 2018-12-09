@@ -51,14 +51,14 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors['LS'] = 1.0
         t_errors['QP'] = 1.0
-        t_errors['RMTC'] = 1e-2
-        t_errors['RMTB'] = 1e-2
+        t_errors['RMTC'] = 1.0
+        t_errors['RMTB'] = 1.0
 
         e_errors = {}
         e_errors['LS'] = 1.5
         e_errors['QP'] = 1.5
-        e_errors['RMTC'] = 1e-2
-        e_errors['RMTB'] = 1e-2
+        e_errors['RMTC'] = 1.0
+        e_errors['RMTB'] = 1.0
 
         self.nt = nt
         self.ne = ne
