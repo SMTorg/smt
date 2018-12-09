@@ -9,6 +9,7 @@ os:
   - osx
 
 osx_image: xcode7.3
+dist: xenial
 
 language: generic
 
