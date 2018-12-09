@@ -68,7 +68,7 @@ class TestMOE(SMTestCase):
             plt.plot(xe, y, 'o')
             plt.show()
 
-    #@unittest.skip('disabled')
+    @unittest.skip('disabled')
     def test_norm1_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -109,7 +109,7 @@ class TestMOE(SMTestCase):
             plt.title('L1 Norm')
             plt.show()
 
-    #@unittest.skip('disabled')
+    @unittest.skip('disabled')
     def test_branin_2d_200(self):
         self.ndim = 2
         self.nt = 200
