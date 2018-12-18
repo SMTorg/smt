@@ -60,8 +60,8 @@ class Test(SMTestCase):
         e_errors['LS'] = 2.5
         e_errors['QP'] = 2.0
         e_errors['KRG'] = 2.0
-        e_errors['IDW'] = 1.5
-        e_errors['RBF'] = 1.5
+        e_errors['IDW'] = 2
+        e_errors['RBF'] = 2
 
         self.nt = nt
         self.ne = ne
