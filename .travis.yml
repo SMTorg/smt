@@ -2,19 +2,20 @@ branches:
   only:
     - master
 
-sudo: required
-
-os:
-  - linux
-  - osx
+language: generic
+matrix:
+  include:
+    - os: linux
+      env: PY=2.7
+    - os: linux
+      env: PY=3.6 COVERAGE=1
+    - os: osx
+      env: PY=2.7
+    - os: osx
+      env: PY=3.6
 
 osx_image: xcode7.3
-
-language: generic
-
-env:
-- PY=2.7
-- PY=3.6
+dist: xenial
 
 addons:
   apt:
@@ -30,14 +31,44 @@ addons:
     - g++-5
 
 install:
-- sudo pip2 install --upgrade pip
-- sudo pip2 install numpy scipy Cython
-- sudo pip2 install git+https://github.com/OpenMDAO/testflo.git
-- sudo pip2 install git+https://github.com/hwangjt/sphinx_auto_embed.git
-- sudo pip2 install -e . --ignore-installed six
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      if [ "$PY" = "2.7" ]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+      fi
+    else
+      if [ "$PY" = "2.7" ]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  - conda create -q -n test-environment python=$PY numpy scipy cython
+  - source activate test-environment
+  - pip install --upgrade pip
+  - pip install testflo
+  - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+  - pip install -e . --ignore-installed six
+  - pip install coverage
+  - pip install coveralls --ignore-installed
 
 script:
-- testflo
+- testflo -n 1 smt --verbose --coverage --coverpkg=smt
 - cd doc
 - sphinx_auto_embed
 - make html
+- cd ..
+
+after_success:
+- if [ "$COVERAGE" ]; then
+    coveralls;
+  fi
