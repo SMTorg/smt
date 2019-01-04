@@ -19,7 +19,13 @@ from __future__ import division
 import six
 import numpy as np
 import warnings
-from sklearn import mixture, cluster
+
+OLD_SKLEARN=False
+try: # scikit-learn < 0.20.0 
+    from sklearn.mixture import GMM as GaussianMixture
+    OLD_SKLEARN=True
+except:
+    from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
 
 from smt.utils.options_dictionary import OptionsDictionary
@@ -132,8 +138,8 @@ class MOE(Extensions):
         ct = self.training_values[:, nx+1:]
 
         # Clustering
-        self.cluster = mixture.GMM(n_components=self.n_clusters,
-                                   covariance_type='full', n_init=20)
+        self.cluster = GaussianMixture(n_components=self.n_clusters,
+                                       covariance_type='full', n_init=20)
         self.cluster.fit(np.c_[xt, ct])        
         if not self.cluster.converged_:
             raise Exception('Clustering not converged')
@@ -447,7 +453,10 @@ class MOE(Extensions):
         distribs = []
         dim= self.ndim
         means = self.cluster.means_
-        cov = heaviside_factor*self.cluster.covars_
+        if OLD_SKLEARN:
+            cov = heaviside_factor*self.cluster.covars_
+        else:
+            cov = heaviside_factor*self.cluster.covariances_
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]

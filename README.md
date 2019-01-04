@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) (Linux, OS X)
-
-[![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) (Windows)
+[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/o0303yw40sqqe88y?svg=true)](https://ci.appveyor.com/project/hwangjt/smt-52ku9) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg)](https://coveralls.io/github/SMTorg/smt)
 
 # Surrogate Modeling Toolbox
 The surrogate modeling toolbox (SMT) is a Python package that contains a collection of surrogate modeling methods, sampling techniques, and benchmarking functions. This package provides a library of surrogate models that is simple to use and facilitates the implementation of additional methods.
@@ -43,3 +41,5 @@ http://smt.readthedocs.io
 
 # Contact
 This repository was created by Mohamed Amine Bouhlel and is maintained by the MDOlab.
+
+Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com
