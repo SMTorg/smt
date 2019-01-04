@@ -19,3 +19,4 @@ smt/src/rmts/rmtsclib.cpp
 /coverage_html_report
 /dist
 .idea
+.cache
