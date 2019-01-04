@@ -89,7 +89,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0253589
+     Training - done. Time (sec):  0.0347950
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -108,61 +108,11 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  extra_points
-     -  0
-     -  None
-     -  ['int']
-     -  Number of extra points per training point
-  *  -  theta0
-     -  [0.01]
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
-  *  -  poly
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
-  *  -  corr
-     -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
-  *  -  delta_x
-     -  0.0001
-     -  None
-     -  ['int', 'float']
-     -  Step used in the FOTA
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
   *  -  print_training
      -  True
      -  None
@@ -173,3 +123,53 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  poly
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['function']
+     -  regr. term
+  *  -  corr
+     -  squar_exp
+     -  ['abs_exp', 'squar_exp']
+     -  ['function']
+     -  type of corr. func.
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  delta_x
+     -  0.0001
+     -  None
+     -  ['int', 'float']
+     -  Step used in the FOTA
+  *  -  extra_points
+     -  0
+     -  None
+     -  ['int']
+     -  Number of extra points per training point

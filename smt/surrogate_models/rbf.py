@@ -17,7 +17,6 @@ from smt.surrogate_models.rbfclib import PyRBF
 
 
 class RBF(SurrogateModel):
-
     """
     Radial basis function interpolant with global polynomial trend.
     """

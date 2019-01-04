@@ -65,16 +65,6 @@ Options
      -  None
      -  ['int']
      -  
-  *  -  P
-     -  50000.0
-     -  None
-     -  ['int', 'float']
-     -  Tip load (50 kN)
-  *  -  E
-     -  2e+11
-     -  None
-     -  ['int', 'float']
-     -  Modulus of elast. (200 GPa)
   *  -  return_complex
      -  False
      -  None
@@ -85,3 +75,13 @@ Options
      -  None
      -  ['str']
      -  
+  *  -  P
+     -  50000.0
+     -  None
+     -  ['int', 'float']
+     -  Tip load (50 kN)
+  *  -  E
+     -  200000000000.0
+     -  None
+     -  ['int', 'float']
+     -  Modulus of elast. (200 GPa)

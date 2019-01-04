@@ -134,28 +134,28 @@ Usage (RMTB)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000041
+           Computing dof2coeff - done. Time (sec):  0.0000031
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0005951
+           Initializing Hessian - done. Time (sec):  0.0004208
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0016670
+           Computing energy terms - done. Time (sec):  0.0015020
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0005698
-        Pre-computing matrices - done. Time (sec):  0.0029190
+           Computing approximation terms - done. Time (sec):  0.0004709
+        Pre-computing matrices - done. Time (sec):  0.0024557
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.216371185e-15 1.135812944e-15
-              Solving for output 0 - done. Time (sec):  0.0056670
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0057321
+                 Iteration (num., iy, grad. norm, func.) :   0   0 6.595870154e-16 1.135765154e-15
+              Solving for output 0 - done. Time (sec):  0.0051720
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0052450
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.645720108e-15 1.135812944e-15
-              Solving for output 0 - done. Time (sec):  0.0002980
-           Solving nonlinear problem (n=20) - done. Time (sec):  0.0003469
-        Solving for degrees of freedom - done. Time (sec):  0.0061641
-     Training - done. Time (sec):  0.0096881
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.646699880e-15 1.135765154e-15
+              Solving for output 0 - done. Time (sec):  0.0002489
+           Solving nonlinear problem (n=20) - done. Time (sec):  0.0003009
+        Solving for degrees of freedom - done. Time (sec):  0.0056121
+     Training - done. Time (sec):  0.0084562
   ___________________________________________________________________________
      
    Evaluation
@@ -163,9 +163,9 @@ Usage (RMTB)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004079
+     Predicting - done. Time (sec):  0.0004418
      
-     Prediction time/pt. (sec) :  0.0000041
+     Prediction time/pt. (sec) :  0.0000044
      
   
 .. figure:: rmts_Test_test_rmtb.png
@@ -220,28 +220,28 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0010078
+           Computing dof2coeff - done. Time (sec):  0.0010469
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0004649
+           Initializing Hessian - done. Time (sec):  0.0010073
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0016940
+           Computing energy terms - done. Time (sec):  0.0028710
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0007329
-        Pre-computing matrices - done. Time (sec):  0.0039852
+           Computing approximation terms - done. Time (sec):  0.0021544
+        Pre-computing matrices - done. Time (sec):  0.0073018
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.923436894e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0062358
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0062990
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.956010469e-15 1.133573309e-15
+              Solving for output 0 - done. Time (sec):  0.0092421
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0094619
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0002840
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0003300
-        Solving for degrees of freedom - done. Time (sec):  0.0066979
-     Training - done. Time (sec):  0.0112362
+              Solving for output 0 - done. Time (sec):  0.0004942
+           Solving nonlinear problem (n=42) - done. Time (sec):  0.0006070
+        Solving for degrees of freedom - done. Time (sec):  0.0106261
+     Training - done. Time (sec):  0.0192304
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +249,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003860
+     Predicting - done. Time (sec):  0.0011630
      
-     Prediction time/pt. (sec) :  0.0000039
+     Prediction time/pt. (sec) :  0.0000116
      
   
 .. figure:: rmts_Test_test_rmtc.png
@@ -271,91 +271,66 @@ Options (RMTB)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  min_energy
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to perform energy minimization
-  *  -  solver_tolerance
-     -  1e-12
-     -  None
-     -  ['Integral', 'float']
-     -  Convergence tolerance for the nonlinear solver
-  *  -  nonlinear_maxiter
-     -  10
-     -  None
-     -  ['Integral']
-     -  Maximum number of nonlinear solver iterations
-  *  -  energy_weight
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  The weight of the energy minimization terms
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  num_ctrl_pts
-     -  15
-     -  None
-     -  ['Integral', 'tuple', 'list', 'ndarray']
-     -  # B-spline control points in each dimension - length [nx]
-  *  -  data_dir
-     -  None
-     -  [None]
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  line_search
-     -  backtracking
-     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
-     -  ['LineSearch']
-     -  Line search algorithm
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
-  *  -  save_energy_terms
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to cache energy terms in the data_dir directory
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  approx_order
-     -  4
+  *  -  print_training
+     -  True
      -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
-  *  -  smoothness
-     -  1.0
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
+     -  ['bool']
+     -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
   *  -  xlimits
      -  None
      -  None
      -  ['ndarray']
      -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
   *  -  regularization_weight
      -  1e-14
      -  None
      -  ['Integral', 'float']
      -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
+  *  -  energy_weight
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  The weight of the energy minimization terms
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
+  *  -  min_energy
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to perform energy minimization
+  *  -  approx_order
+     -  4
+     -  None
+     -  ['Integral']
+     -  Exponent in the approximation term
   *  -  solver
      -  krylov
      -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
@@ -366,26 +341,51 @@ Options (RMTB)
      -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
      -  ['LinearSolver']
      -  Linear solver used for computing output derivatives (dy_dyt)
-  *  -  max_print_depth
-     -  5
-     -  None
-     -  ['Integral']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
   *  -  grad_weight
      -  0.5
      -  None
      -  ['Integral', 'float']
      -  Weight on gradient training data
-  *  -  print_training
-     -  True
+  *  -  solver_tolerance
+     -  1e-12
+     -  None
+     -  ['Integral', 'float']
+     -  Convergence tolerance for the nonlinear solver
+  *  -  nonlinear_maxiter
+     -  10
+     -  None
+     -  ['Integral']
+     -  Maximum number of nonlinear solver iterations
+  *  -  line_search
+     -  backtracking
+     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
+     -  ['LineSearch']
+     -  Line search algorithm
+  *  -  save_energy_terms
+     -  False
      -  None
      -  ['bool']
-     -  Whether to print training information
+     -  Whether to cache energy terms in the data_dir directory
+  *  -  data_dir
+     -  None
+     -  [None]
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  max_print_depth
+     -  5
+     -  None
+     -  ['Integral']
+     -  Maximum depth (level of nesting) to print operation descriptions and times
   *  -  order
      -  3
      -  None
      -  ['Integral', 'tuple', 'list', 'ndarray']
      -  B-spline order in each dimension - length [nx]
+  *  -  num_ctrl_pts
+     -  15
+     -  None
+     -  ['Integral', 'tuple', 'list', 'ndarray']
+     -  # B-spline control points in each dimension - length [nx]
 
 Options (RMTC)
 --------------
@@ -400,91 +400,66 @@ Options (RMTC)
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  min_energy
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to perform energy minimization
-  *  -  solver_tolerance
-     -  1e-12
-     -  None
-     -  ['Integral', 'float']
-     -  Convergence tolerance for the nonlinear solver
-  *  -  nonlinear_maxiter
-     -  10
-     -  None
-     -  ['Integral']
-     -  Maximum number of nonlinear solver iterations
-  *  -  energy_weight
-     -  0.0001
-     -  None
-     -  ['Integral', 'float']
-     -  The weight of the energy minimization terms
-  *  -  print_prediction
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print prediction information
-  *  -  num_elements
-     -  4
-     -  None
-     -  ['Integral', 'list', 'ndarray']
-     -  # elements in each dimension - ndarray [nx]
-  *  -  data_dir
-     -  None
-     -  [None]
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  line_search
-     -  backtracking
-     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
-     -  ['LineSearch']
-     -  Line search algorithm
-  *  -  extrapolate
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to perform linear extrapolation for external evaluation points
-  *  -  save_energy_terms
-     -  False
-     -  None
-     -  ['bool']
-     -  Whether to cache energy terms in the data_dir directory
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  approx_order
-     -  4
+  *  -  print_training
+     -  True
      -  None
-     -  ['Integral']
-     -  Exponent in the approximation term
-  *  -  smoothness
-     -  1.0
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
      -  None
-     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
-     -  Smoothness parameter in each dimension - length nx. None implies uniform
+     -  ['bool']
+     -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
   *  -  xlimits
      -  None
      -  None
      -  ['ndarray']
      -  Lower/upper bounds in each dimension - ndarray [nx, 2]
+  *  -  smoothness
+     -  1.0
+     -  None
+     -  ['Integral', 'float', 'tuple', 'list', 'ndarray']
+     -  Smoothness parameter in each dimension - length nx. None implies uniform
   *  -  regularization_weight
      -  1e-14
      -  None
      -  ['Integral', 'float']
      -  Weight of the term penalizing the norm of the spline coefficients. This is useful as an alternative to energy minimization  when energy minimization makes the training time too long.
+  *  -  energy_weight
+     -  0.0001
+     -  None
+     -  ['Integral', 'float']
+     -  The weight of the energy minimization terms
+  *  -  extrapolate
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether to perform linear extrapolation for external evaluation points
+  *  -  min_energy
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to perform energy minimization
+  *  -  approx_order
+     -  4
+     -  None
+     -  ['Integral']
+     -  Exponent in the approximation term
   *  -  solver
      -  krylov
      -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
@@ -495,18 +470,43 @@ Options (RMTC)
      -  ['krylov-dense', 'dense-lu', 'dense-chol', 'lu', 'ilu', 'krylov', 'krylov-lu', 'krylov-mg', 'gs', 'jacobi', 'mg', 'null']
      -  ['LinearSolver']
      -  Linear solver used for computing output derivatives (dy_dyt)
-  *  -  max_print_depth
-     -  5
-     -  None
-     -  ['Integral']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
   *  -  grad_weight
      -  0.5
      -  None
      -  ['Integral', 'float']
      -  Weight on gradient training data
-  *  -  print_training
-     -  True
+  *  -  solver_tolerance
+     -  1e-12
+     -  None
+     -  ['Integral', 'float']
+     -  Convergence tolerance for the nonlinear solver
+  *  -  nonlinear_maxiter
+     -  10
+     -  None
+     -  ['Integral']
+     -  Maximum number of nonlinear solver iterations
+  *  -  line_search
+     -  backtracking
+     -  ['backtracking', 'bracketed', 'quadratic', 'cubic', 'null']
+     -  ['LineSearch']
+     -  Line search algorithm
+  *  -  save_energy_terms
+     -  False
      -  None
      -  ['bool']
-     -  Whether to print training information
+     -  Whether to cache energy terms in the data_dir directory
+  *  -  data_dir
+     -  None
+     -  [None]
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  max_print_depth
+     -  5
+     -  None
+     -  ['Integral']
+     -  Maximum depth (level of nesting) to print operation descriptions and times
+  *  -  num_elements
+     -  4
+     -  None
+     -  ['Integral', 'list', 'ndarray']
+     -  # elements in each dimension - ndarray [nx]

@@ -4,6 +4,7 @@ from .kpls import KPLS
 from .krg import KRG
 from .gekpls import GEKPLS
 from .kplsk import KPLSK
+from .genn import GENN
 try:
     from .idw import IDW
     from .rbf import RBF

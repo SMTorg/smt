@@ -98,7 +98,7 @@ Usage
   x0 = np.linspace(xlim[0, 0], xlim[0, 1], 20)
   x1 = np.linspace(xlim[1, 0], xlim[1, 1], 20)
   xv, yv = np.meshgrid(x0, x1)
-  x = np.array(zip(xv.reshape((-1,)), yv.reshape((-1,))))
+  x = np.array(list(zip(xv.reshape((-1,)), yv.reshape((-1,)))))
   prob = moe._proba_cluster(x)
   
   plt.subplot(221, projection='3d')
@@ -133,40 +133,40 @@ Usage
   
 ::
 
-  ('QP', 0.7024962356978467)
-  ('KPLSK', 0.7048249453062974)
-  ('LS', 0.7837275699243051)
-  ('RBF', 0.7004062330746561)
-  ('KPLS', 0.7049283524068711)
-  ('IDW', 0.7183794271357008)
-  Best expert = RBF
-  ('QP', 1.0098840018272874)
-  ('KPLSK', 0.98170577826269)
-  ('LS', 1.0819069011246882)
-  ('RBF', 0.9845716925951647)
-  ('KPLS', 0.98570235899476)
-  ('IDW', 1.007008493714131)
+  LS 0.19190838584098172
+  QP 0.14478075923094819
+  KPLS 0.13634900290671711
+  KPLSK 0.13624027238101322
+  RBF 0.19480781732660235
+  IDW 0.16526977142494742
   Best expert = KPLSK
-  ('QP', 0.14478075923094819)
-  ('KPLSK', 0.1461563478188984)
-  ('LS', 0.19190838584098174)
-  ('RBF', 0.19480781732631508)
-  ('KPLS', 0.13832757802772344)
-  ('IDW', 0.16526977142494736)
+  LS 0.7837275699243051
+  QP 0.7024962356979032
+  KPLS 0.7003583968183628
+  KPLSK 0.7009323079606818
+  RBF 0.7004062329212243
+  IDW 0.7183794271357006
   Best expert = KPLS
-  ('QP', 1.6990518366366612)
-  ('KPLSK', 1.7007241265217867)
-  ('LS', 1.7631271224570984)
-  ('RBF', 1.6980460047900212)
-  ('KPLS', 1.7005787633057132)
-  ('IDW', 1.7065380262331586)
+  LS 1.7631271224570977
+  QP 1.6990518366367704
+  KPLS 1.700603652703028
+  KPLSK 1.7008457300766557
+  RBF 1.6980460046116308
+  IDW 1.7065380262331584
   Best expert = RBF
-  ('QP', 1.3340215836244425)
-  ('KPLSK', 1.2645189961752203)
-  ('LS', 1.2993876879189066)
-  ('RBF', 1.2531807528950485)
-  ('KPLS', 1.2638063303240412)
-  ('IDW', 1.2668606771434008)
+  LS 1.0819069011246885
+  QP 1.0098840018273274
+  KPLS 0.9873667799531588
+  KPLSK 0.9817048896668656
+  RBF 0.9845716863712535
+  IDW 1.007008493714131
+  Best expert = KPLSK
+  LS 1.299387687918906
+  QP 1.3340215836243243
+  KPLS 1.2610933624900784
+  KPLSK 1.2637265304255048
+  RBF 1.2531807527609944
+  IDW 1.2668606771434008
   Best expert = RBF
   
 .. figure:: moe_TestMOE_run_moe_example.png
@@ -186,43 +186,43 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  ytest
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Test outputs
-  *  -  smooth_recombination
-     -  True
-     -  None
-     -  ['bool']
-     -  Continuous cluster transition
-  *  -  n_clusters
-     -  2
-     -  None
-     -  ['int']
-     -  Number of clusters
-  *  -  xtest
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Test inputs
-  *  -  heaviside_optimization
-     -  False
-     -  None
-     -  ['bool']
-     -  Optimize Heaviside scaling factor when smooth recombination is used
-  *  -  yt
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Training outputs
   *  -  xt
      -  None
      -  None
      -  ['ndarray']
      -  Training inputs
+  *  -  yt
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Training outputs
   *  -  ct
      -  None
      -  None
      -  ['ndarray']
      -  Training derivative outputs used for clustering
+  *  -  xtest
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Test inputs
+  *  -  ytest
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Test outputs
+  *  -  n_clusters
+     -  2
+     -  None
+     -  ['int']
+     -  Number of clusters
+  *  -  smooth_recombination
+     -  True
+     -  None
+     -  ['bool']
+     -  Continuous cluster transition
+  *  -  heaviside_optimization
+     -  False
+     -  None
+     -  ['bool']
+     -  Optimize Heaviside scaling factor when smooth recombination is used

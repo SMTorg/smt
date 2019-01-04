@@ -217,80 +217,78 @@ RMTB
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000019
+           Computing dof2coeff - done. Time (sec):  0.0000041
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0004699
+           Initializing Hessian - done. Time (sec):  0.0008872
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0057001
+           Computing energy terms - done. Time (sec):  0.0119421
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0006211
-        Pre-computing matrices - done. Time (sec):  0.0068741
+           Computing approximation terms - done. Time (sec):  0.0010629
+        Pre-computing matrices - done. Time (sec):  0.0140262
         Solving for degrees of freedom ...
            Solving initial startup problem (n=400) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 9.429150220e-02 1.114942861e-02
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.126996280e-08 1.793039622e-10
-              Solving for output 0 - done. Time (sec):  0.0158942
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.918130789e-08 1.793051131e-10
+              Solving for output 0 - done. Time (sec):  0.0252142
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.955493282e+00 4.799845498e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   1 2.697466889e-07 4.567649850e-08
-              Solving for output 1 - done. Time (sec):  0.0157371
-           Solving initial startup problem (n=400) - done. Time (sec):  0.0317152
+                 Iteration (num., iy, grad. norm, func.) :   0   1 5.170087671e-07 4.567684873e-08
+              Solving for output 1 - done. Time (sec):  0.0257990
+           Solving initial startup problem (n=400) - done. Time (sec):  0.0511999
            Solving nonlinear problem (n=400) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 6.652693068e-09 1.793037801e-10
-                 Iteration (num., iy, grad. norm, func.) :   0   0 5.849617718e-09 1.703950713e-10
-                 Iteration (num., iy, grad. norm, func.) :   1   0 3.025566935e-08 1.033343258e-10
-                 Iteration (num., iy, grad. norm, func.) :   2   0 1.125487407e-08 2.504487682e-11
-                 Iteration (num., iy, grad. norm, func.) :   3   0 3.535709346e-09 1.049407146e-11
-                 Iteration (num., iy, grad. norm, func.) :   4   0 2.494883650e-09 9.524089801e-12
-                 Iteration (num., iy, grad. norm, func.) :   5   0 7.133349034e-10 7.416110278e-12
-                 Iteration (num., iy, grad. norm, func.) :   6   0 2.004404072e-10 6.533121174e-12
-                 Iteration (num., iy, grad. norm, func.) :   7   0 4.190689804e-11 6.262358032e-12
-                 Iteration (num., iy, grad. norm, func.) :   8   0 2.482185245e-11 6.261715105e-12
-                 Iteration (num., iy, grad. norm, func.) :   9   0 1.657786466e-11 6.260755557e-12
-                 Iteration (num., iy, grad. norm, func.) :  10   0 9.761577910e-12 6.260204240e-12
-                 Iteration (num., iy, grad. norm, func.) :  11   0 2.795276212e-12 6.256591279e-12
-                 Iteration (num., iy, grad. norm, func.) :  12   0 5.997502139e-13 6.255690394e-12
-              Solving for output 0 - done. Time (sec):  0.2036891
+                 Iteration (num., iy, grad. norm, func.) :   0   0 6.652554858e-09 1.793037268e-10
+                 Iteration (num., iy, grad. norm, func.) :   0   0 5.849425817e-09 1.703967811e-10
+                 Iteration (num., iy, grad. norm, func.) :   1   0 3.040889961e-08 1.037059796e-10
+                 Iteration (num., iy, grad. norm, func.) :   2   0 1.131130625e-08 2.516658925e-11
+                 Iteration (num., iy, grad. norm, func.) :   3   0 3.676281227e-09 1.068748129e-11
+                 Iteration (num., iy, grad. norm, func.) :   4   0 1.693073866e-09 8.718637681e-12
+                 Iteration (num., iy, grad. norm, func.) :   5   0 4.767435676e-10 7.258287806e-12
+                 Iteration (num., iy, grad. norm, func.) :   6   0 1.292737721e-10 6.494082490e-12
+                 Iteration (num., iy, grad. norm, func.) :   7   0 2.129984898e-11 6.259342852e-12
+                 Iteration (num., iy, grad. norm, func.) :   8   0 1.701491451e-11 6.257526556e-12
+                 Iteration (num., iy, grad. norm, func.) :   9   0 1.055740158e-11 6.257128928e-12
+                 Iteration (num., iy, grad. norm, func.) :  10   0 9.367344079e-12 6.257118464e-12
+                 Iteration (num., iy, grad. norm, func.) :  11   0 4.777741493e-12 6.256190493e-12
+                 Iteration (num., iy, grad. norm, func.) :  12   0 8.218089052e-13 6.255720318e-12
+              Solving for output 0 - done. Time (sec):  0.2321289
               Solving for output 1 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   1 9.729453645e-08 4.567641275e-08
-                 Iteration (num., iy, grad. norm, func.) :   0   1 9.338312477e-08 4.538212969e-08
-                 Iteration (num., iy, grad. norm, func.) :   1   1 2.886091534e-06 3.234109162e-08
-                 Iteration (num., iy, grad. norm, func.) :   2   1 8.559781824e-07 4.637978549e-09
-                 Iteration (num., iy, grad. norm, func.) :   3   1 2.823691609e-07 2.049077806e-09
-                 Iteration (num., iy, grad. norm, func.) :   4   1 2.723236688e-07 1.947641893e-09
-                 Iteration (num., iy, grad. norm, func.) :   5   1 1.792928010e-07 1.210775835e-09
-                 Iteration (num., iy, grad. norm, func.) :   6   1 1.181658522e-07 7.711278799e-10
-                 Iteration (num., iy, grad. norm, func.) :   7   1 3.467121432e-08 4.634059415e-10
-                 Iteration (num., iy, grad. norm, func.) :   8   1 9.984565229e-09 4.213082093e-10
-                 Iteration (num., iy, grad. norm, func.) :   9   1 3.068167164e-09 3.319977044e-10
-                 Iteration (num., iy, grad. norm, func.) :  10   1 1.186604737e-09 2.807275088e-10
-                 Iteration (num., iy, grad. norm, func.) :  11   1 3.906767960e-10 2.731330653e-10
-                 Iteration (num., iy, grad. norm, func.) :  12   1 3.614894546e-10 2.730008762e-10
-                 Iteration (num., iy, grad. norm, func.) :  13   1 1.215479619e-10 2.721116067e-10
-                 Iteration (num., iy, grad. norm, func.) :  14   1 5.702469698e-11 2.715757739e-10
-                 Iteration (num., iy, grad. norm, func.) :  15   1 3.672983378e-11 2.714454914e-10
-                 Iteration (num., iy, grad. norm, func.) :  16   1 6.502221017e-11 2.714407840e-10
-                 Iteration (num., iy, grad. norm, func.) :  17   1 1.743600885e-11 2.713891416e-10
-                 Iteration (num., iy, grad. norm, func.) :  18   1 4.788887986e-11 2.713889196e-10
-                 Iteration (num., iy, grad. norm, func.) :  19   1 1.196201880e-11 2.713646665e-10
-                 Iteration (num., iy, grad. norm, func.) :  20   1 1.562648133e-11 2.713514888e-10
-                 Iteration (num., iy, grad. norm, func.) :  21   1 6.261087902e-12 2.713491651e-10
-                 Iteration (num., iy, grad. norm, func.) :  22   1 1.400320341e-11 2.713490729e-10
-                 Iteration (num., iy, grad. norm, func.) :  23   1 2.542300839e-12 2.713461617e-10
-                 Iteration (num., iy, grad. norm, func.) :  24   1 3.884621068e-12 2.713457860e-10
-                 Iteration (num., iy, grad. norm, func.) :  25   1 6.967485435e-12 2.713455447e-10
-                 Iteration (num., iy, grad. norm, func.) :  26   1 3.566001156e-12 2.713452990e-10
-                 Iteration (num., iy, grad. norm, func.) :  27   1 3.325579111e-12 2.713451178e-10
-                 Iteration (num., iy, grad. norm, func.) :  28   1 1.877850418e-12 2.713450513e-10
-                 Iteration (num., iy, grad. norm, func.) :  29   1 1.435419086e-12 2.713449988e-10
-                 Iteration (num., iy, grad. norm, func.) :  30   1 1.996402793e-12 2.713449648e-10
-                 Iteration (num., iy, grad. norm, func.) :  31   1 7.066346220e-13 2.713449432e-10
-              Solving for output 1 - done. Time (sec):  0.5002341
-           Solving nonlinear problem (n=400) - done. Time (sec):  0.7039950
-        Solving for degrees of freedom - done. Time (sec):  0.7357800
-     Training - done. Time (sec):  0.7432971
+                 Iteration (num., iy, grad. norm, func.) :   0   1 9.729143239e-08 4.567639526e-08
+                 Iteration (num., iy, grad. norm, func.) :   0   1 9.337808969e-08 4.538209916e-08
+                 Iteration (num., iy, grad. norm, func.) :   1   1 2.904323831e-06 3.250090785e-08
+                 Iteration (num., iy, grad. norm, func.) :   2   1 8.666318505e-07 4.690442846e-09
+                 Iteration (num., iy, grad. norm, func.) :   3   1 2.631077034e-07 1.907895208e-09
+                 Iteration (num., iy, grad. norm, func.) :   4   1 2.396633275e-07 1.714777771e-09
+                 Iteration (num., iy, grad. norm, func.) :   5   1 7.155568916e-08 5.427480540e-10
+                 Iteration (num., iy, grad. norm, func.) :   6   1 4.410601247e-08 4.618989947e-10
+                 Iteration (num., iy, grad. norm, func.) :   7   1 1.321312805e-08 4.212892044e-10
+                 Iteration (num., iy, grad. norm, func.) :   8   1 4.159525680e-09 3.621523966e-10
+                 Iteration (num., iy, grad. norm, func.) :   9   1 1.402444629e-09 3.033096767e-10
+                 Iteration (num., iy, grad. norm, func.) :  10   1 4.159734096e-10 2.740841148e-10
+                 Iteration (num., iy, grad. norm, func.) :  11   1 3.192171188e-10 2.719205528e-10
+                 Iteration (num., iy, grad. norm, func.) :  12   1 2.638366090e-10 2.718125940e-10
+                 Iteration (num., iy, grad. norm, func.) :  13   1 2.313891231e-10 2.718046144e-10
+                 Iteration (num., iy, grad. norm, func.) :  14   1 2.174112189e-10 2.717533849e-10
+                 Iteration (num., iy, grad. norm, func.) :  15   1 6.534835588e-11 2.715115338e-10
+                 Iteration (num., iy, grad. norm, func.) :  16   1 1.973765034e-11 2.713892807e-10
+                 Iteration (num., iy, grad. norm, func.) :  17   1 1.795030101e-11 2.713791902e-10
+                 Iteration (num., iy, grad. norm, func.) :  18   1 1.863357634e-11 2.713688461e-10
+                 Iteration (num., iy, grad. norm, func.) :  19   1 1.941582151e-11 2.713636800e-10
+                 Iteration (num., iy, grad. norm, func.) :  20   1 1.242443841e-11 2.713502351e-10
+                 Iteration (num., iy, grad. norm, func.) :  21   1 3.885126854e-12 2.713467274e-10
+                 Iteration (num., iy, grad. norm, func.) :  22   1 4.329824502e-12 2.713467255e-10
+                 Iteration (num., iy, grad. norm, func.) :  23   1 3.899916065e-12 2.713462311e-10
+                 Iteration (num., iy, grad. norm, func.) :  24   1 2.315857110e-12 2.713453474e-10
+                 Iteration (num., iy, grad. norm, func.) :  25   1 1.562810923e-12 2.713450831e-10
+                 Iteration (num., iy, grad. norm, func.) :  26   1 1.286548732e-12 2.713450522e-10
+                 Iteration (num., iy, grad. norm, func.) :  27   1 1.124148706e-12 2.713450011e-10
+                 Iteration (num., iy, grad. norm, func.) :  28   1 1.865113508e-12 2.713449709e-10
+                 Iteration (num., iy, grad. norm, func.) :  29   1 6.271910693e-13 2.713449696e-10
+              Solving for output 1 - done. Time (sec):  0.5591829
+           Solving nonlinear problem (n=400) - done. Time (sec):  0.7914271
+        Solving for degrees of freedom - done. Time (sec):  0.8427939
+     Training - done. Time (sec):  0.8575890
   ___________________________________________________________________________
      
    Evaluation
@@ -298,7 +296,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006590
+     Predicting - done. Time (sec):  0.0006599
      
      Prediction time/pt. (sec) :  0.0000013
      
@@ -309,9 +307,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006061
+     Predicting - done. Time (sec):  0.0007648
      
-     Prediction time/pt. (sec) :  0.0000012
+     Prediction time/pt. (sec) :  0.0000015
      
   ___________________________________________________________________________
      
@@ -320,7 +318,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006781
+     Predicting - done. Time (sec):  0.0007010
      
      Prediction time/pt. (sec) :  0.0000014
      
@@ -331,7 +329,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006139
+     Predicting - done. Time (sec):  0.0005889
      
      Prediction time/pt. (sec) :  0.0000012
      
@@ -342,7 +340,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006499
+     Predicting - done. Time (sec):  0.0006621
      
      Prediction time/pt. (sec) :  0.0000013
      
@@ -353,7 +351,18 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006258
+     Predicting - done. Time (sec):  0.0005431
+     
+     Prediction time/pt. (sec) :  0.0000011
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0006342
      
      Prediction time/pt. (sec) :  0.0000013
      
@@ -364,18 +373,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006731
-     
-     Prediction time/pt. (sec) :  0.0000013
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0006201
+     Predicting - done. Time (sec):  0.0006118
      
      Prediction time/pt. (sec) :  0.0000012
      
@@ -386,18 +384,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006671
-     
-     Prediction time/pt. (sec) :  0.0000013
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0006089
+     Predicting - done. Time (sec):  0.0006227
      
      Prediction time/pt. (sec) :  0.0000012
      
@@ -408,7 +395,29 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006590
+     Predicting - done. Time (sec):  0.0005400
+     
+     Prediction time/pt. (sec) :  0.0000011
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0006757
+     
+     Prediction time/pt. (sec) :  0.0000014
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0006289
      
      Prediction time/pt. (sec) :  0.0000013
      
@@ -419,20 +428,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006180
+     Predicting - done. Time (sec):  0.0007188
      
-     Prediction time/pt. (sec) :  0.0000012
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0006292
-     
-     Prediction time/pt. (sec) :  0.0000013
+     Prediction time/pt. (sec) :  0.0000014
      
   ___________________________________________________________________________
      
@@ -441,7 +439,7 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006158
+     Predicting - done. Time (sec):  0.0005760
      
      Prediction time/pt. (sec) :  0.0000012
      
@@ -452,9 +450,9 @@ RMTB
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0016150
+     Predicting - done. Time (sec):  0.0019710
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000008
      
   ___________________________________________________________________________
      
@@ -463,7 +461,7 @@ RMTB
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0015090
+     Predicting - done. Time (sec):  0.0015810
      
      Prediction time/pt. (sec) :  0.0000006
      
@@ -506,183 +504,169 @@ RMTC
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0045240
+           Computing dof2coeff - done. Time (sec):  0.0062079
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0004928
+           Initializing Hessian - done. Time (sec):  0.0005131
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0148189
+           Computing energy terms - done. Time (sec):  0.0149319
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0011470
-        Pre-computing matrices - done. Time (sec):  0.0210750
+           Computing approximation terms - done. Time (sec):  0.0014241
+        Pre-computing matrices - done. Time (sec):  0.0231891
         Solving for degrees of freedom ...
            Solving initial startup problem (n=1764) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.279175539e-01 1.114942861e-02
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.525626130e-05 2.184891017e-08
-              Solving for output 0 - done. Time (sec):  0.0348730
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.499206775e-05 2.184788477e-08
+              Solving for output 0 - done. Time (sec):  0.0275202
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 2.653045755e+00 4.799845498e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   1 6.590708234e-05 6.501028429e-06
-              Solving for output 1 - done. Time (sec):  0.0353301
-           Solving initial startup problem (n=1764) - done. Time (sec):  0.0703139
+                 Iteration (num., iy, grad. norm, func.) :   0   1 2.441435303e-04 6.147506677e-06
+              Solving for output 1 - done. Time (sec):  0.0264318
+           Solving initial startup problem (n=1764) - done. Time (sec):  0.0540590
            Solving nonlinear problem (n=1764) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 8.078914091e-07 2.166447289e-08
-                 Iteration (num., iy, grad. norm, func.) :   0   0 9.144203614e-07 1.723325764e-08
-                 Iteration (num., iy, grad. norm, func.) :   1   0 3.512848564e-07 3.252718660e-09
-                 Iteration (num., iy, grad. norm, func.) :   2   0 1.168240718e-07 1.046750212e-09
-                 Iteration (num., iy, grad. norm, func.) :   3   0 6.329288940e-08 5.331255046e-10
-                 Iteration (num., iy, grad. norm, func.) :   4   0 3.416970363e-08 4.111249340e-10
-                 Iteration (num., iy, grad. norm, func.) :   5   0 2.254659429e-08 3.760797805e-10
-                 Iteration (num., iy, grad. norm, func.) :   6   0 2.009632074e-08 3.714401754e-10
-                 Iteration (num., iy, grad. norm, func.) :   7   0 1.934766932e-08 3.710416397e-10
-                 Iteration (num., iy, grad. norm, func.) :   8   0 1.336142337e-08 3.606158144e-10
-                 Iteration (num., iy, grad. norm, func.) :   9   0 1.484071371e-08 3.420934208e-10
-                 Iteration (num., iy, grad. norm, func.) :  10   0 7.058192894e-09 3.069629237e-10
-                 Iteration (num., iy, grad. norm, func.) :  11   0 2.414987245e-09 2.895245402e-10
-                 Iteration (num., iy, grad. norm, func.) :  12   0 1.985215675e-09 2.891910851e-10
-                 Iteration (num., iy, grad. norm, func.) :  13   0 2.274383828e-09 2.889768689e-10
-                 Iteration (num., iy, grad. norm, func.) :  14   0 1.508023702e-09 2.879190117e-10
-                 Iteration (num., iy, grad. norm, func.) :  15   0 1.620847037e-09 2.871365577e-10
-                 Iteration (num., iy, grad. norm, func.) :  16   0 5.731149757e-10 2.868379332e-10
-                 Iteration (num., iy, grad. norm, func.) :  17   0 5.008888169e-10 2.868165672e-10
-                 Iteration (num., iy, grad. norm, func.) :  18   0 8.031942070e-10 2.868034482e-10
-                 Iteration (num., iy, grad. norm, func.) :  19   0 9.994476052e-10 2.867800583e-10
-                 Iteration (num., iy, grad. norm, func.) :  20   0 7.733739008e-10 2.867410067e-10
-                 Iteration (num., iy, grad. norm, func.) :  21   0 9.139102587e-10 2.866789467e-10
-                 Iteration (num., iy, grad. norm, func.) :  22   0 3.644138954e-10 2.865887406e-10
-                 Iteration (num., iy, grad. norm, func.) :  23   0 4.324586053e-10 2.865771771e-10
-                 Iteration (num., iy, grad. norm, func.) :  24   0 5.071061961e-10 2.865753801e-10
-                 Iteration (num., iy, grad. norm, func.) :  25   0 5.866543693e-10 2.865685353e-10
-                 Iteration (num., iy, grad. norm, func.) :  26   0 3.492546224e-10 2.865532358e-10
-                 Iteration (num., iy, grad. norm, func.) :  27   0 4.515879616e-10 2.865340799e-10
-                 Iteration (num., iy, grad. norm, func.) :  28   0 1.592983333e-10 2.865166461e-10
-                 Iteration (num., iy, grad. norm, func.) :  29   0 2.416735330e-10 2.865116592e-10
-                 Iteration (num., iy, grad. norm, func.) :  30   0 2.184128801e-10 2.865105385e-10
-                 Iteration (num., iy, grad. norm, func.) :  31   0 2.308349493e-10 2.865091909e-10
-                 Iteration (num., iy, grad. norm, func.) :  32   0 2.347464637e-10 2.865035896e-10
-                 Iteration (num., iy, grad. norm, func.) :  33   0 7.188318332e-11 2.864965865e-10
-                 Iteration (num., iy, grad. norm, func.) :  34   0 5.775926076e-11 2.864960437e-10
-                 Iteration (num., iy, grad. norm, func.) :  35   0 7.734861517e-11 2.864955112e-10
-                 Iteration (num., iy, grad. norm, func.) :  36   0 8.083117479e-11 2.864949805e-10
-                 Iteration (num., iy, grad. norm, func.) :  37   0 7.147073438e-11 2.864932077e-10
-                 Iteration (num., iy, grad. norm, func.) :  38   0 3.451763296e-11 2.864929979e-10
-                 Iteration (num., iy, grad. norm, func.) :  39   0 3.451762397e-11 2.864929979e-10
-                 Iteration (num., iy, grad. norm, func.) :  40   0 3.451762214e-11 2.864929979e-10
-                 Iteration (num., iy, grad. norm, func.) :  41   0 4.605470389e-11 2.864928044e-10
-                 Iteration (num., iy, grad. norm, func.) :  42   0 6.464587406e-12 2.864925251e-10
-                 Iteration (num., iy, grad. norm, func.) :  43   0 7.824747529e-12 2.864924940e-10
-                 Iteration (num., iy, grad. norm, func.) :  44   0 1.188992500e-11 2.864924873e-10
-                 Iteration (num., iy, grad. norm, func.) :  45   0 1.006451501e-11 2.864924789e-10
-                 Iteration (num., iy, grad. norm, func.) :  46   0 3.055319401e-11 2.864924714e-10
-                 Iteration (num., iy, grad. norm, func.) :  47   0 8.273331413e-12 2.864924593e-10
-                 Iteration (num., iy, grad. norm, func.) :  48   0 9.360617237e-12 2.864924556e-10
-                 Iteration (num., iy, grad. norm, func.) :  49   0 7.254676117e-12 2.864924478e-10
-                 Iteration (num., iy, grad. norm, func.) :  50   0 1.110207770e-11 2.864924384e-10
-                 Iteration (num., iy, grad. norm, func.) :  51   0 4.582040874e-12 2.864924299e-10
-                 Iteration (num., iy, grad. norm, func.) :  52   0 4.589301761e-12 2.864924259e-10
-                 Iteration (num., iy, grad. norm, func.) :  53   0 5.339485232e-12 2.864924255e-10
-                 Iteration (num., iy, grad. norm, func.) :  54   0 5.511752329e-12 2.864924248e-10
-                 Iteration (num., iy, grad. norm, func.) :  55   0 5.410581025e-12 2.864924233e-10
-                 Iteration (num., iy, grad. norm, func.) :  56   0 3.943080143e-12 2.864924206e-10
-                 Iteration (num., iy, grad. norm, func.) :  57   0 3.493074738e-12 2.864924191e-10
-                 Iteration (num., iy, grad. norm, func.) :  58   0 3.528397901e-12 2.864924182e-10
-                 Iteration (num., iy, grad. norm, func.) :  59   0 1.960799706e-12 2.864924176e-10
-                 Iteration (num., iy, grad. norm, func.) :  60   0 2.441886155e-12 2.864924174e-10
-                 Iteration (num., iy, grad. norm, func.) :  61   0 2.374532068e-12 2.864924170e-10
-                 Iteration (num., iy, grad. norm, func.) :  62   0 1.539846288e-12 2.864924165e-10
-                 Iteration (num., iy, grad. norm, func.) :  63   0 1.654037809e-12 2.864924163e-10
-                 Iteration (num., iy, grad. norm, func.) :  64   0 1.187194957e-12 2.864924161e-10
-                 Iteration (num., iy, grad. norm, func.) :  65   0 2.461183662e-12 2.864924158e-10
-                 Iteration (num., iy, grad. norm, func.) :  66   0 4.609495090e-13 2.864924155e-10
-              Solving for output 0 - done. Time (sec):  2.1466520
+                 Iteration (num., iy, grad. norm, func.) :   0   0 8.076561564e-07 2.166293139e-08
+                 Iteration (num., iy, grad. norm, func.) :   0   0 9.142058108e-07 1.723176225e-08
+                 Iteration (num., iy, grad. norm, func.) :   1   0 3.513935845e-07 3.252602993e-09
+                 Iteration (num., iy, grad. norm, func.) :   2   0 1.168214743e-07 1.046685700e-09
+                 Iteration (num., iy, grad. norm, func.) :   3   0 6.326509912e-08 5.331049254e-10
+                 Iteration (num., iy, grad. norm, func.) :   4   0 3.418239776e-08 4.111805755e-10
+                 Iteration (num., iy, grad. norm, func.) :   5   0 2.256295052e-08 3.761245235e-10
+                 Iteration (num., iy, grad. norm, func.) :   6   0 2.010448646e-08 3.714924187e-10
+                 Iteration (num., iy, grad. norm, func.) :   7   0 1.940154325e-08 3.710813074e-10
+                 Iteration (num., iy, grad. norm, func.) :   8   0 1.337930855e-08 3.606311245e-10
+                 Iteration (num., iy, grad. norm, func.) :   9   0 1.491946708e-08 3.420900947e-10
+                 Iteration (num., iy, grad. norm, func.) :  10   0 7.041005685e-09 3.069403043e-10
+                 Iteration (num., iy, grad. norm, func.) :  11   0 2.260877881e-09 2.895211131e-10
+                 Iteration (num., iy, grad. norm, func.) :  12   0 1.905111198e-09 2.891987822e-10
+                 Iteration (num., iy, grad. norm, func.) :  13   0 2.373905281e-09 2.889797702e-10
+                 Iteration (num., iy, grad. norm, func.) :  14   0 1.300032595e-09 2.879068517e-10
+                 Iteration (num., iy, grad. norm, func.) :  15   0 1.623847751e-09 2.871275978e-10
+                 Iteration (num., iy, grad. norm, func.) :  16   0 5.285589253e-10 2.868398442e-10
+                 Iteration (num., iy, grad. norm, func.) :  17   0 7.922712640e-10 2.868375443e-10
+                 Iteration (num., iy, grad. norm, func.) :  18   0 5.888225745e-10 2.868045063e-10
+                 Iteration (num., iy, grad. norm, func.) :  19   0 1.132370943e-09 2.867143548e-10
+                 Iteration (num., iy, grad. norm, func.) :  20   0 3.604109310e-10 2.866142544e-10
+                 Iteration (num., iy, grad. norm, func.) :  21   0 3.554534001e-10 2.866064690e-10
+                 Iteration (num., iy, grad. norm, func.) :  22   0 5.366990360e-10 2.866053737e-10
+                 Iteration (num., iy, grad. norm, func.) :  23   0 6.289675890e-10 2.865891836e-10
+                 Iteration (num., iy, grad. norm, func.) :  24   0 4.378955139e-10 2.865489267e-10
+                 Iteration (num., iy, grad. norm, func.) :  25   0 1.379311543e-10 2.865102796e-10
+                 Iteration (num., iy, grad. norm, func.) :  26   0 1.165470712e-10 2.865092134e-10
+                 Iteration (num., iy, grad. norm, func.) :  27   0 1.464146843e-10 2.865071791e-10
+                 Iteration (num., iy, grad. norm, func.) :  28   0 2.140809245e-10 2.865056805e-10
+                 Iteration (num., iy, grad. norm, func.) :  29   0 1.779606030e-10 2.865037521e-10
+                 Iteration (num., iy, grad. norm, func.) :  30   0 1.353338617e-10 2.865006425e-10
+                 Iteration (num., iy, grad. norm, func.) :  31   0 1.573425416e-10 2.865006039e-10
+                 Iteration (num., iy, grad. norm, func.) :  32   0 1.327422948e-10 2.864992021e-10
+                 Iteration (num., iy, grad. norm, func.) :  33   0 1.054784937e-10 2.864971098e-10
+                 Iteration (num., iy, grad. norm, func.) :  34   0 6.138672488e-11 2.864947948e-10
+                 Iteration (num., iy, grad. norm, func.) :  35   0 6.123870556e-11 2.864945453e-10
+                 Iteration (num., iy, grad. norm, func.) :  36   0 5.048804943e-11 2.864943135e-10
+                 Iteration (num., iy, grad. norm, func.) :  37   0 9.399586850e-11 2.864939967e-10
+                 Iteration (num., iy, grad. norm, func.) :  38   0 4.372030077e-11 2.864935099e-10
+                 Iteration (num., iy, grad. norm, func.) :  39   0 5.948721280e-11 2.864932592e-10
+                 Iteration (num., iy, grad. norm, func.) :  40   0 2.999872370e-11 2.864930129e-10
+                 Iteration (num., iy, grad. norm, func.) :  41   0 4.787331964e-11 2.864930058e-10
+                 Iteration (num., iy, grad. norm, func.) :  42   0 3.009437055e-11 2.864929464e-10
+                 Iteration (num., iy, grad. norm, func.) :  43   0 3.964525862e-11 2.864928616e-10
+                 Iteration (num., iy, grad. norm, func.) :  44   0 1.846213481e-11 2.864927280e-10
+                 Iteration (num., iy, grad. norm, func.) :  45   0 3.500984645e-11 2.864925120e-10
+                 Iteration (num., iy, grad. norm, func.) :  46   0 5.469355859e-12 2.864924656e-10
+                 Iteration (num., iy, grad. norm, func.) :  47   0 5.469352970e-12 2.864924656e-10
+                 Iteration (num., iy, grad. norm, func.) :  48   0 5.469343760e-12 2.864924656e-10
+                 Iteration (num., iy, grad. norm, func.) :  49   0 1.251540829e-11 2.864924604e-10
+                 Iteration (num., iy, grad. norm, func.) :  50   0 4.029270853e-12 2.864924394e-10
+                 Iteration (num., iy, grad. norm, func.) :  51   0 1.067247644e-11 2.864924243e-10
+                 Iteration (num., iy, grad. norm, func.) :  52   0 2.200754943e-12 2.864924196e-10
+                 Iteration (num., iy, grad. norm, func.) :  53   0 2.199224609e-12 2.864924196e-10
+                 Iteration (num., iy, grad. norm, func.) :  54   0 2.189676025e-12 2.864924196e-10
+                 Iteration (num., iy, grad. norm, func.) :  55   0 3.135376413e-12 2.864924186e-10
+                 Iteration (num., iy, grad. norm, func.) :  56   0 1.403223034e-12 2.864924174e-10
+                 Iteration (num., iy, grad. norm, func.) :  57   0 3.378902299e-12 2.864924169e-10
+                 Iteration (num., iy, grad. norm, func.) :  58   0 9.916982742e-13 2.864924163e-10
+              Solving for output 0 - done. Time (sec):  2.6370471
               Solving for output 1 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   1 1.431922489e-05 6.497521500e-06
-                 Iteration (num., iy, grad. norm, func.) :   0   1 1.432062268e-05 6.250717055e-06
-                 Iteration (num., iy, grad. norm, func.) :   1   1 1.447473277e-05 8.022139673e-07
-                 Iteration (num., iy, grad. norm, func.) :   2   1 1.781373926e-05 3.569835972e-07
-                 Iteration (num., iy, grad. norm, func.) :   3   1 5.486407158e-06 1.249456100e-07
-                 Iteration (num., iy, grad. norm, func.) :   4   1 9.592921682e-06 1.162559991e-07
-                 Iteration (num., iy, grad. norm, func.) :   5   1 5.810703198e-06 7.139269087e-08
-                 Iteration (num., iy, grad. norm, func.) :   6   1 1.676464520e-06 3.122631579e-08
-                 Iteration (num., iy, grad. norm, func.) :   7   1 1.250439548e-06 3.060168753e-08
-                 Iteration (num., iy, grad. norm, func.) :   8   1 7.190277095e-07 2.997510861e-08
-                 Iteration (num., iy, grad. norm, func.) :   9   1 3.298304783e-07 2.585302864e-08
-                 Iteration (num., iy, grad. norm, func.) :  10   1 1.131350154e-07 1.927223658e-08
-                 Iteration (num., iy, grad. norm, func.) :  11   1 6.773522889e-08 1.559978407e-08
-                 Iteration (num., iy, grad. norm, func.) :  12   1 2.022425559e-08 1.457641089e-08
-                 Iteration (num., iy, grad. norm, func.) :  13   1 1.813611435e-08 1.457612492e-08
-                 Iteration (num., iy, grad. norm, func.) :  14   1 1.813611429e-08 1.457612492e-08
-                 Iteration (num., iy, grad. norm, func.) :  15   1 1.627997397e-08 1.455608377e-08
-                 Iteration (num., iy, grad. norm, func.) :  16   1 1.236953177e-08 1.455081121e-08
-                 Iteration (num., iy, grad. norm, func.) :  17   1 2.712358396e-08 1.454380435e-08
-                 Iteration (num., iy, grad. norm, func.) :  18   1 5.746887685e-09 1.449786194e-08
-                 Iteration (num., iy, grad. norm, func.) :  19   1 4.999029136e-09 1.447934960e-08
-                 Iteration (num., iy, grad. norm, func.) :  20   1 5.596398624e-09 1.447383496e-08
-                 Iteration (num., iy, grad. norm, func.) :  21   1 1.001964276e-08 1.447323033e-08
-                 Iteration (num., iy, grad. norm, func.) :  22   1 4.055311213e-09 1.447109753e-08
-                 Iteration (num., iy, grad. norm, func.) :  23   1 3.500278354e-09 1.447072004e-08
-                 Iteration (num., iy, grad. norm, func.) :  24   1 3.797276086e-09 1.446927411e-08
-                 Iteration (num., iy, grad. norm, func.) :  25   1 3.362438729e-09 1.446679803e-08
-                 Iteration (num., iy, grad. norm, func.) :  26   1 2.257794035e-09 1.446518008e-08
-                 Iteration (num., iy, grad. norm, func.) :  27   1 1.474682716e-09 1.446466766e-08
-                 Iteration (num., iy, grad. norm, func.) :  28   1 1.291801251e-09 1.446462528e-08
-                 Iteration (num., iy, grad. norm, func.) :  29   1 1.280225366e-09 1.446454868e-08
-                 Iteration (num., iy, grad. norm, func.) :  30   1 1.290729833e-09 1.446426008e-08
-                 Iteration (num., iy, grad. norm, func.) :  31   1 1.105759748e-09 1.446397216e-08
-                 Iteration (num., iy, grad. norm, func.) :  32   1 1.080263277e-09 1.446390251e-08
-                 Iteration (num., iy, grad. norm, func.) :  33   1 7.419467381e-10 1.446385532e-08
-                 Iteration (num., iy, grad. norm, func.) :  34   1 9.482963127e-10 1.446382970e-08
-                 Iteration (num., iy, grad. norm, func.) :  35   1 6.097762938e-10 1.446377880e-08
-                 Iteration (num., iy, grad. norm, func.) :  36   1 8.422762533e-10 1.446373694e-08
-                 Iteration (num., iy, grad. norm, func.) :  37   1 4.174569759e-10 1.446367663e-08
-                 Iteration (num., iy, grad. norm, func.) :  38   1 4.950108412e-10 1.446363189e-08
-                 Iteration (num., iy, grad. norm, func.) :  39   1 2.087152188e-10 1.446360275e-08
-                 Iteration (num., iy, grad. norm, func.) :  40   1 2.056686765e-10 1.446359514e-08
-                 Iteration (num., iy, grad. norm, func.) :  41   1 2.383612869e-10 1.446359047e-08
-                 Iteration (num., iy, grad. norm, func.) :  42   1 2.915449896e-10 1.446358735e-08
-                 Iteration (num., iy, grad. norm, func.) :  43   1 2.149396598e-10 1.446358363e-08
-                 Iteration (num., iy, grad. norm, func.) :  44   1 2.096948627e-10 1.446357666e-08
-                 Iteration (num., iy, grad. norm, func.) :  45   1 1.706834494e-10 1.446357018e-08
-                 Iteration (num., iy, grad. norm, func.) :  46   1 1.216256695e-10 1.446356595e-08
-                 Iteration (num., iy, grad. norm, func.) :  47   1 1.469374448e-10 1.446356455e-08
-                 Iteration (num., iy, grad. norm, func.) :  48   1 8.440355796e-11 1.446356376e-08
-                 Iteration (num., iy, grad. norm, func.) :  49   1 7.106318793e-11 1.446356330e-08
-                 Iteration (num., iy, grad. norm, func.) :  50   1 7.984321984e-11 1.446356233e-08
-                 Iteration (num., iy, grad. norm, func.) :  51   1 7.034230685e-11 1.446356094e-08
-                 Iteration (num., iy, grad. norm, func.) :  52   1 4.698252369e-11 1.446356024e-08
-                 Iteration (num., iy, grad. norm, func.) :  53   1 6.077638566e-11 1.446356016e-08
-                 Iteration (num., iy, grad. norm, func.) :  54   1 7.404934094e-11 1.446356007e-08
-                 Iteration (num., iy, grad. norm, func.) :  55   1 3.266337529e-11 1.446355982e-08
-                 Iteration (num., iy, grad. norm, func.) :  56   1 4.201151240e-11 1.446355972e-08
-                 Iteration (num., iy, grad. norm, func.) :  57   1 2.886621408e-11 1.446355955e-08
-                 Iteration (num., iy, grad. norm, func.) :  58   1 3.077501601e-11 1.446355937e-08
-                 Iteration (num., iy, grad. norm, func.) :  59   1 1.182083475e-11 1.446355927e-08
-                 Iteration (num., iy, grad. norm, func.) :  60   1 1.289100729e-11 1.446355926e-08
-                 Iteration (num., iy, grad. norm, func.) :  61   1 1.121472850e-11 1.446355925e-08
-                 Iteration (num., iy, grad. norm, func.) :  62   1 1.755529976e-11 1.446355923e-08
-                 Iteration (num., iy, grad. norm, func.) :  63   1 9.995399057e-12 1.446355920e-08
-                 Iteration (num., iy, grad. norm, func.) :  64   1 1.350331396e-11 1.446355918e-08
-                 Iteration (num., iy, grad. norm, func.) :  65   1 8.999488433e-12 1.446355918e-08
-                 Iteration (num., iy, grad. norm, func.) :  66   1 6.211355267e-12 1.446355917e-08
-                 Iteration (num., iy, grad. norm, func.) :  67   1 7.729934481e-12 1.446355917e-08
-                 Iteration (num., iy, grad. norm, func.) :  68   1 6.649950102e-12 1.446355916e-08
-                 Iteration (num., iy, grad. norm, func.) :  69   1 7.696764998e-12 1.446355916e-08
-                 Iteration (num., iy, grad. norm, func.) :  70   1 3.226810560e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  71   1 4.928725246e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  72   1 3.208713120e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  73   1 4.187869778e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  74   1 2.313904652e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  75   1 2.309390617e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  76   1 1.850313449e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  77   1 1.954888990e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  78   1 1.342160435e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  79   1 2.015479980e-12 1.446355915e-08
-                 Iteration (num., iy, grad. norm, func.) :  80   1 9.324053839e-13 1.446355915e-08
-              Solving for output 1 - done. Time (sec):  2.5883989
-           Solving nonlinear problem (n=1764) - done. Time (sec):  4.7351329
-        Solving for degrees of freedom - done. Time (sec):  4.8055439
-     Training - done. Time (sec):  4.8276651
+                 Iteration (num., iy, grad. norm, func.) :   0   1 1.342743255e-05 6.111600925e-06
+                 Iteration (num., iy, grad. norm, func.) :   0   1 1.302307595e-05 5.880442538e-06
+                 Iteration (num., iy, grad. norm, func.) :   1   1 1.363985006e-05 7.781714954e-07
+                 Iteration (num., iy, grad. norm, func.) :   2   1 1.316050272e-05 2.746010755e-07
+                 Iteration (num., iy, grad. norm, func.) :   3   1 4.268967712e-06 1.033367573e-07
+                 Iteration (num., iy, grad. norm, func.) :   4   1 3.219792715e-06 6.703442433e-08
+                 Iteration (num., iy, grad. norm, func.) :   5   1 2.039238895e-06 4.211149536e-08
+                 Iteration (num., iy, grad. norm, func.) :   6   1 6.033889795e-07 2.515999581e-08
+                 Iteration (num., iy, grad. norm, func.) :   7   1 4.726317346e-07 2.471919997e-08
+                 Iteration (num., iy, grad. norm, func.) :   8   1 3.696022676e-07 2.449846324e-08
+                 Iteration (num., iy, grad. norm, func.) :   9   1 2.488052165e-07 2.070463385e-08
+                 Iteration (num., iy, grad. norm, func.) :  10   1 8.459610012e-08 1.660646850e-08
+                 Iteration (num., iy, grad. norm, func.) :  11   1 5.658202980e-08 1.500183477e-08
+                 Iteration (num., iy, grad. norm, func.) :  12   1 3.804107541e-08 1.481787787e-08
+                 Iteration (num., iy, grad. norm, func.) :  13   1 3.468856986e-08 1.480601481e-08
+                 Iteration (num., iy, grad. norm, func.) :  14   1 2.832164294e-08 1.477977984e-08
+                 Iteration (num., iy, grad. norm, func.) :  15   1 3.791982085e-08 1.464243575e-08
+                 Iteration (num., iy, grad. norm, func.) :  16   1 5.401835358e-09 1.448701556e-08
+                 Iteration (num., iy, grad. norm, func.) :  17   1 6.403115896e-09 1.448630627e-08
+                 Iteration (num., iy, grad. norm, func.) :  18   1 6.951789243e-09 1.448477870e-08
+                 Iteration (num., iy, grad. norm, func.) :  19   1 6.270760852e-09 1.448358882e-08
+                 Iteration (num., iy, grad. norm, func.) :  20   1 1.238561409e-08 1.447833451e-08
+                 Iteration (num., iy, grad. norm, func.) :  21   1 2.463512479e-09 1.446909735e-08
+                 Iteration (num., iy, grad. norm, func.) :  22   1 4.051882686e-09 1.446825445e-08
+                 Iteration (num., iy, grad. norm, func.) :  23   1 3.421367398e-09 1.446789229e-08
+                 Iteration (num., iy, grad. norm, func.) :  24   1 3.514206340e-09 1.446641231e-08
+                 Iteration (num., iy, grad. norm, func.) :  25   1 1.892268440e-09 1.446502108e-08
+                 Iteration (num., iy, grad. norm, func.) :  26   1 1.591286939e-09 1.446489562e-08
+                 Iteration (num., iy, grad. norm, func.) :  27   1 1.843657461e-09 1.446464627e-08
+                 Iteration (num., iy, grad. norm, func.) :  28   1 1.367852603e-09 1.446432383e-08
+                 Iteration (num., iy, grad. norm, func.) :  29   1 1.279521953e-09 1.446413608e-08
+                 Iteration (num., iy, grad. norm, func.) :  30   1 1.273827484e-09 1.446399608e-08
+                 Iteration (num., iy, grad. norm, func.) :  31   1 1.069805193e-09 1.446389193e-08
+                 Iteration (num., iy, grad. norm, func.) :  32   1 7.203325145e-10 1.446383478e-08
+                 Iteration (num., iy, grad. norm, func.) :  33   1 1.092512544e-09 1.446377574e-08
+                 Iteration (num., iy, grad. norm, func.) :  34   1 4.178765177e-10 1.446367228e-08
+                 Iteration (num., iy, grad. norm, func.) :  35   1 4.695642060e-10 1.446365013e-08
+                 Iteration (num., iy, grad. norm, func.) :  36   1 4.325042579e-10 1.446364130e-08
+                 Iteration (num., iy, grad. norm, func.) :  37   1 5.822577989e-10 1.446363420e-08
+                 Iteration (num., iy, grad. norm, func.) :  38   1 3.233691141e-10 1.446362135e-08
+                 Iteration (num., iy, grad. norm, func.) :  39   1 4.820930113e-10 1.446360509e-08
+                 Iteration (num., iy, grad. norm, func.) :  40   1 1.744254274e-10 1.446358617e-08
+                 Iteration (num., iy, grad. norm, func.) :  41   1 2.456939839e-10 1.446357670e-08
+                 Iteration (num., iy, grad. norm, func.) :  42   1 1.238702481e-10 1.446357147e-08
+                 Iteration (num., iy, grad. norm, func.) :  43   1 1.543359462e-10 1.446356991e-08
+                 Iteration (num., iy, grad. norm, func.) :  44   1 1.277821708e-10 1.446356861e-08
+                 Iteration (num., iy, grad. norm, func.) :  45   1 1.668908600e-10 1.446356678e-08
+                 Iteration (num., iy, grad. norm, func.) :  46   1 9.442875522e-11 1.446356489e-08
+                 Iteration (num., iy, grad. norm, func.) :  47   1 1.282416074e-10 1.446356272e-08
+                 Iteration (num., iy, grad. norm, func.) :  48   1 3.329909012e-11 1.446356055e-08
+                 Iteration (num., iy, grad. norm, func.) :  49   1 3.252145554e-11 1.446356044e-08
+                 Iteration (num., iy, grad. norm, func.) :  50   1 3.862212990e-11 1.446356030e-08
+                 Iteration (num., iy, grad. norm, func.) :  51   1 5.495646363e-11 1.446356009e-08
+                 Iteration (num., iy, grad. norm, func.) :  52   1 4.880141230e-11 1.446355966e-08
+                 Iteration (num., iy, grad. norm, func.) :  53   1 1.034412694e-11 1.446355931e-08
+                 Iteration (num., iy, grad. norm, func.) :  54   1 8.688965632e-12 1.446355931e-08
+                 Iteration (num., iy, grad. norm, func.) :  55   1 1.416075582e-11 1.446355930e-08
+                 Iteration (num., iy, grad. norm, func.) :  56   1 1.783006148e-11 1.446355927e-08
+                 Iteration (num., iy, grad. norm, func.) :  57   1 1.730236391e-11 1.446355926e-08
+                 Iteration (num., iy, grad. norm, func.) :  58   1 2.040787855e-11 1.446355923e-08
+                 Iteration (num., iy, grad. norm, func.) :  59   1 1.406683632e-11 1.446355921e-08
+                 Iteration (num., iy, grad. norm, func.) :  60   1 9.546993710e-12 1.446355919e-08
+                 Iteration (num., iy, grad. norm, func.) :  61   1 8.436673636e-12 1.446355917e-08
+                 Iteration (num., iy, grad. norm, func.) :  62   1 5.474457130e-12 1.446355916e-08
+                 Iteration (num., iy, grad. norm, func.) :  63   1 5.300214589e-12 1.446355916e-08
+                 Iteration (num., iy, grad. norm, func.) :  64   1 4.137292768e-12 1.446355916e-08
+                 Iteration (num., iy, grad. norm, func.) :  65   1 7.384649167e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  66   1 2.714176642e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  67   1 2.900831485e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  68   1 2.763651196e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  69   1 1.639299153e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  70   1 1.613406097e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  71   1 1.850012394e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  72   1 1.313700480e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  73   1 1.860840014e-12 1.446355915e-08
+                 Iteration (num., iy, grad. norm, func.) :  74   1 6.351006658e-13 1.446355915e-08
+              Solving for output 1 - done. Time (sec):  2.3948679
+           Solving nonlinear problem (n=1764) - done. Time (sec):  5.0320210
+        Solving for degrees of freedom - done. Time (sec):  5.0861869
+     Training - done. Time (sec):  5.1102870
   ___________________________________________________________________________
      
    Evaluation
@@ -690,7 +674,29 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010209
+     Predicting - done. Time (sec):  0.0018482
+     
+     Prediction time/pt. (sec) :  0.0000037
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0013301
+     
+     Prediction time/pt. (sec) :  0.0000027
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0009861
      
      Prediction time/pt. (sec) :  0.0000020
      
@@ -701,7 +707,73 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009282
+     Predicting - done. Time (sec):  0.0008950
+     
+     Prediction time/pt. (sec) :  0.0000018
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0011709
+     
+     Prediction time/pt. (sec) :  0.0000023
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0010910
+     
+     Prediction time/pt. (sec) :  0.0000022
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0009820
+     
+     Prediction time/pt. (sec) :  0.0000020
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0008998
+     
+     Prediction time/pt. (sec) :  0.0000018
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0010691
+     
+     Prediction time/pt. (sec) :  0.0000021
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0009260
      
      Prediction time/pt. (sec) :  0.0000019
      
@@ -712,20 +784,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010998
+     Predicting - done. Time (sec):  0.0012159
      
-     Prediction time/pt. (sec) :  0.0000022
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0010190
-     
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000024
      
   ___________________________________________________________________________
      
@@ -734,20 +795,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010440
+     Predicting - done. Time (sec):  0.0025589
      
-     Prediction time/pt. (sec) :  0.0000021
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0010209
-     
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000051
      
   ___________________________________________________________________________
      
@@ -756,20 +806,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0011089
+     Predicting - done. Time (sec):  0.0012889
      
-     Prediction time/pt. (sec) :  0.0000022
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0010951
-     
-     Prediction time/pt. (sec) :  0.0000022
+     Prediction time/pt. (sec) :  0.0000026
      
   ___________________________________________________________________________
      
@@ -778,64 +817,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010939
+     Predicting - done. Time (sec):  0.0013702
      
-     Prediction time/pt. (sec) :  0.0000022
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0010030
-     
-     Prediction time/pt. (sec) :  0.0000020
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0011179
-     
-     Prediction time/pt. (sec) :  0.0000022
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0009990
-     
-     Prediction time/pt. (sec) :  0.0000020
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0010500
-     
-     Prediction time/pt. (sec) :  0.0000021
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0009961
-     
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000027
      
   ___________________________________________________________________________
      
@@ -844,9 +828,9 @@ RMTC
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0036151
+     Predicting - done. Time (sec):  0.0036948
      
-     Prediction time/pt. (sec) :  0.0000014
+     Prediction time/pt. (sec) :  0.0000015
      
   ___________________________________________________________________________
      
@@ -855,9 +839,9 @@ RMTC
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0035200
+     Predicting - done. Time (sec):  0.0047178
      
-     Prediction time/pt. (sec) :  0.0000014
+     Prediction time/pt. (sec) :  0.0000019
      
   
 .. figure:: rans_crm_wing.png
