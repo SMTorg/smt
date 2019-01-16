@@ -8,8 +8,6 @@ This package is distributed under New BSD license.
 
 import numpy as np
 
-tensor = np.ndarray
-
 
 def compute_precision(Y_pred, Y_true):
     """

@@ -15,7 +15,7 @@ import numpy as np
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
-def load_smt_data(model: SurrogateModel, xt, yt, dyt_dxt=None):
+def load_smt_data(model, xt, yt, dyt_dxt=None):
     """
     Utility function to load SMT data more easily
 
@@ -222,7 +222,7 @@ class GENN(SurrogateModel):
         self.training_points = training_points
 
 
-def main(is_gradient_enhancement: bool = True):
+def main(is_gradient_enhancement=True):
     """Test and demonstrate GENN using a 1D example"""
 
     # Test function

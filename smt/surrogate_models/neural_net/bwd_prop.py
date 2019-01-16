@@ -7,14 +7,11 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from smt.surrogate_models.neural_net.activation import Activation
-
-tensor = np.ndarray
 
 EPS = np.finfo(float).eps  # small number to avoid division by zero
 
 
-def initialize_back_prop(AL: tensor, Y: tensor, AL_prime: tensor, Y_prime: tensor):
+def initialize_back_prop(AL, Y, AL_prime, Y_prime):
     """
     Initialize backward propagation
 
@@ -47,8 +44,7 @@ def initialize_back_prop(AL: tensor, Y: tensor, AL_prime: tensor, Y_prime: tenso
     return dAL, dAL_prime
 
 
-def linear_activation_backward(dA: tensor, dA_prime: tensor,
-                               cache: tuple, J_cache: tuple, lambd: float, gamma: float):
+def linear_activation_backward(dA, dA_prime, cache, J_cache, lambd, gamma):
     """
     Implement backward propagation for one LINEAR->ACTIVATION layer for the regression least squares estimation
 
@@ -135,8 +131,7 @@ def linear_activation_backward(dA: tensor, dA_prime: tensor,
     return dA_prev, dW, db, dA_prime_prev
 
 
-def L_model_backward(AL: tensor, Y: tensor, AL_prime: tensor, Y_prime: tensor,
-                     caches: list, J_caches: list, lambd: float, gamma: float):
+def L_model_backward(AL, Y, AL_prime, Y_prime, caches, J_caches, lambd, gamma):
     """
     Implement backward propagation
 

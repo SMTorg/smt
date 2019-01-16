@@ -9,14 +9,12 @@ This package is distributed under New BSD license.
 import numpy as np
 import matplotlib.pyplot as plt
 
-tensor = np.ndarray
-
 EPS = np.finfo(float).eps  # small number to avoid division by zero
 
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
-def finite_difference(parameters: dict, fun=None, dx: float = 1e-6) -> dict:
+def finite_difference(parameters, fun=None, dx=1e-6):
     """
     Compute gradient using central difference
 
@@ -52,7 +50,7 @@ def finite_difference(parameters: dict, fun=None, dx: float = 1e-6) -> dict:
 
 # ------------------------------------ O P T I M I Z E R   C L A S S ---------------------------------------------------
 
-class Optimizer:
+class Optimizer(object):
 
     @property
     def optimum(self):
@@ -98,8 +96,7 @@ class Optimizer:
             setattr(self, name, value)
 
     @classmethod
-    def initialize(cls, initial_guess: dict, cost_function, grad_function=None,
-                   learning_rate: float = 0.05, beta1: float = 0.9, beta2: float = 0.99):
+    def initialize(cls, initial_guess, cost_function, grad_function=None, learning_rate=0.05, beta1=0.9, beta2=0.99):
         attributes = {'user_cost_function': cost_function,
                       'user_grad_function': grad_function,
                       'learning_rate': learning_rate,
@@ -118,13 +115,13 @@ class Optimizer:
         else:
             return finite_difference(x, fun=self.user_cost_function)
 
-    def _update_current_design(self, learning_rate: float = 0.05) -> dict:
+    def _update_current_design(self, learning_rate=0.05):
         """
         Implement one step of gradient descent
         """
         pass
 
-    def grad_check(self, parameters: tensor or list or dict, tol=1e-6):
+    def grad_check(self, parameters, tol=1e-6):
         """
         Check analytical gradient against to finite difference
 
@@ -144,7 +141,7 @@ class Optimizer:
             print("Finite dif: grad[{}] = {}".format(key, str(grads_FD[key].squeeze())))
             print("Analytical: grad[{}] = {}".format(key, str(grads[key].squeeze())))
 
-    def backtracking_line_search(self, tau: float = 0.5):
+    def backtracking_line_search(self, tau=0.5):
         """
         Perform backtracking line search
 
@@ -167,7 +164,7 @@ class Optimizer:
             else:
                 tau *= tau
 
-    def optimize(self, max_iter: int = 100, is_print: bool = True) -> tensor or list or dict:
+    def optimize(self, max_iter=100, is_print=True):
         """
         Optimization logic (main driver)
 
@@ -199,7 +196,7 @@ class Optimizer:
             self._design_history.append(self._current_design.copy())
 
             if is_print:
-                print("iteration = {:d}, cost = {:6.3f}".format(i, self._current_cost))
+                print("iteration = {:d}, cost = {:6.3f}".format(i, float(self._current_cost)))
 
             # Absolute convergence criterion
             if i > 1:
@@ -239,7 +236,7 @@ class Optimizer:
 
 class GD(Optimizer):
 
-    def _update_current_design(self, learning_rate: float = 0.05):
+    def _update_current_design(self, learning_rate=0.05):
         """Gradient descent update"""
         for key in self._previous_design.keys():
             self._current_design[key] = self._previous_design[key] - learning_rate * self._search_direction[key]
@@ -248,11 +245,11 @@ class GD(Optimizer):
 class Adam(Optimizer):
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(Adam, self).__init__(**kwargs)
         self.v = None
         self.s = None
 
-    def _update_current_design(self, learning_rate: float = 0.05, beta_1: float = 0.9, beta_2: float = 0.99):
+    def _update_current_design(self, learning_rate=0.05, beta_1=0.9, beta_2=0.99):
         """Adam update"""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -271,7 +268,7 @@ class Adam(Optimizer):
             self._current_design[key] = self._previous_design[key] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
 
 
-def main(use_adam: bool = True):
+def main(use_adam=True):
     """visually check that optimizer yields correct answer for 2D rosenbrock function"""
 
     # Test function

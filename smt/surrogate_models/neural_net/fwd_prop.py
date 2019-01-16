@@ -9,10 +9,8 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.surrogate_models.neural_net.activation import Activation
 
-tensor = np.ndarray
 
-
-def linear_activation_forward(A_prev: tensor, W: tensor, b: tensor, activation: Activation):
+def linear_activation_forward(A_prev, W, b, activation):
     """
     Implement forward propagation for one layer.
 
@@ -49,7 +47,7 @@ def linear_activation_forward(A_prev: tensor, W: tensor, b: tensor, activation: 
     return A, cache
 
 
-def L_model_forward(X: tensor, parameters: dict, activations: [Activation]):
+def L_model_forward(X, parameters, activations):
     """
     Implements forward propagation for the entire neural network.
 
@@ -99,7 +97,7 @@ def L_model_forward(X: tensor, parameters: dict, activations: [Activation]):
     return A, caches
 
 
-def L_grads_forward(X: tensor, parameters: dict, activations: [Activation]):
+def L_grads_forward(X, parameters, activations):
     """
     Compute the gradient of the neural network evaluated at X.
 

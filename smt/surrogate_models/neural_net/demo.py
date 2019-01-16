@@ -113,8 +113,7 @@ def contour_plot(model, title='GENN'):
     plt.show()
 
 
-def main(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0, deep=3, wide=6,
-         mini_batch_size=32, num_iterations=30, num_epochs=100):
+def main(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0, deep=3, wide=6, batches=32, iterations=30, epochs=100):
     """
     Predict Rastrigin function using neural net and compare against truth model. Provided with proper training data,
     the only hyperparameters the user needs to tune are:
@@ -154,9 +153,9 @@ def main(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0, deep=3, wide=6,
                 beta2=beta2,
                 lambd=lambd,
                 gamma=gamma,
-                mini_batch_size=mini_batch_size,
-                num_iterations=num_iterations,
-                num_epochs=num_epochs,
+                mini_batch_size=batches,
+                num_iterations=iterations,
+                num_epochs=epochs,
                 silent=False)
     model.plot_training_history()
     model.print_training_history()
@@ -175,8 +174,7 @@ if __name__ == "__main__":
          gamma=1.0,
          deep=3,
          wide=6,
-         mini_batch_size=32,
-         num_iterations=30,
-         num_epochs=50)
+         batches=32,
+         iterations=30,
+         epochs=50)
 
-# TODO: write a function to tune the hyper-parameters above (instead of trial and error)

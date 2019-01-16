@@ -9,10 +9,8 @@ This package is distributed under New BSD license.
 import numpy as np
 import matplotlib.pyplot as plt
 
-tensor = np.ndarray
 
-
-class Activation:
+class Activation(object):
 
     def __init__(self, **kwargs):
         for name, value in kwargs.items():

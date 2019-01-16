@@ -11,10 +11,8 @@ import pandas as pd
 import os
 import math
 
-tensor = np.ndarray
 
-
-def load_csv(file: str = None, inputs: [str] = None, outputs: [str] = None, partials: [str] = None) -> tuple:
+def load_csv(file=None, inputs=None, outputs=None, partials=None):
     """
     Load neural net training data from CSV file
 
@@ -84,7 +82,7 @@ def load_csv(file: str = None, inputs: [str] = None, outputs: [str] = None, part
     return X, Y, J
 
 
-def random_mini_batches(X: tensor, Y: tensor, J: tensor, mini_batch_size: int = 64, seed: int = None) -> list:
+def random_mini_batches(X, Y, J, mini_batch_size=64, seed=None):
     """
     Creates a list of random minibatches from (X, Y)
 
@@ -137,7 +135,7 @@ def random_mini_batches(X: tensor, Y: tensor, J: tensor, mini_batch_size: int = 
     return mini_batches
 
 
-def normalize_data(X: tensor, Y: tensor, J: tensor = None, is_classification=False) -> tuple:
+def normalize_data(X, Y, J=None, is_classification=False):
     """
     Normalize training data to help with optimization, i.e. X_norm = (X - mu_x) / sigma_x where X is as below
                                                             Y_norm = (Y - mu_y) / sigma_y where Y is as below

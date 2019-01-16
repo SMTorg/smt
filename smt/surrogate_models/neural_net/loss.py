@@ -13,7 +13,7 @@ tensor = np.ndarray
 EPS = np.finfo(float).eps  # small number to avoid division by zero
 
 
-def compute_regularization(w: [tensor], lambd: float = 0.) -> float:
+def compute_regularization(w, lambd=0.):
     """
     Compute L2 norm penalty
 
@@ -28,7 +28,7 @@ def compute_regularization(w: [tensor], lambd: float = 0.) -> float:
     return penalty
 
 
-def compute_gradient_enhancement(dy_true: tensor, dy_pred: tensor, gamma: float = 0.) -> float:
+def compute_gradient_enhancement(dy_true, dy_pred, gamma=0.):
     """
     Compute gradient enhancement term (apply LSE to partials)
 
@@ -52,8 +52,7 @@ def compute_gradient_enhancement(dy_true: tensor, dy_pred: tensor, gamma: float 
     return loss
 
 
-def lse(y_true: tensor, y_pred: tensor, lambd: float = 0., w: [tensor] = None,
-        dy_true: tensor = None, dy_pred: tensor = None, gamma: float = 0.) -> float:
+def lse(y_true, y_pred, lambd=0., w=None, dy_true=None, dy_pred=None, gamma=0.):
     """
     Compute least squares estimator loss for regression
 

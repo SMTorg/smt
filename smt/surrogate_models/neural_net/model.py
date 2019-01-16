@@ -18,12 +18,12 @@ from smt.surrogate_models.neural_net.loss import lse
 from smt.surrogate_models.neural_net.metrics import rsquare
 from smt.surrogate_models.neural_net.data import normalize_data, load_csv
 
-tensor = np.ndarray
 
+# TODO: implement batch-norm?
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
-def initialize_parameters(layer_dims: [int] = None) -> dict:
+def initialize_parameters(layer_dims=None):
     """
     Initialize neural network given topology using "He" initialization
 
@@ -58,7 +58,7 @@ def initialize_parameters(layer_dims: [int] = None) -> dict:
 
 # ------------------------------------ C L A S S -----------------------------------------------------------------------
 
-class Model:
+class Model(object):
 
     @property
     def number_of_inputs(self):
@@ -118,7 +118,7 @@ class Model:
             setattr(self, name, value)
 
     @classmethod
-    def initialize(cls, n_x: int = None, n_y: int = None, deep: int = 2, wide: int = 12):
+    def initialize(cls, n_x=None, n_y=None, deep=2, wide=12):
         layer_dims = [n_x] + [wide] * deep + [n_y]
         parameters = initialize_parameters(layer_dims)
         activations = [Tanh()] * deep + [Linear()]
@@ -139,10 +139,8 @@ class Model:
         self._activations = [Tanh()] * deep + [Linear()]
         self._parameters = parameters
 
-    def train(self, X: tensor, Y: tensor, J: tensor = None,
-              num_iterations: int = 100, mini_batch_size: int = None, num_epochs: int = 1,
-              alpha: float = 0.01, beta1: float = 0.9, beta2: float = 0.99, lambd: float = 0., gamma: float = 0.,
-              seed: int = None, silent: bool = False):
+    def train(self, X, Y, J=None, num_iterations=100, mini_batch_size=None, num_epochs=1,
+              alpha=0.01, beta1=0.9, beta2=0.99, lambd=0., gamma=0., seed=None, silent=False):
         """
         Train the neural network
 
@@ -201,7 +199,7 @@ class Model:
                 if not silent:
                     print("epoch = {:d}, mini-batch = {:d}, avg cost = {:6.3f}".format(e, b, avg_cost))
 
-    def evaluate(self, X: tensor):
+    def evaluate(self, X):
         """
         Predict output(s) given inputs X.
 
@@ -283,7 +281,7 @@ class Model:
             if is_show_plot:
                 plt.show()
 
-    def _load_training_data(self, X, Y, J = None):
+    def _load_training_data(self, X, Y, J=None):
         """
         Load and normalize training data
 
@@ -316,8 +314,7 @@ class Model:
         self._n_x, self._m = X.shape
         self._n_y = Y.shape[0]
 
-    def cost(self, parameters: dict, activations: list, x: tensor,
-             y_true: tensor = None, dy_true: tensor = None, lambd: float = 0., gamma: float = 0.) -> float:
+    def cost(self, parameters, activations, x, y_true=None, dy_true=None, lambd=0., gamma=0.):
         """
         Cost function for training
 
@@ -336,8 +333,7 @@ class Model:
         cost = lse(y_true, y_pred, lambd, w, dy_true, dy_pred, gamma)
         return cost
 
-    def grad(self, parameters: dict, activations: list, x: tensor,
-             y_true: tensor = None, dy_true: tensor = None, lambd: float = 0., gamma: float = 0.) -> dict:
+    def grad(self, parameters, activations, x, y_true=None, dy_true=None, lambd=0., gamma=0.):
         """
         Gradient of cost function for training
 
@@ -355,7 +351,7 @@ class Model:
         grad = L_model_backward(y_pred, y_true, dy_pred, dy_true, caches, dy_caches, lambd, gamma)
         return grad
 
-    def gradient(self, X: tensor):
+    def gradient(self, X):
         """
         Predict output(s) given inputs X.
 
@@ -378,14 +374,13 @@ class Model:
 
         return J
 
-    def goodness_of_fit(self, X_test: tensor, Y_test: tensor, J_test: tensor = None,
-                        response: int = 0, partial: int = 0) -> dict():
+    def goodness_of_fit(self, X_test, Y_test, J_test=None, response=0, partial=0):
 
         assert X_test.shape[1] == Y_test.shape[1]
         assert Y_test.shape[0] == Y_test.shape[0]
         assert X_test.shape[0] == self.number_of_inputs
         assert Y_test.shape[0] == self.number_of_outputs
-        if type(J_test) == tensor:
+        if type(J_test) == np.ndarray:
             assert X_test.shape[1] == J_test.shape[2]
             assert X_test.shape[0] == J_test.shape[1]
 
@@ -399,7 +394,7 @@ class Model:
         Y_pred_train = self.evaluate(X_train)
         J_pred_train = self.gradient(X_train)
 
-        if type(J_test) == tensor:
+        if type(J_test) == np.ndarray:
             test = J_test[response, partial, :].reshape((1, number_test_examples))
             test_pred = J_pred_test[response, partial, :].reshape((1, number_test_examples))
             train = J_train[response, partial, :].reshape((1, self.number_training_examples))
@@ -490,5 +485,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # TODO: implement batch-norm
 
