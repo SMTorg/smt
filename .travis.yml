@@ -52,14 +52,14 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create -q -n test-environment python=$PY numpy pandas scipy cython
+  - conda create -q -n test-environment python=$PY numpy pandas scipy cython scikit-learn
   - source activate test-environment
   - pip install --upgrade pip
   - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
-  - pip install -e . --ignore-installed six
+  - pip install -e . 
   - pip install coverage
-  - pip install coveralls --ignore-installed
+  - pip install coveralls 
 
 script:
 - testflo -n 1 smt --verbose --coverage --coverpkg=smt
