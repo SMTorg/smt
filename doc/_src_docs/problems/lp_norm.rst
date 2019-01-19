@@ -67,13 +67,13 @@ Options
      -  None
      -  ['bool']
      -  
-  *  -  name
-     -  LpNorm
-     -  None
-     -  ['str']
-     -  
   *  -  order
      -  2
      -  None
      -  ['int']
+     -  
+  *  -  name
+     -  LpNorm
+     -  None
+     -  ['str']
      -  
