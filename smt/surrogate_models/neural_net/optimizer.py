@@ -268,7 +268,7 @@ class Adam(Optimizer):
             self._current_design[key] = self._previous_design[key] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
 
 
-def main(use_adam=True):
+def test_optimizer(use_adam=True):
     """visually check that optimizer yields correct answer for 2D rosenbrock function"""
 
     # Test function
@@ -347,5 +347,5 @@ def main(use_adam=True):
     plt.show()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     test_optimizer()

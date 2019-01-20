@@ -82,21 +82,6 @@ class Tanh(Activation):
         return dda
 
 
-class Relu(Activation):
-
-    def evaluate(self, z):
-        a = (z > 0) * z
-        return a
-
-    def first_derivative(self, z):
-        da = 1.0 * (z > 0)
-        return da
-
-    def second_derivative(self, z):
-        dda = 0.0
-        return dda
-
-
 class Linear(Activation):
 
     def evaluate(self, z):
@@ -109,12 +94,16 @@ class Linear(Activation):
         return np.zeros(z.shape)
 
 
-if __name__ == "__main__":
+def test_activation():
     x = np.linspace(-10, 10, 100)
-    activations = {'tanh': Tanh(), 'sigmoid': Sigmoid(), 'relu': Relu()}
+    activations = {'tanh': Tanh(), 'sigmoid': Sigmoid()}
     for name, activation in activations.items():
         plt.plot(x, activation.evaluate(x))
         plt.title(name)
         plt.show()
+
+
+# if __name__ == "__main__":
+#     test_activations()
 
 

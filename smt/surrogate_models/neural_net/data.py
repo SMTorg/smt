@@ -199,14 +199,14 @@ def normalize_data(X, Y, J=None, is_classification=False):
     return X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y
 
 
-if __name__ == "__main__":
-
-    csv = 'practice_data.csv'  # file that contains test data from the 2D rastrigin function
-
-    # Test methods
-    X, Y, J = load_csv(file=csv, inputs=["X[0]", "X[1]"], outputs=["Y[0]"], partials=[["J[0][0]", "J[0][1]"]])
-    X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y = normalize_data(X, Y, J)
-    mini_batches = random_mini_batches(X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1)
+# if __name__ == "__main__":
+#
+#     csv = 'test_data.csv'  # file that contains test data from the 2D rastrigin function
+#
+#     # Test methods
+#     X, Y, J = load_csv(file=csv, inputs=["X[0]", "X[1]"], outputs=["Y[0]"], partials=[["J[0][0]", "J[0][1]"]])
+#     X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y = normalize_data(X, Y, J)
+#     mini_batches = random_mini_batches(X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1)
 
 
 

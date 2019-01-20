@@ -443,14 +443,32 @@ class Model(object):
         return metrics
 
 
-def main():
-    """Example using 2D Rastrigin function (egg-crate-looking function)"""
+def test_model(train_csv, test_csv, inputs, outputs, partials=None):
+    """
+    Example using 2D Rastrigin function (egg-crate-looking function)
+
+    usage:        test_model(train_csv='train_data.csv',
+                            test_csv='train_data.csv',
+                            inputs=["X[0]", "X[1]"],
+                            outputs=["Y[0]"],
+                            partials=[["J[0][0]", "J[0][1]"]])
+
+    :param train_csv: str, csv file name containing training data
+    :param test_csv: str, csv file name containing test data
+    :param inputs: list(str), csv column labels corresponding to inputs
+    :param outputs: list(str), csv column labels corresponding to outputs
+    :param partials: list(str), csv column labels corresponding to partials
+    """
 
     # Sample data
-    X_train, Y_train, J_train = load_csv(file='train_data.csv',
-                                         inputs=["X[0]", "X[1]"], outputs=["Y[0]"], partials=[["J[0][0]", "J[0][1]"]])
-    X_test, Y_test, J_test = load_csv(file='test_data.csv',
-                                      inputs=["X[0]", "X[1]"], outputs=["Y[0]"], partials=[["J[0][0]", "J[0][1]"]])
+    X_train, Y_train, J_train = load_csv(file=train_csv,
+                                         inputs=inputs,
+                                         outputs=outputs,
+                                         partials=partials)
+    X_test, Y_test, J_test = load_csv(file=test_csv,
+                                         inputs=inputs,
+                                         outputs=outputs,
+                                         partials=partials)
 
     # Hyper-parameters
     alpha = 0.05
@@ -461,8 +479,8 @@ def main():
     deep = 2
     wide = 12
     mini_batch_size = None  # None = use all data as one batch
-    num_iterations = 10
-    num_epochs = 100
+    num_iterations = 25
+    num_epochs = 50
 
     # Training
     model = Model.initialize(n_x=X_train.shape[0], n_y=Y_train.shape[0], deep=deep, wide=wide)
@@ -482,7 +500,7 @@ def main():
     model.goodness_of_fit(X_test, Y_test)  # model.goodness_of_fit(X_test, Y_test, J_test, partial=1)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     test_model()
 
 
