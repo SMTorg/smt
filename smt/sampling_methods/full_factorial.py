@@ -17,18 +17,18 @@ class FullFactorial(SamplingMethod):
         self.options.declare('weights', values=[None], types=[list, np.ndarray])
         self.options.declare('clip', types=bool)
 
-    def _compute(self, n):
+    def _compute(self, nt):
         """
         Compute the requested number of sampling points.
 
         Arguments
         ---------
-        n : int
+        nt : int
             Number of points requested.
 
         Returns
         -------
-        ndarray[n, nx]
+        ndarray[nt, nx]
             The sampling locations in the input space.
         """
         xlimits = self.options['xlimits']
@@ -41,7 +41,7 @@ class FullFactorial(SamplingMethod):
             weights /= numpy.sum(weights)
 
         num_list = np.ones(nx, int)
-        while np.prod(num_list) < n:
+        while np.prod(num_list) < nt:
             ind = np.argmax(weights - num_list / np.sum(num_list))
             num_list[ind] += 1
 
@@ -49,10 +49,10 @@ class FullFactorial(SamplingMethod):
         x_list = np.meshgrid(*lins_list, indexing='ij')
 
         if self.options['clip']:
-            n = np.prod(num_list)
+            nt = np.prod(num_list)
 
-        x = np.zeros((n, nx))
+        x = np.zeros((nt, nx))
         for kx in range(nx):
-            x[:, kx] = x_list[kx].reshape(np.prod(num_list))[:n]
+            x[:, kx] = x_list[kx].reshape(np.prod(num_list))[:nt]
 
         return x

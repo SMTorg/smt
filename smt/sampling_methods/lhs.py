@@ -21,18 +21,18 @@ class LHS(SamplingMethod):
                              types=str, desc='criterion used to construct the LHS design '+
                              'c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively')
 
-    def _compute(self, n):
+    def _compute(self, nt):
         """
         Compute the requested number of sampling points.
 
         Arguments
         ---------
-        n : int
+        nt : int
             Number of points requested.
 
         Returns
         -------
-        ndarray[n, nx]
+        ndarray[nt, nx]
             The sampling locations in the input space.
         """
         xlimits = self.options['xlimits']
@@ -40,7 +40,7 @@ class LHS(SamplingMethod):
         if self.options['criterion'] != 'ese':
             return lhs(nx, samples=n, criterion=self.options['criterion'])
         elif self.options['criterion'] == 'ese':
-            return self._ese(nx,n)
+            return self._ese(nx,nt)
 
     def _maximinESE(self, X, T0=None, outer_loop=None, inner_loop=None, J=20,
                tol=1e-3, p=10, return_hist=False, fixed_index=[]):
@@ -254,9 +254,9 @@ class LHS(SamplingMethod):
 
         return res
 
-    def _ese(self,dim,n):
+    def _ese(self,dim,nt):
         # Parameters of maximinESE procedure
-        P0 = pyDOE.lhs(dim, n, criterion = None)
+        P0 = pyDOE.lhs(dim, nt, criterion = None)
         J = 20
         outer_loop = min(int(1.5*dim), 30)
         inner_loop = min(20*dim, 100)

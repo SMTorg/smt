@@ -13,20 +13,20 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 
 class Random(SamplingMethod):
 
-    def _compute(self, n):
+    def _compute(self, nt):
         """
         Compute the requested number of sampling points.
 
         Arguments
         ---------
-        n : int
+        nt : int
             Number of points requested.
 
         Returns
         -------
-        ndarray[n, nx]
+        ndarray[nt, nx]
             The sampling locations in the input space.
         """
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
-        return np.random.rand(n, nx)
+        return np.random.rand(nt, nx)
