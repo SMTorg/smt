@@ -38,7 +38,7 @@ class LHS(SamplingMethod):
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
         if self.options['criterion'] != 'ese':
-            return lhs(nx, samples=n, criterion=self.options['criterion'])
+            return lhs(nx, samples=nt, criterion=self.options['criterion'])
         elif self.options['criterion'] == 'ese':
             return self._ese(nx,nt)
 
