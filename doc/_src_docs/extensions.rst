@@ -2,7 +2,7 @@ Extensions
 ==========
 
 Extensions implement a set of methods using surrogate models provided by SMT.
-Two methods are available:
+Three methods are available:
 
 .. toctree::
    :maxdepth: 1
