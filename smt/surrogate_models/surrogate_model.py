@@ -4,8 +4,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 '''
-#TODO: Extend to multifidelity problems by adding training_points = {'approx': {}}
-#TODO: Complete the mixture of expert model: verify from if self.options['name'] == 'MixExp': (predict)
 
 from __future__ import division
 
@@ -226,12 +224,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
 
         Returns
         -------
-        y : np.ndarray[n, ny]
+        y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
         x = check_2d_array(x, 'x')
@@ -263,14 +261,14 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
         kx : int
             The 0-based index of the input variable with respect to which derivatives are desired.
 
         Returns
         -------
-        dy_dx : np.ndarray[n, ny]
+        dy_dx : np.ndarray[nt, ny]
             Derivatives.
         """
         check_support(self, 'derivatives')
@@ -304,12 +302,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
 
         Returns
         -------
-        dy_dyt : dict of np.ndarray[n, nt]
+        dy_dyt : dict of np.ndarray[nt, nt]
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
@@ -325,12 +323,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
 
         Returns
         -------
-        s2 : np.ndarray[n, ny]
+        s2 : np.ndarray[nt, ny]
             Variances.
         """
         check_support(self, 'variances')
@@ -362,12 +360,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx]
+        x : np.ndarray[nt, nx]
             Input values for the prediction points.
 
         Returns
         -------
-        y : np.ndarray[n, ny]
+        y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
         raise Exception('This surrogate model is incorrectly implemented')
@@ -385,14 +383,14 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx]
+        x : np.ndarray[nt, nx]
             Input values for the prediction points.
         kx : int
             The 0-based index of the input variable with respect to which derivatives are desired.
 
         Returns
         -------
-        dy_dx : np.ndarray[n, ny]
+        dy_dx : np.ndarray[nt, ny]
             Derivatives.
         """
         check_support(self, 'derivatives', fail=True)
@@ -410,12 +408,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx]
+        x : np.ndarray[nt, nx]
             Input values for the prediction points.
 
         Returns
         -------
-        dy_dyt : dict of np.ndarray[n, nt]
+        dy_dyt : dict of np.ndarray[nt, nt]
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
@@ -434,12 +432,12 @@ class SurrogateModel(object):
 
         Parameters
         ----------
-        x : np.ndarray[n, nx]
+        x : np.ndarray[nt, nx]
             Input values for the prediction points.
 
         Returns
         -------
-        s2 : np.ndarray[n, ny]
+        s2 : np.ndarray[nt, ny]
             Variances.
         """
         check_support(self, 'variances', fail=True)

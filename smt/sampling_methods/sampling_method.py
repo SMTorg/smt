@@ -44,7 +44,7 @@ class SamplingMethod(object):
         """
         pass
 
-    def __call__(self, n):
+    def __call__(self, nt):
         """
         Compute the requested number of sampling points.
 
@@ -52,24 +52,24 @@ class SamplingMethod(object):
 
         Arguments
         ---------
-        n : int
+        nt : int
             Number of points requested.
 
         Returns
         -------
-        ndarray[n, nx]
+        ndarray[nt, nx]
             The sampling locations in the input space.
         """
         xlimits = self.options['xlimits']
         nx = xlimits.shape[0]
 
-        x = self._compute(n)
+        x = self._compute(nt)
         for kx in range(nx):
             x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
 
         return x
 
-    def _compute(self, n):
+    def _compute(self, nt):
         """
         Implemented by sampling methods to compute the requested number of sampling points.
 
@@ -77,12 +77,12 @@ class SamplingMethod(object):
 
         Arguments
         ---------
-        n : int
+        nt : int
             Number of points requested.
 
         Returns
         -------
-        ndarray[n, nx]
+        ndarray[nt, nx]
             The sampling locations in the input space.
         """
         raise Exception('This sampling method has not been implemented correctly')
