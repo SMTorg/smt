@@ -256,7 +256,7 @@ class LHS(SamplingMethod):
 
     def _ese(self,dim,nt):
         # Parameters of maximinESE procedure
-        P0 = pyDOE.lhs(dim, nt, criterion = None)
+        P0 = lhs(dim, nt, criterion = None)
         J = 20
         outer_loop = min(int(1.5*dim), 30)
         inner_loop = min(20*dim, 100)
