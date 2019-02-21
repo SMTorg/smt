@@ -21,17 +21,6 @@ gradient enhancement is only beneficial when the cost of obtaining the gradient 
 This is often true in computer-aided design with the advent of adjoint design methods for example, but it is not always
 the case. The user should therefore carefully weight the benefit of gradient-enhanced methods depending on the application.
 
-Applications
-------------
-
-A well known use case for such methods is when there is a need to replace computationally expensive computer models with
-so-called "surrogate models" in order to save time for further analysis down the line. This situation is not uncommon in
-computer-aided design. In this scenario, the process consists of generating a small Design Of Experiment (DOE), running
-the computationally expensive computer model for each DOE point, and using the results as training data to train a
-"surrogate model" such as GENN. Since the "surrogate model" emulates the original physics-based model accurately in real
-time, it offers a speed benefit that can be used to carry additional analysis such as uncertainty quantification by means
-of Monte Carlo simulation, which would've been computationally inefficient otherwise.
-
 Usage
 -----
 

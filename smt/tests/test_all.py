@@ -19,7 +19,7 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
 from smt.extensions import MFK
 from copy import deepcopy
 try:
@@ -30,6 +30,23 @@ except:
 
 
 print_output = False
+
+
+def genn():
+    neural_net = GENN()
+    neural_net.options["alpha"] = 0.1  # learning rate that controls optimizer step size
+    neural_net.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
+    neural_net.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
+    neural_net.options["lambd"] = 0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
+    neural_net.options["gamma"] = 1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+    neural_net.options["deep"] = 2  # number of hidden layers
+    neural_net.options["wide"] = 12  # number of nodes per hidden layer
+    neural_net.options["mini_batch_size"] = 10000  # used to divide data into training batches (use for large data sets)
+    neural_net.options["num_epochs"] = 25  # number of passes through data
+    neural_net.options["num_iterations"] = 100  # number of optimizer iterations per mini-batch
+    neural_net.options["is_print"] = True
+    return neural_net
+
 
 class Test(SMTestCase):
 
@@ -52,6 +69,7 @@ class Test(SMTestCase):
         sms['KPLS'] = KPLS(theta0=[1e-2]*ncomp,n_comp=ncomp)
         sms['KPLSK'] = KPLSK(theta0=[1]*ncomp,n_comp=ncomp)
         sms['GEKPLS'] = GEKPLS(theta0=[1e-2]*ncomp,n_comp=ncomp,delta_x=1e-1)
+        sms['GENN'] = genn()
         if compiled_available:
             sms['IDW'] = IDW()
             sms['RBF'] = RBF()
@@ -66,6 +84,7 @@ class Test(SMTestCase):
         t_errors['KPLS'] = 1e0
         t_errors['KPLSK'] = 1e0
         t_errors['GEKPLS'] = 1e0
+        t_errors['GENN'] = 1e0
         if compiled_available:
             t_errors['IDW'] = 1e0
             t_errors['RBF'] = 1e-2
@@ -80,6 +99,7 @@ class Test(SMTestCase):
         e_errors['KPLS'] = 1e-2
         e_errors['KPLSK'] = 1e-2
         e_errors['GEKPLS'] = 1e-2
+        e_errors['GENN'] = 1e-2
         if compiled_available:
             e_errors['IDW'] = 1e0
             e_errors['RBF'] = 1e0
@@ -193,6 +213,9 @@ class Test(SMTestCase):
     def test_exp_GEKPLS(self):
         self.run_test()
 
+    def test_exp_GENN(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_IDW(self):
         self.run_test()
@@ -208,7 +231,7 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_exp_RMTB(self):
         self.run_test()
-    
+
     def test_exp_MFK(self):
         self.run_MF_test()
         
@@ -233,6 +256,9 @@ class Test(SMTestCase):
     def test_tanh_GEKPLS(self):
         self.run_test()
 
+    def test_tanh_GENN(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_IDW(self):
         self.run_test()
@@ -248,9 +274,10 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_tanh_RMTB(self):
         self.run_test()
-    
+
     def test_tanh_MFK(self):
         self.run_MF_test()
+
     # --------------------------------------------------------------------
     # Function: cos
 
@@ -272,6 +299,9 @@ class Test(SMTestCase):
     def test_cos_GEKPLS(self):
         self.run_test()
 
+    def test_cos_GENN(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_IDW(self):
         self.run_test()
@@ -287,7 +317,7 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
     def test_cos_RMTB(self):
         self.run_test()
-    
+
     def test_cos_MFK(self):
         self.run_MF_test()
     

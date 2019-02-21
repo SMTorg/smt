@@ -46,7 +46,7 @@ def load_smt_data(model, xt, yt, dyt_dxt=None):
     # Load partials
     if dyt_dxt is not None:
         dyt_dxt = dyt_dxt.reshape((m, n_x))
-        for i in range(n_y):
+        for i in range(n_x):
             model.set_training_derivatives(xt, dyt_dxt[:, i].reshape((m, 1)), i)
 
 
@@ -122,6 +122,7 @@ class GENN(SurrogateModel):
         declare('mini_batch_size', 64, types=int, desc='split data into batches of specified size')
         declare('num_epochs', 10, types=int, desc='number of random passes through the data')
         declare('num_iterations', 100, types=int, desc='number of optimizer iterations per mini-batch')
+        declare('seed', None, types=int, desc='random seed to ensure repeatability of results when desired')
         declare('is_print', True, types=bool, desc='print progress (or not)')
 
         self.supports['derivatives'] = True
@@ -154,6 +155,7 @@ class GENN(SurrogateModel):
         mini_batch_size = self.options["mini_batch_size"]
         num_iterations = self.options["num_iterations"]
         num_epochs = self.options["num_epochs"]
+        seed = self.options["seed"]
         is_print = self.options["is_print"]
 
         # number of inputs and outputs
@@ -171,6 +173,7 @@ class GENN(SurrogateModel):
                          beta2=beta2,
                          lambd=lambd,
                          gamma=gamma,
+                         seed=seed,
                          silent=not is_print)
 
         self._is_trained = True
@@ -222,7 +225,7 @@ class GENN(SurrogateModel):
         self.training_points = training_points
 
 
-def main(is_gradient_enhancement=True):
+def run_example(is_gradient_enhancement=True):  # pragma: no cover
     """Test and demonstrate GENN using a 1D example"""
 
     # Test function
@@ -284,6 +287,6 @@ def main(is_gradient_enhancement=True):
     plt.show()
 
 
-if __name__ == "__main__":
-    main(is_gradient_enhancement=True)
+if __name__ == "__main__":  # pragma: no cover
+    run_example(is_gradient_enhancement=True)
 

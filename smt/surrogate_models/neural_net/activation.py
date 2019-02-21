@@ -94,7 +94,7 @@ class Linear(Activation):
         return np.zeros(z.shape)
 
 
-def test_activation():
+def plot_activations():
     x = np.linspace(-10, 10, 100)
     activations = {'tanh': Tanh(), 'sigmoid': Sigmoid()}
     for name, activation in activations.items():
@@ -103,7 +103,7 @@ def test_activation():
         plt.show()
 
 
-# if __name__ == "__main__":
-#     test_activations()
+if __name__ == "__main__":
+    plot_activations()
 
 

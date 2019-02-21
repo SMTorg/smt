@@ -77,9 +77,11 @@ def lse(y_true, y_pred, lambd=0., w=None, dy_true=None, dy_pred=None, gamma=0.):
     return 1. / m * cost
 
 
-def test_loss():
+if __name__ == "__main__":  # pragma: no cover
+
+    # Check that LSE computes correctly
     w = [np.array(1.), np.array(2.)]
-    f = lambda x: w[0] * x + w[1] * x**2
+    f = lambda x: w[0] * x + w[1] * x ** 2
     dfdx = lambda x: w[0] + 2 * w[1] * x
     m = 100
     lb = -5.
@@ -89,9 +91,5 @@ def test_loss():
     y_pred = f(x).reshape(1, m) + 1.
     dy_true = dfdx(x).reshape(1, 1, m)
     dy_pred = dfdx(x).reshape(1, 1, m) + 1.
-    print(lse(y_true=y_true, y_pred=y_pred, dy_true=dy_true,  dy_pred=dy_pred, w=w, lambd=1., gamma=1.))
-
-
-# if __name__ == "__main__":
-#     test_loss()
-
+    loss = lse(y_true=y_true, y_pred=y_pred, dy_true=dy_true, dy_pred=dy_pred, w=w, lambd=1., gamma=1.)
+    assert(loss == 1.025)

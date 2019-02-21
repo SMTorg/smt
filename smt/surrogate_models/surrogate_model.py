@@ -163,6 +163,7 @@ class SurrogateModel(object):
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
+
     def update_training_derivatives(self, dyt_dxt, kx, name=None):
         """
         Update the training data (values) at the previously set input values.

@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from smt.surrogate_models.neural_net.activation import Activation
 
 
 def linear_activation_forward(A_prev, W, b, activation):

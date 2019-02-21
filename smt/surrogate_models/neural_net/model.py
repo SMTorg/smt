@@ -19,7 +19,7 @@ from smt.surrogate_models.neural_net.metrics import rsquare
 from smt.surrogate_models.neural_net.data import normalize_data, load_csv
 
 
-# TODO: implement batch-norm?
+# TODO: implement batch-norm (deeper networks might suffer from exploding/vanishing gradients during training)
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
@@ -443,7 +443,7 @@ class Model(object):
         return metrics
 
 
-def test_model(train_csv, test_csv, inputs, outputs, partials=None):
+def run_example(train_csv, test_csv, inputs, outputs, partials=None):  # pragma: no cover
     """
     Example using 2D Rastrigin function (egg-crate-looking function)
 
@@ -500,7 +500,11 @@ def test_model(train_csv, test_csv, inputs, outputs, partials=None):
     model.goodness_of_fit(X_test, Y_test)  # model.goodness_of_fit(X_test, Y_test, J_test, partial=1)
 
 
-# if __name__ == "__main__":
-#     test_model()
+if __name__ == "__main__":  # pragma: no cover
+    run_example(train_csv='train_data.csv',
+                test_csv='train_data.csv',
+                inputs=["X[0]", "X[1]"],
+                outputs=["Y[0]"],
+                partials=[["J[0][0]", "J[0][1]"]])
 
 

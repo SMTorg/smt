@@ -268,8 +268,8 @@ class Adam(Optimizer):
             self._current_design[key] = self._previous_design[key] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
 
 
-def test_optimizer(use_adam=True):
-    """visually check that optimizer yields correct answer for 2D rosenbrock function"""
+def run_example(use_adam=True):  # pragma: no cover
+    """visual example using 2D rosenbrock function"""
 
     # Test function
     def rosenbrock(parameters):
@@ -347,5 +347,5 @@ def test_optimizer(use_adam=True):
     plt.show()
 
 
-# if __name__ == "__main__":
-#     test_optimizer()
+if __name__ == "__main__":  # pragma: no cover
+    run_example()

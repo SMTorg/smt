@@ -7,14 +7,13 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import pandas as pd
 import os
 import math
 
 
 def load_csv(file=None, inputs=None, outputs=None, partials=None):
     """
-    Load neural net training data from CSV file
+    Load neural net training data from CSV file using numpy
 
     :param: file: csv filename containing training data (with headers as first row)
     :param: inputs: labels of the inputs, e.g. ["X[0]", "X[1]", "X[2]"]
@@ -47,7 +46,9 @@ def load_csv(file=None, inputs=None, outputs=None, partials=None):
     else:
         exists = os.path.isfile(file)
         if exists:
-            data = pd.read_csv(file)
+            headers = np.genfromtxt(file, delimiter=',', max_rows=1, dtype=str).tolist()
+            data = np.genfromtxt(file, delimiter=',', skip_header=1)
+            index = lambda header: headers.index(header)
         else:
             raise Exception("The file " + file + " does not exist")
 
@@ -60,22 +61,22 @@ def load_csv(file=None, inputs=None, outputs=None, partials=None):
     if n_y == 0:
         raise Exception("No outputs specified")
 
-    m = data[inputs[0]].size  # number of examples
+    m = data[:, index(inputs[0])].size  # number of examples
 
     X = np.zeros((n_x, m))
     for i, x_label in enumerate(inputs):
-        X[i, :] = data[x_label]
+        X[i, :] = data[:, index(x_label)]
 
     Y = np.zeros((n_y, m))
     for i, y_label in enumerate(outputs):
-        Y[i, :] = data[y_label]
+        Y[i, :] = data[:, index(y_label)]
 
     if partials:
         J = np.zeros((n_y, n_x, m))
         if partials:
             for i, response in enumerate(partials):
                 for j, dy_label in enumerate(response):
-                    J[i][j] = data[dy_label]
+                    J[i][j] = data[:, index(dy_label)]
     else:
         J = None
 
@@ -199,14 +200,47 @@ def normalize_data(X, Y, J=None, is_classification=False):
     return X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y
 
 
-# if __name__ == "__main__":
-#
-#     csv = 'test_data.csv'  # file that contains test data from the 2D rastrigin function
-#
-#     # Test methods
-#     X, Y, J = load_csv(file=csv, inputs=["X[0]", "X[1]"], outputs=["Y[0]"], partials=[["J[0][0]", "J[0][1]"]])
-#     X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y = normalize_data(X, Y, J)
-#     mini_batches = random_mini_batches(X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1)
+if __name__ == "__main__":  # pragma: no cover
+
+    # Check that data is read in correctly
+    csv = 'train_data.csv'
+    x_labels = ["X[0]", "X[1]"]
+    y_labels = ["Y[0]"]
+    dy_labels = [["J[0][0]", "J[0][1]"]]
+    X, Y, J = load_csv(file=csv, inputs=x_labels, outputs=y_labels, partials=dy_labels)
+
+    assert (X[0, 6] == 0.071429)
+    assert (X[1, 15] == -0.821429)
+    assert (Y[0, 21] == 7.331321)
+    assert (J[0, 0, 57] == 51.409635)
+    assert (J[0, 1, 209] == 59.252401)
+
+    X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y = normalize_data(X, Y, J)
+
+    for i in range(X_norm.shape[1]):
+        for j in range(X.shape[0]):
+            assert (abs(np.squeeze(X_norm[j, i] * sigma_x[j] + mu_x[j]) - X[j, i]) < 1e-6)
+
+    for i in range(Y_norm.shape[1]):
+        for j in range(Y.shape[0]):
+            assert (abs(np.squeeze(Y_norm[j, i] * sigma_y[j] + mu_y[j]) - Y[j, i]) < 1e-6)
+
+    for i in range(J_norm.shape[2]):
+        for j in range(X.shape[0]):
+            for k in range(Y.shape[0]):
+                assert (abs(np.squeeze(J_norm[k, j, i] * sigma_y[k] / sigma_x[j]) - J[k, j, i]) < 1e-6)
+
+    mini_batches = random_mini_batches(X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1)
+
+    for mini_batch in mini_batches:
+        X_batch, Y_batch, J_batch = mini_batch
+        assert (len(mini_batch) == 3)
+        assert (X_batch.shape[0] == X.shape[0])
+        assert (Y_batch.shape[0] == Y.shape[0])
+        assert (J_batch.shape[0:2] == J.shape[0:2])
+        assert (X_batch.shape[1] <= 32)
+        assert (X_batch.shape[1] == Y_batch.shape[1])
+        assert (X_batch.shape[1] == J_batch.shape[2])
 
 
 

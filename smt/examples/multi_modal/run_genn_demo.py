@@ -1,20 +1,25 @@
 """
 G R A D I E N T - E N H A N C E D   N E U R A L   N E T W O R K S  (G E N N)
 
+Description: This program uses the two dimensional Rastrigin function to demonstrate GENN,
+             which is an egg-crate-looking function that can be challenging to fit because
+             of its multi-modality.
+
 Author: Steven H. Berguin <steven.berguin@gtri.gatech.edu>
 
 This package is distributed under New BSD license.
 """
-
-from smt.surrogate_models.neural_net.model import Model
+from smt.surrogate_models.genn import GENN, load_smt_data
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from pyDOE2 import fullfact
 
+SEED = 101
 
-def get_practice_data(random=False):
+
+def get_practice_data(random=False):  
     """
     Return practice data for two-dimensional Rastrigin function
 
@@ -58,8 +63,10 @@ def get_practice_data(random=False):
     return X.T, Y.T, J.T
 
 
-def contour_plot(model, title='GENN'):
+def contour_plot(genn, title='GENN'):
     """Make contour plots of 2D Rastrigin function and compare to Neural Net prediction"""
+
+    model = genn.model
 
     X_train, _, _ = model.training_data
 
@@ -113,7 +120,9 @@ def contour_plot(model, title='GENN'):
     plt.show()
 
 
-def run_demo(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0, deep=3, wide=6, batches=32, iterations=30, epochs=100):
+def run_demo_2d(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0,
+                deep=3, wide=6,
+                mini_batch_size=None, iterations=30, epochs=100):
     """
     Predict Rastrigin function using neural net and compare against truth model. Provided with proper training data,
     the only hyperparameters the user needs to tune are:
@@ -140,41 +149,121 @@ def run_demo(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0, deep=3, wid
     X_train, Y_train, J_train = get_practice_data(random=False)
     X_test, Y_test, J_test = get_practice_data(random=True)
 
-    # Training
-    model = Model.initialize(n_x=X_train.shape[0],
-                             n_y=Y_train.shape[0],
-                             deep=deep,
-                             wide=wide)
-    model.train(X=X_train,
-                Y=Y_train,
-                J=J_train,
-                alpha=alpha,
-                beta1=beta1,
-                beta2=beta2,
-                lambd=lambd,
-                gamma=gamma,
-                mini_batch_size=batches,
-                num_iterations=iterations,
-                num_epochs=epochs,
-                silent=False)
-    model.plot_training_history()
-    model.print_training_history()
-    model.goodness_of_fit(X_test, Y_test)  # model.goodness_of_fit(X_test, Y_test, J_test, partial=1)
-    model.print_parameters()
+    # Convert training data to SMT format
+    xt = X_train.T
+    yt = Y_train.T
+    dyt_dxt = J_train[0].T  # SMT format doesn't handle more than one output at a time, hence J[0]
+
+    # Convert test data to SMT format
+    xv = X_test.T
+    yv = Y_test.T
+    dyv_dxv = J_test[0].T  # SMT format doesn't handle more than one output at a time, hence J[0]
+
+    # Initialize GENN object
+    genn = GENN()
+    genn.options["alpha"] = alpha
+    genn.options["beta1"] = beta1
+    genn.options["beta2"] = beta2
+    genn.options["lambd"] = lambd
+    genn.options["gamma"] = gamma
+    genn.options["deep"] = deep
+    genn.options["wide"] = wide
+    genn.options["mini_batch_size"] = mini_batch_size
+    genn.options["num_epochs"] = epochs
+    genn.options["num_iterations"] = iterations
+    genn.options["seed"] = SEED
+    genn.options["is_print"] = True
+
+    # Load data
+    load_smt_data(genn, xt, yt, dyt_dxt)  # convenience function that uses SurrogateModel.set_training_values(), etc.
+
+    # Train
+    genn.train()
+    genn.plot_training_history()
+    genn.goodness_of_fit(xv, yv, dyv_dxv)
 
     # Contour plot
-    contour_plot(model, title=title)
+    contour_plot(genn, title=title)
 
 
-# if __name__ == "__main__":
-#     run_demo(alpha=0.1,
-#              beta1=0.9,
-#              beta2=0.99,
-#              lambd=0.1,
-#              gamma=1.0,
-#              deep=3,
-#              wide=6,
-#              batches=32,
-#              iterations=30,
-#              epochs=50)
+def run_demo_1D(is_gradient_enhancement=True):  # pragma: no cover
+    """Test and demonstrate GENN using a 1D example"""
+
+    # Test function
+    f = lambda x: x * np.sin(x)
+    df_dx = lambda x: np.sin(x) + x * np.cos(x)
+
+    # Domain
+    lb = -np.pi
+    ub = np.pi
+
+    # Training data
+    m = 4
+    xt = np.linspace(lb, ub, m)
+    yt = f(xt)
+    dyt_dxt = df_dx(xt)
+
+    # Validation data
+    xv = lb + np.random.rand(30, 1) * (ub - lb)
+    yv = f(xv)
+    dyv_dxv = df_dx(xv)
+
+    # Initialize GENN object
+    genn = GENN()
+    genn.options["alpha"] = 0.05
+    genn.options["beta1"] = 0.9
+    genn.options["beta2"] = 0.99
+    genn.options["lambd"] = 0.05
+    genn.options["gamma"] = int(is_gradient_enhancement)
+    genn.options["deep"] = 2
+    genn.options["wide"] = 6
+    genn.options["mini_batch_size"] = 64
+    genn.options["num_epochs"] = 25
+    genn.options["num_iterations"] = 100
+    genn.options["seed"] = SEED
+    genn.options["is_print"] = True
+
+    # Load data
+    load_smt_data(genn, xt, yt, dyt_dxt)
+
+    # Train
+    genn.train()
+    genn.plot_training_history()
+    genn.goodness_of_fit(xv, yv, dyv_dxv)
+
+    # Plot comparison
+    if genn.options["gamma"] == 1.0:
+        title = 'with gradient enhancement'
+    else:
+        title = 'without gradient enhancement'
+    x = np.arange(lb, ub, 0.01)
+    y = f(x)
+    y_pred = genn.predict_values(x)
+    fig, ax = plt.subplots()
+    ax.plot(x, y_pred)
+    ax.plot(x, y, 'k--')
+    ax.plot(xv, yv, 'ro')
+    ax.plot(xt, yt, 'k+', mew=3, ms=10)
+    ax.set(xlabel='x', ylabel='y', title=title)
+    ax.legend(['Predicted', 'True', 'Test', 'Train'])
+    plt.show()
+
+
+if __name__ == "__main__":
+
+    # 1D example: compare with and without gradient enhancement
+    run_demo_1D(is_gradient_enhancement=False)
+    run_demo_1D(is_gradient_enhancement=True)
+
+    # 2D example: Rastrigin function
+    run_demo_2d(alpha=0.1,
+                beta1=0.9,
+                beta2=0.99,
+                lambd=0.1,
+                gamma=1.0,
+                deep=3,  # 3,
+                wide=12,  # 6,
+                mini_batch_size=32,
+                iterations=30,
+                epochs=25)
 
