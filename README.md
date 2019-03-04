@@ -40,7 +40,7 @@ For examples demonstrating how to use SMT, go to the 'smt/examples' folder.
 http://smt.readthedocs.io
 
 # Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the `[MDOlab] <https://github.com/mdolab>`_.
+This repository was created by Mohamed Amine Bouhlel and is maintained by the `MDOlab <https://github.com/mdolab>`_.
 
 
 Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com
