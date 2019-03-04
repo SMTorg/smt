@@ -6,7 +6,8 @@ MFK is a multi-fidelity modeling method which uses an autoregressive model of or
 .. math ::
         y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
 
-where :math:`\rho(x)` 
+
+where :math:`\rho(x)`
 is a scaling/correlation factor (constant, linear or qudratic) and :math:`\delta(\cdot)` is a discrepancy function.
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1].
@@ -96,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0156002
+     Training - done. Time (sec):  0.0204079
   ___________________________________________________________________________
      
    Evaluation
@@ -104,9 +105,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010660
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000106
      
   ___________________________________________________________________________
      
@@ -115,9 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0008900
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000088
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
