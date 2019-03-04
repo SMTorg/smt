@@ -1,0 +1,32 @@
+GENN
+====
+
+Gradient-Enhanced Neural Networks (GENN) are fully connected multi-layer perceptrons, whose training process was modified to
+account for gradient information. Specifically, the parameters are learned by minimizing the Least Squares Estimator (LSE),
+modified to account for partial derivatives.  The theory behind the algorithm can be found `here`_,
+but suffice it to say that the model is trained in such a way so as to minimize not only the prediction error :math:`y - f(x)` of
+the response, but also the prediction error :math:`{dy}/{dx} - f'(x)` of the partial derivatives. The chief benefit of gradient-enhancement
+is better accuracy with fewer training points, compared to regular neural networks without gradient-enhancement. Note that GENN applies
+to regression (single-output or multi-output), but not classification since there is no gradient in that case. The implementation
+is fully vectorized and uses Adam optimization, mini-batch, and L2-norm regularization.
+
+.. _here: genn_theory.pdf
+
+Limitations
+-----------
+
+Gradient-enhanced methods only apply to the special use-case of computer aided design, where data is generated
+synthetically using physics-based computer models, responses are continuous, and their gradient is defined. Furthermore,
+gradient enhancement is only beneficial when the cost of obtaining the gradient is not excessive in the first place.
+This is often true in computer-aided design with the advent of adjoint design methods for example, but it is not always
+the case. The user should therefore carefully weight the benefit of gradient-enhanced methods depending on the application.
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_genn , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate_models , GENN , options

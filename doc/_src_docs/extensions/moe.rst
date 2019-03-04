@@ -53,6 +53,7 @@ Usage
   from smt.problems import LpNorm
   from smt.sampling_methods import FullFactorial
   
+  import sklearn
   import matplotlib.pyplot as plt
   from matplotlib import colors
   from mpl_toolkits.mplot3d import Axes3D
@@ -90,7 +91,10 @@ Usage
   GMM=moe.cluster
   weight = GMM.weights_
   mean = GMM.means_
-  cov = GMM.covars_
+  if sklearn.__version__ < '0.20.0':
+      cov = GMM.covars_
+  else:
+      cov = GMM.covariances_
   prob_ = moe._proba_cluster(xt)
   sort = np.apply_along_axis(np.argmax, 1, prob_)
   
@@ -98,7 +102,7 @@ Usage
   x0 = np.linspace(xlim[0, 0], xlim[0, 1], 20)
   x1 = np.linspace(xlim[1, 0], xlim[1, 1], 20)
   xv, yv = np.meshgrid(x0, x1)
-  x = np.array(zip(xv.reshape((-1,)), yv.reshape((-1,))))
+  x = np.array(list(zip(xv.reshape((-1,)), yv.reshape((-1,)))))
   prob = moe._proba_cluster(x)
   
   plt.subplot(221, projection='3d')
@@ -133,40 +137,40 @@ Usage
   
 ::
 
-  ('QP', 0.7024962356978467)
-  ('KPLSK', 0.7048249453062974)
-  ('LS', 0.7837275699243051)
-  ('RBF', 0.7004062330746561)
-  ('KPLS', 0.7049283524068711)
-  ('IDW', 0.7183794271357008)
+  LS 1.4418735729979624
+  QP 1.4542641515660801
+  KPLS 1.4186236789470246
+  KPLSK 1.4184385612110044
+  RBF 1.4178300357368523
+  IDW 1.4188134912804515
   Best expert = RBF
-  ('QP', 1.0098840018272874)
-  ('KPLSK', 0.98170577826269)
-  ('LS', 1.0819069011246882)
-  ('RBF', 0.9845716925951647)
-  ('KPLS', 0.98570235899476)
-  ('IDW', 1.007008493714131)
-  Best expert = KPLSK
-  ('QP', 0.14478075923094819)
-  ('KPLSK', 0.1461563478188984)
-  ('LS', 0.19190838584098174)
-  ('RBF', 0.19480781732631508)
-  ('KPLS', 0.13832757802772344)
-  ('IDW', 0.16526977142494736)
-  Best expert = KPLS
-  ('QP', 1.6990518366366612)
-  ('KPLSK', 1.7007241265217867)
-  ('LS', 1.7631271224570984)
-  ('RBF', 1.6980460047900212)
-  ('KPLS', 1.7005787633057132)
-  ('IDW', 1.7065380262331586)
+  LS 1.0451612679414988
+  QP 1.021870693299392
+  KPLS 1.0198972713675998
+  KPLSK 1.016469984701472
+  RBF 1.0170431268334987
+  IDW 1.0163947834915366
+  Best expert = IDW
+  LS 1.521071480977923
+  QP 1.5434778008314816
+  KPLS 1.5262467470920507
+  KPLSK 1.5329970520881877
+  RBF 1.493811640632744
+  IDW 1.4918365835244014
+  Best expert = IDW
+  LS 1.2431081352364661
+  QP 1.2627639638801327
+  KPLS 1.224255312632745
+  KPLSK 1.2261843159790853
+  RBF 1.2131038247145347
+  IDW 1.2140402570940896
   Best expert = RBF
-  ('QP', 1.3340215836244425)
-  ('KPLSK', 1.2645189961752203)
-  ('LS', 1.2993876879189066)
-  ('RBF', 1.2531807528950485)
-  ('KPLS', 1.2638063303240412)
-  ('IDW', 1.2668606771434008)
+  LS 1.0939223922787613
+  QP 1.0998924589863157
+  KPLS 1.0909047560427805
+  KPLSK 1.0910245734660722
+  RBF 1.0907867621379232
+  IDW 1.1284069206525673
   Best expert = RBF
   
 .. figure:: moe_TestMOE_run_moe_example.png
@@ -186,43 +190,43 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  ytest
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Test outputs
-  *  -  smooth_recombination
-     -  True
-     -  None
-     -  ['bool']
-     -  Continuous cluster transition
-  *  -  n_clusters
-     -  2
-     -  None
-     -  ['int']
-     -  Number of clusters
-  *  -  xtest
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Test inputs
-  *  -  heaviside_optimization
-     -  False
-     -  None
-     -  ['bool']
-     -  Optimize Heaviside scaling factor when smooth recombination is used
-  *  -  yt
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Training outputs
   *  -  xt
      -  None
      -  None
      -  ['ndarray']
      -  Training inputs
+  *  -  yt
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Training outputs
   *  -  ct
      -  None
      -  None
      -  ['ndarray']
      -  Training derivative outputs used for clustering
+  *  -  xtest
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Test inputs
+  *  -  ytest
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Test outputs
+  *  -  n_clusters
+     -  2
+     -  None
+     -  ['int']
+     -  Number of clusters
+  *  -  smooth_recombination
+     -  True
+     -  None
+     -  ['bool']
+     -  Continuous cluster transition
+  *  -  heaviside_optimization
+     -  False
+     -  None
+     -  ['bool']
+     -  Optimize Heaviside scaling factor when smooth recombination is used

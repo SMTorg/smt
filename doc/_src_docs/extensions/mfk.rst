@@ -4,7 +4,7 @@ Multi-Fidelity Kriging (MFK)
 MFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1).
 
 .. math ::
-        y_\text{high}({\bf x})=\rho \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+        y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
 
 where :math:`\rho(x)` 
 is a scaling/correlation factor (constant, linear or qudratic) and :math:`\delta(\cdot)` is a discrepancy function.
@@ -96,7 +96,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0128019
+     Training - done. Time (sec):  0.0156002
   ___________________________________________________________________________
      
    Evaluation
@@ -104,9 +104,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006289
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000062
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -115,9 +115,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005281
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000052
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -137,61 +137,11 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  rho_regr
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  print_solver
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print solver information
-  *  -  eval_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  noise evaluation flag
-  *  -  print_problem
-     -  True
-     -  None
-     -  ['bool']
-     -  Whether to print problem information
   *  -  print_global
      -  True
      -  None
      -  ['bool']
      -  Global print toggle. If False, all printing is suppressed
-  *  -  optim_var
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  Turning this option to True, forces variance to zero at HF samples 
-  *  -  poly
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
-  *  -  corr
-     -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
-  *  -  noise0
-     -  1e-06
-     -  None
-     -  ['float']
-     -  Initial noise hyperparameter
   *  -  print_training
      -  True
      -  None
@@ -202,3 +152,53 @@ Options
      -  None
      -  ['bool']
      -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  poly
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['function']
+     -  regr. term
+  *  -  corr
+     -  squar_exp
+     -  ['abs_exp', 'squar_exp']
+     -  ['function']
+     -  type of corr. func.
+  *  -  data_dir
+     -  None
+     -  None
+     -  ['str']
+     -  Directory for loading / saving cached data; None means do not save or load
+  *  -  rho_regr
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['function']
+     -  regr. term
+  *  -  theta0
+     -  None
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  optim_var
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  Turning this option to True, forces variance to zero at HF samples 
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
+     -  None
+     -  ['float']
+     -  Initial noise hyperparameter

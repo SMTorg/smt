@@ -112,7 +112,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0512471
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -120,9 +120,9 @@ Usage
         # eval points. : 3
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002270
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000757
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -138,7 +138,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0973098
+     Training - done. Time (sec):  0.0468001
   ___________________________________________________________________________
      
    Evaluation
@@ -146,9 +146,9 @@ Usage
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0104151
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000208
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
@@ -168,58 +168,58 @@ Options
      -  Acceptable values
      -  Acceptable types
      -  Description
-  *  -  X_HF
-     -  None
-     -  None
-     -  ['ndarray']
-     -  High-fidelity inputs
-  *  -  dy_LF
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Low-fidelity derivatives
-  *  -  type_bridge
-     -  Additive
-     -  ['Additive', 'Multiplicative']
-     -  ['str']
-     -  Bridge function type
-  *  -  options_bridge
-     -  {}
-     -  None
-     -  ['dict']
-     -  Options for the bridge model
-  *  -  options_LF
-     -  {}
-     -  None
-     -  ['dict']
-     -  Options for the low-fidelity model
-  *  -  y_LF
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Low-fidelity output
-  *  -  X_LF
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Low-fidelity inputs
-  *  -  name_model_bridge
-     -  None
-     -  ['KRG', 'LS', 'QP', 'KPLS', 'KPLSK', 'GEKPLS', 'RBF', 'RMTC', 'RMTB', 'IDW']
-     -  ['object']
-     -  Name of the bridge model
   *  -  name_model_LF
      -  None
      -  ['KRG', 'LS', 'QP', 'KPLS', 'KPLSK', 'GEKPLS', 'RBF', 'RMTC', 'RMTB', 'IDW']
      -  ['object']
      -  Name of the low-fidelity model
-  *  -  dy_HF
+  *  -  options_LF
+     -  {}
+     -  None
+     -  ['dict']
+     -  Options for the low-fidelity model
+  *  -  name_model_bridge
+     -  None
+     -  ['KRG', 'LS', 'QP', 'KPLS', 'KPLSK', 'GEKPLS', 'RBF', 'RMTC', 'RMTB', 'IDW']
+     -  ['object']
+     -  Name of the bridge model
+  *  -  options_bridge
+     -  {}
+     -  None
+     -  ['dict']
+     -  Options for the bridge model
+  *  -  type_bridge
+     -  Additive
+     -  ['Additive', 'Multiplicative']
+     -  ['str']
+     -  Bridge function type
+  *  -  X_LF
      -  None
      -  None
      -  ['ndarray']
-     -  High-fidelity derivatives
+     -  Low-fidelity inputs
+  *  -  y_LF
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Low-fidelity output
+  *  -  X_HF
+     -  None
+     -  None
+     -  ['ndarray']
+     -  High-fidelity inputs
   *  -  y_HF
      -  None
      -  None
      -  ['ndarray']
      -  High-fidelity output
+  *  -  dy_LF
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Low-fidelity derivatives
+  *  -  dy_HF
+     -  None
+     -  None
+     -  ['ndarray']
+     -  High-fidelity derivatives
