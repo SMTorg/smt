@@ -15,6 +15,7 @@ try:
 except:
     compiled_available = False
 
+plot_status = False    
 
 class Test(unittest.TestCase):
 
@@ -41,7 +42,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rbf(self):
@@ -66,7 +68,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtb(self):
@@ -93,8 +96,9 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
-
+        if plot_status:
+            plt.show()
+            
     @unittest.skipIf(not compiled_available, "C compilation failed")
     def test_rmtc(self):
         import numpy as np
@@ -120,7 +124,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_ls(self):
         import numpy as np
@@ -144,8 +149,9 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
-
+        if plot_status:
+            plt.show()
+            
     def test_qp(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -168,7 +174,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_krg(self):
         import numpy as np
@@ -192,7 +199,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_kpls(self):
         import numpy as np
@@ -216,7 +224,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_kplsk(self):
         import numpy as np
@@ -240,7 +249,8 @@ class Test(unittest.TestCase):
         plt.xlabel('x')
         plt.ylabel('y')
         plt.legend(['Training data', 'Prediction'])
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_gekpls(self):
         import numpy as np
@@ -281,8 +291,8 @@ class Test(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         surf = ax.plot_surface(X, Y, Z)
-
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_genn(self):
         import numpy as np
@@ -334,8 +344,8 @@ class Test(unittest.TestCase):
         ax.plot(xt, yt, 'k+', mew=3, ms=10)
         ax.set(xlabel='x', ylabel='y', title="GENN")
         ax.legend(['Predicted', 'True', 'Test', 'Train'])
-        plt.show()
-
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     unittest.main()

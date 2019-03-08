@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 EPS = np.finfo(float).eps  # small number to avoid division by zero
-
+plot_status = False
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
@@ -344,8 +344,8 @@ def run_example(use_adam=True):  # pragma: no cover
         plt.title('adam')
     else:
         plt.title('gradient descent')
-    plt.show()
-
+    if plot_status:
+        plt.show()
 
 if __name__ == "__main__":  # pragma: no cover
     run_example()

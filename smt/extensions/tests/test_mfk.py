@@ -12,9 +12,7 @@ import matplotlib
 from smt.extensions import MFK
 matplotlib.use('Agg')
 
-
-
-
+plot_status = False
 
 class TestMFK(unittest.TestCase):
     @staticmethod
@@ -74,8 +72,8 @@ class TestMFK(unittest.TestCase):
         plt.xlim(-0.1,1.1)
         plt.xlabel(r'$x$')
         plt.ylabel(r'$y$')
-
-        plt.show()
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     unittest.main()

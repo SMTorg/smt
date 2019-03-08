@@ -8,6 +8,7 @@ import unittest
 import matplotlib
 matplotlib.use('Agg')
 
+plot_status = False
 
 class TestVFM(unittest.TestCase):
     @staticmethod
@@ -78,7 +79,8 @@ class TestVFM(unittest.TestCase):
         plt.plot(ytest,y,'.')
         plt.xlabel(r'$y$ True')
         plt.ylabel(r'$y$ prediction')
-        plt.show()
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,7 @@ import unittest
 import matplotlib
 matplotlib.use('Agg')
 
-
+plot_status = False
 class Test(unittest.TestCase):
 
     def test_random(self):
@@ -26,7 +26,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], x[:, 1], 'o')
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_lhs(self):
         import numpy as np
@@ -48,7 +49,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], x[:, 1], 'o')
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_full_factorial(self):
         import numpy as np
@@ -70,7 +72,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], x[:, 1], 'o')
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     unittest.main()

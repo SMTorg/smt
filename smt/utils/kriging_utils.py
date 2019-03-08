@@ -275,9 +275,9 @@ def ge_compute_pls(X,y,n_comp,pts,delta_x,xlimits,extra_points):
                 xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
             # right down
-            _X[3,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
-            _X[3,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
-            _y[3,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
+            _X[8,0] +=delta_x*(xlimits[0,1]-xlimits[0,0])
+            _X[8,1] -=delta_x*(xlimits[1,1]-xlimits[1,0])
+            _y[8,0] = _y[0,0].copy()+ pts[None][1][1][i,0]*delta_x*(
                 xlimits[0,1]-xlimits[0,0])-pts[None][2][1][i,0]*delta_x*(
                 xlimits[1,1]-xlimits[1,0])
 

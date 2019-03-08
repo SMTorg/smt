@@ -1,5 +1,6 @@
 import numpy as np
 
+plot_status = False
 
 def get_one_d_step():
     xt = np.array([
@@ -36,4 +37,5 @@ def plot_one_d_step(xt, yt, limits, interp):
     plt.plot(xt, yt, 'o')
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.show()
+    if plot_status:
+        plt.show()

@@ -1,5 +1,6 @@
 import numpy as np
 
+plot_status = False
 
 raw = np.array([
     [2.000000000000000000e+00 ,  4.500000000000000111e-01 ,  1.536799999999999972e-02 ,  3.674239999999999728e-01 ,  5.592279999999999474e-01 , -1.258039999999999992e-01 , -1.248699999999999984e-02],
@@ -174,5 +175,5 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
     plt.ylabel('alpha (deg)')
     plt.title('CL')
     plt.colorbar()
-
-    plt.show()
+    if plot_status:
+        plt.show()

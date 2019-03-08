@@ -9,6 +9,7 @@ This package is distributed under New BSD license.
 import numpy as np
 import matplotlib.pyplot as plt
 
+plot_status = False
 
 class Activation(object):
 
@@ -100,8 +101,8 @@ def plot_activations():
     for name, activation in activations.items():
         plt.plot(x, activation.evaluate(x))
         plt.title(name)
-        plt.show()
-
+        if plot_status:
+            plt.show()
 
 if __name__ == "__main__":
     plot_activations()

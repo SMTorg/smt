@@ -3,6 +3,7 @@ import unittest
 import matplotlib
 matplotlib.use('Agg')
 
+plot_status = False
 
 class Test(unittest.TestCase):
 
@@ -32,7 +33,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_robot_arm(self):
         import numpy as np
@@ -59,7 +61,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_rosenbrock(self):
         import numpy as np
@@ -86,7 +89,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_sphere(self):
         import numpy as np
@@ -113,7 +117,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_branin(self):
         import numpy as np
@@ -140,7 +145,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_lp_norm(self):
         import numpy as np
@@ -167,7 +173,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_tensor_product(self):
         import numpy as np
@@ -194,7 +201,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_torsion_vibration(self):
         import numpy as np
@@ -222,7 +230,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_water_flow(self):
         import numpy as np
@@ -250,7 +259,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_welded_beam(self):
         import numpy as np
@@ -278,7 +288,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
+        if plot_status:
+            plt.show()
 
     def test_wing_weight(self):
         import numpy as np
@@ -306,8 +317,8 @@ class Test(unittest.TestCase):
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.show()
-
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     unittest.main()

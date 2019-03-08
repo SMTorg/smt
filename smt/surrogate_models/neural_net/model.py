@@ -23,6 +23,8 @@ from smt.surrogate_models.neural_net.data import normalize_data, load_csv
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
+plot_status = False
+
 def initialize_parameters(layer_dims=None):
     """
     Initialize neural network given topology using "He" initialization
@@ -241,7 +243,7 @@ class Model(object):
                     for iteration, cost in enumerate(history):
                         print("{}, {}, iteration_{}, cost = {}".format(epoch, batch, iteration, cost))
 
-    def plot_training_history(self, title='Training History', is_show_plot=True):
+    def plot_training_history(self, title='Training History', is_show_plot=False):
         """
         Plot the convergence history of the neural network learning algorithm
         """
@@ -279,7 +281,7 @@ class Model(object):
             plt.title(title)
 
             if is_show_plot:
-                plt.show()
+                plt.show()                
 
     def _load_training_data(self, X, Y, J=None):
         """
@@ -438,7 +440,8 @@ class Model(object):
         plt.ylabel('Probability')
         plt.title('$\mu$=' + str(metrics['avg_error']) + ', $\sigma=$' + str(metrics['std_error']))
         plt.grid(True)
-        plt.show()
+        if plot_status:
+            plt.show()
 
         return metrics
 

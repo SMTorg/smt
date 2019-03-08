@@ -1,6 +1,8 @@
 import numpy as np
 import os
 
+plot_status = False
+
 def get_b777_engine():
     this_dir = os.path.split(__file__)[0]
 
@@ -284,4 +286,5 @@ def plot_b777_engine(xt, yt, limits, interp):
         plt.subplot(nrow, ncol, k + 5)
         plt.legend(legend_entries)
 
-    plt.show()
+    if plot_status:
+        plt.show()

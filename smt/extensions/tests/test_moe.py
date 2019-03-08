@@ -17,6 +17,8 @@ from smt.utils.misc import compute_rms_error
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+plot_status = False
+
 class TestMOE(SMTestCase):
     """
     Test class
@@ -66,7 +68,8 @@ class TestMOE(SMTestCase):
             yv = self.function_test_1d(xv)
             plt.plot(xv, yv, '-.')
             plt.plot(xe, y, 'o')
-            plt.show()
+            if plot_status:
+                plt.show()
 
     #@unittest.skip('disabled')
     def test_norm1_2d_200(self):
@@ -107,7 +110,8 @@ class TestMOE(SMTestCase):
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(xt[:,0], xt[:,1], yt)
             plt.title('L1 Norm')
-            plt.show()
+            if plot_status:
+                plt.show()
 
     @unittest.skip('disabled for now as it blocks unexpectedly on travis linux')
     def test_branin_2d_200(self):
@@ -149,7 +153,8 @@ class TestMOE(SMTestCase):
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(xt[:,0], xt[:,1], yt)
             plt.title('Branin function')
-            plt.show()
+            if plot_status:
+                plt.show()
 
     @staticmethod
     def run_moe_example():
@@ -238,8 +243,8 @@ class TestMOE(SMTestCase):
         plt.xlabel('actual')
         plt.ylabel('prediction')
         plt.title('Predicted vs Actual')
-
-        plt.show()
+        if plot_status:
+            plt.show()
 
 if __name__ == '__main__':
     if '--plot' in argv:

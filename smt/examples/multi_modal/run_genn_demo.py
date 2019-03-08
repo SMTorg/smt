@@ -17,7 +17,7 @@ import matplotlib.gridspec as gridspec
 from pyDOE2 import fullfact
 
 SEED = 101
-
+plot_status = False
 
 def get_practice_data(random=False):  
     """
@@ -116,9 +116,8 @@ def contour_plot(genn, title='GENN'):
     ax2.annotate('X1', **anno_opts)
     ax2.set_xticks([])
     ax2.set_yticks([])
-
-    plt.show()
-
+    if plot_status:
+        plt.show()
 
 def run_demo_2d(alpha=0.1, beta1=0.9, beta2=0.99, lambd=0.1, gamma=1.0,
                 deep=3, wide=6,
@@ -246,7 +245,8 @@ def run_demo_1D(is_gradient_enhancement=True):  # pragma: no cover
     ax.plot(xt, yt, 'k+', mew=3, ms=10)
     ax.set(xlabel='x', ylabel='y', title=title)
     ax.legend(['Predicted', 'True', 'Test', 'Train'])
-    plt.show()
+    if plot_status:
+        plt.show()
 
 
 if __name__ == "__main__":
