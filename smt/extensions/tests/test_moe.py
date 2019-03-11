@@ -4,6 +4,9 @@ Author: Remi Lafage <remi.lafage@onera.fr>
 This package is distributed under New BSD license.
 '''
 
+import matplotlib
+matplotlib.use('Agg')
+
 import unittest
 import numpy as np
 from sys import argv
@@ -13,9 +16,6 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
 from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_rms_error
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 class TestMOE(SMTestCase):
     """
@@ -55,6 +55,9 @@ class TestMOE(SMTestCase):
         rms_error = compute_rms_error(moe, xe, ye)
         self.assert_error(rms_error, 0., 3e-1)
         if TestMOE.plot:
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+
             y = moe.predict_values(xe)
             plt.figure(1)
             plt.plot(ye, ye,'-.')
@@ -96,6 +99,9 @@ class TestMOE(SMTestCase):
         self.assert_error(rms_error, 0., 1e-1)
 
         if TestMOE.plot:
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+
             y = moe.predict_values(xe)
             plt.figure(1)
             plt.plot(ye, ye,'-.')
@@ -138,6 +144,9 @@ class TestMOE(SMTestCase):
         self.assert_error(rms_error, 0., 1e-1)
 
         if TestMOE.plot:
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+
             y = moe.analyse_results(x=xe, operation='predict_values')
             plt.figure(1)
             plt.plot(ye, ye,'-.')

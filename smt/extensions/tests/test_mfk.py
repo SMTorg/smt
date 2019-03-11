@@ -5,21 +5,17 @@ Created on Mon May 07 14:20:11 2018
 @author: m.meliani
 """
 
-
-import matplotlib.pyplot as plt
-import unittest
 import matplotlib
-from smt.extensions import MFK
 matplotlib.use('Agg')
 
-
-
-
+import unittest
+from smt.extensions import MFK
 
 class TestMFK(unittest.TestCase):
     @staticmethod
     def run_mfk_example(self):
         import numpy as np
+        import matplotlib.pyplot as plt
         from smt.extensions import MFK
         # Define the 
         def LF_function(x):
