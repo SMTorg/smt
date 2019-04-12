@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 """
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.surrogate_models.neural_net.model import Model
+from smt.utils.neural_net.model import Model
 import matplotlib.pyplot as plt
 
 import numpy as np

@@ -9,14 +9,14 @@ This package is distributed under New BSD license.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from smt.surrogate_models.neural_net.data import random_mini_batches
-from smt.surrogate_models.neural_net.optimizer import Adam
-from smt.surrogate_models.neural_net.activation import Tanh, Linear
-from smt.surrogate_models.neural_net.bwd_prop import L_model_backward
-from smt.surrogate_models.neural_net.fwd_prop import L_model_forward, L_grads_forward
-from smt.surrogate_models.neural_net.loss import lse
-from smt.surrogate_models.neural_net.metrics import rsquare
-from smt.surrogate_models.neural_net.data import normalize_data, load_csv
+from smt.utils.neural_net.data import random_mini_batches
+from smt.utils.neural_net.optimizer import Adam
+from smt.utils.neural_net.activation import Tanh, Linear
+from smt.utils.neural_net.bwd_prop import L_model_backward
+from smt.utils.neural_net.fwd_prop import L_model_forward, L_grads_forward
+from smt.utils.neural_net.loss import lse
+from smt.utils.neural_net.metrics import rsquare
+from smt.utils.neural_net.data import normalize_data, load_csv
 
 
 # TODO: implement batch-norm (deeper networks might suffer from exploding/vanishing gradients during training)
