@@ -37,7 +37,7 @@ For examples demonstrating how to use SMT, go to the 'smt/examples' folder.
 http://smt.readthedocs.io
 
 # Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera](https://github.com/OneraHub), the French Aerospace Lab.
+This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera, the French Aerospace Lab](https://github.com/OneraHub).
 
 
 Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com
