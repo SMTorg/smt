@@ -7,8 +7,9 @@ environment:
   matrix:
     - PYTHON: 2.7
       CONDA: "C:\\Miniconda-x64"
-
     - PYTHON: 3.6
+      CONDA: "C:\\Miniconda36-x64"
+    - PYTHON: 3.7
       CONDA: "C:\\Miniconda36-x64"
 
 install:
