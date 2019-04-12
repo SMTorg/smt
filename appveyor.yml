@@ -10,7 +10,7 @@ environment:
     - PYTHON: 3.6
       CONDA: "C:\\Miniconda36-x64"
     - PYTHON: 3.7
-      CONDA: "C:\\Miniconda36-x64"
+      CONDA: "C:\\Miniconda37-x64"
 
 install:
   - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
