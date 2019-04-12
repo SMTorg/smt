@@ -7,24 +7,21 @@ It also includes new surrogate models that are not available elsewhere: kriging 
 SMT is documented using custom tools for embedding automatically-tested code and dynamically-generated plots to produce high-quality user guides with minimal effort from contributors.
 SMT is distributed under the New BSD license.
 
-# Version
-Version 0.2
-
 # Required packages
-SMT depends on the following modules: numpy, scipy, sk-learn, pyDOE2 and Cython. 
+SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE2 and Cython. 
 
 # Installation
 Clone the repository from github then run:
 
 ```
-pip install -e name_folder
+pip install -e smt_folder
 ```
 
 # Tests
 To run tests, first install the python testing framework using:
 
 ```
-pip install git+https://github.com/OpenMDAO/testflo.git
+pip install testflo
 ```
 
 and run
@@ -40,7 +37,7 @@ For examples demonstrating how to use SMT, go to the 'smt/examples' folder.
 http://smt.readthedocs.io
 
 # Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab).
+This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera](https://github.com/OneraHub), the French Aerospace Lab.
 
 
 Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com

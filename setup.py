@@ -21,6 +21,7 @@ Programming Language :: C++
 Programming Language :: Python
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -87,7 +88,7 @@ ext = cythonize(
 
 metadata = dict(
     name='smt',
-    version='0.2.2',
+    version='0.3',
     description='The Surrogate Modeling Toolbox (SMT)',
     long_description=LONG_DESCRIPTION,
     author='Mohamed Amine Bouhlel et al.',
