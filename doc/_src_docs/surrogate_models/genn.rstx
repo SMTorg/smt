@@ -10,7 +10,7 @@ is better accuracy with fewer training points, compared to regular neural networ
 to regression (single-output or multi-output), but not classification since there is no gradient in that case. The implementation
 is fully vectorized and uses Adam optimization, mini-batch, and L2-norm regularization.
 
-.. _here: genn_theory.pdf
+.. _here: https://github.com/SMTorg/smt/blob/master/doc/_src_docs/surrogate_models/genn_theory.pdf
 
 Limitations
 -----------
