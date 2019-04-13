@@ -10,7 +10,7 @@ is better accuracy with fewer training points, compared to regular neural networ
 to regression (single-output or multi-output), but not classification since there is no gradient in that case. The implementation
 is fully vectorized and uses Adam optimization, mini-batch, and L2-norm regularization.
 
-.. _here: genn_theory.pdf
+.. _here: https://github.com/SMTorg/smt/blob/master/doc/_src_docs/surrogate_models/genn_theory.pdf
 
 Limitations
 -----------
@@ -20,17 +20,6 @@ synthetically using physics-based computer models, responses are continuous, and
 gradient enhancement is only beneficial when the cost of obtaining the gradient is not excessive in the first place.
 This is often true in computer-aided design with the advent of adjoint design methods for example, but it is not always
 the case. The user should therefore carefully weight the benefit of gradient-enhanced methods depending on the application.
-
-Applications
-------------
-
-A well known use case for such methods is when there is a need to replace computationally expensive computer models with
-so-called "surrogate models" in order to save time for further analysis down the line. This situation is not uncommon in
-computer-aided design. In this scenario, the process consists of generating a small Design Of Experiment (DOE), running
-the computationally expensive computer model for each DOE point, and using the results as training data to train a
-"surrogate model" such as GENN. Since the "surrogate model" emulates the original physics-based model accurately in real
-time, it offers a speed benefit that can be used to carry additional analysis such as uncertainty quantification by means
-of Monte Carlo simulation, which would've been computationally inefficient otherwise.
 
 Usage
 -----
@@ -104,27 +93,27 @@ Usage
    Training
      
      Training ...
-  epoch = 0, mini-batch = 0, avg cost = 16.549
-  epoch = 1, mini-batch = 0, avg cost =  0.867
-  epoch = 2, mini-batch = 0, avg cost =  0.677
-  epoch = 3, mini-batch = 0, avg cost =  0.639
-  epoch = 4, mini-batch = 0, avg cost =  0.624
-  epoch = 5, mini-batch = 0, avg cost =  0.613
-  epoch = 6, mini-batch = 0, avg cost =  0.605
-  epoch = 7, mini-batch = 0, avg cost =  0.598
-  epoch = 8, mini-batch = 0, avg cost =  0.593
-  epoch = 9, mini-batch = 0, avg cost =  0.589
-  epoch = 10, mini-batch = 0, avg cost =  0.587
-  epoch = 11, mini-batch = 0, avg cost =  0.585
-  epoch = 12, mini-batch = 0, avg cost =  0.582
-  epoch = 13, mini-batch = 0, avg cost =  0.580
-  epoch = 14, mini-batch = 0, avg cost =  0.579
-  epoch = 15, mini-batch = 0, avg cost =  0.578
-  epoch = 16, mini-batch = 0, avg cost =  0.578
-  epoch = 17, mini-batch = 0, avg cost =  0.577
-  epoch = 18, mini-batch = 0, avg cost =  0.577
-  epoch = 19, mini-batch = 0, avg cost =  0.577
-     Training - done. Time (sec):  4.2910001
+  epoch = 0, mini-batch = 0, avg cost = 15.939
+  epoch = 1, mini-batch = 0, avg cost =  0.837
+  epoch = 2, mini-batch = 0, avg cost =  0.649
+  epoch = 3, mini-batch = 0, avg cost =  0.630
+  epoch = 4, mini-batch = 0, avg cost =  0.622
+  epoch = 5, mini-batch = 0, avg cost =  0.614
+  epoch = 6, mini-batch = 0, avg cost =  0.609
+  epoch = 7, mini-batch = 0, avg cost =  0.604
+  epoch = 8, mini-batch = 0, avg cost =  0.599
+  epoch = 9, mini-batch = 0, avg cost =  0.595
+  epoch = 10, mini-batch = 0, avg cost =  0.592
+  epoch = 11, mini-batch = 0, avg cost =  0.588
+  epoch = 12, mini-batch = 0, avg cost =  0.585
+  epoch = 13, mini-batch = 0, avg cost =  0.583
+  epoch = 14, mini-batch = 0, avg cost =  0.580
+  epoch = 15, mini-batch = 0, avg cost =  0.579
+  epoch = 16, mini-batch = 0, avg cost =  0.579
+  epoch = 17, mini-batch = 0, avg cost =  0.579
+  epoch = 18, mini-batch = 0, avg cost =  0.578
+  epoch = 19, mini-batch = 0, avg cost =  0.578
+     Training - done. Time (sec):  6.9855859
   ___________________________________________________________________________
      
    Evaluation
@@ -132,9 +121,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0004029
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: genn_Test_test_genn.png
@@ -229,6 +218,11 @@ Options
      -  None
      -  ['int']
      -  number of optimizer iterations per mini-batch
+  *  -  seed
+     -  None
+     -  None
+     -  ['int']
+     -  random seed to ensure repeatability of results when desired
   *  -  is_print
      -  True
      -  None

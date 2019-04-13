@@ -9,6 +9,8 @@ matrix:
       env: PY=2.7
     - os: linux
       env: PY=3.6 COVERAGE=1
+    - os: linux
+      env: PY=3.7
     - os: osx
       env: PY=2.7
     - os: osx
