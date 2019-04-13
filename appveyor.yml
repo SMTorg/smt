@@ -9,8 +9,8 @@ environment:
       CONDA: "C:\\Miniconda-x64"
     - PYTHON: 3.6
       CONDA: "C:\\Miniconda36-x64"
-    - PYTHON: 3.7
-      CONDA: "C:\\Miniconda37-x64"
+#    - PYTHON: 3.7
+#      CONDA: "C:\\Miniconda37-x64"
 
 install:
   - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
@@ -19,7 +19,7 @@ install:
   - if %PYTHON%==2.7 (
       conda install python=%PYTHON% Cython sphinx pip --quiet
     ) else (
-      conda install python=%PYTHON% numpy=1.15 scipy=1.0.1 Cython sphinx pip --quiet
+      conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
     )
   - pip install numpy
   - pip install testflo
