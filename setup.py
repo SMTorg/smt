@@ -11,6 +11,7 @@ import os
 import sys
 from subprocess import call
 import numpy as np
+from smt import __version__
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
@@ -88,7 +89,7 @@ ext = cythonize(
 
 metadata = dict(
     name='smt',
-    version='0.3.0',
+    version=__version__,
     description='The Surrogate Modeling Toolbox (SMT)',
     long_description=LONG_DESCRIPTION,
     author='Mohamed Amine Bouhlel et al.',
