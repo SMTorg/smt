@@ -8,8 +8,6 @@ Mixture of Experts
 #TODO : MOE should be a true 'surrogate model' object
 #TODO : choice of the surrogate model experts to be used
 #TODO : add parameters for KRG, RMTB, RMTC, KRG ?
-#TODO : add derivative support
-#TODO : add variance support
 #TODO : support for best number of clusters
 #TODO : add factory to get proper surrogate model object
 #TODO : implement verbosity 'print_global'
@@ -52,11 +50,10 @@ class MOE(Extensions):
         declare('heaviside_optimization', False, types=bool, 
                 desc='Optimize Heaviside scaling factor when smooth recombination is used')
 
-        # TODO: variance and derivative surrogates support 
-        # declare('derivatives_support', False, types=bool, 
-        #         desc='Use only experts that support derivatives prediction')        
-        # declare('variances_support', False, types=bool, 
-        #         desc='Use only experts that support variance prediction')
+        declare('derivatives_support', False, types=bool, 
+                desc='Use only experts that support derivatives prediction')        
+        declare('variances_support', False, types=bool, 
+                desc='Use only experts that support variance prediction')
 
         # TODO: should we add leaf surrogate models options?
         # for name, smclass in self._surrogate_type.iteritems():
@@ -72,7 +69,7 @@ class MOE(Extensions):
         self.heaviside_optimization = None
         self.heaviside_factor = 1.
 
-        self.experts = []
+        self.experts = ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW']
         self.xt = None
         self.yt = None
 
@@ -216,12 +213,11 @@ class MOE(Extensions):
         """
         Select relevant surrogate models (experts) regarding MOE options
         """
-        prototypes = {name: smclass() for name, smclass in six.iteritems(self._surrogate_type)}
-        #TODO: options not handled yet
-        # if self.options['derivatives_support']:
-        #     prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
-        # if self.options['variances_support']:
-        #     prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
+        prototypes = {name: smclass() for name, smclass in six.iteritems(self._surrogate_type) if name in self.experts}
+        if self.options['derivatives_support']:
+            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
+        if self.options['variances_support']:
+            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
         return {name: self._surrogate_type[name] for name in prototypes}
 
     def _fit(self, x_trained, y_trained, c_trained, new_model=True):
@@ -369,12 +365,13 @@ class MOE(Extensions):
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
         
-        for name, sm_class in six.iteritems(self._surrogate_type):
-            if name in ['RMTC', 'RMTB', 'GEKPLS', 'KRG']:  
-                #TODO: SMs not used for now as it require some parameterization
-                continue
-            
-            sm = sm_class()
+        for name, sm_class in six.iteritems(self.expert_types):
+            kwargs={}
+            if name in ['KRG', 'KPLS', 'KPLSK']:  
+                nb = dim if name is 'KRG' else 1
+                kwargs = {'theta0': nb*[1e-2]}  # default parameterization for Kriging() based surrogates
+
+            sm = sm_class(**kwargs)
             sm.options['print_global']=False
             sm.set_training_values(training_values[:, 0:dim], training_values[:, dim])
             sm.train()
