@@ -4,7 +4,7 @@ Getting started
 Installing
 ----------
 
-To install the last tagged version of SMT: 
+To install the latest tagged version of SMT: 
 
 :code:`pip install smt`
 
