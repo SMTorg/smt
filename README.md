@@ -7,6 +7,8 @@ It also includes new surrogate models that are not available elsewhere: kriging 
 SMT is documented using custom tools for embedding automatically-tested code and dynamically-generated plots to produce high-quality user guides with minimal effort from contributors.
 SMT is distributed under the New BSD license.
 
+To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R.R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
+
 # Required packages
 SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE2 and Cython. 
 
