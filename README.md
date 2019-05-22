@@ -12,7 +12,6 @@ To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. M
 ```
 @article{Bouhlel2019,
 	Author = {Mohamed Amine Bouhlel and John T. Hwang and Nathalie Bartoli and Rémi Lafage and Joseph Morlier and Joaquim R. R. A. Martins},
-	Doi = {10.1007/s00158-011-0666-3},
 	Journal = {Advances in Engineering Software},
 	Title = {A Python surrogate modeling framework with derivatives},
 	Year = {2019}}
