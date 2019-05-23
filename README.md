@@ -1,4 +1,4 @@
-	[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/cqrslg4h2gqyn37d?svg=true)](https://ci.appveyor.com/project/relf/smt-07bo4) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg)](https://coveralls.io/github/SMTorg/smt)
+[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/cqrslg4h2gqyn37d?svg=true)](https://ci.appveyor.com/project/relf/smt-07bo4) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg)](https://coveralls.io/github/SMTorg/smt)
 
 
 # Surrogate Modeling Toolbox
@@ -8,7 +8,7 @@ It also includes new surrogate models that are not available elsewhere: kriging 
 SMT is documented using custom tools for embedding automatically-tested code and dynamically-generated plots to produce high-quality user guides with minimal effort from contributors.
 SMT is distributed under the New BSD license.
 
-To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R.R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
+To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
 
 ```
 @article{Bouhlel2019,
@@ -25,7 +25,7 @@ SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE2 and Cyt
 Clone the repository from github then run:
 
 ```
-pip install -e smt_folder
+pip install -e <smt_folder>
 ```
 
 # Tests
