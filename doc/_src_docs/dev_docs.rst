@@ -1,12 +1,9 @@
-.. _for-developers:
+.. _contributing:
 
-For developers
-==============
+Contributing to SMT
+===================
 
 This part of the documentation is meant for developers who want to contribute new surrogate models, problems, or sampling methods.
-
-Contributing
-------------
 
 Contributing to SMT consists of the following steps:
 
