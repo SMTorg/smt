@@ -24,6 +24,7 @@ Usage
 .. code-block:: python
 
   import numpy as np
+  import matplotlib.pyplot as plt
   from smt.extensions import MFK
   # Define the 
   def LF_function(x):
@@ -97,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0204079
+     Training - done. Time (sec):  0.0156002
   ___________________________________________________________________________
      
    Evaluation
@@ -105,9 +106,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010660
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000106
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -116,9 +117,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0008900
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000088
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
