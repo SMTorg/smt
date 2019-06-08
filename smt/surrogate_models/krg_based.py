@@ -526,16 +526,16 @@ class KrgBased(SurrogateModel):
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['rho_regr']))
 
-        if self.name == 'Kriging' or self.name == 'MFK':
-            d = self.nx
-        else:
+        if  self.name in ['KPLS', 'KPLSK', 'GEKPLS']:
             d = self.options['n_comp']
+        else:
+            d = self.nx
 
         if len(self.options['theta0']) != d:
             if len(self.options['theta0']) == 1:
-                self.options['theta0'] *= d
+                self.options['theta0'] *= np.ones(d)  
             else:
-                raise Exception('the number of dim %s should be equal to the length of theta0 %s.' % 
+                raise ValueError('the number of dim %s should be equal to the length of theta0 %s.' % 
                                 (d, len(self.options['theta0'])))
 
         if not callable(self.options['corr']):
