@@ -24,7 +24,6 @@ class KPLSK(KrgBased):
         super(KPLSK, self)._initialize()
         declare = self.options.declare
         declare('n_comp', 1, types=int, desc='Number of principal components')
-        declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         self.name = 'KPLSK'
 
     def _compute_pls(self,X,y):
