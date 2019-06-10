@@ -7,7 +7,7 @@ Mixture of Experts
 """
 #TODO : MOE should be a true 'surrogate model' object
 #TODO : choice of the surrogate model experts to be used
-#TODO : add parameters for KRG, RMTB, RMTC, KRG ?
+#TODO : add parameters for RMTB, RMTC
 #TODO : support for best number of clusters
 #TODO : add factory to get proper surrogate model object
 #TODO : implement verbosity 'print_global'
@@ -69,7 +69,7 @@ class MOE(Extensions):
         self.heaviside_optimization = None
         self.heaviside_factor = 1.
 
-        self.experts = ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW']
+        self.experts = ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']
         self.xt = None
         self.yt = None
 
@@ -367,9 +367,15 @@ class MOE(Extensions):
         
         for name, sm_class in six.iteritems(self.expert_types):
             kwargs={}
-            if name in ['KRG', 'KPLS', 'KPLSK']:  
-                nb = dim if name is 'KRG' else 1
-                kwargs = {'theta0': nb*[1e-2]}  # default parameterization for Kriging() based surrogates
+            # if name in ['KRG', 'KPLS', 'KPLSK']:  
+            #     nb = dim if name is 'KRG' else 1
+            #     kwargs = {'theta0': nb*[1e-2]}  # default parameterization for Kriging() based surrogates
+            if name in ['RMTB', 'RMTC']:
+                xlimits = np.zeros((dim, 2))
+                for i in range(dim):
+                    xlimits[i][0] = np.amin(training_values[:, i])  
+                    xlimits[i][1] = np.amax(training_values[:, i])
+                kwargs = {'xlimits': xlimits}
 
             sm = sm_class(**kwargs)
             sm.options['print_global']=False
