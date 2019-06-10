@@ -98,11 +98,12 @@ metadata = dict(
     classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
     packages=[
         'smt',
-        'smt/surrogate_models',
-        'smt/problems',
-        'smt/sampling_methods',
-        'smt/utils',
-        'smt/extensions'
+        'smt.surrogate_models',
+        'smt.problems',
+        'smt.sampling_methods',
+        'smt.utils',
+        'smt.utils.neural_net',
+        'smt.extensions'
     ],
     install_requires=[
         'scikit-learn',

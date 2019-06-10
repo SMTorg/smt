@@ -15,8 +15,8 @@ TODO:
 """
 
 from __future__ import division
-import warnings
-warnings.filterwarnings("ignore")
+# import warnings
+# warnings.filterwarnings("ignore")
 
 import numpy as np
 from scipy import linalg, optimize
@@ -25,13 +25,13 @@ from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.gaussian_process.regression_models import constant, linear, quadratic
+from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import abs_exp, squar_exp, standardization, l1_cross_distances
 
 from scipy.optimize import minimize
+
 """
 The kriging class.
-
 """
 
 class KrgBased(SurrogateModel):
@@ -55,7 +55,9 @@ class KrgBased(SurrogateModel):
         declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
                 desc='type of corr. func.')
         declare('data_dir', values=None, types=str,
-                desc='Directory for loading / saving cached data; None means do not save or load')        
+                desc='Directory for loading / saving cached data; None means do not save or load')
+        declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
+        self.name = 'KrigingBased'
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports['derivatives'] = True
@@ -366,7 +368,6 @@ class KrgBased(SurrogateModel):
         return MSE
 
     def _optimize_hyperparam(self,D):
-
         """
         This function evaluates the Gaussian Process model at x.
 
@@ -504,7 +505,6 @@ class KrgBased(SurrogateModel):
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
-
         """
         This function check some parameters of the model.
         """
@@ -526,13 +526,17 @@ class KrgBased(SurrogateModel):
                                  "%s was given." % (self._regression_types.keys(),
                                 self.options['rho_regr']))
 
-        if self.name == 'Kriging' or self.name == 'MFK':
-            d = self.nx
-        else:
+        if  self.name in ['KPLS', 'KPLSK', 'GEKPLS']:
             d = self.options['n_comp']
+        else:
+            d = self.nx
 
         if len(self.options['theta0']) != d:
-            raise Exception('the number of %s should be equal to the length of theta0.' %(d))
+            if len(self.options['theta0']) == 1:
+                self.options['theta0'] *= np.ones(d)  
+            else:
+                raise ValueError('the number of dim %s should be equal to the length of theta0 %s.' % 
+                                (d, len(self.options['theta0'])))
 
         if not callable(self.options['corr']):
             if self.options['corr'] in self._correlation_types:
@@ -547,7 +551,6 @@ class KrgBased(SurrogateModel):
                 raise Exception('Derivative values are needed for using the GEKPLS model.')
 
     def _check_F(self,n_samples_F,p):
-
         """
         This function check the F-parameters of the model.
         """

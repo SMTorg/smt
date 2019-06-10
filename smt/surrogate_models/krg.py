@@ -19,8 +19,6 @@ class KRG(KrgBased):
 
     def _initialize(self):
         super(KRG, self)._initialize()
-        declare = self.options.declare
-        declare('theta0', None, types=(list, np.ndarray), desc='Initial hyperparameters')
         self.name = 'Kriging'
 
     def _componentwise_distance(self,dx,opt=0):
