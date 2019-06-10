@@ -5,21 +5,22 @@ This package is distributed under New BSD license.
 
 Mixture of Experts
 """
-#TODO : choice of the surrogate model experts to be used
-#TODO : support for best number of clusters
-#TODO : add factory to get proper surrogate model object
-#TODO : implement verbosity 'print_global'
-#TODO : documentation
+# TODO : choice of the surrogate model experts to be used
+# TODO : support for best number of clusters
+# TODO : add factory to get proper surrogate model object
+# TODO : implement verbosity 'print_global'
+# TODO : documentation
 
 from __future__ import division
 import six
 import numpy as np
 import warnings
 
-OLD_SKLEARN=False
-try: # scikit-learn < 0.20.0 
+OLD_SKLEARN = False
+try:  # scikit-learn < 0.20.0
     from sklearn.mixture import GMM as GaussianMixture
-    OLD_SKLEARN=True
+
+    OLD_SKLEARN = True
 except:
     from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
@@ -30,28 +31,50 @@ from smt.utils.misc import compute_rms_error
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
 class MOE(Extensions):
-    
     def _initialize(self):
         super(MOE, self)._initialize()
         declare = self.options.declare
-        
-        declare('xt', None, types=np.ndarray, desc='Training inputs')
-        declare('yt', None, types=np.ndarray, desc='Training outputs')
-        declare('ct', None, types=np.ndarray, desc='Training derivative outputs used for clustering')
 
-        declare('xtest', None, types=np.ndarray, desc='Test inputs')
-        declare('ytest', None, types=np.ndarray, desc='Test outputs')
+        declare("xt", None, types=np.ndarray, desc="Training inputs")
+        declare("yt", None, types=np.ndarray, desc="Training outputs")
+        declare(
+            "ct",
+            None,
+            types=np.ndarray,
+            desc="Training derivative outputs used for clustering",
+        )
 
-        declare('n_clusters', 2, types=int, desc='Number of clusters')
-        declare('smooth_recombination', True, types=bool, desc='Continuous cluster transition')
-        declare('heaviside_optimization', False, types=bool, 
-                desc='Optimize Heaviside scaling factor when smooth recombination is used')
+        declare("xtest", None, types=np.ndarray, desc="Test inputs")
+        declare("ytest", None, types=np.ndarray, desc="Test outputs")
 
-        declare('derivatives_support', False, types=bool, 
-                desc='Use only experts that support derivatives prediction')        
-        declare('variances_support', False, types=bool, 
-                desc='Use only experts that support variance prediction')
+        declare("n_clusters", 2, types=int, desc="Number of clusters")
+        declare(
+            "smooth_recombination",
+            True,
+            types=bool,
+            desc="Continuous cluster transition",
+        )
+        declare(
+            "heaviside_optimization",
+            False,
+            types=bool,
+            desc="Optimize Heaviside scaling factor when smooth recombination is used",
+        )
+
+        declare(
+            "derivatives_support",
+            False,
+            types=bool,
+            desc="Use only experts that support derivatives prediction",
+        )
+        declare(
+            "variances_support",
+            False,
+            types=bool,
+            desc="Use only experts that support variance prediction",
+        )
 
         # TODO: should we add leaf surrogate models options?
         # for name, smclass in self._surrogate_type.iteritems():
@@ -65,16 +88,26 @@ class MOE(Extensions):
         self.n_clusters = None
         self.smooth_recombination = None
         self.heaviside_optimization = None
-        self.heaviside_factor = 1.
+        self.heaviside_factor = 1.0
 
-        self.experts = ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']
+        self.experts = [
+            "KRG",
+            "KPLS",
+            "KPLSK",
+            "LS",
+            "QP",
+            "RBF",
+            "IDW",
+            "RMTB",
+            "RMTC",
+        ]
         self.xt = None
         self.yt = None
 
     def set_training_values(self, xt, yt, name=None):
         """
         Supports for surrogate model API.
-        """        
+        """
         self.xt = xt
         self.yt = yt
 
@@ -88,28 +121,31 @@ class MOE(Extensions):
         """
         Support for surrogate model API.
         """
-        return super(MOE, self).analyse_results(x=x, operation='predict_values')        
+        return super(MOE, self).analyse_results(x=x, operation="predict_values")
 
     def _apply(self):
         """
         Build and train the mixture of experts surrogate.
         This method is called by Extension apply() method
         """
-        if self.xt is not None and self.yt is not None:  
+        if self.xt is not None and self.yt is not None:
             # set_training_values has been called
             self.x = x = self.xt
             self.y = y = self.yt
         else:
-            self.x = x = self.options['xt']
-            self.y = y = self.options['yt']
-        self.c = c = self.options['ct']
+            self.x = x = self.options["xt"]
+            self.y = y = self.options["yt"]
+        self.c = c = self.options["ct"]
         if not self.c:
             self.c = c = y
 
-        self.n_clusters = self.options['n_clusters']
-        self.smooth_recombination = self.options['smooth_recombination']
-        self.heaviside_optimization = self.options['smooth_recombination'] and self.options['heaviside_optimization']
-        self.heaviside_factor = 1.
+        self.n_clusters = self.options["n_clusters"]
+        self.smooth_recombination = self.options["smooth_recombination"]
+        self.heaviside_optimization = (
+            self.options["smooth_recombination"]
+            and self.options["heaviside_optimization"]
+        )
+        self.heaviside_factor = 1.0
 
         self._check_inputs()
 
@@ -117,45 +153,45 @@ class MOE(Extensions):
         self.experts = []
 
         # Set test values and trained values
-        xtest = self.options['xtest']
-        ytest = self.options['ytest']
+        xtest = self.options["xtest"]
+        ytest = self.options["ytest"]
         values = np.c_[x, y, c]
         test_data_present = xtest is not None and ytest is not None
         if test_data_present:
-            self.test_values = np.c_[xtest, ytest] 
+            self.test_values = np.c_[xtest, ytest]
             self.training_values = values
         else:
             self.test_values, self.training_values = self._extract_part(values, 10)
 
         self.ndim = nx = x.shape[1]
         xt = self.training_values[:, 0:nx]
-        yt = self.training_values[:, nx:nx+1]
-        ct = self.training_values[:, nx+1:]
+        yt = self.training_values[:, nx : nx + 1]
+        ct = self.training_values[:, nx + 1 :]
 
         # Clustering
-        self.cluster = GaussianMixture(n_components=self.n_clusters,
-                                       covariance_type='full', n_init=20)
-        self.cluster.fit(np.c_[xt, ct])        
+        self.cluster = GaussianMixture(
+            n_components=self.n_clusters, covariance_type="full", n_init=20
+        )
+        self.cluster.fit(np.c_[xt, ct])
         if not self.cluster.converged_:
-            raise Exception('Clustering not converged')
+            raise Exception("Clustering not converged")
 
         # Choice of the experts and training
         self._fit(xt, yt, ct)
 
         xtest = self.test_values[:, 0:nx]
-        ytest = self.test_values[:, nx:nx+1] 
+        ytest = self.test_values[:, nx : nx + 1]
         # Heaviside factor
         if self.heaviside_optimization and self.n_clusters > 1:
             self.heaviside_factor = self._find_best_heaviside_factor(xtest, ytest)
-            print('Best Heaviside factor = {}'.format(self.heaviside_factor))
+            print("Best Heaviside factor = {}".format(self.heaviside_factor))
             self.distribs = self._create_clusters_distributions(self.heaviside_factor)
 
         if not test_data_present:
             # if we have used part of data to validate, fit on overall data
             self._fit(x, y, c, new_model=False)
 
-
-    def _analyse_results(self, x, operation='predict_values', kx=None):
+    def _analyse_results(self, x, operation="predict_values", kx=None):
         """
         Analyse the mixture of experts at the given samples x wrt the specified operation.
         This method is called by Extension analyse_results() method.
@@ -177,12 +213,12 @@ class MOE(Extensions):
             Output values at the prediction value/derivative points.
 
         """
-        if operation == 'predict_values':
+        if operation == "predict_values":
             if self.smooth_recombination:
                 y = self._predict_smooth_output(x)
             else:
                 y = self._predict_hard_output(x)
-            return y 
+            return y
         else:
             raise ValueError("MOE supports predict_values operation only.")
         return y
@@ -195,27 +231,44 @@ class MOE(Extensions):
         if self.x is None or self.y is None:
             raise ValueError("check x and y values")
         if self.x.shape[0] != self.y.shape[0]:
-            raise ValueError("The number of input points %d doesn t match with the number of output points %d."
-                             % (self.x.shape[0], self.y.shape[0]))
+            raise ValueError(
+                "The number of input points %d doesn t match with the number of output points %d."
+                % (self.x.shape[0], self.y.shape[0])
+            )
         if self.y.shape[0] != self.c.shape[0]:
-            raise ValueError("The number of output points %d doesn t match with the number of criterion weights %d."
-                             % (self.y.shape[0], self.c.shape[0]))
+            raise ValueError(
+                "The number of output points %d doesn t match with the number of criterion weights %d."
+                % (self.y.shape[0], self.c.shape[0])
+            )
         # choice of number of cluster
         max_n_clusters = int(len(self.x) / 10) + 1
         if self.n_clusters > max_n_clusters:
-            print('Number of clusters should be inferior to {0}'.format(max_n_clusters))
+            print("Number of clusters should be inferior to {0}".format(max_n_clusters))
             raise ValueError(
-                'The number of clusters is too high considering the number of points')
+                "The number of clusters is too high considering the number of points"
+            )
 
     def _select_expert_types(self):
         """
         Select relevant surrogate models (experts) regarding MOE options
         """
-        prototypes = {name: smclass() for name, smclass in six.iteritems(self._surrogate_type) if name in self.experts}
-        if self.options['derivatives_support']:
-            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['derivatives']}
-        if self.options['variances_support']:
-            prototypes = {name: proto for name, proto in prototypes.iteritems() if proto.support['variances']}
+        prototypes = {
+            name: smclass()
+            for name, smclass in six.iteritems(self._surrogate_type)
+            if name in self.experts
+        }
+        if self.options["derivatives_support"]:
+            prototypes = {
+                name: proto
+                for name, proto in prototypes.iteritems()
+                if proto.support["derivatives"]
+            }
+        if self.options["variances_support"]:
+            prototypes = {
+                name: proto
+                for name, proto in prototypes.iteritems()
+                if proto.support["variances"]
+            }
         return {name: self._surrogate_type[name] for name in prototypes}
 
     def _fit(self, x_trained, y_trained, c_trained, new_model=True):
@@ -247,13 +300,13 @@ class MOE(Extensions):
             if new_model:
                 model = self._find_best_model(clusters[i])
                 self.experts.append(model)
-            else:  # retrain the experts with the 
+            else:  # retrain the experts with the
                 trained_values = np.array(clusters[i])
-                x_trained = trained_values[:, 0:self.ndim]
+                x_trained = trained_values[:, 0 : self.ndim]
                 y_trained = trained_values[:, self.ndim]
                 self.experts[i].set_training_values(x_trained, y_trained)
                 self.experts[i].train()
-        
+
     def _predict_hard_output(self, x):
         """
         This method predicts the output of a x samples for a 
@@ -306,8 +359,11 @@ class MOE(Extensions):
         for i in range(len(sort_proba)):
             recombined_value = 0
             for j in range(len(self.experts)):
-                recombined_value = recombined_value + \
-                    self.experts[j].predict_values(np.atleast_2d(x[i]))[0] * sort_proba[i][j]
+                recombined_value = (
+                    recombined_value
+                    + self.experts[j].predict_values(np.atleast_2d(x[i]))[0]
+                    * sort_proba[i][j]
+                )
 
             predicted_values.append(recombined_value)
 
@@ -334,7 +390,7 @@ class MOE(Extensions):
 
         """
         num = values.shape[0]
-        indices = np.arange(0, num, quantile) # uniformly distributed
+        indices = np.arange(0, num, quantile)  # uniformly distributed
         mask = np.zeros(num, dtype=bool)
         mask[indices] = True
         return values[mask], values[~mask]
@@ -356,30 +412,30 @@ class MOE(Extensions):
         """
         dim = self.ndim
         clustered_values = np.array(clustered_values)
-        
+
         scores = {}
         sms = {}
 
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
-        
+
         for name, sm_class in six.iteritems(self.expert_types):
-            kwargs={}
-            # if name in ['KRG', 'KPLS', 'KPLSK']:  
+            kwargs = {}
+            # if name in ['KRG', 'KPLS', 'KPLSK']:
             #     nb = dim if name is 'KRG' else 1
             #     kwargs = {'theta0': nb*[1e-2]}  # default parameterization for Kriging() based surrogates
-            if name in ['RMTB', 'RMTC']:
+            if name in ["RMTB", "RMTC"]:
                 xlimits = np.zeros((dim, 2))
                 for i in range(dim):
-                    xlimits[i][0] = np.amin(training_values[:, i])  
+                    xlimits[i][0] = np.amin(training_values[:, i])
                     xlimits[i][1] = np.amax(training_values[:, i])
-                kwargs = {'xlimits': xlimits}
+                kwargs = {"xlimits": xlimits}
 
             sm = sm_class(**kwargs)
-            sm.options['print_global']=False
+            sm.options["print_global"] = False
             sm.set_training_values(training_values[:, 0:dim], training_values[:, dim])
             sm.train()
-            
+
             expected = test_values[:, dim]
             actual = sm.predict_values(test_values[:, 0:dim])
             l_two = np.linalg.norm(expected - actual, 2)
@@ -389,13 +445,13 @@ class MOE(Extensions):
             scores[sm.name] = l_two
             print(sm.name, l_two)
             sms[sm.name] = sm
-            
-        best_name=None
-        best_score=None
+
+        best_name = None
+        best_score = None
         for name, rmse in six.iteritems(scores):
             if best_score is None or rmse < best_score:
-                best_name, best_score = name, rmse              
-        
+                best_name, best_score = name, rmse
+
         print("Best expert = {}".format(best_name))
         return sms[best_name]
 
@@ -416,7 +472,7 @@ class MOE(Extensions):
             best heaviside factor wrt given samples
 
         """
-        heaviside_factor = 1.
+        heaviside_factor = 1.0
         if self.n_clusters > 1:
             hfactors = np.linspace(0.1, 2.1, num=21)
             errors = []
@@ -426,16 +482,17 @@ class MOE(Extensions):
                 err_rel = np.linalg.norm(y - ypred, 2) / np.linalg.norm(y, 2)
                 errors.append(err_rel)
             if max(errors) < 1e-6:
-                heaviside_factor = 1.
+                heaviside_factor = 1.0
             else:
                 min_error_index = errors.index(min(errors))
                 heaviside_factor = hfactors[min_error_index]
         return heaviside_factor
-            
+
     """
     Functions related to clustering
     """
-    def _create_clusters_distributions(self, heaviside_factor=1.):
+
+    def _create_clusters_distributions(self, heaviside_factor=1.0):
         """
         Create an array of frozen multivariate normal distributions (distribs).
 
@@ -452,12 +509,12 @@ class MOE(Extensions):
 
         """
         distribs = []
-        dim= self.ndim
+        dim = self.ndim
         means = self.cluster.means_
         if OLD_SKLEARN:
-            cov = heaviside_factor*self.cluster.covars_
+            cov = heaviside_factor * self.cluster.covars_
         else:
-            cov = heaviside_factor*self.cluster.covariances_
+            cov = heaviside_factor * self.cluster.covariances_
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]
@@ -465,7 +522,6 @@ class MOE(Extensions):
             distribs.append(mvn)
         return distribs
 
-    
     def _cluster_values(self, values, classifier):
         """
         Classify values regarding the given classifier info.
@@ -538,7 +594,7 @@ class MOE(Extensions):
         rad = np.sum(probs)
 
         if rad > 0:
-            probs = probs/rad
+            probs = probs / rad
         return probs
 
     def _proba_cluster(self, x, distribs=None):
@@ -577,7 +633,8 @@ class MOE(Extensions):
         if self.n_clusters == 1:
             probs = np.ones((x.shape[0], 1))
         else:
-            probs = np.array([self._proba_cluster_one_sample(x[i], distribs) for i in range(len(x))])
+            probs = np.array(
+                [self._proba_cluster_one_sample(x[i], distribs) for i in range(len(x))]
+            )
 
         return probs
-
