@@ -5,9 +5,7 @@ This package is distributed under New BSD license.
 
 Mixture of Experts
 """
-#TODO : MOE should be a true 'surrogate model' object
 #TODO : choice of the surrogate model experts to be used
-#TODO : add parameters for RMTB, RMTC
 #TODO : support for best number of clusters
 #TODO : add factory to get proper surrogate model object
 #TODO : implement verbosity 'print_global'
