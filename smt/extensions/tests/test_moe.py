@@ -115,7 +115,7 @@ class TestMOE(SMTestCase):
             plt.title('L1 Norm')
             plt.show()
 
-    @unittest.skip('disabled for now as it blocks unexpectedly on travis linux')
+    #@unittest.skip('disabled for now as it blocks unexpectedly on travis linux')
     def test_branin_2d_200(self):
         self.ndim = 2
         self.nt = 200

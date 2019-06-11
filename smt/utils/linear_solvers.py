@@ -233,7 +233,8 @@ class KrylovSolver(LinearSolver):
             if self.options['solver'] == 'cg':
                 self.solver = scipy.sparse.linalg.cg
                 self.callback_func = self.callback._print_sol
-                self.solver_kwargs = {'tol': self.options['atol'],
+                self.solver_kwargs = {'atol': 'legacy',
+                                      'tol': self.options['atol'],
                                       'maxiter': self.options['ilimit'],
                                       }
             elif self.options['solver'] == 'bicgstab':

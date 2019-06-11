@@ -18,11 +18,12 @@ class Extensions(object):
 
     if compiled_available:
         _surrogate_type = {
-            'KRG': KRG,'LS': LS,'QP': QP,'KPLS':KPLS,'KPLSK':KPLSK,'GEKPLS':GEKPLS,
-            'RBF':RBF,'RMTC':RMTC,'RMTB':RMTB,'IDW':IDW}
+            'KRG': KRG, 'LS': LS, 'QP': QP, 
+            'KPLS': KPLS, 'KPLSK': KPLSK, 'GEKPLS': GEKPLS,
+            'RBF': RBF, 'RMTC': RMTC, 'RMTB': RMTB, 'IDW': IDW}
     else:
         _surrogate_type = {
-            'KRG': KRG,'LS': LS,'QP': QP,'KPLS':KPLS,'KPLSK':KPLSK,'GEKPLS':GEKPLS}
+            'KRG': KRG, 'LS': LS, 'QP': QP, 'KPLS': KPLS, 'KPLSK': KPLSK, 'GEKPLS': GEKPLS}
 
     def __init__(self, **kwargs):
         """
