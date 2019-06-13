@@ -328,8 +328,8 @@ class MFK(KrgBased):
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
 #        if self.normalize:
-        f = self.options['poly'](X)
-        f0 = self.options['poly'](X)
+        f = self._regression_types[self.options['poly']](X)
+        f0 = self._regression_types[self.options['poly']](X)
         dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
