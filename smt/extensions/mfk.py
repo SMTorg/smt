@@ -363,7 +363,7 @@ class MFK(KrgBased):
             g = self._regression_types[self.options['rho_regr']](X)
             dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
-            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
+            r_ = self._correlation_types[self.options['corr']](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
