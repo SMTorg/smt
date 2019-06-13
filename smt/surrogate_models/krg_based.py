@@ -8,10 +8,6 @@ This package is distributed under New BSD license.
 TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol
-
-- debug _train: self_pkl = pickle.dumps(obj)
-                           cPickle.PicklingError: Can't pickle <type 'function'>: attribute lookup __builtin__.function failed
-
 """
 
 from __future__ import division
@@ -50,11 +46,11 @@ class KrgBased(SurrogateModel):
         super(KrgBased, self)._initialize()
         declare = self.options.declare
         supports = self.supports
-        declare('poly', 'constant',types=FunctionType,values=('constant', 'linear', 'quadratic'),
-                desc='regr. term')
-        declare('corr', 'squar_exp', types=FunctionType,values=('abs_exp', 'squar_exp'),
-                desc='type of corr. func.')
-        declare('data_dir', values=None, types=str,
+        declare('poly', 'constant', values=('constant', 'linear', 'quadratic'),
+                desc='Regression function type')
+        declare('corr', 'squar_exp', values=('abs_exp', 'squar_exp'),
+                desc='Correlation function type')
+        declare('data_dir', types=str,
                 desc='Directory for loading / saving cached data; None means do not save or load')
         declare('theta0', [1e-2], types=(list, np.ndarray), desc='Initial hyperparameters')
         self.name = 'KrigingBased'
@@ -92,7 +88,7 @@ class KrgBased(SurrogateModel):
             raise Exception("Multiple input features cannot have the same value.")
 
         # Regression matrix and parameters
-        self.F = self.options['poly'](self.X_norma)
+        self.F = self._regression_types[self.options['poly']](self.X_norma)
         n_samples_F = self.F.shape[0]
         if self.F.ndim > 1:
             p = self.F.shape[1]
@@ -112,7 +108,6 @@ class KrgBased(SurrogateModel):
         """
         Train the model
         """
-        """
         inputs = {'self': self}
         with cached_operation(inputs, self.options['data_dir']) as outputs:
             if outputs:
@@ -120,8 +115,6 @@ class KrgBased(SurrogateModel):
             else:
                 self._new_train()
                 #outputs['sol'] = self.sol
-        """
-        self._new_train()
 
     def _reduced_likelihood_function(self, theta):
 
@@ -183,7 +176,7 @@ class KrgBased(SurrogateModel):
                 theta = tmp_var[:-1]
                 noise = tmp_var[-1]
     
-        r = self.options['corr'](theta, self.D).reshape(-1,1)
+        r = self._correlation_types[self.options['corr']](theta, self.D).reshape(-1,1)
         
         R = np.eye(self.nt) * (1. + nugget+ noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:,0]
@@ -276,10 +269,10 @@ class KrgBased(SurrogateModel):
                                  False)
         d = self._componentwise_distance(dx)
         # Compute the correlation function
-        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+        r = self._correlation_types[self.options['corr']](self.optimal_theta, d).reshape(n_eval,self.nt)
         y = np.zeros(n_eval)
         # Compute the regression function
-        f = self.options['poly'](x)
+        f = self._regression_types[self.options['poly']](x)
         # Scaled predictor
         y_ = np.dot(f, self.optimal_par['beta']) + np.dot(r,
                     self.optimal_par['gamma'])
@@ -314,14 +307,14 @@ class KrgBased(SurrogateModel):
                                  False)
         d = self._componentwise_distance(dx)
         # Compute the correlation function
-        r = self.options['corr'](self.optimal_theta, d).reshape(n_eval,self.nt)
+        r = self._correlation_types[self.options['corr']](self.optimal_theta, d).reshape(n_eval,self.nt)
 
-        if self.options['corr'].__name__ != 'squar_exp':
+        if self.options['corr'] != 'squar_exp':
             raise ValueError(
             'The derivative is only available for square exponential kernel')
-        if self.options['poly'].__name__ == 'constant':
+        if self.options['poly'] == 'constant':
             df = np.array([0])
-        elif self.options['poly'].__name__ == 'linear':
+        elif self.options['poly'] == 'linear':
             df = np.zeros((self.nx + 1, self.nx))
             df[1:,:] = 1
         else:
@@ -493,7 +486,7 @@ class KrgBased(SurrogateModel):
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
-                if self.options['corr'].__name__ == 'squar_exp':
+                if self.options['corr'] == 'squar_exp':
                     self.options['theta0'] = (best_optimal_theta*self.coeff_pls**2).sum(1)
                 else:
                     self.options['theta0'] = (best_optimal_theta*np.abs(self.coeff_pls)).sum(1)
@@ -508,24 +501,7 @@ class KrgBased(SurrogateModel):
         """
         This function check some parameters of the model.
         """
-        # Check regression model
-        if not callable(self.options['poly']):
-            if self.options['poly'] in self._regression_types:
-                self.options['poly'] = self._regression_types[
-                    self.options['poly']]
-            else:
-                raise ValueError("regr should be one of %s or callable, "
-                                 "%s was given." % (self._regression_types.keys(),
-                                self.options['poly']))
-        if self.name == 'MFK' and not callable(self.options['rho_regr']):
-            if self.options['rho_regr'] in self._regression_types:
-                self.options['rho_regr'] = self._regression_types[
-                    self.options['rho_regr']]
-            else:
-                raise ValueError("rho_regr should be one of %s or callable, "
-                                 "%s was given." % (self._regression_types.keys(),
-                                self.options['rho_regr']))
-
+        # FIXME: _check_param should be overriden in corresponding subclasses
         if  self.name in ['KPLS', 'KPLSK', 'GEKPLS']:
             d = self.options['n_comp']
         else:
@@ -537,14 +513,6 @@ class KrgBased(SurrogateModel):
             else:
                 raise ValueError('the number of dim %s should be equal to the length of theta0 %s.' % 
                                 (d, len(self.options['theta0'])))
-
-        if not callable(self.options['corr']):
-            if self.options['corr'] in self._correlation_types:
-                self.options['corr'] = self._correlation_types[self.options['corr']]
-            else:
-                raise ValueError("corr should be one of %s or callable, "
-                                 "%s was given."% (self._correlation_types.keys(),
-                                self.options['corr']))
 
         if self.supports['training_derivatives']:
             if not(1 in self.training_points[None]):
