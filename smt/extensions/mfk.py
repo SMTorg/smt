@@ -34,7 +34,7 @@ class MFK(KrgBased):
         super(MFK, self)._initialize()
         declare = self.options.declare
         
-        declare('rho_regr', 'constant', types=str,\
+        declare('rho_regr', 'constant', \
                 values=('constant', 'linear', 'quadratic'), desc='Regression function type for rho')
         declare('theta0', types=(list, np.ndarray), \
                 desc='Initial hyperparameters')
