@@ -13,6 +13,7 @@ class Silence(object):
         sys.stdout = open(os.devnull, "w")
 
     def __exit__(self, *args):
+        sys.stdout.close()
         sys.stdout = sys.__stdout__
         return False
 
