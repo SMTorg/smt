@@ -8,22 +8,39 @@ from __future__ import division
 from smt.utils.options_dictionary import OptionsDictionary
 
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+
     compiled_available = True
 except:
     compiled_available = False
+
 
 class Extensions(object):
 
     if compiled_available:
         _surrogate_type = {
-            'KRG': KRG, 'LS': LS, 'QP': QP, 
-            'KPLS': KPLS, 'KPLSK': KPLSK, 'GEKPLS': GEKPLS,
-            'RBF': RBF, 'RMTC': RMTC, 'RMTB': RMTB, 'IDW': IDW}
+            "KRG": KRG,
+            "LS": LS,
+            "QP": QP,
+            "KPLS": KPLS,
+            "KPLSK": KPLSK,
+            "GEKPLS": GEKPLS,
+            "RBF": RBF,
+            "RMTC": RMTC,
+            "RMTB": RMTB,
+            "IDW": IDW,
+        }
     else:
         _surrogate_type = {
-            'KRG': KRG, 'LS': LS, 'QP': QP, 'KPLS': KPLS, 'KPLSK': KPLSK, 'GEKPLS': GEKPLS}
+            "KRG": KRG,
+            "LS": LS,
+            "QP": QP,
+            "KPLS": KPLS,
+            "KPLSK": KPLSK,
+            "GEKPLS": GEKPLS,
+        }
 
     def __init__(self, **kwargs):
         """

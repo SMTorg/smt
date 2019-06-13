@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function, division
 import numpy as np
@@ -16,8 +16,10 @@ from smt.sampling_methods import FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
+
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+
     compiled_available = True
 except:
     compiled_available = False
@@ -25,8 +27,8 @@ except:
 
 print_output = False
 
-class Test(SMTestCase):
 
+class Test(SMTestCase):
     def setUp(self):
         ndim = 2
         self.nt = 50
@@ -36,14 +38,22 @@ class Test(SMTestCase):
 
         self.sms = sms = OrderedDict()
         if compiled_available:
-            sms['IDW'] = IDW()
-            sms['RBF'] = RBF()
-            sms['RMTB'] = RMTB(regularization_weight=1e-8, nonlinear_maxiter=100, solver_tolerance=1e-16)
-            sms['RMTC'] = RMTC(regularization_weight=1e-8, nonlinear_maxiter=100, solver_tolerance=1e-16)
+            sms["IDW"] = IDW()
+            sms["RBF"] = RBF()
+            sms["RMTB"] = RMTB(
+                regularization_weight=1e-8,
+                nonlinear_maxiter=100,
+                solver_tolerance=1e-16,
+            )
+            sms["RMTC"] = RMTC(
+                regularization_weight=1e-8,
+                nonlinear_maxiter=100,
+                solver_tolerance=1e-16,
+            )
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
-        sname = method_name.split('_')[1]
+        sname = method_name.split("_")[1]
 
         prob = self.problem
         sampling = FullFactorial(xlimits=prob.xlimits, clip=False)
@@ -63,9 +73,9 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared('xlimits'):
-            sm.options['xlimits'] = prob.xlimits
-        sm.options['print_global'] = False
+        if sm.options.is_declared("xlimits"):
+            sm.options["xlimits"] = prob.xlimits
+        sm.options["print_global"] = False
 
         sm.set_training_values(xt, yt)
 
@@ -92,23 +102,23 @@ class Test(SMTestCase):
 
         self.assert_error(jac_fd, jac_an, rtol=5e-2)
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RBF(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTB(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTC(self):
         self.run_test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print_output = True
     unittest.main()

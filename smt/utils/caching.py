@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         
 This package is distributed under New BSD license.
-'''
+"""
 
 try:
     import cPickle as pickle
@@ -11,8 +11,9 @@ except:
 import hashlib
 import contextlib
 
+
 @contextlib.contextmanager
-def cached_operation(inputs_dict, data_dir, desc=''):
+def cached_operation(inputs_dict, data_dir, desc=""):
     """
     Context manager for an operation that may be cached.
 
@@ -31,9 +32,9 @@ def cached_operation(inputs_dict, data_dir, desc=''):
         Dictionary containing the outputs of the operation.
     """
     checksum = _caching_checksum(inputs_dict)
-    filename = '%s/%s_%s.dat' % (data_dir, desc, checksum)
+    filename = "%s/%s_%s.dat" % (data_dir, desc, checksum)
     try:
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             outputs_dict = pickle.load(f)
         load_successful = True
     except:
@@ -43,7 +44,7 @@ def cached_operation(inputs_dict, data_dir, desc=''):
     yield outputs_dict
 
     if not load_successful and data_dir:
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             pickle.dump(outputs_dict, f)
 
 
@@ -62,8 +63,8 @@ def _caching_checksum(obj):
         Hexadecimal string checksum that was computed.
     """
     try:
-        tmp = obj['self'].printer
-        obj['self'].printer = None
+        tmp = obj["self"].printer
+        obj["self"].printer = None
     except:
         pass
 
@@ -71,7 +72,7 @@ def _caching_checksum(obj):
     checksum = hashlib.md5(self_pkl).hexdigest()
 
     try:
-        obj['self'].printer = tmp
+        obj["self"].printer = tmp
     except:
         pass
 

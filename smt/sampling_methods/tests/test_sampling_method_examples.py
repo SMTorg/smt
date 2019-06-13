@@ -1,21 +1,18 @@
 import unittest
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 
 
 class Test(unittest.TestCase):
-
     def test_random(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
         from smt.sampling_methods import Random
 
-        xlimits = np.array([
-            [0., 4.],
-            [0., 3.],
-        ])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         sampling = Random(xlimits=xlimits)
 
         num = 50
@@ -23,9 +20,9 @@ class Test(unittest.TestCase):
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_lhs(self):
@@ -34,10 +31,7 @@ class Test(unittest.TestCase):
 
         from smt.sampling_methods import LHS
 
-        xlimits = np.array([
-            [0., 4.],
-            [0., 3.],
-        ])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         sampling = LHS(xlimits=xlimits)
 
         num = 50
@@ -45,9 +39,9 @@ class Test(unittest.TestCase):
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_full_factorial(self):
@@ -56,10 +50,7 @@ class Test(unittest.TestCase):
 
         from smt.sampling_methods import FullFactorial
 
-        xlimits = np.array([
-            [0., 4.],
-            [0., 3.],
-        ])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         sampling = FullFactorial(xlimits=xlimits)
 
         num = 50
@@ -67,10 +58,11 @@ class Test(unittest.TestCase):
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], 'o')
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

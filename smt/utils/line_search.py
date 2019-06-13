@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function
 import numpy as np
@@ -10,26 +10,28 @@ import scipy.sparse
 import six
 from six.moves import range
 
-VALID_LINE_SEARCHES = ('backtracking', 'bracketed', 'quadratic', 'cubic', 'null')
+VALID_LINE_SEARCHES = ("backtracking", "bracketed", "quadratic", "cubic", "null")
+
 
 def get_line_search_class(line_search):
-    if line_search == 'backtracking':
+    if line_search == "backtracking":
         return BacktrackingLineSearch
-    elif line_search == 'bracketed':
+    elif line_search == "bracketed":
         return BracketedLineSearch
-    elif line_search == 'quadratic':
+    elif line_search == "quadratic":
         return QuadraticLineSearch
-    elif line_search == 'cubic':
+    elif line_search == "cubic":
         return CubicLineSearch
-    elif line_search == 'null':
+    elif line_search == "null":
         return NullLineSearch
+
 
 class LineSearch(object):
     """
     Base line search class.
     """
 
-    def __init__(self, x, dx, func, grad, u1=1.e-4, u2=0.9):
+    def __init__(self, x, dx, func, grad, u1=1.0e-4, u2=0.9):
         """
         Initialize all attributes for the given problem.
 
@@ -56,8 +58,8 @@ class LineSearch(object):
         self.u1 = u1
         self.u2 = u2
 
-        self.phi_0 = self._phi(0.)
-        self.dphi_0 = self._dphi(0.)
+        self.phi_0 = self._phi(0.0)
+        self.dphi_0 = self._dphi(0.0)
 
     def _phi(self, a):
         """
@@ -91,7 +93,7 @@ class NullLineSearch(object):
     Base line search class.
     """
 
-    def __init__(self, x, dx, func, grad, u1=1.e-4, u2=0.9):
+    def __init__(self, x, dx, func, grad, u1=1.0e-4, u2=0.9):
         """
         Initialize all attributes for the given problem.
 
@@ -122,7 +124,7 @@ class BacktrackingLineSearch(LineSearch):
     Simple backtracking line search enforcing only sufficient decrease.
     """
 
-    def __call__(self, initial_a=1., rho=0.5):
+    def __call__(self, initial_a=1.0, rho=0.5):
         a = initial_a
         while not self._func_decreased(a):
             a *= rho
@@ -211,9 +213,9 @@ class QuadraticLineSearch(BracketedLineSearch):
 
     def _compute_minimum(self, a1, p1, dp1, a2, p2, dp2):
         quadratic_mtx = np.zeros((3, 3))
-        quadratic_mtx[0, :] = [1., a1, a1 ** 2]
-        quadratic_mtx[1, :] = [1., a2, a2 ** 2]
-        quadratic_mtx[2, :] = [0., 1., 2 * a1]
+        quadratic_mtx[0, :] = [1.0, a1, a1 ** 2]
+        quadratic_mtx[1, :] = [1.0, a2, a2 ** 2]
+        quadratic_mtx[2, :] = [0.0, 1.0, 2 * a1]
         c0, c1, c2 = np.linalg.solve(quadratic_mtx, [p1, p2, dp1])
 
         d0 = c1
@@ -232,10 +234,10 @@ class CubicLineSearch(BracketedLineSearch):
 
     def _compute_minimum(self, a1, p1, dp1, a2, p2, dp2):
         cubic_mtx = np.zeros((4, 4))
-        cubic_mtx[0, :] = [1., a1, a1 ** 2, a1 ** 3]
-        cubic_mtx[1, :] = [1., a2, a2 ** 2, a2 ** 3]
-        cubic_mtx[2, :] = [0., 1., 2 * a1, 3 * a1 ** 2]
-        cubic_mtx[3, :] = [0., 1., 2 * a2, 3 * a2 ** 2]
+        cubic_mtx[0, :] = [1.0, a1, a1 ** 2, a1 ** 3]
+        cubic_mtx[1, :] = [1.0, a2, a2 ** 2, a2 ** 3]
+        cubic_mtx[2, :] = [0.0, 1.0, 2 * a1, 3 * a1 ** 2]
+        cubic_mtx[3, :] = [0.0, 1.0, 2 * a2, 3 * a2 ** 2]
         c0, c1, c2, c3 = np.linalg.solve(cubic_mtx, [p1, p2, dp1, dp2])
 
         d0 = c1

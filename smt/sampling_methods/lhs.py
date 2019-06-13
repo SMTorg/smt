@@ -13,13 +13,27 @@ import numpy as np
 
 from smt.sampling_methods.sampling_method import SamplingMethod
 
-class LHS(SamplingMethod):
 
+class LHS(SamplingMethod):
     def _initialize(self):
-        self.options.declare('criterion', 'c', values=['center', 'maximin', 'centermaximin',
-                                                       'correlation', 'c', 'm', 'cm', 'corr','ese'],
-                             types=str, desc='criterion used to construct the LHS design '+
-                             'c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively')
+        self.options.declare(
+            "criterion",
+            "c",
+            values=[
+                "center",
+                "maximin",
+                "centermaximin",
+                "correlation",
+                "c",
+                "m",
+                "cm",
+                "corr",
+                "ese",
+            ],
+            types=str,
+            desc="criterion used to construct the LHS design "
+            + "c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively",
+        )
 
     def _compute(self, nt):
         """
@@ -35,15 +49,25 @@ class LHS(SamplingMethod):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options['xlimits']
+        xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
-        if self.options['criterion'] != 'ese':
-            return lhs(nx, samples=nt, criterion=self.options['criterion'])
-        elif self.options['criterion'] == 'ese':
-            return self._ese(nx,nt)
+        if self.options["criterion"] != "ese":
+            return lhs(nx, samples=nt, criterion=self.options["criterion"])
+        elif self.options["criterion"] == "ese":
+            return self._ese(nx, nt)
 
-    def _maximinESE(self, X, T0=None, outer_loop=None, inner_loop=None, J=20,
-               tol=1e-3, p=10, return_hist=False, fixed_index=[]):
+    def _maximinESE(
+        self,
+        X,
+        T0=None,
+        outer_loop=None,
+        inner_loop=None,
+        J=20,
+        tol=1e-3,
+        p=10,
+        return_hist=False,
+        fixed_index=[],
+    ):
         """
 
         Returns an optimized design starting from design X. For more information,
@@ -100,14 +124,14 @@ class LHS(SamplingMethod):
 
         # Initialize parameters if not defined
         if T0 is None:
-            T0 = 0.005*self._PhiP(X, p=p)
+            T0 = 0.005 * self._PhiP(X, p=p)
         if inner_loop is None:
-            inner_loop = min(20*X.shape[1], 100)
+            inner_loop = min(20 * X.shape[1], 100)
         if outer_loop is None:
-            outer_loop = min(int(1.5*X.shape[1]), 30)
+            outer_loop = min(int(1.5 * X.shape[1]), 30)
 
         T = T0
-        X_ = X[:] # copy of initial plan
+        X_ = X[:]  # copy of initial plan
         X_best = X_[:]
         d = X.shape[1]
         PhiP_ = self._PhiP(X_best, p=p)
@@ -127,7 +151,7 @@ class LHS(SamplingMethod):
             # Inner loop
             for i in range(inner_loop):
 
-                modulo = (i+1)%d
+                modulo = (i + 1) % d
                 l_X = list()
                 l_PhiP = list()
 
@@ -135,8 +159,11 @@ class LHS(SamplingMethod):
                 # See description of PhiP_exchange procedure
                 for j in range(J):
                     l_X.append(X_.copy())
-                    l_PhiP.append(self._PhiP_exchange(l_X[j], k=modulo, PhiP_=PhiP_, p=p,
-                                             fixed_index=fixed_index))
+                    l_PhiP.append(
+                        self._PhiP_exchange(
+                            l_X[j], k=modulo, PhiP_=PhiP_, p=p, fixed_index=fixed_index
+                        )
+                    )
 
                 l_PhiP = np.asarray(l_PhiP)
                 k = np.argmin(l_PhiP)
@@ -156,38 +183,35 @@ class LHS(SamplingMethod):
 
                 hist_PhiP.append(PhiP_best)
 
+            p_accpt = float(n_acpt) / inner_loop  # probability of acceptance
+            p_imp = float(n_imp) / inner_loop  # probability of improvement
 
-            p_accpt = float(n_acpt) / inner_loop # probability of acceptance
-            p_imp = float(n_imp) / inner_loop # probability of improvement
-
-            hist_T.extend(inner_loop*[T])
-            hist_proba.extend(inner_loop*[p_accpt])
+            hist_T.extend(inner_loop * [T])
+            hist_proba.extend(inner_loop * [p_accpt])
 
             if PhiP_best - PhiP_oldbest < tol:
                 # flag_imp = 1
-                if p_accpt>=0.1 and p_imp<p_accpt:
-                    T = 0.8*T
-                elif p_accpt>=0.1 and p_imp==p_accpt:
+                if p_accpt >= 0.1 and p_imp < p_accpt:
+                    T = 0.8 * T
+                elif p_accpt >= 0.1 and p_imp == p_accpt:
                     pass
                 else:
-                    T = T/0.8
+                    T = T / 0.8
             else:
                 # flag_imp = 0
-                if p_accpt<=0.1:
-                    T = T/0.7
+                if p_accpt <= 0.1:
+                    T = T / 0.7
                 else:
-                    T = 0.9*T
+                    T = 0.9 * T
 
-        hist = {'PhiP': hist_PhiP, 'T': hist_T, 'proba': hist_proba}
+        hist = {"PhiP": hist_PhiP, "T": hist_T, "proba": hist_proba}
 
         if return_hist:
             return X_best, hist
         else:
             return X_best
 
-
-
-    def _PhiP(self,X, p=10):
+    def _PhiP(self, X, p=10):
         """
         Calculates the PhiP criterion of the design X with power p.
 
@@ -197,10 +221,9 @@ class LHS(SamplingMethod):
         The power used for the calculation of PhiP (default to 10)
         """
 
-        return ((pdist(X)**(-p)).sum()) ** (1./p)
+        return ((pdist(X) ** (-p)).sum()) ** (1.0 / p)
 
-
-    def _PhiP_exchange(self,X, k, PhiP_, p, fixed_index):
+    def _PhiP_exchange(self, X, k, PhiP_, p, fixed_index):
         """
         Modifies X with a single exchange algorithm and calculates the corresponding
         PhiP criterion. Internal use.
@@ -242,30 +265,43 @@ class LHS(SamplingMethod):
         while i2 == i1 or i2 in fixed_index:
             i2 = np.random.randint(X.shape[0])
 
-        X_ = np.delete(X, [i1,i2], axis=0)
+        X_ = np.delete(X, [i1, i2], axis=0)
 
-        dist1 = cdist([X[i1,:]], X_)
-        dist2 = cdist([X[i2,:]], X_)
-        d1 = np.sqrt(dist1**2 + (X[i2,k] - X_[:,k])**2 - (X[i1,k] - X_[:,k])**2)
-        d2 = np.sqrt(dist2**2 - (X[i2,k] - X_[:,k])**2 + (X[i1,k] - X_[:,k])**2)
+        dist1 = cdist([X[i1, :]], X_)
+        dist2 = cdist([X[i2, :]], X_)
+        d1 = np.sqrt(
+            dist1 ** 2 + (X[i2, k] - X_[:, k]) ** 2 - (X[i1, k] - X_[:, k]) ** 2
+        )
+        d2 = np.sqrt(
+            dist2 ** 2 - (X[i2, k] - X_[:, k]) ** 2 + (X[i1, k] - X_[:, k]) ** 2
+        )
 
-        res = (PhiP_**p + (d1**(-p) - dist1**(-p) + d2**(-p) - dist2**(-p)).sum())**(1./p)
-        X[i1,k], X[i2,k] = X[i2,k], X[i1,k]
+        res = (
+            PhiP_ ** p + (d1 ** (-p) - dist1 ** (-p) + d2 ** (-p) - dist2 ** (-p)).sum()
+        ) ** (1.0 / p)
+        X[i1, k], X[i2, k] = X[i2, k], X[i1, k]
 
         return res
 
-    def _ese(self,dim,nt):
+    def _ese(self, dim, nt):
         # Parameters of maximinESE procedure
-        P0 = lhs(dim, nt, criterion = None)
+        P0 = lhs(dim, nt, criterion=None)
         J = 20
-        outer_loop = min(int(1.5*dim), 30)
-        inner_loop = min(20*dim, 100)
+        outer_loop = min(int(1.5 * dim), 30)
+        inner_loop = min(20 * dim, 100)
 
         D0 = pdist(P0)
         R0 = np.corrcoef(P0)
-        corr0 = np.max(np.abs(R0[R0!=1]))
+        corr0 = np.max(np.abs(R0[R0 != 1]))
         phip0 = self._PhiP(P0)
 
-        P, historic = self._maximinESE(P0, outer_loop=outer_loop, inner_loop=inner_loop,
-                                 J=J, tol=1e-3, p=10, return_hist=True)
+        P, historic = self._maximinESE(
+            P0,
+            outer_loop=outer_loop,
+            inner_loop=inner_loop,
+            J=J,
+            tol=1e-3,
+            p=10,
+            return_hist=True,
+        )
         return P

@@ -39,7 +39,9 @@ def initialize_back_prop(AL, Y, AL_prime, Y_prime):
     n_y, _ = AL.shape  # number layers, number examples
     Y = Y.reshape(AL.shape)
     dAL = AL - Y  # derivative of loss function w.r.t. to activations: dAL = d(L)/dAL
-    dAL_prime = AL_prime - Y_prime  # derivative of loss function w.r.t. to partials: dAL_prime = d(L)/d(AL_prime)
+    dAL_prime = (
+        AL_prime - Y_prime
+    )  # derivative of loss function w.r.t. to partials: dAL_prime = d(L)/d(AL_prime)
 
     return dAL, dAL_prime
 
@@ -100,9 +102,13 @@ def linear_activation_backward(dA, dA_prime, cache, J_cache, lambd, gamma):
     G_prime = activation.first_derivative(Z)
 
     # Compute the contribution due to the 0th order terms (where regularization only affects dW)
-    dW = 1. / m * np.dot(G_prime * dA, A_prev.T) + lambd / m * W  # dW = d(J)/dW where J is the cost function
-    db = 1. / m * np.sum(G_prime * dA, axis=1, keepdims=True)  # db = d(J)/db
-    dA_prev = np.dot(W.T, G_prime * dA)  # dA_prev = d(L)/dA_prev where A_prev = previous layer activation
+    dW = (
+        1.0 / m * np.dot(G_prime * dA, A_prev.T) + lambd / m * W
+    )  # dW = d(J)/dW where J is the cost function
+    db = 1.0 / m * np.sum(G_prime * dA, axis=1, keepdims=True)  # db = d(J)/db
+    dA_prev = np.dot(
+        W.T, G_prime * dA
+    )  # dA_prev = d(L)/dA_prev where A_prev = previous layer activation
 
     # Initialize dA_prime_prev = d(J)/dA_prime_prev
     dA_prime_prev = np.zeros((W.shape[1], n, m))
@@ -122,9 +128,19 @@ def linear_activation_backward(dA, dA_prime, cache, J_cache, lambd, gamma):
             dA_prime_j = dA_prime[:, j, :].reshape(Z_prime_j.shape)
 
             # Compute contribution to cost function gradient, db = d(J)/db, dW = d(J)/dW, d(L)/dA, d(L)/dA'
-            dW += gamma / m * (np.dot(dA_prime_j * G_prime_prime * Z_prime_j, A_prev.T) +
-                             np.dot(dA_prime_j * G_prime, A_prime_j_prev.T))
-            db += gamma / m * np.sum(dA_prime_j * G_prime_prime * Z_prime_j, axis=1, keepdims=True)
+            dW += (
+                gamma
+                / m
+                * (
+                    np.dot(dA_prime_j * G_prime_prime * Z_prime_j, A_prev.T)
+                    + np.dot(dA_prime_j * G_prime, A_prime_j_prev.T)
+                )
+            )
+            db += (
+                gamma
+                / m
+                * np.sum(dA_prime_j * G_prime_prime * Z_prime_j, axis=1, keepdims=True)
+            )
             dA_prev += gamma * np.dot(W.T, dA_prime_j * G_prime_prime * Z_prime_j)
             dA_prime_prev[:, j, :] = gamma * np.dot(W.T, dA_prime_j * G_prime)
 
@@ -200,7 +216,9 @@ def L_model_backward(AL, Y, AL_prime, Y_prime, caches, J_caches, lambd, gamma):
         J_cache = J_caches[l]
 
         # Backprop step
-        dA, dW, db, dA_prime = linear_activation_backward(dA, dA_prime, cache, J_cache, lambd, gamma)
+        dA, dW, db, dA_prime = linear_activation_backward(
+            dA, dA_prime, cache, J_cache, lambd, gamma
+        )
 
         # Store result
         grads["W" + str(l + 1)] = dW

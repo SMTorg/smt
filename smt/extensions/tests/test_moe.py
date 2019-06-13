@@ -1,11 +1,12 @@
-'''
+"""
 Author: Remi Lafage <remi.lafage@onera.fr>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 
 import unittest
 import numpy as np
@@ -17,34 +18,39 @@ from smt.problems import Branin, LpNorm
 from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_rms_error
 
+
 class TestMOE(SMTestCase):
     """
     Test class
     """
+
     plot = None
 
     @staticmethod
     def function_test_1d(x):
-        x = np.reshape(x, (-1, ))
+        x = np.reshape(x, (-1,))
         y = np.zeros(x.shape)
-        y[x<0.4] = x[x<0.4]**2
-        y[(x>=0.4) & (x<0.8)] = 3*x[(x>=0.4) & (x<0.8)]+1  
-        y[x>=0.8] = np.sin(10*x[x>=0.8])
+        y[x < 0.4] = x[x < 0.4] ** 2
+        y[(x >= 0.4) & (x < 0.8)] = 3 * x[(x >= 0.4) & (x < 0.8)] + 1
+        y[x >= 0.8] = np.sin(10 * x[x >= 0.8])
         return y.reshape((-1, 1))
 
-    #@unittest.skip('disabled')
+    # @unittest.skip('disabled')
     def test_1d_50(self):
         self.ndim = 1
         self.nt = 50
-        self.ne = 50 
+        self.ne = 50
 
         np.random.seed(0)
         xt = np.random.sample(self.nt).reshape((-1, 1))
         yt = self.function_test_1d(xt)
-        moe = MOE(smooth_recombination=True, 
-                  heaviside_optimization=True, 
-                  n_clusters=3,
-                  xt=xt, yt=yt)   
+        moe = MOE(
+            smooth_recombination=True,
+            heaviside_optimization=True,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
+        )
         moe.train()
 
         # validation data
@@ -53,25 +59,25 @@ class TestMOE(SMTestCase):
         ye = self.function_test_1d(xe)
 
         rms_error = compute_rms_error(moe, xe, ye)
-        self.assert_error(rms_error, 0., 3e-1)
+        self.assert_error(rms_error, 0.0, 3e-1)
         if TestMOE.plot:
             import matplotlib.pyplot as plt
             from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.predict_values(xe)
             plt.figure(1)
-            plt.plot(ye, ye,'-.')
-            plt.plot(ye, y, '.')
-            plt.xlabel(r'$y$ actual')
-            plt.ylabel(r'$y$ prediction')
+            plt.plot(ye, ye, "-.")
+            plt.plot(ye, y, ".")
+            plt.xlabel(r"$y$ actual")
+            plt.ylabel(r"$y$ prediction")
             plt.figure(2)
             xv = np.linspace(0, 1, 100)
             yv = self.function_test_1d(xv)
-            plt.plot(xv, yv, '-.')
-            plt.plot(xe, y, 'o')
+            plt.plot(xv, yv, "-.")
+            plt.plot(xe, y, "o")
             plt.show()
 
-    #@unittest.skip('disabled')
+    # @unittest.skip('disabled')
     def test_norm1_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -86,8 +92,8 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # mixture of experts
-        moe = MOE(smooth_recombination=False, n_clusters=5) 
-        moe.set_training_values(xt, yt)    
+        moe = MOE(smooth_recombination=False, n_clusters=5)
+        moe.set_training_values(xt, yt)
         moe.train()
 
         # validation data
@@ -96,7 +102,7 @@ class TestMOE(SMTestCase):
         ye = prob(xe)
 
         rms_error = compute_rms_error(moe, xe, ye)
-        self.assert_error(rms_error, 0., 1e-1)
+        self.assert_error(rms_error, 0.0, 1e-1)
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
@@ -104,18 +110,18 @@ class TestMOE(SMTestCase):
 
             y = moe.predict_values(xe)
             plt.figure(1)
-            plt.plot(ye, ye,'-.')
-            plt.plot(ye, y, '.')
-            plt.xlabel(r'$y$ actual')
-            plt.ylabel(r'$y$ prediction')
+            plt.plot(ye, ye, "-.")
+            plt.plot(ye, y, ".")
+            plt.xlabel(r"$y$ actual")
+            plt.ylabel(r"$y$ prediction")
 
             fig = plt.figure(2)
-            ax = fig.add_subplot(111, projection='3d')
-            ax.scatter(xt[:,0], xt[:,1], yt)
-            plt.title('L1 Norm')
+            ax = fig.add_subplot(111, projection="3d")
+            ax.scatter(xt[:, 0], xt[:, 1], yt)
+            plt.title("L1 Norm")
             plt.show()
 
-    #@unittest.skip('disabled for now as it blocks unexpectedly on travis linux')
+    # @unittest.skip('disabled for now as it blocks unexpectedly on travis linux')
     def test_branin_2d_200(self):
         self.ndim = 2
         self.nt = 200
@@ -132,7 +138,7 @@ class TestMOE(SMTestCase):
         # mixture of experts
         moe = MOE(n_clusters=5)
         moe.set_training_values(xt, yt)
-        moe.options['heaviside_optimization'] = True    
+        moe.options["heaviside_optimization"] = True
         moe.train()
 
         # validation data
@@ -141,23 +147,23 @@ class TestMOE(SMTestCase):
         ye = prob(xe)
 
         rms_error = compute_rms_error(moe, xe, ye)
-        self.assert_error(rms_error, 0., 1e-1)
+        self.assert_error(rms_error, 0.0, 1e-1)
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
             from mpl_toolkits.mplot3d import Axes3D
 
-            y = moe.analyse_results(x=xe, operation='predict_values')
+            y = moe.analyse_results(x=xe, operation="predict_values")
             plt.figure(1)
-            plt.plot(ye, ye,'-.')
-            plt.plot(ye, y, '.')
-            plt.xlabel(r'$y$ actual')
-            plt.ylabel(r'$y$ prediction')
+            plt.plot(ye, ye, "-.")
+            plt.plot(ye, y, ".")
+            plt.xlabel(r"$y$ actual")
+            plt.ylabel(r"$y$ prediction")
 
             fig = plt.figure(2)
-            ax = fig.add_subplot(111, projection='3d')
-            ax.scatter(xt[:,0], xt[:,1], yt)
-            plt.title('Branin function')
+            ax = fig.add_subplot(111, projection="3d")
+            ax.scatter(xt[:, 0], xt[:, 1], yt)
+            plt.title("Branin function")
             plt.show()
 
     @staticmethod
@@ -172,7 +178,7 @@ class TestMOE(SMTestCase):
         import matplotlib.pyplot as plt
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
-        
+
         ndim = 2
         nt = 200
         ne = 200
@@ -187,7 +193,7 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # Mixture of experts
-        moe = MOE(smooth_recombination=True, n_clusters=5)     
+        moe = MOE(smooth_recombination=True, n_clusters=5)
         moe.set_training_values(xt, yt)
         moe.train()
 
@@ -203,10 +209,10 @@ class TestMOE(SMTestCase):
 
         # Cluster display
         colors_ = list(six.iteritems(colors.cnames))
-        GMM=moe.cluster
+        GMM = moe.cluster
         weight = GMM.weights_
         mean = GMM.means_
-        if sklearn.__version__ < '0.20.0':
+        if sklearn.__version__ < "0.20.0":
             cov = GMM.covars_
         else:
             cov = GMM.covariances_
@@ -220,41 +226,43 @@ class TestMOE(SMTestCase):
         x = np.array(list(zip(xv.reshape((-1,)), yv.reshape((-1,)))))
         prob = moe._proba_cluster(x)
 
-        plt.subplot(221, projection='3d')
+        plt.subplot(221, projection="3d")
         ax = plt.gca()
         for i in range(len(sort)):
             color = colors_[int(((len(colors_) - 1) / sort.max()) * sort[i])][0]
             ax.scatter(xt[i][0], xt[i][1], yt[i], c=color)
-        plt.title('Clustered Samples')
+        plt.title("Clustered Samples")
 
-        plt.subplot(222, projection='3d')
+        plt.subplot(222, projection="3d")
         ax = plt.gca()
         for i in range(len(weight)):
             color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
-            ax.plot_trisurf(x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0,
-                             color=color)
-        plt.title('Membership Probabilities')
+            ax.plot_trisurf(
+                x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0, color=color
+            )
+        plt.title("Membership Probabilities")
 
         plt.subplot(223)
         for i in range(len(weight)):
             color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
             plt.tricontour(x[:, 0], x[:, 1], prob[:, i], 1, colors=color, linewidths=3)
-        plt.title('Cluster Map')
+        plt.title("Cluster Map")
 
         plt.subplot(224)
-        plt.plot(ye, ye,'-.')
-        plt.plot(ye, y, '.')
-        plt.xlabel('actual')
-        plt.ylabel('prediction')
-        plt.title('Predicted vs Actual')
+        plt.plot(ye, ye, "-.")
+        plt.plot(ye, y, ".")
+        plt.xlabel("actual")
+        plt.ylabel("prediction")
+        plt.title("Predicted vs Actual")
 
         plt.show()
 
-if __name__ == '__main__':
-    if '--plot' in argv:
+
+if __name__ == "__main__":
+    if "--plot" in argv:
         TestMOE.plot = True
-        argv.remove('--plot')
-    if '--example' in argv:
+        argv.remove("--plot")
+    if "--example" in argv:
         TestMOE.run_moe_example()
         exit()
     unittest.main()

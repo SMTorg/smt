@@ -1,8 +1,9 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         
 This package is distributed under New BSD license.
-'''
+"""
+
 
 class OptionsDictionary(object):
     """
@@ -66,7 +67,7 @@ class OptionsDictionary(object):
         value : object
             The value to set.
         """
-        assert name in self._declared_entries, 'Option %s has not been declared' % name
+        assert name in self._declared_entries, "Option %s has not been declared" % name
         self._assert_valid(name, value)
         self._dict[name] = value
 
@@ -77,19 +78,29 @@ class OptionsDictionary(object):
         return key in self._declared_entries
 
     def _assert_valid(self, name, value):
-        values = self._declared_entries[name]['values']
-        types = self._declared_entries[name]['types']
+        values = self._declared_entries[name]["values"]
+        types = self._declared_entries[name]["types"]
 
         if values is not None and types is not None:
-            assert value in values or isinstance(value, types), \
-                'Option %s: value and type of %s are both invalid - '  % (name, value) \
-                + 'value must be %s or type must be %s' % (values, types)
+            assert value in values or isinstance(
+                value, types
+            ), "Option %s: value and type of %s are both invalid - " % (
+                name,
+                value,
+            ) + "value must be %s or type must be %s" % (
+                values,
+                types,
+            )
         elif values is not None:
-            assert value in values, \
-                'Option %s: value %s is invalid - must be %s' % (name, value, values)
+            assert value in values, "Option %s: value %s is invalid - must be %s" % (
+                name,
+                value,
+                values,
+            )
         elif types is not None:
-            assert isinstance(value, types), \
-                'Option %s: type of %s is invalid - must be %s' % (name, value, types)
+            assert isinstance(
+                value, types
+            ), "Option %s: type of %s is invalid - must be %s" % (name, value, types)
 
     def update(self, dict_):
         """
@@ -103,7 +114,7 @@ class OptionsDictionary(object):
         for name in dict_:
             self[name] = dict_[name]
 
-    def declare(self, name, default=None, values=None, types=None, desc=''):
+    def declare(self, name, default=None, values=None, types=None, desc=""):
         """
         Declare an option.
 
@@ -126,10 +137,10 @@ class OptionsDictionary(object):
             Optional description of the option.
         """
         self._declared_entries[name] = {
-            'values': values,
-            'types': types,
-            'default': default,
-            'desc': desc,
+            "values": values,
+            "types": types,
+            "default": default,
+            "desc": desc,
         }
 
         if default is not None:

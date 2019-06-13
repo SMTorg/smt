@@ -1,13 +1,14 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function
 
 import time
 import contextlib
+
 
 class Printer(object):
     """
@@ -47,7 +48,7 @@ class Printer(object):
         """
         return self.times[key]
 
-    def __call__(self, string='', noindent=False):
+    def __call__(self, string="", noindent=False):
         """
         Print the given string.
 
@@ -62,7 +63,7 @@ class Printer(object):
             if noindent:
                 print(string)
             else:
-                print('   ' * self.depth + string)
+                print("   " * self.depth + string)
 
     def _center(self, string):
         """
@@ -73,14 +74,14 @@ class Printer(object):
         string : str
             String to print.
         """
-        pre = ' ' * int((75 - len(string))/2.0)
-        self(pre + '%s' % string, noindent=True)
+        pre = " " * int((75 - len(string)) / 2.0)
+        self(pre + "%s" % string, noindent=True)
 
     def _line_break(self):
         """
         Print a line with a width of 75 characters.
         """
-        self('_' * 75, noindent=True)
+        self("_" * 75, noindent=True)
         self()
 
     def _title(self, title):
@@ -93,7 +94,7 @@ class Printer(object):
             String to print.
         """
         self._line_break()
-        self(' ' + title, noindent=True)
+        self(" " + title, noindent=True)
         self()
 
     @contextlib.contextmanager
@@ -114,7 +115,7 @@ class Printer(object):
             Name for this operation allowing the measured time to be read later if given.
         """
         if string is not None:
-            self(string + ' ...')
+            self(string + " ...")
 
         start_time = time.time()
         self.depth += 1
@@ -123,7 +124,7 @@ class Printer(object):
         stop_time = time.time()
 
         if string is not None:
-            self(string + ' - done. Time (sec): %10.7f' % (stop_time - start_time))
+            self(string + " - done. Time (sec): %10.7f" % (stop_time - start_time))
 
         if key is not None:
             if key not in self.times:

@@ -1,9 +1,9 @@
-'''
+"""
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import division
 
@@ -30,14 +30,18 @@ class IDW(SurrogateModel):
         declare = self.options.declare
         supports = self.supports
 
-        declare('p', 2.5, types=(int, float), desc='order of distance norm')
-        declare('data_dir', values=None, types=str,
-                desc='Directory for loading / saving cached data; None means do not save or load')
+        declare("p", 2.5, types=(int, float), desc="order of distance norm")
+        declare(
+            "data_dir",
+            values=None,
+            types=str,
+            desc="Directory for loading / saving cached data; None means do not save or load",
+        )
 
-        supports['derivatives'] = True
-        supports['output_derivatives'] = True
+        supports["derivatives"] = True
+        supports["output_derivatives"] = True
 
-        self.name = 'IDW'
+        self.name = "IDW"
 
     def _setup(self):
         xt = self.training_points[None][0][0]
@@ -45,7 +49,7 @@ class IDW(SurrogateModel):
         nx = xt.shape[1]
 
         self.idwc = PyIDW()
-        self.idwc.setup(nx, nt, self.options['p'], xt.flatten())
+        self.idwc.setup(nx, nt, self.options["p"], xt.flatten())
 
     ############################################################################
     # Model functions
@@ -66,17 +70,17 @@ class IDW(SurrogateModel):
         tmp = self.idwc
         self.idwc = None
 
-        inputs = {'self': self}
-        with cached_operation(inputs, self.options['data_dir']) as outputs:
+        inputs = {"self": self}
+        with cached_operation(inputs, self.options["data_dir"]) as outputs:
             self.idwc = tmp
 
             if outputs:
-                self.sol = outputs['sol']
+                self.sol = outputs["sol"]
             else:
                 self._new_train()
-                #outputs['sol'] = self.sol
+                # outputs['sol'] = self.sol
 
-    def _predict_values(self,x):
+    def _predict_values(self, x):
         """
         This function is used by _predict function. See _predict for more details.
         """
@@ -128,7 +132,7 @@ class IDW(SurrogateModel):
         jac = np.empty(n * nt)
         self.idwc.compute_jac(n, x.flatten(), jac)
         jac = jac.reshape((n, nt))
-        jac = np.einsum('ij,k->ijk', jac, np.ones(ny))
+        jac = np.einsum("ij,k->ijk", jac, np.ones(ny))
 
         dy_dyt = {None: jac}
         return dy_dyt

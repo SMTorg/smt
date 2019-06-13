@@ -1,11 +1,12 @@
 import unittest
 
 import matplotlib
-matplotlib.use('Agg')
-matplotlib.pyplot.switch_backend('Agg')
+
+matplotlib.use("Agg")
+matplotlib.pyplot.switch_backend("Agg")
+
 
 class Test(unittest.TestCase):
-
     def test_cantilever_beam(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -30,8 +31,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_robot_arm(self):
@@ -45,7 +46,7 @@ class Test(unittest.TestCase):
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(0., 1., num)
+        x[:, 0] = np.linspace(0.0, 1.0, num)
         x[:, 1] = np.pi
         y = problem(x)
 
@@ -57,8 +58,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_rosenbrock(self):
@@ -72,8 +73,8 @@ class Test(unittest.TestCase):
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(-2, 2., num)
-        x[:, 1] = 0.
+        x[:, 0] = np.linspace(-2, 2.0, num)
+        x[:, 1] = 0.0
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -84,8 +85,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_sphere(self):
@@ -99,8 +100,8 @@ class Test(unittest.TestCase):
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(-10, 10., num)
-        x[:, 1] = 0.
+        x[:, 0] = np.linspace(-10, 10.0, num)
+        x[:, 1] = 0.0
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -111,8 +112,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_branin(self):
@@ -126,8 +127,8 @@ class Test(unittest.TestCase):
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(-5., 10., num)
-        x[:, 1] = np.linspace(0., 15., num)
+        x[:, 0] = np.linspace(-5.0, 10.0, num)
+        x[:, 1] = np.linspace(0.0, 15.0, num)
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -138,8 +139,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_lp_norm(self):
@@ -153,8 +154,8 @@ class Test(unittest.TestCase):
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(-1., 1., num)
-        x[:, 1] = np.linspace(-1., 1., num)
+        x[:, 0] = np.linspace(-1.0, 1.0, num)
+        x[:, 1] = np.linspace(-1.0, 1.0, num)
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -165,8 +166,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_tensor_product(self):
@@ -176,12 +177,12 @@ class Test(unittest.TestCase):
         from smt.problems import TensorProduct
 
         ndim = 2
-        problem = TensorProduct(ndim=ndim, func='cos')
+        problem = TensorProduct(ndim=ndim, func="cos")
 
         num = 100
         x = np.ones((num, ndim))
-        x[:, 0] = np.linspace(-1, 1., num)
-        x[:, 1] = 0.
+        x[:, 0] = np.linspace(-1, 1.0, num)
+        x[:, 1] = 0.0
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -192,8 +193,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_torsion_vibration(self):
@@ -220,8 +221,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_water_flow(self):
@@ -248,8 +249,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_welded_beam(self):
@@ -265,7 +266,7 @@ class Test(unittest.TestCase):
         x = np.ones((num, ndim))
         for i in range(ndim):
             x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-        x[:, 0] = np.linspace(5., 10., num)
+        x[:, 0] = np.linspace(5.0, 10.0, num)
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -276,8 +277,8 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
     def test_wing_weight(self):
@@ -293,7 +294,7 @@ class Test(unittest.TestCase):
         x = np.ones((num, ndim))
         for i in range(ndim):
             x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-        x[:, 0] = np.linspace(150., 200., num)
+        x[:, 0] = np.linspace(150.0, 200.0, num)
         y = problem(x)
 
         yd = np.empty((num, ndim))
@@ -304,10 +305,10 @@ class Test(unittest.TestCase):
         print(yd.shape)
 
         plt.plot(x[:, 0], y[:, 0])
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

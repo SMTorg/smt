@@ -11,8 +11,8 @@ from six.moves import range
 
 from smt.sampling_methods.sampling_method import SamplingMethod
 
-class Random(SamplingMethod):
 
+class Random(SamplingMethod):
     def _compute(self, nt):
         """
         Compute the requested number of sampling points.
@@ -27,6 +27,6 @@ class Random(SamplingMethod):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options['xlimits']
+        xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
         return np.random.rand(nt, nx)

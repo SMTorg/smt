@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 
 class Activation(object):
-
     def __init__(self, **kwargs):
         for name, value in kwargs.items():
             setattr(self, name, value)
@@ -45,14 +44,13 @@ class Activation(object):
 
 
 class Sigmoid(Activation):
-
     def evaluate(self, z):
-        a = 1. / (1. + np.exp(-z))
+        a = 1.0 / (1.0 + np.exp(-z))
         return a
 
     def first_derivative(self, z):
         a = self.evaluate(z)
-        da = a * (1. - a)
+        da = a * (1.0 - a)
         return da
 
     def second_derivative(self, z):
@@ -63,7 +61,6 @@ class Sigmoid(Activation):
 
 
 class Tanh(Activation):
-
     def evaluate(self, z):
         numerator = np.exp(z) - np.exp(-z)
         denominator = np.exp(z) + np.exp(-z)
@@ -83,7 +80,6 @@ class Tanh(Activation):
 
 
 class Linear(Activation):
-
     def evaluate(self, z):
         return z
 
@@ -96,7 +92,7 @@ class Linear(Activation):
 
 def plot_activations():
     x = np.linspace(-10, 10, 100)
-    activations = {'tanh': Tanh(), 'sigmoid': Sigmoid()}
+    activations = {"tanh": Tanh(), "sigmoid": Sigmoid()}
     for name, activation in activations.items():
         plt.plot(x, activation.evaluate(x))
         plt.title(name)
@@ -105,5 +101,3 @@ def plot_activations():
 
 if __name__ == "__main__":
     plot_activations()
-
-

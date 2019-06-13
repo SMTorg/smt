@@ -12,15 +12,15 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem
 from smt.problems.tensor_product import TensorProduct
 
-class NdimStepFunction(Problem):
 
+class NdimStepFunction(Problem):
     def __init__(self, ndim=1, width=10.0):
-        self.problem = TensorProduct(ndim=ndim, func='tanh', width=width)
+        self.problem = TensorProduct(ndim=ndim, func="tanh", width=width)
 
         self.options = OptionsDictionary()
-        self.options.declare('ndim', ndim, types=int)
-        self.options.declare('return_complex', False, types=bool)
-        self.options.declare('name', 'NdimStepFunction', types=str)
+        self.options.declare("ndim", ndim, types=int)
+        self.options.declare("return_complex", False, types=bool)
+        self.options.declare("name", "NdimStepFunction", types=str)
 
         self.xlimits = self.problem.xlimits
 

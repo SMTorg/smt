@@ -15,14 +15,15 @@ from smt.problems.robot_arm import RobotArm
 
 
 class NdimRobotArm(Problem):
-
     def __init__(self, ndim=1, w=0.2):
-        self.problem = ReducedProblem(RobotArm(ndim=2*(ndim+1)), np.arange(3, 2*(ndim+1), 2), w=w)
+        self.problem = ReducedProblem(
+            RobotArm(ndim=2 * (ndim + 1)), np.arange(3, 2 * (ndim + 1), 2), w=w
+        )
 
         self.options = OptionsDictionary()
-        self.options.declare('ndim', ndim, types=int)
-        self.options.declare('return_complex', False, types=bool)
-        self.options.declare('name', 'NdimRobotArm', types=str)
+        self.options.declare("ndim", ndim, types=int)
+        self.options.declare("return_complex", False, types=bool)
+        self.options.declare("name", "NdimRobotArm", types=str)
 
         self.xlimits = self.problem.xlimits
 

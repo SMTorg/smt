@@ -46,13 +46,13 @@ def load_csv(file=None, inputs=None, outputs=None, partials=None):
     else:
         exists = os.path.isfile(file)
         if exists:
-            headers = np.genfromtxt(file, delimiter=',', max_rows=1, dtype=str).tolist()
-            data = np.genfromtxt(file, delimiter=',', skip_header=1)
+            headers = np.genfromtxt(file, delimiter=",", max_rows=1, dtype=str).tolist()
+            data = np.genfromtxt(file, delimiter=",", skip_header=1)
             index = lambda header: headers.index(header)
         else:
             raise Exception("The file " + file + " does not exist")
 
-    n_x = len(inputs)   # number of inputs
+    n_x = len(inputs)  # number of inputs
     n_y = len(outputs)  # number of outputs
 
     # Check that there are inputs and outputs
@@ -113,10 +113,12 @@ def random_mini_batches(X, Y, J, mini_batch_size=64, seed=None):
     # Step 2: Partition (shuffled_X, shuffled_Y). Minus the end case.
     num_complete_minibatches = int(math.floor(m / mini_batch_size))
     for k in range(0, num_complete_minibatches):
-        mini_batch_X = shuffled_X[:, k * mini_batch_size:(k + 1) * mini_batch_size]
-        mini_batch_Y = shuffled_Y[:, k * mini_batch_size:(k + 1) * mini_batch_size]
+        mini_batch_X = shuffled_X[:, k * mini_batch_size : (k + 1) * mini_batch_size]
+        mini_batch_Y = shuffled_Y[:, k * mini_batch_size : (k + 1) * mini_batch_size]
         if J is not None:
-            mini_batch_J = shuffled_J[:, :, k * mini_batch_size:(k + 1) * mini_batch_size]
+            mini_batch_J = shuffled_J[
+                :, :, k * mini_batch_size : (k + 1) * mini_batch_size
+            ]
         else:
             mini_batch_J = None
         mini_batch = (mini_batch_X, mini_batch_Y, mini_batch_J)
@@ -124,10 +126,10 @@ def random_mini_batches(X, Y, J, mini_batch_size=64, seed=None):
 
     # Handling the end case (last mini-batch < mini_batch_size)
     if m % mini_batch_size != 0:
-        mini_batch_X = shuffled_X[:, (k + 1) * mini_batch_size:]
-        mini_batch_Y = shuffled_Y[:, (k + 1) * mini_batch_size:]
+        mini_batch_X = shuffled_X[:, (k + 1) * mini_batch_size :]
+        mini_batch_Y = shuffled_Y[:, (k + 1) * mini_batch_size :]
         if J is not None:
-            mini_batch_J = shuffled_J[:, :, (k + 1) * mini_batch_size:]
+            mini_batch_J = shuffled_J[:, :, (k + 1) * mini_batch_size :]
         else:
             mini_batch_J = None
         mini_batch = (mini_batch_X, mini_batch_Y, mini_batch_J)
@@ -203,44 +205,49 @@ def normalize_data(X, Y, J=None, is_classification=False):
 if __name__ == "__main__":  # pragma: no cover
 
     # Check that data is read in correctly
-    csv = 'train_data.csv'
+    csv = "train_data.csv"
     x_labels = ["X[0]", "X[1]"]
     y_labels = ["Y[0]"]
     dy_labels = [["J[0][0]", "J[0][1]"]]
     X, Y, J = load_csv(file=csv, inputs=x_labels, outputs=y_labels, partials=dy_labels)
 
-    assert (X[0, 6] == 0.071429)
-    assert (X[1, 15] == -0.821429)
-    assert (Y[0, 21] == 7.331321)
-    assert (J[0, 0, 57] == 51.409635)
-    assert (J[0, 1, 209] == 59.252401)
+    assert X[0, 6] == 0.071429
+    assert X[1, 15] == -0.821429
+    assert Y[0, 21] == 7.331321
+    assert J[0, 0, 57] == 51.409635
+    assert J[0, 1, 209] == 59.252401
 
     X_norm, Y_norm, J_norm, mu_x, sigma_x, mu_y, sigma_y = normalize_data(X, Y, J)
 
     for i in range(X_norm.shape[1]):
         for j in range(X.shape[0]):
-            assert (abs(np.squeeze(X_norm[j, i] * sigma_x[j] + mu_x[j]) - X[j, i]) < 1e-6)
+            assert abs(np.squeeze(X_norm[j, i] * sigma_x[j] + mu_x[j]) - X[j, i]) < 1e-6
 
     for i in range(Y_norm.shape[1]):
         for j in range(Y.shape[0]):
-            assert (abs(np.squeeze(Y_norm[j, i] * sigma_y[j] + mu_y[j]) - Y[j, i]) < 1e-6)
+            assert abs(np.squeeze(Y_norm[j, i] * sigma_y[j] + mu_y[j]) - Y[j, i]) < 1e-6
 
     for i in range(J_norm.shape[2]):
         for j in range(X.shape[0]):
             for k in range(Y.shape[0]):
-                assert (abs(np.squeeze(J_norm[k, j, i] * sigma_y[k] / sigma_x[j]) - J[k, j, i]) < 1e-6)
+                assert (
+                    abs(
+                        np.squeeze(J_norm[k, j, i] * sigma_y[k] / sigma_x[j])
+                        - J[k, j, i]
+                    )
+                    < 1e-6
+                )
 
-    mini_batches = random_mini_batches(X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1)
+    mini_batches = random_mini_batches(
+        X_norm, Y_norm, J_norm, mini_batch_size=32, seed=1
+    )
 
     for mini_batch in mini_batches:
         X_batch, Y_batch, J_batch = mini_batch
-        assert (len(mini_batch) == 3)
-        assert (X_batch.shape[0] == X.shape[0])
-        assert (Y_batch.shape[0] == Y.shape[0])
-        assert (J_batch.shape[0:2] == J.shape[0:2])
-        assert (X_batch.shape[1] <= 32)
-        assert (X_batch.shape[1] == Y_batch.shape[1])
-        assert (X_batch.shape[1] == J_batch.shape[2])
-
-
-
+        assert len(mini_batch) == 3
+        assert X_batch.shape[0] == X.shape[0]
+        assert Y_batch.shape[0] == Y.shape[0]
+        assert J_batch.shape[0:2] == J.shape[0:2]
+        assert X_batch.shape[1] <= 32
+        assert X_batch.shape[1] == Y_batch.shape[1]
+        assert X_batch.shape[1] == J_batch.shape[2]

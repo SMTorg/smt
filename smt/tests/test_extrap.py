@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function, division
 import numpy as np
@@ -20,6 +20,7 @@ from smt.utils.silence import Silence
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+
     compiled_available = True
 except:
     compiled_available = False
@@ -27,20 +28,20 @@ except:
 
 print_output = False
 
-class Test(SMTestCase):
 
+class Test(SMTestCase):
     def setUp(self):
         ndim = 3
         nt = 500
         ne = 100
 
         problems = OrderedDict()
-        problems['sphere'] = Sphere(ndim=ndim)
+        problems["sphere"] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTC'] = RMTC(num_elements=6, extrapolate=True)
-            sms['RMTB'] = RMTB(order=4, num_ctrl_pts=10, extrapolate=True)
+            sms["RMTC"] = RMTC(num_elements=6, extrapolate=True)
+            sms["RMTB"] = RMTB(order=4, num_ctrl_pts=10, extrapolate=True)
 
         self.nt = nt
         self.ne = ne
@@ -48,7 +49,7 @@ class Test(SMTestCase):
         self.sms = sms
 
     def run_test(self, sname, extrap_train=False, extrap_predict=False):
-        prob = self.problems['sphere']
+        prob = self.problems["sphere"]
         sampling = LHS(xlimits=prob.xlimits)
 
         np.random.seed(0)
@@ -59,9 +60,9 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared('xlimits'):
-            sm.options['xlimits'] = prob.xlimits
-        sm.options['print_global'] = False
+        if sm.options.is_declared("xlimits"):
+            sm.options["xlimits"] = prob.xlimits
+        sm.options["print_global"] = False
 
         x = np.zeros((1, xt.shape[1]))
         x[0, :] = prob.xlimits[:, 1] + 1.0
@@ -77,36 +78,34 @@ class Test(SMTestCase):
         if extrap_predict:
             sm.predict_values(x)
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTC(self):
-        self.run_test('RMTC', False, False)
+        self.run_test("RMTC", False, False)
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTC_train(self):
         with self.assertRaises(Exception) as context:
-            self.run_test('RMTC', True, False)
-        self.assertEqual(str(context.exception),
-                         'Training points above max for 0')
+            self.run_test("RMTC", True, False)
+        self.assertEqual(str(context.exception), "Training points above max for 0")
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTC_predict(self):
-        self.run_test('RMTC', False, True)
+        self.run_test("RMTC", False, True)
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTB(self):
-        self.run_test('RMTB', False, False)
+        self.run_test("RMTB", False, False)
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTB_train(self):
         with self.assertRaises(Exception) as context:
-            self.run_test('RMTB', True, False)
-        self.assertEqual(str(context.exception),
-                         'Training points above max for 0')
+            self.run_test("RMTB", True, False)
+        self.assertEqual(str(context.exception), "Training points above max for 0")
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_RMTB_predict(self):
-        self.run_test('RMTB', False, True)
+        self.run_test("RMTB", False, True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

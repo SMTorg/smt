@@ -10,14 +10,14 @@ import numpy as np
 
 from smt.problems.problem import Problem
 
-class Rosenbrock(Problem):
 
+class Rosenbrock(Problem):
     def _initialize(self):
-        self.options.declare('name', 'Rosenbrock', types=str)
+        self.options.declare("name", "Rosenbrock", types=str)
 
     def _setup(self):
-        self.xlimits[:, 0] = -2.
-        self.xlimits[:, 1] =  2.
+        self.xlimits[:, 0] = -2.0
+        self.xlimits[:, 1] = 2.0
 
     def _evaluate(self, x, kx):
         """
@@ -39,11 +39,15 @@ class Rosenbrock(Problem):
         y = np.zeros((ne, 1), complex)
         if kx is None:
             for ix in range(nx - 1):
-                y[:, 0] += 100. * (x[:, ix+1] - x[:, ix] ** 2) ** 2 + (1 - x[:, ix]) ** 2
+                y[:, 0] += (
+                    100.0 * (x[:, ix + 1] - x[:, ix] ** 2) ** 2 + (1 - x[:, ix]) ** 2
+                )
         else:
             if kx < nx - 1:
-                y[:, 0] += -400. * (x[:, kx+1] - x[:, kx] ** 2) * x[:, kx]  - 2 * (1 - x[:, kx])
+                y[:, 0] += -400.0 * (x[:, kx + 1] - x[:, kx] ** 2) * x[:, kx] - 2 * (
+                    1 - x[:, kx]
+                )
             if kx > 0:
-                y[:, 0] += 200. * (x[:, kx] - x[:, kx-1] ** 2)
+                y[:, 0] += 200.0 * (x[:, kx] - x[:, kx - 1] ** 2)
 
         return y

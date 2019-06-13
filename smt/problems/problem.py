@@ -10,8 +10,8 @@ import numpy as np
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_2d_array
 
-class Problem(object):
 
+class Problem(object):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -29,12 +29,12 @@ class Problem(object):
         >>> prob = Sphere(ndim=3)
         """
         self.options = OptionsDictionary()
-        self.options.declare('ndim', 1, types=int)
-        self.options.declare('return_complex', False, types=bool)
+        self.options.declare("ndim", 1, types=int)
+        self.options.declare("return_complex", False, types=bool)
         self._initialize()
         self.options.update(kwargs)
 
-        self.xlimits = np.zeros((self.options['ndim'], 2))
+        self.xlimits = np.zeros((self.options["ndim"], 2))
 
         self._setup()
 
@@ -68,18 +68,20 @@ class Problem(object):
         ndarray[n, 1]
             Functions values if kx=None or derivative values if kx is an int.
         """
-        x = check_2d_array(x, 'x')
+        x = check_2d_array(x, "x")
 
-        if x.shape[1] != self.options['ndim']:
-            raise ValueError('The second dimension of x should be %i' % self.options['ndim'])
+        if x.shape[1] != self.options["ndim"]:
+            raise ValueError(
+                "The second dimension of x should be %i" % self.options["ndim"]
+            )
 
         if kx is not None:
             if not isinstance(kx, int) or kx < 0:
-                raise TypeError('kx should be None or a non-negative int.')
+                raise TypeError("kx should be None or a non-negative int.")
 
         y = self._evaluate(x, kx)
 
-        if self.options['return_complex']:
+        if self.options["return_complex"]:
             return y
         else:
             return np.real(y)
@@ -101,4 +103,4 @@ class Problem(object):
         ndarray[n, 1]
             Functions values if kx=None or derivative values if kx is an int.
         """
-        raise Exception('This problem has not been implemented correctly')
+        raise Exception("This problem has not been implemented correctly")
