@@ -35,9 +35,9 @@ class KPLSK(KrgBased):
     def _componentwise_distance(self,dx,opt=0):
         if opt == 0:
             # Kriging step
-            d = componentwise_distance(dx,self.options['corr'].__name__,self.nx)
+            d = componentwise_distance(dx,self.options['corr'],self.nx)
         else:
             # KPLS step
-            d = componentwise_distance_PLS(dx,self.options['corr'].__name__,
+            d = componentwise_distance_PLS(dx,self.options['corr'],
                                                 self.options['n_comp'],self.coeff_pls)
         return d

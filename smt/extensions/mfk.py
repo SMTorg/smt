@@ -34,9 +34,9 @@ class MFK(KrgBased):
         super(MFK, self)._initialize()
         declare = self.options.declare
         
-        declare('rho_regr', 'constant',types=FunctionType,\
-                values=('constant', 'linear', 'quadratic'), desc='regr. term')
-        declare('theta0', None, types=(list, np.ndarray), \
+        declare('rho_regr', 'constant', \
+                values=('constant', 'linear', 'quadratic'), desc='Regression function type for rho')
+        declare('theta0', types=(list, np.ndarray), \
                 desc='Initial hyperparameters')
         declare('optim_var', False, types = bool, \
                 values = (True, False), \
@@ -145,12 +145,12 @@ class MFK(KrgBased):
             
 
             # Regression matrix and parameters
-            self.F_all[lvl] = self.options['poly'](self.X_norma)
+            self.F_all[lvl] = self._regression_types[self.options['poly']](self.X_norma)
             self.p_all[lvl] = self.F_all[lvl].shape[1]
 
             # Concatenate the autoregressive part for levels > 0
             if lvl > 0:
-                F_rho = self.options['rho_regr'](self.X_norma)
+                F_rho = self._regression_types[self.options['rho_regr']](self.X_norma)
                 self.q_all[lvl] = F_rho.shape[1]
                 self.F_all[lvl] = np.hstack((F_rho*np.dot(self._predict_intermediate_values(self.X_norma, lvl, descale=False),
                                               np.ones((1,self.q_all[lvl]))), self.F_all[lvl]))
@@ -194,7 +194,7 @@ class MFK(KrgBased):
             self._new_train()
             
     def _componentwise_distance(self,dx,opt=0):
-        d = componentwise_distance(dx,self.options['corr'].__name__,
+        d = componentwise_distance(dx, self.options['corr'],
                                    self.nx)
         return d
     
@@ -225,8 +225,8 @@ class MFK(KrgBased):
         if descale :
             X = (X - self.X_mean) / self.X_std
 ##                X = (X - self.X_mean[0]) / self.X_std[0]
-        f = self.options['poly'](X)
-        f0 = self.options['poly'](X)
+        f = self._regression_types[self.options['poly']](X)
+        f0 = self._regression_types[self.options['poly']](X)
         dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
@@ -236,7 +236,7 @@ class MFK(KrgBased):
         beta = self.optimal_par[0]['beta']
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y_norma_all[0], lower=True)
-        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
+        r_ = self._correlation_types[self.options['corr']](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
         gamma = self.optimal_par[0]['gamma']
         
 
@@ -247,10 +247,10 @@ class MFK(KrgBased):
         for i in range(1,lvl):
             F = self.F_all[i]
             C = self.optimal_par[i]['C']
-            g = self.options['rho_regr'](X)
+            g = self._regression_types[self.options['rho_regr']](X)
             dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
-            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
+            r_ = self._correlation_types[self.options['corr']](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
             Ft = solve_triangular(C, F, lower=True)
             yt = solve_triangular(C, self.y_norma_all[i], lower=True)
@@ -328,8 +328,8 @@ class MFK(KrgBased):
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
 #        if self.normalize:
-        f = self.options['poly'](X)
-        f0 = self.options['poly'](X)
+        f = self._regression_types[self.options['poly']](X)
+        f0 = self._regression_types[self.options['poly']](X)
         dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
@@ -339,7 +339,7 @@ class MFK(KrgBased):
         beta = self.optimal_par[0]['beta']
         Ft = solve_triangular(C, F, lower=True)
         yt = solve_triangular(C, self.y_norma_all[0], lower=True)
-        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
+        r_ = self._correlation_types[self.options['corr']](self.optimal_theta[0], d).reshape(n_eval, self.nt_all[0])
         gamma = self.optimal_par[0]['gamma']
 
         # Scaled predictor
@@ -360,10 +360,10 @@ class MFK(KrgBased):
         for i in range(1,nlevel):
             F = self.F_all[i]
             C = self.optimal_par[i]['C']
-            g = self.options['rho_regr'](X)
+            g = self._regression_types[self.options['rho_regr']](X)
             dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
-            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
+            r_ = self._correlation_types[self.options['corr']](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T*mu[:,i-1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
@@ -424,12 +424,12 @@ class MFK(KrgBased):
         
         dy_dx = np.zeros((n_eval, lvl))
         
-        if self.options['corr'].__name__ != 'squar_exp':
+        if self.options['corr'] != 'squar_exp':
             raise ValueError(
             'The derivative is only available for square exponential kernel')
-        if self.options['poly'].__name__ == 'constant':
+        if self.options['poly'] == 'constant':
             df = np.zeros([n_eval,1])
-        elif self.options['poly'].__name__ == 'linear':
+        elif self.options['poly'] == 'linear':
             df = np.zeros((n_eval, self.nx + 1))
             df[:,1:] = 1
         else:
@@ -437,7 +437,7 @@ class MFK(KrgBased):
                 'The derivative is only available for ordinary kriging or '+
                 'universal kriging using a linear trend')
         df0 = copy.deepcopy(df)
-        if self.options['rho_regr'].__name__ != 'constant' :
+        if self.options['rho_regr'] != 'constant' :
             raise ValueError(
                 'The derivative is only available for regression rho constant')
         # Get pairwise componentwise L1-distances to the input training set
@@ -445,7 +445,7 @@ class MFK(KrgBased):
                                  False)
         d = self._componentwise_distance(dx)
         # Compute the correlation function
-        r_ = self.options['corr'](self.optimal_theta[0], d).reshape(n_eval,self.nt_all[0])
+        r_ = self._correlation_types[self.options['corr']](self.optimal_theta[0], d).reshape(n_eval,self.nt_all[0])
 
         # Beta and gamma = R^-1(y-FBeta)
         beta = self.optimal_par[0]['beta']
@@ -463,10 +463,10 @@ class MFK(KrgBased):
         for i in range(1,lvl):
             F = self.F_all[i]
             C = self.optimal_par[i]['C']
-            g = self.options['rho_regr'](x)
+            g = self._regression_types[self.options['rho_regr']](x)
             dx = manhattan_distances(x, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
-            r_ = self.options['corr'](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
+            r_ = self._correlation_types[self.options['corr']](self.optimal_theta[i], d).reshape(n_eval, self.nt_all[i])
             df = np.vstack((g.T*dy_dx[:,i-1], df0.T))
 
             Ft = solve_triangular(C, F, lower=True)
