@@ -37,8 +37,8 @@ Usage
   print(yd.shape)
   
   plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

@@ -24,7 +24,7 @@ Usage
   x = np.ones((num, ndim))
   for i in range(ndim):
       x[:, i] = 0.5 * (problem.xlimits[i, 0] + problem.xlimits[i, 1])
-  x[:, 0] = np.linspace(5., 10., num)
+  x[:, 0] = np.linspace(5.0, 10.0, num)
   y = problem(x)
   
   yd = np.empty((num, ndim))
@@ -35,8 +35,8 @@ Usage
   print(yd.shape)
   
   plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

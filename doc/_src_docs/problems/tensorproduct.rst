@@ -32,12 +32,12 @@ Usage
   from smt.problems import TensorProduct
   
   ndim = 2
-  problem = TensorProduct(ndim=ndim, func='cos')
+  problem = TensorProduct(ndim=ndim, func="cos")
   
   num = 100
   x = np.ones((num, ndim))
-  x[:, 0] = np.linspace(-1, 1., num)
-  x[:, 1] = 0.
+  x[:, 0] = np.linspace(-1, 1.0, num)
+  x[:, 1] = 0.0
   y = problem(x)
   
   yd = np.empty((num, ndim))
@@ -48,8 +48,8 @@ Usage
   print(yd.shape)
   
   plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

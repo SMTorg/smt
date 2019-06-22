@@ -72,7 +72,7 @@ Usage
   yt = prob(xt)
   
   # Mixture of experts
-  moe = MOE(smooth_recombination=True, n_clusters=5)     
+  moe = MOE(smooth_recombination=True, n_clusters=5)
   moe.set_training_values(xt, yt)
   moe.train()
   
@@ -88,10 +88,10 @@ Usage
   
   # Cluster display
   colors_ = list(six.iteritems(colors.cnames))
-  GMM=moe.cluster
+  GMM = moe.cluster
   weight = GMM.weights_
   mean = GMM.means_
-  if sklearn.__version__ < '0.20.0':
+  if sklearn.__version__ < "0.20.0":
       cov = GMM.covars_
   else:
       cov = GMM.covariances_
@@ -105,73 +105,89 @@ Usage
   x = np.array(list(zip(xv.reshape((-1,)), yv.reshape((-1,)))))
   prob = moe._proba_cluster(x)
   
-  plt.subplot(221, projection='3d')
+  plt.subplot(221, projection="3d")
   ax = plt.gca()
   for i in range(len(sort)):
       color = colors_[int(((len(colors_) - 1) / sort.max()) * sort[i])][0]
       ax.scatter(xt[i][0], xt[i][1], yt[i], c=color)
-  plt.title('Clustered Samples')
+  plt.title("Clustered Samples")
   
-  plt.subplot(222, projection='3d')
+  plt.subplot(222, projection="3d")
   ax = plt.gca()
   for i in range(len(weight)):
       color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
-      ax.plot_trisurf(x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0,
-                       color=color)
-  plt.title('Membership Probabilities')
+      ax.plot_trisurf(
+          x[:, 0], x[:, 1], prob[:, i], alpha=0.4, linewidth=0, color=color
+      )
+  plt.title("Membership Probabilities")
   
   plt.subplot(223)
   for i in range(len(weight)):
       color = colors_[int(((len(colors_) - 1) / len(weight)) * i)][0]
       plt.tricontour(x[:, 0], x[:, 1], prob[:, i], 1, colors=color, linewidths=3)
-  plt.title('Cluster Map')
+  plt.title("Cluster Map")
   
   plt.subplot(224)
-  plt.plot(ye, ye,'-.')
-  plt.plot(ye, y, '.')
-  plt.xlabel('actual')
-  plt.ylabel('prediction')
-  plt.title('Predicted vs Actual')
+  plt.plot(ye, ye, "-.")
+  plt.plot(ye, y, ".")
+  plt.xlabel("actual")
+  plt.ylabel("prediction")
+  plt.title("Predicted vs Actual")
   
   plt.show()
   
 ::
 
+  Kriging 1.418429438614483
   LS 1.4418735729979624
   QP 1.4542641515660801
   KPLS 1.4186236789470246
   KPLSK 1.4184385612110044
   RBF 1.4178300357368523
+  RMTC 1.430746629259529
+  RMTB 1.4285575959464327
   IDW 1.4188134912804515
   Best expert = RBF
+  Kriging 1.0172805901833657
   LS 1.0451612679414988
   QP 1.021870693299392
   KPLS 1.0198972713675998
   KPLSK 1.016469984701472
   RBF 1.0170431268334987
+  RMTC 1.5483147980515946
+  RMTB 1.0338582188178558
   IDW 1.0163947834915366
   Best expert = IDW
+  Kriging 1.540784607392825
   LS 1.521071480977923
   QP 1.5434778008314816
   KPLS 1.5262467470920507
   KPLSK 1.5329970520881877
   RBF 1.493811640632744
+  RMTC 1.635517120028801
+  RMTB 1.5464033315936672
   IDW 1.4918365835244014
   Best expert = IDW
+  Kriging 1.2191013043112668
   LS 1.2431081352364661
   QP 1.2627639638801327
   KPLS 1.224255312632745
   KPLSK 1.2261843159790853
   RBF 1.2131038247145347
+  RMTC 1.3135910205091708
+  RMTB 1.2334527112535287
   IDW 1.2140402570940896
   Best expert = RBF
+  Kriging 1.0910512967452126
   LS 1.0939223922787613
   QP 1.0998924589863157
   KPLS 1.0909047560427805
   KPLSK 1.0910245734660722
   RBF 1.0907867621379232
+  RMTC 1.0906652690338512
+  RMTB 1.0906812651891993
   IDW 1.1284069206525673
-  Best expert = RBF
+  Best expert = RMTC
   
 .. figure:: moe_TestMOE_run_moe_example.png
   :scale: 80 %
@@ -230,3 +246,13 @@ Options
      -  None
      -  ['bool']
      -  Optimize Heaviside scaling factor when smooth recombination is used
+  *  -  derivatives_support
+     -  False
+     -  None
+     -  ['bool']
+     -  Use only experts that support derivatives prediction
+  *  -  variances_support
+     -  False
+     -  None
+     -  ['bool']
+     -  Use only experts that support variance prediction

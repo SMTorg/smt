@@ -26,20 +26,26 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   from smt.extensions import MFK
-  # Define the 
+  
+  # Define the
   def LF_function(x):
       import numpy as np
-      return 0.5*((x*6-2)**2)*np.sin((x*6-2)*2)+(x-0.5)*10. - 5
+  
+      return (
+          0.5 * ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
+          + (x - 0.5) * 10.0
+          - 5
+      )
   
   def HF_function(x):
       import numpy as np
-      return ((x*6-2)**2)*np.sin((x*6-2)*2)
   
+      return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
   
   # Problem set up
-  ndim=1
-  Xt_e = np.linspace(0,1, 4, endpoint = True).reshape(-1,ndim)
-  Xt_c = np.linspace(0,1, 11, endpoint = True).reshape(-1,ndim)
+  ndim = 1
+  Xt_e = np.linspace(0, 1, 4, endpoint=True).reshape(-1, ndim)
+  Xt_c = np.linspace(0, 1, 11, endpoint=True).reshape(-1, ndim)
   
   nt_exp = Xt_e.shape[0]
   nt_cheap = Xt_c.shape[0]
@@ -48,19 +54,17 @@ Usage
   yt_e = HF_function(Xt_e)
   yt_c = LF_function(Xt_c)
   
+  sm = MFK(theta0=np.array(Xt_e.shape[1] * [1.0]))
   
-  
-  sm = MFK(theta0=np.array(Xt_e.shape[1]*[1.]))
-  
-  #low-fidelity dataset names being integers from 0 to level-1
-  sm.set_training_values(Xt_c, yt_c, name = 0) 
-  #high-fidelity dataset without name
-  sm.set_training_values(Xt_e, yt_e) 
+  # low-fidelity dataset names being integers from 0 to level-1
+  sm.set_training_values(Xt_c, yt_c, name=0)
+  # high-fidelity dataset without name
+  sm.set_training_values(Xt_e, yt_e)
   
   # train the model
   sm.train()
   
-  x = np.linspace(0, 1, 101, endpoint = True).reshape(-1,1)
+  x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
   
   # query the outputs
   y = sm.predict_values(x)
@@ -68,17 +72,17 @@ Usage
   der = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
-   
-  plt.plot(x, HF_function(x), label ='reference')
-  plt.plot(x, y, linestyle = '-.' , label ='mean_gp')
-  plt.scatter(Xt_e, yt_e, marker = 'o' , color ='k', label ='HF doe')
-  plt.scatter(Xt_c, yt_c, marker = '*' , color ='g', label ='LF doe')
-   
+  
+  plt.plot(x, HF_function(x), label="reference")
+  plt.plot(x, y, linestyle="-.", label="mean_gp")
+  plt.scatter(Xt_e, yt_e, marker="o", color="k", label="HF doe")
+  plt.scatter(Xt_c, yt_c, marker="*", color="g", label="LF doe")
+  
   plt.legend(loc=0)
-  plt.ylim(-10,17)
-  plt.xlim(-0.1,1.1)
-  plt.xlabel(r'$x$')
-  plt.ylabel(r'$y$')
+  plt.ylim(-10, 17)
+  plt.xlim(-0.1, 1.1)
+  plt.xlabel(r"$x$")
+  plt.ylabel(r"$y$")
   
   plt.show()
   
@@ -98,7 +102,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0156002
+     Training - done. Time (sec):  0.0295000
   ___________________________________________________________________________
      
    Evaluation
@@ -106,9 +110,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   ___________________________________________________________________________
      
@@ -117,9 +121,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -167,28 +171,28 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
+     -  None
+     -  Regression function type
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
+     -  None
+     -  Correlation function type
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
-  *  -  rho_regr
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
   *  -  theta0
      -  None
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  rho_regr
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  None
+     -  Regression function type for rho
   *  -  optim_var
      -  False
      -  [True, False]
