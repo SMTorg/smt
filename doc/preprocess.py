@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         
 This package is distributed under New BSD license.
-'''
+"""
 
 import os
 
@@ -15,12 +15,12 @@ def get_file_paths():
     file_paths_list_rstx = []
     file_paths_list_py = []
 
-    for root, dirs, files in os.walk('.'):
+    for root, dirs, files in os.walk("."):
         for file_name in files:
             file_paths_list.append((root, file_name))
-            if file_name[-5:] == '.rstx':
+            if file_name[-5:] == ".rstx":
                 file_paths_list_rstx.append((root, file_name))
-            if file_name[-3:] == '.py':
+            if file_name[-3:] == ".py":
                 file_paths_list_py.append((root, file_name))
 
     return file_paths_list, file_paths_list_rstx, file_paths_list_py
@@ -29,16 +29,16 @@ def get_file_paths():
 file_paths_list, file_paths_list_rstx, file_paths_list_py = get_file_paths()
 
 for root, file_name in file_paths_list_rstx:
-    file_path = root + '/' + file_name
+    file_path = root + "/" + file_name
 
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         lines = f.readlines()
 
     for iline, line in enumerate(lines):
 
-        if '.. embed-test' in line:
+        if ".. embed-test" in line:
             lines[iline] = process_test(root, file_name, iline, line)
-        elif '.. embed-options-table' in line:
+        elif ".. embed-options-table" in line:
             lines[iline] = process_options(root, file_name, iline, line)
 
     new_lines = []
@@ -48,6 +48,6 @@ for root, file_name in file_paths_list_rstx:
         else:
             new_lines.append(line)
 
-    new_file_path = file_path[:-5] + '.rst'
-    with open(new_file_path, 'w') as f:
+    new_file_path = file_path[:-5] + ".rst"
+    with open(new_file_path, "w") as f:
         f.writelines(new_lines)

@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function, division
 import numpy as np
@@ -21,6 +21,7 @@ from smt.utils import compute_rms_error
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+
     compiled_available = True
 except:
     compiled_available = False
@@ -28,39 +29,39 @@ except:
 
 print_output = False
 
-class Test(SMTestCase):
 
+class Test(SMTestCase):
     def setUp(self):
         ndim = 3
         nt = 5000
         ne = 500
 
         problems = OrderedDict()
-        problems['sphere'] = Sphere(ndim=ndim)
-        problems['exp'] = TensorProduct(ndim=ndim, func='exp')
-        problems['tanh'] = TensorProduct(ndim=ndim, func='tanh')
-        problems['cos'] = TensorProduct(ndim=ndim, func='cos')
+        problems["sphere"] = Sphere(ndim=ndim)
+        problems["exp"] = TensorProduct(ndim=ndim, func="exp")
+        problems["tanh"] = TensorProduct(ndim=ndim, func="tanh")
+        problems["cos"] = TensorProduct(ndim=ndim, func="cos")
 
         sms = OrderedDict()
         if compiled_available:
-            sms['RMTC'] = RMTC()
-            sms['RMTB'] = RMTB()
+            sms["RMTC"] = RMTC()
+            sms["RMTB"] = RMTB()
 
         t_errors = {}
-        t_errors['RMTC'] = 1e-1
-        t_errors['RMTB'] = 1e-1
+        t_errors["RMTC"] = 1e-1
+        t_errors["RMTB"] = 1e-1
 
         e_errors = {}
-        e_errors['RMTC'] = 1e-1
-        e_errors['RMTB'] = 1e-1
+        e_errors["RMTC"] = 1e-1
+        e_errors["RMTB"] = 1e-1
 
         ge_t_errors = {}
-        ge_t_errors['RMTC'] = 1e-2
-        ge_t_errors['RMTB'] = 1e-2
+        ge_t_errors["RMTC"] = 1e-2
+        ge_t_errors["RMTB"] = 1e-2
 
         ge_e_errors = {}
-        ge_e_errors['RMTC'] = 1e-2
-        ge_e_errors['RMTB'] = 1e-2
+        ge_e_errors["RMTC"] = 1e-2
+        ge_e_errors["RMTB"] = 1e-2
 
         self.nt = nt
         self.ne = ne
@@ -73,8 +74,8 @@ class Test(SMTestCase):
 
     def run_test(self):
         method_name = inspect.stack()[1][3]
-        pname = method_name.split('_')[1]
-        sname = method_name.split('_')[2]
+        pname = method_name.split("_")[1]
+        sname = method_name.split("_")[2]
 
         prob = self.problems[pname]
         sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
@@ -97,9 +98,9 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared('xlimits'):
-            sm.options['xlimits'] = prob.xlimits
-        sm.options['print_global'] = False
+        if sm.options.is_declared("xlimits"):
+            sm.options["xlimits"] = prob.xlimits
+        sm.options["print_global"] = False
 
         sm.set_training_values(xt, yt)
 
@@ -111,9 +112,9 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared('xlimits'):
-            sm.options['xlimits'] = prob.xlimits
-        sm.options['print_global'] = False
+        if sm.options.is_declared("xlimits"):
+            sm.options["xlimits"] = prob.xlimits
+        sm.options["print_global"] = False
 
         sm.set_training_values(xt, yt)
         for kx in range(prob.xlimits.shape[0]):
@@ -126,61 +127,72 @@ class Test(SMTestCase):
         ge_e_error = compute_rms_error(sm, xe, ye)
 
         if print_output:
-            print('%8s %6s %18.9e %18.9e %18.9e %18.9e'
-                  % (pname[:6], sname, t_error, e_error, ge_t_error, ge_e_error))
+            print(
+                "%8s %6s %18.9e %18.9e %18.9e %18.9e"
+                % (pname[:6], sname, t_error, e_error, ge_t_error, ge_e_error)
+            )
 
-        self.assert_error(t_error, 0., self.t_errors[sname])
-        self.assert_error(e_error, 0., self.e_errors[sname])
-        self.assert_error(ge_t_error, 0., self.ge_t_errors[sname])
-        self.assert_error(ge_e_error, 0., self.ge_e_errors[sname])
+        self.assert_error(t_error, 0.0, self.t_errors[sname])
+        self.assert_error(e_error, 0.0, self.e_errors[sname])
+        self.assert_error(ge_t_error, 0.0, self.ge_t_errors[sname])
+        self.assert_error(ge_e_error, 0.0, self.ge_e_errors[sname])
 
     # --------------------------------------------------------------------
     # Function: sphere
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_sphere_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_sphere_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
     # Function: exp
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_exp_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_exp_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
     # Function: tanh
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_tanh_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_tanh_RMTB(self):
         self.run_test()
 
     # --------------------------------------------------------------------
     # Function: cos
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_cos_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, 'Compiled Fortran libraries not available')
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_cos_RMTB(self):
         self.run_test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print_output = True
-    print('%6s %8s %18s %18s %18s %18s'
-          % ('SM', 'Problem', 'Train. pt. error', 'Test pt. error', 'GE tr. pt. error', 'GE test pt. error'))
+    print(
+        "%6s %8s %18s %18s %18s %18s"
+        % (
+            "SM",
+            "Problem",
+            "Train. pt. error",
+            "Test pt. error",
+            "GE tr. pt. error",
+            "GE test pt. error",
+        )
+    )
     unittest.main()

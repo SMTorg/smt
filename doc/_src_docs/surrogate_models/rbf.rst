@@ -64,22 +64,22 @@ Usage
   
   from smt.surrogate_models import RBF
   
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
   sm.train()
   
   num = 100
-  x = np.linspace(0., 4., num)
+  x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
-  plt.plot(xt, yt, 'o')
+  plt.plot(xt, yt, "o")
   plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
   plt.show()
   
 ::
@@ -106,7 +106,7 @@ Usage
            Back solving (5 x 5 mtx) ...
            Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
         Solving linear system (col. 0) - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0005000
   ___________________________________________________________________________
      
    Evaluation

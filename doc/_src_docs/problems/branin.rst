@@ -30,8 +30,8 @@ Usage
   
   num = 100
   x = np.ones((num, ndim))
-  x[:, 0] = np.linspace(-5., 10., num)
-  x[:, 1] = np.linspace(0., 15., num)
+  x[:, 0] = np.linspace(-5.0, 10.0, num)
+  x[:, 1] = np.linspace(0.0, 15.0, num)
   y = problem(x)
   
   yd = np.empty((num, ndim))
@@ -42,8 +42,8 @@ Usage
   print(yd.shape)
   
   plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

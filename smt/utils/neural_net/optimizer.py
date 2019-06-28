@@ -14,6 +14,7 @@ EPS = np.finfo(float).eps  # small number to avoid division by zero
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
+
 def finite_difference(parameters, fun=None, dx=1e-6):
     """
     Compute gradient using central difference
@@ -50,8 +51,8 @@ def finite_difference(parameters, fun=None, dx=1e-6):
 
 # ------------------------------------ O P T I M I Z E R   C L A S S ---------------------------------------------------
 
-class Optimizer(object):
 
+class Optimizer(object):
     @property
     def optimum(self):
         return self._optimum_design
@@ -96,14 +97,24 @@ class Optimizer(object):
             setattr(self, name, value)
 
     @classmethod
-    def initialize(cls, initial_guess, cost_function, grad_function=None, learning_rate=0.05, beta1=0.9, beta2=0.99):
-        attributes = {'user_cost_function': cost_function,
-                      'user_grad_function': grad_function,
-                      'learning_rate': learning_rate,
-                      'beta_1': beta1,
-                      'beta_2': beta2,
-                      'initial_guess': initial_guess,
-                      '_current_design': initial_guess.copy()}
+    def initialize(
+        cls,
+        initial_guess,
+        cost_function,
+        grad_function=None,
+        learning_rate=0.05,
+        beta1=0.9,
+        beta2=0.99,
+    ):
+        attributes = {
+            "user_cost_function": cost_function,
+            "user_grad_function": grad_function,
+            "learning_rate": learning_rate,
+            "beta_1": beta1,
+            "beta_2": beta2,
+            "initial_guess": initial_guess,
+            "_current_design": initial_guess.copy(),
+        }
         return cls(**attributes)
 
     def _cost_function(self, x):
@@ -152,12 +163,14 @@ class Optimizer(object):
         :param tau: hyper-parameter between 0 and 1 used to reduce alpha during backtracking line search
         :return: x: update inputs understood by the function 'update' and 'evaluate'
         """
-        tau = max(0., min(1., tau))  # make sure 0 < tau < 1
+        tau = max(0.0, min(1.0, tau))  # make sure 0 < tau < 1
         converged = False
         self._previous_design = self._current_design.copy()
         while not converged:
             self._update_current_design(learning_rate=self.learning_rate * tau)
-            if self._cost_function(self._current_design) < self._cost_function(self._previous_design):
+            if self._cost_function(self._current_design) < self._cost_function(
+                self._previous_design
+            ):
                 converged = True
             elif self.learning_rate * tau < 1e-6:
                 converged = True
@@ -175,9 +188,13 @@ class Optimizer(object):
         # Stopping criteria (Vanderplaats, ch. 3, p. 121)
         converged = False
         N1 = 0
-        N1_max = 100  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
+        N1_max = (
+            100
+        )  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
         N2 = 0
-        N2_max = 100  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
+        N2_max = (
+            100
+        )  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
         epsilon_absolute = 1e-7  # absolute error criterion
         epsilon_relative = 1e-7  # relative error criterion
 
@@ -196,7 +213,11 @@ class Optimizer(object):
             self._design_history.append(self._current_design.copy())
 
             if is_print:
-                print("iteration = {:d}, cost = {:6.3f}".format(i, float(self._current_cost)))
+                print(
+                    "iteration = {:d}, cost = {:6.3f}".format(
+                        i, float(self._current_cost)
+                    )
+                )
 
             # Absolute convergence criterion
             if i > 1:
@@ -211,7 +232,9 @@ class Optimizer(object):
                         print("Absolute stopping criterion satisfied")
 
                 # Relative convergence criterion
-                dF2 = abs(self._cost_history[-1] - self._cost_history[-2]) / max(abs(self._cost_history[-1]), 1e-6)
+                dF2 = abs(self._cost_history[-1] - self._cost_history[-2]) / max(
+                    abs(self._cost_history[-1]), 1e-6
+                )
                 if dF2 < epsilon_relative:
                     N2 += 1
                 else:
@@ -235,15 +258,15 @@ class Optimizer(object):
 
 
 class GD(Optimizer):
-
     def _update_current_design(self, learning_rate=0.05):
         """Gradient descent update"""
         for key in self._previous_design.keys():
-            self._current_design[key] = self._previous_design[key] - learning_rate * self._search_direction[key]
+            self._current_design[key] = (
+                self._previous_design[key] - learning_rate * self._search_direction[key]
+            )
 
 
 class Adam(Optimizer):
-
     def __init__(self, **kwargs):
         super(Adam, self).__init__(**kwargs)
         self.v = None
@@ -256,16 +279,28 @@ class Adam(Optimizer):
         t = self._current_iteration + 1
 
         if self.v is None:
-            self.v = {key: np.zeros(value.shape) for key, value in self._current_design.items()}
+            self.v = {
+                key: np.zeros(value.shape)
+                for key, value in self._current_design.items()
+            }
         if self.s is None:
-            self.s = {key: np.zeros(value.shape) for key, value in self._current_design.items()}
+            self.s = {
+                key: np.zeros(value.shape)
+                for key, value in self._current_design.items()
+            }
 
         for key in self._current_design.keys():
-            self.v[key] = self.beta_1 * self.v[key] + (1. - beta_1) * self._search_direction[key]
-            self.s[key] = self.beta_2 * self.s[key] + (1. - beta_2) * np.square(self._search_direction[key])
-            v_corrected = self.v[key] / (1. - self.beta_1 ** t)
-            s_corrected = self.s[key] / (1. - self.beta_2 ** t)
-            self._current_design[key] = self._previous_design[key] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
+            self.v[key] = (
+                self.beta_1 * self.v[key] + (1.0 - beta_1) * self._search_direction[key]
+            )
+            self.s[key] = self.beta_2 * self.s[key] + (1.0 - beta_2) * np.square(
+                self._search_direction[key]
+            )
+            v_corrected = self.v[key] / (1.0 - self.beta_1 ** t)
+            s_corrected = self.s[key] / (1.0 - self.beta_2 ** t)
+            self._current_design[key] = self._previous_design[
+                key
+            ] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
 
 
 def run_example(use_adam=True):  # pragma: no cover
@@ -273,22 +308,22 @@ def run_example(use_adam=True):  # pragma: no cover
 
     # Test function
     def rosenbrock(parameters):
-        x1 = parameters['x1']
-        x2 = parameters['x2']
+        x1 = parameters["x1"]
+        x2 = parameters["x2"]
 
         y = (1 - x1) ** 2 + 100 * (x2 - x1 ** 2) ** 2
         y = y.reshape(1, 1)
 
         dydx = dict()
-        dydx['x1'] = -2 * (1 - x1) - 400 * x1 * (x2 - x1 ** 2)
-        dydx['x2'] = 200 * (x2 - x1 ** 2)
+        dydx["x1"] = -2 * (1 - x1) - 400 * x1 * (x2 - x1 ** 2)
+        dydx["x2"] = 200 * (x2 - x1 ** 2)
 
         return y, dydx
 
     # Initial guess
     initial_guess = dict()
-    initial_guess['x1'] = np.array([1.25]).reshape((1, 1))
-    initial_guess['x2'] = np.array([-1.75]).reshape((1, 1))
+    initial_guess["x1"] = np.array([1.25]).reshape((1, 1))
+    initial_guess["x2"] = np.array([-1.75]).reshape((1, 1))
 
     # Function handles to be pass
     f = lambda x: rosenbrock(parameters=x)[0]
@@ -299,28 +334,32 @@ def run_example(use_adam=True):  # pragma: no cover
 
     # Optimize
     if use_adam:
-        optimizer = Adam.initialize(initial_guess=initial_guess,
-                                    cost_function=f,
-                                    grad_function=dfdx,
-                                    learning_rate=alpha)
+        optimizer = Adam.initialize(
+            initial_guess=initial_guess,
+            cost_function=f,
+            grad_function=dfdx,
+            learning_rate=alpha,
+        )
     else:
-        optimizer = GD.initialize(initial_guess=initial_guess,
-                                  cost_function=f,
-                                  grad_function=dfdx,
-                                  learning_rate=alpha)
+        optimizer = GD.initialize(
+            initial_guess=initial_guess,
+            cost_function=f,
+            grad_function=dfdx,
+            learning_rate=alpha,
+        )
     optimizer.grad_check(initial_guess)
     optimizer.optimize(max_iter=1000)
 
     # For plotting initial and final answer
-    x0 = np.array([initial_guess['x1'].squeeze(),
-                   initial_guess['x2'].squeeze()])
+    x0 = np.array([initial_guess["x1"].squeeze(), initial_guess["x2"].squeeze()])
 
-    xf = np.array([optimizer.optimum['x1'].squeeze(),
-                   optimizer.optimum['x2'].squeeze()])
+    xf = np.array(
+        [optimizer.optimum["x1"].squeeze(), optimizer.optimum["x2"].squeeze()]
+    )
 
     # For plotting contours
-    lb = -2.
-    ub = 2.
+    lb = -2.0
+    ub = 2.0
     m = 100
     x1 = np.linspace(lb, ub, m)
     x2 = np.linspace(lb, ub, m)
@@ -328,22 +367,21 @@ def run_example(use_adam=True):  # pragma: no cover
     Y = np.zeros(X1.shape)
     for i in range(0, m):
         for j in range(0, m):
-            Y[i, j] = f({'x1': np.array([X1[i, j]]),
-                         'x2': np.array([X2[i, j]])})
+            Y[i, j] = f({"x1": np.array([X1[i, j]]), "x2": np.array([X2[i, j]])})
 
     # Plot
-    x1_his = np.array([design['x1'] for design in optimizer.design_history]).squeeze()
-    x2_his = np.array([design['x2'] for design in optimizer.design_history]).squeeze()
+    x1_his = np.array([design["x1"] for design in optimizer.design_history]).squeeze()
+    x2_his = np.array([design["x2"] for design in optimizer.design_history]).squeeze()
     plt.plot(x1_his, x2_his)
-    plt.plot(x0[0], x0[1], '+', ms=15)
-    plt.plot(xf[0], xf[1], 'o')
-    plt.plot(np.array([1.]), np.array([1.]), 'x')
-    plt.legend(['history', 'initial guess', 'predicted optimum', 'true optimum'])
-    plt.contour(X1, X2, Y, 50, cmap='RdGy')
+    plt.plot(x0[0], x0[1], "+", ms=15)
+    plt.plot(xf[0], xf[1], "o")
+    plt.plot(np.array([1.0]), np.array([1.0]), "x")
+    plt.legend(["history", "initial guess", "predicted optimum", "true optimum"])
+    plt.contour(X1, X2, Y, 50, cmap="RdGy")
     if use_adam:
-        plt.title('adam')
+        plt.title("adam")
     else:
-        plt.title('gradient descent')
+        plt.title("gradient descent")
     plt.show()
 
 

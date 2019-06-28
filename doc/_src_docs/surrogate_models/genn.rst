@@ -50,31 +50,45 @@ Usage
   
   # GENN
   genn = GENN()
-  genn.options["alpha"] = 0.1             # learning rate that controls optimizer step size
-  genn.options["beta1"] = 0.9             # tuning parameter to control ADAM optimization
-  genn.options["beta2"] = 0.99            # tuning parameter to control ADAM optimization
-  genn.options["lambd"] = 0.1             # lambd = 0. = no regularization, lambd > 0 = regularization
-  genn.options["gamma"] = 1.0             # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
-  genn.options["deep"] = 2                # number of hidden layers
-  genn.options["wide"] = 6                # number of nodes per hidden layer
-  genn.options["mini_batch_size"] = 64    # used to divide data into training batches (use for large data sets)
-  genn.options["num_epochs"] = 20         # number of passes through data
-  genn.options["num_iterations"] = 100    # number of optimizer iterations per mini-batch
-  genn.options["is_print"] = True         # print output (or not)
-  load_smt_data(genn, xt, yt, dyt_dxt)    # convenience function to read in data that is in SMT format
-  genn.train()                            # API function to train model
-  genn.plot_training_history()            # non-API function to plot training history (to check convergence)
-  genn.goodness_of_fit(xv, yv, dyv_dxv)   # non-API function to check accuracy of regression
-  y_pred = genn.predict_values(x)         # API function to predict values at new (unseen) points
+  genn.options["alpha"] = 0.1  # learning rate that controls optimizer step size
+  genn.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
+  genn.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
+  genn.options[
+      "lambd"
+  ] = 0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
+  genn.options[
+      "gamma"
+  ] = 1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+  genn.options["deep"] = 2  # number of hidden layers
+  genn.options["wide"] = 6  # number of nodes per hidden layer
+  genn.options[
+      "mini_batch_size"
+  ] = 64  # used to divide data into training batches (use for large data sets)
+  genn.options["num_epochs"] = 20  # number of passes through data
+  genn.options[
+      "num_iterations"
+  ] = 100  # number of optimizer iterations per mini-batch
+  genn.options["is_print"] = True  # print output (or not)
+  load_smt_data(
+      genn, xt, yt, dyt_dxt
+  )  # convenience function to read in data that is in SMT format
+  genn.train()  # API function to train model
+  genn.plot_training_history()  # non-API function to plot training history (to check convergence)
+  genn.goodness_of_fit(
+      xv, yv, dyv_dxv
+  )  # non-API function to check accuracy of regression
+  y_pred = genn.predict_values(
+      x
+  )  # API function to predict values at new (unseen) points
   
   # Plot
   fig, ax = plt.subplots()
   ax.plot(x, y_pred)
-  ax.plot(x, y, 'k--')
-  ax.plot(xv, yv, 'ro')
-  ax.plot(xt, yt, 'k+', mew=3, ms=10)
-  ax.set(xlabel='x', ylabel='y', title="GENN")
-  ax.legend(['Predicted', 'True', 'Test', 'Train'])
+  ax.plot(x, y, "k--")
+  ax.plot(xv, yv, "ro")
+  ax.plot(xt, yt, "k+", mew=3, ms=10)
+  ax.set(xlabel="x", ylabel="y", title="GENN")
+  ax.legend(["Predicted", "True", "Test", "Train"])
   plt.show()
   
 ::
@@ -93,27 +107,27 @@ Usage
    Training
      
      Training ...
-  epoch = 0, mini-batch = 0, avg cost = 16.627
-  epoch = 1, mini-batch = 0, avg cost =  0.878
-  epoch = 2, mini-batch = 0, avg cost =  0.684
-  epoch = 3, mini-batch = 0, avg cost =  0.655
-  epoch = 4, mini-batch = 0, avg cost =  0.636
-  epoch = 5, mini-batch = 0, avg cost =  0.624
-  epoch = 6, mini-batch = 0, avg cost =  0.611
-  epoch = 7, mini-batch = 0, avg cost =  0.599
-  epoch = 8, mini-batch = 0, avg cost =  0.593
-  epoch = 9, mini-batch = 0, avg cost =  0.588
-  epoch = 10, mini-batch = 0, avg cost =  0.583
-  epoch = 11, mini-batch = 0, avg cost =  0.580
-  epoch = 12, mini-batch = 0, avg cost =  0.578
+  epoch = 0, mini-batch = 0, avg cost = 16.629
+  epoch = 1, mini-batch = 0, avg cost =  0.901
+  epoch = 2, mini-batch = 0, avg cost =  0.721
+  epoch = 3, mini-batch = 0, avg cost =  0.670
+  epoch = 4, mini-batch = 0, avg cost =  0.650
+  epoch = 5, mini-batch = 0, avg cost =  0.627
+  epoch = 6, mini-batch = 0, avg cost =  0.613
+  epoch = 7, mini-batch = 0, avg cost =  0.605
+  epoch = 8, mini-batch = 0, avg cost =  0.597
+  epoch = 9, mini-batch = 0, avg cost =  0.590
+  epoch = 10, mini-batch = 0, avg cost =  0.586
+  epoch = 11, mini-batch = 0, avg cost =  0.582
+  epoch = 12, mini-batch = 0, avg cost =  0.579
   epoch = 13, mini-batch = 0, avg cost =  0.577
   epoch = 14, mini-batch = 0, avg cost =  0.576
   epoch = 15, mini-batch = 0, avg cost =  0.576
   epoch = 16, mini-batch = 0, avg cost =  0.576
-  epoch = 17, mini-batch = 0, avg cost =  0.576
+  epoch = 17, mini-batch = 0, avg cost =  0.575
   epoch = 18, mini-batch = 0, avg cost =  0.575
   epoch = 19, mini-batch = 0, avg cost =  0.575
-     Training - done. Time (sec):  4.3181002
+     Training - done. Time (sec):  4.7474997
   ___________________________________________________________________________
      
    Evaluation
@@ -121,9 +135,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000008
      
   
 .. figure:: genn_Test_test_genn.png

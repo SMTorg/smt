@@ -20,7 +20,7 @@ Usage
   
   num = 100
   x = np.ones((num, ndim))
-  x[:, 0] = np.linspace(0., 1., num)
+  x[:, 0] = np.linspace(0.0, 1.0, num)
   x[:, 1] = np.pi
   y = problem(x)
   
@@ -32,8 +32,8 @@ Usage
   print(yd.shape)
   
   plt.plot(x[:, 0], y[:, 0])
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

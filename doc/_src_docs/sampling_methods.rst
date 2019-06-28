@@ -23,10 +23,7 @@ Usage
   
   from smt.sampling_methods import Random
   
-  xlimits = np.array([
-      [0., 4.],
-      [0., 3.],
-  ])
+  xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
   sampling = Random(xlimits=xlimits)
   
   num = 50
@@ -34,9 +31,9 @@ Usage
   
   print(x.shape)
   
-  plt.plot(x[:, 0], x[:, 1], 'o')
-  plt.xlabel('x')
-  plt.ylabel('y')
+  plt.plot(x[:, 0], x[:, 1], "o")
+  plt.xlabel("x")
+  plt.ylabel("y")
   plt.show()
   
 ::

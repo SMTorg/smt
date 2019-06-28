@@ -12,16 +12,18 @@ import numpy as np
 
 from smt.problems.problem import Problem
 
-class CantileverBeam(Problem):
 
+class CantileverBeam(Problem):
     def _initialize(self):
-        self.options.declare('name', 'CantileverBeam', types=str)
-        self.options.declare('ndim', 3, types=int)
-        self.options.declare('P', 50e3, types=(int, float), desc='Tip load (50 kN)')
-        self.options.declare('E', 200e9, types=(int, float), desc='Modulus of elast. (200 GPa)')
+        self.options.declare("name", "CantileverBeam", types=str)
+        self.options.declare("ndim", 3, types=int)
+        self.options.declare("P", 50e3, types=(int, float), desc="Tip load (50 kN)")
+        self.options.declare(
+            "E", 200e9, types=(int, float), desc="Modulus of elast. (200 GPa)"
+        )
 
     def _setup(self):
-        assert self.options['ndim'] % 3 == 0, 'ndim must be divisible by 3'
+        assert self.options["ndim"] % 3 == 0, "ndim must be divisible by 3"
 
         # Width b
         self.xlimits[0::3, 0] = 0.01
@@ -52,37 +54,65 @@ class CantileverBeam(Problem):
         """
         ne, nx = x.shape
 
-        nelem = int(self.options['ndim'] / 3)
-        P = self.options['P']
-        E = self.options['E']
+        nelem = int(self.options["ndim"] / 3)
+        P = self.options["P"]
+        E = self.options["E"]
 
         y = np.zeros((ne, 1), complex)
         if kx is None:
             for ielem in range(nelem):
-                b = x[:, 3*ielem + 0]
-                h = x[:, 3*ielem + 1]
+                b = x[:, 3 * ielem + 0]
+                h = x[:, 3 * ielem + 1]
 
-                y[:, 0] += 12. / b / h ** 3 * np.sum(x[:, 2+3*ielem::3], axis=1) ** 3
-                y[:, 0] -= 12. / b / h ** 3 * np.sum(x[:, 5+3*ielem::3], axis=1) ** 3
+                y[:, 0] += (
+                    12.0 / b / h ** 3 * np.sum(x[:, 2 + 3 * ielem :: 3], axis=1) ** 3
+                )
+                y[:, 0] -= (
+                    12.0 / b / h ** 3 * np.sum(x[:, 5 + 3 * ielem :: 3], axis=1) ** 3
+                )
         else:
             kelem = int(np.floor(kx / 3))
             if kx % 3 == 0:
-                b = x[:, 3*kelem + 0]
-                h = x[:, 3*kelem + 1]
-                y[:, 0] += -12. / b ** 2 / h ** 3 * np.sum(x[:, 2 + 3*kelem::3], axis=1) ** 3
-                y[:, 0] -= -12. / b ** 2 / h ** 3 * np.sum(x[:, 5 + 3*kelem::3], axis=1) ** 3
+                b = x[:, 3 * kelem + 0]
+                h = x[:, 3 * kelem + 1]
+                y[:, 0] += (
+                    -12.0
+                    / b ** 2
+                    / h ** 3
+                    * np.sum(x[:, 2 + 3 * kelem :: 3], axis=1) ** 3
+                )
+                y[:, 0] -= (
+                    -12.0
+                    / b ** 2
+                    / h ** 3
+                    * np.sum(x[:, 5 + 3 * kelem :: 3], axis=1) ** 3
+                )
 
             elif kx % 3 == 1:
-                b = x[:, 3*kelem + 0]
-                h = x[:, 3*kelem + 1]
-                y[:, 0] += -36. / b / h ** 4 * np.sum(x[:, 2 + 3*kelem::3], axis=1) ** 3
-                y[:, 0] -= -36. / b / h ** 4 * np.sum(x[:, 5 + 3*kelem::3], axis=1) ** 3
+                b = x[:, 3 * kelem + 0]
+                h = x[:, 3 * kelem + 1]
+                y[:, 0] += (
+                    -36.0 / b / h ** 4 * np.sum(x[:, 2 + 3 * kelem :: 3], axis=1) ** 3
+                )
+                y[:, 0] -= (
+                    -36.0 / b / h ** 4 * np.sum(x[:, 5 + 3 * kelem :: 3], axis=1) ** 3
+                )
             elif kx % 3 == 2:
-                for ielem in range(kelem+1):
-                    b = x[:, 3*ielem + 0]
-                    h = x[:, 3*ielem + 1]
-                    y[:, 0] += 36. / b / h ** 3 * np.sum(x[:, 2+ 3*ielem::3], axis=1) ** 2
+                for ielem in range(kelem + 1):
+                    b = x[:, 3 * ielem + 0]
+                    h = x[:, 3 * ielem + 1]
+                    y[:, 0] += (
+                        36.0
+                        / b
+                        / h ** 3
+                        * np.sum(x[:, 2 + 3 * ielem :: 3], axis=1) ** 2
+                    )
                     if kelem > ielem:
-                       y[:, 0] -= 36. / b / h ** 3 * np.sum(x[:, 5 + 3*ielem::3], axis=1) ** 2
+                        y[:, 0] -= (
+                            36.0
+                            / b
+                            / h ** 3
+                            * np.sum(x[:, 5 + 3 * ielem :: 3], axis=1) ** 2
+                        )
 
-        return (P/3/E) * y
+        return (P / 3 / E) * y

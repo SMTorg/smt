@@ -9,8 +9,8 @@ import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 
-class SamplingMethod(object):
 
+class SamplingMethod(object):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -29,8 +29,11 @@ class SamplingMethod(object):
         >>> sampling = Random(xlimits=np.arange(2).reshape((1, 2)))
         """
         self.options = OptionsDictionary()
-        self.options.declare('xlimits', types=np.ndarray,
-            desc='The interval of the domain in each dimension with shape nx x 2 (required)')
+        self.options.declare(
+            "xlimits",
+            types=np.ndarray,
+            desc="The interval of the domain in each dimension with shape nx x 2 (required)",
+        )
         self._initialize()
         self.options.update(kwargs)
 
@@ -60,7 +63,7 @@ class SamplingMethod(object):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options['xlimits']
+        xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
 
         x = self._compute(nt)
@@ -85,4 +88,4 @@ class SamplingMethod(object):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        raise Exception('This sampling method has not been implemented correctly')
+        raise Exception("This sampling method has not been implemented correctly")

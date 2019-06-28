@@ -41,34 +41,38 @@ Usage
   from smt.sampling_methods import LHS
   
   # Construction of the DOE
-  fun = Sphere(ndim = 2)
-  sampling = LHS(xlimits=fun.xlimits,criterion = 'm')
+  fun = Sphere(ndim=2)
+  sampling = LHS(xlimits=fun.xlimits, criterion="m")
   xt = sampling(20)
   yt = fun(xt)
   # Compute the gradient
   for i in range(2):
-      yd = fun(xt,kx=i)
-      yt = np.concatenate((yt,yd),axis=1)
+      yd = fun(xt, kx=i)
+      yt = np.concatenate((yt, yd), axis=1)
   
   # Build the GEKPLS model
-  sm = GEKPLS(theta0=[1e-2],xlimits=fun.xlimits,extra_points=1,print_prediction = False)
-  sm.set_training_values(xt, yt[:,0])
+  sm = GEKPLS(
+      theta0=[1e-2], xlimits=fun.xlimits, extra_points=1, print_prediction=False
+  )
+  sm.set_training_values(xt, yt[:, 0])
   for i in range(2):
-      sm.set_training_derivatives(xt,yt[:, 1+i].reshape((yt.shape[0],1)),i)
+      sm.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
   sm.train()
   
   # Test the model
-  X = np.arange(fun.xlimits[0,0], fun.xlimits[0,1], .25)
-  Y = np.arange(fun.xlimits[1,0], fun.xlimits[1,1], .25)
+  X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+  Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
   X, Y = np.meshgrid(X, Y)
-  Z = np.zeros((X.shape[0],X.shape[1]))
+  Z = np.zeros((X.shape[0], X.shape[1]))
   
   for i in range(X.shape[0]):
       for j in range(X.shape[1]):
-          Z[i,j] = sm.predict_values(np.hstack((X[i,j],Y[i,j])).reshape((1,2)))
+          Z[i, j] = sm.predict_values(
+              np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+          )
   
   fig = plt.figure()
-  ax = fig.gca(projection='3d')
+  ax = fig.gca(projection="3d")
   surf = ax.plot_surface(X, Y, Z)
   
   plt.show()
@@ -89,7 +93,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0155997
+     Training - done. Time (sec):  0.0714998
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -136,18 +140,23 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
+     -  None
+     -  Regression function type
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
+     -  None
+     -  Correlation function type
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
   *  -  xlimits
      -  None
      -  None
@@ -158,11 +167,6 @@ Options
      -  None
      -  ['int']
      -  Number of principal components
-  *  -  theta0
-     -  [0.01]
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
   *  -  delta_x
      -  0.0001
      -  None

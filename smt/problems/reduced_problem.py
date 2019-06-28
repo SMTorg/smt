@@ -11,8 +11,8 @@ from six.moves import range
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem
 
-class ReducedProblem(Problem):
 
+class ReducedProblem(Problem):
     def __init__(self, problem, dims, w=0.2):
         """
         Arguments
@@ -30,19 +30,19 @@ class ReducedProblem(Problem):
 
         if isinstance(dims, int):
             self.dims = np.arange(dims)
-            assert dims <= problem.options['ndim']
+            assert dims <= problem.options["ndim"]
         elif isinstance(dims, (list, tuple, np.ndarray)):
             self.dims = np.array(dims, int)
-            assert np.max(dims) < problem.options['ndim']
+            assert np.max(dims) < problem.options["ndim"]
         else:
-            raise ValueError('dims is invalid')
+            raise ValueError("dims is invalid")
 
         self.options = OptionsDictionary()
-        self.options.declare('ndim', len(self.dims), types=int)
-        self.options.declare('return_complex', False, types=bool)
-        self.options.declare('name', 'R_'+self.problem.options['name'], types=str)
+        self.options.declare("ndim", len(self.dims), types=int)
+        self.options.declare("return_complex", False, types=bool)
+        self.options.declare("name", "R_" + self.problem.options["name"], types=str)
 
-        self.xlimits = np.zeros((self.options['ndim'], 2))
+        self.xlimits = np.zeros((self.options["ndim"], 2))
         for idim, idim_reduced in enumerate(self.dims):
             self.xlimits[idim, :] = problem.xlimits[idim_reduced, :]
 
@@ -63,11 +63,12 @@ class ReducedProblem(Problem):
         """
         ne, nx = x.shape
 
-        nx_prob = self.problem.options['ndim']
+        nx_prob = self.problem.options["ndim"]
         x_prob = np.zeros((ne, nx_prob), complex)
         for ix in range(nx_prob):
-            x_prob[:, ix] = (1 - self.w) * self.problem.xlimits[ix, 0] \
-                + self.w * self.problem.xlimits[ix, 1]
+            x_prob[:, ix] = (1 - self.w) * self.problem.xlimits[
+                ix, 0
+            ] + self.w * self.problem.xlimits[ix, 1]
 
         for ix in range(nx):
             x_prob[:, self.dims[ix]] = x[:, ix]

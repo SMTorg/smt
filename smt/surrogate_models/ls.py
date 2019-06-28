@@ -30,11 +30,15 @@ class LS(SurrogateModel):
         declare = self.options.declare
         supports = self.supports
 
-        declare('data_dir', values=None, types=str,
-                desc='Directory for loading / saving cached data; None means do not save or load')
+        declare(
+            "data_dir",
+            values=None,
+            types=str,
+            desc="Directory for loading / saving cached data; None means do not save or load",
+        )
 
-        self.name = 'LS'
-        supports['derivatives'] = True
+        self.name = "LS"
+        supports["derivatives"] = True
 
     ############################################################################
     # Model functions
@@ -51,21 +55,21 @@ class LS(SurrogateModel):
             y = pts[None][0][1]
 
         self.mod = linear_model.LinearRegression()
-        self.mod.fit(x,y)
+        self.mod.fit(x, y)
 
     def _train(self):
         """
         Train the model
         """
-        inputs = {'self': self}
-        with cached_operation(inputs, self.options['data_dir']) as outputs:
+        inputs = {"self": self}
+        with cached_operation(inputs, self.options["data_dir"]) as outputs:
             if outputs:
-                self.sol = outputs['sol']
+                self.sol = outputs["sol"]
             else:
                 self._new_train()
-                #outputs['sol'] = self.sol
+                # outputs['sol'] = self.sol
 
-    def _predict_values(self,x):
+    def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
 
@@ -101,6 +105,6 @@ class LS(SurrogateModel):
 
         # Initialization
         n_eval, n_features_x = x.shape
-        y = np.ones((n_eval,1)) * self.mod.coef_[0,kx]
+        y = np.ones((n_eval, 1)) * self.mod.coef_[0, kx]
 
         return y

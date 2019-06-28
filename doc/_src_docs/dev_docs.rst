@@ -14,7 +14,7 @@ Contributing to SMT consists of the following steps:
 - Add tests to the top-level ``tests`` directory following the existing examples and run tests (see `Testing`_ section below) 
 - Add a documentation page in the appropriate directory, e.g., ``doc/_src_docs/surrogate_models/rbf.rstx``, using the existing docs as a reference (see `Building the documentation`_ section below).
 - Add an entry in the table of contents so that readers can find the documentation page, e.g., in ``doc/_src_docs/surrogate_model.rstx``.
-- Commit the changes, push to the forked version of SMT and issue a pull request for review and comments from the other developers of SMT and the larger community
+- Test and commit the changes, push to the forked version of SMT and issue a pull request for review and comments from the other developers of SMT and the larger community
 
 
 Developer API

@@ -15,14 +15,15 @@ from smt.problems.cantilever_beam import CantileverBeam
 
 
 class NdimCantileverBeam(Problem):
-
     def __init__(self, ndim=1, w=0.2):
-        self.problem = ReducedProblem(CantileverBeam(ndim=3*ndim), np.arange(1, 3*ndim, 3), w=w)
+        self.problem = ReducedProblem(
+            CantileverBeam(ndim=3 * ndim), np.arange(1, 3 * ndim, 3), w=w
+        )
 
         self.options = OptionsDictionary()
-        self.options.declare('ndim', ndim, types=int)
-        self.options.declare('return_complex', False, types=bool)
-        self.options.declare('name', 'NdimCantileverBeam', types=str)
+        self.options.declare("ndim", ndim, types=int)
+        self.options.declare("return_complex", False, types=bool)
+        self.options.declare("name", "NdimCantileverBeam", types=str)
 
         self.xlimits = self.problem.xlimits
 

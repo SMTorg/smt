@@ -37,22 +37,22 @@ Usage
   
   from smt.surrogate_models import KRG
   
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
   sm = KRG(theta0=[1e-2])
   sm.set_training_values(xt, yt)
   sm.train()
   
   num = 100
-  x = np.linspace(0., 4., num)
+  x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
-  plt.plot(xt, yt, 'o')
+  plt.plot(xt, yt, "o")
   plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
   plt.show()
   
 ::
@@ -71,7 +71,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0070000
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: krg_Test_test_krg.png
@@ -129,20 +129,20 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
+     -  None
+     -  Regression function type
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
+     -  None
+     -  Correlation function type
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
   *  -  theta0
-     -  None
+     -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters

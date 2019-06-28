@@ -96,24 +96,30 @@ Usage (RMTB)
   
   from smt.surrogate_models import RMTB
   
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
-  xlimits = np.array([[0., 4.]])
+  xlimits = np.array([[0.0, 4.0]])
   
-  sm = RMTB(xlimits=xlimits, order=4, num_ctrl_pts=20, energy_weight=1e-15, regularization_weight=0.)
+  sm = RMTB(
+      xlimits=xlimits,
+      order=4,
+      num_ctrl_pts=20,
+      energy_weight=1e-15,
+      regularization_weight=0.0,
+  )
   sm.set_training_values(xt, yt)
   sm.train()
   
   num = 100
-  x = np.linspace(0., 4., num)
+  x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
-  plt.plot(xt, yt, 'o')
+  plt.plot(xt, yt, "o")
   plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
   plt.show()
   
 ::
@@ -136,26 +142,26 @@ Usage (RMTB)
            Computing dof2coeff ...
            Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0005000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0000000
+           Computing energy terms - done. Time (sec):  0.0009999
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0000000
+           Computing approximation terms - done. Time (sec):  0.0005002
+        Pre-computing matrices - done. Time (sec):  0.0020001
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 7.406180418e-16 1.135977162e-15
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0000000
+              Solving for output 0 - done. Time (sec):  0.0039999
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0039999
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.649511987e-15 1.135977162e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0039999
+     Training - done. Time (sec):  0.0070000
   ___________________________________________________________________________
      
    Evaluation
@@ -182,24 +188,29 @@ Usage (RMTC)
   
   from smt.surrogate_models import RMTC
   
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
-  xlimits = np.array([[0., 4.]])
+  xlimits = np.array([[0.0, 4.0]])
   
-  sm = RMTC(xlimits=xlimits, num_elements=20, energy_weight=1e-15, regularization_weight=0.)
+  sm = RMTC(
+      xlimits=xlimits,
+      num_elements=20,
+      energy_weight=1e-15,
+      regularization_weight=0.0,
+  )
   sm.set_training_values(xt, yt)
   sm.train()
   
   num = 100
-  x = np.linspace(0., 4., num)
+  x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
-  plt.plot(xt, yt, 'o')
+  plt.plot(xt, yt, "o")
   plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
   plt.show()
   
 ::
@@ -220,28 +231,28 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000000
+           Computing dof2coeff - done. Time (sec):  0.0005002
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0005000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0000000
+           Computing energy terms - done. Time (sec):  0.0010002
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0000000
+           Computing approximation terms - done. Time (sec):  0.0005000
+        Pre-computing matrices - done. Time (sec):  0.0025003
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.991721882e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0156000
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0156000
+              Solving for output 0 - done. Time (sec):  0.0039999
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0044999
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0156000
-     Training - done. Time (sec):  0.0156000
+              Solving for output 0 - done. Time (sec):  0.0005000
+           Solving nonlinear problem (n=42) - done. Time (sec):  0.0005000
+        Solving for degrees of freedom - done. Time (sec):  0.0049999
+     Training - done. Time (sec):  0.0080001
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +260,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: rmts_Test_test_rmtc.png

@@ -23,6 +23,7 @@ from smt.utils.neural_net.data import normalize_data, load_csv
 
 # ------------------------------------ S U P P O R T   F U N C T I O N S -----------------------------------------------
 
+
 def initialize_parameters(layer_dims=None):
     """
     Initialize neural network given topology using "He" initialization
@@ -50,7 +51,9 @@ def initialize_parameters(layer_dims=None):
     # Parameters
     parameters = {}
     for l in range(1, number_layers + 1):
-        parameters["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * np.sqrt(1. / layer_dims[l - 1])
+        parameters["W" + str(l)] = np.random.randn(
+            layer_dims[l], layer_dims[l - 1]
+        ) * np.sqrt(1.0 / layer_dims[l - 1])
         parameters["b" + str(l)] = np.zeros((layer_dims[l], 1))
 
     return parameters
@@ -58,8 +61,8 @@ def initialize_parameters(layer_dims=None):
 
 # ------------------------------------ C L A S S -----------------------------------------------------------------------
 
-class Model(object):
 
+class Model(object):
     @property
     def number_of_inputs(self):
         return self._n_x
@@ -94,9 +97,9 @@ class Model(object):
 
     @property
     def training_data(self):
-        X = self._X_norm * self._scale_factors['x'][1] + self._scale_factors['x'][0]
-        Y = self._Y_norm * self._scale_factors['y'][1] + self._scale_factors['y'][0]
-        J = self._J_norm * self._scale_factors['y'][1] / self._scale_factors['x'][1]
+        X = self._X_norm * self._scale_factors["x"][1] + self._scale_factors["x"][0]
+        Y = self._Y_norm * self._scale_factors["y"][1] + self._scale_factors["y"][0]
+        J = self._J_norm * self._scale_factors["y"][1] / self._scale_factors["x"][1]
         return X, Y, J
 
     def __init__(self, **kwargs):
@@ -104,7 +107,7 @@ class Model(object):
         self._layer_dims = list()
         self._activations = list()
         self._training_history = dict()
-        self._scale_factors = {'x': (1, 1), 'y': (1, 1)}
+        self._scale_factors = {"x": (1, 1), "y": (1, 1)}
         self._X_norm = None
         self._Y_norm = None
         self._J_norm = None
@@ -122,25 +125,41 @@ class Model(object):
         layer_dims = [n_x] + [wide] * deep + [n_y]
         parameters = initialize_parameters(layer_dims)
         activations = [Tanh()] * deep + [Linear()]
-        attributes = {"_parameters": parameters,
-                      "_activations": activations,
-                      "_layer_dims": layer_dims,
-                      "_n_x": n_x,
-                      "_n_y": n_y}
+        attributes = {
+            "_parameters": parameters,
+            "_activations": activations,
+            "_layer_dims": layer_dims,
+            "_n_x": n_x,
+            "_n_y": n_y,
+        }
         return cls(**attributes)
 
     def load_parameters(self, parameters):
         L = len(parameters) // 2
         deep = L - 1
-        wide = parameters['W1'].shape[0]
-        self._n_x = parameters['W1'].shape[1]
-        self._n_y = parameters['W' + str(L)].shape[0]
+        wide = parameters["W1"].shape[0]
+        self._n_x = parameters["W1"].shape[1]
+        self._n_y = parameters["W" + str(L)].shape[0]
         self._layer_dims = [self._n_x] + [wide] * deep + [self._n_y]
         self._activations = [Tanh()] * deep + [Linear()]
         self._parameters = parameters
 
-    def train(self, X, Y, J=None, num_iterations=100, mini_batch_size=None, num_epochs=1,
-              alpha=0.01, beta1=0.9, beta2=0.99, lambd=0., gamma=0., seed=None, silent=False):
+    def train(
+        self,
+        X,
+        Y,
+        J=None,
+        num_iterations=100,
+        mini_batch_size=None,
+        num_epochs=1,
+        alpha=0.01,
+        beta1=0.9,
+        beta2=0.99,
+        lambd=0.0,
+        gamma=0.0,
+        seed=None,
+        silent=False,
+    ):
         """
         Train the neural network
 
@@ -178,26 +197,44 @@ class Model(object):
         else:
             is_print = True
         for e in range(num_epochs):
-            self._training_history['epoch_' + str(e)] = dict()
-            mini_batches = random_mini_batches(self._X_norm, self._Y_norm, self._J_norm, mini_batch_size, seed)
+            self._training_history["epoch_" + str(e)] = dict()
+            mini_batches = random_mini_batches(
+                self._X_norm, self._Y_norm, self._J_norm, mini_batch_size, seed
+            )
             for b, mini_batch in enumerate(mini_batches):
 
                 # Get training data from this mini-batch
                 X, Y, J = mini_batch
 
                 # Optimization (learn parameters by minimizing prediction error)
-                optimizer = Adam.initialize(initial_guess=self._parameters,
-                                            cost_function=lambda p: self.cost(p, self.activations, X, Y, J, lambd, gamma),
-                                            grad_function=lambda p: self.grad(p, self.activations, X, Y, J, lambd, gamma),
-                                            learning_rate=alpha, beta1=beta1, beta2=beta2)
-                self._parameters = optimizer.optimize(max_iter=num_iterations, is_print=is_print)
+                optimizer = Adam.initialize(
+                    initial_guess=self._parameters,
+                    cost_function=lambda p: self.cost(
+                        p, self.activations, X, Y, J, lambd, gamma
+                    ),
+                    grad_function=lambda p: self.grad(
+                        p, self.activations, X, Y, J, lambd, gamma
+                    ),
+                    learning_rate=alpha,
+                    beta1=beta1,
+                    beta2=beta2,
+                )
+                self._parameters = optimizer.optimize(
+                    max_iter=num_iterations, is_print=is_print
+                )
 
                 # Compute average cost and print output
                 avg_cost = np.mean(optimizer.cost_history).squeeze()
-                self._training_history['epoch_' + str(e)]['batch_' + str(b)] = optimizer.cost_history
+                self._training_history["epoch_" + str(e)][
+                    "batch_" + str(b)
+                ] = optimizer.cost_history
 
                 if not silent:
-                    print("epoch = {:d}, mini-batch = {:d}, avg cost = {:6.3f}".format(e, b, avg_cost))
+                    print(
+                        "epoch = {:d}, mini-batch = {:d}, avg cost = {:6.3f}".format(
+                            e, b, avg_cost
+                        )
+                    )
 
     def evaluate(self, X):
         """
@@ -210,14 +247,16 @@ class Model(object):
 
         number_of_examples = X.shape[1]
 
-        mu_x, sigma_x = self._scale_factors['x']
-        mu_y, sigma_y = self._scale_factors['y']
+        mu_x, sigma_x = self._scale_factors["x"]
+        mu_y, sigma_y = self._scale_factors["y"]
 
         X_norm = (X - mu_x) / sigma_x
 
         Y_norm, _ = L_model_forward(X_norm, self.parameters, self.activations)
 
-        Y = (Y_norm * sigma_y + mu_y).reshape(self.number_of_outputs, number_of_examples)
+        Y = (Y_norm * sigma_y + mu_y).reshape(
+            self.number_of_outputs, number_of_examples
+        )
 
         return Y
 
@@ -239,16 +278,20 @@ class Model(object):
             for epoch, batches in self._training_history.items():
                 for batch, history in batches.items():
                     for iteration, cost in enumerate(history):
-                        print("{}, {}, iteration_{}, cost = {}".format(epoch, batch, iteration, cost))
+                        print(
+                            "{}, {}, iteration_{}, cost = {}".format(
+                                epoch, batch, iteration, cost
+                            )
+                        )
 
-    def plot_training_history(self, title='Training History', is_show_plot=True):
+    def plot_training_history(self, title="Training History", is_show_plot=True):
         """
         Plot the convergence history of the neural network learning algorithm
         """
         if self.training_history:
             if len(self.training_history.keys()) > 1:
-                x_label = 'epoch'
-                y_label = 'avg cost'
+                x_label = "epoch"
+                y_label = "avg cost"
                 y = []
                 for epoch, batches in self.training_history.items():
                     avg_costs = []
@@ -258,19 +301,19 @@ class Model(object):
                     y.append(np.mean(np.array(avg_costs)))
                 y = np.array(y)
                 x = np.arange(len(y))
-            elif len(self.training_history['epoch_0']) > 1:
-                x_label = 'mini-batch'
-                y_label = 'avg cost'
+            elif len(self.training_history["epoch_0"]) > 1:
+                x_label = "mini-batch"
+                y_label = "avg cost"
                 y = []
-                for batch, values in self.training_history['epoch_0'].items():
+                for batch, values in self.training_history["epoch_0"].items():
                     avg_cost = np.mean(np.array(values))
                     y.append(avg_cost)
                 y = np.array(y)
                 x = np.arange(y.size)
             else:
-                x_label = 'optimizer iteration'
-                y_label = 'cost'
-                y = np.array(self.training_history['epoch_0']['batch_0'])
+                x_label = "optimizer iteration"
+                y_label = "cost"
+                y = np.array(self.training_history["epoch_0"]["batch_0"])
                 x = np.arange(y.size)
 
             plt.plot(x, y)
@@ -309,12 +352,21 @@ class Model(object):
         self._X_norm = X_norm
         self._Y_norm = Y_norm
         self._J_norm = J_norm
-        self._scale_factors['x'] = (mu_x, sigma_x)
-        self._scale_factors['y'] = (mu_y, sigma_y)
+        self._scale_factors["x"] = (mu_x, sigma_x)
+        self._scale_factors["y"] = (mu_y, sigma_y)
         self._n_x, self._m = X.shape
         self._n_y = Y.shape[0]
 
-    def cost(self, parameters, activations, x, y_true=None, dy_true=None, lambd=0., gamma=0.):
+    def cost(
+        self,
+        parameters,
+        activations,
+        x,
+        y_true=None,
+        dy_true=None,
+        lambd=0.0,
+        gamma=0.0,
+    ):
         """
         Cost function for training
 
@@ -329,11 +381,20 @@ class Model(object):
         """
         y_pred, caches = L_model_forward(x, parameters, activations)
         dy_pred, dy_caches = L_grads_forward(x, parameters, activations)
-        w = [value for name, value in parameters.items() if 'W' in name]
+        w = [value for name, value in parameters.items() if "W" in name]
         cost = lse(y_true, y_pred, lambd, w, dy_true, dy_pred, gamma)
         return cost
 
-    def grad(self, parameters, activations, x, y_true=None, dy_true=None, lambd=0., gamma=0.):
+    def grad(
+        self,
+        parameters,
+        activations,
+        x,
+        y_true=None,
+        dy_true=None,
+        lambd=0.0,
+        gamma=0.0,
+    ):
         """
         Gradient of cost function for training
 
@@ -348,7 +409,9 @@ class Model(object):
         """
         y_pred, caches = L_model_forward(x, parameters, activations)
         dy_pred, dy_caches = L_grads_forward(x, parameters, activations)
-        grad = L_model_backward(y_pred, y_true, dy_pred, dy_true, caches, dy_caches, lambd, gamma)
+        grad = L_model_backward(
+            y_pred, y_true, dy_pred, dy_true, caches, dy_caches, lambd, gamma
+        )
         return grad
 
     def gradient(self, X):
@@ -362,15 +425,17 @@ class Model(object):
 
         number_of_examples = X.shape[1]
 
-        mu_x, sigma_x = self._scale_factors['x']
-        mu_y, sigma_y = self._scale_factors['y']
+        mu_x, sigma_x = self._scale_factors["x"]
+        mu_y, sigma_y = self._scale_factors["y"]
 
         X_norm = (X - mu_x) / sigma_x
 
         Y_norm, _ = L_model_forward(X_norm, self.parameters, self.activations)
         J_norm, _ = L_grads_forward(X_norm, self.parameters, self.activations)
 
-        J = (J_norm * sigma_y / sigma_x).reshape(self.number_of_outputs, self.number_of_inputs, number_of_examples)
+        J = (J_norm * sigma_y / sigma_x).reshape(
+            self.number_of_outputs, self.number_of_inputs, number_of_examples
+        )
 
         return J
 
@@ -396,24 +461,38 @@ class Model(object):
 
         if type(J_test) == np.ndarray:
             test = J_test[response, partial, :].reshape((1, number_test_examples))
-            test_pred = J_pred_test[response, partial, :].reshape((1, number_test_examples))
-            train = J_train[response, partial, :].reshape((1, self.number_training_examples))
-            train_pred = J_pred_train[response, partial, :].reshape((1, self.number_training_examples))
-            title = 'Goodness of fit for dY' + str(response) + '/dX' + str(partial)
+            test_pred = J_pred_test[response, partial, :].reshape(
+                (1, number_test_examples)
+            )
+            train = J_train[response, partial, :].reshape(
+                (1, self.number_training_examples)
+            )
+            train_pred = J_pred_train[response, partial, :].reshape(
+                (1, self.number_training_examples)
+            )
+            title = "Goodness of fit for dY" + str(response) + "/dX" + str(partial)
         else:
             test = Y_test[response, :].reshape((1, number_test_examples))
             test_pred = Y_pred_test[response, :].reshape((1, number_test_examples))
             train = Y_train[response, :].reshape((1, self.number_training_examples))
-            train_pred = Y_pred_train[response, :].reshape((1, self.number_training_examples))
-            title = 'Goodness of fit for Y' + str(response)
+            train_pred = Y_pred_train[response, :].reshape(
+                (1, self.number_training_examples)
+            )
+            title = "Goodness of fit for Y" + str(response)
 
         metrics = dict()
-        metrics['R_squared'] = np.round(rsquare(test_pred, test), 2).squeeze()
-        metrics['std_error'] = np.round(np.std(test_pred - test).reshape(1, 1), 2).squeeze()
-        metrics['avg_error'] = np.round(np.mean(test_pred - test).reshape(1, 1), 2).squeeze()
+        metrics["R_squared"] = np.round(rsquare(test_pred, test), 2).squeeze()
+        metrics["std_error"] = np.round(
+            np.std(test_pred - test).reshape(1, 1), 2
+        ).squeeze()
+        metrics["avg_error"] = np.round(
+            np.mean(test_pred - test).reshape(1, 1), 2
+        ).squeeze()
 
         # Reference line
-        y = np.linspace(min(np.min(test), np.min(train)), max(np.max(test), np.max(train)), 100)
+        y = np.linspace(
+            min(np.min(test), np.min(train)), max(np.max(test), np.max(train)), 100
+        )
 
         # Prepare to plot
         fig = plt.figure(figsize=(12, 6))
@@ -423,27 +502,34 @@ class Model(object):
         # Plot
         ax1 = fig.add_subplot(spec[0, 0])
         ax1.plot(y, y)
-        ax1.scatter(test, test_pred, s=20, c='r')
-        ax1.scatter(train, train_pred, s=100, c='k', marker="+")
+        ax1.scatter(test, test_pred, s=20, c="r")
+        ax1.scatter(train, train_pred, s=100, c="k", marker="+")
         plt.legend(["perfect", "test", "train"])
         plt.xlabel("actual")
         plt.ylabel("predicted")
-        plt.title("RSquare = " + str(metrics['R_squared']))
+        plt.title("RSquare = " + str(metrics["R_squared"]))
 
         ax2 = fig.add_subplot(spec[0, 1])
         error = (test_pred - test).T
         weights = np.ones(error.shape) / test_pred.shape[1]
-        ax2.hist(error, weights=weights, facecolor='g', alpha=0.75)
-        plt.xlabel('Absolute Prediction Error')
-        plt.ylabel('Probability')
-        plt.title('$\mu$=' + str(metrics['avg_error']) + ', $\sigma=$' + str(metrics['std_error']))
+        ax2.hist(error, weights=weights, facecolor="g", alpha=0.75)
+        plt.xlabel("Absolute Prediction Error")
+        plt.ylabel("Probability")
+        plt.title(
+            "$\mu$="
+            + str(metrics["avg_error"])
+            + ", $\sigma=$"
+            + str(metrics["std_error"])
+        )
         plt.grid(True)
         plt.show()
 
         return metrics
 
 
-def run_example(train_csv, test_csv, inputs, outputs, partials=None):  # pragma: no cover
+def run_example(
+    train_csv, test_csv, inputs, outputs, partials=None
+):  # pragma: no cover
     """
     Example using 2D Rastrigin function (egg-crate-looking function)
 
@@ -461,14 +547,12 @@ def run_example(train_csv, test_csv, inputs, outputs, partials=None):  # pragma:
     """
 
     # Sample data
-    X_train, Y_train, J_train = load_csv(file=train_csv,
-                                         inputs=inputs,
-                                         outputs=outputs,
-                                         partials=partials)
-    X_test, Y_test, J_test = load_csv(file=test_csv,
-                                         inputs=inputs,
-                                         outputs=outputs,
-                                         partials=partials)
+    X_train, Y_train, J_train = load_csv(
+        file=train_csv, inputs=inputs, outputs=outputs, partials=partials
+    )
+    X_test, Y_test, J_test = load_csv(
+        file=test_csv, inputs=inputs, outputs=outputs, partials=partials
+    )
 
     # Hyper-parameters
     alpha = 0.05
@@ -483,28 +567,34 @@ def run_example(train_csv, test_csv, inputs, outputs, partials=None):  # pragma:
     num_epochs = 50
 
     # Training
-    model = Model.initialize(n_x=X_train.shape[0], n_y=Y_train.shape[0], deep=deep, wide=wide)
-    model.train(X=X_train,
-                Y=Y_train,
-                J=J_train,
-                alpha=alpha,
-                lambd=lambd,
-                gamma=gamma,
-                beta1=beta1,
-                beta2=beta2,
-                mini_batch_size=mini_batch_size,
-                num_iterations=num_iterations,
-                num_epochs=num_epochs,
-                silent=False)
+    model = Model.initialize(
+        n_x=X_train.shape[0], n_y=Y_train.shape[0], deep=deep, wide=wide
+    )
+    model.train(
+        X=X_train,
+        Y=Y_train,
+        J=J_train,
+        alpha=alpha,
+        lambd=lambd,
+        gamma=gamma,
+        beta1=beta1,
+        beta2=beta2,
+        mini_batch_size=mini_batch_size,
+        num_iterations=num_iterations,
+        num_epochs=num_epochs,
+        silent=False,
+    )
     model.plot_training_history()
-    model.goodness_of_fit(X_test, Y_test)  # model.goodness_of_fit(X_test, Y_test, J_test, partial=1)
+    model.goodness_of_fit(
+        X_test, Y_test
+    )  # model.goodness_of_fit(X_test, Y_test, J_test, partial=1)
 
 
 if __name__ == "__main__":  # pragma: no cover
-    run_example(train_csv='train_data.csv',
-                test_csv='train_data.csv',
-                inputs=["X[0]", "X[1]"],
-                outputs=["Y[0]"],
-                partials=[["J[0][0]", "J[0][1]"]])
-
-
+    run_example(
+        train_csv="train_data.csv",
+        test_csv="train_data.csv",
+        inputs=["X[0]", "X[1]"],
+        outputs=["Y[0]"],
+        partials=[["J[0][0]", "J[0][1]"]],
+    )

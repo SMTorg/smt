@@ -1,9 +1,9 @@
-'''
+"""
 Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import division
 
@@ -49,34 +49,51 @@ class SurrogateModel(object):
         --------
         >>> from smt.surrogate_models import RBF
         >>> sm = RBF(print_global=False)
-        """        
+        """
         self.options = OptionsDictionary()
-        
+
         self.supports = supports = {}
-        supports['training_derivatives'] = False
-        supports['derivatives'] = False
-        supports['output_derivatives'] = False
-        supports['adjoint_api'] = False
-        supports['variances'] = False
-        
+        supports["training_derivatives"] = False
+        supports["derivatives"] = False
+        supports["output_derivatives"] = False
+        supports["adjoint_api"] = False
+        supports["variances"] = False
+
         declare = self.options.declare
 
-        declare('print_global', True, types=bool,
-                desc='Global print toggle. If False, all printing is suppressed')
-        declare('print_training', True, types=bool,
-                desc='Whether to print training information')
-        declare('print_prediction', True, types=bool,
-                desc='Whether to print prediction information')
-        declare('print_problem', True, types=bool,
-                desc='Whether to print problem information')
-        declare('print_solver', True, types=bool,
-                desc='Whether to print solver information')
+        declare(
+            "print_global",
+            True,
+            types=bool,
+            desc="Global print toggle. If False, all printing is suppressed",
+        )
+        declare(
+            "print_training",
+            True,
+            types=bool,
+            desc="Whether to print training information",
+        )
+        declare(
+            "print_prediction",
+            True,
+            types=bool,
+            desc="Whether to print prediction information",
+        )
+        declare(
+            "print_problem",
+            True,
+            types=bool,
+            desc="Whether to print problem information",
+        )
+        declare(
+            "print_solver", True, types=bool, desc="Whether to print solver information"
+        )
 
         self._initialize()
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)
         self.printer = Printer()
-        
+
     def set_training_values(self, xt, yt, name=None):
         """
         Set training data (values).
@@ -91,11 +108,13 @@ class SurrogateModel(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        xt = check_2d_array(xt, 'xt')
-        yt = check_2d_array(yt, 'yt')
+        xt = check_2d_array(xt, "xt")
+        yt = check_2d_array(yt, "yt")
 
         if xt.shape[0] != yt.shape[0]:
-            raise ValueError('the first dimension of xt and yt must have the same length')
+            raise ValueError(
+                "the first dimension of xt and yt must have the same length"
+            )
 
         self.nt = xt.shape[0]
         self.nx = xt.shape[1]
@@ -115,20 +134,22 @@ class SurrogateModel(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        yt = check_2d_array(yt, 'yt')
+        yt = check_2d_array(yt, "yt")
 
         kx = 0
 
         if kx not in self.training_points[name]:
             raise ValueError(
-                'The training points must be set first with set_training_values ' +
-                'before calling update_training_values.')
+                "The training points must be set first with set_training_values "
+                + "before calling update_training_values."
+            )
 
         xt = self.training_points[name][kx][0]
         if xt.shape[0] != yt.shape[0]:
             raise ValueError(
-                'The number of training points does not agree with the earlier call of ' +
-                'set_training_values.')
+                "The number of training points does not agree with the earlier call of "
+                + "set_training_values."
+            )
 
         self.training_points[name][kx][1] = np.array(yt)
 
@@ -148,19 +169,20 @@ class SurrogateModel(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        check_support(self, 'training_derivatives')
+        check_support(self, "training_derivatives")
 
-        xt = check_2d_array(xt, 'xt')
-        dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
+        xt = check_2d_array(xt, "xt")
+        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
 
         if xt.shape[0] != dyt_dxt.shape[0]:
-            raise ValueError('the first dimension of xt and dyt_dxt must have the same length')
+            raise ValueError(
+                "the first dimension of xt and dyt_dxt must have the same length"
+            )
 
         if not isinstance(kx, int):
-            raise ValueError('kx must be an int')
+            raise ValueError("kx must be an int")
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
-
 
     def update_training_derivatives(self, dyt_dxt, kx, name=None):
         """
@@ -176,20 +198,22 @@ class SurrogateModel(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        check_support(self, 'training_derivatives')
+        check_support(self, "training_derivatives")
 
-        dyt_dxt = check_2d_array(dyt_dxt, 'dyt_dxt')
+        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
 
         if kx not in self.training_points[name]:
             raise ValueError(
-                'The training points must be set first with set_training_values ' +
-                'before calling update_training_values.')
+                "The training points must be set first with set_training_values "
+                + "before calling update_training_values."
+            )
 
         xt = self.training_points[name][kx][0]
         if xt.shape[0] != dyt_dxt.shape[0]:
             raise ValueError(
-                'The number of training points does not agree with the earlier call of ' +
-                'set_training_values.')
+                "The number of training points does not agree with the earlier call of "
+                + "set_training_values."
+            )
 
         self.training_points[name][kx + 1][1] = np.array(dyt_dxt)
 
@@ -199,24 +223,28 @@ class SurrogateModel(object):
         """
         n_exact = self.training_points[None][0][0].shape[0]
 
-        self.printer.active = self.options['print_global']
+        self.printer.active = self.options["print_global"]
         self.printer._line_break()
         self.printer._center(self.name)
 
-        self.printer.active = self.options['print_global'] and self.options['print_problem']
-        self.printer._title('Problem size')
-        self.printer('   %-25s : %i' % ('# training points.', n_exact))
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_problem"]
+        )
+        self.printer._title("Problem size")
+        self.printer("   %-25s : %i" % ("# training points.", n_exact))
         self.printer()
 
-        self.printer.active = self.options['print_global'] and self.options['print_training']
-        if self.name == 'MixExp':
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_training"]
+        )
+        if self.name == "MixExp":
             # Mixture of experts model
-            self.printer._title('Training of the Mixture of experts')
+            self.printer._title("Training of the Mixture of experts")
         else:
-            self.printer._title('Training')
+            self.printer._title("Training")
 
-        #Train the model using the specified model-method
-        with self.printer._timed_context('Training', 'training'):
+        # Train the model using the specified model-method
+        with self.printer._timed_context("Training", "training"):
             self._train()
 
     def predict_values(self, x):
@@ -233,26 +261,28 @@ class SurrogateModel(object):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        x = check_2d_array(x, 'x')
+        x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
-        self.printer.active = self.options['print_global'] and self.options['print_prediction']
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
 
-        if self.name == 'MixExp':
+        if self.name == "MixExp":
             # Mixture of experts model
-            self.printer._title('Evaluation of the Mixture of experts')
+            self.printer._title("Evaluation of the Mixture of experts")
         else:
-            self.printer._title('Evaluation')
-        self.printer('   %-12s : %i' % ('# eval points.', n))
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
         self.printer()
 
-        #Evaluate the unknown points using the specified model-method
-        with self.printer._timed_context('Predicting', key='prediction'):
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
             y = self._predict_values(x)
 
-        time_pt = self.printer._time('prediction')[-1] / n
+        time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
-        self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
 
@@ -272,27 +302,29 @@ class SurrogateModel(object):
         dy_dx : np.ndarray[nt, ny]
             Derivatives.
         """
-        check_support(self, 'derivatives')
-        x = check_2d_array(x, 'x')
+        check_support(self, "derivatives")
+        x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
-        self.printer.active = self.options['print_global'] and self.options['print_prediction']
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
 
-        if self.name == 'MixExp':
+        if self.name == "MixExp":
             # Mixture of experts model
-            self.printer._title('Evaluation of the Mixture of experts')
+            self.printer._title("Evaluation of the Mixture of experts")
         else:
-            self.printer._title('Evaluation')
-        self.printer('   %-12s : %i' % ('# eval points.', n))
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
         self.printer()
 
-        #Evaluate the unknown points using the specified model-method
-        with self.printer._timed_context('Predicting', key='prediction'):
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
             y = self._predict_derivatives(x, kx)
 
-        time_pt = self.printer._time('prediction')[-1] / n
+        time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
-        self.printer('Prediction time/pt. (sec) : %10.7f' %  time_pt)
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
 
         return y.reshape((n, self.ny))
@@ -312,7 +344,7 @@ class SurrogateModel(object):
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
-        check_support(self, 'output_derivatives')
+        check_support(self, "output_derivatives")
         check_nx(self.nx, x)
 
         dy_dyt = self._predict_output_derivatives(x)
@@ -332,7 +364,7 @@ class SurrogateModel(object):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
-        check_support(self, 'variances')
+        check_support(self, "variances")
         check_nx(self.nx, x)
         n = x.shape[0]
         s2 = self._predict_variances(x)
@@ -369,7 +401,7 @@ class SurrogateModel(object):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        raise Exception('This surrogate model is incorrectly implemented')
+        raise Exception("This surrogate model is incorrectly implemented")
 
     def _predict_derivatives(self, x, kx):
         """
@@ -394,7 +426,7 @@ class SurrogateModel(object):
         dy_dx : np.ndarray[nt, ny]
             Derivatives.
         """
-        check_support(self, 'derivatives', fail=True)
+        check_support(self, "derivatives", fail=True)
 
     def _predict_output_derivatives(self, x):
         """
@@ -418,7 +450,7 @@ class SurrogateModel(object):
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
-        check_support(self, 'output_derivatives', fail=True)
+        check_support(self, "output_derivatives", fail=True)
 
     def _predict_variances(self, x):
         """
@@ -441,4 +473,4 @@ class SurrogateModel(object):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
-        check_support(self, 'variances', fail=True)
+        check_support(self, "variances", fail=True)

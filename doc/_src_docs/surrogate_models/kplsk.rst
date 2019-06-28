@@ -31,22 +31,22 @@ Usage
   
   from smt.surrogate_models import KPLSK
   
-  xt = np.array([0., 1., 2., 3., 4.])
-  yt = np.array([0., 1., 1.5, 0.5, 1.0])
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
   sm = KPLSK(theta0=[1e-2])
   sm.set_training_values(xt, yt)
   sm.train()
   
   num = 100
-  x = np.linspace(0., 4., num)
+  x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
-  yy = sm.predict_derivatives(xt,0)
-  plt.plot(xt, yt, 'o')
+  yy = sm.predict_derivatives(xt, 0)
+  plt.plot(xt, yt, "o")
   plt.plot(x, y)
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.legend(['Training data', 'Prediction'])
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
   plt.show()
   
 ::
@@ -65,7 +65,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0156000
+     Training - done. Time (sec):  0.0114999
   ___________________________________________________________________________
      
    Evaluation
@@ -134,25 +134,25 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  ['function']
-     -  regr. term
+     -  None
+     -  Regression function type
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp']
-     -  ['function']
-     -  type of corr. func.
+     -  None
+     -  Correlation function type
   *  -  data_dir
      -  None
      -  None
      -  ['str']
      -  Directory for loading / saving cached data; None means do not save or load
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components

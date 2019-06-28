@@ -1,8 +1,8 @@
-'''
+"""
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
-'''
+"""
 
 from __future__ import print_function, division
 import numpy as np
@@ -10,19 +10,37 @@ import unittest
 
 from six.moves import range
 
-from smt.problems import CantileverBeam, Sphere, ReducedProblem, RobotArm, Rosenbrock, Branin, LpNorm
-from smt.problems import TensorProduct, TorsionVibration, WaterFlow, WeldedBeam, WingWeight
-from smt.problems import NdimCantileverBeam, NdimRobotArm, NdimRosenbrock, NdimStepFunction
+from smt.problems import (
+    CantileverBeam,
+    Sphere,
+    ReducedProblem,
+    RobotArm,
+    Rosenbrock,
+    Branin,
+    LpNorm,
+)
+from smt.problems import (
+    TensorProduct,
+    TorsionVibration,
+    WaterFlow,
+    WeldedBeam,
+    WingWeight,
+)
+from smt.problems import (
+    NdimCantileverBeam,
+    NdimRobotArm,
+    NdimRosenbrock,
+    NdimStepFunction,
+)
 from smt.utils.sm_test_case import SMTestCase
 
 
 class Test(SMTestCase):
-
     def run_test(self, problem):
-        problem.options['return_complex'] = True
+        problem.options["return_complex"] = True
 
         # Test xlimits
-        ndim = problem.options['ndim']
+        ndim = problem.options["ndim"]
         xlimits = problem.xlimits
         self.assertEqual(xlimits.shape, (ndim, 2))
 
@@ -63,18 +81,31 @@ class Test(SMTestCase):
                 dydx_AN[:] = problem(x, idim)[:, iy]
 
                 abs_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN)
-                rel_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN) / np.linalg.norm(dydx_FD)
+                rel_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN) / np.linalg.norm(
+                    dydx_FD
+                )
 
                 abs_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN)
-                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / np.linalg.norm(dydx_CS)
+                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / np.linalg.norm(
+                    dydx_CS
+                )
 
-                msg = '{:16s} iy {:2} dim {:2} of {:2} ' \
-                    + 'abs_FD {:16.9e} rel_FD {:16.9e} abs_CS {:16.9e} rel_CS {:16.9e}'
-                print(msg.format(
-                    problem.options['name'], iy, idim, ndim,
-                    abs_rms_error_FD, rel_rms_error_FD,
-                    abs_rms_error_CS, rel_rms_error_CS,
-                ))
+                msg = (
+                    "{:16s} iy {:2} dim {:2} of {:2} "
+                    + "abs_FD {:16.9e} rel_FD {:16.9e} abs_CS {:16.9e} rel_CS {:16.9e}"
+                )
+                print(
+                    msg.format(
+                        problem.options["name"],
+                        iy,
+                        idim,
+                        ndim,
+                        abs_rms_error_FD,
+                        rel_rms_error_FD,
+                        abs_rms_error_CS,
+                        rel_rms_error_CS,
+                    )
+                )
                 self.assertTrue(rel_rms_error_FD < 1e-3 or abs_rms_error_FD < 1e-5)
 
     def test_sphere(self):
@@ -82,20 +113,20 @@ class Test(SMTestCase):
         self.run_test(Sphere(ndim=3))
 
     def test_exp(self):
-        self.run_test(TensorProduct(name='TP-exp', ndim=1, func='exp'))
-        self.run_test(TensorProduct(name='TP-exp', ndim=3, func='exp'))
+        self.run_test(TensorProduct(name="TP-exp", ndim=1, func="exp"))
+        self.run_test(TensorProduct(name="TP-exp", ndim=3, func="exp"))
 
     def test_tanh(self):
-        self.run_test(TensorProduct(name='TP-tanh', ndim=1, func='tanh'))
-        self.run_test(TensorProduct(name='TP-tanh', ndim=3, func='tanh'))
+        self.run_test(TensorProduct(name="TP-tanh", ndim=1, func="tanh"))
+        self.run_test(TensorProduct(name="TP-tanh", ndim=3, func="tanh"))
 
     def test_cos(self):
-        self.run_test(TensorProduct(name='TP-cos', ndim=1, func='cos'))
-        self.run_test(TensorProduct(name='TP-cos', ndim=3, func='cos'))
+        self.run_test(TensorProduct(name="TP-cos", ndim=1, func="cos"))
+        self.run_test(TensorProduct(name="TP-cos", ndim=3, func="cos"))
 
     def test_gaussian(self):
-        self.run_test(TensorProduct(name='TP-gaussian', ndim=1, func='gaussian'))
-        self.run_test(TensorProduct(name='TP-gaussian', ndim=3, func='gaussian'))
+        self.run_test(TensorProduct(name="TP-gaussian", ndim=1, func="gaussian"))
+        self.run_test(TensorProduct(name="TP-gaussian", ndim=3, func="gaussian"))
 
     def test_branin(self):
         self.run_test(Branin(ndim=2))
@@ -150,5 +181,5 @@ class Test(SMTestCase):
         self.run_test(NdimStepFunction(ndim=2))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

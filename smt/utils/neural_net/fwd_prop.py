@@ -85,12 +85,16 @@ def L_model_forward(X, parameters, activations):
     """
     caches = []
     A = X
-    L = len(activations)  # number of layers in the network (doesn't include input layer)
+    L = len(
+        activations
+    )  # number of layers in the network (doesn't include input layer)
     for l in range(1, L + 1):
         A_prev = A
         W = parameters["W" + str(l)]
         b = parameters["b" + str(l)]
-        A, cache = linear_activation_forward(A_prev, W, b, activation=activations[l-1])
+        A, cache = linear_activation_forward(
+            A_prev, W, b, activation=activations[l - 1]
+        )
         caches.append(cache)
 
     return A, caches
