@@ -382,7 +382,7 @@ class KrgBased(SurrogateModel):
 
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
-            np.dot(self.optimal_par["Ft"].T, rt) - self.options["poly"](x).T,
+            np.dot(self.optimal_par["Ft"].T, rt) - self._regression_types[self.options["poly"]](x).T,
         )
 
         MSE = self.optimal_par["sigma2"] * (
