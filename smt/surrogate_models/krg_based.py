@@ -375,7 +375,7 @@ class KrgBased(SurrogateModel):
         d = self._componentwise_distance(dx)
 
         # Compute the correlation function
-        r = self.options["corr"](self.optimal_theta, d).reshape(n_eval, self.nt)
+        r = self._correlation_types[self.options["corr"]](self.optimal_theta, d).reshape(n_eval, self.nt)
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
