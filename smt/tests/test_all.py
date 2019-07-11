@@ -161,6 +161,9 @@ class Test(SMTestCase):
         t_error = compute_rms_error(sm)
         e_error = compute_rms_error(sm, xe, ye)
 
+        if sm.supports["variances"]:
+            sm.predict_variances(xe)
+
     def run_MF_test(self):
         method_name = inspect.stack()[1][3]
         pname = method_name.split("_")[1]
