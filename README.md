@@ -11,7 +11,7 @@ SMT is distributed under the New BSD license.
 To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
 
 ```
-@article{Bouhlel2019,
+@article{SMT2019,
 	Author = {Mohamed Amine Bouhlel and John T. Hwang and Nathalie Bartoli and Rémi Lafage and Joseph Morlier and Joaquim R. R. A. Martins},
 	Journal = {Advances in Engineering Software},
 	Title = {A Python surrogate modeling framework with derivatives},
