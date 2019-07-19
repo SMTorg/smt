@@ -85,6 +85,7 @@ The number of elements in each dimension is an option that trades off efficiency
 
 In general, RMTB is the better choice when training time is the most important,
 while RMTC is the better choice when accuracy of the interpolant is the most important.
+More details of these methods are given `here <http://mdolab.engin.umich.edu/content/fast-prediction-surrogate-model-large-datasets>`_.
 
 Usage (RMTB)
 ------------

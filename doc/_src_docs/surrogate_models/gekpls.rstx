@@ -21,11 +21,9 @@ This approach reduces the number of hyperparameters (reduced dimension) from :ma
 As previously mentioned, PLS is applied several times with respect to each sampling point, which provides the influence of each input variable around that point.
 The idea here is to add only m approximating points :math:`(m \in [1, nx])` around each sampling point.
 Only the :math:`m` highest coefficients given by the first principal component are considered, which usually contains the most useful information.
-More details of such approach are given in [2]_.
+More details of such approach are given `here <http://mdolab.engin.umich.edu/content/gradient-enhanced-kriging-high-dimensional-problems>`_.
 
 .. [1] Forrester, I. J. and Sobester, A. and Keane, A. J., Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008 (Chapter 7).
-
-.. [2] Bouhlel, M. A. and Martins, J. R. R. A., Gradient-enhanced kriging for high-dimensional problems (under review), Engineering with Computers, 2017.
 
 Usage
 -----
