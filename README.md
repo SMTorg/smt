@@ -46,7 +46,7 @@ testflo
 ```
 
 # Usage
-For examples demonstrating how to use SMT, go to the 'smt/examples' folder.
+For examples demonstrating how to use SMT, you can take a look at the [tutorial notebook](tutorial/SMT_Tutorial.ipynb) or go to the 'smt/examples' folder.
 
 # Documentation
 http://smt.readthedocs.io
