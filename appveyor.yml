@@ -16,12 +16,7 @@ install:
   - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
   - conda config --set always_yes yes
   - conda update conda
-  - if %PYTHON%==2.7 (
-      conda install python=%PYTHON% Cython sphinx pip --quiet
-    ) else (
-      conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
-    )
-  - pip install numpy
+  - conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
   - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e . 
