@@ -11,6 +11,8 @@ import six
 import numpy as np
 import warnings
 
+from types import FunctionType
+
 from scipy.stats import norm
 from scipy.optimize import minimize
 
@@ -22,18 +24,38 @@ from smt.surrogate_models import KPLS, KRG, KPLSK
 from smt.sampling_methods import LHS
 
 
-class EGO(object):
+class EGO(Extensions):
+    def _initialize(self):
+        super(EGO, self)._initialize()
+        declare = self.options.declare
+
+        declare("func", None, types=FunctionType, desc="Function to minimize")
+        declare(
+            "criterion",
+            "EI",
+            types=str,
+            values=["EI", "SBO", "UCB"],
+            desc="criterion for next evaluaition point",
+        )
+        declare("niter", None, types=int, desc="Number of iterations")
+        declare("ndoe", None, types=int, desc="Number of points of the initial doe")
+        declare(
+            "xlimits", None, types=np.ndarray, desc="Bounds of function func inputs"
+        )
+
     def optimize(self, fun, n_iter, criterion, ndim, ndoe, xlimits):
 
         sampling = LHS(xlimits=xlimits, criterion="ese")
         x_doe = sampling(ndoe)
         y_doe = fun(x_doe)
+        ndim = xlimits.shape[0]
 
         # to save the initial doe
         x_data = x_doe
         y_data = y_doe
 
-        gpr = KRG(theta0=[1e-2] * ndim, print_global=False)
+        gpr = KRG()
+        gpr.options["print_global"] = False
 
         for _ in range(n_iter):
             x_start = np.atleast_2d(np.random.rand(20) * 25).T
