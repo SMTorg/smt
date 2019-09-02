@@ -9,19 +9,15 @@ environment:
       CONDA: "C:\\Miniconda-x64"
     - PYTHON: 3.6
       CONDA: "C:\\Miniconda36-x64"
-#    - PYTHON: 3.7
-#      CONDA: "C:\\Miniconda37-x64"
+    # - PYTHON: 3.7
+    #   CONDA: "C:\\Miniconda37-x64"
 
 install:
-  - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
+  - set PATH=%CONDA%;%CONDA%\Library\bin;%CONDA%\bin;%CONDA%\Scripts;%PATH%
   - conda config --set always_yes yes
   - conda update conda
-  - if %PYTHON%==2.7 (
-      conda install python=%PYTHON% Cython sphinx pip --quiet
-    ) else (
-      conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
-    )
-  - pip install numpy
+  - conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
+  - python -m pip install -U pip
   - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e . 
