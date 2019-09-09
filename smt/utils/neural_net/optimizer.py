@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 EPS = np.finfo(float).eps  # small number to avoid division by zero
 
@@ -305,7 +304,8 @@ class Adam(Optimizer):
 
 def run_example(use_adam=True):  # pragma: no cover
     """visual example using 2D rosenbrock function"""
-
+    import matplotlib.pyplot as plt 
+    
     # Test function
     def rosenbrock(parameters):
         x1 = parameters["x1"]
