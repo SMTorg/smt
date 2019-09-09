@@ -12,7 +12,7 @@ import unittest
 import numpy as np
 from sys import argv
 
-from smt.extensions import MOE
+from smt.applications import MOE
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
 from smt.sampling_methods import FullFactorial
@@ -170,7 +170,7 @@ class TestMOE(SMTestCase):
     def run_moe_example():
         import numpy as np
         import six
-        from smt.extensions import MOE
+        from smt.applications import MOE
         from smt.problems import LpNorm
         from smt.sampling_methods import FullFactorial
 

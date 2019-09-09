@@ -20,7 +20,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.extensions import MFK
+from smt.applications import MFK
 from copy import deepcopy
 
 try:

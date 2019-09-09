@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import unittest
-from smt.extensions import MFK
+from smt.applications import MFK
 
 
 class TestMFK(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestMFK(unittest.TestCase):
     def run_mfk_example(self):
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.extensions import MFK
+        from smt.applications import MFK
 
         # Define the
         def LF_function(x):
