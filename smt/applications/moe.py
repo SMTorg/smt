@@ -26,13 +26,13 @@ except:
 from scipy.stats import multivariate_normal
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.extensions.extensions import Extensions
+from smt.applications.application import SurrogateBasedApplication
 from smt.utils.misc import compute_rms_error
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
-class MOE(Extensions):
+class MOE(SurrogateBasedApplication):
     def _initialize(self):
         super(MOE, self)._initialize()
         declare = self.options.declare
@@ -106,7 +106,17 @@ class MOE(Extensions):
 
     def set_training_values(self, xt, yt, name=None):
         """
-        Supports for surrogate model API.
+        Set training data (values).
+
+        Parameters
+        ----------
+        xt : np.ndarray[nt, nx] or np.ndarray[nt]
+            The input values for the nt training points.
+        yt : np.ndarray[nt, ny] or np.ndarray[nt]
+            The output values for the nt training points.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
         """
         self.xt = xt
         self.yt = yt
@@ -114,19 +124,7 @@ class MOE(Extensions):
     def train(self):
         """
         Supports for surrogate model API.
-        """
-        super(MOE, self).apply_method()
-
-    def predict_values(self, x):
-        """
-        Support for surrogate model API.
-        """
-        return super(MOE, self).analyse_results(x=x, operation="predict_values")
-
-    def _apply(self):
-        """
         Build and train the mixture of experts surrogate.
-        This method is called by Extension apply() method
         """
         if self.xt is not None and self.yt is not None:
             # set_training_values has been called
@@ -191,36 +189,24 @@ class MOE(Extensions):
             # if we have used part of data to validate, fit on overall data
             self._fit(x, y, c, new_model=False)
 
-    def _analyse_results(self, x, operation="predict_values", kx=None):
+    def predict_values(self, x):
         """
-        Analyse the mixture of experts at the given samples x wrt the specified operation.
-        This method is called by Extension analyse_results() method.
+        Predict the output values at a set of points.
 
-        Arguments
+        Parameters
         ----------
-        x : np.ndarray[n, nx] or np.ndarray[n]
-            Input values for the prediction result analysis.
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
 
-        operation: str
-            Type of the analysis. A value is available: 'predict_values'
-
-        kx : int
-            The 0-based index of the input variable with respect to which derivatives are desired.
-
-        Return
-        ------
-        y: np.ndarray
-            Output values at the prediction value/derivative points.
-
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output values at the prediction points.
         """
-        if operation == "predict_values":
-            if self.smooth_recombination:
-                y = self._predict_smooth_output(x)
-            else:
-                y = self._predict_hard_output(x)
-            return y
+        if self.smooth_recombination:
+            y = self._predict_smooth_output(x)
         else:
-            raise ValueError("MOE supports predict_values operation only.")
+            y = self._predict_hard_output(x)
         return y
 
     def _check_inputs(self):

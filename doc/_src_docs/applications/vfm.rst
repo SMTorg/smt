@@ -35,7 +35,7 @@ Usage
   
   from smt.problems import WaterFlowLFidelity, WaterFlow
   from smt.sampling_methods import LHS
-  from smt.extensions import VFM
+  from smt.applications import VFM
   
   # Problem set up
   ndim = 8
@@ -93,11 +93,8 @@ Usage
       dy_HF=dy_HF,
   )
   
-  # Appliy the VFM algorithm
-  M.apply_method()
-  
   # Prediction of the validation points
-  y = M.analyse_results(x=xtest, operation="predict_values")
+  y = M.predict_values(x=xtest)
   
   plt.figure()
   plt.plot(ytest, ytest, "-.")
@@ -122,7 +119,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0030000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -148,7 +145,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0425000
+     Training - done. Time (sec):  0.0467999
   ___________________________________________________________________________
      
    Evaluation
@@ -156,9 +153,9 @@ Usage
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: vfm_TestVFM_run_vfm_example.png

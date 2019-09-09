@@ -21,7 +21,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 
-from smt.extensions import MFK
+from smt.applications import MFK
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB

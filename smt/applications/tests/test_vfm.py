@@ -20,7 +20,7 @@ class TestVFM(unittest.TestCase):
 
         from smt.problems import WaterFlowLFidelity, WaterFlow
         from smt.sampling_methods import LHS
-        from smt.extensions import VFM
+        from smt.applications import VFM
 
         # Problem set up
         ndim = 8
@@ -78,11 +78,8 @@ class TestVFM(unittest.TestCase):
             dy_HF=dy_HF,
         )
 
-        # Appliy the VFM algorithm
-        M.apply_method()
-
         # Prediction of the validation points
-        y = M.analyse_results(x=xtest, operation="predict_values")
+        y = M.predict_values(x=xtest)
 
         plt.figure()
         plt.plot(ytest, ytest, "-.")

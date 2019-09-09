@@ -111,7 +111,7 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.utils.neural_net",
-        "smt.extensions",
+        "smt.applications",
     ],
     install_requires=[
         "scikit-learn",

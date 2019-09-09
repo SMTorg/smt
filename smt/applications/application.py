@@ -1,5 +1,5 @@
 """
-Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
+Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>, R. Lafage
 
 This package is distributed under New BSD license.
 """
@@ -17,7 +17,7 @@ except:
     compiled_available = False
 
 
-class Extensions(object):
+class SurrogateBasedApplication(object):
 
     if compiled_available:
         _surrogate_type = {
@@ -55,7 +55,7 @@ class Extensions(object):
 
         Examples
         --------
-        >>> from smt.extensions import VFM
+        >>> from smt.applications import VFM
         >>> extension = VFM(type_bridge = 'Additive', name_model_LF = QP, name_model_bridge =
                            LS, X_LF = xLF, y_LF = yLF, X_HF = xHF, y_HF = yHF, options_LF =
                            dictOptionLFModel, options_bridge = dictOptionBridgeModel)
@@ -75,18 +75,3 @@ class Extensions(object):
         """
         pass
 
-    def apply_method(self):
-        """
-        Run the complete algorithm of the SMT application; e.g.: VFM, ME, EGO...
-
-        """
-        self._apply()
-
-    def analyse_results(self, **kwargs):
-        """
-        Get the final results; e.g., for VFM, two possible analysis are available:
-        - kwargs = {x = x, operation = 'predict_values'}
-        - kwargs = {x = x, operation = 'predict_derivatives, kx = i}
-
-        """
-        return self._analyse_results(**kwargs)
