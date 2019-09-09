@@ -27,6 +27,7 @@ To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. M
 		doi = {https://doi.org/10.1016/j.advengsoft.2019.03.005},
 		Year = {2019}}
 
+
 Focus on derivatives
 --------------------
 
@@ -62,7 +63,7 @@ Documentation contents
    _src_docs/problems
    _src_docs/sampling_methods
    _src_docs/examples
-   _src_docs/extensions
+   _src_docs/applications
    _src_docs/dev_docs
 
 

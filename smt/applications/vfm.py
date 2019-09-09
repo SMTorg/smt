@@ -1,5 +1,5 @@
 """
-Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
+Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>, R. Lafage
 
 This package is distributed under New BSD license.
 
@@ -12,10 +12,10 @@ import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 from types import FunctionType
-from smt.extensions.extensions import Extensions
+from smt.applications.application import SurrogateBasedApplication
 
 
-class VFM(Extensions):
+class VFM(SurrogateBasedApplication):
     def _initialize(self):
         super(VFM, self)._initialize()
         declare = self.options.declare
@@ -69,6 +69,56 @@ class VFM(Extensions):
         declare("y_HF", None, types=np.ndarray, desc="High-fidelity output")
         declare("dy_LF", None, types=np.ndarray, desc="Low-fidelity derivatives")
         declare("dy_HF", None, types=np.ndarray, desc="High-fidelity derivatives")
+
+    def predict_values(self, x):
+        """
+        Predict the output values at a set of points x.
+
+        Parameters
+        ----------
+        x: np.ndarray[n, nx] or np.ndarray[n]
+           Input values for the prediction result analysis.
+
+        kx : int
+           The 0-based index of the input variable with respect to which derivatives are desired.
+
+        return
+        ------
+        y: np.ndarray
+            Output values at the prediction points.
+
+        """
+        self._apply()
+        y = self.sm_HF["predict_values"](x)
+        return y
+
+    def predict_derivatives(self, x, kx):
+        """
+        Predict the dy_dx derivatives at a set of points.
+
+        Parameters
+        ----------
+        x: np.ndarray[n, nx] or np.ndarray[n]
+           Input values for the prediction result analysis.
+
+        kx : int
+           The 0-based index of the input variable with respect to which derivatives are desired.
+
+        return
+        ------
+        y: np.ndarray
+            Derivatives at the prediction points.
+
+        """
+        self._apply()
+        if kx is None:
+            y = np.zeros(x.shape)
+            for i in range(x.shape[1]):
+                y[:, i] = self.sm_HF["predict_derivatives"][i](x).reshape((x.shape[0]))
+        else:
+            y = self.sm_HF["predict_derivatives"][kx](x).reshape((x.shape[0], 1))
+
+        return y
 
     def _apply(self):
         """
@@ -176,42 +226,6 @@ class VFM(Extensions):
                     )
 
         self.sm_HF = sm_HF
-
-    def _analyse_results(self, x, operation="predict_values", kx=None):
-        """
-        Analyse the results requested by the user
-
-        Parameters
-        ----------
-        x: np.ndarray[n, nx] or np.ndarray[n]
-           Input values for the prediction result analysis.
-
-        operation: str
-           Type of the analysis. Two values are available: 'predict_values' or 'predict_derivatives'
-
-        kx : int
-           The 0-based index of the input variable with respect to which derivatives are desired.
-
-        return
-        ------
-        y: np.ndarray
-            Output values at the prediction value/derivative points.
-
-        """
-
-        if operation == "predict_values":
-            y = self.sm_HF["predict_values"](x)
-        elif operation == "predict_derivatives":
-            if kx is None:
-                y = np.zeros(x.shape)
-                for i in range(x.shape[1]):
-                    y[:, i] = self.sm_HF["predict_derivatives"][i](x).reshape(
-                        (x.shape[0])
-                    )
-            else:
-                y = self.sm_HF["predict_derivatives"][kx](x).reshape((x.shape[0], 1))
-
-        return y
 
     def _check_param(self):
 

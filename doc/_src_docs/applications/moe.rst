@@ -49,7 +49,7 @@ Usage
 
   import numpy as np
   import six
-  from smt.extensions import MOE
+  from smt.applications import MOE
   from smt.problems import LpNorm
   from smt.sampling_methods import FullFactorial
   

@@ -45,9 +45,9 @@ References
 Usage
 -----
 
-.. embed-test-print-plot :: smt.extensions.tests.test_moe , TestMOE , run_moe_example , 80
+.. embed-test-print-plot :: smt.applications.tests.test_moe , TestMOE , run_moe_example , 80
 
 Options
 -------
 
-.. embed-options-table :: smt.extensions , MOE , options
+.. embed-options-table :: smt.applications , MOE , options
