@@ -153,16 +153,16 @@ Usage (RMTB)
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 7.406180418e-16 1.135977162e-15
-              Solving for output 0 - done. Time (sec):  0.0155997
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0155997
+                 Iteration (num., iy, grad. norm, func.) :   0   0 6.595870154e-16 1.135765154e-15
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.649511987e-15 1.135977162e-15
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.646699880e-15 1.135765154e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0155997
-     Training - done. Time (sec):  0.0155997
+        Solving for degrees of freedom - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -244,7 +244,7 @@ Usage (RMTC)
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.991721882e-15 1.133573309e-15
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.922777301e-15 1.133573309e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving initial startup problem (n=42) - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) ...
