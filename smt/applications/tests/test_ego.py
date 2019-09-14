@@ -103,7 +103,7 @@ class TestEGO(SMTestCase):
 
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
-        ego = EGO(n_iter=n_iter, criterion=criterion, ndoe=3, xlimits=xlimits)
+        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=function_test_1d)
         print(x_opt, y_opt)
