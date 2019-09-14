@@ -1,8 +1,8 @@
 Efficient Global Optimization (EGO)
 ===================================
 
-History
--------
+Bayesian Optimization
+---------------------
 
 Bayesian optimization is defined by Jonas Mockus in (Mockus, 1975) as an optimization technique 
 based upon the minimization of the expected deviation from the extremum of the studied function. 
@@ -98,6 +98,14 @@ For (:math:`i=0:n_{iter}`)
 Return : :math:`f_{min}` \# This is the best known solution after :math:`n_{iter}` iterations.
 
 More details can be found in [1]_.
+
+Implementation Note
+-------------------
+
+Beside the Expected Improvement, the implementation here offers two other infill criteria :
+* SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (math:`\mu`)
+* UCB (Upper Confidence bound): using the confidence interval : math:`\mu -3 \times \sigma`
+
 
 References
 ----------

@@ -35,14 +35,23 @@ class EGO(SurrogateBasedApplication):
             "EI",
             types=str,
             values=["EI", "SBO", "UCB"],
-            desc="criterion for next evaluaition point",
+            desc="criterion for next evaluation point determination: Expected Improvement, \
+            Surrogate-Based Optimization or Upper Confidence Bound",
         )
-        declare("niter", None, types=int, desc="Number of iterations")
+        declare("n_iter", None, types=int, desc="Number of optimizer steps")
         declare(
-            "nmax_optim", 20, types=int, desc="Maximum number of internal optimizations"
+            "n_max_optim",
+            20,
+            types=int,
+            desc="Maximum number of internal optimizations",
         )
-        declare("nstart", 20, types=int, desc="Number of start")
-        declare("ndoe", None, types=int, desc="Number of points of the initial doe")
+        declare("n_start", 20, types=int, desc="Number of optimization start points")
+        declare(
+            "n_doe",
+            None,
+            types=int,
+            desc="Number of points of the initial LHS doe, only used if xdoe is not given",
+        )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
@@ -54,8 +63,8 @@ class EGO(SurrogateBasedApplication):
         doe = self.options["xdoe"]
         if doe is None:
             self.log("Build initial DOE with LHS")
-            ndoe = self.options["ndoe"]
-            x_doe = sampling(ndoe)
+            n_doe = self.options["n_doe"]
+            x_doe = sampling(n_doe)
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(doe)
@@ -71,11 +80,11 @@ class EGO(SurrogateBasedApplication):
         bounds = xlimits
 
         criterion = self.options["criterion"]
-        niter = self.options["niter"]
-        nstart = self.options["nstart"]
-        nmax_optim = self.options["nmax_optim"]
+        n_iter = self.options["n_iter"]
+        n_start = self.options["n_start"]
+        n_max_optim = self.options["n_max_optim"]
 
-        for k in range(niter):
+        for k in range(n_iter):
 
             f_min_k = np.min(y_data)
             gpr.set_training_values(x_data, y_data)
@@ -89,11 +98,11 @@ class EGO(SurrogateBasedApplication):
                 obj_k = lambda x: EGO.UCB(gpr, np.atleast_2d(x))
 
             success = False
-            noptim = 1  # in order to have some success optimizations with SLSQP
-            while not success and noptim <= nmax_optim:
+            n_optim = 1  # in order to have some success optimizations with SLSQP
+            while not success and n_optim <= n_max_optim:
                 opt_all = []
-                x_start = sampling(nstart)
-                for ii in range(nstart):
+                x_start = sampling(n_start)
+                for ii in range(n_start):
                     opt_all.append(
                         minimize(
                             obj_k,
@@ -111,9 +120,9 @@ class EGO(SurrogateBasedApplication):
                 success = obj_success.size != 0
                 if not success:
                     self.log("New start point for the internal optimization")
-                    noptim += 1
+                    n_optim += 1
 
-            if noptim >= nmax_optim:
+            if n_optim >= n_max_optim:
                 self.log("Internal optimization failed at EGO iter = {}".format(k))
                 break
             elif success:

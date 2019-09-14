@@ -5,14 +5,14 @@ This package is distributed under New BSD license.
 import unittest
 import numpy as np
 from sys import argv
+import matplotlib
+
+matplotlib.use("Agg")
 
 from smt.applications import EGO
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 class TestEGO(SMTestCase):
@@ -31,13 +31,12 @@ class TestEGO(SMTestCase):
         return y.reshape((-1, 1))
 
     def test_function_test_1d(self):
-        ndim = 1
-        niter = 15
+        n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
 
         criterion = "EI"
 
-        ego = EGO(niter=niter, criterion=criterion, ndoe=3, xlimits=xlimits)
+        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
         print(x_opt, y_opt)
@@ -46,14 +45,13 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
     def test_rosenbrock_2D(self):
-        ndim = 2
-        niter = 30
-        fun = Rosenbrock(ndim=ndim)
+        n_iter = 30
+        fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, niter=niter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -61,14 +59,13 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_branin_2D(self):
-        ndim = 2
-        niter = 10
-        fun = Branin(ndim=ndim)
+        n_iter = 10
+        fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, niter=niter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -101,13 +98,12 @@ class TestEGO(SMTestCase):
             y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
             return y.reshape((-1, 1))
 
-        ndim = 1
-        niter = 15
+        n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
 
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
-        ego = EGO(niter=niter, criterion=criterion, ndoe=3, xlimits=xlimits)
+        ego = EGO(n_iter=n_iter, criterion=criterion, ndoe=3, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=function_test_1d)
         print(x_opt, y_opt)
