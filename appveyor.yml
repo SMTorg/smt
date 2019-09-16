@@ -1,5 +1,5 @@
 build: false
-version: 0.3.{build}
+version: 0.4.{build}
 platform:
   - x64
 
