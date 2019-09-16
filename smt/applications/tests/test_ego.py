@@ -141,7 +141,7 @@ class TestEGO(SMTestCase):
             data, = ax.plot(
                 x_data_k, y_data_k, linestyle="", marker="o", color="orange"
             )
-            if k + 1 < n_iter - 1:
+            if i < n_iter - 1:
                 opt, = ax.plot(
                     x_data[k], y_data[k], linestyle="", marker="*", color="r"
                 )
