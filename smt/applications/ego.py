@@ -177,21 +177,6 @@ class EGO(SurrogateBasedApplication):
         ei = args1 + args2
         return ei
 
-    @staticmethod
-    def EI2(gpr, points, y_data):
-        """ Expected improvement """
-        f_min = np.min(y_data)
-        pred = gpr.predict_values(points)
-        var = gpr.predict_variances(points)
-        args0 = (f_min - pred) / var
-        args1 = (f_min - pred) * norm.cdf(args0)
-        args2 = var * norm.pdf(args0)
-        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
-            return 0.0
-
-        ei = args1 + args2
-        return ei
-
     def SBO(self, point):
         """ Surrogate based optimization: min the surrogate model by suing the mean mu """
         res = self.gpr.predict_values(point)
