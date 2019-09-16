@@ -1,8 +1,8 @@
 Efficient Global Optimization (EGO)
 ===================================
 
-History
--------
+Bayesian Optimization
+---------------------
 
 Bayesian optimization is defined by Jonas Mockus in (Mockus, 1975) as an optimization technique 
 based upon the minimization of the expected deviation from the extremum of the studied function. 
@@ -52,11 +52,10 @@ The Expected Improvement funtion (EI) can be expressed:
 
 .. math::
 	\begin{equation}	
-	E[I(x)] = E[\max(f_{min}-Y, 0)],
+	E[I(x)] = E[\max(f_{min}-Y, 0)]
 	\end{equation}
 
-where :math:`Y` is the random variable following the distribution
- :math:`\mathcal{N}(\mu(x), \sigma^{2}(x))`.
+where :math:`Y` is the random variable following the distribution :math:`\mathcal{N}(\mu(x), \sigma^{2}(x))`.
 By expressing the right-hand side of EI expression as an integral, and applying some tedious 
 integration by parts, one can express the expected improvement in closed form: 
 
@@ -95,24 +94,19 @@ For (:math:`i=0:n_{iter}`)
 * :math:`i = i+1`  
 
 :math:`f_{min} = \min Y`  
-Return : :math:`f_{min}` \# This is the best known solution after :math:`n_{iter}` iterations
 
-
-.. math ::
-	\begin{equation}\label{e:globalMOE}
-	\hat{y}({\bf x})=\sum_{i=1}^{K} \mathbb{P}(\kappa=i|X={\bf x}) \hat{y_i}({\bf x})
-	\end{equation}
-
-which is the classical probability expression of mixture of experts.
-
-In this equation, :math:`K` is the number of Gaussian components, :math:`\mathbb{P}(\kappa=i|X= {\bf x})`, denoted by gating network,  is the probability to lie in cluster :math:`i` knowing that :math:`X = {\bf x}` and :math:`\hat{y_i}` is the local expert built on cluster :math:`i`.
-
-This equation leads to two different approximation models depending on the computation of :math:`\mathbb{P}(\kappa=i|X={\bf x})`. 
-
-	* When choosing the Gaussian laws to compute this quantity, the equation leads to a *smooth model* that smoothly recombine different local experts.
-	* If :math:`\mathbb{P}(\kappa=i|X= {\bf x})` is computed as characteristic functions of clusters (being equal to 0 or 1) this leads to a *discontinuous approximation model*.
+Return : :math:`f_{min}` \# This is the best known solution after :math:`n_{iter}` iterations.
 
 More details can be found in [1]_.
+
+Implementation Note
+-------------------
+
+Beside the Expected Improvement, the implementation here offers two other infill criteria:
+
+* SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
+* UCB (Upper Confidence bound): using the confidence interval: :math:`\mu -3 \times \sigma`
+
 
 References
 ----------
@@ -133,6 +127,7 @@ Usage
   import matplotlib.pyplot as plt
   from matplotlib import colors
   from mpl_toolkits.mplot3d import Axes3D
+  from scipy.stats import norm
   
   def function_test_1d(x):
       # function xsinx
@@ -143,20 +138,73 @@ Usage
       y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
       return y.reshape((-1, 1))
   
-  ndim = 1
-  niter = 15
+  n_iter = 6
   xlimits = np.array([[0.0, 25.0]])
+  xdoe = np.atleast_2d([0, 7, 25]).T
+  n_doe = xdoe.size
   
-  criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   
-  ego = EGO(niter=niter, criterion=criterion, ndoe=3, xlimits=xlimits)
+  ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
   
-  x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=function_test_1d)
-  print(x_opt, y_opt)
+  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
+      fun=function_test_1d
+  )
+  print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
+  
+  x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
+  y_plot = function_test_1d(x_plot)
+  
+  fig = plt.figure(figsize=[10, 10])
+  for i in range(n_iter):
+      k = n_doe + i
+      x_data_k = x_data[0:k]
+      y_data_k = y_data[0:k]
+      ego.gpr.set_training_values(x_data_k, y_data_k)
+      ego.gpr.train()
+  
+      y_gp_plot = ego.gpr.predict_values(x_plot)
+      y_gp_plot_var = ego.gpr.predict_variances(x_plot)
+      y_ei_plot = -ego.EI(x_plot, y_data_k)
+  
+      ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
+      ax1 = ax.twinx()
+      ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+  
+      true_fun, = ax.plot(x_plot, y_plot)
+      data, = ax.plot(
+          x_data_k, y_data_k, linestyle="", marker="o", color="orange"
+      )
+      if k + 1 < n_iter - 1:
+          opt, = ax.plot(
+              x_data[k], y_data[k], linestyle="", marker="*", color="r"
+          )
+      gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+      sig_plus = y_gp_plot + 3 * y_gp_plot_var
+      sig_moins = y_gp_plot - 3 * y_gp_plot_var
+      un_gp = ax.fill_between(
+          x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
+      )
+      lines = [true_fun, data, gp, un_gp, opt, ei]
+      fig.suptitle("EGO optimization of $f(x) = x \sin{x}$")
+      fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
+      ax.set_title("iteration {}".format(i + 1))
+      fig.legend(
+          lines,
+          [
+              "f(x)=xsin(x)",
+              "Given data points",
+              "Kriging prediction",
+              "Kriging 99% confidence interval",
+              "Next point to evaluate",
+              "Expected improvment function",
+          ],
+      )
+  plt.show()
   
 ::
 
-  [18.93526158] [-15.12510323]
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -184,27 +232,27 @@ Options
      -  EI
      -  ['EI', 'SBO', 'UCB']
      -  ['str']
-     -  criterion for next evaluaition point
-  *  -  niter
+     -  criterion for next evaluation point determination: Expected Improvement,             Surrogate-Based Optimization or Upper Confidence Bound
+  *  -  n_iter
      -  None
      -  None
      -  ['int']
-     -  Number of iterations
-  *  -  nmax_optim
+     -  Number of optimizer steps
+  *  -  n_max_optim
      -  20
      -  None
      -  ['int']
      -  Maximum number of internal optimizations
-  *  -  nstart
+  *  -  n_start
      -  20
      -  None
      -  ['int']
-     -  Number of start
-  *  -  ndoe
+     -  Number of optimization start points
+  *  -  n_doe
      -  None
      -  None
      -  ['int']
-     -  Number of points of the initial doe
+     -  Number of points of the initial LHS doe, only used if xdoe is not given
   *  -  xdoe
      -  None
      -  None

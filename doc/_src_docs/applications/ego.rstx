@@ -102,9 +102,10 @@ More details can be found in [1]_.
 Implementation Note
 -------------------
 
-Beside the Expected Improvement, the implementation here offers two other infill criteria :
-* SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (math:`\mu`)
-* UCB (Upper Confidence bound): using the confidence interval : math:`\mu -3 \times \sigma`
+Beside the Expected Improvement, the implementation here offers two other infill criteria:
+
+* SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
+* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
 
 References

@@ -2,12 +2,17 @@
 Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
 This package is distributed under New BSD license.
 """
+
+import warnings
+
+warnings.filterwarnings("ignore")
+
 import unittest
 import numpy as np
 from sys import argv
 import matplotlib
 
-# matplotlib.use("Agg")
+matplotlib.use("Agg")
 
 from smt.applications import EGO
 from smt.utils.sm_test_case import SMTestCase
@@ -83,22 +88,12 @@ class TestEGO(SMTestCase):
         import six
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
-        from smt.surrogate_models import KRG
 
         import sklearn
         import matplotlib.pyplot as plt
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
         from scipy.stats import norm
-
-        def EI(t, points, f_min):
-            pred = t.predict_values(points)
-            var = t.predict_variances(points)
-            args0 = (f_min - pred) / var
-            args1 = (f_min - pred) * norm.cdf(args0)
-            args2 = var * norm.pdf(args0)
-            ei = args1 + args2
-            return ei
 
         def function_test_1d(x):
             # function xsinx
@@ -109,9 +104,10 @@ class TestEGO(SMTestCase):
             y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
             return y.reshape((-1, 1))
 
-        n_iter = 8
+        n_iter = 6
         xlimits = np.array([[0.0, 25.0]])
         xdoe = np.atleast_2d([0, 7, 25]).T
+        n_doe = xdoe.size
 
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
@@ -120,62 +116,58 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
             fun=function_test_1d
         )
-        print(x_opt, y_opt)
-        # Check if the optimal point is Xopt=18.9, Yopt =-15.1
+        print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
 
-        X_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
-        Y_plot = function_test_1d(X_plot)
-        gpr = KRG()
-        gpr.options["print_global"] = False
+        x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
+        y_plot = function_test_1d(x_plot)
 
         fig = plt.figure(figsize=[10, 10])
-        for k in range(n_iter):
-            x_data_k = x_data[0 : k + 3]
-            y_data_k = y_data[0 : k + 3]
-            gpr.set_training_values(x_data_k, y_data_k)
-            gpr.train()
-            obj_k = lambda x: -EI(gpr, np.atleast_2d(x), np.min(y_data_k))
+        for i in range(n_iter):
+            k = n_doe + i
+            x_data_k = x_data[0:k]
+            y_data_k = y_data[0:k]
+            ego.gpr.set_training_values(x_data_k, y_data_k)
+            ego.gpr.train()
 
-            Y_GP_plot = gpr.predict_values(X_plot)
-            Y_GP_plot_var = gpr.predict_variances(X_plot)
-            Y_EI_plot = obj_k(X_plot)
+            y_gp_plot = ego.gpr.predict_values(x_plot)
+            y_gp_plot_var = ego.gpr.predict_variances(x_plot)
+            y_ei_plot = -ego.EI(x_plot, y_data_k)
 
-            ax = fig.add_subplot(4, 2, k + 1)
+            ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
             ax1 = ax.twinx()
-            ei, = ax1.plot(X_plot, Y_EI_plot, color="red")
+            ei, = ax1.plot(x_plot, y_ei_plot, color="red")
 
-            true_fun, = ax.plot(X_plot, Y_plot)
+            true_fun, = ax.plot(x_plot, y_plot)
             data, = ax.plot(
                 x_data_k, y_data_k, linestyle="", marker="o", color="orange"
             )
-            if k + 4 < n_iter - 1:
+            if k + 1 < n_iter - 1:
                 opt, = ax.plot(
-                    x_data[k + 3], y_data[k + 3], linestyle="", marker="*", color="r"
+                    x_data[k], y_data[k], linestyle="", marker="*", color="r"
                 )
-            gp, = ax.plot(X_plot, Y_GP_plot, linestyle="--", color="g")
-            sig_plus = Y_GP_plot + 3 * Y_GP_plot_var
-            sig_moins = Y_GP_plot - 3 * Y_GP_plot_var
+            gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+            sig_plus = y_gp_plot + 3 * y_gp_plot_var
+            sig_moins = y_gp_plot - 3 * y_gp_plot_var
             un_gp = ax.fill_between(
-                X_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
+                x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
             )
             lines = [true_fun, data, gp, un_gp, opt, ei]
-            fig.suptitle("EGO optimization of $x \sin{x}$ function")
+            fig.suptitle("EGO optimization of $f(x) = x \sin{x}$")
             fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
-            ax.set_title("iteration {}".format(k))
+            ax.set_title("iteration {}".format(i + 1))
             fig.legend(
                 lines,
                 [
-                    "True function",
-                    "Data",
-                    "GPR prediction",
-                    "99 % confidence",
-                    "Next point to Evaluate",
-                    "Infill Criteria",
+                    "f(x)=xsin(x)",
+                    "Given data points",
+                    "Kriging prediction",
+                    "Kriging 99% confidence interval",
+                    "Next point to evaluate",
+                    "Expected improvment function",
                 ],
             )
-            # plt.savefig("Optimisation_%d" % k)
-            # plt.close(fig)
         plt.show()
+        # Check the optimal point is x_opt=18.9, y_opt =-15.1
 
 
 if __name__ == "__main__":

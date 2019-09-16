@@ -9,7 +9,6 @@ This package is distributed under New BSD license.
 from __future__ import division
 import six
 import numpy as np
-import warnings
 
 from types import FunctionType
 
@@ -57,6 +56,25 @@ class EGO(SurrogateBasedApplication):
         declare("verbose", False, types=bool, desc="Print computation information")
 
     def optimize(self, fun):
+        """
+        Optimizes fun
+
+        Parameters
+        ----------
+
+        fun: function to optimize: ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]
+
+        Returns
+        -------
+
+        [nx, 1]: x optimum
+        [1, 1]: y optimum
+        int: index of optimum in data arrays 
+        [ndoe + n_iter, nx]: coord-x data
+        [ndoe + n_iter, 1]: coord-y data
+        [ndoe, nx]: coord-x initial doe
+        [ndoe, 1]: coord-y initial doe
+        """
         xlimits = self.options["xlimits"]
         sampling = LHS(xlimits=xlimits, criterion="ese")
 
@@ -75,7 +93,7 @@ class EGO(SurrogateBasedApplication):
         x_data = x_doe
         y_data = y_doe
 
-        gpr = KRG(print_global=False)
+        self.gpr = KRG(print_global=False)
 
         bounds = xlimits
 
@@ -86,16 +104,15 @@ class EGO(SurrogateBasedApplication):
 
         for k in range(n_iter):
 
-            f_min_k = np.min(y_data)
-            gpr.set_training_values(x_data, y_data)
-            gpr.train()
+            self.gpr.set_training_values(x_data, y_data)
+            self.gpr.train()
 
             if criterion == "EI":
-                obj_k = lambda x: -EGO.EI(gpr, np.atleast_2d(x), f_min_k)
+                self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)
             elif criterion == "SBO":
-                obj_k = lambda x: EGO.SBO(gpr, np.atleast_2d(x))
+                self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
             elif criterion == "UCB":
-                obj_k = lambda x: EGO.UCB(gpr, np.atleast_2d(x))
+                self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
 
             success = False
             n_optim = 1  # in order to have some success optimizations with SLSQP
@@ -105,7 +122,7 @@ class EGO(SurrogateBasedApplication):
                 for ii in range(n_start):
                     opt_all.append(
                         minimize(
-                            obj_k,
+                            self.obj_k,
                             x_start[ii, :],
                             method="SLSQP",
                             bounds=bounds,
@@ -146,30 +163,43 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    @staticmethod
-    def EI(gpr, points, f_min):
+    def EI(self, points, y_data):
         """ Expected improvement """
-        pred = gpr.predict_values(points)
-        var = gpr.predict_variances(points)
+        f_min = np.min(y_data)
+        pred = self.gpr.predict_values(points)
+        var = self.gpr.predict_variances(points)
         args0 = (f_min - pred) / var
         args1 = (f_min - pred) * norm.cdf(args0)
         args2 = var * norm.pdf(args0)
-        if var == 0.0:  # can be use only if one point is computed
+        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
             return 0.0
 
         ei = args1 + args2
         return ei
 
     @staticmethod
-    def SBO(gpr, point):
+    def EI2(gpr, points, y_data):
+        """ Expected improvement """
+        f_min = np.min(y_data)
+        pred = gpr.predict_values(points)
+        var = gpr.predict_variances(points)
+        args0 = (f_min - pred) / var
+        args1 = (f_min - pred) * norm.cdf(args0)
+        args2 = var * norm.pdf(args0)
+        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
+            return 0.0
+
+        ei = args1 + args2
+        return ei
+
+    def SBO(self, point):
         """ Surrogate based optimization: min the surrogate model by suing the mean mu """
-        res = gpr.predict_values(point)
+        res = self.gpr.predict_values(point)
         return res
 
-    @staticmethod
-    def UCB(gpr, point):
+    def UCB(self, point):
         """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
-        pred = gpr.predict_values(point)
-        var = gpr.predict_variances(point)
+        pred = self.gpr.predict_values(point)
+        var = self.gpr.predict_variances(point)
         res = pred - 3.0 * var
         return res
