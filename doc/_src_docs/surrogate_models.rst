@@ -69,9 +69,9 @@ Usage
         Initializing linear solver - done. Time (sec):  0.0000000
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0156002
-        Solving linear system (col. 0) - done. Time (sec):  0.0156002
-     Training - done. Time (sec):  0.0156002
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Solving linear system (col. 0) - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0156000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001560
      
   
 .. figure:: surrogate_models_Test_test_rbf.png

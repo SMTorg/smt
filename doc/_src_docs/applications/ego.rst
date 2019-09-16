@@ -37,7 +37,7 @@ In what follows, we describe the Efficient Global Optimization (EGO) algorithm,
 as published in [4]_.
 
 Let :math:`F` be an expensive black-box function to be minimized. We sample :math:`F` at the 
-different locations :math:`X = \{x_1, x_2,\ldots,x_n\}$` yielding the responses 
+different locations :math:`X = \{x_1, x_2,\ldots,x_n\}` yielding the responses 
 :math:`Y = \{y_1, y_2,\ldots,y_n\}`. We build a Kriging model (also called Gaussian process) 
 with a mean function :math:`\mu` and a variance function :math:`\sigma^{2}`.
 
@@ -48,7 +48,7 @@ The next step is to compute the criterion EI. To do this, let us denote:
 	f_{min} = \min \{y_1, y_2,\ldots,y_n\}.
 	\end{equation}
 
-The Expected Improvement funtion (EI) can be expressed:
+The Expected Improvement function (EI) can be expressed:
 
 .. math::
 	\begin{equation}	
@@ -181,7 +181,7 @@ Usage
       data, = ax.plot(
           x_data_k, y_data_k, linestyle="", marker="o", color="orange"
       )
-      if k + 1 < n_iter - 1:
+      if i < n_iter - 1:
           opt, = ax.plot(
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
