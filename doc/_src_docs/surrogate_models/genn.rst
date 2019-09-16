@@ -107,27 +107,27 @@ Usage
    Training
      
      Training ...
-  epoch = 0, mini-batch = 0, avg cost = 16.629
-  epoch = 1, mini-batch = 0, avg cost =  0.901
-  epoch = 2, mini-batch = 0, avg cost =  0.724
-  epoch = 3, mini-batch = 0, avg cost =  0.675
-  epoch = 4, mini-batch = 0, avg cost =  0.652
-  epoch = 5, mini-batch = 0, avg cost =  0.636
-  epoch = 6, mini-batch = 0, avg cost =  0.622
-  epoch = 7, mini-batch = 0, avg cost =  0.611
-  epoch = 8, mini-batch = 0, avg cost =  0.603
-  epoch = 9, mini-batch = 0, avg cost =  0.597
-  epoch = 10, mini-batch = 0, avg cost =  0.593
-  epoch = 11, mini-batch = 0, avg cost =  0.588
-  epoch = 12, mini-batch = 0, avg cost =  0.583
+  epoch = 0, mini-batch = 0, avg cost = 16.549
+  epoch = 1, mini-batch = 0, avg cost =  0.867
+  epoch = 2, mini-batch = 0, avg cost =  0.677
+  epoch = 3, mini-batch = 0, avg cost =  0.639
+  epoch = 4, mini-batch = 0, avg cost =  0.625
+  epoch = 5, mini-batch = 0, avg cost =  0.615
+  epoch = 6, mini-batch = 0, avg cost =  0.607
+  epoch = 7, mini-batch = 0, avg cost =  0.600
+  epoch = 8, mini-batch = 0, avg cost =  0.595
+  epoch = 9, mini-batch = 0, avg cost =  0.590
+  epoch = 10, mini-batch = 0, avg cost =  0.585
+  epoch = 11, mini-batch = 0, avg cost =  0.581
+  epoch = 12, mini-batch = 0, avg cost =  0.580
   epoch = 13, mini-batch = 0, avg cost =  0.580
-  epoch = 14, mini-batch = 0, avg cost =  0.577
-  epoch = 15, mini-batch = 0, avg cost =  0.576
-  epoch = 16, mini-batch = 0, avg cost =  0.575
-  epoch = 17, mini-batch = 0, avg cost =  0.575
-  epoch = 18, mini-batch = 0, avg cost =  0.574
-  epoch = 19, mini-batch = 0, avg cost =  0.574
-     Training - done. Time (sec):  4.4148002
+  epoch = 14, mini-batch = 0, avg cost =  0.579
+  epoch = 15, mini-batch = 0, avg cost =  0.579
+  epoch = 16, mini-batch = 0, avg cost =  0.579
+  epoch = 17, mini-batch = 0, avg cost =  0.577
+  epoch = 18, mini-batch = 0, avg cost =  0.577
+  epoch = 19, mini-batch = 0, avg cost =  0.577
+     Training - done. Time (sec):  4.3799999
   ___________________________________________________________________________
      
    Evaluation

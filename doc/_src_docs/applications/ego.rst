@@ -4,7 +4,7 @@ Efficient Global Optimization (EGO)
 Bayesian Optimization
 ---------------------
 
-Bayesian optimization is defined by Jonas Mockus in (Mockus, 1975) as an optimization technique 
+Bayesian optimization is defined by Jonas Mockus in [1]_ as an optimization technique 
 based upon the minimization of the expected deviation from the extremum of the studied function. 
 
 The objective function is treated as a black-box function. A Bayesian strategy sees the objective 
@@ -15,26 +15,26 @@ in turn, is used to construct an acquisition function (often also referred to as
 criterion) that determines what the next query point should be.
 
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
-of is (Kushner, 1962 ; Kushner, 1964). Kushner used Wiener processes for one-dimensional problems.
+of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
 parameter that controlled the trade-off between ‘more global’ and ‘more local’ optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
 Bayesian optimization method using linear combinations of Wiener fields, some of which was 
-published in English in (Mockus, 1975). This paper also describes an acquisition function that 
+published in English in [1]_. This paper also describes an acquisition function that 
 is based on myopic expected improvement of the posterior, which has been widely adopted in 
 Bayesian optimization as the Expected Improvement function.
 
 In 1998, Jones used Gaussian processes together with the expected improvement function to 
 successfully perform derivative-free optimization and experimental design through an algorithm 
-called  Efficient  Global  Optimization, or EGO (Jones, 1998).
+called  Efficient  Global  Optimization, or EGO.
 
 EGO
 ---
 
 In what follows, we describe the Efficient Global Optimization (EGO) algorithm, 
-as published in (Jones, 1998).
+as published in [4]_.
 
 Let :math:`F` be an expensive black-box function to be minimized. We sample :math:`F` at the 
 different locations :math:`X = \{x_1, x_2,\ldots,x_n\}$` yielding the responses 
@@ -97,7 +97,7 @@ For (:math:`i=0:n_{iter}`)
 
 Return : :math:`f_{min}` \# This is the best known solution after :math:`n_{iter}` iterations.
 
-More details can be found in [1]_.
+More details can be found in [4]_.
 
 Implementation Note
 -------------------
@@ -105,13 +105,19 @@ Implementation Note
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
-* UCB (Upper Confidence bound): using the confidence interval: :math:`\mu -3 \times \sigma`
+* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
 
 References
 ----------
 
-.. [1] Jones, D. R., Schonlau, M., & Welch, W. J. (1998). Efficient global optimization of expensive black-box functions. Journal of Global optimization, 13(4), 455-492.
+.. [1] Mockus, J. (1975). On Bayesian methods for seeking the extremum. In Optimization Techniques IFIP Technical Conference (pp. 400-404). Springer, Berlin, Heidelberg.
+
+.. [2] Kushner, H. J. (1962). A versatile stochastic model of a function of unknown and time varying form. Journal of Mathematical Analysis and Applications, 5(1), 150-167.
+
+.. [3] Kushner, H. J. (1964). A new method of locating the maximum point of an arbitrary multipeak curve in the presence of noise. Journal of Basic Engineering, 86(1), 97-106.
+
+.. [4] Jones, D. R., Schonlau, M., & Welch, W. J. (1998). Efficient global optimization of expensive black-box functions. Journal of Global optimization, 13(4), 455-492.
 
 Usage
 -----
