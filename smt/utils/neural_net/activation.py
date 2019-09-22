@@ -89,9 +89,9 @@ class Linear(Activation):
         return np.zeros(z.shape)
 
 
-def plot_activations():
+def plot_activations():  # pragma: no cover
     import matplotlib.pyplot as plt
-	
+
     x = np.linspace(-10, 10, 100)
     activations = {"tanh": Tanh(), "sigmoid": Sigmoid()}
     for name, activation in activations.items():
@@ -100,5 +100,5 @@ def plot_activations():
         plt.show()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     plot_activations()

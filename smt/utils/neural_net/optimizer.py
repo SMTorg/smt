@@ -131,7 +131,7 @@ class Optimizer(object):
         """
         pass
 
-    def grad_check(self, parameters, tol=1e-6):
+    def grad_check(self, parameters, tol=1e-6):  # pragma: no cover
         """
         Check analytical gradient against to finite difference
 
@@ -304,8 +304,8 @@ class Adam(Optimizer):
 
 def run_example(use_adam=True):  # pragma: no cover
     """visual example using 2D rosenbrock function"""
-    import matplotlib.pyplot as plt 
-    
+    import matplotlib.pyplot as plt
+
     # Test function
     def rosenbrock(parameters):
         x1 = parameters["x1"]
