@@ -23,47 +23,39 @@ def function_test_1d(x):
 
 
 class TestRMTS(SMTestCase):
-    def test_linear_search(self):
+    def setUp(self):
         # xt = np.random.rand(5, 1) * 10.0
-        xt = np.array([[3.6566495, 4.64266046, 7.23645433, 6.04862594, 8.85571712]]).T
-        yt = function_test_1d(xt)
+        self.xt = np.array(
+            [[3.6566495, 4.64266046, 7.23645433, 6.04862594, 8.85571712]]
+        ).T
+        self.yt = function_test_1d(self.xt)
 
-        xlimits = np.array([[0.0, 25.0]])
+        self.xlimits = np.array([[0.0, 25.0]])
 
-        smref = RMTB(xlimits=xlimits, print_global=False)
-        smref.set_training_values(xt, yt)
+        self.smref = smref = RMTB(xlimits=self.xlimits, print_global=False)
+        smref.set_training_values(self.xt, self.yt)
         with Silence():
             smref.train()
 
-        xref = np.array([[0.0, 6.25, 12.5, 18.75, 25.0]]).T
-        yref = smref.predict_values(xref)
+        self.xref = np.array([[0.0, 6.25, 12.5, 18.75, 25.0]]).T
+        self.yref = smref.predict_values(self.xref)
 
-        sms = {}
+        self.sms = {}
+
+    def test_linear_search(self):
         for ls in ["bracketed", "cubic", "quadratic", "null"]:
-            sms[ls] = RMTB(xlimits=xlimits, line_search=ls, print_global=False)
-            sms[ls].set_training_values(xt, yt)
+            self.sms[ls] = RMTB(
+                xlimits=self.xlimits, line_search=ls, print_global=False
+            )
+            self.sms[ls].set_training_values(self.xt, self.yt)
 
             with Silence():
-                sms[ls].train()
+                self.sms[ls].train()
 
-            error = compute_rms_error(sms[ls], xref, yref)
+            error = compute_rms_error(self.sms[ls], self.xref, self.yref)
             self.assert_error(error, 0.0, 1e-1)
 
     def test_linear_solver(self):
-        xt = np.array([[3.6566495, 4.64266046, 7.23645433, 6.04862594, 8.85571712]]).T
-        yt = function_test_1d(xt)
-
-        xlimits = np.array([[0.0, 25.0]])
-
-        smref = RMTB(xlimits=xlimits, print_global=False)
-        smref.set_training_values(xt, yt)
-        with Silence():
-            smref.train()
-
-        xref = np.array([[0.0, 6.25, 12.5, 18.75, 25.0]]).T
-        yref = smref.predict_values(xref)
-
-        sms = {}
         for ls in [
             "krylov-dense",
             "dense-chol",
@@ -77,13 +69,13 @@ class TestRMTS(SMTestCase):
             "mg",
             "null",
         ]:
-            sms[ls] = RMTB(xlimits=xlimits, solver=ls, print_global=False)
-            sms[ls].set_training_values(xt, yt)
+            self.sms[ls] = RMTB(xlimits=self.xlimits, solver=ls, print_global=False)
+            self.sms[ls].set_training_values(self.xt, self.yt)
 
             with Silence():
-                sms[ls].train()
+                self.sms[ls].train()
 
-            error = compute_rms_error(sms[ls], xref, yref)
+            error = compute_rms_error(self.sms[ls], self.xref, self.yref)
             self.assert_error(error, 0.0, 1.1)
 
 
