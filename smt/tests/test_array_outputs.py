@@ -42,16 +42,16 @@ class ArrayOutputTest(SMTestCase):
 
         self.assert_error(d0, np.array([[0.02588578, 5.86555448]]), atol=1e-6, rtol=1e-6)
 
-    def test_KRG(self):
+    # def test_KRG(self):
 
-        xt, yt, interp = setup_KRG()
-        with Silence():
-            d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
+    #     xt, yt, interp = setup_KRG()
+    #     with Silence():
+    #         d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
 
-        self.assert_error(d0, np.array([[0.06874097, 5.26604232]]), atol=1e-6, rtol=1e-6)
+    #     self.assert_error(d0, np.array([[0.06874097, 5.26604232]]), atol=1e-6, rtol=1e-6)
 
 if __name__ == '__main__':
 
-    # krg = setup_KRG()
-    # qp = setup_QP()
+    # xt, yt, krg = setup_KRG()
+    # xt, yt, qp = setup_QP()
     unittest.main()
