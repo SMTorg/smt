@@ -119,20 +119,20 @@ class QP(SurrogateModel):
         """
         dim = self.nx
 
-        linear_coef = self.coef[1 + kx, 0]
-        quad_coef = 2 * self.coef[1 + dim + kx, 0] * x[:, kx]
-        cross_coef = 0
+        linear_coef = self.coef[1 + kx, :]
+        quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
+        cross_coef = np.zeros(self.ny)
         for i in range(dim):
             if i > kx:
                 k = int(
                     2 * dim + 2 + (kx) * dim - ((kx + 1) * (kx)) / 2 + (i - (kx + 2))
                 )
-                cross_coef += self.coef[k, 0] * x[:, i]
+                cross_coef += self.coef[k, :] * x[:, i]
             elif i < kx:
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (kx - (i + 2)))
-                cross_coef += self.coef[k, 0] * x[:, i]
+                cross_coef += self.coef[k, :] * x[:, i]
 
-        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], 1))
+        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
         return y
 
     def _predict_values(self, x):

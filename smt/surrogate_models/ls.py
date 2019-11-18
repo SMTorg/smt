@@ -105,6 +105,6 @@ class LS(SurrogateModel):
 
         # Initialization
         n_eval, n_features_x = x.shape
-        y = np.ones((n_eval, 1)) * self.mod.coef_[0, kx]
+        y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
 
         return y
