@@ -109,25 +109,25 @@ Usage
      Training ...
   epoch = 0, mini-batch = 0, avg cost = 16.629
   epoch = 1, mini-batch = 0, avg cost =  0.901
-  epoch = 2, mini-batch = 0, avg cost =  0.726
-  epoch = 3, mini-batch = 0, avg cost =  0.675
-  epoch = 4, mini-batch = 0, avg cost =  0.649
-  epoch = 5, mini-batch = 0, avg cost =  0.637
-  epoch = 6, mini-batch = 0, avg cost =  0.625
-  epoch = 7, mini-batch = 0, avg cost =  0.613
-  epoch = 8, mini-batch = 0, avg cost =  0.605
-  epoch = 9, mini-batch = 0, avg cost =  0.596
-  epoch = 10, mini-batch = 0, avg cost =  0.591
-  epoch = 11, mini-batch = 0, avg cost =  0.586
-  epoch = 12, mini-batch = 0, avg cost =  0.583
-  epoch = 13, mini-batch = 0, avg cost =  0.580
-  epoch = 14, mini-batch = 0, avg cost =  0.577
+  epoch = 2, mini-batch = 0, avg cost =  0.722
+  epoch = 3, mini-batch = 0, avg cost =  0.676
+  epoch = 4, mini-batch = 0, avg cost =  0.648
+  epoch = 5, mini-batch = 0, avg cost =  0.633
+  epoch = 6, mini-batch = 0, avg cost =  0.623
+  epoch = 7, mini-batch = 0, avg cost =  0.615
+  epoch = 8, mini-batch = 0, avg cost =  0.606
+  epoch = 9, mini-batch = 0, avg cost =  0.599
+  epoch = 10, mini-batch = 0, avg cost =  0.593
+  epoch = 11, mini-batch = 0, avg cost =  0.590
+  epoch = 12, mini-batch = 0, avg cost =  0.586
+  epoch = 13, mini-batch = 0, avg cost =  0.582
+  epoch = 14, mini-batch = 0, avg cost =  0.579
   epoch = 15, mini-batch = 0, avg cost =  0.576
-  epoch = 16, mini-batch = 0, avg cost =  0.576
-  epoch = 17, mini-batch = 0, avg cost =  0.576
-  epoch = 18, mini-batch = 0, avg cost =  0.576
-  epoch = 19, mini-batch = 0, avg cost =  0.575
-     Training - done. Time (sec):  4.2744000
+  epoch = 16, mini-batch = 0, avg cost =  0.575
+  epoch = 17, mini-batch = 0, avg cost =  0.574
+  epoch = 18, mini-batch = 0, avg cost =  0.573
+  epoch = 19, mini-batch = 0, avg cost =  0.573
+     Training - done. Time (sec):  4.4119999
   ___________________________________________________________________________
      
    Evaluation
