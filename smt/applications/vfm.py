@@ -173,7 +173,10 @@ class VFM(SurrogateBasedApplication):
 
         # compute the bridge data
         if self.options["type_bridge"] == "Multiplicative":
-            y_bridge = y_HF / sm_LF.predict_values(X_HF)
+            # y_bridge = y_HF / sm_LF.predict_values(X_HF)
+            y_bridge = np.zeros(y_HF.shape)
+            for i in range(X_HF.shape[0]):
+                y_bridge[i, :] = y_HF[i, :] / np.maximum(1.e-30, sm_LF.predict_values(np.atleast_2d(X_HF[i, :])))
             self.B_deriv = self.options["options_bridge"]["deriv"]
             del self.options["options_bridge"]["deriv"]
             if self.B_deriv:
@@ -190,7 +193,10 @@ class VFM(SurrogateBasedApplication):
                         / sm_LF.predict_values(X_HF) ** 2
                     ).reshape(y_HF.shape[0])
         elif self.options["type_bridge"] == "Additive":
-            y_bridge = y_HF - sm_LF.predict_values(X_HF)
+            #y_bridge = y_HF - sm_LF.predict_values(X_HF)
+            y_bridge = np.zeros(y_HF.shape)
+            for i in range(X_HF.shape[0]):
+                y_bridge[i, :] = y_HF[i, :] - sm_LF.predict_values(np.atleast_2d(X_HF[i, :]))
             self.B_deriv = self.options["options_bridge"]["deriv"]
             del self.options["options_bridge"]["deriv"]
             if self.B_deriv:
