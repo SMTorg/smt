@@ -110,7 +110,7 @@ def l1_cross_distances(X):
     return D, ij.astype(np.int)
 
 
-def abs_exp(theta, d):
+def abs_exp(theta, d, grad_ind=None, hess_ind=None):
 
     """
     Absolute exponential autocorrelation model.
@@ -134,22 +134,30 @@ def abs_exp(theta, d):
     n_components = d.shape[1]
 
     # Construct/split the correlation matrix
-    i, nb_limit = 0, int(1e4)
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                -np.sum(
-                    theta.reshape(1, n_components)
-                    * d[i * nb_limit : (i + 1) * nb_limit, :],
-                    axis=1,
-                )
-            )
-            i += 1
+    i,nb_limit  = 0,int(1e4)
+    while i * nb_limit <= d.shape[0]:
+        r[i*nb_limit:(i+1)*nb_limit,0] = np.exp(-np.sum(theta.reshape(1,
+                n_components) * d[i*nb_limit:(i+1)*nb_limit,:], axis=1))
+        i+=1
+        
+    i = 0    
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,grad_ind] \
+                                            * r[i*nb_limit:(i+1)*nb_limit,0]
+            i+=1
+            
+    i=0
+    if hess_ind is not None:
+        while i*nb_limit <= d.shape[0]:
+            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,hess_ind] \
+                                            * r[i*nb_limit:(i+1)*nb_limit,0]
+            i+=1
+    
+    return r
 
 
-def squar_exp(theta, d):
+def squar_exp(theta, d, grad_ind=None, hess_ind=None):
 
     """
     Squared exponential correlation model.
@@ -168,24 +176,32 @@ def squar_exp(theta, d):
         An array containing the values of the autocorrelation model.
     """
 
-    r = np.zeros((d.shape[0], 1))
+    r = np.zeros((d.shape[0],1))
     n_components = d.shape[1]
 
     # Construct/split the correlation matrix
-    i, nb_limit = 0, int(1e4)
+    i,nb_limit  = 0,int(1e4)
 
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                -np.sum(
-                    theta.reshape(1, n_components)
-                    * d[i * nb_limit : (i + 1) * nb_limit, :],
-                    axis=1,
-                )
-            )
-            i += 1
+    while i * nb_limit <= d.shape[0]:
+        r[i*nb_limit:(i+1)*nb_limit,0] = np.exp(-np.sum(theta.reshape(1,
+                n_components) * d[i*nb_limit:(i+1)*nb_limit,:], axis=1))
+        i+=1
+        
+    i = 0    
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,grad_ind] \
+                                            * r[i*nb_limit:(i+1)*nb_limit,0]
+            i+=1
+    
+    i=0
+    if hess_ind is not None:
+        while i*nb_limit <= d.shape[0]:
+            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,hess_ind] \
+                                            * r[i*nb_limit:(i+1)*nb_limit,0]
+            i+=1
+    
+    return r
 
 
 def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
