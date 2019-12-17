@@ -170,7 +170,7 @@ class KrgBased(SurrogateModel):
             Cholesky decomposition of the correlation matrix [R].
             Ft
             Solution of the linear equation system : [R] x Ft = F
-            G
+            Q, G
             QR decomposition of the matrix Ft.
         """
         # Initialize output
@@ -279,7 +279,35 @@ class KrgBased(SurrogateModel):
         Returns
         -------
         grad_red : np.ndarray (dim,1)
-            Derivative values.
+            Derivative of the reduced_likelihood
+            
+        par: dict()
+            - A dictionary containing the requested Gaussian Process model
+              parameters:
+
+            sigma2
+            Gaussian Process variance.
+            beta
+            Generalized least-squares regression weights for
+            Universal Kriging or for Ordinary Kriging.
+            gamma
+            Gaussian Process weights.
+            C
+            Cholesky decomposition of the correlation matrix [R].
+            Ft
+            Solution of the linear equation system : [R] x Ft = F
+            Q, G
+            QR decomposition of the matrix Ft.
+            dr
+            List of all the correlation matrix derivative
+            tr
+            List of all the trace part in the reduce likelihood derivatives
+            dmu
+            List of all the mean derivatives
+            arg
+            List of all minus_Cinv_dRdomega_gamma
+            dsigma
+            List of all sigma derivatives
         """                
         red, par = self._reduced_likelihood_function(theta)
         
@@ -296,6 +324,7 @@ class KrgBased(SurrogateModel):
         tr_all = []
         dmu_all = []
         arg_all = []
+        dsigma_all = []
         
               
         for i_der in range(dim):
@@ -325,6 +354,7 @@ class KrgBased(SurrogateModel):
             # Compute Sigma2 Derivatives
             dsigma_2 = (1/self.nt) * (- dmu.T.dot(gamma) - gamma.T.dot(dmu) \
                        - np.dot(gamma.T, dR.dot(gamma)))
+            dsigma_all.append(dsigma_2)
             
             # Compute reduced log likelihood derivatives
             grad_red[i_der] = - (dsigma_2/sigma_2 + np.trace(tr)/self.nt)
@@ -333,6 +363,7 @@ class KrgBased(SurrogateModel):
         par['tr'] = tr_all
         par['dmu'] = dmu_all
         par['arg'] = arg_all
+        par['dsigma'] = dsigma_all
 
         return np.atleast_2d(grad_red).T, par 
     
@@ -348,12 +379,44 @@ class KrgBased(SurrogateModel):
 
         Returns
         -------
-        grad_red : np.ndarray
-            Derivative values.
+        hess : np.ndarray
+            Hessian values.
+        
+        hess_ij: np.ndarray [dim * (dim + 1) / 2, 2]
+            - The indices i and j of the vectors in theta associated to the hessian in hess.
+            
+        par: dict()
+            - A dictionary containing the requested Gaussian Process model
+              parameters:
+
+            sigma2
+            Gaussian Process variance.
+            beta
+            Generalized least-squares regression weights for
+            Universal Kriging or for Ordinary Kriging.
+            gamma
+            Gaussian Process weights.
+            C
+            Cholesky decomposition of the correlation matrix [R].
+            Ft
+            Solution of the linear equation system : [R] x Ft = F
+            Q, G
+            QR decomposition of the matrix Ft.
+            dr
+            List of all the correlation matrix derivative
+            tr
+            List of all the trace part in the reduce likelihood derivatives
+            dmu
+            List of all the mean derivatives
+            arg
+            List of all minus_Cinv_dRdomega_gamma
+            dsigma
+            List of all sigma derivatives
         """   
         eps = 1e-6
         ddred, dpar = self._reduced_likelihood_function(theta+[-eps,0])
         ddred_2, dpar_2 = self._reduced_likelihood_function(theta+[eps,0])
+        red, _ = self._reduced_likelihood_function(theta)
         
         dred, par = self._reduced_likelihood_gradient(theta)
         
@@ -364,12 +427,12 @@ class KrgBased(SurrogateModel):
         sigma_2 = par['sigma2']
         
         dim = len(self.X_mean)
-        grad_red = np.zeros(dim)
         
         dr_all = par['dr']
         tr_all = par['tr']
         dmu_all = par['dmu']
         arg_all = par['arg']
+        dsigma = par['dsigma']
         hess_ij = np.zeros(())
         
         
@@ -388,7 +451,8 @@ class KrgBased(SurrogateModel):
             dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:,0]
             dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:,0]
             
-            Cinv_dmudomega = np.linalg.solve(C, dmu_all[omega])
+            dmudomega = dmu_all[omega]
+            Cinv_dmudomega = np.linalg.solve(C, dmudomega)
             Rinv_dmudomega = np.linalg.solve(C.T, Cinv_dmudomega)
             minus_Rinv_dRdomega_gamma = np.linalg.solve(C.T, arg_all[omega])
             
@@ -405,18 +469,21 @@ class KrgBased(SurrogateModel):
                 # Compute beta second derivatives
                 dRdeta_Rinv_dmudomega = np.dot(dRdeta, Rinv_dmudomega)
                 
-                Cinv_dmudeta = np.linalg.solve(C, dmu_all[eta])
+                dmudeta = dmu_all[eta]
+                Cinv_dmudeta = np.linalg.solve(C, dmudeta)
                 Rinv_dmudeta = np.linalg.solve(C.T, Cinv_dmudeta)
                 dRdomega_Rinv_dmudeta = np.dot(dRdomega, Rinv_dmudeta)
                 
-                minus_dRdeta_Rinv_dRdomega_gamma = - np.dot(dRdeta, minus_Rinv_dRdomega_gamma)
+                minus_dRdeta_Rinv_dRdomega_gamma = np.dot(dRdeta, minus_Rinv_dRdomega_gamma)
                 
                 minus_Rinv_dRdeta_gamma = np.linalg.solve(C.T, arg_all[eta])
-                minus_dRdomega_Rinv_dRdeta_gamma = - np.dot(dRdomega, minus_Rinv_dRdeta_gamma)
+                minus_dRdomega_Rinv_dRdeta_gamma = np.dot(dRdomega, minus_Rinv_dRdeta_gamma)
                 
                 minus_dRdetadomega_gamma = np.dot(dRdetadomega, -gamma)
             
-                beta_sum = dRdeta_Rinv_dmudomega + dRdomega_Rinv_dmudeta + minus_dRdeta_Rinv_dRdomega_gamma + minus_dRdomega_Rinv_dRdeta_gamma + minus_dRdetadomega_gamma
+                beta_sum = dRdeta_Rinv_dmudomega + dRdomega_Rinv_dmudeta \
+                           - minus_dRdeta_Rinv_dRdomega_gamma \
+                           - minus_dRdomega_Rinv_dRdeta_gamma + minus_dRdetadomega_gamma
                 
                 Qt_Cinv_beta_sum = np.dot(Q.T, np.linalg.solve(C, beta_sum))
                 dbetadetadomega = np.linalg.solve(G, Qt_Cinv_beta_sum)
@@ -424,46 +491,35 @@ class KrgBased(SurrogateModel):
                 # Compute mu second derivatives
                 dmudetadomega = np.dot(self.F, dbetadetadomega)
                 
-                if omega == 0 and eta == 0:
-                    mu1 = self.F.dot(dpar_2['beta'])
-                    mu2 = self.F.dot(dpar['beta'])
-                    mu = self.F.dot(par['beta'])
-                    dd_mu = (mu1 - 2 * mu + mu2)/eps**2  
-                    print(np.linalg.norm(dd_mu - dmudetadomega))
-                    print(np.abs(dd_mu - dmudetadomega))
-                
-                
                 # Compute sigma2 second derivatives
                     
-                sigma_arg_1 = - np.dot(dmudetadomega.T, gamma) - np.dot(dmu_all[omega].T, minus_Rinv_dRdeta_gamma) \
-                              - np.dot(dmu_all[eta].T, minus_Rinv_dRdomega_gamma)
-                # sigma_arg_1 = 0   
-                sigma_arg_2 = np.dot(gamma.T, - dmudetadomega + dRdomega_Rinv_dmudeta + dRdeta_Rinv_dmudomega)
-                # sigma_arg_2 = 0
-                sigma_arg_3 = np.dot(Cinv_dmudomega.T, Cinv_dmudeta) +  np.dot(Cinv_dmudeta.T, Cinv_dmudomega)
-                # sigma_arg_3 = 0 
-                sigma_arg_4 = np.dot(gamma.T, minus_dRdetadomega_gamma - minus_dRdomega_Rinv_dRdeta_gamma - minus_dRdeta_Rinv_dRdomega_gamma)
-                sigma_arg_41 = np.dot(dRdomega,np.linalg.solve(C.T,np.linalg.solve(C,np.dot(dRdeta,gamma))))
-                sigma_arg_42 = np.dot(dRdeta,np.linalg.solve(C.T,np.linalg.solve(C,np.dot(dRdomega,gamma))))
-                sigma_arg_4 = np.dot(gamma.T, np.dot(-dRdetadomega, gamma) + sigma_arg_42 + sigma_arg_41)
+                sigma_arg_1 = - np.dot(dmudetadomega.T, gamma) \
+                              + np.dot(dmudomega.T, -minus_Rinv_dRdeta_gamma) \
+                              + np.dot(dmudeta.T, -minus_Rinv_dRdomega_gamma)
+                              
+                sigma_arg_2 = - np.dot(gamma.T, dmudeta) + np.dot(gamma.T, dRdeta.dot(Rinv_dmudomega)) \
+                              + np.dot(gamma.T, dRdomega.dot(Rinv_dmudeta))
+                              
+                sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(dmudomega.T, Rinv_dmudeta)
                 
+                sigma_arg_4_in = minus_dRdetadomega_gamma - minus_dRdeta_Rinv_dRdomega_gamma \
+                                 - minus_dRdomega_Rinv_dRdeta_gamma 
+                sigma_arg_4 = np.dot(gamma.T, sigma_arg_4_in)
                 
-                sigma_arg_tr_1 = np.dot(tr_all[eta], tr_all[omega])
-                
-                sigma_arg_tr_2 = np.linalg.solve(C.T, np.linalg.solve(C, dRdetadomega))
-                
-                ddsigma2 = (1/self.nt) * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 \
+                dsigma2detadomega = (1/self.nt) * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 \
                                           + sigma_arg_4 )
                     
-                if omega == 0 and eta == 0:
-                    dd_sigma2 = (dpar_2['sigma2'] - 2 * par['sigma2'] + dpar['sigma2'])/eps**2
-                    print(np.linalg.norm(dd_sigma2 - ddsigma2)) 
-                    print(ddsigma2)
-                    print(dd_sigma2)
+                # Compute Hessian
+                dreddetadomega_tr_1 = np.trace(np.dot(tr_all[eta], tr_all[omega]))
                 
-                # Compute Hess deta dtheta
-                hess[ind_0 + i] = i    
-        return True
+                dreddetadomega_tr_2 = np.trace(np.linalg.solve(C.T, np.linalg.solve(C, dRdetadomega)))
+                    
+                dreddetadomega_arg1 = (self.nt/sigma_2)*(dsigma2detadomega - \
+                                                    (1/sigma_2)*dsigma[omega]*dsigma[eta])
+                dreddetadomega = - (dreddetadomega_arg1 - dreddetadomega_tr_1 + dreddetadomega_tr_2)/self.nt
+                
+                hess[ind_0 + i] = dreddetadomega
+        return hess, hess_ij, par
 
     def _predict_values(self, x):
         """
