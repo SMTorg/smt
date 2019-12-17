@@ -174,7 +174,7 @@ class KrgBased(SurrogateModel):
             QR decomposition of the matrix Ft.
         """
         # Initialize output
-        reduced_likelihood_function_value = - np.inf
+        reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
@@ -183,21 +183,21 @@ class KrgBased(SurrogateModel):
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
                 # it is very probable that lower-fidelity correlation matrix
-                # becomes ill-conditionned 
-                nugget = 10.0* nugget 
+                # becomes ill-conditionned
+                nugget = 10.0 * nugget
         noise = 0.0
-        tmp_var = theta 
+        tmp_var = theta
         if self.name == "MFK":
             if self.options["eval_noise"]:
                 theta = tmp_var[:-1]
                 noise = tmp_var[-1]
-    
+
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
-        
+
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-        
+
         # Cholesky decomposition of R
         try:
             C = linalg.cholesky(R, lower=True)
@@ -205,7 +205,7 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             raise e
             return reduced_likelihood_function_value, par
-        
+
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
         Q, G = linalg.qr(Ft, mode="economic")
@@ -216,13 +216,15 @@ class KrgBased(SurrogateModel):
             sv = linalg.svd(self.F, compute_uv=False)
             condF = sv[0] / sv[-1]
             if condF > 1e15:
-                raise Exception("F is too ill conditioned. Poor combination "
-                                "of regression model and observations.")
+                raise Exception(
+                    "F is too ill conditioned. Poor combination "
+                    "of regression model and observations."
+                )
 
             else:
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
-        
+
         Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
         beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
         rho = Yt - np.dot(Ft, beta)
@@ -238,11 +240,12 @@ class KrgBased(SurrogateModel):
             p = self.p
             q = self.q
             sigma2 = (rho ** 2.0).sum(axis=0) / (n_samples - p - q)
-            reduced_likelihood_function_value = -(n_samples - p - q) * np.log10(sigma2) \
-                    - n_samples*np.log10(detR)
+            reduced_likelihood_function_value = -(n_samples - p - q) * np.log10(
+                sigma2
+            ) - n_samples * np.log10(detR)
         else:
             sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt)
-            reduced_likelihood_function_value = - np.log(sigma2.sum()) - np.log(detR)
+            reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -252,17 +255,19 @@ class KrgBased(SurrogateModel):
         par["Q"] = Q
 
         # A particular case when f_min_cobyla fail
-        if (self.best_iteration_fail is not None) and \
-            (not np.isinf(reduced_likelihood_function_value)):
+        if (self.best_iteration_fail is not None) and (
+            not np.isinf(reduced_likelihood_function_value)
+        ):
 
-            if (reduced_likelihood_function_value >  self.best_iteration_fail):
-                 self.best_iteration_fail = reduced_likelihood_function_value
-                 self._thetaMemory = np.array(tmp_var)
+            if reduced_likelihood_function_value > self.best_iteration_fail:
+                self.best_iteration_fail = reduced_likelihood_function_value
+                self._thetaMemory = np.array(tmp_var)
 
-        elif (self.best_iteration_fail is None) and \
-            (not np.isinf(reduced_likelihood_function_value)):
-             self.best_iteration_fail = reduced_likelihood_function_value
-             self._thetaMemory = np.array(tmp_var)
+        elif (self.best_iteration_fail is None) and (
+            not np.isinf(reduced_likelihood_function_value)
+        ):
+            self.best_iteration_fail = reduced_likelihood_function_value
+            self._thetaMemory = np.array(tmp_var)
 
         return reduced_likelihood_function_value, par
 
@@ -308,65 +313,67 @@ class KrgBased(SurrogateModel):
             List of all minus_Cinv_dRdomega_gamma
             dsigma
             List of all sigma derivatives
-        """                
+        """
         red, par = self._reduced_likelihood_function(theta)
-        
-        C = par['C']
-        gamma = par['gamma']
-        Q = par['Q']
-        G = par['G']
-        sigma_2 = par['sigma2']
-        
+
+        C = par["C"]
+        gamma = par["gamma"]
+        Q = par["Q"]
+        G = par["G"]
+        sigma_2 = par["sigma2"]
+
         dim = len(self.X_mean)
         grad_red = np.zeros(dim)
-        
+
         dr_all = []
         tr_all = []
         dmu_all = []
         arg_all = []
         dsigma_all = []
-        
-              
+
         for i_der in range(dim):
-        
+
             # Compute R derivatives
-            dr = self._correlation_types[self.options["corr"]](theta, self.D, grad_ind=i_der)   
+            dr = self._correlation_types[self.options["corr"]](
+                theta, self.D, grad_ind=i_der
+            )
             dr_all.append(dr)
-            
-            dR = np.zeros((self.nt,self.nt))
-            dR[self.ij[:, 0], self.ij[:, 1]] = dr[:,0]
-            dR[self.ij[:, 1], self.ij[:, 0]] = dr[:,0]
-            
+
+            dR = np.zeros((self.nt, self.nt))
+            dR[self.ij[:, 0], self.ij[:, 1]] = dr[:, 0]
+            dR[self.ij[:, 1], self.ij[:, 0]] = dr[:, 0]
+
             # Compute beta derivatives
-            minus_Cinv_dR_gamma = np.linalg.solve(C, np.dot(dR,-gamma))
-            dbeta = np.linalg.solve(G, np.dot(Q.T,minus_Cinv_dR_gamma))
+            minus_Cinv_dR_gamma = np.linalg.solve(C, np.dot(dR, -gamma))
+            dbeta = np.linalg.solve(G, np.dot(Q.T, minus_Cinv_dR_gamma))
             arg_all.append(minus_Cinv_dR_gamma)
-            
+
             # Compute mu derivatives
             dmu = np.dot(self.F, dbeta)
             dmu_all.append(dmu)
-            
+
             # Compute log(detR) derivatives
             tr_1 = np.linalg.solve(C, dR)
             tr = np.linalg.solve(C.T, tr_1)
             tr_all.append(tr)
-            
-            # Compute Sigma2 Derivatives
-            dsigma_2 = (1/self.nt) * (- dmu.T.dot(gamma) - gamma.T.dot(dmu) \
-                       - np.dot(gamma.T, dR.dot(gamma)))
-            dsigma_all.append(dsigma_2)
-            
-            # Compute reduced log likelihood derivatives
-            grad_red[i_der] = - (dsigma_2/sigma_2 + np.trace(tr)/self.nt)
-        
-        par['dr'] = dr_all
-        par['tr'] = tr_all
-        par['dmu'] = dmu_all
-        par['arg'] = arg_all
-        par['dsigma'] = dsigma_all
 
-        return np.atleast_2d(grad_red).T, par 
-    
+            # Compute Sigma2 Derivatives
+            dsigma_2 = (1 / self.nt) * (
+                -dmu.T.dot(gamma) - gamma.T.dot(dmu) - np.dot(gamma.T, dR.dot(gamma))
+            )
+            dsigma_all.append(dsigma_2)
+
+            # Compute reduced log likelihood derivatives
+            grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+
+        par["dr"] = dr_all
+        par["tr"] = tr_all
+        par["dmu"] = dmu_all
+        par["arg"] = arg_all
+        par["dsigma"] = dsigma_all
+
+        return np.atleast_2d(grad_red).T, par
+
     def _reduced_likelihood_hessian(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
@@ -412,112 +419,138 @@ class KrgBased(SurrogateModel):
             List of all minus_Cinv_dRdomega_gamma
             dsigma
             List of all sigma derivatives
-        """   
+        """
         eps = 1e-6
-        ddred, dpar = self._reduced_likelihood_function(theta+[-eps,0])
-        ddred_2, dpar_2 = self._reduced_likelihood_function(theta+[eps,0])
+        ddred, dpar = self._reduced_likelihood_function(theta + [-eps, 0])
+        ddred_2, dpar_2 = self._reduced_likelihood_function(theta + [eps, 0])
         red, _ = self._reduced_likelihood_function(theta)
-        
+
         dred, par = self._reduced_likelihood_gradient(theta)
-        
-        C = par['C']
-        gamma = par['gamma']
-        Q = par['Q']
-        G = par['G']
-        sigma_2 = par['sigma2']
-        
+
+        C = par["C"]
+        gamma = par["gamma"]
+        Q = par["Q"]
+        G = par["G"]
+        sigma_2 = par["sigma2"]
+
         dim = len(self.X_mean)
-        
-        dr_all = par['dr']
-        tr_all = par['tr']
-        dmu_all = par['dmu']
-        arg_all = par['arg']
-        dsigma = par['dsigma']
+
+        dr_all = par["dr"]
+        tr_all = par["tr"]
+        dmu_all = par["dmu"]
+        arg_all = par["arg"]
+        dsigma = par["dsigma"]
         hess_ij = np.zeros(())
-        
-        
-        n_val_hess = dim*(dim+1) // 2
+
+        n_val_hess = dim * (dim + 1) // 2
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
         hess = np.zeros(n_val_hess)
         ind_1 = 0
-        
+
         for omega in range(dim):
             ind_0 = ind_1
             ind_1 = ind_0 + dim - omega
             hess_ij[ind_0:ind_1, 0] = omega
-            hess_ij[ind_0:ind_1, 1] = np.arange(omega,dim)
-            
-            dRdomega = np.zeros((self.nt,self.nt))
-            dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:,0]
-            dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:,0]
-            
+            hess_ij[ind_0:ind_1, 1] = np.arange(omega, dim)
+
+            dRdomega = np.zeros((self.nt, self.nt))
+            dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
+            dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:, 0]
+
             dmudomega = dmu_all[omega]
             Cinv_dmudomega = np.linalg.solve(C, dmudomega)
             Rinv_dmudomega = np.linalg.solve(C.T, Cinv_dmudomega)
             minus_Rinv_dRdomega_gamma = np.linalg.solve(C.T, arg_all[omega])
-            
-            for i,eta in enumerate(hess_ij[ind_0:ind_1, 1]):
-                dRdeta = np.zeros((self.nt,self.nt))
-                dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:,0]
-                dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:,0]
-                
-                dr_eta_omega = self._correlation_types[self.options["corr"]](theta, self.D, grad_ind=omega, hess_ind=eta) 
-                dRdetadomega = np.zeros((self.nt,self.nt))
-                dRdetadomega[self.ij[:, 0], self.ij[:, 1]] = dr_eta_omega[:,0]
-                dRdetadomega[self.ij[:, 1], self.ij[:, 0]] = dr_eta_omega[:,0]
-                
+
+            for i, eta in enumerate(hess_ij[ind_0:ind_1, 1]):
+                dRdeta = np.zeros((self.nt, self.nt))
+                dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:, 0]
+                dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:, 0]
+
+                dr_eta_omega = self._correlation_types[self.options["corr"]](
+                    theta, self.D, grad_ind=omega, hess_ind=eta
+                )
+                dRdetadomega = np.zeros((self.nt, self.nt))
+                dRdetadomega[self.ij[:, 0], self.ij[:, 1]] = dr_eta_omega[:, 0]
+                dRdetadomega[self.ij[:, 1], self.ij[:, 0]] = dr_eta_omega[:, 0]
+
                 # Compute beta second derivatives
                 dRdeta_Rinv_dmudomega = np.dot(dRdeta, Rinv_dmudomega)
-                
+
                 dmudeta = dmu_all[eta]
                 Cinv_dmudeta = np.linalg.solve(C, dmudeta)
                 Rinv_dmudeta = np.linalg.solve(C.T, Cinv_dmudeta)
                 dRdomega_Rinv_dmudeta = np.dot(dRdomega, Rinv_dmudeta)
-                
-                minus_dRdeta_Rinv_dRdomega_gamma = np.dot(dRdeta, minus_Rinv_dRdomega_gamma)
-                
+
+                minus_dRdeta_Rinv_dRdomega_gamma = np.dot(
+                    dRdeta, minus_Rinv_dRdomega_gamma
+                )
+
                 minus_Rinv_dRdeta_gamma = np.linalg.solve(C.T, arg_all[eta])
-                minus_dRdomega_Rinv_dRdeta_gamma = np.dot(dRdomega, minus_Rinv_dRdeta_gamma)
-                
+                minus_dRdomega_Rinv_dRdeta_gamma = np.dot(
+                    dRdomega, minus_Rinv_dRdeta_gamma
+                )
+
                 minus_dRdetadomega_gamma = np.dot(dRdetadomega, -gamma)
-            
-                beta_sum = dRdeta_Rinv_dmudomega + dRdomega_Rinv_dmudeta \
-                           - minus_dRdeta_Rinv_dRdomega_gamma \
-                           - minus_dRdomega_Rinv_dRdeta_gamma + minus_dRdetadomega_gamma
-                
+
+                beta_sum = (
+                    dRdeta_Rinv_dmudomega
+                    + dRdomega_Rinv_dmudeta
+                    - minus_dRdeta_Rinv_dRdomega_gamma
+                    - minus_dRdomega_Rinv_dRdeta_gamma
+                    + minus_dRdetadomega_gamma
+                )
+
                 Qt_Cinv_beta_sum = np.dot(Q.T, np.linalg.solve(C, beta_sum))
                 dbetadetadomega = np.linalg.solve(G, Qt_Cinv_beta_sum)
-                
+
                 # Compute mu second derivatives
                 dmudetadomega = np.dot(self.F, dbetadetadomega)
-                
+
                 # Compute sigma2 second derivatives
-                    
-                sigma_arg_1 = - np.dot(dmudetadomega.T, gamma) \
-                              + np.dot(dmudomega.T, -minus_Rinv_dRdeta_gamma) \
-                              + np.dot(dmudeta.T, -minus_Rinv_dRdomega_gamma)
-                              
-                sigma_arg_2 = - np.dot(gamma.T, dmudeta) + np.dot(gamma.T, dRdeta.dot(Rinv_dmudomega)) \
-                              + np.dot(gamma.T, dRdomega.dot(Rinv_dmudeta))
-                              
-                sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(dmudomega.T, Rinv_dmudeta)
-                
-                sigma_arg_4_in = minus_dRdetadomega_gamma - minus_dRdeta_Rinv_dRdomega_gamma \
-                                 - minus_dRdomega_Rinv_dRdeta_gamma 
+
+                sigma_arg_1 = (
+                    -np.dot(dmudetadomega.T, gamma)
+                    + np.dot(dmudomega.T, -minus_Rinv_dRdeta_gamma)
+                    + np.dot(dmudeta.T, -minus_Rinv_dRdomega_gamma)
+                )
+
+                sigma_arg_2 = (
+                    -np.dot(gamma.T, dmudeta)
+                    + np.dot(gamma.T, dRdeta.dot(Rinv_dmudomega))
+                    + np.dot(gamma.T, dRdomega.dot(Rinv_dmudeta))
+                )
+
+                sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(
+                    dmudomega.T, Rinv_dmudeta
+                )
+
+                sigma_arg_4_in = (
+                    minus_dRdetadomega_gamma
+                    - minus_dRdeta_Rinv_dRdomega_gamma
+                    - minus_dRdomega_Rinv_dRdeta_gamma
+                )
                 sigma_arg_4 = np.dot(gamma.T, sigma_arg_4_in)
-                
-                dsigma2detadomega = (1/self.nt) * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 \
-                                          + sigma_arg_4 )
-                    
+
+                dsigma2detadomega = (1 / self.nt) * (
+                    sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4
+                )
+
                 # Compute Hessian
                 dreddetadomega_tr_1 = np.trace(np.dot(tr_all[eta], tr_all[omega]))
-                
-                dreddetadomega_tr_2 = np.trace(np.linalg.solve(C.T, np.linalg.solve(C, dRdetadomega)))
-                    
-                dreddetadomega_arg1 = (self.nt/sigma_2)*(dsigma2detadomega - \
-                                                    (1/sigma_2)*dsigma[omega]*dsigma[eta])
-                dreddetadomega = - (dreddetadomega_arg1 - dreddetadomega_tr_1 + dreddetadomega_tr_2)/self.nt
-                
+
+                dreddetadomega_tr_2 = np.trace(
+                    np.linalg.solve(C.T, np.linalg.solve(C, dRdetadomega))
+                )
+
+                dreddetadomega_arg1 = (self.nt / sigma_2) * (
+                    dsigma2detadomega - (1 / sigma_2) * dsigma[omega] * dsigma[eta]
+                )
+                dreddetadomega = (
+                    -(dreddetadomega_arg1 - dreddetadomega_tr_1 + dreddetadomega_tr_2)
+                    / self.nt
+                )
+
                 hess[ind_0 + i] = dreddetadomega
         return hess, hess_ij, par
 
@@ -628,14 +661,17 @@ class KrgBased(SurrogateModel):
         d = self._componentwise_distance(dx)
 
         # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](self.optimal_theta, d).reshape(n_eval, self.nt)
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
-            np.dot(self.optimal_par["Ft"].T, rt) - self._regression_types[self.options["poly"]](x).T,
+            np.dot(self.optimal_par["Ft"].T, rt)
+            - self._regression_types[self.options["poly"]](x).T,
         )
 
         MSE = self.optimal_par["sigma2"] * (
