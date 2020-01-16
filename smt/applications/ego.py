@@ -52,6 +52,7 @@ class EGO(SurrogateBasedApplication):
             desc="Number of points of the initial LHS doe, only used if xdoe is not given",
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
+        declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
 
@@ -78,16 +79,20 @@ class EGO(SurrogateBasedApplication):
         xlimits = self.options["xlimits"]
         sampling = LHS(xlimits=xlimits, criterion="ese")
 
-        doe = self.options["xdoe"]
-        if doe is None:
+        xdoe = self.options["xdoe"]
+        if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = sampling(n_doe)
         else:
             self.log("Initial DOE given")
-            x_doe = np.atleast_2d(doe)
+            x_doe = np.atleast_2d(xdoe)
 
-        y_doe = fun(x_doe)
+        ydoe = self.options["ydoe"]
+        if ydoe is None:
+            y_doe = fun(x_doe)
+        else: # to save time if y_doe is already given to EGO
+            y_doe = ydoe
 
         # to save the initial doe
         x_data = x_doe
