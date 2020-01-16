@@ -145,7 +145,7 @@ class TestMFK(SMTestCase):
         # Problem set up
         ndim = 1
         Xt_e = np.linspace(0, 1, 4, endpoint=True).reshape(-1, ndim)
-        Xt_c = np.linspace(0, 1, 11, endpoint=True).reshape(-1, ndim)
+        Xt_c = np.linspace(0, 1, 13, endpoint=True).reshape(-1, ndim)
 
         nt_exp = Xt_e.shape[0]
         nt_cheap = Xt_c.shape[0]
