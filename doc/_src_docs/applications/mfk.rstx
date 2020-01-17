@@ -8,7 +8,7 @@ MFK is a multi-fidelity modeling method which uses an autoregressive model of or
 
 
 where :math:`\rho(x)`
-is a scaling/correlation factor (constant, linear or qudratic) and :math:`\delta(\cdot)` is a discrepancy function.
+is a scaling/correlation factor (constant, linear or quadratic) and :math:`\delta(\cdot)` is a discrepancy function.
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
 The implementation here follows the one proposed by Le Gratiet [2]_. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.

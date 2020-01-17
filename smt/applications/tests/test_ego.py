@@ -82,6 +82,20 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
+    def test_ydoe_option(self):
+        n_iter = 10
+        fun = Branin(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        ydoe = fun(xdoe)
+
+        ego = EGO(xdoe=xdoe,ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
+
+        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+
     @staticmethod
     def run_ego_example():
         import numpy as np
