@@ -119,7 +119,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0009999
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -145,7 +145,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0330002
+     Training - done. Time (sec):  0.0312002
   ___________________________________________________________________________
      
    Evaluation
@@ -153,9 +153,9 @@ Usage
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: vfm_TestVFM_run_vfm_example.png

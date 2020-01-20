@@ -8,7 +8,7 @@ MFK is a multi-fidelity modeling method which uses an autoregressive model of or
 
 
 where :math:`\rho(x)`
-is a scaling/correlation factor (constant, linear or qudratic) and :math:`\delta(\cdot)` is a discrepancy function.
+is a scaling/correlation factor (constant, linear or quadratic) and :math:`\delta(\cdot)` is a discrepancy function.
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
 The implementation here follows the one proposed by Le Gratiet [2]_. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.
@@ -46,7 +46,7 @@ Usage
   # Problem set up
   ndim = 1
   Xt_e = np.linspace(0, 1, 4, endpoint=True).reshape(-1, ndim)
-  Xt_c = np.linspace(0, 1, 11, endpoint=True).reshape(-1, ndim)
+  Xt_c = np.linspace(0, 1, 13, endpoint=True).reshape(-1, ndim)
   
   nt_exp = Xt_e.shape[0]
   nt_cheap = Xt_c.shape[0]
@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100002
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -111,9 +111,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009999
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000099
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -122,9 +122,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png

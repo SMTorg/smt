@@ -264,6 +264,11 @@ Options
      -  None
      -  ['ndarray']
      -  Initial doe inputs
+  *  -  ydoe
+     -  None
+     -  None
+     -  ['ndarray']
+     -  Initial doe outputs
   *  -  xlimits
      -  None
      -  None
