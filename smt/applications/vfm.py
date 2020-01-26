@@ -16,15 +16,9 @@ from smt.applications.application import SurrogateBasedApplication
 
 
 class VFM(SurrogateBasedApplication):
-    def __init__(self, **kwargs):
-        super(VFM, self).__init__(**kwargs)
-
-        self.nx = self.options["X_LF"].shape[1]
-        self.ny = self.options["y_LF"].shape[1]
-        self._trained = False
-
     def _initialize(self):
         super(VFM, self)._initialize()
+
         declare = self.options.declare
 
         declare(
@@ -76,6 +70,11 @@ class VFM(SurrogateBasedApplication):
         declare("y_HF", None, types=np.ndarray, desc="High-fidelity output")
         declare("dy_LF", None, types=np.ndarray, desc="Low-fidelity derivatives")
         declare("dy_HF", None, types=np.ndarray, desc="High-fidelity derivatives")
+
+        self.nx = None
+        self.ny = None
+        self.sm_HF = None
+        self._trained = False
 
     def predict_values(self, x):
         """
@@ -134,8 +133,6 @@ class VFM(SurrogateBasedApplication):
         Algorithm of the VFM method
         """
 
-        self._trained = True
-
         # For seek of readability
         if (
             self.options["X_LF"] is not None
@@ -149,6 +146,9 @@ class VFM(SurrogateBasedApplication):
             y_HF = self.options["y_HF"]
         else:
             raise ValueError("Check X_LF, y_LF, X_HF, and y_FH")
+
+        self.nx = X_LF.shape[1]
+        self.ny = y_LF.shape[1]
 
         if self.options["dy_LF"] is not None:
             dy_LF = self.options["dy_LF"]
@@ -237,6 +237,7 @@ class VFM(SurrogateBasedApplication):
                         + sm_LF.predict_derivatives(x, i)
                     )
 
+        self._trained = True
         self.sm_HF = sm_HF
 
     def _check_param(self):
