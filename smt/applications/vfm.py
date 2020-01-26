@@ -16,13 +16,11 @@ from smt.applications.application import SurrogateBasedApplication
 
 
 class VFM(SurrogateBasedApplication):
-
-
     def __init__(self, **kwargs):
         super(VFM, self).__init__(**kwargs)
 
-        self.nx = self.options['X_LF'].shape[1]
-        self.ny = self.options['y_LF'].shape[1]
+        self.nx = self.options["X_LF"].shape[1]
+        self.ny = self.options["y_LF"].shape[1]
         self._trained = False
 
     def _initialize(self):
@@ -164,6 +162,7 @@ class VFM(SurrogateBasedApplication):
         self.LF_deriv = self.options["options_LF"]["deriv"]
         del self.options["options_LF"]["deriv"]
         sm_LF = self.options["name_model_LF"](**self.options["options_LF"])
+        sm_LF.options["print_global"] = False
         sm_LF.set_training_values(X_LF, y_LF)
         if self.LF_deriv:
             for i in range(sm_LF.nx):
@@ -173,10 +172,7 @@ class VFM(SurrogateBasedApplication):
 
         # compute the bridge data
         if self.options["type_bridge"] == "Multiplicative":
-            # y_bridge = y_HF / sm_LF.predict_values(X_HF)
-            y_bridge = np.zeros(y_HF.shape)
-            for i in range(X_HF.shape[0]):
-                y_bridge[i, :] = y_HF[i, :] / np.maximum(1.e-30, sm_LF.predict_values(np.atleast_2d(X_HF[i, :])))
+            y_bridge = y_HF / sm_LF.predict_values(X_HF)
             self.B_deriv = self.options["options_bridge"]["deriv"]
             del self.options["options_bridge"]["deriv"]
             if self.B_deriv:
@@ -193,10 +189,7 @@ class VFM(SurrogateBasedApplication):
                         / sm_LF.predict_values(X_HF) ** 2
                     ).reshape(y_HF.shape[0])
         elif self.options["type_bridge"] == "Additive":
-            #y_bridge = y_HF - sm_LF.predict_values(X_HF)
-            y_bridge = np.zeros(y_HF.shape)
-            for i in range(X_HF.shape[0]):
-                y_bridge[i, :] = y_HF[i, :] - sm_LF.predict_values(np.atleast_2d(X_HF[i, :]))
+            y_bridge = y_HF - sm_LF.predict_values(X_HF)
             self.B_deriv = self.options["options_bridge"]["deriv"]
             del self.options["options_bridge"]["deriv"]
             if self.B_deriv:
