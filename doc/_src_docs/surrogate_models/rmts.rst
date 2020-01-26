@@ -145,10 +145,10 @@ Usage (RMTB)
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0000000
+           Computing energy terms - done. Time (sec):  0.0156000
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0156000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
@@ -162,7 +162,7 @@ Usage (RMTB)
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
         Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0156000
   ___________________________________________________________________________
      
    Evaluation
@@ -234,12 +234,12 @@ Usage (RMTC)
            Computing dof2coeff ...
            Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0156000
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
            Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0156000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
@@ -253,7 +253,7 @@ Usage (RMTC)
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
         Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0156000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation

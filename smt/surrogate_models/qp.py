@@ -77,7 +77,7 @@ class QP(SurrogateModel):
         Build the response surface of degree 2
         argument
         -----------
-        x : np.ndarray [nt, dim]
+        x : np.ndarray [nt, nx]
             Training points
         Returns
         -------
@@ -98,7 +98,6 @@ class QP(SurrogateModel):
             for j in range(i + 1, dim):
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (j - (i + 2)))
                 M[k, :] = x[i, :] * x[j, :]
-
         return M.T
 
     def _predict_derivatives(self, x, kx):
@@ -141,16 +140,15 @@ class QP(SurrogateModel):
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
+        x : np.ndarray [n_evals, nx]
             Evaluation point input variable values
 
         Returns
         -------
-        y : np.ndarray
+        y : np.ndarray [n_evals, ny]
             Evaluation point output variable values
         """
-
         M = self._response_surface(x)
-        y = np.dot(M, self.coef).T
+        y = np.dot(M, self.coef)
 
         return y

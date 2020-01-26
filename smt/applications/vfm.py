@@ -18,6 +18,7 @@ from smt.applications.application import SurrogateBasedApplication
 class VFM(SurrogateBasedApplication):
     def _initialize(self):
         super(VFM, self)._initialize()
+
         declare = self.options.declare
 
         declare(
@@ -70,6 +71,11 @@ class VFM(SurrogateBasedApplication):
         declare("dy_LF", None, types=np.ndarray, desc="Low-fidelity derivatives")
         declare("dy_HF", None, types=np.ndarray, desc="High-fidelity derivatives")
 
+        self.nx = None
+        self.ny = None
+        self.sm_HF = None
+        self._trained = False
+
     def predict_values(self, x):
         """
         Predict the output values at a set of points x.
@@ -88,7 +94,8 @@ class VFM(SurrogateBasedApplication):
             Output values at the prediction points.
 
         """
-        self._apply()
+        if not self._trained:
+            self._apply()
         y = self.sm_HF["predict_values"](x)
         return y
 
@@ -110,13 +117,14 @@ class VFM(SurrogateBasedApplication):
             Derivatives at the prediction points.
 
         """
-        self._apply()
+        if not self._trained:
+            self._apply()
         if kx is None:
             y = np.zeros(x.shape)
             for i in range(x.shape[1]):
                 y[:, i] = self.sm_HF["predict_derivatives"][i](x).reshape((x.shape[0]))
         else:
-            y = self.sm_HF["predict_derivatives"][kx](x).reshape((x.shape[0], 1))
+            y = self.sm_HF["predict_derivatives"][kx](x).reshape((x.shape[0], self.ny))
 
         return y
 
@@ -139,6 +147,9 @@ class VFM(SurrogateBasedApplication):
         else:
             raise ValueError("Check X_LF, y_LF, X_HF, and y_FH")
 
+        self.nx = X_LF.shape[1]
+        self.ny = y_LF.shape[1]
+
         if self.options["dy_LF"] is not None:
             dy_LF = self.options["dy_LF"]
         if self.options["dy_HF"] is not None:
@@ -151,6 +162,7 @@ class VFM(SurrogateBasedApplication):
         self.LF_deriv = self.options["options_LF"]["deriv"]
         del self.options["options_LF"]["deriv"]
         sm_LF = self.options["name_model_LF"](**self.options["options_LF"])
+        sm_LF.options["print_global"] = False
         sm_LF.set_training_values(X_LF, y_LF)
         if self.LF_deriv:
             for i in range(sm_LF.nx):
@@ -225,6 +237,7 @@ class VFM(SurrogateBasedApplication):
                         + sm_LF.predict_derivatives(x, i)
                     )
 
+        self._trained = True
         self.sm_HF = sm_HF
 
     def _check_param(self):
