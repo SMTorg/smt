@@ -134,26 +134,35 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None):
     n_components = d.shape[1]
 
     # Construct/split the correlation matrix
-    i,nb_limit  = 0,int(1e4)
+    i, nb_limit = 0, int(1e4)
     while i * nb_limit <= d.shape[0]:
-        r[i*nb_limit:(i+1)*nb_limit,0] = np.exp(-np.sum(theta.reshape(1,
-                n_components) * d[i*nb_limit:(i+1)*nb_limit,:], axis=1))
-        i+=1
-        
-    i = 0    
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                theta.reshape(1, n_components)
+                * d[i * nb_limit : (i + 1) * nb_limit, :],
+                axis=1,
+            )
+        )
+        i += 1
+
+    i = 0
     if grad_ind is not None:
         while i * nb_limit <= d.shape[0]:
-            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,grad_ind] \
-                                            * r[i*nb_limit:(i+1)*nb_limit,0]
-            i+=1
-            
-    i=0
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    i = 0
     if hess_ind is not None:
-        while i*nb_limit <= d.shape[0]:
-            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,hess_ind] \
-                                            * r[i*nb_limit:(i+1)*nb_limit,0]
-            i+=1
-    
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
     return r
 
 
@@ -176,31 +185,95 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None):
         An array containing the values of the autocorrelation model.
     """
 
-    r = np.zeros((d.shape[0],1))
+    r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
     # Construct/split the correlation matrix
-    i,nb_limit  = 0,int(1e4)
+    i, nb_limit = 0, int(1e4)
 
     while i * nb_limit <= d.shape[0]:
-        r[i*nb_limit:(i+1)*nb_limit,0] = np.exp(-np.sum(theta.reshape(1,
-                n_components) * d[i*nb_limit:(i+1)*nb_limit,:], axis=1))
-        i+=1
-        
-    i = 0    
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                theta.reshape(1, n_components)
+                * d[i * nb_limit : (i + 1) * nb_limit, :],
+                axis=1,
+            )
+        )
+        i += 1
+
+    i = 0
+
     if grad_ind is not None:
         while i * nb_limit <= d.shape[0]:
-            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,grad_ind] \
-                                            * r[i*nb_limit:(i+1)*nb_limit,0]
-            i+=1
-    
-    i=0
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    i = 0
     if hess_ind is not None:
-        while i*nb_limit <= d.shape[0]:
-            r[i*nb_limit:(i+1)*nb_limit,0] = - d[i*nb_limit:(i+1)*nb_limit,hess_ind] \
-                                            * r[i*nb_limit:(i+1)*nb_limit,0]
-            i+=1
-    
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    return r
+
+
+def act_exp(theta, d, grad_ind=None, hess_ind=None):
+    """
+    Active learning exponential correlation model
+
+    Parameters
+    ----------
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        |d_i| otherwise
+    grad_ind : int, optional
+        Indice for whch component the gradient must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for whch component the gradient must be computed. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good lendth
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    if len(theta) % n_components != 0:
+        raise Exception("Length of theta must be a multiple of n_components")
+
+    n_small_components = len(theta) // n_components
+
+    A = np.reshape(theta, (n_small_components, n_components)).T
+
+    d_A = d.dot(A)
+    # r[:,0] = np.exp(-(1/2)*np.sum(d_A**2., axis=1))
+    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A, axis=1))
+
+    if grad_ind is not None:
+        d_grad_ind = grad_ind % n_components
+        r_grad_ind = grad_ind // n_components
+
+        r[:, 0] = -1 / 2 * d[:, d_grad_ind] * r[:, 0]
+
+    if hess_ind is not None:
+        d_hess_ind = hess_ind % n_components
+        r_hess_ind = hess_ind // n_components
+
+        r[:, 0] = -d[:, d_hess_ind] * r[:, 0] / 2.0
+
     return r
 
 
@@ -379,6 +452,10 @@ def componentwise_distance(D, corr, dim):
                 D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
                     D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
                 )
+            elif corr == "act_exp":
+                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
+                    i * nb_limit : (i + 1) * nb_limit, :
+                ]
             else:
                 # abs_exp
                 D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(

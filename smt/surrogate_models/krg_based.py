@@ -26,11 +26,14 @@ from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
     abs_exp,
     squar_exp,
+    act_exp,
     standardization,
     l1_cross_distances,
 )
 
 from scipy.optimize import minimize
+
+import time
 
 """
 The kriging class.
@@ -41,7 +44,11 @@ class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
-    _correlation_types = {"abs_exp": abs_exp, "squar_exp": squar_exp}
+    _correlation_types = {
+        "abs_exp": abs_exp,
+        "squar_exp": squar_exp,
+        "act_exp": act_exp,
+    }
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
@@ -56,7 +63,7 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp"),
+            values=("abs_exp", "squar_exp", "act_exp"),
             desc="Correlation function type",
         )
         declare(
@@ -66,6 +73,12 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
+        )
+        declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla", "L-BFGS-B"),
+            desc="optimiseur for Hyperparameters optimisation",
         )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
@@ -89,7 +102,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name != "Kriging":
+        if self.name != "Kriging" and self.name != "Active Kriging":
             X, y = self._compute_pls(X.copy(), y.copy())
 
         # Center and scale X and y
@@ -118,7 +131,15 @@ class KrgBased(SurrogateModel):
         if self.name == "MFK":
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-        del self.y_norma, self.D
+        elif self.name == "Active Kriging":
+            var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
+            r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
+            var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
+            var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
+            self.sigma_R = -np.linalg.solve(var_R, np.eye(len(self.optimal_theta)))
+            self.optimal_par = par
+        if self.name != "Active Kriging":
+            del self.y_norma, self.D
 
     def _train(self):
         """
@@ -322,21 +343,23 @@ class KrgBased(SurrogateModel):
         G = par["G"]
         sigma_2 = par["sigma2"]
 
-        dim = len(self.X_mean)
-        grad_red = np.zeros(dim)
+        nb_theta = len(theta)
+        grad_red = np.zeros(nb_theta)
 
         dr_all = []
         tr_all = []
         dmu_all = []
         arg_all = []
         dsigma_all = []
+        dbeta_all = []
 
-        for i_der in range(dim):
+        for i_der in range(nb_theta):
 
             # Compute R derivatives
             dr = self._correlation_types[self.options["corr"]](
                 theta, self.D, grad_ind=i_der
             )
+
             dr_all.append(dr)
 
             dR = np.zeros((self.nt, self.nt))
@@ -344,22 +367,30 @@ class KrgBased(SurrogateModel):
             dR[self.ij[:, 1], self.ij[:, 0]] = dr[:, 0]
 
             # Compute beta derivatives
-            minus_Cinv_dR_gamma = np.linalg.solve(C, np.dot(dR, -gamma))
-            dbeta = np.linalg.solve(G, np.dot(Q.T, minus_Cinv_dR_gamma))
-            arg_all.append(minus_Cinv_dR_gamma)
+            Cinv_dR_gamma = linalg.solve_triangular(C, np.dot(dR, gamma), lower=True)
+            dbeta = -linalg.solve_triangular(G, np.dot(Q.T, Cinv_dR_gamma))
+            arg_all.append(Cinv_dR_gamma)
+
+            dbeta_all.append(dbeta)
 
             # Compute mu derivatives
             dmu = np.dot(self.F, dbeta)
             dmu_all.append(dmu)
 
             # Compute log(detR) derivatives
-            tr_1 = np.linalg.solve(C, dR)
-            tr = np.linalg.solve(C.T, tr_1)
+            tr_1 = linalg.solve_triangular(C, dR, lower=True)
+            tr = linalg.solve_triangular(C.T, tr_1)
             tr_all.append(tr)
 
             # Compute Sigma2 Derivatives
-            dsigma_2 = (1 / self.nt) * (
-                -dmu.T.dot(gamma) - gamma.T.dot(dmu) - np.dot(gamma.T, dR.dot(gamma))
+            dsigma_2 = (
+                (1 / self.nt)
+                * (
+                    -dmu.T.dot(gamma)
+                    - gamma.T.dot(dmu)
+                    - np.dot(gamma.T, dR.dot(gamma))
+                )
+                * self.y_std ** 2.0
             )
             dsigma_all.append(dsigma_2)
 
@@ -371,6 +402,9 @@ class KrgBased(SurrogateModel):
         par["dmu"] = dmu_all
         par["arg"] = arg_all
         par["dsigma"] = dsigma_all
+        par["dbeta_all"] = dbeta_all
+
+        # print('gradient:', grad_red)
 
         return np.atleast_2d(grad_red).T, par
 
@@ -389,7 +423,7 @@ class KrgBased(SurrogateModel):
         hess : np.ndarray
             Hessian values.
         
-        hess_ij: np.ndarray [dim * (dim + 1) / 2, 2]
+        hess_ij: np.ndarray [nb_theta * (nb_theta + 1) / 2, 2]
             - The indices i and j of the vectors in theta associated to the hessian in hess.
             
         par: dict()
@@ -420,11 +454,6 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        eps = 1e-6
-        ddred, dpar = self._reduced_likelihood_function(theta + [-eps, 0])
-        ddred_2, dpar_2 = self._reduced_likelihood_function(theta + [eps, 0])
-        red, _ = self._reduced_likelihood_function(theta)
-
         dred, par = self._reduced_likelihood_gradient(theta)
 
         C = par["C"]
@@ -433,34 +462,37 @@ class KrgBased(SurrogateModel):
         G = par["G"]
         sigma_2 = par["sigma2"]
 
-        dim = len(self.X_mean)
+        nb_theta = len(theta)
 
         dr_all = par["dr"]
         tr_all = par["tr"]
         dmu_all = par["dmu"]
         arg_all = par["arg"]
         dsigma = par["dsigma"]
-        hess_ij = np.zeros(())
+        Rinv_dRdomega_gamma_all = []
+        Rinv_dmudomega_all = []
 
-        n_val_hess = dim * (dim + 1) // 2
+        n_val_hess = nb_theta * (nb_theta + 1) // 2
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
-        hess = np.zeros(n_val_hess)
+        hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
 
-        for omega in range(dim):
+        for omega in range(nb_theta):
             ind_0 = ind_1
-            ind_1 = ind_0 + dim - omega
+            ind_1 = ind_0 + nb_theta - omega
             hess_ij[ind_0:ind_1, 0] = omega
-            hess_ij[ind_0:ind_1, 1] = np.arange(omega, dim)
+            hess_ij[ind_0:ind_1, 1] = np.arange(omega, nb_theta)
 
             dRdomega = np.zeros((self.nt, self.nt))
             dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
             dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:, 0]
 
             dmudomega = dmu_all[omega]
-            Cinv_dmudomega = np.linalg.solve(C, dmudomega)
-            Rinv_dmudomega = np.linalg.solve(C.T, Cinv_dmudomega)
-            minus_Rinv_dRdomega_gamma = np.linalg.solve(C.T, arg_all[omega])
+            Cinv_dmudomega = linalg.solve_triangular(C, dmudomega, lower=True)
+            Rinv_dmudomega = linalg.solve_triangular(C.T, Cinv_dmudomega)
+            Rinv_dmudomega_all.append(Rinv_dmudomega)
+            Rinv_dRdomega_gamma = linalg.solve_triangular(C.T, arg_all[omega])
+            Rinv_dRdomega_gamma_all.append(Rinv_dRdomega_gamma)
 
             for i, eta in enumerate(hess_ij[ind_0:ind_1, 1]):
                 dRdeta = np.zeros((self.nt, self.nt))
@@ -478,47 +510,44 @@ class KrgBased(SurrogateModel):
                 dRdeta_Rinv_dmudomega = np.dot(dRdeta, Rinv_dmudomega)
 
                 dmudeta = dmu_all[eta]
-                Cinv_dmudeta = np.linalg.solve(C, dmudeta)
-                Rinv_dmudeta = np.linalg.solve(C.T, Cinv_dmudeta)
+                Cinv_dmudeta = linalg.solve_triangular(C, dmudeta, lower=True)
+                Rinv_dmudeta = linalg.solve_triangular(C.T, Cinv_dmudeta)
                 dRdomega_Rinv_dmudeta = np.dot(dRdomega, Rinv_dmudeta)
 
-                minus_dRdeta_Rinv_dRdomega_gamma = np.dot(
-                    dRdeta, minus_Rinv_dRdomega_gamma
-                )
+                dRdeta_Rinv_dRdomega_gamma = np.dot(dRdeta, Rinv_dRdomega_gamma)
 
-                minus_Rinv_dRdeta_gamma = np.linalg.solve(C.T, arg_all[eta])
-                minus_dRdomega_Rinv_dRdeta_gamma = np.dot(
-                    dRdomega, minus_Rinv_dRdeta_gamma
-                )
+                Rinv_dRdeta_gamma = linalg.solve_triangular(C.T, arg_all[eta])
+                dRdomega_Rinv_dRdeta_gamma = np.dot(dRdomega, Rinv_dRdeta_gamma)
 
-                minus_dRdetadomega_gamma = np.dot(dRdetadomega, -gamma)
+                dRdetadomega_gamma = np.dot(dRdetadomega, gamma)
 
                 beta_sum = (
                     dRdeta_Rinv_dmudomega
                     + dRdomega_Rinv_dmudeta
-                    - minus_dRdeta_Rinv_dRdomega_gamma
-                    - minus_dRdomega_Rinv_dRdeta_gamma
-                    + minus_dRdetadomega_gamma
+                    + dRdeta_Rinv_dRdomega_gamma
+                    + dRdomega_Rinv_dRdeta_gamma
+                    - dRdetadomega_gamma
                 )
 
-                Qt_Cinv_beta_sum = np.dot(Q.T, np.linalg.solve(C, beta_sum))
-                dbetadetadomega = np.linalg.solve(G, Qt_Cinv_beta_sum)
+                Qt_Cinv_beta_sum = np.dot(
+                    Q.T, linalg.solve_triangular(C, beta_sum, lower=True)
+                )
+                dbetadetadomega = linalg.solve_triangular(G, Qt_Cinv_beta_sum)
 
                 # Compute mu second derivatives
                 dmudetadomega = np.dot(self.F, dbetadetadomega)
 
                 # Compute sigma2 second derivatives
-
                 sigma_arg_1 = (
                     -np.dot(dmudetadomega.T, gamma)
-                    + np.dot(dmudomega.T, -minus_Rinv_dRdeta_gamma)
-                    + np.dot(dmudeta.T, -minus_Rinv_dRdomega_gamma)
+                    + np.dot(dmudomega.T, Rinv_dRdeta_gamma)
+                    + np.dot(dmudeta.T, Rinv_dRdomega_gamma)
                 )
 
                 sigma_arg_2 = (
-                    -np.dot(gamma.T, dmudeta)
-                    + np.dot(gamma.T, dRdeta.dot(Rinv_dmudomega))
-                    + np.dot(gamma.T, dRdomega.dot(Rinv_dmudeta))
+                    -np.dot(gamma.T, dmudetadomega)
+                    + np.dot(gamma.T, dRdeta_Rinv_dmudomega)
+                    + np.dot(gamma.T, dRdomega_Rinv_dmudeta)
                 )
 
                 sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(
@@ -526,21 +555,25 @@ class KrgBased(SurrogateModel):
                 )
 
                 sigma_arg_4_in = (
-                    minus_dRdetadomega_gamma
-                    - minus_dRdeta_Rinv_dRdomega_gamma
-                    - minus_dRdomega_Rinv_dRdeta_gamma
+                    -dRdetadomega_gamma
+                    + dRdeta_Rinv_dRdomega_gamma
+                    + dRdomega_Rinv_dRdeta_gamma
                 )
                 sigma_arg_4 = np.dot(gamma.T, sigma_arg_4_in)
 
-                dsigma2detadomega = (1 / self.nt) * (
-                    sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4
+                dsigma2detadomega = (
+                    (1 / self.nt)
+                    * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
+                    * self.y_std ** 2.0
                 )
 
                 # Compute Hessian
                 dreddetadomega_tr_1 = np.trace(np.dot(tr_all[eta], tr_all[omega]))
 
                 dreddetadomega_tr_2 = np.trace(
-                    np.linalg.solve(C.T, np.linalg.solve(C, dRdetadomega))
+                    linalg.solve_triangular(
+                        C.T, linalg.solve_triangular(C, dRdetadomega, lower=True)
+                    )
                 )
 
                 dreddetadomega_arg1 = (self.nt / sigma_2) * (
@@ -551,7 +584,9 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i] = dreddetadomega
+                hess[ind_0 + i, 0] = dreddetadomega
+            par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
+            par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
 
     def _predict_values(self, x):
@@ -652,7 +687,19 @@ class KrgBased(SurrogateModel):
         return y
 
     def _predict_variances(self, x):
+        """
+        Provide uncertainty of the model at a set of points
 
+        Parameters
+        ----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        MSE : np.ndarray
+            Evaluation point output variable MSE
+        """
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -714,6 +761,17 @@ class KrgBased(SurrogateModel):
         def minus_reduced_likelihood_function(log10t):
             return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
 
+        def grad_minus_reduced_likelihood_function(log10t):
+            log10t_2d = np.atleast_2d(log10t).T
+            res = (
+                -np.log(10.0)
+                * (10.0 ** log10t_2d)
+                * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+            )
+            return res
+
+        theta0_rand = np.random.rand(len(self.options["theta0"]))
+
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
         if self.name == "KPLSK":
@@ -729,11 +787,16 @@ class KrgBased(SurrogateModel):
                 [],
             )
 
+            bounds_log10t = []
+
             for i in range(len(self.options["theta0"])):
                 constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
                 constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
 
+                bounds_log10t.append((-6.0, 2.0))
+
             self.D = self._componentwise_distance(D, opt=ii)
+            theta0_rand = theta0_rand * 2
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
@@ -745,20 +808,57 @@ class KrgBased(SurrogateModel):
                         theta0 = np.concatenate(
                             [theta0, np.array([self.options["noise0"]])]
                         )
+                        theta0_rand = np.concatenate(
+                            [theta0_rand, np.array([self.options["noise0"]])]
+                        )
+
                         constraints.append(lambda log10t: log10t[-1] + 16)
                         constraints.append(lambda log10t: 10 - log10t[-1])
+
+                        bounds_log10t.append((10, 16))
                 try:
-                    optimal_theta = 10.0 ** optimize.fmin_cobyla(
-                        minus_reduced_likelihood_function,
-                        np.log10(theta0),
-                        constraints,
-                        rhobeg=_rhobeg,
-                        rhoend=1e-4,
-                        maxfun=limit,
-                    )
+
+                    if self.options["hyper_opt"] == "Cobyla":
+                        optimal_theta = 10.0 ** optimize.fmin_cobyla(
+                            minus_reduced_likelihood_function,
+                            np.log10(theta0),
+                            constraints,
+                            rhobeg=_rhobeg,
+                            rhoend=1e-4,
+                            maxfun=limit,
+                        )
+                    elif self.options["hyper_opt"] == "L-BFGS-B":
+
+                        optimal_theta_res = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            np.log10(theta0),
+                            method="L-BFGS-B",
+                            jac=grad_minus_reduced_likelihood_function,
+                            bounds=bounds_log10t,
+                            options={"maxiter": 10, "disp": True},
+                        )
+
+                        optimal_theta_res_2 = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            np.log10(theta0_rand),
+                            method="L-BFGS-B",
+                            jac=grad_minus_reduced_likelihood_function,
+                            bounds=bounds_log10t,
+                            options={"maxiter": 10, "disp": True},
+                        )
+
+                        # print(optimal_theta_res)
+                        # print(optimal_theta_res_2)
+
+                        if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
+                            optimal_theta_res = optimal_theta_res_2
+
+                        optimal_theta = 10 ** optimal_theta_res["x"]
+
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
+
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -845,8 +945,21 @@ class KrgBased(SurrogateModel):
         # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
             d = self.options["n_comp"]
+        elif self.name in ["Active Kriging"]:
+            d = self.options["n_comp"] * self.nx
         else:
             d = self.nx
+
+        if self.name == "Active Kriging":
+            if self.options["corr"] != "act_exp":
+                raise ValueError(
+                    "Active Kriging must be used with act_exp correlation function"
+                )
+        else:
+            if self.options["corr"] == "act_exp":
+                raise ValueError(
+                    "act_exp correlation function must be used With Active Kriging"
+                )
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
