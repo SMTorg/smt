@@ -34,6 +34,7 @@ from smt.utils.kriging_utils import (
 from scipy.optimize import minimize
 
 import time
+import traceback
 
 """
 The kriging class.
@@ -275,6 +276,9 @@ class KrgBased(SurrogateModel):
         par["G"] = G
         par["Q"] = Q
 
+        if self.name == "Active Kriging":
+            reduced_likelihood_function_value += self._reduced_log_prior(theta)
+
         # A particular case when f_min_cobyla fail
         if (self.best_iteration_fail is not None) and (
             not np.isinf(reduced_likelihood_function_value)
@@ -404,9 +408,12 @@ class KrgBased(SurrogateModel):
         par["dsigma"] = dsigma_all
         par["dbeta_all"] = dbeta_all
 
-        # print('gradient:', grad_red)
+        grad_red = np.atleast_2d(grad_red).T
 
-        return np.atleast_2d(grad_red).T, par
+        if self.name == "Active Kriging":
+            grad_red += self._reduced_log_prior(theta, grad=True)
+
+        return grad_red, par
 
     def _reduced_likelihood_hessian(self, theta):
         """
@@ -476,6 +483,9 @@ class KrgBased(SurrogateModel):
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
+
+        if self.name == "Active Kriging":
+            log_prior = self._reduced_log_prior(theta, hessian=True)
 
         for omega in range(nb_theta):
             ind_0 = ind_1
@@ -585,6 +595,9 @@ class KrgBased(SurrogateModel):
                 )
 
                 hess[ind_0 + i, 0] = dreddetadomega
+
+                if self.name == "Active Kriging" and eta == omega:
+                    hess[ind_0 + i, 0] += log_prior[eta]
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
@@ -835,7 +848,7 @@ class KrgBased(SurrogateModel):
                             method="L-BFGS-B",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_log10t,
-                            options={"maxiter": 10, "disp": True},
+                            options={"maxiter": 15, "disp": True},
                         )
 
                         optimal_theta_res_2 = optimize.minimize(
@@ -844,9 +857,8 @@ class KrgBased(SurrogateModel):
                             method="L-BFGS-B",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_log10t,
-                            options={"maxiter": 10, "disp": True},
+                            options={"maxiter": 15, "disp": True},
                         )
-
                         # print(optimal_theta_res)
                         # print(optimal_theta_res_2)
 

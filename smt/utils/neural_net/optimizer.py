@@ -304,8 +304,8 @@ class Adam(Optimizer):
 
 def run_example(use_adam=True):  # pragma: no cover
     """visual example using 2D rosenbrock function"""
-    import matplotlib.pyplot as plt 
-    
+    import matplotlib.pyplot as plt
+
     # Test function
     def rosenbrock(parameters):
         x1 = parameters["x1"]

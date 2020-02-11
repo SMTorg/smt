@@ -91,7 +91,7 @@ class Linear(Activation):
 
 def plot_activations():
     import matplotlib.pyplot as plt
-	
+
     x = np.linspace(-10, 10, 100)
     activations = {"tanh": Tanh(), "sigmoid": Sigmoid()}
     for name, activation in activations.items():

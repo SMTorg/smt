@@ -23,16 +23,34 @@ class AKRG(KrgBased):
         super(AKRG, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of active dimensions")
+        declare(
+            "prior",
+            {"mean": 0.0, "var": 5.0 / 4.0},
+            types=dict,
+            desc="Parameters for Gaussian prior of the Hyperparameters",
+        )
         self.options["hyper_opt"] = "L-BFGS-B"
         self.options["corr"] = "act_exp"
-        self.options["theta0"] = [0.5]
         self.name = "Active Kriging"
 
     def _componentwise_distance(self, dx, opt=0):
         d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def predict_variance(self, x):
+    def predict_variances(self, x, both=False):
+        """
+        Provide uncertainty of the model at a set of points
+
+        Parameters
+        ----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        AMSE : np.ndarray
+            Evaluation point output variable MSE with the hyperparameters distribution
+        """
         dy = self._predict_value_derivatives_hyper(x)
         dMSE, MSE = self._predict_variance_derivatives_hyper(x)
 
@@ -52,7 +70,50 @@ class AKRG(KrgBased):
 
         AMSE[AMSE < 0.0] = 0.0
 
-        return AMSE
+        print("in here")
+
+        if both:
+            return AMSE, MSE
+        else:
+            return AMSE
+
+    def _reduced_log_prior(self, theta, grad=False, hessian=False):
+        """
+        Compute the reduced log value, gradient or heassian of the hyperparameters prior
+
+        Parameters
+        ----------
+        theta : list(n_comp), optional
+            - An array containing the autocorrelation parameters at which the
+              Gaussian Process model parameters should be determined.
+              
+        grad : boulean, optional
+            True if the gradient must be computed. The default is False.
+        hessian : boulean, optional
+            True if the hessian must be computed. The default is False.
+
+        Returns
+        -------
+        res : float or np.ndarray
+            Reduced log value, gradient or hessian of the hyperparameters prior
+
+        """
+        nb_theta = len(theta)
+
+        if theta.ndim < 2:
+            theta = np.atleast_2d(theta).T
+
+        mean = np.ones((nb_theta, 1)) * self.options["prior"]["mean"]
+        sig_inv = np.eye(nb_theta) / self.options["prior"]["var"]
+
+        if grad:
+            sig_inv_m = np.atleast_2d(np.sum(sig_inv, axis=0)).T
+            res = -2.0 * (theta - mean) * sig_inv_m
+        elif hessian:
+            res = -2.0 * np.atleast_2d(np.sum(sig_inv, axis=0)).T
+        else:
+            res = -np.dot((theta - mean).T, sig_inv.dot(theta - mean))
+        return res
 
     def _predict_value_derivatives_hyper(self, x):
         """

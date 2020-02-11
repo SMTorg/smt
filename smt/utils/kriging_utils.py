@@ -264,14 +264,10 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None):
 
     if grad_ind is not None:
         d_grad_ind = grad_ind % n_components
-        r_grad_ind = grad_ind // n_components
-
         r[:, 0] = -1 / 2 * d[:, d_grad_ind] * r[:, 0]
 
     if hess_ind is not None:
         d_hess_ind = hess_ind % n_components
-        r_hess_ind = hess_ind // n_components
-
         r[:, 0] = -d[:, d_hess_ind] * r[:, 0] / 2.0
 
     return r
