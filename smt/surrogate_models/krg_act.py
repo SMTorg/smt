@@ -70,8 +70,6 @@ class AKRG(KrgBased):
 
         AMSE[AMSE < 0.0] = 0.0
 
-        print("in here")
-
         if both:
             return AMSE, MSE
         else:

@@ -21,14 +21,14 @@ from types import FunctionType
 from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from sklearn.metrics.pairwise import manhattan_distances
+from smt.utils.kriging_utils import differences
 from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
     abs_exp,
     squar_exp,
     act_exp,
     standardization,
-    l1_cross_distances,
+    cross_distances,
 )
 
 from scipy.optimize import minimize
@@ -112,7 +112,7 @@ class KrgBased(SurrogateModel):
         )
 
         # Calculate matrix of distances D between samples
-        D, self.ij = l1_cross_distances(self.X_norma)
+        D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(D, axis=1)) == 0.0:
             raise Exception("Multiple input features cannot have the same value.")
 
@@ -139,6 +139,10 @@ class KrgBased(SurrogateModel):
             var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
             self.sigma_R = -np.linalg.solve(var_R, np.eye(len(self.optimal_theta)))
             self.optimal_par = par
+            A = np.reshape(self.optimal_theta, (self.options['n_comp'], self.nx)).T
+            
+            print(A/np.linalg.norm(A))
+            
         if self.name != "Active Kriging":
             del self.y_norma, self.D
 
@@ -620,7 +624,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r = self._correlation_types[self.options["corr"]](
@@ -658,7 +662,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r = self._correlation_types[self.options["corr"]](
@@ -717,7 +721,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
 
         # Compute the correlation function

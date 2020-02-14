@@ -178,3 +178,4 @@ if __name__ == "__main__":
         TestEGO.run_ego_example()
         exit()
     unittest.main()
+

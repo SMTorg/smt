@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 from pyDOE2 import bbdesign
+from sklearn.metrics.pairwise import check_pairwise_arrays
 
 
 def standardization(X, y, copy=False):
@@ -71,10 +72,10 @@ def standardization(X, y, copy=False):
         return X, y, X_mean, y_mean, X_std, y_std
 
 
-def l1_cross_distances(X):
+def cross_distances(X):
 
     """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
+    Computes the nonzero componentwise cross-distances between the vectors
     in X.
 
     Parameters
@@ -87,7 +88,7 @@ def l1_cross_distances(X):
     -------
 
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The L1 cross-distances between the vectors in X.
+            - The cross-distances between the vectors in X.
 
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
@@ -105,9 +106,14 @@ def l1_cross_distances(X):
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1) : n_samples])
+        D[ll_0:ll_1] = (X[k] - X[(k + 1) : n_samples])
 
     return D, ij.astype(np.int)
+
+def differences(X, Y):
+    X, Y = check_pairwise_arrays(X, Y)
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+    return D.reshape((-1, X.shape[1]))
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None):
@@ -232,16 +238,16 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None):
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        |d_i| otherwise
+        d_i otherwise
     grad_ind : int, optional
-        Indice for whch component the gradient must be computed. The default is None.
+        Indice for which component the gradient must be computed. The default is None.
     hess_ind : int, optional
-        Indice for whch component the gradient must be computed. The default is None.
+        Indice for which component the gradient must be computed. The default is None.
 
     Raises
     ------
     Exception
-        Assure that theta is of the good lendth
+        Assure that theta is of the good length
 
     Returns
     -------
@@ -259,17 +265,30 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None):
     A = np.reshape(theta, (n_small_components, n_components)).T
 
     d_A = d.dot(A)
-    # r[:,0] = np.exp(-(1/2)*np.sum(d_A**2., axis=1))
-    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A, axis=1))
+    # d_A_sign = np.ones(d_A.shape)
+    # d_A_sign[d_A <= 0] = -1.
+    # print(d_A_sign)
+    
+    r[:,0] = np.exp(-(1/2)*np.sum(d_A**2., axis=1))
+    # r[:, 0] = np.exp(-(1 / 2) * np.sum(np.abs(d_A), axis=1))
 
     if grad_ind is not None:
         d_grad_ind = grad_ind % n_components
-        r[:, 0] = -1 / 2 * d[:, d_grad_ind] * r[:, 0]
-
-    if hess_ind is not None:
-        d_hess_ind = hess_ind % n_components
-        r[:, 0] = -d[:, d_hess_ind] * r[:, 0] / 2.0
-
+        d_A_grad_ind = grad_ind // n_components
+       
+        if hess_ind is None:
+            # r[:, 0] = -1 / 2 * d_A_sign[:,sign_grad_ind] * d[:, d_grad_ind] * r[:, 0]
+            r[:, 0] = - d[:, d_grad_ind] * d_A[:, d_A_grad_ind] * r[:, 0]
+            
+        elif hess_ind is not None:
+            d_hess_ind = hess_ind % n_components
+            d_A_hess_ind = hess_ind // n_components
+            # r[:, 0] = -d[:, d_hess_ind] * r[:, 0] / 2.0
+            fact = - d_A[:, d_A_grad_ind] * d_A[:, d_A_hess_ind]
+            if d_A_hess_ind ==  d_A_grad_ind:
+                fact = 1 + fact
+            r[:, 0] = - d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+        
     return r
 
 
