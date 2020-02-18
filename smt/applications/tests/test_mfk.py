@@ -25,7 +25,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.applications import MFK
+from smt.applications.mfk import MFK, create_nested_lhs
 from copy import deepcopy
 
 print_output = False
@@ -36,6 +36,27 @@ class TestMFK(SMTestCase):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
+
+    def test_nested_lhs(self):
+        xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
+        num = [6, 4, 2]
+        xnorm = create_nested_lhs(nlevel=3, xlimits=xlimits, n_samples=num)
+
+        xlow, xmedium, xhigh = xnorm
+
+        for items1 in xmedium:
+            found = False
+            for items0 in xlow:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
+
+        for items1 in xhigh:
+            found = False
+            for items0 in xmedium:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
 
     def test_mfk(self):
         self.problems = ["exp", "tanh", "cos"]

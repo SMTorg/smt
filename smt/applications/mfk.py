@@ -18,10 +18,75 @@ from smt.utils.kriging_utils import (
 )
 from scipy.linalg import solve_triangular
 from scipy import linalg
+from scipy.spatial.distance import cdist
 from sklearn.metrics.pairwise import manhattan_distances
 import copy
 from copy import deepcopy
 from sys import exit
+from smt.sampling_methods import LHS
+
+def create_nested_lhs(nlevel, xlimits, n_samples):
+    """
+
+    Builds nlevel nested designs of dimension dim and size n_samples.
+    Each design is built with the lhs_maximinESE procedure.
+    Builds the highest level first ; nested properties are ensured by deleting
+    the nearest neighbours in lower levels of fidelity.
+
+    Parameters
+    ----------
+
+    nlevel : integer.
+        The number of designs to be built
+
+    xlimits : ndarray
+        The interval of the domain in each dimension with shape nx x 2 (required)
+ 
+    n_samples: list of length nlevel.
+        The size of the nested designs, from low to high fidelity.
+        Must be a list of decreasing elements to respect nested property.
+
+
+    Returns
+    ------
+
+    DOE: list of length nlevel.
+        list of nested designs, from low to high fidelity level.
+
+    """
+
+    if len(n_samples) != nlevel:
+        raise ValueError('n_samples must be a list of nlevel elements')
+    if np.allclose(np.sort(n_samples)[::-1], n_samples) == False:
+        raise ValueError('n_samples must be a list of decreasing integers')
+
+    DOE = []
+    P0 = LHS(xlimits=xlimits , criterion="ese")
+    DOE.append(P0(n_samples[0]))
+
+    for i in range(1,nlevel):
+        P = LHS(xlimits=xlimits , criterion="ese")
+        DOE.append(P(n_samples[i]))
+
+    for i in range(1,nlevel)[::-1]:
+        ind = []
+        d = cdist(DOE[i], DOE[i-1], 'euclidean')
+        for j in range(DOE[i].shape[0]):
+            dj = np.sort(d[j,:])
+            k = dj[0]
+            l = (np.where(d[j,:] == k))[0][0]
+            m = 0
+            while l in ind:
+                m = m + 1
+                k = dj[m]
+                l = (np.where(d[j,:] == k))[0][0]
+            ind.append(l)
+
+        DOE[i-1] = np.delete(DOE[i-1],ind, axis = 0)
+        DOE[i-1] = np.vstack((DOE[i-1],DOE[i]))
+    print(DOE)
+    return DOE
+
 
 """
 The MFK class.
