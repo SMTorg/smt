@@ -25,7 +25,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.applications import MFK
+from smt.applications.mfk import MFK, NestedLHS
 from copy import deepcopy
 
 print_output = False
@@ -36,6 +36,25 @@ class TestMFK(SMTestCase):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
+
+    def test_nested_lhs(self):
+        xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
+        xnorm = NestedLHS(nlevel=3, xlimits=xlimits)
+        xlow, xmedium, xhigh = xnorm(15)
+
+        for items1 in xmedium:
+            found = False
+            for items0 in xlow:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
+
+        for items1 in xhigh:
+            found = False
+            for items0 in xmedium:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
 
     def test_mfk(self):
         self.problems = ["exp", "tanh", "cos"]
@@ -122,10 +141,10 @@ class TestMFK(SMTestCase):
         self.assert_error(e_error1, 0.0, 1e-1)
 
     @staticmethod
-    def run_mfk_example(self):
+    def run_mfk_example():
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.applications import MFK
+        from smt.applications.mfk import MFK, NestedLHS
 
         # Define the
         def LF_function(x):
@@ -143,12 +162,9 @@ class TestMFK(SMTestCase):
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
         # Problem set up
-        ndim = 1
-        Xt_e = np.linspace(0, 1, 4, endpoint=True).reshape(-1, ndim)
-        Xt_c = np.linspace(0, 1, 13, endpoint=True).reshape(-1, ndim)
-
-        nt_exp = Xt_e.shape[0]
-        nt_cheap = Xt_c.shape[0]
+        xlimits = np.array([[0.0, 1.0]])
+        xnorm = NestedLHS(nlevel=2, xlimits=xlimits)
+        Xt_c, Xt_e = xnorm(7)
 
         # Evaluate the HF and LF functions
         yt_e = HF_function(Xt_e)
@@ -168,8 +184,6 @@ class TestMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        MSE = sm.predict_variances(x)
-        der = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 
