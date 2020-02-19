@@ -24,10 +24,6 @@ from smt.utils.kriging_utils import (
     standardization,
 )
 
-"""
-The NestedLHS class.
-"""
-
 
 class NestedLHS(object):
     def __init__(self, nlevel, xlimits):
@@ -37,10 +33,10 @@ class NestedLHS(object):
         Parameters
         ----------
         nlevel : integer.
-            The number of designs to be built
+            The number of design of experiments to be built
 
         xlimits : ndarray
-            The interval of the domain in each dimension with shape nx x 2 (required)
+            The interval of the domain in each dimension with shape (nx, 2)
 
         """
         self.nlevel = nlevel
@@ -48,25 +44,22 @@ class NestedLHS(object):
 
     def __call__(self, nb_samples_hifi):
         """
-
-        Builds nlevel nested designs of dimension dim and size n_samples.
-        Each design is built with the lhs_maximinESE procedure.
-        Builds the highest level first ; nested properties are ensured by deleting
+        Builds nlevel nested design of experiments of dimension dim and size n_samples.
+        Each doe sis built with the optmized lhs procedure.
+        Builds the highest level first; nested properties are ensured by deleting
         the nearest neighbours in lower levels of fidelity.
 
         Parameters
         ----------
 
-        nb_samples_hifi: The number of samples of the high fidelity model.
-            nb_samples_lowfi = 2 * nb_samples_hifi
+        nb_samples_hifi: The number of samples of the highest fidelity model.
+            nb_samples_fi(n-1) = 2 * nb_samples_fi(n)
 
 
         Returns
         ------
 
-        DOE: list of length nlevel.
-            list of nested designs, from low to high fidelity level.
-
+        list of length nlevel of design of experiemnts from low to high fidelity level.
         """
         nt = []
         for i in range(self.nlevel, 0, -1):
@@ -77,18 +70,18 @@ class NestedLHS(object):
         if np.allclose(np.sort(nt)[::-1], nt) == False:
             raise ValueError("nt must be a list of decreasing integers")
 
-        DOE = []
-        P0 = LHS(xlimits=self.xlimits, criterion="ese")
-        DOE.append(P0(nt[0]))
+        doe = []
+        p0 = LHS(xlimits=self.xlimits, criterion="ese")
+        doe.append(p0(nt[0]))
 
         for i in range(1, self.nlevel):
-            P = LHS(xlimits=self.xlimits, criterion="ese")
-            DOE.append(P(nt[i]))
+            p = LHS(xlimits=self.xlimits, criterion="ese")
+            doe.append(p(nt[i]))
 
         for i in range(1, self.nlevel)[::-1]:
             ind = []
-            d = cdist(DOE[i], DOE[i - 1], "euclidean")
-            for j in range(DOE[i].shape[0]):
+            d = cdist(doe[i], doe[i - 1], "euclidean")
+            for j in range(doe[i].shape[0]):
                 dj = np.sort(d[j, :])
                 k = dj[0]
                 l = (np.where(d[j, :] == k))[0][0]
@@ -99,22 +92,12 @@ class NestedLHS(object):
                     l = (np.where(d[j, :] == k))[0][0]
                 ind.append(l)
 
-            DOE[i - 1] = np.delete(DOE[i - 1], ind, axis=0)
-            DOE[i - 1] = np.vstack((DOE[i - 1], DOE[i]))
-        return DOE
-
-
-"""
-The MFK class.
-"""
+            doe[i - 1] = np.delete(doe[i - 1], ind, axis=0)
+            doe[i - 1] = np.vstack((doe[i - 1], doe[i]))
+        return doe
 
 
 class MFK(KrgBased):
-
-    """
-    - MFK
-    """
-
     def _initialize(self):
         super(MFK, self)._initialize()
         declare = self.options.declare

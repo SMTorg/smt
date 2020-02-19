@@ -146,8 +146,8 @@ class TestMFK(SMTestCase):
         import matplotlib.pyplot as plt
         from smt.applications.mfk import MFK, NestedLHS
 
-        # Define the
-        def LF_function(x):
+        # low fidelity model
+        def lf_function(x):
             import numpy as np
 
             return (
@@ -156,26 +156,27 @@ class TestMFK(SMTestCase):
                 - 5
             )
 
-        def HF_function(x):
+        # high fidelity model
+        def hf_function(x):
             import numpy as np
 
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xnorm = NestedLHS(nlevel=2, xlimits=xlimits)
-        Xt_c, Xt_e = xnorm(7)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
+        xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions
-        yt_e = HF_function(Xt_e)
-        yt_c = LF_function(Xt_c)
+        yt_e = hf_function(xt_e)
+        yt_c = lf_function(xt_c)
 
-        sm = MFK(theta0=np.array(Xt_e.shape[1] * [1.0]))
+        sm = MFK(theta0=np.array(xt_e.shape[1] * [1.0]))
 
         # low-fidelity dataset names being integers from 0 to level-1
-        sm.set_training_values(Xt_c, yt_c, name=0)
+        sm.set_training_values(xt_c, yt_c, name=0)
         # high-fidelity dataset without name
-        sm.set_training_values(Xt_e, yt_e)
+        sm.set_training_values(xt_e, yt_e)
 
         # train the model
         sm.train()
@@ -184,13 +185,15 @@ class TestMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
+        mse = sm.predict_variances(x)
+        derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 
-        plt.plot(x, HF_function(x), label="reference")
+        plt.plot(x, hf_function(x), label="reference")
         plt.plot(x, y, linestyle="-.", label="mean_gp")
-        plt.scatter(Xt_e, yt_e, marker="o", color="k", label="HF doe")
-        plt.scatter(Xt_c, yt_c, marker="*", color="g", label="LF doe")
+        plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
+        plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
 
         plt.legend(loc=0)
         plt.ylim(-10, 17)
