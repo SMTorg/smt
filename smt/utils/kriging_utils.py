@@ -106,9 +106,10 @@ def cross_distances(X):
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = (X[k] - X[(k + 1) : n_samples])
+        D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
 
     return D, ij.astype(np.int)
+
 
 def differences(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
@@ -229,7 +230,7 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None):
     return r
 
 
-def act_exp(theta, d, grad_ind=None, hess_ind=None):
+def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
     """
     Active learning exponential correlation model
 
@@ -265,30 +266,29 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None):
     A = np.reshape(theta, (n_small_components, n_components)).T
 
     d_A = d.dot(A)
-    # d_A_sign = np.ones(d_A.shape)
-    # d_A_sign[d_A <= 0] = -1.
-    # print(d_A_sign)
-    
-    r[:,0] = np.exp(-(1/2)*np.sum(d_A**2., axis=1))
-    # r[:, 0] = np.exp(-(1 / 2) * np.sum(np.abs(d_A), axis=1))
+
+    # Necessary when working in embeddings space
+    if d_x is not None:
+        d = d_x
+        n_components = d.shape[1]
+
+    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A ** 2.0, axis=1))
 
     if grad_ind is not None:
         d_grad_ind = grad_ind % n_components
         d_A_grad_ind = grad_ind // n_components
-       
+
         if hess_ind is None:
-            # r[:, 0] = -1 / 2 * d_A_sign[:,sign_grad_ind] * d[:, d_grad_ind] * r[:, 0]
-            r[:, 0] = - d[:, d_grad_ind] * d_A[:, d_A_grad_ind] * r[:, 0]
-            
+            r[:, 0] = -d[:, d_grad_ind] * d_A[:, d_A_grad_ind] * r[:, 0]
+
         elif hess_ind is not None:
             d_hess_ind = hess_ind % n_components
             d_A_hess_ind = hess_ind // n_components
-            # r[:, 0] = -d[:, d_hess_ind] * r[:, 0] / 2.0
-            fact = - d_A[:, d_A_grad_ind] * d_A[:, d_A_hess_ind]
-            if d_A_hess_ind ==  d_A_grad_ind:
+            fact = -d_A[:, d_A_grad_ind] * d_A[:, d_A_hess_ind]
+            if d_A_hess_ind == d_A_grad_ind:
                 fact = 1 + fact
-            r[:, 0] = - d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
-        
+            r[:, 0] = -d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+
     return r
 
 

@@ -81,6 +81,7 @@ class KrgBased(SurrogateModel):
             values=("Cobyla", "L-BFGS-B"),
             desc="optimiseur for Hyperparameters optimisation",
         )
+        declare("noise", 0.0, types=float, desc="Noise in kriging")
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -133,16 +134,8 @@ class KrgBased(SurrogateModel):
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
         elif self.name == "Active Kriging":
-            var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
-            r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
-            var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
-            var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
-            self.sigma_R = -np.linalg.solve(var_R, np.eye(len(self.optimal_theta)))
-            self.optimal_par = par
-            A = np.reshape(self.optimal_theta, (self.options['n_comp'], self.nx)).T
-            
-            print(A/np.linalg.norm(A))
-            
+            self._specific_train()
+
         if self.name != "Active Kriging":
             del self.y_norma, self.D
 
@@ -211,7 +204,7 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
-        noise = 0.0
+        noise = self.options["noise"]
         tmp_var = theta
         if self.name == "MFK":
             if self.options["eval_noise"]:
@@ -229,7 +222,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            raise e
+            # raise e
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
@@ -274,7 +267,7 @@ class KrgBased(SurrogateModel):
             reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
-        par["gamma"] = linalg.solve_triangular(C.T, rho)
+        par["gamma"] = np.linalg.solve(C.T, rho)
         par["C"] = C
         par["Ft"] = Ft
         par["G"] = G
@@ -362,7 +355,6 @@ class KrgBased(SurrogateModel):
         dbeta_all = []
 
         for i_der in range(nb_theta):
-
             # Compute R derivatives
             dr = self._correlation_types[self.options["corr"]](
                 theta, self.D, grad_ind=i_der
@@ -404,6 +396,30 @@ class KrgBased(SurrogateModel):
 
             # Compute reduced log likelihood derivatives
             grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+
+            # eps = 1e-7
+            # theta_eps = theta.copy()
+            # theta_eps[i_der] = eps + theta_eps[i_der]
+            # theta_eps_neg = theta.copy()
+            # theta_eps_neg[i_der] = theta_eps_neg[i_der] - eps
+
+            # r = self._correlation_types[self.options["corr"]](theta, self.D)
+            # r_diff = self._correlation_types[self.options["corr"]](theta_eps, self.D)
+            # dr_diff = (r_diff - r) / eps
+            # print('dr', np.linalg.norm(dr_diff-dr)/np.linalg.norm(dr_diff))
+
+            # red_diff, par_diff = self._reduced_likelihood_function(theta_eps)
+            # red_diff_neg, par_diff_neg = self._reduced_likelihood_function(theta_eps_neg)
+            # dbeta_diff = (par_diff['beta'] - par_diff_neg['beta'])/(2*eps)
+            # print('dbeta_diff', dbeta_diff)
+            # print('dbeta', dbeta)
+            # print('dbeta', np.linalg.norm(dbeta_diff-dbeta)/np.linalg.norm(dbeta_diff))
+
+            # dmu_diff = np.dot(self.F, dbeta_diff)
+            # print('dmu', np.linalg.norm(dmu_diff - dmu)/np.linalg.norm(dmu_diff))
+
+            # dsigma_diff = (par_diff['sigma2'] - par['sigma2'])/eps
+            # print('dsigma', np.linalg.norm(dsigma_diff - dsigma_2)/np.linalg.norm(dsigma_diff))
 
         par["dr"] = dr_all
         par["tr"] = tr_all
@@ -656,8 +672,6 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Derivative values.
         """
-        kx += 1
-
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -674,10 +688,10 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for square exponential kernel"
             )
         if self.options["poly"] == "constant":
-            df = np.array([0])
+            df = np.array([[0, 0]])
         elif self.options["poly"] == "linear":
             df = np.zeros((self.nx + 1, self.nx))
-            df[1:, :] = 1
+            df[1:, :] = np.eye(self.nx)
         else:
             raise ValueError(
                 "The derivative is only available for ordinary kriging or "
@@ -688,17 +702,15 @@ class KrgBased(SurrogateModel):
         beta = self.optimal_par["beta"]
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
-        d_dx = x[:, kx - 1].reshape((n_eval, 1)) - self.X_norma[:, kx - 1].reshape(
-            (1, self.nt)
-        )
+        d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
         if self.name != "Kriging" and self.name != "KPLSK":
             theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
         else:
             theta = self.optimal_theta
         y = (
-            (df_dx[0] - 2 * theta[kx - 1] * np.dot(d_dx * r, gamma))
+            (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
             * self.y_std
-            / self.X_std[kx - 1]
+            / self.X_std[kx]
         )
 
         return y
@@ -852,7 +864,7 @@ class KrgBased(SurrogateModel):
                             method="L-BFGS-B",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_log10t,
-                            options={"maxiter": 15, "disp": True},
+                            options={"maxiter": 30, "disp": True},
                         )
 
                         optimal_theta_res_2 = optimize.minimize(
@@ -861,10 +873,10 @@ class KrgBased(SurrogateModel):
                             method="L-BFGS-B",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_log10t,
-                            options={"maxiter": 15, "disp": True},
+                            options={"maxiter": 30, "disp": True},
                         )
-                        # print(optimal_theta_res)
-                        # print(optimal_theta_res_2)
+                        print(optimal_theta_res)
+                        print(optimal_theta_res_2)
 
                         if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
                             optimal_theta_res = optimal_theta_res_2

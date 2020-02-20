@@ -8,7 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg, optimize
-from sklearn.metrics.pairwise import manhattan_distances
+from smt.utils.kriging_utils import differences
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
@@ -31,28 +31,61 @@ class AKRG(KrgBased):
         )
         self.options["hyper_opt"] = "L-BFGS-B"
         self.options["corr"] = "act_exp"
+        self.options["noise"] = 1e-10
         self.name = "Active Kriging"
 
-    def _componentwise_distance(self, dx, opt=0):
-        d = componentwise_distance(dx, self.options["corr"], self.nx)
+    def _componentwise_distance(self, dx, opt=0, small=False):
+        if small:
+            d = componentwise_distance(dx, self.options["corr"], self.options["n_comp"])
+        else:
+            d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def predict_variances(self, x, both=False):
+    def predict_variances(self, x, both=False, small=False):
         """
-        Provide uncertainty of the model at a set of points
-
+        #TODO    
+        
         Parameters
         ----------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        x : TYPE
+            DESCRIPTION.
+        both : TYPE, optional
+            DESCRIPTION. The default is False.
+        small : TYPE, optional
+            DESCRIPTION. The default is False.
+
+        Raises
+        ------
+        ValueError
+            DESCRIPTION.
 
         Returns
         -------
-        AMSE : np.ndarray
-            Evaluation point output variable MSE with the hyperparameters distribution
+        TYPE
+            DESCRIPTION.
+
         """
-        dy = self._predict_value_derivatives_hyper(x)
-        dMSE, MSE = self._predict_variance_derivatives_hyper(x)
+        n_eval, n_features = x.shape
+        if small:
+            if n_features != self.options["n_comp"]:
+                raise ValueError(
+                    "dim(u) should be equal to %i" % self.options["n_comp"]
+                )
+            u = x
+            u = u - self.U_mean
+            x = (
+                self.optimal_par["Q_A"]
+                .dot(np.linalg.solve(self.optimal_par["R_A"].T, u.T))
+                .T
+            )
+        else:
+            if n_features != self.X_std.shape[0]:
+                raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
+            u = None
+            x = (x - self.X_mean) / self.X_std
+
+        dy = self._predict_value_derivatives_hyper(x, u)
+        dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
 
         arg_1 = np.dot(dy.T, self.sigma_R.dot(dy))
         arg_1 = np.einsum("ii->i", arg_1)
@@ -74,6 +107,70 @@ class AKRG(KrgBased):
             return AMSE, MSE
         else:
             return AMSE
+
+    def predict_values(self, x, small=False):
+        """
+        #TODO 
+
+        Parameters
+        ----------
+        x : TYPE
+            DESCRIPTION.
+        u : TYPE, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        y : TYPE
+            DESCRIPTION.
+
+        """
+        n_eval, n_features = x.shape
+        if small:
+            if n_features != self.options["n_comp"]:
+                raise ValueError(
+                    "dim(u) should be equal to %i" % self.options["n_comp"]
+                )
+            theta = np.eye(self.options["n_comp"]).reshape(
+                (self.options["n_comp"] ** 2,)
+            )
+
+            # Get pairwise componentwise L1-distances to the input training set
+            u = x
+            u = u - self.U_mean
+            du = differences(u, Y=self.U_norma.copy())
+            d = self._componentwise_distance(du, small=True)
+
+            # Get an approximation of x
+            x = (
+                self.optimal_par["Q_A"]
+                .dot(np.linalg.solve(self.optimal_par["R_A"].T, u.T))
+                .T
+            )
+            dx = differences(x, Y=self.X_norma.copy())
+            d_x = self._componentwise_distance(dx)
+        else:
+            if n_features != self.X_std.shape[0]:
+                raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
+            theta = self.optimal_theta
+
+            # Get pairwise componentwise L1-distances to the input training set
+            x = (x - self.X_mean) / self.X_std
+            dx = differences(x, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            d_x = None
+
+        # Compute the correlation function
+        r = self._correlation_types[self.options["corr"]](theta, d, d_x=d_x).reshape(
+            n_eval, self.nt
+        )
+
+        f = self._regression_types[self.options["poly"]](x)
+        # Scaled predictor
+        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+        # Predictor
+        y = (self.y_mean + self.y_std * y_).ravel()
+        return y
 
     def _reduced_log_prior(self, theta, grad=False, hessian=False):
         """
@@ -113,30 +210,48 @@ class AKRG(KrgBased):
             res = -np.dot((theta - mean).T, sig_inv.dot(theta - mean))
         return res
 
-    def _predict_value_derivatives_hyper(self, x):
+    def _predict_value_derivatives_hyper(self, x, u=None):
         """
-        Compute the value derivatives over the optimal hyperparameters for a set of points
+        #TODO 
 
         Parameters
         ----------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        x : TYPE
+            DESCRIPTION.
+        u : TYPE, optional
+            DESCRIPTION. The default is None.
 
         Returns
         -------
-        dy : np.ndarray
-            Derivative values over the optimal hyperparameters.
+        dy : TYPE
+            DESCRIPTION.
+
         """
         # Initialization
-        n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+        n_eval, _ = x.shape
+
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
-        d = self._componentwise_distance(dx)
+        dx = differences(x, Y=self.X_norma.copy())
+        d_x = self._componentwise_distance(dx)
+        if u is not None:
+            theta = np.eye(self.options["n_comp"]).reshape(
+                (self.options["n_comp"] ** 2,)
+            )
+
+            # Get pairwise componentwise L1-distances to the input training set
+            du = differences(u, Y=self.U_norma.copy())
+            d = self._componentwise_distance(du, small=True)
+        else:
+            theta = self.optimal_theta
+
+            # Get pairwise componentwise L1-distances to the input training set
+            d = d_x
+            d_x = None
+
         # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
+        r = self._correlation_types[self.options["corr"]](theta, d, d_x=d_x).reshape(
+            n_eval, self.nt
+        )
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](x)
 
@@ -146,50 +261,64 @@ class AKRG(KrgBased):
         Rinv_dR_gamma = self.optimal_par["Rinv_dR_gamma"]
         Rinv_dmu = self.optimal_par["Rinv_dmu"]
 
-        for theta in range(len(self.optimal_theta)):
-            drdtheta = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d, grad_ind=theta
+        for omega in range(len(self.optimal_theta)):
+            drdomega = self._correlation_types[self.options["corr"]](
+                theta, d, grad_ind=omega, d_x=d_x
             ).reshape(n_eval, self.nt)
 
-            dbetadtheta = self.optimal_par["dbeta_all"][theta]
+            dbetadomega = self.optimal_par["dbeta_all"][omega]
 
-            drdtheta_gamma = drdtheta.dot(gamma)
-
-            dy_theta = (
-                f.dot(dbetadtheta)
-                + drdtheta.dot(gamma)
-                - r.dot(Rinv_dR_gamma[theta] + Rinv_dmu[theta])
+            dy_omega = (
+                f.dot(dbetadomega)
+                + drdomega.dot(gamma)
+                - r.dot(Rinv_dR_gamma[omega] + Rinv_dmu[omega])
             )
 
-            dy[theta, :] = dy_theta[:, 0]
+            dy[omega, :] = dy_omega[:, 0]
 
         return dy
 
-    def _predict_variance_derivatives_hyper(self, x):
+    def _predict_variance_derivatives_hyper(self, x, u=None):
         """
-        Compute the variance derivatives over the optimal hyperparameters for a set of points
+        #TODO
 
         Parameters
         ----------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
+        x : TYPE
+            DESCRIPTION.
+        u : TYPE, optional
+            DESCRIPTION. The default is None.
 
         Returns
         -------
-        dMSE : np.ndarray
-            Derivative variance over the optimal hyperparameters.
+        dMSE : TYPE
+            DESCRIPTION.
+        MSE : TYPE
+            DESCRIPTION.
 
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
-        d = self._componentwise_distance(dx)
+        dx = differences(x, Y=self.X_norma.copy())
+        d_x = self._componentwise_distance(dx)
+        if u is not None:
+            theta = np.eye(self.options["n_comp"]).reshape(
+                (self.options["n_comp"] ** 2,)
+            )
+            # Get pairwise componentwise L1-distances to the input training set
+            du = differences(u, Y=self.U_norma.copy())
+            d = self._componentwise_distance(du, small=True)
+        else:
+            theta = self.optimal_theta
+            # Get pairwise componentwise L1-distances to the input training set
+            d = d_x
+            d_x = None
 
         # Compute the correlation function
         r = (
-            self._correlation_types[self.options["corr"]](self.optimal_theta, d)
+            self._correlation_types[self.options["corr"]](theta, d, d_x=d_x)
             .reshape(n_eval, self.nt)
             .T
         )
@@ -204,16 +333,16 @@ class AKRG(KrgBased):
 
         F_Rinv_r = np.dot(Ft.T, rt)
 
-        u = linalg.solve_triangular(G.T, f - F_Rinv_r)
+        u_ = linalg.solve_triangular(G.T, f - F_Rinv_r)
 
         MSE = self.optimal_par["sigma2"] * (
-            1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+            1.0 - (rt ** 2.0).sum(axis=0) + (u_ ** 2.0).sum(axis=0)
         )
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
 
-        Ginv_u = np.linalg.solve(G, u)
+        Ginv_u = np.linalg.solve(G, u_)
         Rinv_F = np.linalg.solve(C.T, Ft)
         Rinv_r = np.linalg.solve(C.T, rt)
         Rinv_F_Ginv_u = Rinv_F.dot(Ginv_u)
@@ -223,54 +352,81 @@ class AKRG(KrgBased):
         dr_all = self.optimal_par["dr"]
         dsigma = self.optimal_par["dsigma"]
 
-        for theta in range(len(self.optimal_theta)):
-            drdtheta = (
+        for omega in range(len(self.optimal_theta)):
+            drdomega = (
                 self._correlation_types[self.options["corr"]](
-                    self.optimal_theta, d, grad_ind=theta
+                    theta, d, grad_ind=omega, d_x=d_x
                 )
                 .reshape(n_eval, self.nt)
                 .T
             )
 
-            dRdtheta = np.zeros((self.nt, self.nt))
-            dRdtheta[self.ij[:, 0], self.ij[:, 1]] = dr_all[theta][:, 0]
-            dRdtheta[self.ij[:, 1], self.ij[:, 0]] = dr_all[theta][:, 0]
+            dRdomega = np.zeros((self.nt, self.nt))
+            dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
+            dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:, 0]
 
             # Compute du2dtheta
 
-            dRdtheta_Rinv_F_Ginv_u = dRdtheta.dot(Rinv_F_Ginv_u)
+            dRdomega_Rinv_F_Ginv_u = dRdomega.dot(Rinv_F_Ginv_u)
 
-            r_Rinv_dRdtheta_Rinv_F_Ginv_u = np.dot(Rinv_r.T, dRdtheta_Rinv_F_Ginv_u)
+            r_Rinv_dRdomega_Rinv_F_Ginv_u = np.dot(Rinv_r.T, dRdomega_Rinv_F_Ginv_u)
 
-            drdtheta_Rinv_F_Ginv_u = np.dot(drdtheta.T, Rinv_F_Ginv_u)
+            drdomega_Rinv_F_Ginv_u = np.dot(drdomega.T, Rinv_F_Ginv_u)
 
-            u_Ginv_F_Rinv_dRdtheta_Rinv_F_Ginv_u = np.dot(
-                Rinv_F_Ginv_u.T, dRdtheta_Rinv_F_Ginv_u
+            u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u = np.dot(
+                Rinv_F_Ginv_u.T, dRdomega_Rinv_F_Ginv_u
             )
 
-            du2dtheta = np.einsum(
+            du2domega = np.einsum(
                 "ii->i",
-                r_Rinv_dRdtheta_Rinv_F_Ginv_u
-                + r_Rinv_dRdtheta_Rinv_F_Ginv_u.T
-                - drdtheta_Rinv_F_Ginv_u
-                - drdtheta_Rinv_F_Ginv_u.T
-                + u_Ginv_F_Rinv_dRdtheta_Rinv_F_Ginv_u,
+                r_Rinv_dRdomega_Rinv_F_Ginv_u
+                + r_Rinv_dRdomega_Rinv_F_Ginv_u.T
+                - drdomega_Rinv_F_Ginv_u
+                - drdomega_Rinv_F_Ginv_u.T
+                + u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u,
             )
-            du2dtheta = np.atleast_2d(du2dtheta)
+            du2domega = np.atleast_2d(du2domega)
 
             # Compute drt2dtheta
+            drdomega_Rinv_r = np.dot(drdomega.T, Rinv_r)
 
-            drdtheta_Rinv_r = np.dot(drdtheta.T, Rinv_r)
+            r_Rinv_dRdomega_Rinv_r = np.dot(Rinv_r.T, dRdomega.dot(Rinv_r))
 
-            r_Rinv_dRdtheta_Rinv_r = np.dot(Rinv_r.T, dRdtheta.dot(Rinv_r))
-
-            drt2dtheta = np.einsum(
-                "ii->i", drdtheta_Rinv_r + drdtheta_Rinv_r.T - r_Rinv_dRdtheta_Rinv_r
+            drt2domega = np.einsum(
+                "ii->i", drdomega_Rinv_r + drdomega_Rinv_r.T - r_Rinv_dRdomega_Rinv_r
             )
-            drt2dtheta = np.atleast_2d(drt2dtheta)
+            drt2domega = np.atleast_2d(drt2domega)
 
-            dMSE[theta] = dsigma[theta] * MSE / sigma2 + sigma2 * (
-                -drt2dtheta + du2dtheta
+            dMSE[omega] = dsigma[omega] * MSE / sigma2 + sigma2 * (
+                -drt2domega + du2domega
             )
 
         return dMSE, MSE
+
+    def _specific_train(self):
+        """
+        Specific training of Active Kriging
+
+        Returns
+        -------
+        None.
+
+        """
+        # Compute covariance matrix of hyperparameters
+        var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
+        r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
+        var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
+        var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
+        self.sigma_R = -np.linalg.solve(var_R, np.eye(len(self.optimal_theta)))
+
+        # Compute normalise embedding
+        self.optimal_par = par
+        A = np.reshape(self.optimal_theta, (self.options["n_comp"], self.nx)).T
+        self.optimal_par["Q_A"], self.optimal_par["R_A"] = linalg.qr(A, mode="economic")
+
+        # Compute normalisation in embeding base
+        self.U_norma = self.X_norma.dot(A)
+        self.U_mean = self.X_mean.dot((A.T / self.X_std).T)
+
+        print(A / np.linalg.norm(A))
+        print(np.linalg.matrix_rank(A))
