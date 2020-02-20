@@ -318,8 +318,6 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Derivative values.
         """
-        kx += 1
-
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -336,10 +334,10 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for square exponential kernel"
             )
         if self.options["poly"] == "constant":
-            df = np.array([0])
+            df = np.array([[0, 0]])
         elif self.options["poly"] == "linear":
             df = np.zeros((self.nx + 1, self.nx))
-            df[1:, :] = 1
+            df[1:, :] = np.eye(self.nx)
         else:
             raise ValueError(
                 "The derivative is only available for ordinary kriging or "
@@ -350,19 +348,16 @@ class KrgBased(SurrogateModel):
         beta = self.optimal_par["beta"]
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
-        d_dx = x[:, kx - 1].reshape((n_eval, 1)) - self.X_norma[:, kx - 1].reshape(
-            (1, self.nt)
-        )
+        d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
         if self.name != "Kriging" and self.name != "KPLSK":
             theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
         else:
             theta = self.optimal_theta
         y = (
-            (df_dx[0] - 2 * theta[kx - 1] * np.dot(d_dx * r, gamma))
+            (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
             * self.y_std
-            / self.X_std[kx - 1]
+            / self.X_std[kx]
         )
-
         return y
 
     def _predict_variances(self, x):
@@ -375,19 +370,22 @@ class KrgBased(SurrogateModel):
         d = self._componentwise_distance(dx)
 
         # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](self.optimal_theta, d).reshape(n_eval, self.nt)
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
-            np.dot(self.optimal_par["Ft"].T, rt) - self._regression_types[self.options["poly"]](x).T,
+            np.dot(self.optimal_par["Ft"].T, rt)
+            - self._regression_types[self.options["poly"]](x).T,
         )
 
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
-        MSE = np.einsum('i,j -> ji', A, B)
+        MSE = np.einsum("i,j -> ji", A, B)
 
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
