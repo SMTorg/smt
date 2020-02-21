@@ -78,7 +78,7 @@ class KrgBased(SurrogateModel):
         declare(
             "hyper_opt",
             "Cobyla",
-            values=("Cobyla", "L-BFGS-B"),
+            values=("Cobyla", "SLSQP"),
             desc="optimiseur for Hyperparameters optimisation",
         )
         declare("noise", 0.0, types=float, desc="Noise in kriging")
@@ -253,7 +253,7 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
-        # TODO : modify for coherence and use log.
+        # FIXME : modify for coherence and use log.
         if self.name == "MFK":
             n_samples = self.nt
             p = self.p
@@ -787,17 +787,27 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        def minus_reduced_likelihood_function(log10t):
-            return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+        if self.name == "Active Kriging":
 
-        def grad_minus_reduced_likelihood_function(log10t):
-            log10t_2d = np.atleast_2d(log10t).T
-            res = (
-                -np.log(10.0)
-                * (10.0 ** log10t_2d)
-                * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
-            )
-            return res
+            def minus_reduced_likelihood_function(theta):
+                return -self._reduced_likelihood_function(theta)[0]
+
+            def grad_minus_reduced_likelihood_function(theta):
+                return -self._reduced_likelihood_gradient(theta)[0]
+
+        else:
+
+            def minus_reduced_likelihood_function(log10t):
+                return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+
+            def grad_minus_reduced_likelihood_function(log10t):
+                log10t_2d = np.atleast_2d(log10t).T
+                res = (
+                    -np.log(10.0)
+                    * (10.0 ** log10t_2d)
+                    * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+                )
+                return res
 
         theta0_rand = np.random.rand(len(self.options["theta0"]))
 
@@ -816,67 +826,77 @@ class KrgBased(SurrogateModel):
                 [],
             )
 
-            bounds_log10t = []
+            bounds_hyp = []
 
             for i in range(len(self.options["theta0"])):
-                constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+                if self.name == "Active Kriging":
+                    constraints.append(lambda theta, i=i: theta[i] + 10)
+                    constraints.append(lambda theta, i=i: 10 - theta[i])
 
-                bounds_log10t.append((-6.0, 2.0))
+                    bounds_hyp.append((-10.0, 10.0))
+                    theta0_rand = theta0_rand * 20.0 - 10.0
+                    theta0 = self.options["theta0"]
+
+                else:
+                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
+                    constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+
+                    bounds_hyp.append((-6.0, 2.0))
+                    theta0_rand = theta0_rand * 8.0 - 6.0
+                    theta0 = np.log10(self.options["theta0"])
 
             self.D = self._componentwise_distance(D, opt=ii)
-            theta0_rand = theta0_rand * 2
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
-                theta0 = self.options["theta0"]
                 if self.name == "MFK":
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
-                            [theta0, np.array([self.options["noise0"]])]
+                            [theta0, np.log10(np.array([self.options["noise0"]]))]
                         )
                         theta0_rand = np.concatenate(
-                            [theta0_rand, np.array([self.options["noise0"]])]
+                            [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
                         )
 
                         constraints.append(lambda log10t: log10t[-1] + 16)
                         constraints.append(lambda log10t: 10 - log10t[-1])
 
-                        bounds_log10t.append((10, 16))
+                        bounds_hyp.append((10, 16))
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
                         optimal_theta = 10.0 ** optimize.fmin_cobyla(
                             minus_reduced_likelihood_function,
-                            np.log10(theta0),
+                            theta0,
                             constraints,
                             rhobeg=_rhobeg,
                             rhoend=1e-4,
                             maxfun=limit,
                         )
-                    elif self.options["hyper_opt"] == "L-BFGS-B":
+                    elif self.options["hyper_opt"] == "SLSQP":
 
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
-                            np.log10(theta0),
-                            method="L-BFGS-B",
+                            theta0,
+                            method="SLSQP",
                             jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_log10t,
-                            options={"maxiter": 30, "disp": True},
+                            bounds=bounds_hyp,
+                            options={"maxiter": min(1000, 30 * self.nx)},
                         )
 
                         optimal_theta_res_2 = optimize.minimize(
                             minus_reduced_likelihood_function,
-                            np.log10(theta0_rand),
-                            method="L-BFGS-B",
+                            theta0_rand,
+                            method="SLSQP",
                             jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_log10t,
-                            options={"maxiter": 30, "disp": True},
+                            bounds=bounds_hyp,
+                            options={"maxiter": min(1000, 30 * self.nx)},
                         )
-                        print(optimal_theta_res)
-                        print(optimal_theta_res_2)
+
+                        # print(optimal_theta_res)
+                        # print(optimal_theta_res_2)
 
                         if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
                             optimal_theta_res = optimal_theta_res_2
@@ -982,6 +1002,10 @@ class KrgBased(SurrogateModel):
             if self.options["corr"] != "act_exp":
                 raise ValueError(
                     "Active Kriging must be used with act_exp correlation function"
+                )
+            if self.options["hyper_opt"] != "SLSQP":
+                raise ValueError(
+                    "Active Kriging must be used with SLSQP hyperparameters optimizer"
                 )
         else:
             if self.options["corr"] == "act_exp":

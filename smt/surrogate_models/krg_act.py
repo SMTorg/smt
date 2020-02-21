@@ -29,7 +29,7 @@ class AKRG(KrgBased):
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
         )
-        self.options["hyper_opt"] = "L-BFGS-B"
+        self.options["hyper_opt"] = "SLSQP"
         self.options["corr"] = "act_exp"
         self.options["noise"] = 1e-10
         self.name = "Active Kriging"
@@ -428,5 +428,8 @@ class AKRG(KrgBased):
         self.U_norma = self.X_norma.dot(A)
         self.U_mean = self.X_mean.dot((A.T / self.X_std).T)
 
-        print(A / np.linalg.norm(A))
-        print(np.linalg.matrix_rank(A))
+        # Compute best number of Components for Active Kriging
+        svd = np.linalg.svd(A / np.linalg.norm(A))
+        svd_cumsum = np.cumsum(svd[1])
+        svd_sum = np.sum(svd[1])
+        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.8 * svd_sum)) + 1
