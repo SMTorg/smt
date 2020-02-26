@@ -32,6 +32,7 @@ from smt.utils.kriging_utils import (
 )
 
 from scipy.optimize import minimize
+from scipy.stats import multivariate_normal as m_norm
 
 import time
 import traceback
@@ -136,8 +137,8 @@ class KrgBased(SurrogateModel):
         elif self.name == "Active Kriging":
             self._specific_train()
 
-        if self.name != "Active Kriging":
-            del self.y_norma, self.D
+        # if self.name != "Active Kriging":
+        #     del self.y_norma, self.D
 
     def _train(self):
         """
@@ -222,7 +223,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            # raise e
+            raise e
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
@@ -267,7 +268,7 @@ class KrgBased(SurrogateModel):
             reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
-        par["gamma"] = np.linalg.solve(C.T, rho)
+        par["gamma"] = linalg.solve_triangular(C.T, rho)
         par["C"] = C
         par["Ft"] = Ft
         par["G"] = G
@@ -809,6 +810,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
+
         theta0_rand = np.random.rand(len(self.options["theta0"]))
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
@@ -832,18 +834,20 @@ class KrgBased(SurrogateModel):
                 if self.name == "Active Kriging":
                     constraints.append(lambda theta, i=i: theta[i] + 10)
                     constraints.append(lambda theta, i=i: 10 - theta[i])
-
                     bounds_hyp.append((-10.0, 10.0))
-                    theta0_rand = theta0_rand * 20.0 - 10.0
-                    theta0 = self.options["theta0"]
+
 
                 else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
                     constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
-
                     bounds_hyp.append((-6.0, 2.0))
-                    theta0_rand = theta0_rand * 8.0 - 6.0
-                    theta0 = np.log10(self.options["theta0"])
+                    
+            if self.name == "Active Kriging":
+                theta0_rand = m_norm.rvs(self.options['prior']['mean']*len(self.options["theta0"]), self.options['prior']['var'], 1)
+                theta0 = self.options["theta0"]
+            else:
+                theta0_rand = theta0_rand * 8.0 - 6.0
+                theta0 = np.log10(self.options["theta0"])
 
             self.D = self._componentwise_distance(D, opt=ii)
 

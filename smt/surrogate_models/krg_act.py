@@ -25,13 +25,13 @@ class AKRG(KrgBased):
         declare("n_comp", 1, types=int, desc="Number of active dimensions")
         declare(
             "prior",
-            {"mean": 0.0, "var": 5.0 / 4.0},
+            {"mean": [0.0], "var": 5.0 / 4.0},
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
         )
         self.options["hyper_opt"] = "SLSQP"
         self.options["corr"] = "act_exp"
-        self.options["noise"] = 1e-10
+        self.options["noise"] = 1e-9
         self.name = "Active Kriging"
 
     def _componentwise_distance(self, dx, opt=0, small=False):
@@ -43,7 +43,7 @@ class AKRG(KrgBased):
 
     def predict_variances(self, x, both=False, small=False):
         """
-        #TODO    
+        Predict variances 
         
         Parameters
         ----------
@@ -65,17 +65,19 @@ class AKRG(KrgBased):
             DESCRIPTION.
 
         """
-        n_eval, n_features = x.shape
+        n_eval, n_features = x.shape        
         if small:
             if n_features != self.options["n_comp"]:
                 raise ValueError(
                     "dim(u) should be equal to %i" % self.options["n_comp"]
                 )
             u = x
-            u = u - self.U_mean
+            u = u * self.embedding['norm'] - self.U_mean
             x = (
-                self.optimal_par["Q_A"]
-                .dot(np.linalg.solve(self.optimal_par["R_A"].T, u.T))
+                self.embedding["Q_A"]
+                .dot(
+                    linalg.solve_triangular(self.embedding["R_A"].T, u.T, lower=True)
+                )
                 .T
             )
         else:
@@ -87,11 +89,9 @@ class AKRG(KrgBased):
         dy = self._predict_value_derivatives_hyper(x, u)
         dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
 
-        arg_1 = np.dot(dy.T, self.sigma_R.dot(dy))
-        arg_1 = np.einsum("ii->i", arg_1)
+        arg_1 = np.einsum("ij,ij->i", dy.T,self.sigma_R.dot(dy).T)
 
-        arg_2 = np.dot(dMSE.T, self.sigma_R.dot(dMSE))
-        arg_2 = np.einsum("ii->i", arg_2)
+        arg_2 = np.einsum("ij,ij->i", dMSE.T, self.sigma_R.dot(dMSE).T)
 
         AMSE = np.zeros(x.shape[0])
 
@@ -110,7 +110,7 @@ class AKRG(KrgBased):
 
     def predict_values(self, x, small=False):
         """
-        #TODO 
+        Predict values
 
         Parameters
         ----------
@@ -133,18 +133,19 @@ class AKRG(KrgBased):
                 )
             theta = np.eye(self.options["n_comp"]).reshape(
                 (self.options["n_comp"] ** 2,)
-            )
-
+            )          
             # Get pairwise componentwise L1-distances to the input training set
             u = x
-            u = u - self.U_mean
+            u = u * self.embedding['norm'] - self.U_mean
             du = differences(u, Y=self.U_norma.copy())
             d = self._componentwise_distance(du, small=True)
 
             # Get an approximation of x
             x = (
-                self.optimal_par["Q_A"]
-                .dot(np.linalg.solve(self.optimal_par["R_A"].T, u.T))
+                self.embedding["Q_A"]
+                .dot(
+                    linalg.solve_triangular(self.embedding["R_A"].T, u.T, lower=True)
+                )
                 .T
             )
             dx = differences(x, Y=self.X_norma.copy())
@@ -212,7 +213,7 @@ class AKRG(KrgBased):
 
     def _predict_value_derivatives_hyper(self, x, u=None):
         """
-        #TODO 
+        Predict the value derivatives with respect to the hyperparameters
 
         Parameters
         ----------
@@ -280,7 +281,7 @@ class AKRG(KrgBased):
 
     def _predict_variance_derivatives_hyper(self, x, u=None):
         """
-        #TODO
+        Predict the variance derivatives with respect to the hyperparameters
 
         Parameters
         ----------
@@ -342,9 +343,9 @@ class AKRG(KrgBased):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
 
-        Ginv_u = np.linalg.solve(G, u_)
-        Rinv_F = np.linalg.solve(C.T, Ft)
-        Rinv_r = np.linalg.solve(C.T, rt)
+        Ginv_u = linalg.solve_triangular(G, u_, lower=False)
+        Rinv_F = linalg.solve_triangular(C.T, Ft, lower=False)
+        Rinv_r = linalg.solve_triangular(C.T, rt, lower=False)
         Rinv_F_Ginv_u = Rinv_F.dot(Ginv_u)
 
         dMSE = np.zeros((len(self.optimal_theta), n_eval))
@@ -368,33 +369,18 @@ class AKRG(KrgBased):
             # Compute du2dtheta
 
             dRdomega_Rinv_F_Ginv_u = dRdomega.dot(Rinv_F_Ginv_u)
-
-            r_Rinv_dRdomega_Rinv_F_Ginv_u = np.dot(Rinv_r.T, dRdomega_Rinv_F_Ginv_u)
-
-            drdomega_Rinv_F_Ginv_u = np.dot(drdomega.T, Rinv_F_Ginv_u)
-
-            u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u = np.dot(
-                Rinv_F_Ginv_u.T, dRdomega_Rinv_F_Ginv_u
-            )
-
-            du2domega = np.einsum(
-                "ii->i",
-                r_Rinv_dRdomega_Rinv_F_Ginv_u
-                + r_Rinv_dRdomega_Rinv_F_Ginv_u.T
-                - drdomega_Rinv_F_Ginv_u
-                - drdomega_Rinv_F_Ginv_u.T
-                + u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u,
-            )
+            r_Rinv_dRdomega_Rinv_F_Ginv_u =  np.einsum("ij,ij->i", Rinv_r.T, dRdomega_Rinv_F_Ginv_u.T)           
+            drdomega_Rinv_F_Ginv_u = np.einsum("ij,ij->i",drdomega.T, Rinv_F_Ginv_u.T)
+            u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u = np.einsum("ij,ij->i",Rinv_F_Ginv_u.T, dRdomega_Rinv_F_Ginv_u.T)
+        
+            du2domega = 2. * r_Rinv_dRdomega_Rinv_F_Ginv_u - 2. * drdomega_Rinv_F_Ginv_u + u_Ginv_F_Rinv_dRdomega_Rinv_F_Ginv_u
             du2domega = np.atleast_2d(du2domega)
 
             # Compute drt2dtheta
-            drdomega_Rinv_r = np.dot(drdomega.T, Rinv_r)
+            drdomega_Rinv_r =  np.einsum("ij,ij->i", drdomega.T, Rinv_r.T)
+            r_Rinv_dRdomega_Rinv_r = np.einsum("ij,ij->i", Rinv_r.T, dRdomega.dot(Rinv_r).T)
 
-            r_Rinv_dRdomega_Rinv_r = np.dot(Rinv_r.T, dRdomega.dot(Rinv_r))
-
-            drt2domega = np.einsum(
-                "ii->i", drdomega_Rinv_r + drdomega_Rinv_r.T - r_Rinv_dRdomega_Rinv_r
-            )
+            drt2domega = 2. * drdomega_Rinv_r - r_Rinv_dRdomega_Rinv_r
             drt2domega = np.atleast_2d(drt2domega)
 
             dMSE[omega] = dsigma[omega] * MSE / sigma2 + sigma2 * (
@@ -402,6 +388,52 @@ class AKRG(KrgBased):
             )
 
         return dMSE, MSE
+    
+    def get_x_from_u(self, u):
+        """
+        Compute x from u
+
+        Parameters
+        ----------
+        u : np.ndarray [n_evals, n_comp]
+            Evaluation point input variable in embedding space
+
+        Returns
+        -------
+        x : np.ndarray [n_evals, dim]
+            Return point input variable values in original space
+
+        """
+        u_norma = u * self.embedding['norm'] - self.U_mean
+        # Get an approximation of x
+        x_norma = (
+            self.embedding["Q_A"]
+            .dot(
+                linalg.solve_triangular(self.embedding["R_A"].T, u.T, lower=True)
+            )
+            .T
+        )
+        
+        x = x_norma * self.X_std + self.X_mean
+        return x
+    
+    def get_u_from_x(self, x):
+        """
+        Compute u from x
+
+        Parameters
+        ----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values in original space
+
+        Returns
+        -------
+        u : np.ndarray [n_evals, n_comp]
+            Return point input variable in embedding space
+        """
+        u = x.dot(self.embedding['C'])
+        return u
+        
 
     def _specific_train(self):
         """
@@ -417,19 +449,36 @@ class AKRG(KrgBased):
         r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
         var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
         var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
-        self.sigma_R = -np.linalg.solve(var_R, np.eye(len(self.optimal_theta)))
+        self.sigma_R = -linalg.solve(var_R, np.eye(len(self.optimal_theta)))
 
         # Compute normalise embedding
         self.optimal_par = par
+        
         A = np.reshape(self.optimal_theta, (self.options["n_comp"], self.nx)).T
-        self.optimal_par["Q_A"], self.optimal_par["R_A"] = linalg.qr(A, mode="economic")
-
+        B = (A.T / self.X_std).T
+        norm_B = np.linalg.norm(B)
+        C = B / norm_B
+        
+        self.embedding = {}
+        self.embedding["A"] = A
+        self.embedding['C'] = C
+        self.embedding["norm"] = norm_B
+        self.embedding["Q_A"], self.embedding["R_A"] = linalg.qr(A, mode="economic")
+        
+        U = []
+        for i in range(C.shape[1]):
+            ub = np.sum(np.abs(C[:,i]))
+            lb = -ub
+            U.append((lb, ub))
+        
+        self.embedding['bounds'] = U
+        
         # Compute normalisation in embeding base
         self.U_norma = self.X_norma.dot(A)
-        self.U_mean = self.X_mean.dot((A.T / self.X_std).T)
+        self.U_mean = self.X_mean.dot(C) * norm_B
 
         # Compute best number of Components for Active Kriging
-        svd = np.linalg.svd(A / np.linalg.norm(A))
+        svd = linalg.svd(A)
         svd_cumsum = np.cumsum(svd[1])
         svd_sum = np.sum(svd[1])
-        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.8 * svd_sum)) + 1
+        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.9 * svd_sum)) + 1
