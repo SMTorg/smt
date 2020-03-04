@@ -198,7 +198,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 10.0 * MACHINE_EPSILON
+        nugget = 1e3 * MACHINE_EPSILON
         if self.name == "MFK":
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
@@ -810,7 +810,6 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-
         theta0_rand = np.random.rand(len(self.options["theta0"]))
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
@@ -836,14 +835,17 @@ class KrgBased(SurrogateModel):
                     constraints.append(lambda theta, i=i: 10 - theta[i])
                     bounds_hyp.append((-10.0, 10.0))
 
-
                 else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
                     constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
                     bounds_hyp.append((-6.0, 2.0))
-                    
+
             if self.name == "Active Kriging":
-                theta0_rand = m_norm.rvs(self.options['prior']['mean']*len(self.options["theta0"]), self.options['prior']['var'], 1)
+                theta0_rand = m_norm.rvs(
+                    self.options["prior"]["mean"] * len(self.options["theta0"]),
+                    self.options["prior"]["var"],
+                    1,
+                )
                 theta0 = self.options["theta0"]
             else:
                 theta0_rand = theta0_rand * 8.0 - 6.0
