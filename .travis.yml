@@ -57,7 +57,7 @@ install:
   - conda create -q -n test-environment python=$PY numpy pandas scipy cython scikit-learn
   - source activate test-environment
   - pip install --upgrade pip
-  - pip install testflo
+  - pip install testflo==1.3.6
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e . 
   - pip install coverage
