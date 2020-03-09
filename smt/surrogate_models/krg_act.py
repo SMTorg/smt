@@ -41,7 +41,7 @@ class AKRG(KrgBased):
             d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def predict_variances(self, x, both=False, small=False, restricted_domain=None):
+    def predict_variances(self, x, both=False, restricted_domain=None):
         """
         Predict variances 
         
@@ -65,8 +65,9 @@ class AKRG(KrgBased):
             DESCRIPTION.
 
         """
-        n_eval, n_features = x.shape
-        if small:
+        n_eval, n_features = x.shape 
+        
+        if n_features < self.nx:
             if n_features != self.options["n_comp"]:
                 raise ValueError(
                     "dim(u) should be equal to %i" % self.options["n_comp"]
@@ -77,7 +78,7 @@ class AKRG(KrgBased):
             u = u * self.embedding["norm"] - self.U_mean
             x = (x - self.X_mean) / self.X_std
         else:
-            if n_features != self.X_std.shape[0]:
+            if n_features != self.nx:
                 raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
             u = None
             x = (x - self.X_mean) / self.X_std
@@ -104,7 +105,7 @@ class AKRG(KrgBased):
         else:
             return AMSE
 
-    def predict_values(self, x, small=False, restricted_domain=None):
+    def predict_values(self, x, restricted_domain=None):
         """
         Predict values
 
@@ -122,7 +123,7 @@ class AKRG(KrgBased):
 
         """
         n_eval, n_features = x.shape
-        if small:
+        if n_features < self.nx:
             if n_features != self.options["n_comp"]:
                 raise ValueError(
                     "dim(u) should be equal to %i" % self.options["n_comp"]
@@ -143,7 +144,7 @@ class AKRG(KrgBased):
             dx = differences(x, Y=self.X_norma.copy())
             d_x = self._componentwise_distance(dx)
         else:
-            if n_features != self.X_std.shape[0]:
+            if n_features != self.nx:
                 raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
             theta = self.optimal_theta
 
