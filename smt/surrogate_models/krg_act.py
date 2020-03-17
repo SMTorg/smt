@@ -65,8 +65,8 @@ class AKRG(KrgBased):
             DESCRIPTION.
 
         """
-        n_eval, n_features = x.shape 
-        
+        n_eval, n_features = x.shape
+
         if n_features < self.nx:
             if n_features != self.options["n_comp"]:
                 raise ValueError(
@@ -74,7 +74,7 @@ class AKRG(KrgBased):
                 )
             u = x
             x, _ = self.get_x_from_u(u, restricted_domain)
-            
+
             u = u * self.embedding["norm"] - self.U_mean
             x = (x - self.X_mean) / self.X_std
         else:
@@ -133,8 +133,8 @@ class AKRG(KrgBased):
             )
             # Get pairwise componentwise L1-distances to the input training set
             u = x
-            x, _ = self.get_x_from_u(u, restricted_domain)  
-            
+            x, _ = self.get_x_from_u(u, restricted_domain)
+
             u = u * self.embedding["norm"] - self.U_mean
             du = differences(u, Y=self.U_norma.copy())
             d = self._componentwise_distance(du, small=True)
@@ -410,11 +410,14 @@ class AKRG(KrgBased):
         # TODO: Change to use qr decomposition
         res = []
         u = np.atleast_2d(u)
-        
+
         self.embedding["Q_C"], self.embedding["R_C"]
 
         res = []
-        x_temp = np.dot(self.embedding["Q_C"], linalg.solve_triangular(self.embedding["R_C"].T, u.T, lower=True)).T
+        x_temp = np.dot(
+            self.embedding["Q_C"],
+            linalg.solve_triangular(self.embedding["R_C"].T, u.T, lower=True),
+        ).T
         # print(u)
         # print(x_temp)
 
@@ -422,7 +425,10 @@ class AKRG(KrgBased):
             bounds = None
             res = x_temp
         else:
-            bounds = [(restricted_domain[i, 0], restricted_domain[i, 1]) for i in range(self.nx)]
+            bounds = [
+                (restricted_domain[i, 0], restricted_domain[i, 1])
+                for i in range(self.nx)
+            ]
             for i, u_i in enumerate(u):
                 con_fun = lambda x: self.get_u_from_x(x) - u_i
                 con = [{"type": "eq", "fun": con_fun}]

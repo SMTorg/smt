@@ -29,6 +29,8 @@ from smt.utils.kriging_utils import (
     act_exp,
     standardization,
     cross_distances,
+    matern52,
+    matern32,
 )
 
 from scipy.optimize import minimize
@@ -50,6 +52,8 @@ class KrgBased(SurrogateModel):
         "abs_exp": abs_exp,
         "squar_exp": squar_exp,
         "act_exp": act_exp,
+        "matern52": matern52,
+        "matern32": matern32,
     }
 
     def _initialize(self):
@@ -65,7 +69,7 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp", "act_exp"),
+            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32"),
             desc="Correlation function type",
         )
         declare(
@@ -198,7 +202,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 1e3 * MACHINE_EPSILON
+        nugget = 10 * MACHINE_EPSILON
         if self.name == "MFK":
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
