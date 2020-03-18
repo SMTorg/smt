@@ -64,7 +64,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_branin_2D(self):
-        n_iter = 10
+        n_iter = 30
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
@@ -77,7 +77,7 @@ class TestEGO(SMTestCase):
         # 3 optimal points possible: [-pi,12.275], [pi, 12.275], [9.42478,2.475]
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.1)
-            or np.allclose([[3.14, 12.275]], x_opt, rtol=0.1)
+            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.1)
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.1)
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
@@ -192,4 +192,3 @@ if __name__ == "__main__":
         TestEGO.run_ego_example()
         exit()
     unittest.main()
-
