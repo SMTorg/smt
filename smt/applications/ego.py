@@ -172,11 +172,11 @@ class EGO(SurrogateBasedApplication):
         """ Expected improvement """
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
-        var = self.gpr.predict_variances(points)
-        args0 = (f_min - pred) / var
+        sig = np.sqrt(self.gpr.predict_variances(points))
+        args0 = (f_min - pred) / sig
         args1 = (f_min - pred) * norm.cdf(args0)
-        args2 = var * norm.pdf(args0)
-        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
+        args2 = sig * norm.pdf(args0)
+        if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
             return 0.0
 
         ei = args1 + args2
@@ -191,5 +191,5 @@ class EGO(SurrogateBasedApplication):
         """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
-        res = pred - 3.0 * var
+        res = pred - 3.0 * np.sqrt(var)
         return res
