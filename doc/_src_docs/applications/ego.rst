@@ -170,7 +170,7 @@ Usage
       ego.gpr.train()
   
       y_gp_plot = ego.gpr.predict_values(x_plot)
-      y_gp_plot_var = ego.gpr.predict_variances(x_plot)
+      y_gp_plot_sd = np.sqrt(ego.gpr.predict_variances(x_plot))
       y_ei_plot = -ego.EI(x_plot, y_data_k)
   
       ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
@@ -186,8 +186,8 @@ Usage
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
       gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
-      sig_plus = y_gp_plot + 3 * y_gp_plot_var
-      sig_moins = y_gp_plot - 3 * y_gp_plot_var
+      sig_plus = y_gp_plot + 3 * y_gp_plot_sd
+      sig_moins = y_gp_plot - 3 * y_gp_plot_sd
       un_gp = ax.fill_between(
           x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
       )
