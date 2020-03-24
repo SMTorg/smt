@@ -31,7 +31,7 @@ class AKRG(KrgBased):
         )
         self.options["hyper_opt"] = "SLSQP"
         self.options["corr"] = "act_exp"
-        self.options["noise"] = 1e-9
+        self.options["noise"] = 0.
         self.name = "Active Kriging"
 
     def _componentwise_distance(self, dx, opt=0, small=False):
@@ -508,4 +508,4 @@ class AKRG(KrgBased):
         svd = linalg.svd(A)
         svd_cumsum = np.cumsum(svd[1])
         svd_sum = np.sum(svd[1])
-        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.95 * svd_sum)) + 1
+        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1

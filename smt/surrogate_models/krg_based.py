@@ -209,6 +209,8 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
+        elif self.name == 'Active Kriging':
+            nugget = 100. * nugget
         noise = self.options["noise"]
         tmp_var = theta
         if self.name == "MFK":
