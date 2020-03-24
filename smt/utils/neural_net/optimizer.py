@@ -131,7 +131,7 @@ class Optimizer(object):
         """
         pass
 
-    def grad_check(self, parameters, tol=1e-6):
+    def grad_check(self, parameters, tol=1e-6):  # pragma: no cover
         """
         Check analytical gradient against to finite difference
 

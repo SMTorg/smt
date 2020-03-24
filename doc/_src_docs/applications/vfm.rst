@@ -40,7 +40,6 @@ Usage
   # Problem set up
   ndim = 8
   ntest = 500
-  ncomp = 1
   ndoeLF = int(10 * ndim)
   ndoeHF = int(3)
   funLF = WaterFlowLFidelity(ndim=ndim)
@@ -107,32 +106,6 @@ Usage
 
   ___________________________________________________________________________
      
-                                      QP
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 80
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.0000000
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 3
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  ___________________________________________________________________________
-     
                                     Kriging
   ___________________________________________________________________________
      
@@ -146,17 +119,6 @@ Usage
      
      Training ...
      Training - done. Time (sec):  0.0311999
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
   :scale: 80 %

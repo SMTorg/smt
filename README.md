@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/cqrslg4h2gqyn37d?svg=true)](https://ci.appveyor.com/project/relf/smt-07bo4) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg)](https://coveralls.io/github/SMTorg/smt)
+[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/cqrslg4h2gqyn37d?svg=true)](https://ci.appveyor.com/project/relf/smt-07bo4) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
 # Surrogate Modeling Toolbox

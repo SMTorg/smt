@@ -209,8 +209,8 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
-        elif self.name == 'Active Kriging':
-            nugget = 100. * nugget
+        elif self.name == "Active Kriging":
+            nugget = 100.0 * nugget
         noise = self.options["noise"]
         tmp_var = theta
         if self.name == "MFK":
@@ -719,7 +719,6 @@ class KrgBased(SurrogateModel):
             * self.y_std
             / self.X_std[kx]
         )
-
         return y
 
     def _predict_variances(self, x):
@@ -757,10 +756,11 @@ class KrgBased(SurrogateModel):
             - self._regression_types[self.options["poly"]](x).T,
         )
 
-        MSE = self.optimal_par["sigma2"] * (
-            1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
-        )
-        # Mean Squared Error might be slightly negative depending on
+        A = self.optimal_par["sigma2"]
+        B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+        MSE = np.einsum(
+            "i,j -> ji", A, B
+        )  # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE

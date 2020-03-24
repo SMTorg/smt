@@ -52,6 +52,7 @@ class EGO(SurrogateBasedApplication):
             desc="Number of points of the initial LHS doe, only used if xdoe is not given",
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
+        declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
 
@@ -78,16 +79,20 @@ class EGO(SurrogateBasedApplication):
         xlimits = self.options["xlimits"]
         sampling = LHS(xlimits=xlimits, criterion="ese")
 
-        doe = self.options["xdoe"]
-        if doe is None:
+        xdoe = self.options["xdoe"]
+        if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = sampling(n_doe)
         else:
             self.log("Initial DOE given")
-            x_doe = np.atleast_2d(doe)
+            x_doe = np.atleast_2d(xdoe)
 
-        y_doe = fun(x_doe)
+        ydoe = self.options["ydoe"]
+        if ydoe is None:
+            y_doe = fun(x_doe)
+        else:  # to save time if y_doe is already given to EGO
+            y_doe = ydoe
 
         # to save the initial doe
         x_data = x_doe
@@ -167,11 +172,11 @@ class EGO(SurrogateBasedApplication):
         """ Expected improvement """
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
-        var = self.gpr.predict_variances(points)
-        args0 = (f_min - pred) / var
+        sig = np.sqrt(self.gpr.predict_variances(points))
+        args0 = (f_min - pred) / sig
         args1 = (f_min - pred) * norm.cdf(args0)
-        args2 = var * norm.pdf(args0)
-        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
+        args2 = sig * norm.pdf(args0)
+        if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
             return 0.0
 
         ei = args1 + args2
@@ -186,5 +191,5 @@ class EGO(SurrogateBasedApplication):
         """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
-        res = pred - 3.0 * var
+        res = pred - 3.0 * np.sqrt(var)
         return res

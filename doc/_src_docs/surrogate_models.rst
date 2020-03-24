@@ -79,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0156000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001560
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: surrogate_models_Test_test_rbf.png

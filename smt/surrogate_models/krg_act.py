@@ -31,7 +31,7 @@ class AKRG(KrgBased):
         )
         self.options["hyper_opt"] = "SLSQP"
         self.options["corr"] = "act_exp"
-        self.options["noise"] = 0.
+        self.options["noise"] = 0.0
         self.name = "Active Kriging"
 
     def _componentwise_distance(self, dx, opt=0, small=False):
