@@ -202,7 +202,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 10 * MACHINE_EPSILON
+        nugget = 10. * MACHINE_EPSILON
         if self.name == "MFK":
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
@@ -403,30 +403,6 @@ class KrgBased(SurrogateModel):
 
             # Compute reduced log likelihood derivatives
             grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
-
-            # eps = 1e-7
-            # theta_eps = theta.copy()
-            # theta_eps[i_der] = eps + theta_eps[i_der]
-            # theta_eps_neg = theta.copy()
-            # theta_eps_neg[i_der] = theta_eps_neg[i_der] - eps
-
-            # r = self._correlation_types[self.options["corr"]](theta, self.D)
-            # r_diff = self._correlation_types[self.options["corr"]](theta_eps, self.D)
-            # dr_diff = (r_diff - r) / eps
-            # print('dr', np.linalg.norm(dr_diff-dr)/np.linalg.norm(dr_diff))
-
-            # red_diff, par_diff = self._reduced_likelihood_function(theta_eps)
-            # red_diff_neg, par_diff_neg = self._reduced_likelihood_function(theta_eps_neg)
-            # dbeta_diff = (par_diff['beta'] - par_diff_neg['beta'])/(2*eps)
-            # print('dbeta_diff', dbeta_diff)
-            # print('dbeta', dbeta)
-            # print('dbeta', np.linalg.norm(dbeta_diff-dbeta)/np.linalg.norm(dbeta_diff))
-
-            # dmu_diff = np.dot(self.F, dbeta_diff)
-            # print('dmu', np.linalg.norm(dmu_diff - dmu)/np.linalg.norm(dmu_diff))
-
-            # dsigma_diff = (par_diff['sigma2'] - par['sigma2'])/eps
-            # print('dsigma', np.linalg.norm(dsigma_diff - dsigma_2)/np.linalg.norm(dsigma_diff))
 
         par["dr"] = dr_all
         par["tr"] = tr_all
