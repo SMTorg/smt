@@ -1,0 +1,2 @@
+v1 : add predict_variances_int & predict_mean_int, surrogate model.py, krg_based.py
+v2 : add EI_penalized for integer variables, add Cobyla for EI_penalized, ego.py 
