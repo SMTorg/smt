@@ -9,7 +9,7 @@ TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol
 
-Saves Paul branch :  v2
+Saves Paul branch :  v3
 """
 
 from __future__ import division
@@ -339,6 +339,50 @@ class KrgBased(SurrogateModel):
 
         return y
 
+    def _predict_values_cate(self, x):
+        """
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        """
+        # Initialization
+        n_eval, n_features_x = x.shape
+        for i in range(len(x)) :
+            y = np.zeros(np.shape(x[i]))
+            y[np.argmax(x[i])] = 1
+            x[i]= y
+
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = self._componentwise_distance(dx)
+        # Compute the correlation function
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
+        y = np.zeros(n_eval)
+        # Compute the regression function
+        f = self._regression_types[self.options["poly"]](x)
+        # Scaled predictor
+        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+        # Predictor
+        y = (self.y_mean + self.y_std * y_).ravel()
+
+        return y
+
+
+
+
+
+
 
 
     def _predict_derivatives(self, x, kx):
@@ -436,7 +480,7 @@ class KrgBased(SurrogateModel):
 
         # Initialization
         n_eval, n_features_x = x.shape 
-        x=np.round(x) 
+        x=np.round(x)
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
         dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
@@ -465,6 +509,43 @@ class KrgBased(SurrogateModel):
         MSE[MSE < 0.0] = 0.0
         return MSE
 
+
+
+    def _predict_variances_cate(self, x):
+
+        # Initialization
+        n_eval, n_features_x = x.shape
+        for i in range(len(x)) :
+            y = np.zeros(np.shape(x[i]))
+            y[np.argmax(x[i])] = 1
+            x[i]= y
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
+        d = self._componentwise_distance(dx)
+
+        # Compute the correlation function
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
+
+        C = self.optimal_par["C"]
+        rt = linalg.solve_triangular(C, r.T, lower=True)
+
+        u = linalg.solve_triangular(
+            self.optimal_par["G"].T,
+            np.dot(self.optimal_par["Ft"].T, rt)
+            - self._regression_types[self.options["poly"]](x).T,
+        )
+
+        A = self.optimal_par["sigma2"]
+        B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+        MSE = np.einsum("i,j -> ji", A, B)
+
+        # Mean Squared Error might be slightly negative depending on
+        # machine precision: force to zero!
+        MSE[MSE < 0.0] = 0.0
+        return MSE
 
 
 

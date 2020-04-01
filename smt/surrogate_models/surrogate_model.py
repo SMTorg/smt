@@ -4,7 +4,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 
-Saves Paul branch :  v2
+Saves Paul branch :  v3
 """
 
 from __future__ import division
@@ -328,11 +328,44 @@ class SurrogateModel(object):
         self.printer()
         return y.reshape((n, self.ny))
 
+    def predict_values_cate(self, x):
+        """
+        Predict the output values at a set of points.
 
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
 
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output values at the prediction points.
+        """
+        x = check_2d_array(x, "x")
+        check_nx(self.nx, x)
+        n = x.shape[0]
+        self.printer.active = (
+                self.options["print_global"] and self.options["print_prediction"]
+        )
 
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
 
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_values_cate(x)
 
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+        return y.reshape((n, self.ny))
 
 
 
@@ -443,6 +476,26 @@ class SurrogateModel(object):
         return s2.reshape((n, self.ny))
 
 
+
+    def predict_variances_cate(self, x):
+        """
+        Predict the variances at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        s2 : np.ndarray[nt, ny]
+            Variances.
+        """
+        check_support(self, "variances")
+        check_nx(self.nx, x)
+        n = x.shape[0]
+        s2 = self._predict_variances_cate(x)
+        return s2.reshape((n, self.ny))
 
 
     def _initialize(self):
