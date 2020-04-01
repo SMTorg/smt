@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/cqrslg4h2gqyn37d?svg=true)](https://ci.appveyor.com/project/relf/smt-07bo4) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master)
+[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/q3rnqmyp2f7wd172?svg=true)](https://ci.appveyor.com/project/SMTOrgAdmin/smt) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master) [![Documentation Status](https://readthedocs.org/projects/smt/badge/?version=latest)](https://smt.readthedocs.io/en/latest/?badge=latest)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
