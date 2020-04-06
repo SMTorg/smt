@@ -56,4 +56,4 @@ http://smt.readthedocs.io
 This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera, the French Aerospace Lab](https://github.com/OneraHub).
 
 
-Email: mbouhlel@umich.edu or bouhlel.mohamed.amine@gmail.com
+Email: bouhlel.mohamed.amine@gmail.com
