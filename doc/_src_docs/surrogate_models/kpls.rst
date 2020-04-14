@@ -1,3 +1,5 @@
+.. _kpls-ref-label:
+
 KPLS
 ====
 
@@ -58,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0055003
   ___________________________________________________________________________
      
    Evaluation

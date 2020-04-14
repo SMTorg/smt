@@ -135,7 +135,7 @@ class KrgBased(SurrogateModel):
         self.optimal_rlf_value, self.optimal_par, self.optimal_theta = self._optimize_hyperparam(
             D
         )
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
         elif self.name == "Active Kriging":
@@ -148,13 +148,8 @@ class KrgBased(SurrogateModel):
         """
         Train the model
         """
-        inputs = {"self": self}
-        with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            if outputs:
-                self.sol = outputs["sol"]
-            else:
-                self._new_train()
-                # outputs['sol'] = self.sol
+
+        self._new_train()
 
     def _reduced_likelihood_function(self, theta):
 
@@ -213,7 +208,7 @@ class KrgBased(SurrogateModel):
             nugget = 100.0 * nugget
         noise = self.options["noise"]
         tmp_var = theta
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 theta = tmp_var[:-1]
                 noise = tmp_var[-1]
@@ -260,8 +255,7 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
-        # FIXME : modify for coherence and use log.
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:            
             n_samples = self.nt
             p = self.p
             q = self.q
@@ -736,8 +730,7 @@ class KrgBased(SurrogateModel):
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum(
             "i,j -> ji", A, B
-        )  # Mean Squared Error might be slightly negative depending on
-        # machine precision: force to zero!
+        )         # Mean Squared Error might be slightly negative depending on        # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
 
@@ -839,7 +832,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
-                if self.name == "MFK":
+                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
                             [theta0, np.log10(np.array([self.options["noise0"]]))]
@@ -978,8 +971,10 @@ class KrgBased(SurrogateModel):
         """
         This function check some parameters of the model.
         """
+
         # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
+        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
+
             d = self.options["n_comp"]
         elif self.name in ["Active Kriging"]:
             d = self.options["n_comp"] * self.nx
