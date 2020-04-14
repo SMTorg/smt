@@ -91,7 +91,7 @@ class EGO(SurrogateBasedApplication):
         ydoe = self.options["ydoe"]
         if ydoe is None:
             y_doe = fun(x_doe)
-        else: # to save time if y_doe is already given to EGO
+        else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
         # to save the initial doe

@@ -197,7 +197,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 10. * MACHINE_EPSILON
+        nugget = 10.0 * MACHINE_EPSILON
         if self.name == "MFK":
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
@@ -255,7 +255,7 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:            
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             n_samples = self.nt
             p = self.p
             q = self.q
@@ -730,7 +730,7 @@ class KrgBased(SurrogateModel):
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum(
             "i,j -> ji", A, B
-        )         # Mean Squared Error might be slightly negative depending on        # machine precision: force to zero!
+        )  # Mean Squared Error might be slightly negative depending on        # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
 

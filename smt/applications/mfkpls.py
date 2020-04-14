@@ -546,4 +546,3 @@ class MFKPLS(KrgBased):
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
         return dy_dx[:, -1] * self.y_std / self.X_std[kx]
-
