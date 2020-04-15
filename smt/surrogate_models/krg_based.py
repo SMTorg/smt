@@ -83,7 +83,7 @@ class KrgBased(SurrogateModel):
         declare(
             "hyper_opt",
             "Cobyla",
-            values=("Cobyla", "SLSQP"),
+            values=("Cobyla", "TNC"),
             desc="optimiseur for Hyperparameters optimisation",
         )
         declare("noise", 0.0, types=float, desc="Noise in kriging")
@@ -291,7 +291,6 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
-
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -337,6 +336,7 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
+        time_0 = time.clock()
         red, par = self._reduced_likelihood_function(theta)
 
         C = par["C"]
@@ -409,7 +409,6 @@ class KrgBased(SurrogateModel):
 
         if self.name == "Active Kriging":
             grad_red += self._reduced_log_prior(theta, grad=True)
-
         return grad_red, par
 
     def _reduced_likelihood_hessian(self, theta):
@@ -856,24 +855,24 @@ class KrgBased(SurrogateModel):
                             rhoend=1e-4,
                             maxfun=limit,
                         )
-                    elif self.options["hyper_opt"] == "SLSQP":
-
+                    elif self.options["hyper_opt"] == "TNC":                                                
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0,
-                            method="SLSQP",
+                            method="TNC",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_hyp,
-                            options={"maxiter": min(1000, 30 * self.nx)},
+                            options={"maxiter": min(1000, limit)},
                         )
+                        
 
                         optimal_theta_res_2 = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_rand,
-                            method="SLSQP",
+                            method="TNC",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_hyp,
-                            options={"maxiter": min(1000, 30 * self.nx)},
+                            options={"maxiter": min(1000, limit)},
                         )
 
                         # print(optimal_theta_res)
@@ -986,9 +985,9 @@ class KrgBased(SurrogateModel):
                 raise ValueError(
                     "Active Kriging must be used with act_exp correlation function"
                 )
-            if self.options["hyper_opt"] != "SLSQP":
+            if self.options["hyper_opt"] != "TNC":
                 raise ValueError(
-                    "Active Kriging must be used with SLSQP hyperparameters optimizer"
+                    "Active Kriging must be used with TNC hyperparameters optimizer"
                 )
         else:
             if self.options["corr"] == "act_exp":

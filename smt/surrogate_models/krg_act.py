@@ -7,11 +7,12 @@ This package is distributed under New BSD license.
 from __future__ import division
 import warnings
 import numpy as np
-from scipy import linalg, optimize
+from scipy import linalg, optimize, sparse
 from smt.utils.kriging_utils import differences
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
+import time
 
 """
 The Active kriging class.
@@ -29,7 +30,7 @@ class AKRG(KrgBased):
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
         )
-        self.options["hyper_opt"] = "SLSQP"
+        self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
         self.options["noise"] = 0.0
         self.name = "Active Kriging"
@@ -476,8 +477,9 @@ class AKRG(KrgBased):
         r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
         var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
         var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
-        self.sigma_R = -linalg.solve(var_R, np.eye(len(self.optimal_theta)))
-
+        
+        self.sigma_R = - linalg.inv(var_R)
+        
         # Compute normalise embedding
         self.optimal_par = par
 
