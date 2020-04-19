@@ -22,3 +22,4 @@ smt/src/rmts/rmtsclib.cpp
 .vscode/
 .pytest_cache/
 
+*checkpoint.ipynb
