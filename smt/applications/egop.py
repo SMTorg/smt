@@ -29,7 +29,7 @@ class EGO_para(EGO):
         super(EGO_para, self)._initialize()
         declare = self.options.declare
 
-        declare("fun", None, types=FunctionType, desc="Function to minimize")
+        declare("fun_para", None, types=FunctionType, desc="Function to minimize ")
         declare(
             "criterion",
             "EI",
@@ -58,14 +58,14 @@ class EGO_para(EGO):
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
 
-    def optimize(self, fun):
+    def optimize(self, fun_para, **kwargs):
         """
         Optimizes fun
 
         Parameters
         ----------
 
-        fun: function to optimize: ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]
+        fun_para: function to optimize: (ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]) TO UPDATE
 
         Returns
         -------
@@ -92,7 +92,7 @@ class EGO_para(EGO):
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self.fun_para(fun,x_doe)
+            y_doe = fun_para(x_doe, **kwargs)
         else: # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -122,7 +122,7 @@ class EGO_para(EGO):
             
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_par:])
-            y = self.fun_para(fun,x_to_compute)
+            y = fun_para(x_to_compute, **kwargs)
             y_data[-n_par:] = y
             
         ind_best = np.argmin(y_data)
@@ -181,7 +181,7 @@ class EGO_para(EGO):
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
         return x_et_k, True
-    
+    """
     def fun_para(self,fun, x):
         nb_run = x.shape[0]
         self.log("\t Parallele evaluation of {} fun(s)".format(nb_run))
@@ -189,3 +189,4 @@ class EGO_para(EGO):
         for i in range(nb_run):
             y[i] = fun(np.atleast_2d(x[i]))
         return np.atleast_2d(y).T
+    """
