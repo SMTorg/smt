@@ -1,10 +1,11 @@
 """
-Author: Remi Lafage <remi.lafage@onera.fr>, Nathalie Bartoli, Emile Roux
+Author: Emile Roux <emile.roux@univ-smb.fr>, Remi Lafage <remi.lafage@onera.fr>, Nathalie Bartoli
 
 This package is distributed under New BSD license.
 
+
 """
-# TODO : documentation
+
 
 from __future__ import division
 import six
@@ -23,8 +24,16 @@ from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import KPLS, KRG, KPLSK
 from smt.sampling_methods import LHS
 
+from joblib import Parallel, delayed
+
+
 
 class EGO_para(EGO):
+    """
+    The EGO_para class provide a prallel version of the EGO class.
+    The basic idea is to extract n intersting point at once and then evaluates 
+    this n points in parallel
+    """
     def _initialize(self):
         super(EGO_para, self)._initialize()
         declare = self.options.declare
@@ -58,14 +67,16 @@ class EGO_para(EGO):
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
 
-    def optimize(self, fun_para, **kwargs):
+    def optimize(self, fun, JobRunner=None, **kwargs):
         """
         Optimizes fun
 
         Parameters
         ----------
 
-        fun_para: function to optimize: (ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]) TO UPDATE
+        fun: function to optimize: (ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]) 
+
+        JobRunner: (optional) a function that manage the // call of the fun evaluation
 
         Returns
         -------
@@ -78,10 +89,19 @@ class EGO_para(EGO):
         [ndoe, nx]: coord-x initial doe
         [ndoe, 1]: coord-y initial doe
         """
+        
+        # Set the default JobRunner if none is provided
+        if JobRunner is None:
+            JobRunner = self.JobRunner
+        
+        # Set the bounds of the optimization problem
         xlimits = self.options["xlimits"]
+        
+        # Set the DOE to inititialze the methode
         self.sampling = LHS(xlimits=xlimits, criterion="ese")
-
         xdoe = self.options["xdoe"]
+        
+        # Build teh DOE if none is provided
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
@@ -90,22 +110,25 @@ class EGO_para(EGO):
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
 
+        # Evalue DOE points using the JobRunner
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = fun_para(x_doe, **kwargs)
+            y_doe = JobRunner(x_doe, fun, **kwargs)
         else: # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
         # to save the initial doe
         x_data = x_doe
         y_data = y_doe
-
+        
+        # Initilized the kriging metamodel
         self.gpr = KRG(print_global=False)        
 
+        # Main loop
         n_iter = self.options["n_iter"]
         n_par = self.options["n_par"]
-
         for k in range(n_iter):
+            # Virtual enrichement loop
             for p in range(n_par):            
                 x_et_k, success = self._find_points(x_data, y_data)
                 if not success : 
@@ -113,25 +136,38 @@ class EGO_para(EGO):
                     break
                 elif success:
                     self.log("Internal optimization succeeded at EGO iter = {}.{}".format(k,p))
-                # KB
-                y_et_k = self.gpr.predict_values(x_et_k)
-                
+                # Set temporaly the y_data to the one predicted by the kringin metamodel
+                # Here it is the kriging beliver (KB) option
+                y_et_k = self.gpr.predict_values(x_et_k)                
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
             
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_par:])
-            y = fun_para(x_to_compute, **kwargs)
+            y = JobRunner(x_to_compute, fun, **kwargs)
             y_data[-n_par:] = y
-            
+        
+        # Find the optimal point
         ind_best = np.argmin(y_data)
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe
+        return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe, self.gpr
 
     def _find_points(self, x_data, y_data):
+        """
+        Function that analyse a set of x_data and y_data and give back the 
+        more intresting point to evaluates according to the selected criterion
+        
+        Inputs: 
+            - x_data and y_data
+        Outputs:
+            - x_et_k : the points to evaluate
+            - success bool : boolean succes flag to interupte
+                the main loop if need
+        
+        """
         self.gpr.set_training_values(x_data, y_data)
         self.gpr.train()
         
@@ -181,12 +217,27 @@ class EGO_para(EGO):
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
         return x_et_k, True
-    """
-    def fun_para(self,fun, x):
-        nb_run = x.shape[0]
-        self.log("\t Parallele evaluation of {} fun(s)".format(nb_run))
-        y=np.zeros(nb_run)
-        for i in range(nb_run):
-            y[i] = fun(np.atleast_2d(x[i]))
-        return np.atleast_2d(y).T
-    """
+
+    def JobRunner(self, x, fun, n_cores = None):
+        """
+        Function that call the function in // using the `joblib` modul
+        
+        Inputs :
+            - x : n * dim numpy array (the x_data to evaluate) 
+            - fun : the function to minimize
+            - n_cores (optional): number of paralle processes 
+        Output :
+            - results : n numpy array (return as a `atleast_2d()` numpy array)
+        """
+        if n_cores is None : n_cores = self.options["n_par"]
+        
+        self.log("JobRunner ({} cores) :".format(n_cores))        
+        self.log("\t Start Running {0} function evaluations in parallel".format(len(x)))
+        inputs = range(len(x))  
+        
+        results = Parallel(n_jobs=n_cores)(delayed(fun)(np.atleast_2d(x[i])) for i in inputs)
+        results = np.atleast_2d(np.asanyarray(results).flatten()).T
+        
+        self.log("\t End parallel Running")
+        
+        return results
