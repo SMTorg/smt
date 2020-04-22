@@ -338,7 +338,7 @@ class KrgBased(SurrogateModel):
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
-        if self.name != "Kriging" and self.name != "KPLSK":
+        if self.name != "Kriging" and "KPLSK" not in self.name:
             theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
         else:
             theta = self.optimal_theta
@@ -415,7 +415,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
-        if self.name == "KPLSK":
+        if "KPLSK" in self.name:
             n_iter = 1
         else:
             n_iter = 0
@@ -518,7 +518,8 @@ class KrgBased(SurrogateModel):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if self.name == "KPLSK":
+            if "KPLSK" in self.name:
+
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 

@@ -210,7 +210,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.8 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %

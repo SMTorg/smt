@@ -52,11 +52,11 @@ Options
      -  The interval of the domain in each dimension with shape nx x 2 (required)
   *  -  weights
      -  None
-     -  [None]
-     -  ['list', 'ndarray']
-     -  
-  *  -  clip
      -  None
+     -  ['list', 'ndarray']
+     -  relative sampling weights for each nx dimensions
+  *  -  clip
+     -  False
      -  None
      -  ['bool']
-     -  
+     -  round number of samples to the sampling number product of each nx dimensions (> asked nt)
