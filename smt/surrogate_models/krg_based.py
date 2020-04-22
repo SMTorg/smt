@@ -32,10 +32,6 @@ from smt.utils.kriging_utils import (
 
 from scipy.optimize import minimize
 
-"""
-The kriging class.
-"""
-
 
 class KrgBased(SurrogateModel):
 
@@ -124,11 +120,9 @@ class KrgBased(SurrogateModel):
         """
         Train the model
         """
-
         self._new_train()
 
     def _reduced_likelihood_function(self, theta):
-
         """
         This function determines the BLUP parameters and evaluates the reduced
         likelihood function for the given autocorrelation parameters theta.
