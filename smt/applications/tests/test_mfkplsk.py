@@ -143,11 +143,11 @@ class TestMFKPLSK(SMTestCase):
         self.assert_error(e_error1, 0.0, 1e-1)
 
     @staticmethod
-    def run_mfkpls_example():
+    def run_mfkplsk_example():
         import numpy as np
         import matplotlib.pyplot as plt
         from smt.applications.mfk import MFK, NestedLHS
-        from smt.applications.mfkpls import MFKPLSK
+        from smt.applications.mfkplsk import MFKPLSK
 
         # low fidelity modelk
         def lf_function(x):
