@@ -1,5 +1,7 @@
 """
-Author: Emile Roux <emile.roux@univ-smb.fr>, Remi Lafage <remi.lafage@onera.fr>, Nathalie Bartoli
+Author: Emile Roux <emile.roux@univ-smb.fr>
+
+Drived from the EGO class by Remi Lafage <remi.lafage@onera.fr>, Nathalie Bartoli
 
 This package is distributed under New BSD license.
 
@@ -55,7 +57,7 @@ class EGO_para(EGO):
             desc="Maximum number of internal optimizations",
         )
         declare("n_start", 20, types=int, desc="Number of optimization start points")
-        declare("n_par", 1, types=int, desc="Number parallel points")
+        declare("n_par", 1, types=int, desc="Number parallel sample the compute using the qEI ")
         declare(
             "n_doe",
             None,
@@ -137,7 +139,7 @@ class EGO_para(EGO):
                 elif success:
                     self.log("Internal optimization succeeded at EGO iter = {}.{}".format(k,p))
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
-                # Here it is the kriging beliver (KB) option
+                # Here it is the kriging beliver (KB) option 
                 y_et_k = self.gpr.predict_values(x_et_k)                
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
