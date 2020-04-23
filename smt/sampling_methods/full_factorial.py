@@ -14,8 +14,18 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 
 class FullFactorial(SamplingMethod):
     def _initialize(self):
-        self.options.declare("weights", values=[None], types=[list, np.ndarray])
-        self.options.declare("clip", types=bool)
+        self.options.declare(
+            "weights",
+            values=None,
+            types=(list, np.ndarray),
+            desc="relative sampling weights for each nx dimensions",
+        )
+        self.options.declare(
+            "clip",
+            default=False,
+            types=bool,
+            desc="round number of samples to the sampling number product of each nx dimensions (> asked nt)",
+        )
 
     def _compute(self, nt):
         """
@@ -38,7 +48,7 @@ class FullFactorial(SamplingMethod):
             weights = np.ones(nx) / nx
         else:
             weights = np.atleast_1d(self.options["weights"])
-            weights /= numpy.sum(weights)
+            weights /= np.sum(weights)
 
         num_list = np.ones(nx, int)
         while np.prod(num_list) < nt:

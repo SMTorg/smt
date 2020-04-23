@@ -1,4 +1,4 @@
-Multi-Fidelity Kriging KPLS (MFKPLS)
+Multi-Fidelity Kriging KPLSK (MFKPLSK)
 ====================================
 
 Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
@@ -17,7 +17,7 @@ high-fidelity to preserve the robustness to poor correlations between fidelity l
 A hyperparameter optimization is then performed in the subspace that maximizes the
 variations of HF data.
 
-MFKPLS is a combination of :ref:`mfk-ref-label` and :ref:`kpls-ref-label` techniques.
+MFKPLSK is a combination of :ref:`mfk-ref-label` and :ref:`kplsk-ref-label` techniques.
 
 References
 ----------
@@ -31,9 +31,9 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   from smt.applications.mfk import MFK, NestedLHS
-  from smt.applications.mfkpls import MFKPLS
+  from smt.applications.mfkplsk import MFKPLSK
   
-  # low fidelity model
+  # low fidelity modelk
   def lf_function(x):
       import numpy as np
   
@@ -60,7 +60,7 @@ Usage
   
   # choice of number of PLS components
   ncomp = 1
-  sm = MFKPLS(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
+  sm = MFKPLSK(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -96,7 +96,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                    MFKPLS
+                                    MFKPLSK
   ___________________________________________________________________________
      
    Problem size
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100000
+     Training - done. Time (sec):  0.0204999
   ___________________________________________________________________________
      
    Evaluation
@@ -116,7 +116,7 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0005002
      
      Prediction time/pt. (sec) :  0.0000050
      
@@ -132,7 +132,7 @@ Usage
      Prediction time/pt. (sec) :  0.0000050
      
   
-.. figure:: mfkpls_TestMFKPLS_run_mfkpls_example.png
+.. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
   :scale: 80 %
   :align: center
 

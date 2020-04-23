@@ -12,6 +12,7 @@ Three methods are available:
    applications/vfm
    applications/mfk
    applications/mfkpls
+   applications/mfkplsk
    applications/ego
 
 The intent is to provide applications of surrogate models in higher level methods.

@@ -3,42 +3,36 @@
 Created on Fri May 04 10:26:49 2018
 
 @author: Mostafa Meliani <melimostafa@gmail.com>
-Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of 
-order 1 (AR1)
+Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of order 1 (AR1)
 Partial Least Square decomposition added on highest fidelity level
 Adapted March 2020 by Nathalie Bartoli to the new SMT version
 """
 
 from __future__ import division
 import numpy as np
-from smt.surrogate_models.krg_based import KrgBased
-from types import FunctionType
+from copy import deepcopy
+from sys import exit
+from scipy.linalg import solve_triangular
+from scipy import linalg
+from packaging import version
+from sklearn import __version__ as sklversion
+
+if version.parse(sklversion) < version.parse("0.22"):
+    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
+else:
+    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.metrics.pairwise import manhattan_distances
+
 from smt.utils.kriging_utils import (
     l1_cross_distances,
     componentwise_distance,
     standardization,
 )
-
+from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
-from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-from scipy.linalg import solve_triangular
-from scipy import linalg
-from sklearn.metrics.pairwise import manhattan_distances
-import copy
-from copy import deepcopy
-from sys import exit
-
-"""
-The MFKPLS class.
-"""
 
 
 class MFKPLS(KrgBased):
-
-    """
-    - MFKPLS
-    """
-
     def _initialize(self):
         super(MFKPLS, self)._initialize()
         declare = self.options.declare
@@ -124,7 +118,14 @@ class MFKPLS(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model + PLS (done on the highest fidelity level)
         """
+        self._new_train_init()
 
+        for lvl in range(self.nlvl):
+            self._new_train_iteration(lvl)
+
+        self._new_train_finalize(lvl)
+
+    def _new_train_init(self):
         xt = []
         yt = []
         i = 0
@@ -156,7 +157,6 @@ class MFKPLS(KrgBased):
         #             self.y_std = 0.,0.,1.,1.
 
         nlevel = self.nlvl
-        n_samples = self.nt_all
 
         # initialize lists
         self.noise = nlevel * [0]
@@ -170,70 +170,73 @@ class MFKPLS(KrgBased):
         self.X_norma_all = [(x - self.X_mean) / self.X_std for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
-        for lvl in range(nlevel):
-            self.X_norma = self.X_norma_all[lvl]
-            self.y_norma = self.y_norma_all[lvl]
-            # Calculate matrix of distances D between samples
-            self.D_all[lvl] = l1_cross_distances(self.X_norma)
+    def _new_train_iteration(self, lvl):
+        n_samples = self.nt_all
 
-            # Regression matrix and parameters
-            self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
-            self.p_all[lvl] = self.F_all[lvl].shape[1]
+        self.X_norma = self.X_norma_all[lvl]
+        self.y_norma = self.y_norma_all[lvl]
+        # Calculate matrix of distances D between samples
+        self.D_all[lvl] = l1_cross_distances(self.X_norma)
 
-            # Concatenate the autoregressive part for levels > 0
-            if lvl > 0:
-                F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
-                self.q_all[lvl] = F_rho.shape[1]
-                self.F_all[lvl] = np.hstack(
-                    (
-                        F_rho
-                        * np.dot(
-                            self._predict_intermediate_values(
-                                self.X_norma, lvl, descale=False
-                            ),
-                            np.ones((1, self.q_all[lvl])),
+        # Regression matrix and parameters
+        self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
+        self.p_all[lvl] = self.F_all[lvl].shape[1]
+
+        # Concatenate the autoregressive part for levels > 0
+        if lvl > 0:
+            F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
+            self.q_all[lvl] = F_rho.shape[1]
+            self.F_all[lvl] = np.hstack(
+                (
+                    F_rho
+                    * np.dot(
+                        self._predict_intermediate_values(
+                            self.X_norma, lvl, descale=False
                         ),
-                        self.F_all[lvl],
-                    )
+                        np.ones((1, self.q_all[lvl])),
+                    ),
+                    self.F_all[lvl],
                 )
-            else:
-                self.q_all[lvl] = 0
+            )
+        else:
+            self.q_all[lvl] = 0
 
-            n_samples_F_i = self.F_all[lvl].shape[0]
+        n_samples_F_i = self.F_all[lvl].shape[0]
 
-            if n_samples_F_i != n_samples[lvl]:
-                raise Exception(
-                    "Number of rows in F and X do not match. Most "
-                    "likely something is going wrong with the "
-                    "regression model."
+        if n_samples_F_i != n_samples[lvl]:
+            raise Exception(
+                "Number of rows in F and X do not match. Most "
+                "likely something is going wrong with the "
+                "regression model."
+            )
+
+        if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
+            raise Exception(
+                (
+                    "Ordinary least squares problem is undetermined "
+                    "n_samples=%d must be greater than the regression"
+                    " model size p+q=%d."
                 )
+                % (n_samples[i], self.p_all[lvl] + self.q_all[lvl])
+            )
 
-            if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
-                raise Exception(
-                    (
-                        "Ordinary least squares problem is undetermined "
-                        "n_samples=%d must be greater than the regression"
-                        " model size p+q=%d."
-                    )
-                    % (n_samples[i], self.p_all[lvl] + self.q_all[lvl])
-                )
+        # Determine Gaussian Process model parameters
+        self.F = self.F_all[lvl]
+        D, self.ij = self.D_all[lvl]
+        self._lvl = lvl
+        self.nt = self.nt_all[lvl]
+        self.q = self.q_all[lvl]
+        self.p = self.p_all[lvl]
+        self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[
+            lvl
+        ] = self._optimize_hyperparam(D)
+        if self.options["eval_noise"]:
+            tmp_list = self.optimal_theta[lvl]
+            self.optimal_theta[lvl] = tmp_list[:-1]
+            self.noise[lvl] = tmp_list[-1]
+        del self.y_norma, self.D
 
-            # Determine Gaussian Process model parameters
-            self.F = self.F_all[lvl]
-            D, self.ij = self.D_all[lvl]
-            self._lvl = lvl
-            self.nt = self.nt_all[lvl]
-            self.q = self.q_all[lvl]
-            self.p = self.p_all[lvl]
-            self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[
-                lvl
-            ] = self._optimize_hyperparam(D)
-            if self.options["eval_noise"]:
-                tmp_list = self.optimal_theta[lvl]
-                self.optimal_theta[lvl] = tmp_list[:-1]
-                self.noise[lvl] = tmp_list[-1]
-            del self.y_norma, self.D
-
+    def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
             for lvl in range(self.nlvl - 1):
                 self.set_training_values(
@@ -490,7 +493,7 @@ class MFKPLS(KrgBased):
                 + "universal kriging using a linear trend"
             )
 
-        df0 = copy.deepcopy(df)
+        df0 = deepcopy(df)
 
         if self.options["rho_regr"] != "constant":
             raise ValueError(
@@ -512,8 +515,8 @@ class MFKPLS(KrgBased):
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma_all[0][:, kx].reshape(
             (1, self.nt_all[0])
         )
-        theta = np.sum(self.optimal_theta[0] * self.coeff_pls ** 2, axis=1)
 
+        theta = self._get_theta(0)
         dy_dx[:, 0] = np.ravel((df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma)))
 
         # Calculate recursively derivative at level i
@@ -538,12 +541,12 @@ class MFKPLS(KrgBased):
                 (1, self.nt_all[i])
             )
 
-            # Modif MM
-            theta = np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)
-            # theta = self.optimal_theta[i]
+            theta = self._get_theta(i)
 
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
         return dy_dx[:, -1] * self.y_std / self.X_std[kx]
 
+    def _get_theta(self, i):
+        return np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)

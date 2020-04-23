@@ -118,7 +118,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0365000
+     Training - done. Time (sec):  0.0425000
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
   :scale: 80 %
