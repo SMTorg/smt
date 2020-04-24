@@ -121,10 +121,10 @@ class TestEGOp(SMTestCase):
 
 if __name__ == "__main__":
     if "--plot" in argv:
-        TestEGO.plot = True
+        TestEGOp.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestEGO.run_ego_example()
+        TestEGOp.run_ego_example()
         exit()
     unittest.main()
 
