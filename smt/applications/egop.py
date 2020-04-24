@@ -26,7 +26,6 @@ from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import KPLS, KRG, KPLSK
 from smt.sampling_methods import LHS
 
-from joblib import Parallel, delayed
 
 
 
@@ -78,7 +77,6 @@ class EGO_para(EGO):
 
         fun: function to optimize: (ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]) 
 
-        JobRunner: (optional) a function that manage the // call of the fun evaluation
 
         Returns
         -------
@@ -92,9 +90,6 @@ class EGO_para(EGO):
         [ndoe, 1]: coord-y initial doe
         """
         
-        # Set the default JobRunner if none is provided
-        if JobRunner is None:
-            JobRunner = self.JobRunner
         
         # Set the bounds of the optimization problem
         xlimits = self.options["xlimits"]
@@ -115,7 +110,7 @@ class EGO_para(EGO):
         # Evalue DOE points using the JobRunner
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = JobRunner(x_doe, fun, **kwargs)
+            y_doe = fun(x_doe)
         else: # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -147,7 +142,7 @@ class EGO_para(EGO):
             
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_par:])
-            y = JobRunner(x_to_compute, fun, **kwargs)
+            y = fun(x_to_compute)
             y_data[-n_par:] = y
         
         # Find the optimal point
@@ -155,7 +150,7 @@ class EGO_para(EGO):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe, self.gpr
+        return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe
 
     def _find_points(self, x_data, y_data):
         """
@@ -220,26 +215,3 @@ class EGO_para(EGO):
         x_et_k = np.atleast_2d(opt["x"])
         return x_et_k, True
 
-    def JobRunner(self, x, fun, n_cores = None):
-        """
-        Function that call the function in // using the `joblib` modul
-        
-        Inputs :
-            - x : n * dim numpy array (the x_data to evaluate) 
-            - fun : the function to minimize
-            - n_cores (optional): number of paralle processes 
-        Output :
-            - results : n numpy array (return as a `atleast_2d()` numpy array)
-        """
-        if n_cores is None : n_cores = self.options["n_par"]
-        
-        self.log("JobRunner ({} cores) :".format(n_cores))        
-        self.log("\t Start Running {0} function evaluations in parallel".format(len(x)))
-        inputs = range(len(x))  
-        
-        results = Parallel(n_jobs=n_cores)(delayed(fun)(np.atleast_2d(x[i])) for i in inputs)
-        results = np.atleast_2d(np.asanyarray(results).flatten()).T
-        
-        self.log("\t End parallel Running")
-        
-        return results
