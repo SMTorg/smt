@@ -40,7 +40,7 @@ class TestEGOp(SMTestCase):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
 
-        criterion = "EI"
+        criterion = "UCB"
         n_par = 2
 
         ego = EGO_para(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits, n_par=n_par)
@@ -71,7 +71,7 @@ class TestEGOp(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO_para(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        ego = EGO_para(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, n_par=2)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
