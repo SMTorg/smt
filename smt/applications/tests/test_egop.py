@@ -105,11 +105,13 @@ class TestEGOp(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO_para(
-            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="EI", xlimits=xlimits
+            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="UCB", xlimits=xlimits,
+            n_start=30,
         )
         _, _, _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_points(xdoe,ydoe)
-        self.assertAlmostEqual(13.9, float(x), delta=1)
+        print(x)
+        self.assertAlmostEqual(6.5, float(x), delta=1)
         
     @staticmethod
     def run_egop_example():
