@@ -52,18 +52,20 @@ class TestEGOp(SMTestCase):
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
     def test_rosenbrock_2D(self):
-        n_iter = 10
+        n_iter = 15
         n_par = 5
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
+        qEIAproxCrit = 'KB'
         ego = EGO_para(xdoe=xdoe,
                        n_iter=n_iter,
                        criterion=criterion,
                        xlimits=xlimits,
-                       n_par=n_par)
+                       n_par=n_par,
+                       qEIAproxCrit=qEIAproxCrit)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
         print("Rosenbrock: " ,x_opt)
