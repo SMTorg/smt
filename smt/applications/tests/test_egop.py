@@ -25,7 +25,6 @@ class TestEGOp(SMTestCase):
     """
     Test class
     """
-
     plot = None
 
     @staticmethod
