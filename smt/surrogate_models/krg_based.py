@@ -323,7 +323,7 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for square exponential kernel"
             )
         if self.options["poly"] == "constant":
-            df = np.array([[0, 0]])
+            df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
             df = np.zeros((self.nx + 1, self.nx))
             df[1:, :] = np.eye(self.nx)
