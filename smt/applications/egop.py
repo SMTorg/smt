@@ -220,7 +220,6 @@ class EGO_para(EGO):
         return x_et_k, True
     
     def set_virtual_point(self, x):
-        print(x)
         qEIAproxCrit = self.options["qEIAproxCrit"]
         if qEIAproxCrit == 'KB':
             return self.gpr.predict_values(x)
