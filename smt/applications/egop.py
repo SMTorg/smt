@@ -57,6 +57,9 @@ class EGO_para(EGO):
         )
         declare("n_start", 20, types=int, desc="Number of optimization start points")
         declare("n_par", 1, types=int, desc="Number parallel sample the compute using the qEI ")
+        declare("qEIAproxCrit", "KBLB", types=str,
+                values=["KB", "KBLB", "KBUB", "KBRand"],
+                desc="Approximated q-EI maximization strategy ")
         declare(
             "n_doe",
             None,
@@ -124,6 +127,7 @@ class EGO_para(EGO):
         # Main loop
         n_iter = self.options["n_iter"]
         n_par = self.options["n_par"]
+
         for k in range(n_iter):
             # Virtual enrichement loop
             for p in range(n_par):            
@@ -134,8 +138,8 @@ class EGO_para(EGO):
                 elif success:
                     self.log("Internal optimization succeeded at EGO iter = {}.{}".format(k,p))
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
-                # Here it is the kriging beliver (KB) option 
-                y_et_k = self.gpr.predict_values(x_et_k)                
+                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k))
+
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
@@ -214,4 +218,21 @@ class EGO_para(EGO):
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
         return x_et_k, True
-
+    
+    def set_virtual_point(self, x):
+        qEIAproxCrit = self.options["qEIAproxCrit"]
+        if qEIAproxCrit == 'KB':
+            return self.gpr.predict_values(x)
+            
+        if qEIAproxCrit == 'KBUB':
+            conf = 3.
+        
+        if qEIAproxCrit == 'KBLB':
+            conf = -3.
+            
+        if qEIAproxCrit == 'KBRand':
+            conf = np.random.randn()
+            
+        pred = self.gpr.predict_values(x)
+        var  = self.gpr.predict_variances(x)
+        return pred + conf * np.sqrt(var)
