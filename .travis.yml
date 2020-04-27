@@ -16,11 +16,6 @@ matrix:
     - os: osx
       env: PY=3.7
 
-jobs:
-  allow_failures:
-    - os: osx
-      env: PY=2.7
-
 addons:
   apt:
     sources:
