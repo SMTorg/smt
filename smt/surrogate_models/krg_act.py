@@ -436,7 +436,7 @@ class AKRG(KrgBased):
                 obj = lambda x: linalg.norm(x - x_temp[i, :])
                 res_i = optimize.minimize(
                     obj,
-                    np.random.rand(len(self.X_std)),
+                    np.random.rand(len(self.X_std)) * 2. - 1.,
                     method="SLSQP",
                     bounds=bounds,
                     constraints=con,
