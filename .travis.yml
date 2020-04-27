@@ -12,12 +12,9 @@ matrix:
     - os: linux
       env: PY=3.7
     - os: osx
-      env: PY=2.7
-    - os: osx
       env: PY=3.6
-
-osx_image: xcode9.4
-dist: xenial
+    - os: osx
+      env: PY=3.7
 
 addons:
   apt:
