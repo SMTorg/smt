@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 from smt.surrogate_models import KRG
 from smt.problems import Sphere
-from smt.sampling_methods import LHS
+from smt.sampling_methods import FullFactorial
 
 
 class TestKRG(unittest.TestCase):
@@ -28,13 +28,14 @@ class TestKRG(unittest.TestCase):
 
     def test_derivatives(self):
         # Construction of the DOE
-        fun = Sphere(ndim=2)
-        sampling = LHS(xlimits=fun.xlimits, criterion="m")
-        xt = sampling(20)
+        ndim = 4
+        fun = Sphere(ndim=ndim)
+        sampling = FullFactorial(xlimits=fun.xlimits)
+        xt = sampling(100)
         yt = fun(xt)
 
         # Compute the training derivatives
-        for i in range(2):
+        for i in range(ndim):
             yd = fun(xt, kx=i)
             yt = np.concatenate((yt, yd), axis=1)
 
@@ -42,31 +43,34 @@ class TestKRG(unittest.TestCase):
         sm_krg_c = KRG(poly="constant", print_global=False)
         sm_krg_c.set_training_values(xt, yt[:, 0])
         sm_krg_c.train()
-        TestKRG._check_derivatives(sm_krg_c, xt, yt)
+        TestKRG._check_derivatives(sm_krg_c, xt, yt, ndim)
 
         sm_krg_l = KRG(poly="linear", print_global=False)
         sm_krg_l.set_training_values(xt, yt[:, 0])
         sm_krg_l.train()
-        TestKRG._check_derivatives(sm_krg_l, xt, yt)
+        TestKRG._check_derivatives(sm_krg_l, xt, yt, ndim)
 
     @staticmethod
-    def _check_derivatives(sm, xt, yt, i=10):
+    def _check_derivatives(sm, xt, yt, ndim, i=10):
         # Compares three derivatives at i-th traning point
         # 1. Training derivative: "exact" value
         # 2. Predicted derivative: obtaied by sm.predict_derivatives()
 
         # testing point
-        x_test = xt[i].reshape((1, 2))
+        x_test = xt[i].reshape((1, ndim))
 
         # 2. derivatives prediction by surrogate
-        dydx_predict = np.zeros(2)
-        dydx_predict[0] = sm.predict_derivatives(x_test, kx=0)[0]
-        dydx_predict[1] = sm.predict_derivatives(x_test, kx=1)[0]
+        dydx_predict = np.zeros(ndim)
+        for j in range(ndim):
+            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
+            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
+            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
+            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
         print(dydx_predict)
         print(yt[i, 1:])
 
         # compare results
-        np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=1e-3, rtol=1e-3)
+        np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=2e-3, rtol=1e-3)
 
 
 if __name__ == "__main__":
