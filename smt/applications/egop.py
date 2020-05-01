@@ -38,8 +38,6 @@ class EGO_para(EGO):
     def _initialize(self):
         super(EGO_para, self)._initialize()
         declare = self.options.declare
-
-        declare("fun_para", None, types=FunctionType, desc="Function to minimize ")
         declare(
             "criterion",
             "EI",
@@ -58,7 +56,7 @@ class EGO_para(EGO):
         declare("n_start", 20, types=int, desc="Number of optimization start points")
         declare("n_par", 1, types=int, desc="Number parallel sample the compute using the qEI ")
         declare("qEIAproxCrit", "KBLB", types=str,
-                values=["KB", "KBLB", "KBUB", "KBRand"],
+                values=["KB", "KBLB", "KBUB", "KBRand", "CLmin"],
                 desc="Approximated q-EI maximization strategy ")
         declare(
             "n_doe",
@@ -138,7 +136,7 @@ class EGO_para(EGO):
                 elif success:
                     self.log("Internal optimization succeeded at EGO iter = {}.{}".format(k,p))
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
-                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k))
+                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data)
 
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
@@ -219,8 +217,12 @@ class EGO_para(EGO):
         x_et_k = np.atleast_2d(opt["x"])
         return x_et_k, True
     
-    def set_virtual_point(self, x):
+    def set_virtual_point(self, x, y_data):
         qEIAproxCrit = self.options["qEIAproxCrit"]
+        
+        if qEIAproxCrit == 'CLmin':
+            return np.min(y_data)
+        
         if qEIAproxCrit == 'KB':
             return self.gpr.predict_values(x)
             

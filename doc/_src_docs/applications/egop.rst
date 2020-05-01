@@ -1,4 +1,4 @@
-Efficient Global Optimization (EGO)
+Efficient Global Optimization parallel version (EGOp)
 ===================================
 
 Bayesian Optimization
@@ -126,7 +126,7 @@ Usage
 
   import numpy as np
   import six
-  from smt.applications import EGO
+  from smt.applications import EGO_para
   from smt.sampling_methods import FullFactorial
   
   import sklearn
@@ -144,14 +144,22 @@ Usage
       y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
       return y.reshape((-1, 1))
   
-  n_iter = 6
+  n_iter = 3
+  n_par = 3
+  n_start = 50
   xlimits = np.array([[0.0, 25.0]])
-  xdoe = np.atleast_2d([0, 7, 25]).T
+  xdoe = np.atleast_2d([0,7,  25]).T
   n_doe = xdoe.size
   
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-  
-  ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
+  qEIAproxCrit = 'KBUB' #"KB", "KBLB", "KBUB", "KBRand"
+  ego = EGO_para(n_iter=n_iter,
+                 criterion=criterion,
+                 xdoe=xdoe,
+                 xlimits=xlimits,
+                 n_par=n_par,
+                 qEIAproxCrit=qEIAproxCrit,
+                 n_start=n_start)
   
   x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
       fun=function_test_1d
@@ -163,56 +171,74 @@ Usage
   
   fig = plt.figure(figsize=[10, 10])
   for i in range(n_iter):
-      k = n_doe + i
+      k = n_doe + (i)*(n_par)
       x_data_k = x_data[0:k]
       y_data_k = y_data[0:k]
-      ego.gpr.set_training_values(x_data_k, y_data_k)
-      ego.gpr.train()
+      x_data_sub = x_data_k.copy()
+      y_data_sub = y_data_k.copy()
+      for p in range(n_par):     
+          ego.gpr.set_training_values(x_data_sub, y_data_sub)
+          ego.gpr.train()
+          
+          y_ei_plot = -ego.EI(x_plot, y_data_sub)
+          y_gp_plot = ego.gpr.predict_values(x_plot)
+          y_gp_plot_var = ego.gpr.predict_variances(x_plot)
   
-      y_gp_plot = ego.gpr.predict_values(x_plot)
-      y_gp_plot_var = ego.gpr.predict_variances(x_plot)
-      y_ei_plot = -ego.EI(x_plot, y_data_k)
+          
+          x_data_sub = np.append(x_data_sub, x_data[k+p])        
+          y_KB = ego.set_virtual_point(np.atleast_2d(x_data[k+p]),
+                                       y_data_sub)
   
-      ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
-      ax1 = ax.twinx()
-      ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+          y_data_sub = np.append(y_data_sub, y_KB)
+          
+      
   
-      true_fun, = ax.plot(x_plot, y_plot)
-      data, = ax.plot(
-          x_data_k, y_data_k, linestyle="", marker="o", color="orange"
-      )
-      if i < n_iter - 1:
-          opt, = ax.plot(
-              x_data[k], y_data[k], linestyle="", marker="*", color="r"
+          
+      
+          ax = fig.add_subplot(n_iter, n_par, i*(n_par) + p + 1)
+          ax1 = ax.twinx()
+          ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+      
+          true_fun, = ax.plot(x_plot, y_plot)
+          data, = ax.plot(
+              x_data_sub[:-1-p], y_data_sub[:-1-p], linestyle="", marker="o", color="orange"
           )
-      gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
-      sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
-      sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
-      un_gp = ax.fill_between(
-          x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
-      )
-      lines = [true_fun, data, gp, un_gp, opt, ei]
-      fig.suptitle("EGO optimization of $f(x) = x \sin{x}$")
-      fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
-      ax.set_title("iteration {}".format(i + 1))
-      fig.legend(
-          lines,
-          [
-              "f(x)=xsin(x)",
-              "Given data points",
-              "Kriging prediction",
-              "Kriging 99% confidence interval",
-              "Next point to evaluate",
-              "Expected improvment function",
-          ],
-      )
+          virt_data, = ax.plot(
+              x_data_sub[-p-1:-1], y_data_sub[-p-1:-1], linestyle="", marker="o", color="g"
+          )
+  
+          opt, = ax.plot(
+              x_data_sub[-1], y_data_sub[-1], linestyle="", marker="*", color="r"
+          )
+          gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+          sig_plus  = y_gp_plot + 3. * np.sqrt(y_gp_plot_var)
+          sig_moins = y_gp_plot - 3. * np.sqrt(y_gp_plot_var)
+          un_gp = ax.fill_between(
+              x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
+          )
+          lines = [true_fun, data, gp, un_gp, opt, ei, virt_data]
+          fig.suptitle("EGOp optimization of $f(x) = x \sin{x}$")
+          fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
+          ax.set_title("iteration {}.{}".format(i ,p ))
+          fig.legend(
+              lines,
+              [
+                  "f(x)=xsin(x)",
+                  "Given data points",
+                  "Kriging prediction",
+                  "Kriging 99% confidence interval",
+                  "Next point to evaluate",
+                  "Expected improvment function",
+                  "Virtula data points"
+              ],
+          )
   plt.show()
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=19.0 with f(x)=-15.1
   
-.. figure:: ego_TestEGO_run_ego_example.png
+.. figure:: egop_TestEGOp_run_egop_example.png
   :scale: 80 %
   :align: center
 
@@ -279,3 +305,13 @@ Options
      -  None
      -  ['bool']
      -  Print computation information
+  *  -  n_par
+     -  1
+     -  None
+     -  ['int']
+     -  Number parallel sample the compute using the qEI 
+  *  -  qEIAproxCrit
+     -  KBLB
+     -  ['KB', 'KBLB', 'KBUB', 'KBRand', 'CLmin']
+     -  ['str']
+     -  Approximated q-EI maximization strategy 

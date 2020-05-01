@@ -162,8 +162,8 @@ class TestEGO(SMTestCase):
                     x_data[k], y_data[k], linestyle="", marker="*", color="r"
                 )
             gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
-            sig_plus = y_gp_plot + 3 * y_gp_plot_var
-            sig_moins = y_gp_plot - 3 * y_gp_plot_var
+            sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
+            sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
             un_gp = ax.fill_between(
                 x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
             )
