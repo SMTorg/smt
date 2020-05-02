@@ -186,8 +186,8 @@ Usage
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
       gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
-      sig_plus = y_gp_plot + 3 * y_gp_plot_var
-      sig_moins = y_gp_plot - 3 * y_gp_plot_var
+      sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
+      sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
       un_gp = ax.fill_between(
           x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
       )
@@ -210,7 +210,7 @@ Usage
   
 ::
 
-  Minimum in x=18.8 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %

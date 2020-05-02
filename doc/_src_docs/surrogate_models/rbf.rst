@@ -106,7 +106,7 @@ Usage
            Back solving (5 x 5 mtx) ...
            Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
         Solving linear system (col. 0) - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0005000
+     Training - done. Time (sec):  0.0010269
   ___________________________________________________________________________
      
    Evaluation
@@ -114,9 +114,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: rbf_Test_test_rbf.png

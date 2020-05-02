@@ -1,0 +1,73 @@
+Efficient Global Optimization parallel version (EGOp)
+=====================================================
+
+
+The parallel version is an extension of the :doc:`ego` proposed by Jones in 1998 [1]_.
+
+The goal is to be able to run batch optimization. At each iteration of the algorithm, multiple new sampling points are extracted from the know ones. These new sampling points are then evaluated using a parallel computing environment. 
+
+The parallel version of this algorithm has been presented by Ginsbourger et al. [2]_ in 2010. The Expected improvement (`EI`) is extended to proposed q new sampling points instead of one, they called this criterion the `qEI` criterion. As the exact evaluation is not straightforward they proposed different ways to approximate this criterion.
+
+Details of the implementation can be found in [3]_ [4]_.
+
+Differents approximation strategy of the  `qEI` criterion
+---------------------------------------------------------
+
+The basic idea is to run :math:`q` iterations of the `EGO` algorithm and to set temporally the response :math:`\hat y_q`  of the :math:`q` new sampling points to a virtual value. 
+When the :math:`q` new sampling points are defined the real evaluation of the response :math:`y_q` of these points is done in parallel.
+The efficiency of the methods lies in the strategy to set the virtual values. 
+
+Let assume that the new sampling point is at :math:`x_q`. The virtual response :math:`y_q` is set according to one of those strategies: 
+
+The minimum constant liar (`CLmin`) strategy : 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:math:`\hat y_q = \min (Y)`
+
+The Kriging believer (`KB`) strategy : 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The Kriging model gives a mean function  :math:`\mu` and a variance function :math:`\sigma^2` based on sample vectors :math:`X` and :math:`Y`. 
+
+The virtual values are set according to the model prediction:
+
+:math:`\hat y_q = \mu (x_q)`
+
+Some variants are proposed to introduce an optimistic or pessimistic part :
+
+    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+
+Tips for an efficient use
+-------------------------
+* the `n_par` parameter is set by the user, a real improvement of the efficiency is observed for relatively low values of the parameter (<8) [3]_
+* Since the maximization of the `EI` is a highly multimodal optimization problem, it could be necessary to increase the `n_start` parameter of the algorithm. 
+
+Implementation Note
+-------------------
+
+Beside the theory is based on the q-Expected Improvement, the implementation works also with other infill criteria:
+
+* SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
+* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
+
+
+
+References
+----------
+
+.. [1] Jones, D. R., Schonlau, M., & Welch, W. J. (1998). Efficient global optimization of expensive black-box functions. Journal of Global optimization, 13(4), 455-492.
+
+.. [2] Ginsbourger, D., Le Riche, R., & Carraro, L. (2010). Kriging is well-suited to parallelize optimization. In Computational intelligence in expensive optimization problems (pp. 131-162). Springer, Berlin, Heidelberg.
+
+.. [3] Roux, E. , Tillier, Y. , Kraria, S., & Bouchard, P.-O. (2020). An efficient parallel global optimization strategy based on Kriging properties suitable for material parameter identification.In AME, accepted for publication. 
+
+.. [4] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation). 
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.applications.tests.test_egop , TestEGOp , run_egop_example , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.applications , EGO_para , options
