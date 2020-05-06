@@ -92,13 +92,13 @@ class EGO(SurrogateBasedApplication):
         xlimits = self.options["xlimits"]
 
         # Build initial DOE
-        sampling = LHS(xlimits=xlimits, criterion="ese")
+        self._sampling = LHS(xlimits=xlimits, criterion="ese")
 
         xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
-            x_doe = sampling(n_doe)
+            x_doe = self._sampling(n_doe)
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
@@ -219,7 +219,7 @@ class EGO(SurrogateBasedApplication):
         n_optim = 1  # in order to have some success optimizations with SLSQP
         while not success and n_optim <= n_max_optim:
             opt_all = []
-            x_start = self.sampling(n_start)
+            x_start = self._sampling(n_start)
             for ii in range(n_start):
                 opt_all.append(
                     minimize(
