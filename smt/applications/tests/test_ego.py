@@ -4,6 +4,7 @@ This package is distributed under New BSD license.
 """
 
 import warnings
+import time
 
 warnings.filterwarnings("ignore")
 
@@ -15,15 +16,22 @@ import matplotlib
 matplotlib.use("Agg")
 
 from smt.applications import EGO
+from smt.applications.ego import Evaluator
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
+from multiprocessing import Pool
+
+
+class ParallelEvaluator(Evaluator):
+    def run(self, fun, x):
+        with Pool(3) as p:
+            return np.array(
+                [y[0] for y in p.map(fun, [np.atleast_2d(x[i]) for i in range(len(x))])]
+            )
 
 
 class TestEGO(SMTestCase):
-    """
-    Test class
-    """
 
     plot = None
 
@@ -34,6 +42,13 @@ class TestEGO(SMTestCase):
         y = np.zeros(x.shape)
         y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
         return y.reshape((-1, 1))
+
+    def test_evaluator(self):
+        x = [[1], [2], [3]]
+        expected = TestEGO.function_test_1d(x)
+        actual = ParallelEvaluator(3).run(TestEGO.function_test_1d, x)
+        for i in range(len(x)):
+            self.assertAlmostEqual(expected[i, 0], actual[i, 0])
 
     def test_function_test_1d(self):
         n_iter = 15
@@ -61,6 +76,7 @@ class TestEGO(SMTestCase):
             n_doe=3,
             xlimits=xlimits,
             n_parallel=n_parallel,
+            evaluator=ParallelEvaluator(),
         )
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
@@ -97,6 +113,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             n_parallel=n_parallel,
             qEI=qEI,
+            evaluator=ParallelEvaluator(),
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -272,6 +289,7 @@ class TestEGO(SMTestCase):
         import numpy as np
         import six
         from smt.applications import EGO
+        from smt.applications.ego import EGO, Evaluator
         from smt.sampling_methods import FullFactorial
 
         import sklearn
@@ -279,6 +297,7 @@ class TestEGO(SMTestCase):
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
         from scipy.stats import norm
+        from multiprocessing import Pool
 
         def function_test_1d(x):
             # function xsinx
@@ -389,6 +408,6 @@ if __name__ == "__main__":
         TestEGO.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestEGO.run_ego_example()
+        TestEGO.run_ego_parallel_example()
         exit()
     unittest.main()

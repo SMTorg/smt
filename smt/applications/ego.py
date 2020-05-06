@@ -22,6 +22,31 @@ from smt.surrogate_models import KPLS, KRG, KPLSK
 from smt.sampling_methods import LHS
 
 
+class Evaluator(object):
+    """
+    An interface for evaluation of a function at x points (nsamples of nx dimension nx)
+    """
+
+    def run(self, fun, x):
+        """
+        Evaluates fun at x.
+
+        Parameters
+        ---------
+        fun : function to evaluate: (nsamples, nx) -> (nsample, 1)
+
+        x : np.ndarray[nsamples, nx]
+            nsamples points of nx dimensions.
+
+        Returns
+        -------
+        np.ndarray[nsample, 1]
+            fun evaluations at the nsamples points.
+
+        """
+        return fun(x)
+
+
 class EGO(SurrogateBasedApplication):
     def _initialize(self):
         super(EGO, self)._initialize()
@@ -56,6 +81,12 @@ class EGO(SurrogateBasedApplication):
             types=str,
             values=["KB", "KBLB", "KBUB", "KBRand", "CLmin"],
             desc="Approximated q-EI maximization strategy",
+        )
+        declare(
+            "evaluator",
+            default=Evaluator(),
+            types=Evaluator,
+            desc="Object used to run function to optimized at x (nsamples, nxdim)",
         )
         declare(
             "n_doe",
@@ -93,6 +124,7 @@ class EGO(SurrogateBasedApplication):
 
         # Build initial DOE
         self._sampling = LHS(xlimits=xlimits, criterion="ese")
+        self._evaluator = self.options["evaluator"]
 
         xdoe = self.options["xdoe"]
         if xdoe is None:
@@ -105,7 +137,7 @@ class EGO(SurrogateBasedApplication):
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = fun(x_doe)
+            y_doe = self._evaluator.run(fun, x_doe)
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -115,12 +147,7 @@ class EGO(SurrogateBasedApplication):
 
         self.gpr = KRG(print_global=False)
 
-        bounds = xlimits
-
-        criterion = self.options["criterion"]
         n_iter = self.options["n_iter"]
-        n_start = self.options["n_start"]
-        n_max_optim = self.options["n_max_optim"]
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
@@ -147,7 +174,7 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = fun(x_to_compute)
+            y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
         # Find the optimal point
