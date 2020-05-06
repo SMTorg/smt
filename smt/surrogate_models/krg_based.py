@@ -192,6 +192,7 @@ class KrgBased(SurrogateModel):
             Q, G
             QR decomposition of the matrix Ft.
         """
+        time_0 = time.process_time_ns()
         # Initialize output
         reduced_likelihood_function_value = -np.inf
         par = {}
@@ -291,6 +292,8 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
+           
+        # print('likelihood', 100*(time.process_time_ns() - time_0))
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -336,7 +339,7 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        time_0 = time.clock()
+        time_0 = time.process_time()
         red, par = self._reduced_likelihood_function(theta)
 
         C = par["C"]
@@ -407,6 +410,7 @@ class KrgBased(SurrogateModel):
 
         grad_red = np.atleast_2d(grad_red).T
 
+        # print('grad likelihood',time.process_time() - time_0)
         if self.name == "Active Kriging":
             grad_red += self._reduced_log_prior(theta, grad=True)
         return grad_red, par
@@ -855,14 +859,15 @@ class KrgBased(SurrogateModel):
                             rhoend=1e-4,
                             maxfun=limit,
                         )
-                    elif self.options["hyper_opt"] == "TNC":                                                
+                    elif self.options["hyper_opt"] == "TNC":  
+                                              
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0,
                             method="TNC",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_hyp,
-                            options={"maxiter": min(1000, limit)},
+                            options={"maxiter": 100,'ftol':1e-2,'gtol':1e-2},#min(1000, limit)},
                         )
                         
 
@@ -872,8 +877,9 @@ class KrgBased(SurrogateModel):
                             method="TNC",
                             jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_hyp,
-                            options={"maxiter": min(1000, limit)},
+                            options={"maxiter": 100,'ftol':1e-2,'gtol':1e-2},#min(1000, limit)},
                         )
+                        
 
                         # print(optimal_theta_res)
                         # print(optimal_theta_res_2)
