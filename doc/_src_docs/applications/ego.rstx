@@ -99,6 +99,55 @@ Return : :math:`f_{min}` \# This is the best known solution after :math:`n_{iter
 
 More details can be found in [4]_.
 
+EGO parallel (EGO with qEI criterion)
+-------------------------------------
+
+
+The goal is to be able to run batch optimization. At each iteration of the algorithm, multiple new sampling points are extracted 
+from the know ones. These new sampling points are then evaluated using a parallel computing environment. 
+
+The parallel version of this algorithm has been presented by Ginsbourger et al. [5]_ in 2010. 
+The Expected improvement (`EI`) is extended to proposed q new sampling points instead of one, 
+they called this criterion the `qEI` criterion. As the exact evaluation is not straightforward 
+they proposed different ways to approximate this criterion.
+
+Details of the implementation can be found in [6]_ [7]_.
+
+Differents approximation strategy of the `qEI` criterion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The basic idea is to run :math:`q` iterations of the `EGO` algorithm and to set temporally the response :math:`\hat y_q`  of the :math:`q` new sampling points to a virtual value. 
+When the :math:`q` new sampling points are defined the real evaluation of the response :math:`y_q` of these points is done in parallel.
+The efficiency of the methods lies in the strategy to set the virtual values. 
+
+Let assume that the new sampling point is at :math:`x_q`. The virtual response :math:`y_q` is set according to one of those strategies: 
+
+The minimum constant liar (`CLmin`) strategy 
+""""""""""""""""""""""""""""""""""""""""""""
+
+:math:`\hat y_q = \min (Y)`
+
+The Kriging believer (`KB`) strategy 
+""""""""""""""""""""""""""""""""""""
+
+The Kriging model gives a mean function  :math:`\mu` and a variance function :math:`\sigma^2` based on sample vectors :math:`X` and :math:`Y`. 
+
+The virtual values are set according to the model prediction:
+
+:math:`\hat y_q = \mu (x_q)`
+
+Some variants are proposed to introduce an optimistic or pessimistic part :
+
+    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+
+Tips for an efficient use
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* the `n_parallel` parameter is set by the user, a real improvement of the efficiency is observed for relatively low values of the parameter (<8) [3]_
+* Since the maximization of the `EI` is a highly multimodal optimization problem, it could be necessary to increase the `n_start` parameter of the algorithm. 
+
+
 Implementation Note
 -------------------
 
@@ -119,10 +168,21 @@ References
 
 .. [4] Jones, D. R., Schonlau, M., & Welch, W. J. (1998). Efficient global optimization of expensive black-box functions. Journal of Global optimization, 13(4), 455-492.
 
+.. [5] Ginsbourger, D., Le Riche, R., & Carraro, L. (2010). Kriging is well-suited to parallelize optimization. In Computational intelligence in expensive optimization problems (pp. 131-162). Springer, Berlin, Heidelberg.
+
+.. [6] Roux, E. , Tillier, Y. , Kraria, S., & Bouchard, P.-O. (2020). An efficient parallel global optimization strategy based on Kriging properties suitable for material parameter identification.In AME, accepted for publication. 
+
+.. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
+
 Usage
 -----
 
 .. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_example , 80
+
+Usage with parallel Options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_parallel_example , 80
 
 Options
 -------
