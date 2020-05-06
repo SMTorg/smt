@@ -45,17 +45,17 @@ class EGO(SurrogateBasedApplication):
         )
         declare("n_start", 20, types=int, desc="Number of optimization start points")
         declare(
-            "n_par",
+            "n_parallel",
             1,
             types=int,
-            desc="Number of parallel sample to compute using the qEI ",
+            desc="Number of parallel samples to compute using qEI criterion",
         )
         declare(
-            "qEIAproxCrit",
+            "qEI",
             "KBLB",
             types=str,
             values=["KB", "KBLB", "KBUB", "KBRand", "CLmin"],
-            desc="Approximated q-EI maximization strategy ",
+            desc="Approximated q-EI maximization strategy",
         )
         declare(
             "n_doe",
@@ -121,11 +121,11 @@ class EGO(SurrogateBasedApplication):
         n_iter = self.options["n_iter"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
-        n_par = self.options["n_par"]
+        n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
             # Virtual enrichement loop
-            for p in range(n_par):
+            for p in range(n_parallel):
                 x_et_k, success = self._find_points(x_data, y_data)
                 if not success:
                     self.log(
@@ -146,9 +146,9 @@ class EGO(SurrogateBasedApplication):
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
 
             # Compute the real values of y_data
-            x_to_compute = np.atleast_2d(x_data[-n_par:])
+            x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             y = fun(x_to_compute)
-            y_data[-n_par:] = y
+            y_data[-n_parallel:] = y
 
         # Find the optimal point
         ind_best = np.argmin(y_data)
@@ -250,21 +250,21 @@ class EGO(SurrogateBasedApplication):
         return x_et_k, True
 
     def set_virtual_point(self, x, y_data):
-        qEIAproxCrit = self.options["qEIAproxCrit"]
+        qEI = self.options["qEI"]
 
-        if qEIAproxCrit == "CLmin":
+        if qEI == "CLmin":
             return np.min(y_data)
 
-        if qEIAproxCrit == "KB":
+        if qEI == "KB":
             return self.gpr.predict_values(x)
 
-        if qEIAproxCrit == "KBUB":
+        if qEI == "KBUB":
             conf = 3.0
 
-        if qEIAproxCrit == "KBLB":
+        if qEI == "KBLB":
             conf = -3.0
 
-        if qEIAproxCrit == "KBRand":
+        if qEI == "KBRand":
             conf = np.random.randn()
 
         pred = self.gpr.predict_values(x)

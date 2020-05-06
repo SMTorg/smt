@@ -54,9 +54,13 @@ class TestEGO(SMTestCase):
         xlimits = np.array([[0.0, 25.0]])
 
         criterion = "EI"
-        n_par = 3
+        n_parallel = 3
         ego = EGO(
-            n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits, n_par=n_par
+            n_iter=n_iter,
+            criterion=criterion,
+            n_doe=3,
+            xlimits=xlimits,
+            n_parallel=n_parallel,
         )
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
@@ -79,20 +83,20 @@ class TestEGO(SMTestCase):
 
     def test_rosenbrock_2D_parallel(self):
         n_iter = 15
-        n_par = 5
+        n_parallel = 5
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        qEIAproxCrit = "KB"
+        qEI = "KB"
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
             xlimits=xlimits,
-            n_par=n_par,
-            qEIAproxCrit=qEIAproxCrit,
+            n_parallel=n_parallel,
+            qEI=qEI,
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -123,13 +127,17 @@ class TestEGO(SMTestCase):
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
-        n_par = 5
+        n_parallel = 5
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
-            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, n_par=n_par
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            n_parallel=n_parallel,
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -282,21 +290,21 @@ class TestEGO(SMTestCase):
             return y.reshape((-1, 1))
 
         n_iter = 3
-        n_par = 3
+        n_parallel = 3
         n_start = 50
         xlimits = np.array([[0.0, 25.0]])
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        qEIAproxCrit = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
+        qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             xlimits=xlimits,
-            n_par=n_par,
-            qEIAproxCrit=qEIAproxCrit,
+            n_parallel=n_parallel,
+            qEI=qEI,
             n_start=n_start,
         )
 
@@ -310,12 +318,12 @@ class TestEGO(SMTestCase):
 
         fig = plt.figure(figsize=[10, 10])
         for i in range(n_iter):
-            k = n_doe + (i) * (n_par)
+            k = n_doe + (i) * (n_parallel)
             x_data_k = x_data[0:k]
             y_data_k = y_data[0:k]
             x_data_sub = x_data_k.copy()
             y_data_sub = y_data_k.copy()
-            for p in range(n_par):
+            for p in range(n_parallel):
                 ego.gpr.set_training_values(x_data_sub, y_data_sub)
                 ego.gpr.train()
 
@@ -328,7 +336,7 @@ class TestEGO(SMTestCase):
 
                 y_data_sub = np.append(y_data_sub, y_KB)
 
-                ax = fig.add_subplot(n_iter, n_par, i * (n_par) + p + 1)
+                ax = fig.add_subplot(n_iter, n_parallel, i * (n_parallel) + p + 1)
                 ax1 = ax.twinx()
                 ei, = ax1.plot(x_plot, y_ei_plot, color="red")
 
