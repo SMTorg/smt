@@ -46,7 +46,7 @@ class TestEGO(SMTestCase):
     def test_evaluator(self):
         x = [[1], [2], [3]]
         expected = TestEGO.function_test_1d(x)
-        actual = ParallelEvaluator(3).run(TestEGO.function_test_1d, x)
+        actual = ParallelEvaluator().run(TestEGO.function_test_1d, x)
         for i in range(len(x)):
             self.assertAlmostEqual(expected[i, 0], actual[i, 0])
 
