@@ -109,25 +109,25 @@ Usage
      Training ...
   epoch = 0, mini-batch = 0, avg cost = 16.629
   epoch = 1, mini-batch = 0, avg cost =  0.901
-  epoch = 2, mini-batch = 0, avg cost =  0.719
-  epoch = 3, mini-batch = 0, avg cost =  0.664
+  epoch = 2, mini-batch = 0, avg cost =  0.721
+  epoch = 3, mini-batch = 0, avg cost =  0.665
   epoch = 4, mini-batch = 0, avg cost =  0.640
-  epoch = 5, mini-batch = 0, avg cost =  0.627
-  epoch = 6, mini-batch = 0, avg cost =  0.615
-  epoch = 7, mini-batch = 0, avg cost =  0.604
-  epoch = 8, mini-batch = 0, avg cost =  0.597
-  epoch = 9, mini-batch = 0, avg cost =  0.590
-  epoch = 10, mini-batch = 0, avg cost =  0.585
-  epoch = 11, mini-batch = 0, avg cost =  0.581
-  epoch = 12, mini-batch = 0, avg cost =  0.579
-  epoch = 13, mini-batch = 0, avg cost =  0.577
-  epoch = 14, mini-batch = 0, avg cost =  0.576
-  epoch = 15, mini-batch = 0, avg cost =  0.575
+  epoch = 5, mini-batch = 0, avg cost =  0.628
+  epoch = 6, mini-batch = 0, avg cost =  0.614
+  epoch = 7, mini-batch = 0, avg cost =  0.606
+  epoch = 8, mini-batch = 0, avg cost =  0.600
+  epoch = 9, mini-batch = 0, avg cost =  0.594
+  epoch = 10, mini-batch = 0, avg cost =  0.589
+  epoch = 11, mini-batch = 0, avg cost =  0.585
+  epoch = 12, mini-batch = 0, avg cost =  0.582
+  epoch = 13, mini-batch = 0, avg cost =  0.579
+  epoch = 14, mini-batch = 0, avg cost =  0.578
+  epoch = 15, mini-batch = 0, avg cost =  0.576
   epoch = 16, mini-batch = 0, avg cost =  0.575
   epoch = 17, mini-batch = 0, avg cost =  0.575
   epoch = 18, mini-batch = 0, avg cost =  0.575
   epoch = 19, mini-batch = 0, avg cost =  0.575
-     Training - done. Time (sec):  5.5515001
+     Training - done. Time (sec):  4.6659999
   ___________________________________________________________________________
      
    Evaluation
@@ -135,7 +135,7 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0005002
      
      Prediction time/pt. (sec) :  0.0000008
      

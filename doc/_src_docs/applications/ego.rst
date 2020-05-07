@@ -244,8 +244,8 @@ Usage
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
       gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
-      sig_plus = y_gp_plot + 3 * y_gp_plot_var
-      sig_moins = y_gp_plot - 3 * y_gp_plot_var
+      sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
+      sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
       un_gp = ax.fill_between(
           x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
       )
@@ -274,7 +274,7 @@ Usage
   :scale: 80 %
   :align: center
 
-Usage with parallel Options
+Usage with parallel options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
@@ -309,15 +309,19 @@ Usage with parallel Options
   
   class ParallelEvaluator(Evaluator):
       """
-      Implement Evaluator interface using multiprocessing ThreadPool object.
+      Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
       """
   
       def run(self, fun, x):
           n_thread = 5
           # Caveat: import are made here due to SMT documentation building process
           import numpy as np
+          from sys import version_info
           from multiprocessing.pool import ThreadPool
   
+          if version_info.major == 2:
+              return fun(x)
+          # Python 3 only
           with ThreadPool(n_thread) as p:
               return np.array(
                   [
@@ -473,10 +477,10 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000092F3BA8>
+     -  <smt.applications.ego.Evaluator object at 0x0000000008EE7470>
      -  None
      -  ['Evaluator']
-     -  Object used to run optimized function fun at x (nsamples, nxdim)
+     -  Object used to run function fun to optimize at x points (nsamples, nxdim)
   *  -  n_doe
      -  None
      -  None
