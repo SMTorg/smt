@@ -145,23 +145,23 @@ Usage (RMTB)
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0005000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0015001
+           Computing energy terms - done. Time (sec):  0.0014999
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0005002
-        Pre-computing matrices - done. Time (sec):  0.0030003
+           Computing approximation terms - done. Time (sec):  0.0005000
+        Pre-computing matrices - done. Time (sec):  0.0024998
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.460686810e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 6.595870154e-16 1.135765154e-15
-              Solving for output 0 - done. Time (sec):  0.0030000
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0035000
+              Solving for output 0 - done. Time (sec):  0.0030003
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0035002
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.646699880e-15 1.135765154e-15
               Solving for output 0 - done. Time (sec):  0.0000000
-           Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0035000
+           Solving nonlinear problem (n=20) - done. Time (sec):  0.0005000
+        Solving for degrees of freedom - done. Time (sec):  0.0040002
      Training - done. Time (sec):  0.0075002
   ___________________________________________________________________________
      
@@ -236,24 +236,24 @@ Usage (RMTC)
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0005000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0025001
+           Computing energy terms - done. Time (sec):  0.0020001
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0005000
-        Pre-computing matrices - done. Time (sec):  0.0044999
+        Pre-computing matrices - done. Time (sec):  0.0039999
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.922777301e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0040002
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0040002
+              Solving for output 0 - done. Time (sec):  0.0059998
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0059998
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0040002
-     Training - done. Time (sec):  0.0090001
+              Solving for output 0 - done. Time (sec):  0.0005000
+           Solving nonlinear problem (n=42) - done. Time (sec):  0.0005000
+        Solving for degrees of freedom - done. Time (sec):  0.0064998
+     Training - done. Time (sec):  0.0109999
   ___________________________________________________________________________
      
    Evaluation
