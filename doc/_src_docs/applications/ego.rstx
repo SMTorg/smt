@@ -156,6 +156,9 @@ Beside the Expected Improvement, the implementation here offers two other infill
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
 * UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
+Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
+and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
+
 
 References
 ----------
@@ -179,7 +182,7 @@ Usage
 
 .. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_example , 80
 
-Usage with parallel Options
+Usage with parallel options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_parallel_example , 80

@@ -4,10 +4,11 @@ This package is distributed under New BSD license.
 """
 
 import warnings
-import time
 
 warnings.filterwarnings("ignore")
 
+import time
+import sys
 import unittest
 import numpy as np
 from sys import argv
@@ -22,7 +23,9 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 
+PYTHON_2 = sys.version_info.major == 2
 
+# This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
     def run(self, fun, x):
         with Pool(3) as p:
@@ -43,6 +46,7 @@ class TestEGO(SMTestCase):
         y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
         return y.reshape((-1, 1))
 
+    @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_evaluator(self):
         x = [[1], [2], [3]]
         expected = TestEGO.function_test_1d(x)
@@ -64,6 +68,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
+    @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_function_test_1d_parallel(self):
         n_iter = 3
         xlimits = np.array([[0.0, 25.0]])
@@ -97,6 +102,7 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
+    @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_rosenbrock_2D_parallel(self):
         n_iter = 15
         n_parallel = 5
@@ -135,9 +141,9 @@ class TestEGO(SMTestCase):
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         print(x_opt)
         self.assertTrue(
-            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.1)
-            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.1)
-            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.1)
+            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.5)
+            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.5)
+            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.5)
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
@@ -162,9 +168,9 @@ class TestEGO(SMTestCase):
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         print(x_opt)
         self.assertTrue(
-            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.1)
-            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.1)
-            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.1)
+            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.5)
+            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.5)
+            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.5)
         )
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
@@ -297,7 +303,6 @@ class TestEGO(SMTestCase):
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
         from scipy.stats import norm
-        from multiprocessing import Pool
 
         def function_test_1d(x):
             # function xsinx
@@ -315,6 +320,31 @@ class TestEGO(SMTestCase):
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
+        class ParallelEvaluator(Evaluator):
+            """
+            Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
+            """
+
+            def run(self, fun, x):
+                n_thread = 5
+                # Caveat: import are made here due to SMT documentation building process
+                import numpy as np
+                from sys import version_info
+                from multiprocessing.pool import ThreadPool
+
+                if version_info.major == 2:
+                    return fun(x)
+                # Python 3 only
+                with ThreadPool(n_thread) as p:
+                    return np.array(
+                        [
+                            y[0]
+                            for y in p.map(
+                                fun, [np.atleast_2d(x[i]) for i in range(len(x))]
+                            )
+                        ]
+                    )
+
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
         ego = EGO(
@@ -325,6 +355,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             qEI=qEI,
             n_start=n_start,
+            evaluator=ParallelEvaluator(),
         )
 
         x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(

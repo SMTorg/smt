@@ -156,6 +156,9 @@ Beside the Expected Improvement, the implementation here offers two other infill
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
 * UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
+Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
+and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
+
 
 References
 ----------
@@ -265,7 +268,7 @@ Usage
   
 ::
 
-  Minimum in x=18.8 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -279,6 +282,7 @@ Usage with parallel Options
   import numpy as np
   import six
   from smt.applications import EGO
+  from smt.applications.ego import EGO, Evaluator
   from smt.sampling_methods import FullFactorial
   
   import sklearn
@@ -303,6 +307,27 @@ Usage with parallel Options
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
+  class ParallelEvaluator(Evaluator):
+      """
+      Implement Evaluator interface using multiprocessing ThreadPool object.
+      """
+  
+      def run(self, fun, x):
+          n_thread = 5
+          # Caveat: import are made here due to SMT documentation building process
+          import numpy as np
+          from multiprocessing.pool import ThreadPool
+  
+          with ThreadPool(n_thread) as p:
+              return np.array(
+                  [
+                      y[0]
+                      for y in p.map(
+                          fun, [np.atleast_2d(x[i]) for i in range(len(x))]
+                      )
+                  ]
+              )
+  
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
   ego = EGO(
@@ -313,6 +338,7 @@ Usage with parallel Options
       n_parallel=n_parallel,
       qEI=qEI,
       n_start=n_start,
+      evaluator=ParallelEvaluator(),
   )
   
   x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
@@ -446,6 +472,11 @@ Options
      -  ['KB', 'KBLB', 'KBUB', 'KBRand', 'CLmin']
      -  ['str']
      -  Approximated q-EI maximization strategy
+  *  -  evaluator
+     -  <smt.applications.ego.Evaluator object at 0x00000000092F3BA8>
+     -  None
+     -  ['Evaluator']
+     -  Object used to run optimized function fun at x (nsamples, nxdim)
   *  -  n_doe
      -  None
      -  None

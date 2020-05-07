@@ -24,7 +24,8 @@ from smt.sampling_methods import LHS
 
 class Evaluator(object):
     """
-    An interface for evaluation of a function at x points (nsamples of nx dimension nx)
+    An interface for evaluation of a function at x points (nsamples of dimension nx).
+    User can derive this interface and override the run() method to implement custom multiprocessing.
     """
 
     def run(self, fun, x):
@@ -86,7 +87,7 @@ class EGO(SurrogateBasedApplication):
             "evaluator",
             default=Evaluator(),
             types=Evaluator,
-            desc="Object used to run function to optimized at x (nsamples, nxdim)",
+            desc="Object used to run function fun to optimize at x points (nsamples, nxdim)",
         )
         declare(
             "n_doe",
