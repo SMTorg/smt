@@ -34,7 +34,7 @@ class EGO(SurrogateBasedApplication):
             "criterion",
             "EI",
             types=str,
-            values=["EI", "SBO", "UCB","EI_penalized"],
+            values=["EI", "SBO", "UCB"],
             desc="criterion for next evaluation point determination: Expected Improvement, \
             Surrogate-Based Optimization or Upper Confidence Bound",
         )
@@ -56,8 +56,7 @@ class EGO(SurrogateBasedApplication):
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
-        declare("tunnel", 1, types=int, desc="0 to disable tunneling in ei_penalized")
-       
+
     def optimize(self, fun):
         """
         Optimizes fun
@@ -80,7 +79,6 @@ class EGO(SurrogateBasedApplication):
         """
         xlimits = self.options["xlimits"]
         sampling = LHS(xlimits=xlimits, criterion="ese")
-        tunnel = self.options["tunnel"]
 
         xdoe = self.options["xdoe"]
         if xdoe is None:
@@ -89,7 +87,7 @@ class EGO(SurrogateBasedApplication):
             x_doe = sampling(n_doe)
         else:
             self.log("Initial DOE given")
-            x_doe   = np.atleast_2d(xdoe)
+            x_doe = np.atleast_2d(xdoe)
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -118,7 +116,7 @@ class EGO(SurrogateBasedApplication):
             if criterion == "EI":
                 self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)
             elif criterion == "EI_penalized":
-                self.obj_k = lambda x: -self.EI_penalized(np.atleast_2d(x),x_data,y_data,tunnel=tunnel)
+                self.obj_k = lambda x: -self.EI_penalized(np.atleast_2d(x),x_data,y_data)
             elif criterion == "EI_penalized_cate":
                 self.obj_k = lambda x: -self.EI_penalized_cate(np.atleast_2d(x), x_data, y_data)
             elif criterion == "SBO":
@@ -200,7 +198,7 @@ class EGO(SurrogateBasedApplication):
         ei = args1 + args2
         return ei
 
-    def EI_penalized(self, points, x_data,y_data,tunnel=1):
+    def EI_penalized(self, points, x_data,y_data):
         """ Expected improvement """
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
@@ -211,17 +209,23 @@ class EGO(SurrogateBasedApplication):
         if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
             return 0.0
         ei = args1 + args2
-        if tunnel == 1 :
-            for i in range(len(points)) :
-                p =np.atleast_2d(points[i])
-                for x in x_data:
-                    x =np.atleast_2d(x)
-                   #if np.abs(p-x)<1:
-                       #ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena=( (self.EI(p,y_data)-self.EI(x,y_data))/np.power(np.linalg.norm(p-x),4) )
-                    if pena > 0 :
-                        ei[i]= ei[i]- pena
-                    ei[i]=max(ei[i],0)
+        for i in range(len(points)) :
+            p =np.atleast_2d(points[i])
+            prod =1
+            for x in x_data:
+                x =np.atleast_2d(x)
+               #if np.abs(p-x)<1:
+                   #ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
+                #pena=( (self.EI(p,y_data)-self.EI(x,y_data))/np.power(np.linalg.norm(p-x),4) )
+                prod = prod*np.power(np.linalg.norm(p-x),4)
+                #if pena > 0 :
+                    #ei[i]= ei[i]- pena
+            ind_best = np.argmin(y_data)
+            x_opt = np.atleast_2d(x_data[ind_best])
+            pena=(self.EI(p,y_data)-self.EI(x_opt,y_data))/prod
+            if pena > 0 :
+                ei[i]= ei[i]- pena
+            ei[i]=max(ei[i],0)
         return ei
 
     def EI_penalized_cate(self, points, x_data, y_data):

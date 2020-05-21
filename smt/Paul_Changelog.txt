@@ -2,3 +2,5 @@ v1 : add predict_variances_int & predict_mean_int, surrogate model.py, krg_based
 v2 : add EI_penalized for integer variables, add Cobyla for EI_penalized, ego.py 
 v3 : add EI_penalized for categorial variables, add  predict_variances_cate &
      predict_mean_cate, fixes on muldimensional integers, surrogate model.py, krg_based.py, ego.py
+v4 :  Test in tunneling  
+v5 : Mixed 
