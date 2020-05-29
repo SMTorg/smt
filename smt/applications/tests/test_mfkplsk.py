@@ -119,6 +119,9 @@ class TestMFKPLSK(SMTestCase):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
 
+        # to test some options
+        sm.options["eval_noise"] = False
+
         # modif MM
         sm.options["n_comp"] = self.n_comp
         sm.options["theta0"] = [1e-2] * self.n_comp

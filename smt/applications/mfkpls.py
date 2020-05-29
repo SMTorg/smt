@@ -217,7 +217,7 @@ class MFKPLS(KrgBased):
                     "n_samples=%d must be greater than the regression"
                     " model size p+q=%d."
                 )
-                % (n_samples[i], self.p_all[lvl] + self.q_all[lvl])
+                % (n_samples_F_i, self.p_all[lvl] + self.q_all[lvl])
             )
 
         # Determine Gaussian Process model parameters
@@ -238,6 +238,7 @@ class MFKPLS(KrgBased):
 
     def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
+            X = self.X
             for lvl in range(self.nlvl - 1):
                 self.set_training_values(
                     X[lvl], self._predict_intermediate_values(X[lvl], lvl + 1), name=lvl
