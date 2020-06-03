@@ -67,6 +67,10 @@ class TestMFKPLS(SMTestCase):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
 
+            # to test some options
+            sm.options["eval_noise"] = True
+            sm.options["optim_var"] = True
+
             # modif MM
             sm.options["n_comp"] = self.n_comp
             sm.options["theta0"] = [1e-2] * self.n_comp
