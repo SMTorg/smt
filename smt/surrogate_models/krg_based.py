@@ -39,11 +39,6 @@ from scipy.stats import multivariate_normal as m_norm
 import time
 import traceback
 
-"""
-The kriging class.
-"""
-
-
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -148,11 +143,11 @@ class KrgBased(SurrogateModel):
         """
         Train the model
         """
+                # outputs['sol'] = self.sol
 
         self._new_train()
 
     def _reduced_likelihood_function(self, theta):
-
         """
         This function determines the BLUP parameters and evaluates the reduced
         likelihood function for the given autocorrelation parameters theta.
@@ -668,7 +663,7 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for square exponential kernel"
             )
         if self.options["poly"] == "constant":
-            df = np.array([[0, 0]])
+            df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
             df = np.zeros((self.nx + 1, self.nx))
             df[1:, :] = np.eye(self.nx)
@@ -683,7 +678,7 @@ class KrgBased(SurrogateModel):
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
-        if self.name != "Kriging" and self.name != "KPLSK":
+        if self.name != "Kriging" and "KPLSK" not in self.name:
             theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
         else:
             theta = self.optimal_theta
@@ -731,9 +726,10 @@ class KrgBased(SurrogateModel):
 
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
-        MSE = np.einsum(
-            "i,j -> ji", A, B
-        )  # Mean Squared Error might be slightly negative depending on        # machine precision: force to zero!
+        MSE = np.einsum("i,j -> ji", A, B)
+
+        # Mean Squared Error might be slightly negative depending on
+        # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
 
@@ -792,7 +788,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
-        if self.name == "KPLSK":
+        if "KPLSK" in self.name:
             n_iter = 1
         else:
             n_iter = 0
@@ -835,6 +831,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
+                # theta0 = self.options["theta0"]
                 if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
@@ -953,7 +950,8 @@ class KrgBased(SurrogateModel):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if self.name == "KPLSK":
+            if "KPLSK" in self.name:
+
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 

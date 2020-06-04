@@ -22,8 +22,8 @@ from smt.utils.kriging_utils import (
     cross_distances,
     componentwise_distance,
     standardization,
+    differences,
 )
-from smt.utils.kriging_utils import differences
 from sys import exit
 
 

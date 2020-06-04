@@ -28,20 +28,20 @@ from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
 from smt.applications.mfk import MFK, NestedLHS
-from smt.applications.mfkpls import MFKPLS
+from smt.applications.mfkplsk import MFKPLSK
 from copy import deepcopy
 
 print_output = False
 
 
-class TestMFKPLS(SMTestCase):
+class TestMFKPLSK(SMTestCase):
     def setUp(self):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
         self.n_comp = 2
 
-    def test_mfkpls(self):
+    def test_mfkplsk(self):
         self.problems = ["exp", "tanh", "cos"]
 
         for fname in self.problems:
@@ -61,15 +61,11 @@ class TestMFKPLS(SMTestCase):
             ye = prob(xe)
 
             # Modif MM
-            sm = MFKPLS()
+            sm = MFKPLSK()
 
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
-
-            # to test some options
-            sm.options["eval_noise"] = True
-            sm.options["optim_var"] = True
 
             # modif MM
             sm.options["n_comp"] = self.n_comp
@@ -89,10 +85,10 @@ class TestMFKPLS(SMTestCase):
             self.assert_error(t_error, 0.0, 1.5)
             self.assert_error(e_error, 0.0, 1.5)
 
-    def test_mfkpls_derivs(self):
+    def test_mfkplsk_derivs(self):
 
         if self.ndim < 2:
-            print("To try test_mfkpls_derivs the dimension must be greater than 1")
+            print("To try test_mfkplsk_derivs the dimension must be greater than 1")
 
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
@@ -115,13 +111,16 @@ class TestMFKPLS(SMTestCase):
         dye = {}
         for kx in range(prob.xlimits.shape[0]):
             dye[kx] = prob(xe, kx=kx)
-        print("n_comp mfkpls_deriv", self.n_comp)
+
         # modif MM
-        sm = MFKPLS()
+        sm = MFKPLSK()
 
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
+
+        # to test some options
+        sm.options["eval_noise"] = False
 
         # modif MM
         sm.options["n_comp"] = self.n_comp
@@ -147,13 +146,13 @@ class TestMFKPLS(SMTestCase):
         self.assert_error(e_error1, 0.0, 1e-1)
 
     @staticmethod
-    def run_mfkpls_example():
+    def run_mfkplsk_example():
         import numpy as np
         import matplotlib.pyplot as plt
         from smt.applications.mfk import MFK, NestedLHS
-        from smt.applications.mfkpls import MFKPLS
+        from smt.applications.mfkplsk import MFKPLSK
 
-        # low fidelity model
+        # low fidelity modelk
         def lf_function(x):
             import numpy as np
 
@@ -180,7 +179,7 @@ class TestMFKPLS(SMTestCase):
 
         # choice of number of PLS components
         ncomp = 1
-        sm = MFKPLS(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
+        sm = MFKPLSK(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
 
         # low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(xt_c, yt_c, name=0)

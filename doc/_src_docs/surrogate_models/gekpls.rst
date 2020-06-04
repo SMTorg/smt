@@ -91,11 +91,7 @@ Usage
    Training
      
      Training ...
-<<<<<<< HEAD
-     Training - done. Time (sec):  0.0156002
-=======
-     Training - done. Time (sec):  0.0180001
->>>>>>> 62115271cd9d413ea034aad0b6b893770914c84f
+     Training - done. Time (sec):  0.0189998
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %

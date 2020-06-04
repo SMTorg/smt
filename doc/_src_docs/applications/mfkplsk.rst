@@ -1,25 +1,27 @@
-.. _mfk-ref-label:
+Multi-Fidelity Kriging KPLSK (MFKPLSK)
+====================================
 
-Multi-Fidelity Kriging (MFK)
-================================
+Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
+interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
+maximize the variation of the quantity of interest.
 
-MFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1).
+These principal components define rotations that can be applied to define bases changes.
+The principal components can be truncated at any number (called n_comp) to explain a
+’majority’ of the data variations.
+[1]_ used the PLS to define subspaces to make high-dimensional Kriging
+more efficient. 
 
-.. math ::
-        y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+We apply the same idea to :ref:`mfk-ref-label`. The only difference is that we do
+not apply the PLS analysis step on all datasets. We apply the PLS analysis step on the
+high-fidelity to preserve the robustness to poor correlations between fidelity levels.
+A hyperparameter optimization is then performed in the subspace that maximizes the
+variations of HF data.
 
-
-where :math:`\rho(x)`
-is a scaling/correlation factor (constant, linear or quadratic) and :math:`\delta(\cdot)` is a discrepancy function.
-
-The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
-The implementation here follows the one proposed by Le Gratiet [2]_. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.
-This method only uses nested sampling training points as described by Le Gratiet [2]_.
+MFKPLSK is a combination of :ref:`mfk-ref-label` and :ref:`kplsk-ref-label` techniques.
 
 References
 ----------
-.. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
-.. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
+.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., & Morlier, J. (2016). An improved approach for estimating the hyperparameters of the kriging model for high-dimensional problems through the partial least squares method. Mathematical Problems in Engineering, 2016.
 
 Usage
 -----
@@ -29,8 +31,9 @@ Usage
   import numpy as np
   import matplotlib.pyplot as plt
   from smt.applications.mfk import MFK, NestedLHS
+  from smt.applications.mfkplsk import MFKPLSK
   
-  # low fidelity model
+  # low fidelity modelk
   def lf_function(x):
       import numpy as np
   
@@ -55,7 +58,9 @@ Usage
   yt_e = hf_function(xt_e)
   yt_c = lf_function(xt_c)
   
-  sm = MFK(theta0=np.array(xt_e.shape[1] * [1.0]))
+  # choice of number of PLS components
+  ncomp = 1
+  sm = MFKPLSK(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -91,7 +96,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                      MFK
+                                    MFKPLSK
   ___________________________________________________________________________
      
    Problem size
@@ -103,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0135000
+     Training - done. Time (sec):  0.0195000
   ___________________________________________________________________________
      
    Evaluation
@@ -127,7 +132,7 @@ Usage
      Prediction time/pt. (sec) :  0.0000050
      
   
-.. figure:: mfk_TestMFK_run_mfk_example.png
+.. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
   :scale: 80 %
   :align: center
 
@@ -189,6 +194,11 @@ Options
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

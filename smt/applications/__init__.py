@@ -1,5 +1,6 @@
 from .vfm import VFM
 from .moe import MOE
-from .mfk import MFK
+from .mfk import MFK, NestedLHS
 from .mfkpls import MFKPLS
-from .ego import EGO
+from .mfkplsk import MFKPLSK
+from .ego import EGO, Evaluator
