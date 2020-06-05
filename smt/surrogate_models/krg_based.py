@@ -114,7 +114,7 @@ class KrgBased(SurrogateModel):
 
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
-        if np.min(np.sum(D, axis=1)) == 0.0:
+        if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             raise Exception("Multiple input features cannot have the same value.")
 
         # Regression matrix and parameters
@@ -127,13 +127,15 @@ class KrgBased(SurrogateModel):
         self._check_F(n_samples_F, p)
 
         # Optimization
+        # TODO : Must be modified for Active KPLS
         self.optimal_rlf_value, self.optimal_par, self.optimal_theta = self._optimize_hyperparam(
             D
         )
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-        elif self.name == "Active Kriging":
+        elif self.name in ["Active Kriging",'Active KPLS']:
+            # TODO : must be modified for Active KPLS
             self._specific_train()
 
         # if self.name != "Active Kriging":
@@ -187,6 +189,7 @@ class KrgBased(SurrogateModel):
             Q, G
             QR decomposition of the matrix Ft.
         """
+        # TODO : must be modified for active KPLS
         time_0 = time.process_time_ns()
         # Initialize output
         reduced_likelihood_function_value = -np.inf
@@ -200,7 +203,7 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
-        elif self.name == "Active Kriging":
+        elif self.name in ["Active Kriging",'Active KPLS']:
             nugget = 100.0 * nugget
         noise = self.options["noise"]
         tmp_var = theta
@@ -270,7 +273,7 @@ class KrgBased(SurrogateModel):
         par["G"] = G
         par["Q"] = Q
 
-        if self.name == "Active Kriging":
+        if self.name in ["Active Kriging",'Active KPLS']:
             reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
         # A particular case when f_min_cobyla fail
@@ -334,6 +337,7 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
+        # TODO : must be modified for Active KPLS
         time_0 = time.process_time()
         red, par = self._reduced_likelihood_function(theta)
 
@@ -406,7 +410,7 @@ class KrgBased(SurrogateModel):
         grad_red = np.atleast_2d(grad_red).T
 
         # print('grad likelihood',time.process_time() - time_0)
-        if self.name == "Active Kriging":
+        if self.name in ["Active Kriging",'Active KPLS']:
             grad_red += self._reduced_log_prior(theta, grad=True)
         return grad_red, par
 
@@ -456,6 +460,7 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
+        # TODO: must be modified for active KPLS
         dred, par = self._reduced_likelihood_gradient(theta)
 
         C = par["C"]
@@ -479,7 +484,7 @@ class KrgBased(SurrogateModel):
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
 
-        if self.name == "Active Kriging":
+        if self.name in ["Active Kriging",'Active KPLS']:
             log_prior = self._reduced_log_prior(theta, hessian=True)
 
         for omega in range(nb_theta):
@@ -591,7 +596,7 @@ class KrgBased(SurrogateModel):
 
                 hess[ind_0 + i, 0] = dreddetadomega
 
-                if self.name == "Active Kriging" and eta == omega:
+                if self.name in ["Active Kriging",'Active KPLS'] and eta == omega:
                     hess[ind_0 + i, 0] += log_prior[eta]
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
@@ -758,17 +763,29 @@ class KrgBased(SurrogateModel):
         best_optimal_theta: list(n_comp) or list(dim)
             - The best hyperparameters found by the optimization.
         """
+        # TODO Must be modified for Active KPLS
         # reinitialize optimization best values
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        if self.name == "Active Kriging":
+        if self.name in ["Active Kriging",'Active KPLS']:
 
             def minus_reduced_likelihood_function(theta):
-                return -self._reduced_likelihood_function(theta)[0]
+                if self.name in ['Active KPLS']:
+                    theta = theta*self.coeff_pls
+                    theta = np.atleast_2d(np.ravel(theta)).T
+                res =  -self._reduced_likelihood_function(theta)[0]
+                return res
 
             def grad_minus_reduced_likelihood_function(theta):
-                return -self._reduced_likelihood_gradient(theta)[0]
+                if self.name in ['Active KPLS']:
+                    theta = theta*self.coeff_pls
+                    theta = np.atleast_2d(np.ravel(theta)).T
+                grad = -self._reduced_likelihood_gradient(theta)[0]
+                if self.name in ['Active KPLS']:
+                    grad = np.reshape(grad, self.coeff_pls.shape)
+                    grad = np.einsum('ii->i',self.coeff_pls.T.dot(grad))
+                return grad
 
         else:
 
@@ -804,22 +821,26 @@ class KrgBased(SurrogateModel):
             bounds_hyp = []
 
             for i in range(len(self.options["theta0"])):
-                if self.name == "Active Kriging":
+                if self.name in ["Active Kriging"]:
                     constraints.append(lambda theta, i=i: theta[i] + 10)
                     constraints.append(lambda theta, i=i: 10 - theta[i])
                     bounds_hyp.append((-10.0, 10.0))
-
+                elif self.name in ['Active KPLS']:
+                    constraints.append(lambda theta, i=i: theta[i] + 1)
+                    constraints.append(lambda theta, i=i: - theta[i])
+                    bounds_hyp.append((1e-6, 100.0))
                 else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
                     constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
                     bounds_hyp.append((-6.0, 2.0))
 
-            if self.name == "Active Kriging":
+            if self.name in ["Active Kriging",'Active KPLS']:
                 theta0_rand = m_norm.rvs(
                     self.options["prior"]["mean"] * len(self.options["theta0"]),
                     self.options["prior"]["var"],
                     1,
                 )
+                # theta0_rand = theta0_rand*0.1
                 theta0 = self.options["theta0"]
             else:
                 theta0_rand = theta0_rand * 8.0 - 6.0
@@ -848,7 +869,7 @@ class KrgBased(SurrogateModel):
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
-                        optimal_theta = 10.0 ** optimize.fmin_cobyla(
+                        optimal_theta = optimize.fmin_cobyla(
                             minus_reduced_likelihood_function,
                             theta0,
                             constraints,
@@ -858,37 +879,42 @@ class KrgBased(SurrogateModel):
                         )
                     elif self.options["hyper_opt"] == "TNC":  
                                               
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100,'ftol':1e-2,'gtol':1e-2},#min(1000, limit)},
-                        )
-                        
+                        # optimal_theta_res = optimize.minimize(
+                        #     minus_reduced_likelihood_function,
+                        #     theta0,
+                        #     method="TNC",
+                        #     jac=grad_minus_reduced_likelihood_function,
+                        #     bounds=bounds_hyp,
+                        #     options={"maxiter": 100, 'ftol':1e-2,'gtol':1e-2}
+                        # )
 
-                        optimal_theta_res_2 = optimize.minimize(
+                        optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_rand,
                             method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
+                            # jac=grad_minus_reduced_likelihood_function,
                             bounds=bounds_hyp,
-                            options={"maxiter": 100,'ftol':1e-2,'gtol':1e-2},#min(1000, limit)},
+                            options={"maxiter": 100,'ftol':1e-2,'gtol':1e-2}
                         )
+
+                        # if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
+                        #     optimal_theta_res = optimal_theta_res_2
                         
-
-                        # print(optimal_theta_res)
-                        # print(optimal_theta_res_2)
-
-                        if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
-                            optimal_theta_res = optimal_theta_res_2
-
-                        optimal_theta = 10 ** optimal_theta_res["x"]
+                        optimal_theta = optimal_theta_res['x']
+                        
+                        print('opt_theta = ', optimal_theta)
+                        
+                    if self.name not in ["Active Kriging",'Active KPLS']:
+                        optimal_theta = 10 ** optimal_theta
+                    if self.name in ['Active KPLS']:
+                        optimal_theta = optimal_theta*self.coeff_pls
+                        optimal_theta = np.atleast_2d(np.ravel(optimal_theta)).T
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
+                    
+                    print('opt_theta = ', optimal_theta)
 
                     # Compare the new optimizer to the best previous one
                     if k > 0:
@@ -929,6 +955,7 @@ class KrgBased(SurrogateModel):
                                     )
                     k += 1
                 except ValueError as ve:
+                    # raise ve
                     # If iteration is max when fmin_cobyla fail is not reached
                     if self.nb_ill_matrix > 0:
                         self.nb_ill_matrix -= 1
@@ -974,9 +1001,10 @@ class KrgBased(SurrogateModel):
         """
         This function check some parameters of the model.
         """
+        # TODO : must be modified for Active Kriging
 
         # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
+        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK",'Active KPLS']:
 
             d = self.options["n_comp"]
         elif self.name in ["Active Kriging"]:
@@ -984,7 +1012,7 @@ class KrgBased(SurrogateModel):
         else:
             d = self.nx
 
-        if self.name == "Active Kriging":
+        if self.name in ["Active Kriging",'Active KPLS']:
             if self.options["corr"] != "act_exp":
                 raise ValueError(
                     "Active Kriging must be used with act_exp correlation function"

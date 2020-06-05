@@ -6,6 +6,7 @@ from .gekpls import GEKPLS
 from .kplsk import KPLSK
 from .genn import GENN
 from .krg_act import AKRG
+from .kpls_act import AKPLS
 
 try:
     from .idw import IDW
