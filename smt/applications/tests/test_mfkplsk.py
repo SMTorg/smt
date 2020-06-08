@@ -29,7 +29,6 @@ from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
 from smt.applications.mfk import MFK, NestedLHS
 from smt.applications.mfkplsk import MFKPLSK
-from smt.applications.mfkplsk import MFKPLSK
 from copy import deepcopy
 
 print_output = False
@@ -67,7 +66,7 @@ class TestMFKPLSK(SMTestCase):
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
-            
+
             # to test some options
             sm.options["eval_noise"] = True
             sm.options["optim_var"] = True
@@ -75,7 +74,6 @@ class TestMFKPLSK(SMTestCase):
             # modif MM
             sm.options["n_comp"] = self.n_comp
             sm.options["theta0"] = [1e-2] * self.n_comp
-            
 
             sm.set_training_values(xt, yt[:, 0])
             sm.set_training_values(x_lf, y_lf[:, 0], name=0)
