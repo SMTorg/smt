@@ -34,7 +34,7 @@ class EGO(SurrogateBasedApplication):
             "criterion",
             "EI",
             types=str,
-            values=["EI", "SBO", "UCB","EI_penalized"],
+            values=["EI", "SBO", "UCB"],
             desc="criterion for next evaluation point determination: Expected Improvement, \
             Surrogate-Based Optimization or Upper Confidence Bound",
         )
@@ -139,9 +139,9 @@ class EGO(SurrogateBasedApplication):
             if criterion == "EI":
                 self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data,vartype,tunnel,x_data)
             elif criterion == "SBO":
-                self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
+                self.obj_k = lambda x: self.SBO(np.atleast_2d(x), vartype)
             elif criterion == "UCB":
-                self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+                self.obj_k = lambda x: self.UCB(np.atleast_2d(x),vartype)
 
             success = False
             n_optim = 1  # in order to have some success optimizations with SLSQP
@@ -228,14 +228,14 @@ class EGO(SurrogateBasedApplication):
                     ei[i]=max(ei[i],0)
         return ei
 
-    def SBO(self, point):
+    def SBO(self, point,vartype):
         """ Surrogate based optimization: min the surrogate model by suing the mean mu """
-        res = self.gpr.predict_values(point)
+        res = self.gpr.predict_values(point,vartype)
         return res
 
-    def UCB(self, point):
+    def UCB(self, point,vartype):
         """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
-        pred = self.gpr.predict_values(point)
-        var = self.gpr.predict_variances(point)
+        pred = self.gpr.predict_values(point,vartype)
+        var = self.gpr.predict_variances(point,vartype)
         res = pred - 3.0 * np.sqrt(var)
         return res

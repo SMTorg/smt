@@ -1,8 +1,9 @@
 """
 Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
 This package is distributed under New BSD license.
-"""
 
+Saves Paul branch : v5
+"""
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -41,7 +42,7 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"
 
-        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
+        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits,vartype=["cont"])
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
         print(x_opt, y_opt)
@@ -56,7 +57,7 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["cont","cont"])
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -70,7 +71,7 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["cont","cont"])
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -82,6 +83,54 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
+    def test_branin_2D_mixed(self):
+        n_iter = 15
+        fun = Branin(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["int","cont"])
+
+        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
+        self.assertTrue(
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.1)
+            or np.allclose([[3, 2.275]], x_opt, rtol=0.1)
+            or np.allclose([[9, 2.475]], x_opt, rtol=0.1)
+        )
+        self.assertAlmostEqual(0.494, float(y_opt), delta=1)
+
+    @staticmethod
+    def function_test_cate_mixed(X):
+        x1= X[:, 0]
+      #  caté 1
+        x2=X[:,1]
+        x3=X[:,2]
+        x4=X[:,3]
+      #  caté 2
+        x5=X[:,4]
+        x6=X[:,5]
+        
+        y= (x2+2*x3+3*x4)*x5*x1 + (x2+2*x3+3*x4)*x6*0.95*x1
+        return y
+
+
+
+    def test_function_test_cate_mixed(self):
+        n_iter = 15
+        xlimits = np.array([[-5, 5],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]])
+        xdoe = np.atleast_2d([[5,4],[1,1],[0,0],[0,0],[1,1],[0,0]]).T
+        n_doe = xdoe.size
+        criterion = "EI"  #'EI' or 'SBO' or 'UCB'        
+        v=["int",("cate",3),("cate",2)]
+    
+        ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits,vartype=v,tunnel=1)
+        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+
+        self.assertTrue(np.allclose([[-5,0,0,1,1,0]], x_opt, rtol=0.5))   
+        self.assertAlmostEqual(-15, float(y_opt), delta=1)
+
     def test_ydoe_option(self):
         n_iter = 10
         fun = Branin(ndim=2)
@@ -91,9 +140,7 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
 
-        ego = EGO(
-            xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits
-        )
+        ego = EGO(xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, vartype= ["cont","cont"] )
         _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
