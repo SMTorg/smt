@@ -519,18 +519,21 @@ class KrgBased(SurrogateModel):
                         print("fmin_cobyla failed but the best value is retained")
 
             if "KPLSK" in self.name:
+                if self.name == "MFKPLSK" and self.options["eval_noise"]:
+                    # best_optimal_theta contains [theta, noise] if eval_noise = True
+                    theta = best_optimal_theta[:-1]
+                else:
+                    # best_optimal_theta contains [theta] if eval_noise = False
+                    theta = best_optimal_theta
 
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (
-                        best_optimal_theta * self.coeff_pls ** 2
-                    ).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
                 else:
-                    self.options["theta0"] = (
-                        best_optimal_theta * np.abs(self.coeff_pls)
-                    ).sum(1)
+                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+
                 self.options["n_comp"] = int(self.nx)
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
