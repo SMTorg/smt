@@ -34,10 +34,6 @@ from smt.utils.kriging_utils import (
 
 from scipy.optimize import minimize
 
-"""
-The kriging class.
-"""
-
 
 class KrgBased(SurrogateModel):
 
@@ -118,7 +114,7 @@ class KrgBased(SurrogateModel):
         self.optimal_rlf_value, self.optimal_par, self.optimal_theta = self._optimize_hyperparam(
             D
         )
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
         del self.y_norma, self.D
@@ -127,16 +123,9 @@ class KrgBased(SurrogateModel):
         """
         Train the model
         """
-        inputs = {"self": self}
-        with cached_operation(inputs, self.options["data_dir"]) as outputs:
-            if outputs:
-                self.sol = outputs["sol"]
-            else:
-                self._new_train()
-                # outputs['sol'] = self.sol
+        self._new_train()
 
     def _reduced_likelihood_function(self, theta):
-
         """
         This function determines the BLUP parameters and evaluates the reduced
         likelihood function for the given autocorrelation parameters theta.
@@ -190,7 +179,7 @@ class KrgBased(SurrogateModel):
                 nugget = 10.0 * nugget
         noise = 0.0
         tmp_var = theta
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 theta = tmp_var[:-1]
                 noise = tmp_var[-1]
@@ -236,7 +225,7 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
-        if self.name == "MFK":
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             n_samples = self.nt
             p = self.p
             q = self.q
@@ -373,7 +362,7 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for square exponential kernel"
             )
         if self.options["poly"] == "constant":
-            df = np.array([[0, 0]])
+            df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
             df = np.zeros((self.nx + 1, self.nx))
             df[1:, :] = np.eye(self.nx)
@@ -388,7 +377,7 @@ class KrgBased(SurrogateModel):
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
-        if self.name != "Kriging" and self.name != "KPLSK":
+        if self.name != "Kriging" and "KPLSK" not in self.name:
             theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
         else:
             theta = self.optimal_theta
@@ -500,7 +489,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
-        if self.name == "KPLSK":
+        if "KPLSK" in self.name:
             n_iter = 1
         else:
             n_iter = 0
@@ -524,7 +513,7 @@ class KrgBased(SurrogateModel):
             while k < stop:
                 # Use specified starting point as first guess
                 theta0 = self.options["theta0"]
-                if self.name == "MFK":
+                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
                             [theta0, np.array([self.options["noise0"]])]
@@ -603,18 +592,22 @@ class KrgBased(SurrogateModel):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if self.name == "KPLSK":
+            if "KPLSK" in self.name:
+                if self.name == "MFKPLSK" and self.options["eval_noise"]:
+                    # best_optimal_theta contains [theta, noise] if eval_noise = True
+                    theta = best_optimal_theta[:-1]
+                else:
+                    # best_optimal_theta contains [theta] if eval_noise = False
+                    theta = best_optimal_theta
+
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (
-                        best_optimal_theta * self.coeff_pls ** 2
-                    ).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
                 else:
-                    self.options["theta0"] = (
-                        best_optimal_theta * np.abs(self.coeff_pls)
-                    ).sum(1)
+                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+
                 self.options["n_comp"] = int(self.nx)
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
@@ -626,8 +619,10 @@ class KrgBased(SurrogateModel):
         """
         This function check some parameters of the model.
         """
+
         # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
+        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
+
             d = self.options["n_comp"]
         else:
             d = self.nx

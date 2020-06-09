@@ -1,3 +1,5 @@
+.. _kplsk-ref-label:
+
 KPLSK
 =====
 
@@ -65,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0090003
   ___________________________________________________________________________
      
    Evaluation
@@ -84,9 +86,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001000
      
   
 .. figure:: kplsk_Test_test_kplsk.png

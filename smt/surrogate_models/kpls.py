@@ -8,21 +8,19 @@ from __future__ import division
 import warnings
 import numpy as np
 
+from packaging import version
+from sklearn import __version__ as sklversion
+
+if version.parse(sklversion) < version.parse("0.22"):
+    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
+else:
+    from sklearn.cross_decomposition import PLSRegression as pls
+
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
-from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-
-"""
-The KPLS class.
-"""
 
 
 class KPLS(KrgBased):
-
-    """
-    - KPLS
-    """
-
     def _initialize(self):
         super(KPLS, self)._initialize()
         declare = self.options.declare
