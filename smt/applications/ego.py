@@ -125,37 +125,34 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the bounds of the optimization problem
         xlimits = self.options["xlimits"]
-<<<<<<< HEAD
-        sampling = LHS(xlimits=xlimits, criterion="ese")
-        vartype = self.options["vartype"]
-        tunnel = self.options["tunnel"]
-
-        if(vartype==None):
-            print("Variables types missing")
-        temp=[]    
-        ind_cate=2;
-        for i in vartype :
-            if (i=='cont'):
-                temp.append(0)
-            elif (i=='int'):
-                temp.append(1)
-            elif( i[0]=='cate') :
-                for j in range (i[1]):
-                    temp.append(ind_cate) ; 
-                ind_cate =ind_cate+1;
-            else : 
-                print("type_error") ;
-        temp = np.array(temp)
-        vartype=temp
-        # Assign 0 to continuous variables, 1 for int and n>1 for each 
-        #categorical variable.
-=======
 
         # Build initial DOE
         self._sampling = LHS(xlimits=xlimits, criterion="ese")
         self._evaluator = self.options["evaluator"]
->>>>>>> upstream/master
+        vartype = self.options["vartype"]
+        tunnel = self.options["tunnel"]
 
+        if(vartype is None):
+            print("Variables types missing")
+        if( isinstance(vartype,list)) :
+            temp=[]    
+            ind_cate=2;
+            for i in vartype :
+                if (i=='cont'):
+                    temp.append(0)
+                elif (i=='int'):
+                    temp.append(1)
+                elif( i[0]=='cate') :
+                    for j in range (i[1]):
+                        temp.append(ind_cate) ; 
+                    ind_cate =ind_cate+1;
+                else : 
+                    print("type_error") ;
+            temp = np.array(temp)
+            vartype=temp
+        # Assign 0 to continuous variables, 1 for int and n>1 for each 
+        #categorical variable.
+         
         xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
@@ -181,29 +178,9 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
-<<<<<<< HEAD
-
-            self.gpr.set_training_values(x_data, y_data)
-            self.gpr.train()
-            if criterion == "EI":
-                self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data,vartype,tunnel,x_data)
-            elif criterion == "SBO":
-                self.obj_k = lambda x: self.SBO(np.atleast_2d(x), vartype)
-            elif criterion == "UCB":
-                self.obj_k = lambda x: self.UCB(np.atleast_2d(x),vartype)
-
-            success = False
-            n_optim = 1  # in order to have some success optimizations with SLSQP
-            while not success and n_optim <= n_max_optim:
-                opt_all = []
-                x_start = sampling(n_start)
-
-                for ii in range(n_start):
-                        opt_all.append(minimize(self.obj_k,x_start[ii, :],method="SLSQP",bounds=bounds,options={"maxiter": 200}))
-=======
             # Virtual enrichement loop
             for p in range(n_parallel):
-                x_et_k, success = self._find_points(x_data, y_data)
+                x_et_k, success = self._find_points(x_data, y_data,vartype, tunnel)
                 if not success:
                     self.log(
                         "Internal optimization failed at EGO iter = {}.{}".format(k, p)
@@ -216,47 +193,12 @@ class EGO(SurrogateBasedApplication):
                         )
                     )
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
-                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data)
->>>>>>> upstream/master
+                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data,vartype)
 
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
 
-<<<<<<< HEAD
-            if n_optim >= n_max_optim:
-                self.log("Internal optimization failed at EGO iter = {}".format(k))
-                break
-            elif success:
-                self.log("Internal optimization succeeded at EGO iter = {}".format(k))
-            ind_min = np.argmin(obj_success)
-            opt = opt_success[ind_min]
-            x_et_k = np.atleast_2d(opt["x"])
-
-            i=0;
-            while ( i< np.shape(x_et_k[0])[0]):
-                if (i< np.shape(x_et_k[0])[0] and vartype[i] == 0) :
-                    i=i+1; 
-                elif ( i< np.shape(x_et_k[0])[0] and vartype[i] == 1) : 
-                    x_et_k[0][i]= np.round(x_et_k[0][i]) ;
-                    i=i+1;
-                elif ( i< np.shape(x_et_k[0])[0] and vartype[i] > 1) : 
-                    k=[];
-                    i0=i;
-                    ind = vartype[i] ; 
-                    while (( i< np.shape(x_et_k[0])[0]) and (vartype[i]==ind)) :
-                        k.append(x_et_k[0][i])
-                        i = i+1 ;
-                    y=np.zeros(np.shape(k))
-                    y[np.argmax(k)]=1
-                    x_et_k[0][i0:i] = y
-                
-            y_et_k = fun(x_et_k)
-            y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
-            x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
-
-        ind_best = np.argmin(y_data)        
-=======
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             y = self._evaluator.run(fun, x_to_compute)
@@ -264,7 +206,6 @@ class EGO(SurrogateBasedApplication):
 
         # Find the optimal point
         ind_best = np.argmin(y_data)
->>>>>>> upstream/master
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
@@ -312,7 +253,7 @@ class EGO(SurrogateBasedApplication):
         res = pred - 3.0 * np.sqrt(var)
         return res
 
-    def _find_points(self, x_data, y_data):
+    def _find_points(self, x_data, y_data,vartype,tunnel):
         """
         Function that analyse a set of x_data and y_data and give back the 
         more interesting point to evaluates according to the selected criterion
@@ -332,13 +273,35 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         bounds = self.options["xlimits"]
-
+        
+        
+        if(vartype is None):
+            print("Variables types missing")
+        if( isinstance(vartype,list)) :
+            temp=[]    
+            ind_cate=2;
+            for i in vartype :
+                if (i=='cont'):
+                    temp.append(0)
+                elif (i=='int'):
+                    temp.append(1)
+                elif( i[0]=='cate') :
+                    for j in range (i[1]):
+                        temp.append(ind_cate) ; 
+                    ind_cate =ind_cate+1;
+                else : 
+                    print("type_error") ;
+            temp = np.array(temp)
+            vartype=temp
+        # Assign 0 to continuous variables, 1 for int and n>1 for each 
+        #categorical variable.
+        
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data,vartype,tunnel,x_data)
         elif criterion == "SBO":
-            self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
+            self.obj_k = lambda x: self.SBO(np.atleast_2d(x), vartype)
         elif criterion == "UCB":
-            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+             self.obj_k = lambda x: self.UCB(np.atleast_2d(x),vartype)
 
         success = False
         n_optim = 1  # in order to have some success optimizations with SLSQP
@@ -346,15 +309,8 @@ class EGO(SurrogateBasedApplication):
             opt_all = []
             x_start = self._sampling(n_start)
             for ii in range(n_start):
-                opt_all.append(
-                    minimize(
-                        self.obj_k,
-                        x_start[ii, :],
-                        method="SLSQP",
-                        bounds=bounds,
-                        options={"maxiter": 200},
-                    )
-                )
+                opt_all.append(minimize(self.obj_k,x_start[ii, :],method="SLSQP",bounds=bounds,options={"maxiter": 200}))
+
 
             opt_all = np.asarray(opt_all)
 
@@ -372,16 +328,36 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
+            
+        i=0;
+        while ( i< np.shape(x_et_k[0])[0]):
+            if (i< np.shape(x_et_k[0])[0] and vartype[i] == 0) :
+                i=i+1; 
+            elif ( i< np.shape(x_et_k[0])[0] and vartype[i] == 1) : 
+                x_et_k[0][i]= np.round(x_et_k[0][i]) ;
+                i=i+1;
+            elif ( i< np.shape(x_et_k[0])[0] and vartype[i] > 1) : 
+                k=[];
+                i0=i;
+                ind = vartype[i] ; 
+                while (( i< np.shape(x_et_k[0])[0]) and (vartype[i]==ind)) :
+                    k.append(x_et_k[0][i])
+                    i = i+1 ;
+                y=np.zeros(np.shape(k))
+                y[np.argmax(k)]=1
+                x_et_k[0][i0:i] = y       
+    
+        
         return x_et_k, True
 
-    def set_virtual_point(self, x, y_data):
+    def set_virtual_point(self, x, y_data,vartype):
         qEI = self.options["qEI"]
 
         if qEI == "CLmin":
             return np.min(y_data)
 
         if qEI == "KB":
-            return self.gpr.predict_values(x)
+            return self.gpr.predict_values(x,vartype)
 
         if qEI == "KBUB":
             conf = 3.0
@@ -392,6 +368,6 @@ class EGO(SurrogateBasedApplication):
         if qEI == "KBRand":
             conf = np.random.randn()
 
-        pred = self.gpr.predict_values(x)
-        var = self.gpr.predict_variances(x)
+        pred = self.gpr.predict_values(x,vartype)
+        var = self.gpr.predict_variances(x,vartype)
         return pred + conf * np.sqrt(var)
