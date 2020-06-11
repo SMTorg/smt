@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 from scipy import linalg, optimize, sparse
 from smt.utils.kriging_utils import differences
+import matplotlib.pyplot as plt
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
@@ -436,7 +437,7 @@ class AKRG(KrgBased):
                 obj = lambda x: linalg.norm(x - x_temp[i, :])
                 res_i = optimize.minimize(
                     obj,
-                    np.random.rand(len(self.X_std)) * 2. - 1.,
+                    np.random.rand(len(self.X_std)) * 2.0 - 1.0,
                     method="SLSQP",
                     bounds=bounds,
                     constraints=con,
@@ -472,16 +473,16 @@ class AKRG(KrgBased):
         None.
 
         """
-        # Compute covariance matrix of hyperparameters
-        var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
-        r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
-        var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
-        var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
-        
-        self.sigma_R = - linalg.inv(var_R)
-        
-        # Compute normalise embedding
-        self.optimal_par = par
+        # # Compute covariance matrix of hyperparameters
+        # var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
+        # r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
+        # var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
+        # var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
+
+        # self.sigma_R = - linalg.inv(var_R)
+
+        # # Compute normalise embedding
+        # self.optimal_par = par
 
         A = np.reshape(self.optimal_theta, (self.options["n_comp"], self.nx)).T
         B = (A.T / self.X_std).T
@@ -494,20 +495,27 @@ class AKRG(KrgBased):
         self.embedding["norm"] = norm_B
         self.embedding["Q_C"], self.embedding["R_C"] = linalg.qr(C, mode="economic")
 
-        U = []
-        for i in range(C.shape[1]):
-            ub = np.sum(np.abs(C[:, i]))
-            lb = -ub
-            U.append((lb, ub))
+        # U = []
+        # for i in range(C.shape[1]):
+        #     ub = np.sum(np.abs(C[:, i]))
+        #     lb = -ub
+        #     U.append((lb, ub))
 
-        self.embedding["bounds"] = U
+        # self.embedding["bounds"] = U
 
-        # Compute normalisation in embeding base
-        self.U_norma = self.X_norma.dot(A)
-        self.U_mean = self.X_mean.dot(C) * norm_B
+        # # Compute normalisation in embeding base
+        # self.U_norma = self.X_norma.dot(A)
+        # self.U_mean = self.X_mean.dot(C) * norm_B
 
-        # Compute best number of Components for Active Kriging
-        svd = linalg.svd(A)
-        svd_cumsum = np.cumsum(svd[1])
-        svd_sum = np.sum(svd[1])
-        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
+        # # Compute best number of Components for Active Kriging
+        # svd = linalg.svd(A)
+        # svd_cumsum = np.cumsum(svd[1])
+        # svd_sum = np.sum(svd[1])
+        # self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
+
+        # u_plot = np.atleast_2d(np.linspace(lb,ub)).T
+        # y_plot = self.predict_values(u_plot)
+        # plt.plot(self.U_norma, self.y_mean + self.y_std * self.y_norma,linestyle=' ',marker='x')
+        # plt.plot(u_plot * self.embedding["norm"] - self.U_mean,y_plot)
+        # plt.show()
+        # time.sleep(3)

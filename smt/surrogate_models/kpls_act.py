@@ -8,6 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg, optimize, sparse
+import matplotlib.pyplot as plt
 
 from packaging import version
 from sklearn import __version__ as sklversion
@@ -16,7 +17,7 @@ if version.parse(sklversion) < version.parse("0.22"):
     from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 else:
     from sklearn.cross_decomposition import PLSRegression as pls
-    
+
 from smt.utils.kriging_utils import differences
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
@@ -38,7 +39,7 @@ class AKPLS(KrgBased):
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
         )
-        self.options['hyper_opt'] = 'TNC'
+        self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
         self.options["noise"] = 0.0
         self.name = "Active KPLS"
@@ -441,7 +442,7 @@ class AKPLS(KrgBased):
                 obj = lambda x: linalg.norm(x - x_temp[i, :])
                 res_i = optimize.minimize(
                     obj,
-                    np.random.rand(len(self.X_std)) * 2. - 1.,
+                    np.random.rand(len(self.X_std)) * 2.0 - 1.0,
                     method="SLSQP",
                     bounds=bounds,
                     constraints=con,
@@ -479,14 +480,12 @@ class AKPLS(KrgBased):
         """
         # Compute covariance matrix of hyperparameters
         var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
-        print('here')
         r, r_ij, par = self._reduced_likelihood_hessian(self.optimal_theta)
-        print('after hess')
         var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
         var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
-        
-        self.sigma_R = - linalg.inv(var_R)
-        
+
+        self.sigma_R = -linalg.inv(var_R)
+
         # Compute normalise embedding
         self.optimal_par = par
 
@@ -514,16 +513,22 @@ class AKPLS(KrgBased):
         self.U_mean = self.X_mean.dot(C) * norm_B
 
         # Compute best number of Components for Active Kriging
-        # svd = linalg.svd(A)
-        # svd_cumsum = np.cumsum(svd[1])
-        # svd_sum = np.sum(svd[1])
-        # self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
-        self.best_ncomp = 1
-        
+        svd = linalg.svd(A)
+        svd_cumsum = np.cumsum(svd[1])
+        svd_sum = np.sum(svd[1])
+        self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
+        # self.best_ncomp = 1
+
+        # u_plot = np.atleast_2d(np.linspace(lb,ub,1000)).T
+        # y_plot = self.predict_values(u_plot)
+        # plt.plot(self.U_norma, self.y_mean + self.y_std * self.y_norma,linestyle=' ',marker='x')
+        # plt.plot(u_plot * self.embedding["norm"] - self.U_mean,y_plot)
+        # plt.show()
+        # time.sleep(3)
+
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
         self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
+        # print(self.coeff_pls)
 
         return X, y
-        
-        
