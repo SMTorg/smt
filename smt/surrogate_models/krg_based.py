@@ -274,6 +274,9 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Evaluation point output variable values
         """
+        
+        
+        ###TRANSFORM_VARTYPE
         if( isinstance(vartype,list)) :
             temp=[]    
             ind_cate=2;
@@ -290,7 +293,9 @@ class KrgBased(SurrogateModel):
                     print("type_error") ;
             temp = np.array(temp)
             vartype=temp
-            
+        ###
+        
+        ####PROJECT_VALUES    
         for j in range(0, np.shape(x)[0]) : 
             i=0;
             while ( i< np.shape(x[j])[0]):
@@ -309,6 +314,8 @@ class KrgBased(SurrogateModel):
                     y=np.zeros(np.shape(k))
                     y[np.argmax(k)]=1
                     x[j][i0:i] = y
+        ##
+        
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -390,6 +397,8 @@ class KrgBased(SurrogateModel):
 
     def _predict_variances(self, x,vartype):
         
+        
+        ##TRANSFORM_VARTTYPE
         if( isinstance(vartype,list)) :
             temp=[]    
             ind_cate=2;
@@ -406,7 +415,9 @@ class KrgBased(SurrogateModel):
                     print("type_error") ;
             temp = np.array(temp)
             vartype=temp
-            
+        ##
+        
+        ##PROKECT_VALUES
         for j in range(0, np.shape(x)[0]) : 
             i=0;
             while ( i< np.shape(x[j])[0]):
@@ -424,7 +435,9 @@ class KrgBased(SurrogateModel):
                         i = i+1 ;
                     y=np.zeros(np.shape(k))
                     y[np.argmax(k)]=1
-                    x[j][i0:i] = y
+                    x[j][i0:i] = y            
+        ##
+        
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
