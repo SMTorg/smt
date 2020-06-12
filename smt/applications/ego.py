@@ -131,30 +131,7 @@ class EGO(SurrogateBasedApplication):
         self._evaluator = self.options["evaluator"]
         vartype = self.options["vartype"]
         tunnel = self.options["tunnel"]
-
-        ##TRANSFORM_VARTYPE
-        if(vartype is None):
-            print("Variables types missing")
-        if( isinstance(vartype,list)) :
-            temp=[]    
-            ind_cate=2;
-            for i in vartype :
-                if (i=='cont'):
-                    temp.append(0)
-                elif (i=='int'):
-                    temp.append(1)
-                elif( i[0]=='cate') :
-                    for j in range (i[1]):
-                        temp.append(ind_cate) ; 
-                    ind_cate =ind_cate+1;
-                else : 
-                    print("type_error") ;
-            temp = np.array(temp)
-            vartype=temp
-        # Assign 0 to continuous variables, 1 for int and n>1 for each 
-        #categorical variable.
-        #######
-        
+        self.gpr = KRG(print_global=False)        
         xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
@@ -163,28 +140,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe   = np.atleast_2d(xdoe)
-         
-        ##PROJECT_VALUES
-        for j in range(0, np.shape(x_doe)[0]) : 
-            i=0;
-            while ( i< np.shape(x_doe[j])[0]):
-                if (i< np.shape(x_doe[j])[0] and vartype[i] == 0) :
-                    i=i+1; 
-                elif ( i< np.shape(x_doe[j])[0] and vartype[i] == 1) : 
-                    x_doe[j][i]= np.round(x_doe[j][i]) ;
-                    i=i+1;
-                elif ( i< np.shape(x_doe[j])[0] and vartype[i] > 1) : 
-                    k=[];
-                    i0=i;
-                    ind = vartype[i] ; 
-                    while (( i< np.shape(x_doe[j])[0]) and (vartype[i]==ind)) :
-                        k.append(x_doe[j][i])
-                        i = i+1 ;
-                    yi=np.zeros(np.shape(k))
-                    yi[np.argmax(k)]=1
-                    x_doe[j][i0:i] = yi
-        ######
-
+        x_doe=self.gpr._project_values(x_doe,vartype)
         ydoe = self.options["ydoe"]
         if ydoe is None:
             y_doe = self._evaluator.run(fun, x_doe)
@@ -195,7 +151,6 @@ class EGO(SurrogateBasedApplication):
         x_data = x_doe
         y_data = y_doe
         ########
-        self.gpr = KRG(print_global=False)
 
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
@@ -297,30 +252,6 @@ class EGO(SurrogateBasedApplication):
         n_max_optim = self.options["n_max_optim"]
         bounds = self.options["xlimits"]
         
-        ##TRANSFORM_VARTYPE
-        if(vartype is None):
-            print("Variables types missing")
-        if( isinstance(vartype,list)) :
-            temp=[]    
-            ind_cate=2;
-            for i in vartype :
-                if (i=='cont'):
-                    temp.append(0)
-                elif (i=='int'):
-                    temp.append(1)
-                elif( i[0]=='cate') :
-                    for j in range (i[1]):
-                        temp.append(ind_cate) ; 
-                    ind_cate =ind_cate+1;
-                else : 
-                    print("type_error") ;
-            temp = np.array(temp)
-            vartype=temp
-        # Assign 0 to continuous variables, 1 for int and n>1 for each 
-        #categorical variable.
-        ############
-        
-        
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data,vartype,tunnel,x_data)
         elif criterion == "SBO":
@@ -352,27 +283,7 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
-        
-        ##PROJECT_VALUES
-        i=0;
-        while ( i< np.shape(x_et_k[0])[0]):
-            if (i< np.shape(x_et_k[0])[0] and vartype[i] == 0) :
-                i=i+1; 
-            elif ( i< np.shape(x_et_k[0])[0] and vartype[i] == 1) : 
-                x_et_k[0][i]= np.round(x_et_k[0][i]) ;
-                i=i+1;
-            elif ( i< np.shape(x_et_k[0])[0] and vartype[i] > 1) : 
-                k=[];
-                i0=i;
-                ind = vartype[i] ; 
-                while (( i< np.shape(x_et_k[0])[0]) and (vartype[i]==ind)) :
-                    k.append(x_et_k[0][i])
-                    i = i+1 ;
-                yi=np.zeros(np.shape(k))
-                yi[np.argmax(k)]=1
-                x_et_k[0][i0:i] = yi       
-        ######
-        
+        self.gpr._project_values(x_et_k,vartype)
         return x_et_k, True
 
     def set_virtual_point(self, x, y_data,vartype):

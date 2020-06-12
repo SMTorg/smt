@@ -274,49 +274,8 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Evaluation point output variable values
         """
-        
-        
-        ###TRANSFORM_VARTYPE
-        if( isinstance(vartype,list)) :
-            temp=[]    
-            ind_cate=2;
-            for i in vartype :
-                if (i=='cont'):
-                    temp.append(0)
-                elif (i=='int'):
-                    temp.append(1)
-                elif( i[0]=='cate') :
-                    for j in range (i[1]):
-                        temp.append(ind_cate) ; 
-                    ind_cate =ind_cate+1;
-                else : 
-                    print("type_error") ;
-            temp = np.array(temp)
-            vartype=temp
-        ###
-        
-        ####PROJECT_VALUES    
-        for j in range(0, np.shape(x)[0]) : 
-            i=0;
-            while ( i< np.shape(x[j])[0]):
-                if (i< np.shape(x[j])[0] and vartype[i] == 0) :
-                    i=i+1; 
-                elif ( i< np.shape(x[j])[0] and vartype[i] == 1) : 
-                    x[j][i]= np.round(x[j][i]) ;
-                    i=i+1;
-                elif ( i< np.shape(x[j])[0] and vartype[i] > 1) : 
-                    k=[];
-                    i0=i;
-                    ind = vartype[i] ; 
-                    while (( i< np.shape(x[j])[0]) and (vartype[i]==ind)) :
-                        k.append(x[j][i])
-                        i = i+1 ;
-                    y=np.zeros(np.shape(k))
-                    y[np.argmax(k)]=1
-                    x[j][i0:i] = y
-        ##
-        
         # Initialization
+        x=self._project_values(x,vartype)
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -395,50 +354,9 @@ class KrgBased(SurrogateModel):
         )
         return y
 
-    def _predict_variances(self, x,vartype):
-        
-        
-        ##TRANSFORM_VARTTYPE
-        if( isinstance(vartype,list)) :
-            temp=[]    
-            ind_cate=2;
-            for i in vartype :
-                if (i=='cont'):
-                    temp.append(0)
-                elif (i=='int'):
-                    temp.append(1)
-                elif( i[0]=='cate') :
-                    for j in range (i[1]):
-                        temp.append(ind_cate) ; 
-                    ind_cate =ind_cate+1;
-                else : 
-                    print("type_error") ;
-            temp = np.array(temp)
-            vartype=temp
-        ##
-        
-        ##PROKECT_VALUES
-        for j in range(0, np.shape(x)[0]) : 
-            i=0;
-            while ( i< np.shape(x[j])[0]):
-                if (i< np.shape(x[j])[0] and vartype[i] == 0) :
-                    i=i+1; 
-                elif ( i< np.shape(x[j])[0] and vartype[i] == 1) : 
-                    x[j][i]= np.round(x[j][i]) ;
-                    i=i+1;
-                elif ( i< np.shape(x[j])[0] and vartype[i] > 1) : 
-                    k=[];
-                    i0=i;
-                    ind = vartype[i] ; 
-                    while (( i< np.shape(x[j])[0]) and (vartype[i]==ind)) :
-                        k.append(x[j][i])
-                        i = i+1 ;
-                    y=np.zeros(np.shape(k))
-                    y[np.argmax(k)]=1
-                    x[j][i0:i] = y            
-        ##
-        
+    def _predict_variances(self, x,vartype):        
         # Initialization
+        x=self._project_values(x,vartype)
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -467,6 +385,53 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
+
+    def _project_values(self,x,vartype):
+        vartype = self._transform_vartype(vartype) ;        
+        for j in range(0, np.shape(x)[0]) : 
+            i=0;
+            while ( i< np.shape(x[j])[0]):
+                if (i< np.shape(x[j])[0] and vartype[i] == 0) :
+                    i=i+1; 
+                elif ( i< np.shape(x[j])[0] and vartype[i] == 1) : 
+                    x[j][i]= np.round(x[j][i]) ;
+                    i=i+1;
+                elif ( i< np.shape(x[j])[0] and vartype[i] > 1) : 
+                    k=[];
+                    i0=i;
+                    ind = vartype[i] ; 
+                    while (( i< np.shape(x[j])[0]) and (vartype[i]==ind)) :
+                        k.append(x[j][i])
+                        i = i+1 ;
+                    y=np.zeros(np.shape(k))
+                    y[np.argmax(k)]=1
+                    x[j][i0:i] = y            
+        return x
+    
+    def _transform_vartype(self,vartype):
+        if(vartype is None):
+            print("Variables types missing")
+        if( isinstance(vartype,list)) :
+            temp=[]    
+            ind_cate=2;
+            for i in vartype :
+                if (i=='cont'):
+                    temp.append(0)
+                elif (i=='int'):
+                    temp.append(1)
+                elif( i[0]=='cate') :
+                    for j in range (i[1]):
+                        temp.append(ind_cate) ; 
+                    ind_cate =ind_cate+1;
+                else : 
+                    print("type_error") ;
+            temp = np.array(temp)
+            vartype=temp
+        # Assign 0 to continuous variables, 1 for int and n>1 for each 
+        #categorical variable.
+        #######
+        
+        return vartype 
 
     def _optimize_hyperparam(self, D):
         """
