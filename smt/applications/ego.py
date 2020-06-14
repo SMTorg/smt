@@ -208,7 +208,7 @@ class EGO(SurrogateBasedApplication):
         if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
             return 0.0
         ei = args1 + args2
-        #penalized the points already evaluated
+        #penalize the points already evaluated with tunneling
         if tunnel == 1 :
             for i in range(len(points)) :
                 p =np.atleast_2d(points[i])
