@@ -67,6 +67,7 @@ class KrgBased(SurrogateModel):
         )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
+        self.vartype=None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
         supports["variances"] = True
@@ -387,15 +388,39 @@ class KrgBased(SurrogateModel):
         return MSE
 
     def _project_values(self,x,vartype):
-        vartype = self._transform_vartype(vartype) ;        
+        """
+        This function project continuously relaxed values 
+        to their closer assessable values.
+        --------
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Continuous evaluation point input variable values 
+        vartype : list
+            The type of the each dimension (cont, int or cate). 
+        Returns
+        -------
+        y : np.ndarray
+            Feasible evaluation point input variable values.
+        """
+        if self.vartype is None : 
+            self.vartype=vartype ;
+            dim=np.shape(x)[1] ;
+            vartype = self._transform_vartype(dim) ;
+            self.vartype=vartype ;
+        
+        vartype=self.vartype 
+        
         for j in range(0, np.shape(x)[0]) : 
             i=0;
             while ( i< np.shape(x[j])[0]):
                 if (i< np.shape(x[j])[0] and vartype[i] == 0) :
                     i=i+1; 
+                    ##Continuous : Do nothing
                 elif ( i< np.shape(x[j])[0] and vartype[i] == 1) : 
                     x[j][i]= np.round(x[j][i]) ;
                     i=i+1;
+                    ##Integer : Round
                 elif ( i< np.shape(x[j])[0] and vartype[i] > 1) : 
                     k=[];
                     i0=i;
@@ -405,31 +430,55 @@ class KrgBased(SurrogateModel):
                         i = i+1 ;
                     y=np.zeros(np.shape(k))
                     y[np.argmax(k)]=1
-                    x[j][i0:i] = y            
+                    x[j][i0:i] = y
+                    ##Categorial : The biggest level is selected. 
         return x
     
-    def _transform_vartype(self,vartype):
+    def _transform_vartype(self,dim):
+        """
+        This function unfold vartype list to a coded array with
+        0 for continuous variables, 1 for integers and n>1 for each 
+        level of the n-th categorical variable.
+        Each level correspond to a new continuous dimension.
+        
+        --------
+        Arguments
+        ---------
+        vartype : list
+            The type of the each dimension  (cont, int or cate).
+        dim : int
+            The number of dimension
+        Returns
+        -------
+        vartype : np.ndarray
+            The type of the each dimension. 
+        """
+        vartype= self.vartype;
         if(vartype is None):
-            print("Variables types missing")
+            print("Variables types missing. Continuous assumed.")
+            vartype=np.zeros(dim)
         if( isinstance(vartype,list)) :
             temp=[]    
             ind_cate=2;
             for i in vartype :
                 if (i=='cont'):
                     temp.append(0)
+                    ##new continuous dimension : append 0
                 elif (i=='int'):
                     temp.append(1)
+                    ##new integer dimension : append 1
                 elif( i[0]=='cate') :
                     for j in range (i[1]):
                         temp.append(ind_cate) ; 
+                    ##For each level
+                        ##new categorical dimension : append n 
                     ind_cate =ind_cate+1;
                 else : 
                     print("type_error") ;
             temp = np.array(temp)
             vartype=temp
-        # Assign 0 to continuous variables, 1 for int and n>1 for each 
+        ## Assign 0 to continuous variables, 1 for int and n>1 for each 
         #categorical variable.
-        #######
         
         return vartype 
 

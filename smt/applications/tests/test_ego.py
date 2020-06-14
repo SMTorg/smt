@@ -69,7 +69,7 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"
 
-        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits,vartype=["cont"])
+        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
         print(x_opt, y_opt)
@@ -97,7 +97,6 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             n_parallel=n_parallel,
             evaluator=ParallelEvaluator(),
-            vartype=["cont"],
         )
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
@@ -114,7 +113,7 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["cont","cont"])
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -133,7 +132,7 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["cont","cont"])
+        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
@@ -160,7 +159,6 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xlimits=xlimits,
             n_parallel=n_parallel,
-            vartype=["cont","cont"],
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -238,7 +236,7 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
 
-        ego = EGO(xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, vartype= ["cont","cont"] )
+        ego = EGO(xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits )
         _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
@@ -249,8 +247,7 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
-            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="UCB", xlimits=xlimits, n_start=30, vartype=["cont"], tunnel=0
-        )
+            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="UCB", xlimits=xlimits, n_start=30, tunnel=0 )
         _, _, _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_points(xdoe, ydoe,vartype=["cont"], tunnel=0)
         self.assertAlmostEqual(6.5, float(x), delta=1)

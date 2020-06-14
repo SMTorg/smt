@@ -102,6 +102,7 @@ class EGO(SurrogateBasedApplication):
         declare("verbose", False, types=bool, desc="Print computation information")
         declare("vartype", None, types=list, desc="type of variables")
         declare("tunnel", 0, types=int, desc="1 to enable tunneling in ei")
+        declare("surrogate", KRG(print_global=False), desc="surrogate model to use")
 
     def optimize(self, fun):
         """
@@ -131,8 +132,11 @@ class EGO(SurrogateBasedApplication):
         self._evaluator = self.options["evaluator"]
         vartype = self.options["vartype"]
         tunnel = self.options["tunnel"]
-        self.gpr = KRG(print_global=False)        
+        #self.gpr = KPLSK(print_global=False,n_comp=2)        
+        #self.gpr = KPLS(print_global=False,n_comp=2)        
+        self.gpr=self.options["surrogate"]
         xdoe = self.options["xdoe"]
+
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
