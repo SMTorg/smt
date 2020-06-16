@@ -197,7 +197,7 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    def EI(self, points,y_data,vartype, tunnel=0,x_data=None):
+    def EI(self, points,y_data,vartype=None, tunnel=0,x_data=None):
         """ Expected improvement """
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points,vartype)
@@ -223,19 +223,19 @@ class EGO(SurrogateBasedApplication):
                     ei[i]=max(ei[i],0)
         return ei
 
-    def SBO(self, point,vartype):
+    def SBO(self, point,vartype=None):
         """ Surrogate based optimization: min the surrogate model by suing the mean mu """
         res = self.gpr.predict_values(point,vartype)
         return res
 
-    def UCB(self, point,vartype):
+    def UCB(self, point,vartype=None):
         """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
         pred = self.gpr.predict_values(point,vartype)
         var = self.gpr.predict_variances(point,vartype)
         res = pred - 3.0 * np.sqrt(var)
         return res
 
-    def _find_points(self, x_data, y_data,vartype,tunnel):
+    def _find_points(self, x_data=None, y_data=None,vartype=None,tunnel=0):
         """
         Function that analyse a set of x_data and y_data and give back the 
         more interesting point to evaluates according to the selected criterion

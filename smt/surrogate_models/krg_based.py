@@ -261,7 +261,7 @@ class KrgBased(SurrogateModel):
 
         return reduced_likelihood_function_value, par
 
-    def _predict_values(self, x,vartype):
+    def _predict_values(self, x,vartype=None):
         """
         Evaluates the model at a set of points.
 
@@ -355,7 +355,7 @@ class KrgBased(SurrogateModel):
         )
         return y
 
-    def _predict_variances(self, x,vartype):        
+    def _predict_variances(self, x,vartype=None):        
         # Initialization
         x=self._project_values(x,vartype)
         n_eval, n_features_x = x.shape

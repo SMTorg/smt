@@ -249,7 +249,7 @@ class SurrogateModel(object):
         with self.printer._timed_context("Training", "training"):
             self._train()
 
-    def predict_values(self, x, vartype):
+    def predict_values(self, x, vartype=None):
         """
         Predict the output values at a set of points.
 
@@ -354,7 +354,7 @@ class SurrogateModel(object):
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
 
-    def predict_variances(self, x,vartype):
+    def predict_variances(self, x,vartype=None):
         """
         Predict the variances at a set of points.
 
