@@ -251,7 +251,7 @@ class EGO(SurrogateBasedApplication):
             for ii in range(n_start):
                 opt_all.append(
                     minimize(
-                        self.obj_k,
+                        lambda x: float(self.obj_k(x)),
                         x_start[ii, :],
                         method="SLSQP",
                         bounds=bounds,
