@@ -5,13 +5,6 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of
 order 1 (AR1)
-
-Modified by Vincent Drouet :
-- correction of sigma2, which is already descaled after _reduced_likelihood_function,
-    and was descaled a second time in MFK
-- correction of MSE line 487, should be Q_/(self.nt_all[i] - p - q)
-    instead of Q_/(2*(self.nt_all[i] - p - q)) ; moreover, sigma2 = Q_/(self.nt_all[i] - p - q),
-    so it is useless to compute Q_, and the expression is rewritten with sigma2 as in Le Gratiet and Cannamela 2015
 """
 
 from __future__ import division
