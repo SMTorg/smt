@@ -269,8 +269,16 @@ class EGO(SurrogateBasedApplication):
             opt_all = []
             x_start = self._sampling(n_start)
             for ii in range(n_start):
-                opt_all.append(minimize(self.obj_k,x_start[ii, :],method="SLSQP",bounds=bounds,options={"maxiter": 200}))
 
+                opt_all.append(
+                    minimize(
+                        lambda x: float(self.obj_k(x)),
+                        x_start[ii, :],
+                        method="SLSQP",
+                        bounds=bounds,
+                        options={"maxiter": 200},
+                    )
+                )
 
             opt_all = np.asarray(opt_all)
 
