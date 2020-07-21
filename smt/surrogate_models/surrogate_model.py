@@ -281,8 +281,11 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x2,vartype)
-
+            if vartype == None :
+                y = self._predict_values(x2)                
+            else : 
+                y = self._predict_values(x2,vartype)
+            
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
