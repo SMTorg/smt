@@ -376,9 +376,9 @@ class SurrogateModel(object):
         n = x.shape[0]
         x2=np.copy(x)
         if vartype == None :
-            y = self._predict_variances(x2)                
+            s2 = self._predict_variances(x2)                
         else : 
-            y = self._predict_variances(x2,vartype)
+            s2 = self._predict_variances(x2,vartype)
             
         return s2.reshape((n, self.ny))
 
