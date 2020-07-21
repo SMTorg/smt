@@ -455,7 +455,6 @@ class KrgBased(SurrogateModel):
         """
         vartype= self.vartype;
         if(vartype is None):
-            print("Variables types missing. Continuous assumed.")
             vartype=np.zeros(dim)
         if( isinstance(vartype,list)) :
             temp=[]    

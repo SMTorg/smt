@@ -155,7 +155,8 @@ class EGO(SurrogateBasedApplication):
         x_data = x_doe
         y_data = y_doe
         ########
-
+        if(vartype is None):
+            print("Variables types missing. Continuous assumed.")
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
 
