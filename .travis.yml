@@ -6,13 +6,11 @@ language: generic
 matrix:
   include:
     - os: linux
-      env: PY=2.7
-    - os: linux
       env: PY=3.6 COVERAGE=1
     - os: linux
       env: PY=3.7
-    - os: osx
-      env: PY=3.6
+    - os: linux
+      env: PY=3.8
     - os: osx
       env: PY=3.7
 
@@ -31,17 +29,9 @@ addons:
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      if [ "$PY" = "2.7" ]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
-      fi
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     else
-      if [ "$PY" = "2.7" ]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      fi
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -54,7 +44,7 @@ install:
   - conda create -q -n test-environment python=$PY numpy pandas scipy cython scikit-learn
   - source activate test-environment
   - pip install --upgrade pip
-  - pip install testflo==1.3.6
+  - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e . 
   - pip install coverage
