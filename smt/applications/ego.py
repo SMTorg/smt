@@ -299,14 +299,17 @@ class EGO(SurrogateBasedApplication):
         self.gpr._project_values(x_et_k,vartype)
         return x_et_k, True
 
-    def set_virtual_point(self, x, y_data,vartype):
+    def set_virtual_point(self, x, y_data,vartype=None):
         qEI = self.options["qEI"]
 
         if qEI == "CLmin":
             return np.min(y_data)
 
         if qEI == "KB":
-            return self.gpr.predict_values(x,vartype)
+            if vartype==None :
+                return self.gpr.predict_values(x,vartype)
+            else :
+                return self.gpr.predict_values(x,vartype)
 
         if qEI == "KBUB":
             conf = 3.0
@@ -316,7 +319,10 @@ class EGO(SurrogateBasedApplication):
 
         if qEI == "KBRand":
             conf = np.random.randn()
-
-        pred = self.gpr.predict_values(x,vartype)
-        var = self.gpr.predict_variances(x,vartype)
+        if vartype==None :
+            pred = self.gpr.predict_values(x)
+            var = self.gpr.predict_variances(x)
+        else :
+            pred = self.gpr.predict_values(x,vartype)
+            var = self.gpr.predict_variances(x,vartype)
         return pred + conf * np.sqrt(var)
