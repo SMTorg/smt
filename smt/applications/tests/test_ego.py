@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
 This package is distributed under New BSD license.
@@ -198,11 +199,11 @@ class TestEGO(SMTestCase):
     def function_test_cate_mixed(X):
 
         x1= X[:, 0]
-      #  caté 1
+      #  cate 1
         x2=X[:,1]
         x3=X[:,2]
         x4=X[:,3]
-      #  caté 2
+      #  cate 2
         x5=X[:,4]
         x6=X[:,5]
         
