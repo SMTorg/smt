@@ -176,6 +176,7 @@ class EGO(SurrogateBasedApplication):
                         )
                     )
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
+                if 
                 y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data,vartype)
 
                 # Update y_data with predicted value
@@ -307,7 +308,7 @@ class EGO(SurrogateBasedApplication):
 
         if qEI == "KB":
             if vartype==None :
-                return self.gpr.predict_values(x,vartype)
+                return self.gpr.predict_values(x)
             else :
                 return self.gpr.predict_values(x,vartype)
 
