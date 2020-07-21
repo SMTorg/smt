@@ -176,8 +176,10 @@ class EGO(SurrogateBasedApplication):
                         )
                     )
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
-                if 
-                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data,vartype)
+                if vartype == None :
+                    y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data)
+                else:
+                    y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data,vartype)
 
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
