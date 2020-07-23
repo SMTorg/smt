@@ -266,7 +266,7 @@ class SurrogateModel(object):
         x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
-        x2=np.copy(x)
+        x2 = np.copy(x)
         self.printer.active = (
             self.options["print_global"] and self.options["print_prediction"]
         )
@@ -281,17 +281,16 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            if vartype == None :
-                y = self._predict_values(x2)                
-            else : 
-                y = self._predict_values(x2,vartype)
-            
+            if vartype == None:
+                y = self._predict_values(x2)
+            else:
+                y = self._predict_values(x2, vartype)
+
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
-
 
     def predict_derivatives(self, x, kx):
         """
@@ -357,7 +356,7 @@ class SurrogateModel(object):
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
 
-    def predict_variances(self, x,vartype=None):
+    def predict_variances(self, x, vartype=None):
         """
         Predict the variances at a set of points.
 
@@ -374,12 +373,12 @@ class SurrogateModel(object):
         check_support(self, "variances")
         check_nx(self.nx, x)
         n = x.shape[0]
-        x2=np.copy(x)
-        if vartype == None :
-            s2 = self._predict_variances(x2)                
-        else : 
-            s2 = self._predict_variances(x2,vartype)
-            
+        x2 = np.copy(x)
+        if vartype == None:
+            s2 = self._predict_variances(x2)
+        else:
+            s2 = self._predict_variances(x2, vartype)
+
         return s2.reshape((n, self.ny))
 
     def _initialize(self):

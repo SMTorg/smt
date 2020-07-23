@@ -61,8 +61,6 @@ class TestEGO(SMTestCase):
         for i in range(len(x)):
             self.assertAlmostEqual(expected[i, 0], actual[i, 0])
 
-
-
     def test_function_test_1d(self):
         print("test_1D")
         n_iter = 15
@@ -77,9 +75,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
-    
-        
-    
+
     @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_function_test_1d_parallel(self):
         print("test_1D_para")
@@ -89,7 +85,6 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"
         n_parallel = 3
-
 
         ego = EGO(
             n_iter=n_iter,
@@ -104,8 +99,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
-    
-    
     def test_rosenbrock_2D(self):
         print("test_rosen")
         n_iter = 30
@@ -120,10 +113,6 @@ class TestEGO(SMTestCase):
 
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
-
-
- 
-
 
     def test_branin_2D(self):
         print("test_branin")
@@ -141,7 +130,7 @@ class TestEGO(SMTestCase):
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.2)
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.2)
-            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.2 )
+            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.2)
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
@@ -174,7 +163,6 @@ class TestEGO(SMTestCase):
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
-
     def test_branin_2D_mixed(self):
         print("test_branin_mixed")
 
@@ -184,7 +172,13 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits,vartype=["int","cont"])
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            vartype=["int", "cont"],
+        )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
@@ -198,30 +192,32 @@ class TestEGO(SMTestCase):
     @staticmethod
     def function_test_cate_mixed(X):
 
-        x1= X[:, 0]
-      #  cate 1
-        x2=X[:,1]
-        x3=X[:,2]
-        x4=X[:,3]
-      #  cate 2
-        x5=X[:,4]
-        x6=X[:,5]
-        
-        y= (x2+2*x3+3*x4)*x5*x1 + (x2+2*x3+3*x4)*x6*0.95*x1
+        x1 = X[:, 0]
+        #  cate 1
+        x2 = X[:, 1]
+        x3 = X[:, 2]
+        x4 = X[:, 3]
+        #  cate 2
+        x5 = X[:, 4]
+        x6 = X[:, 5]
+
+        y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
         return y
-
-
 
     def test_function_test_cate_mixed(self):
         print("test_cate_mixed")
         n_iter = 15
-        xlimits = np.array([[-5, 5],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]])
-        xdoe = np.atleast_2d([[5,4],[1,1],[0,0],[0,0],[1,1],[0,0]]).T
+        xlimits = np.array(
+            [[-5, 5], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]
+        )
+        xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
         n_doe = xdoe.size
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'        
-        v=["int",("cate",3),("cate",2)]
-    
-        ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits,vartype=v)
+        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        v = ["int", ("cate", 3), ("cate", 2)]
+
+        ego = EGO(
+            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, vartype=v
+        )
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=1)
@@ -237,10 +233,13 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
 
-        ego = EGO(xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits )
+        ego = EGO(
+            xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits
+        )
         _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+
     def test_find_points(self):
         print("test_points")
         fun = TestEGO.function_test_1d
@@ -248,11 +247,18 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
-            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="UCB", xlimits=xlimits, n_start=30, tunnel=0 )
+            xdoe=xdoe,
+            ydoe=ydoe,
+            n_iter=1,
+            criterion="UCB",
+            xlimits=xlimits,
+            n_start=30,
+            tunnel=0,
+        )
         _, _, _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_points(xdoe, ydoe,vartype=["cont"], tunnel=0)
+        x, _ = ego._find_points(xdoe, ydoe, vartype=["cont"], tunnel=0)
         self.assertAlmostEqual(6.5, float(x), delta=1)
-    
+
     @staticmethod
     def run_ego_example():
         import numpy as np
@@ -306,17 +312,17 @@ class TestEGO(SMTestCase):
 
             ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
             ax1 = ax.twinx()
-            ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+            (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
 
-            true_fun, = ax.plot(x_plot, y_plot)
-            data, = ax.plot(
+            (true_fun,) = ax.plot(x_plot, y_plot)
+            (data,) = ax.plot(
                 x_data_k, y_data_k, linestyle="", marker="o", color="orange"
             )
             if i < n_iter - 1:
-                opt, = ax.plot(
+                (opt,) = ax.plot(
                     x_data[k], y_data[k], linestyle="", marker="*", color="r"
                 )
-            gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+            (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
             sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
             sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
             un_gp = ax.fill_between(
@@ -438,17 +444,17 @@ class TestEGO(SMTestCase):
 
                 ax = fig.add_subplot(n_iter, n_parallel, i * (n_parallel) + p + 1)
                 ax1 = ax.twinx()
-                ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+                (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
 
-                true_fun, = ax.plot(x_plot, y_plot)
-                data, = ax.plot(
+                (true_fun,) = ax.plot(x_plot, y_plot)
+                (data,) = ax.plot(
                     x_data_sub[: -1 - p],
                     y_data_sub[: -1 - p],
                     linestyle="",
                     marker="o",
                     color="orange",
                 )
-                virt_data, = ax.plot(
+                (virt_data,) = ax.plot(
                     x_data_sub[-p - 1 : -1],
                     y_data_sub[-p - 1 : -1],
                     linestyle="",
@@ -456,10 +462,10 @@ class TestEGO(SMTestCase):
                     color="g",
                 )
 
-                opt, = ax.plot(
+                (opt,) = ax.plot(
                     x_data_sub[-1], y_data_sub[-1], linestyle="", marker="*", color="r"
                 )
-                gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+                (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
                 sig_plus = y_gp_plot + 3.0 * np.sqrt(y_gp_plot_var)
                 sig_moins = y_gp_plot - 3.0 * np.sqrt(y_gp_plot_var)
                 un_gp = ax.fill_between(
