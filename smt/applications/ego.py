@@ -3,7 +3,6 @@ Authors: Nathalie Bartoli, Remy Priem, Remi Lafage, Emile Roux <emile.roux@univ-
 
 This package is distributed under New BSD license.
 
-Saves Paul branch :  v5
 """
 
 from __future__ import division

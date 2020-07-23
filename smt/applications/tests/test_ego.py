@@ -2,9 +2,8 @@
 """
 Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
 This package is distributed under New BSD license.
-
-Saves Paul branch : v5
 """
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -167,7 +166,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         print("test_branin_mixed")
 
-        n_iter = 15
+        n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
@@ -181,9 +180,9 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
-            np.allclose([[-3, 12.275]], x_opt, rtol=0.1)
-            or np.allclose([[3, 2.275]], x_opt, rtol=0.1)
-            or np.allclose([[9, 2.475]], x_opt, rtol=0.1)
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+            or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
+            or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 

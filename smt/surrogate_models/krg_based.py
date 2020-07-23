@@ -9,7 +9,6 @@ TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol
 
-Saves Paul branch :  v5
 """
 
 from __future__ import division
