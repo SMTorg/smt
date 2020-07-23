@@ -9,7 +9,6 @@ TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol
 
-Saves Paul branch :  v5
 """
 
 from __future__ import division
@@ -283,9 +282,9 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if not(self.vartype is None) : 
+        if not (self.vartype is None):
             x = self._project_values(x)
-        
+
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -364,9 +363,9 @@ class KrgBased(SurrogateModel):
 
     def _predict_variances(self, x):
         # Initialization
-        if not(self.vartype is None) : 
+        if not (self.vartype is None):
             x = self._project_values(x)
-        
+
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -412,16 +411,16 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Feasible evaluation point input variable values.
         """
-        if self.vartype is None :
+        if self.vartype is None:
             return x
-        
-        if  (type(self.vartype) is list) :
+
+        if type(self.vartype) is list:
             dim = np.shape(x)[1]
             vartype = self._transform_vartype(dim)
             self.vartype = vartype
 
         vartype = self.vartype
-        
+
         for j in range(0, np.shape(x)[0]):
             i = 0
             while i < np.shape(x[j])[0]:
