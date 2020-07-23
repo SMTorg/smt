@@ -67,8 +67,8 @@ class KrgBased(SurrogateModel):
         )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
-        self.vartype = None
         self.nb_ill_matrix = 5
+        self.vartype = self.options["vartype"]
         supports["derivatives"] = True
         supports["variances"] = True
 
@@ -268,7 +268,7 @@ class KrgBased(SurrogateModel):
 
         return reduced_likelihood_function_value, par
 
-    def _predict_values(self, x, vartype=None):
+    def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
 
@@ -283,7 +283,9 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        x = self._project_values(x, vartype)
+        if not(self.vartype is None) : 
+            x = self._project_values(x)
+        
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -360,9 +362,11 @@ class KrgBased(SurrogateModel):
         )
         return y
 
-    def _predict_variances(self, x, vartype=None):
+    def _predict_variances(self, x):
         # Initialization
-        x = self._project_values(x, vartype)
+        if not(self.vartype is None) : 
+            x = self._project_values(x)
+        
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -392,7 +396,7 @@ class KrgBased(SurrogateModel):
         MSE[MSE < 0.0] = 0.0
         return MSE
 
-    def _project_values(self, x, vartype):
+    def _project_values(self, x):
         """
         This function project continuously relaxed values 
         to their closer assessable values.
@@ -408,14 +412,16 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Feasible evaluation point input variable values.
         """
-        if self.vartype is None:
-            self.vartype = vartype
+        if self.vartype is None :
+            return x
+        
+        if  (type(self.vartype) is list) :
             dim = np.shape(x)[1]
             vartype = self._transform_vartype(dim)
             self.vartype = vartype
 
         vartype = self.vartype
-
+        
         for j in range(0, np.shape(x)[0]):
             i = 0
             while i < np.shape(x[j])[0]:

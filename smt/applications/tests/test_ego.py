@@ -24,6 +24,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
+from smt.surrogate_models import KRG
 
 PYTHON_2 = sys.version_info.major == 2
 
@@ -172,12 +173,13 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
+        s=KRG(print_global=False, vartype=["int","cont"])
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
             xlimits=xlimits,
-            vartype=["int", "cont"],
+            surrogate=s,
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -214,9 +216,10 @@ class TestEGO(SMTestCase):
         n_doe = xdoe.size
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         v = ["int", ("cate", 3), ("cate", 2)]
+        s=KRG(print_global=False, vartype=v)
 
         ego = EGO(
-            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, vartype=v
+            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s
         )
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
@@ -256,7 +259,7 @@ class TestEGO(SMTestCase):
             tunnel=0,
         )
         _, _, _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_points(xdoe, ydoe, vartype=["cont"], tunnel=0)
+        x, _ = ego._find_points(xdoe, ydoe, tunnel=0)
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     @staticmethod
