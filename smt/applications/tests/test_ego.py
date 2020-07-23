@@ -173,13 +173,9 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        s=KRG(print_global=False, vartype=["int","cont"])
+        s = KRG(print_global=False, vartype=["int", "cont"])
         ego = EGO(
-            xdoe=xdoe,
-            n_iter=n_iter,
-            criterion=criterion,
-            xlimits=xlimits,
-            surrogate=s,
+            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s,
         )
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
@@ -216,7 +212,7 @@ class TestEGO(SMTestCase):
         n_doe = xdoe.size
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         v = ["int", ("cate", 3), ("cate", 2)]
-        s=KRG(print_global=False, vartype=v)
+        s = KRG(print_global=False, vartype=v)
 
         ego = EGO(
             n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s

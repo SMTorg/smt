@@ -90,9 +90,7 @@ class SurrogateModel(object):
         declare(
             "print_solver", True, types=bool, desc="Whether to print solver information"
         )
-        declare(
-            "vartype", None, types=list, desc="For mixed integer : variables types"
-        )
+        declare("vartype", None, types=list, desc="For mixed integer : variables types")
 
         self._initialize()
         self.options.update(kwargs)
@@ -285,13 +283,13 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-             y = self._predict_values(x2)
+            y = self._predict_values(x2)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
-    
+
     def predict_derivatives(self, x, kx):
         """
         Predict the dy_dx derivatives at a set of points.

@@ -140,7 +140,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            
+
         x_doe = self.gpr._project_values(x_doe)
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -172,7 +172,7 @@ class EGO(SurrogateBasedApplication):
                     )
                 # Set temporaly the y_data to the one predicted by the kringin metamodel
                 y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data)
-            
+
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
@@ -255,9 +255,7 @@ class EGO(SurrogateBasedApplication):
         bounds = self.options["xlimits"]
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(
-                np.atleast_2d(x), y_data, tunnel, x_data
-            )
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data, tunnel, x_data)
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
         elif criterion == "UCB":
@@ -305,7 +303,7 @@ class EGO(SurrogateBasedApplication):
             return np.min(y_data)
 
         if qEI == "KB":
-                return self.gpr.predict_values(x)
+            return self.gpr.predict_values(x)
         if qEI == "KBUB":
             conf = 3.0
 
@@ -316,5 +314,5 @@ class EGO(SurrogateBasedApplication):
             conf = np.random.randn()
         pred = self.gpr.predict_values(x)
         var = self.gpr.predict_variances(x)
-       
+
         return pred + conf * np.sqrt(var)
