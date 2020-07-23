@@ -3,6 +3,8 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
+
+Saves Paul branch :  v5
 """
 
 from __future__ import division
@@ -87,6 +89,9 @@ class SurrogateModel(object):
         )
         declare(
             "print_solver", True, types=bool, desc="Whether to print solver information"
+        )
+        declare(
+            "vartype", None, types=list, desc="For mixed integer : variables types"
         )
 
         self._initialize()
@@ -261,9 +266,11 @@ class SurrogateModel(object):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
+        self.vartype = self.options["vartype"]
         x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
+        x2 = np.copy(x)
         self.printer.active = (
             self.options["print_global"] and self.options["print_prediction"]
         )
@@ -278,14 +285,13 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x)
-
+             y = self._predict_values(x2)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
-
+    
     def predict_derivatives(self, x, kx):
         """
         Predict the dy_dx derivatives at a set of points.
@@ -364,10 +370,12 @@ class SurrogateModel(object):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
+        self.vartype = self.options["vartype"]
         check_support(self, "variances")
         check_nx(self.nx, x)
         n = x.shape[0]
-        s2 = self._predict_variances(x)
+        x2 = np.copy(x)
+        s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
     def _initialize(self):
