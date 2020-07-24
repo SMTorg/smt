@@ -17,7 +17,7 @@ criterion) that determines what the next query point should be.
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
 of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
-parameter that controlled the trade-off between ‘more global’ and ‘more local’ optimization, in 
+parameter that controlled the trade-off between "more global" and "more local" optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
@@ -160,6 +160,11 @@ Regarding the parallel execution, one can implement specific multiprocessing by 
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
 
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization.
+
+You can penalize already evaluated point in EI via tunneling (not recommanded for high dimensional problems).
+
+
 References
 ----------
 
@@ -176,6 +181,8 @@ References
 .. [6] Roux, E. , Tillier, Y. , Kraria, S., & Bouchard, P.-O. (2020). An efficient parallel global optimization strategy based on Kriging properties suitable for material parameter identification.In AME, accepted for publication. 
 
 .. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
+
+.. [8] E.C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Usage
 -----
@@ -233,17 +240,17 @@ Usage
   
       ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
       ax1 = ax.twinx()
-      ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+      (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
   
-      true_fun, = ax.plot(x_plot, y_plot)
-      data, = ax.plot(
+      (true_fun,) = ax.plot(x_plot, y_plot)
+      (data,) = ax.plot(
           x_data_k, y_data_k, linestyle="", marker="o", color="orange"
       )
       if i < n_iter - 1:
-          opt, = ax.plot(
+          (opt,) = ax.plot(
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
-      gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+      (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
       sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
       sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
       un_gp = ax.fill_between(
@@ -375,17 +382,17 @@ Usage with parallel options
   
           ax = fig.add_subplot(n_iter, n_parallel, i * (n_parallel) + p + 1)
           ax1 = ax.twinx()
-          ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+          (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
   
-          true_fun, = ax.plot(x_plot, y_plot)
-          data, = ax.plot(
+          (true_fun,) = ax.plot(x_plot, y_plot)
+          (data,) = ax.plot(
               x_data_sub[: -1 - p],
               y_data_sub[: -1 - p],
               linestyle="",
               marker="o",
               color="orange",
           )
-          virt_data, = ax.plot(
+          (virt_data,) = ax.plot(
               x_data_sub[-p - 1 : -1],
               y_data_sub[-p - 1 : -1],
               linestyle="",
@@ -393,10 +400,10 @@ Usage with parallel options
               color="g",
           )
   
-          opt, = ax.plot(
+          (opt,) = ax.plot(
               x_data_sub[-1], y_data_sub[-1], linestyle="", marker="*", color="r"
           )
-          gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+          (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
           sig_plus = y_gp_plot + 3.0 * np.sqrt(y_gp_plot_var)
           sig_moins = y_gp_plot - 3.0 * np.sqrt(y_gp_plot_var)
           un_gp = ax.fill_between(
@@ -477,7 +484,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000000008EE7470>
+     -  <smt.applications.ego.Evaluator object at 0x000001EA44D7D198>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -506,3 +513,13 @@ Options
      -  None
      -  ['bool']
      -  Print computation information
+  *  -  tunnel
+     -  0
+     -  None
+     -  ['int']
+     -  1 to enable tunneling in ei
+  *  -  surrogate
+     -  <smt.surrogate_models.krg.KRG object at 0x000001EA44D66E10>
+     -  None
+     -  None
+     -  surrogate model to use

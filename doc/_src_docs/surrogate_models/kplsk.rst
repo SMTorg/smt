@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0090003
+     Training - done. Time (sec):  0.0059979
   ___________________________________________________________________________
      
    Evaluation
@@ -75,9 +75,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009985
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   ___________________________________________________________________________
      
@@ -86,9 +86,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001000
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -133,6 +133,11 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']

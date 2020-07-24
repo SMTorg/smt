@@ -103,8 +103,8 @@ class KrgBased(SurrogateModel):
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
         ###
-        #     if np.min(np.sum(D, axis=1)) == 0.0:
-        #        raise Exception("Multiple input features cannot have the same value.")
+        if np.min(np.sum(D, axis=1)) == 0.0 and self.vartype is None:
+            raise Exception("Multiple input features cannot have the same value.")
         ####
         # Regression matrix and parameters
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
@@ -184,7 +184,7 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
-        noise = 0
+        noise = 0.0
         tmp_var = theta
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
@@ -301,6 +301,7 @@ class KrgBased(SurrogateModel):
         y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
+
         return y
 
     def _predict_derivatives(self, x, kx):
@@ -362,6 +363,7 @@ class KrgBased(SurrogateModel):
         return y
 
     def _predict_variances(self, x):
+
         # Initialization
         if not (self.vartype is None):
             x = self._project_values(x)

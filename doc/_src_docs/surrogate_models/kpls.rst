@@ -60,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0055003
+     Training - done. Time (sec):  0.0049984
   ___________________________________________________________________________
      
    Evaluation
@@ -115,6 +115,11 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
