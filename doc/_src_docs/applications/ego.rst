@@ -17,7 +17,7 @@ criterion) that determines what the next query point should be.
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
 of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
-parameter that controlled the trade-off between "more global" and "more local" optimization, in 
+parameter that controlled the trade-off between 'more global' and 'more local' optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
@@ -159,8 +159,7 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
-
-Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization.
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. [8]_
 
 You can penalize already evaluated point in EI via tunneling (not recommanded for high dimensional problems).
 
@@ -275,7 +274,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.8 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -484,7 +483,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001EA44D7D198>
+     -  <smt.applications.ego.Evaluator object at 0x000001349EFD0BA8>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -519,7 +518,7 @@ Options
      -  ['int']
      -  1 to enable tunneling in ei
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001EA44D66E10>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001349EAAC198>
      -  None
      -  None
      -  surrogate model to use
