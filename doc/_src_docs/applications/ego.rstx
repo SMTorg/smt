@@ -17,7 +17,7 @@ criterion) that determines what the next query point should be.
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
 of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
-parameter that controlled the trade-off between 'more global' and 'more local' optimization, in 
+parameter that controlled the trade-off between ‘more global’ and ‘more local’ optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
@@ -159,10 +159,6 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
-Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. [8]_
-
-You can penalize already evaluated point in EI via tunneling (not recommanded for high dimensional problems).
-
 
 References
 ----------
@@ -180,8 +176,6 @@ References
 .. [6] Roux, E. , Tillier, Y. , Kraria, S., & Bouchard, P.-O. (2020). An efficient parallel global optimization strategy based on Kriging properties suitable for material parameter identification.In AME, accepted for publication. 
 
 .. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
-
-.. [8] E.C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Usage
 -----
