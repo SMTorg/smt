@@ -32,15 +32,15 @@ Kriging with mixed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The goal is to be able to build a model for mixed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
 More details avalaible here : 
-.. [2] E. C. Garrido-Merchán and D. Hernández-Lobato. “Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes”. In:Neurocomputing380 (2020), pages 20–35.doi:10.1016/j.neucom.2019.11.004
 
+[2] E. C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Implementation Note
 -------------------
@@ -52,8 +52,8 @@ Usage
 
 .. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_krg , 80
 
-Usage with parallel options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Usage with mixed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_krg_mixed , 80
 

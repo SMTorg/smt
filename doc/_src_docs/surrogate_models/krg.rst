@@ -32,15 +32,15 @@ Kriging with mixed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The goal is to be able to build a model for mixed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
 More details avalaible here : 
-.. [2] E. C. Garrido-Merchán and D. Hernández-Lobato. “Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes”. In:Neurocomputing380 (2020), pages 20–35.doi:10.1016/j.neucom.2019.11.004
 
+[2] E. C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Implementation Note
 -------------------
@@ -91,7 +91,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039985
+     Training - done. Time (sec):  0.0039937
   ___________________________________________________________________________
      
    Evaluation
@@ -108,8 +108,8 @@ Usage
   :scale: 80 %
   :align: center
 
-Usage with parallel options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Usage with mixed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -120,12 +120,16 @@ Usage with parallel options
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  ##    Vartype example
+  
   # vartype =["cont","int",("cate",3),("cate",2)]
   #"cont" means x1 continuous
   #"int" means x2 integer
   #"(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
   #"(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
-  vartype = ["int"]           
+  
+  vartype = ["int"]     
   sm = KRG(theta0=[1e-2], vartype=vartype)
   sm.set_training_values(xt, yt)
   sm.train()
@@ -157,7 +161,7 @@ Usage with parallel options
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039983
+     Training - done. Time (sec):  0.0039935
   ___________________________________________________________________________
      
    Evaluation
