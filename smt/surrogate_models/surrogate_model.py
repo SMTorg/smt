@@ -90,7 +90,7 @@ class SurrogateModel(object):
             "print_solver", True, types=bool, desc="Whether to print solver information"
         )
         declare(
-            "vartype", None, types=list, desc="For mixed integer : variables types"
+            "vartype", None, desc="For mixed integer : variables types"
         )
 
         self._initialize()

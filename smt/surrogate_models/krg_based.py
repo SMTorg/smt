@@ -67,7 +67,6 @@ class KrgBased(SurrogateModel):
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
-        self.vartype = self.options["vartype"]
         supports["derivatives"] = True
         supports["variances"] = True
 
@@ -103,7 +102,7 @@ class KrgBased(SurrogateModel):
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
         ###
-        if np.min(np.sum(D, axis=1)) == 0.0 and self.vartype is None:
+        if np.min(np.sum(D, axis=1)) == 0.0 and self.options["vartype"] is None:
             raise Exception("Multiple input features cannot have the same value.")
         ####
         # Regression matrix and parameters
@@ -282,7 +281,7 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if not (self.vartype is None):
+        if not (self.options["vartype"] is None):
             x = self._project_values(x)
 
         n_eval, n_features_x = x.shape
@@ -365,7 +364,7 @@ class KrgBased(SurrogateModel):
     def _predict_variances(self, x):
 
         # Initialization
-        if not (self.vartype is None):
+        if not (self.options["vartype"] is None):
             x = self._project_values(x)
 
         n_eval, n_features_x = x.shape
@@ -413,15 +412,15 @@ class KrgBased(SurrogateModel):
         y : np.ndarray
             Feasible evaluation point input variable values.
         """
-        if self.vartype is None:
+        if self.options["vartype"] is None:
             return x
 
-        if type(self.vartype) is list:
+        if type(self.options["vartype"]) is list:
             dim = np.shape(x)[1]
             vartype = self._transform_vartype(dim)
-            self.vartype = vartype
+            self.options["vartype"] = vartype
 
-        vartype = self.vartype
+        vartype = self.options["vartype"]
 
         for j in range(0, np.shape(x)[0]):
             i = 0
@@ -465,7 +464,7 @@ class KrgBased(SurrogateModel):
         vartype : np.ndarray
             The type of the each dimension. 
         """
-        vartype = self.vartype
+        vartype = self.options["vartype"]
         if vartype is None:
             vartype = np.zeros(dim)
         if isinstance(vartype, list):
