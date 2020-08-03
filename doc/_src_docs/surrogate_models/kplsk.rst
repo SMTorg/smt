@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0059965
+     Training - done. Time (sec):  0.0079958
   ___________________________________________________________________________
      
    Evaluation
@@ -75,9 +75,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009995
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000100
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -136,7 +136,7 @@ Options
   *  -  vartype
      -  None
      -  None
-     -  ['list']
+     -  None
      -  For mixed integer : variables types
   *  -  poly
      -  constant

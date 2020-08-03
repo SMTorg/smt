@@ -25,8 +25,8 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
-    abs_exp,
     squar_exp,
+    abs_exp,
     standardization,
     l1_cross_distances,
 )
@@ -484,13 +484,161 @@ class KrgBased(SurrogateModel):
                     ##new categorical dimension : append n
                     ind_cate = ind_cate + 1
                 else:
-                    print("type_error")
+                    raise Exception ("type_error")
             temp = np.array(temp)
             vartype = temp
         ## Assign 0 to continuous variables, 1 for int and n>1 for each
         # categorical variable.
 
         return vartype
+
+    def _relax_limits(self, xlimits):
+        """
+        This function unfold xlimits to add contiuous dimensions
+        Each level correspond to a new continuous dimension in [0,1].
+        Integer dimensions are relaxed continuously.
+        
+        --------
+        Arguments
+        ---------
+        vartype : list
+        The type of the each original dimension  (cont, int or cate).
+        xlimits : np.ndarray
+        The bounds of the each original dimension and their labels .
+        Returns
+        -------
+        xlimits : np.ndarray
+        The bounds of the each original dimension  (cont, int or cate).
+        """
+        
+        #Continuous optimization : do nothing
+        if (self.options["vartype"] is None ):
+            return xlimits
+        
+        self.options["vartype"]= self._transform_vartype(self.options["vartype"])
+        xlim=xlimits
+        vt=self.options["vartype"]
+        
+        #continuous or integer => no cate
+        if (isinstance(xlim[0][0], np.float64)) :
+            for ty in vt :
+                if not(ty==0 or ty==1) : 
+                    raise Exception ("xlimits used an incorrect type")
+       #cate not found => error
+        elif (isinstance(xlim[0][0], np.str_) or isinstance(xlim[0], list) ) :
+            rais=1
+            xlim=np.zeros((np.size(vt),2))
+            ind_r=0
+            ind_o=-1
+            tmp=0        
+            count=0
+            for ty in vt :
+                #if cate : add dimensions
+                if not(ty==0 or ty==1) : 
+                        rais=0
+                        xlim[ind_r]=[0,1]
+ 
+                #if (cate,n) we should have n labels
+                        if ty==tmp :
+                            count=count+1
+                        else:
+                            ind_o=ind_o+1
+                            tmp=ty
+                            count=0
+                        try : 
+                            err=(xlimits[ind_o][count])
+                        except:
+                            raise Exception ("missing labels in xlimits")                                 
+ 
+                else:
+                #if not cate : recopy bounds
+                    no_cate=0
+                    while no_cate==0:
+                        try: 
+                            ind_o=ind_o+1
+                            xlim[ind_r]=xlimits[ind_o]
+                            no_cate=1
+                        except:
+                             if (ind_o == np.size(vt)+1):
+                                    raise Exception ("xlimits used an incorrect type")                                 
+                ind_r=ind_r+1        
+            if rais==1 :
+                raise Exception ("xlimits used an incorrect type")
+             
+        return(xlim)    
+    
+    def _assign_labels(self, x, xlimits):
+        """
+        This function reduce inputs from relaxed space to original space by 
+        assigning labels to categorical variables.
+                
+        --------
+        Arguments
+        ---------
+         x : np.ndarray [n_evals, dim]
+        Continuous evaluation point input variable values 
+        xlimits : np.ndarray
+        The bounds of the each original dimension and their labels .
+        Returns
+        -------
+        x_labeled : np.ndarray [n_evals, dim]
+        Evaluation point input variable values and corresponding labels
+        """
+        
+        #Continuous optimization : do nothing
+        if (self.options["vartype"] is None ):
+            return x
+        
+        
+        self.options["vartype"]= self._transform_vartype(self.options["vartype"])
+        xlim=xlimits
+        vt=self.options["vartype"]
+        x2=np.copy(x)
+        nbpt=(np.shape(x)[0])
+           
+        #continuous or integer => no cate
+        if (isinstance(xlim[0][0], np.float64)) :
+            for ty in vt :
+                if not(ty==0 or ty==1) : 
+                    raise Exception ("xlimits used an incorrect type")
+     
+        #cate => to label
+        elif (isinstance(xlim[0][0], np.str_) or isinstance(xlim[0], list) ) :
+            dim_out_cate= int(max(0,np.max(vt)-1))
+            dim_out= (vt == 0).sum()+(vt == 1).sum()+dim_out_cate
+            x2=np.array(np.zeros((nbpt,dim_out)),dtype=np.str_)
+            
+            for p in range(nbpt):
+                j=0
+                tmp=0
+                cpt=0
+                for i in range(np.shape(x)[1]):
+                  if vt[i]==0 or vt[i]==1 :
+                      x2[p][j]=x[p][i]
+                      j=j+1
+                  else :
+                     tmp2= vt[i]
+                     if tmp2 == tmp :
+                         tmp=tmp2
+                         if x[p][i] > 0.999:
+                             x2[p][j]=xlimits[j][cpt]
+                             j=j+1
+                     else:
+                         tmp=tmp2
+                         cpt=0
+                         if x[p][i] > 0.999:
+                             x2[p][j]=xlimits[j][cpt]
+                             j=j+1
+
+                     cpt=cpt+1
+
+                         
+                    
+        
+        return(x2)    
+
+
+
 
     def _optimize_hyperparam(self, D):
         """
