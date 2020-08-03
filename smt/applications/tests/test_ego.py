@@ -189,14 +189,16 @@ class TestEGO(SMTestCase):
     @staticmethod
     def function_test_cate_mixed(X):
 
-        x1 = X[:, 0]
+        x1 = X[:, 0].astype(float)
         #  cate 1
-        x2 = X[:, 1]
-        x3 = X[:, 2]
-        x4 = X[:, 3]
+        c1= X[:, 1]
+        x2 = (c1=="1")
+        x3 = (c1=="2")
+        x4 = (c1=="3")
         #  cate 2
-        x5 = X[:, 4]
-        x6 = X[:, 5]
+        c2= X[:,2]
+        x5 = (c2=="4")
+        x6 = (c2=="5")
 
         y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
         return y
@@ -205,7 +207,7 @@ class TestEGO(SMTestCase):
         print("test_cate_mixed")
         n_iter = 15
         xlimits = np.array(
-            [[-5, 5], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]
+            [[-5, 5], ["1","2","3"],["4","5"]]
         )
         xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
         n_doe = xdoe.size
@@ -343,6 +345,80 @@ class TestEGO(SMTestCase):
             )
         plt.show()
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
+
+    def run_ego_example_mixed():
+        import numpy as np
+        import six
+        from smt.applications import EGO
+        from smt.sampling_methods import FullFactorial
+
+        import sklearn
+        import matplotlib.pyplot as plt
+        from matplotlib import colors
+        from mpl_toolkits.mplot3d import Axes3D
+        from scipy.stats import norm
+        from smt.surrogate_models import KRG
+        from smt.sampling_methods import LHS
+        
+        def function_test_cate_mixed(X):
+            import numpy as np
+            #float
+            x1 = X[:, 0].astype(float)
+            #  cate 1
+            c1= X[:, 1]
+            x2 = (c1=="1")
+            x3 = (c1=="2")
+            x4 = (c1=="3")
+            #  cate 2
+            c2= X[:,2]
+            x5 = (c2=="4")
+            x6 = (c2=="5")
+            #int
+            i = X[:, 3].astype(float)
+            
+            y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1+i
+            return y
+
+        n_iter = 15
+        vartype = ["cont", ("cate", 3), ("cate", 2),"int"]
+        xlimits = np.array(
+            [[-5, 5], ["1","2","3"],["4","5"],[0,2]]
+        )
+        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        qEI = "KB"
+        sm = KRG(print_global=False, vartype=vartype)
+        
+        n_doe=6
+        samp=LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
+        xdoe=samp(n_doe)
+        xdoe=sm._project_values(xdoe)
+        ydoe = function_test_cate_mixed(sm._assign_labels(xdoe,xlimits))
+        
+        ego = EGO(
+            n_iter=n_iter, criterion=criterion, xdoe=xdoe,ydoe=ydoe, xlimits=xlimits, surrogate=sm,qEI=qEI
+        )
+
+        x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(fun=function_test_cate_mixed)
+
+        mini=np.zeros(n_iter)
+        for k in range(n_iter):
+                mini[k]=np.log(np.abs(np.min(y_data[0:k+5])+15))
+        x_plot = np.linspace(1,n_iter+0.5, n_iter)
+        
+        u= max(np.floor(max(mini))+1,-100)
+        l= max(np.floor(min(mini))-.2,-10)
+        fig= plt.figure()
+        axes = fig.add_axes([0.1,0.1,0.8,0.8])
+        epm, = axes.plot(x_plot,mini,color='r')
+        axes.set_ylim([l,u])      
+        plt.title("minimum convergence plot" , loc='center')
+        plt.xlabel("number of iterations")
+        plt.ylabel("log of the difference w.r.t the best")
+        plt.show()
+
+
+
+
 
     @staticmethod
     def run_ego_parallel_example():

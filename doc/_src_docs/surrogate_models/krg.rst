@@ -91,7 +91,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039937
+     Training - done. Time (sec):  0.0039978
   ___________________________________________________________________________
      
    Evaluation
@@ -99,9 +99,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009995
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: krg_Test_test_krg.png
@@ -161,7 +161,7 @@ Usage with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039935
+     Training - done. Time (sec):  0.0039988
   ___________________________________________________________________________
      
    Evaluation
@@ -169,7 +169,7 @@ Usage with mixed variables
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009995
+     Predicting - done. Time (sec):  0.0009992
      
      Prediction time/pt. (sec) :  0.0000100
      
@@ -219,7 +219,7 @@ Options
   *  -  vartype
      -  None
      -  None
-     -  ['list']
+     -  None
      -  For mixed integer : variables types
   *  -  poly
      -  constant

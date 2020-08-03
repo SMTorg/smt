@@ -60,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039937
+     Training - done. Time (sec):  0.0049975
   ___________________________________________________________________________
      
    Evaluation
@@ -118,7 +118,7 @@ Options
   *  -  vartype
      -  None
      -  None
-     -  ['list']
+     -  None
      -  For mixed integer : variables types
   *  -  poly
      -  constant
