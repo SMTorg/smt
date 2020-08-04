@@ -127,18 +127,18 @@ class EGO(SurrogateBasedApplication):
 
         # Set the continuous bounds of the optimization problem
         self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
-        
+
         # Build initial DOE
-        self._sampling = LHS(xlimits= self.xlimits, criterion="ese")
+        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
         self._evaluator = self.options["evaluator"]
         tunnel = self.options["tunnel"]
         xdoe = self.options["xdoe"]
-        
+
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = self._sampling(n_doe)
-            
+
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
@@ -146,7 +146,9 @@ class EGO(SurrogateBasedApplication):
         x_doe = self.gpr._project_values(x_doe)
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self._evaluator.run(fun, self.gpr._assign_labels(x_doe,self.options["xlimits"]))
+            y_doe = self._evaluator.run(
+                fun, self.gpr._assign_labels(x_doe, self.options["xlimits"])
+            )
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -181,7 +183,9 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = self._evaluator.run(fun, self.gpr._assign_labels(x_to_compute,self.options["xlimits"]))
+            y = self._evaluator.run(
+                fun, self.gpr._assign_labels(x_to_compute, self.options["xlimits"])
+            )
             y_data[-n_parallel:] = y
 
         # Find the optimal point
