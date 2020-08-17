@@ -466,8 +466,6 @@ class MFK(KrgBased):
             # scaled predictor
             sigma2 = self.optimal_par[i]["sigma2"] / self.y_std ** 2
             q = self.q_all[i]
-            # p = self.p_all[i]
-            # Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
             u_ = solve_triangular(G.T, f - np.dot(Ft.T, r_t), lower=True)
             sigma2_rho = np.dot(
                 g,
