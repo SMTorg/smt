@@ -246,14 +246,14 @@ class MOE(SurrogateBasedApplication):
         if self.options["derivatives_support"]:
             prototypes = {
                 name: proto
-                for name, proto in prototypes.iteritems()
-                if proto.support["derivatives"]
+                for name, proto in six.iteritems(prototypes)
+                if proto.supports["derivatives"]
             }
         if self.options["variances_support"]:
             prototypes = {
                 name: proto
-                for name, proto in prototypes.iteritems()
-                if proto.support["variances"]
+                for name, proto in six.iteritems(prototypes)
+                if proto.supports["variances"]
             }
         return {name: self._surrogate_type[name] for name in prototypes}
 

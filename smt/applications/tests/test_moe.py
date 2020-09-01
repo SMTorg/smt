@@ -166,6 +166,14 @@ class TestMOE(SMTestCase):
             plt.title("Branin function")
             plt.show()
 
+    def test_select_expert_types(self):
+        moe = MOE(variances_support=True)
+        expected = ["KPLS", "KPLSK", "KRG"]
+        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+        moe = MOE(derivatives_support=True)
+        expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTB", "RMTC"]
+        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+
     @staticmethod
     def run_moe_example():
         import numpy as np
