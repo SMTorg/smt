@@ -78,7 +78,7 @@ class EGO(SurrogateBasedApplication):
         )
         declare(
             "qEI",
-            "KB",
+            "KBLB",
             types=str,
             values=["KB", "KBLB", "KBUB", "KBRand", "CLmin"],
             desc="Approximated q-EI maximization strategy",
@@ -192,8 +192,8 @@ class EGO(SurrogateBasedApplication):
 
     def _setup_optimizer(self, fun):
         """
-        Train internal surrogate used for optimization 
-        setup function evaluator wrt options
+        Instanciate internal surrogate used for optimization 
+        and setup function evaluator wrt options
 
         Parameters
         ----------

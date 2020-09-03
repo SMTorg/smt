@@ -212,8 +212,11 @@ class TestEGO(SMTestCase):
         ego.gpr.set_training_values(xdoe, ydoe)
         ego.gpr.train()
         xtest = np.array([[10.0]])
-        # test that default virtual point should be equal to kriging prediction
-        expected = float(ego.gpr.predict_values(xtest))
+        # test that default virtual point should be equal to 3sigma lower bound kriging interval
+        expected = float(
+            ego.gpr.predict_values(xtest)
+            - 3 * np.sqrt(ego.gpr.predict_variances(xtest))
+        )
         actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
         self.assertAlmostEqual(expected, actual)
 
@@ -392,7 +395,7 @@ class TestEGO(SMTestCase):
                 y_gp_plot_var = ego.gpr.predict_variances(x_plot)
 
                 x_data_sub = np.append(x_data_sub, x_data[k + p])
-                y_KB = ego.set_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
+                y_KB = ego._get_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
 
                 y_data_sub = np.append(y_data_sub, y_KB)
 
