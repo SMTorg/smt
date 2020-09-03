@@ -370,7 +370,7 @@ class TestEGO(SMTestCase):
             evaluator=ParallelEvaluator(),
         )
 
-        _, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
+        x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
         print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
 
         x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
