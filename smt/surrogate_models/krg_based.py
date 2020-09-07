@@ -487,7 +487,7 @@ class KrgBased(SurrogateModel):
 
         return vartype
 
-    def _relax_limits(self, xlimits):
+    def _relax_limits(self, xlimits,dim=0):
         """
         This function unfold xlimits to add contiuous dimensions
         Each level correspond to a new continuous dimension in [0,1].
@@ -498,6 +498,8 @@ class KrgBased(SurrogateModel):
         ---------
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
+        dim : int
+        The number of dimension
     
         Returns
         -------
@@ -511,10 +513,13 @@ class KrgBased(SurrogateModel):
         
         xlim=xlimits
         if type(self.options["vartype"]) is list and not hasattr(self, 'vartype'):
-            dim = np.shape(x)[1]
+            if dim==0 : 
+                try: 
+                    dim = np.shape(x)[1]
+                except NameError :
+                    raise Exception ("Missing dimension to unfold xlimits")
             self.vartype = self._transform_vartype(dim)
         vt = self.vartype 
-        
         
         #continuous or integer => no cate
         if (isinstance(xlim[0][0], np.float64)) :
