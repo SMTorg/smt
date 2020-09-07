@@ -64,6 +64,10 @@ class KrgBased(SurrogateModel):
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
+        declare(
+            "vartype", types=list , desc="For mixed integer : variables types between continuous: \"cont\", integer: \"int\", and categorial with n levels: (\"cate\",n) "
+        )
+
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5

@@ -89,10 +89,6 @@ class SurrogateModel(object):
         declare(
             "print_solver", True, types=bool, desc="Whether to print solver information"
         )
-        declare(
-            "vartype", types=list , desc="For mixed integer : variables types between continuous: \"cont\", integer: \"int\", and categorial with n levels: (\"cate\",n) "
-        )
-
         self._initialize()
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)

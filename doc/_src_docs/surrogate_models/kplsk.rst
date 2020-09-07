@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0079958
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -133,11 +133,6 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
-  *  -  vartype
-     -  None
-     -  None
-     -  None
-     -  For mixed integer : variables types
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -158,6 +153,11 @@ Options
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 
   *  -  n_comp
      -  1
      -  None
