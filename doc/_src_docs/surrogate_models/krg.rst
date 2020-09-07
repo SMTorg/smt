@@ -1,4 +1,4 @@
-﻿Kriging
+Kriging
 =======
 
 Kriging is an interpolating model that is a linear combination of a known function :math:`f_i({\bf x})` which is added to a realization of a stochastic process :math:`Z({\bf x})`
@@ -26,19 +26,21 @@ These three types are available in SMT.
 More details about the kriging approach could be found in [1]_.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
-.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 
 Kriging with mixed variables 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The goal is to be able to build a model for mixed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
+More details avalaible here : 
+
+[2] E. C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Implementation Note
 -------------------
@@ -89,7 +91,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0049977
+     Training - done. Time (sec):  0.0039978
   ___________________________________________________________________________
      
    Evaluation
@@ -97,9 +99,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009995
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: krg_Test_test_krg.png
@@ -159,7 +161,7 @@ Usage with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0059972
+     Training - done. Time (sec):  0.0039988
   ___________________________________________________________________________
      
    Evaluation
@@ -167,7 +169,7 @@ Usage with mixed variables
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009997
+     Predicting - done. Time (sec):  0.0009992
      
      Prediction time/pt. (sec) :  0.0000100
      
