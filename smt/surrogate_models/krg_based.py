@@ -505,6 +505,7 @@ class KrgBased(SurrogateModel):
         The type of the each original dimension  (cont, int or cate).
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
+    
         Returns
         -------
         xlimits : np.ndarray

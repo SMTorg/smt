@@ -270,8 +270,52 @@ class Test(unittest.TestCase):
                     np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
                 )
 
+    def test_krg_mixed3(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KRG
+        vartype = ["cont","int"]     
+        sm = KRG(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
        
-        
+    def test_krg_mixed4(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KRG
+        vartype = [("cate",2),"cont","int"]     
+        sm = KRG(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=4)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+             
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -296,6 +340,108 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
+ 
+    def test_kpls_mixed(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KPLS
+
+        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+    
+        vartype = ["int"]     
+        sm = KPLS(theta0=[1e-2], vartype=vartype)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
+        plt.show()
+      
+
+
+    def test_kpls_mixed2(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLS
+        vartype = [("cate",2)]     
+        sm = KPLS(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
+
+    def test_kpls_mixed3(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLS
+        vartype = ["cont","int"]     
+        sm = KPLS(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
+       
+    def test_kpls_mixed4(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLS
+        vartype = [("cate",2),"cont","int"]     
+        sm = KPLS(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=4)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+
     def test_kplsk(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -319,6 +465,109 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
+
+
+    def test_kplsk_mixed(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KPLSK
+
+        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+    
+        vartype = ["int"]     
+        sm = KPLSK(theta0=[1e-2], vartype=vartype)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
+        plt.show()
+      
+
+
+    def test_kpls_mixed2(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLSK
+        vartype = [("cate",2)]     
+        sm = KPLSK(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
+
+    def test_kpls_mixed3(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLSK
+        vartype = ["cont","int"]     
+        sm = KPLSK(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
+       
+    def test_kpls_mixed4(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLSK
+        vartype = [("cate",2),"cont","int"]     
+        sm = KPLSK(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=4)
+
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+
 
     def test_gekpls(self):
         import numpy as np
