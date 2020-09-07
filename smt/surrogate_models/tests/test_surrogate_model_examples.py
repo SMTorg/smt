@@ -240,7 +240,38 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
+        
+        
+    def test_krg_mixed2(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.problems import Sphere
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KRG
+        vartype = [("cate",2)]     
+        sm = KRG(vartype=vartype, print_prediction=False)
+        fun = Sphere(ndim=2)
 
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xt = sampling(20)
+        xt = sm._project_values(xt)
+        yt = fun(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        X = np.arange(fun.xlimits[0, 0], fun.xlimits[0, 1], 0.25)
+        Y = np.arange(fun.xlimits[1, 0], fun.xlimits[1, 1], 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.zeros((X.shape[0], X.shape[1]))
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = sm.predict_values(
+                    np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
+                )
+
+       
+        
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt
