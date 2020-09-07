@@ -208,7 +208,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
     
-    def test_krg_mixed_1D(self):
+    def test_krg_mixed(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
