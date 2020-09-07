@@ -90,7 +90,7 @@ class SurrogateModel(object):
             "print_solver", True, types=bool, desc="Whether to print solver information"
         )
         declare(
-            "vartype", None, desc="For mixed integer : variables types"
+            "vartype", types=list , desc="For mixed integer : variables types between continuous: \"cont\", integer: \"int\", and categorial with n levels: (\"cate\",n) "
         )
 
         self._initialize()
@@ -265,7 +265,6 @@ class SurrogateModel(object):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        self.vartype = self.options["vartype"]
         x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
@@ -369,7 +368,6 @@ class SurrogateModel(object):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
-        self.vartype = self.options["vartype"]
         check_support(self, "variances")
         check_nx(self.nx, x)
         n = x.shape[0]

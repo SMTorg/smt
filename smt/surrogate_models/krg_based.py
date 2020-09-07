@@ -405,8 +405,7 @@ class KrgBased(SurrogateModel):
         ---------
         x : np.ndarray [n_evals, dim]
             Continuous evaluation point input variable values 
-        vartype : list
-            The type of the each dimension (cont, int or cate). 
+      
         Returns
         -------
         y : np.ndarray
@@ -414,14 +413,11 @@ class KrgBased(SurrogateModel):
         """
         if self.options["vartype"] is None:
             return x
-
-        if type(self.options["vartype"]) is list:
+        
+        if type(self.options["vartype"]) is list and not hasattr(self, 'vartype'):
             dim = np.shape(x)[1]
-            vartype = self._transform_vartype(dim)
-            self.options["vartype"] = vartype
-
-        vartype = self.options["vartype"]
-
+            self.vartype = self._transform_vartype(dim)      
+        vartype = self.vartype 
         for j in range(0, np.shape(x)[0]):
             i = 0
             while i < np.shape(x[j])[0]:
@@ -455,10 +451,9 @@ class KrgBased(SurrogateModel):
         --------
         Arguments
         ---------
-        vartype : list
-            The type of the each dimension  (cont, int or cate).
         dim : int
             The number of dimension
+            
         Returns
         -------
         vartype : np.ndarray
@@ -501,8 +496,6 @@ class KrgBased(SurrogateModel):
         --------
         Arguments
         ---------
-        vartype : list
-        The type of the each original dimension  (cont, int or cate).
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
     
@@ -516,9 +509,12 @@ class KrgBased(SurrogateModel):
         if (self.options["vartype"] is None ):
             return xlimits
         
-        self.options["vartype"]= self._transform_vartype(self.options["vartype"])
         xlim=xlimits
-        vt=self.options["vartype"]
+        if type(self.options["vartype"]) is list and not hasattr(self, 'vartype'):
+            dim = np.shape(x)[1]
+            self.vartype = self._transform_vartype(dim)
+        vt = self.vartype 
+        
         
         #continuous or integer => no cate
         if (isinstance(xlim[0][0], np.float64)) :
@@ -580,6 +576,7 @@ class KrgBased(SurrogateModel):
         Continuous evaluation point input variable values 
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
+        
         Returns
         -------
         x_labeled : np.ndarray [n_evals, dim]
@@ -590,10 +587,13 @@ class KrgBased(SurrogateModel):
         if (self.options["vartype"] is None ):
             return x
         
+     
+        if type(self.options["vartype"]) is list and not hasattr(self, 'vartype'):
+            dim = np.shape(x)[1]
+            self.vartype = self._transform_vartype(dim)
+        vt = self.vartype 
         
-        self.options["vartype"]= self._transform_vartype(self.options["vartype"])
         xlim=xlimits
-        vt=self.options["vartype"]
         x2=np.copy(x)
         nbpt=(np.shape(x)[0])
            
