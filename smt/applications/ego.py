@@ -122,47 +122,17 @@ class EGO(SurrogateBasedApplication):
         [ndoe, nx]: coord-x initial doe
         [ndoe, 1]: coord-y initial doe
         """
-        # Set the model
-        self.gpr = self.options["surrogate"]
+        x_data, y_data = self._setup_optimizer(fun)
 
-        # Set the continuous bounds of the optimization problem
-        self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
-
-        # Build initial DOE
-        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
-        self._evaluator = self.options["evaluator"]
-        tunnel = self.options["tunnel"]
-        xdoe = self.options["xdoe"]
-
-        if xdoe is None:
-            self.log("Build initial DOE with LHS")
-            n_doe = self.options["n_doe"]
-            x_doe = self._sampling(n_doe)
-
-        else:
-            self.log("Initial DOE given")
-            x_doe = np.atleast_2d(xdoe)
-
-        x_doe = self.gpr._project_values(x_doe)
-        ydoe = self.options["ydoe"]
-        if ydoe is None:
-            y_doe = self._evaluator.run(
-                fun, self.gpr._assign_labels(x_doe, self.options["xlimits"])
-            )
-        else:  # to save time if y_doe is already given to EGO
-            y_doe = ydoe
-
-        # to save the initial doe
-        x_data = x_doe
-        y_data = y_doe
-        ########
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
+            
             # Virtual enrichement loop
             for p in range(n_parallel):
-                x_et_k, success = self._find_points(x_data, y_data, tunnel)
+               # find next best x-coord point to evaluate
+                x_et_k, success = self._find_best_point(x_data, y_data, self.options["tunnel"])
                 if not success:
                     self.log(
                         "Internal optimization failed at EGO iter = {}.{}".format(k, p)
@@ -174,8 +144,8 @@ class EGO(SurrogateBasedApplication):
                             k, p
                         )
                     )
-                # Set temporaly the y_data to the one predicted by the kringin metamodel
-                y_et_k = self.set_virtual_point(np.atleast_2d(x_et_k), y_data)
+                # Set temporaly the y-coord point based on the kriging prediction
+                y_et_k = self._get_virtual_point(np.atleast_2d(x_et_k), y_data)
 
                 # Update y_data with predicted value
                 y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
@@ -193,7 +163,7 @@ class EGO(SurrogateBasedApplication):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe
+        return x_opt, y_opt, ind_best, x_data, y_data
 
     def log(self, msg):
         if self.options["verbose"]:
@@ -239,17 +209,70 @@ class EGO(SurrogateBasedApplication):
         res = pred - 3.0 * np.sqrt(var)
         return res
 
-    def _find_points(self, x_data=None, y_data=None, tunnel=0):
+    def _setup_optimizer(self, fun):
+        """
+        Instanciate internal surrogate used for optimization 
+        and setup function evaluator wrt options
+
+        Parameters
+        ----------
+
+        fun: function to optimize: ndarray[n, nx] or ndarray[n] -> ndarray[n, 1]
+
+        Returns
+        -------
+
+        ndarray: initial coord-x doe
+        ndarray: initial coord-y doe = fun(xdoe)
+
+        """
+        # Set the model
+        self.gpr = self.options["surrogate"]
+
+        # Set the continuous bounds of the optimization problem
+        self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
+
+        # Build initial DOE
+        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
+        self._evaluator = self.options["evaluator"]
+        tunnel = self.options["tunnel"]
+        xdoe = self.options["xdoe"] 
+        if xdoe is None:
+            self.log("Build initial DOE with LHS")
+            n_doe = self.options["n_doe"]
+            x_doe = self._sampling(n_doe)
+
+        else:
+            self.log("Initial DOE given")
+            x_doe = np.atleast_2d(xdoe)
+
+        x_doe = self.gpr._project_values(x_doe)
+        ydoe = self.options["ydoe"]
+        if ydoe is None:
+            y_doe = self._evaluator.run(
+                fun, self.gpr._assign_labels(x_doe, self.options["xlimits"])
+            )
+        else:  # to save time if y_doe is already given to EGO
+            y_doe = ydoe
+
+        return x_doe, y_doe
+
+    def _find_best_point(self, x_data=None, y_data=None, tunnel=0):
         """
         Function that analyse a set of x_data and y_data and give back the 
         more interesting point to evaluates according to the selected criterion
         
-        Inputs: 
-            - x_data and y_data
-        Outputs:
-            - x_et_k : the points to evaluate
-            - success bool : boolean succes flag to interupte
-                the main loop if need
+        Parameters
+        ----------
+
+        x_data: ndarray(n_points, nx)
+        y_data: ndarray(n_points, 1)
+        
+        Returns
+        -------
+
+        ndarray(nx, 1): the next best point to evaluate
+        boolean: success flag
         
         """
         self.gpr.set_training_values(x_data, y_data)
@@ -302,7 +325,22 @@ class EGO(SurrogateBasedApplication):
         self.gpr._project_values(x_et_k)
         return x_et_k, True
 
-    def set_virtual_point(self, x, y_data):
+    def _get_virtual_point(self, x, y_data):
+        """
+        Depending on the qEI attribute return a predicted value at given point x
+
+        Parameters
+        ----------
+
+        x: ndarray(1, 1) the x-coord point where to forecast the y-coord virtual point
+        y_data: current y evaluation list only used when qEI is CLmin
+
+        Returns
+        -------
+
+        ndarray(1, 1): the so-called virtual y-coord point
+
+        """
         qEI = self.options["qEI"]
 
         if qEI == "CLmin":

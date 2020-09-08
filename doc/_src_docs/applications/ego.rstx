@@ -17,7 +17,7 @@ criterion) that determines what the next query point should be.
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
 of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
-parameter that controlled the trade-off between 'more global' and 'more local' optimization, in 
+parameter that controlled the trade-off between ‘more global’ and ‘more local’ optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
@@ -193,10 +193,10 @@ Usage with parallel options
 
 .. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_parallel_example , 80
 
+
 Usage with mixed variable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_example_mixed, 80
-
 
 
 Options

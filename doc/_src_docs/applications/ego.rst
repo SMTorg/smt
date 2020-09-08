@@ -17,7 +17,7 @@ criterion) that determines what the next query point should be.
 One of the earliest bodies of work on Bayesian optimisation that we are aware 
 of are [2]_ and [3]_. Kushner used Wiener processes for one-dimensional problems.
 Kushner’s decision model was based on maximizing the probability of improvement, and included a 
-parameter that controlled the trade-off between 'more global' and 'more local' optimization, in 
+parameter that controlled the trade-off between ‘more global’ and ‘more local’ optimization, in 
 the same spirit as the Exploration/Exploitation trade-off.
 
 Meanwhile, in the former Soviet Union, Mockus and colleagues developed a multidimensional 
@@ -217,9 +217,7 @@ Usage
   
   ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
   
-  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-      fun=function_test_1d
-  )
+  x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
   print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -274,7 +272,7 @@ Usage
   
 ::
 
-  Minimum in x=18.8 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -351,9 +349,7 @@ Usage with parallel options
       evaluator=ParallelEvaluator(),
   )
   
-  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-      fun=function_test_1d
-  )
+  x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
   print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -375,7 +371,7 @@ Usage with parallel options
           y_gp_plot_var = ego.gpr.predict_variances(x_plot)
   
           x_data_sub = np.append(x_data_sub, x_data[k + p])
-          y_KB = ego.set_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
+          y_KB = ego._get_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
   
           y_data_sub = np.append(y_data_sub, y_KB)
   
@@ -434,6 +430,7 @@ Usage with parallel options
   :scale: 80 %
   :align: center
 
+
 Usage with mixed variable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
@@ -453,56 +450,67 @@ Usage with mixed variable
   
   def function_test_cate_mixed(X):
       import numpy as np
-      #float
+  
+      # float
       x1 = X[:, 0].astype(float)
       #  cate 1
-      c1= X[:, 1]
-      x2 = (c1=="1")
-      x3 = (c1=="2")
-      x4 = (c1=="3")
+      c1 = X[:, 1]
+      x2 = c1 == "1"
+      x3 = c1 == "2"
+      x4 = c1 == "3"
       #  cate 2
-      c2= X[:,2]
-      x5 = (c2=="4")
-      x6 = (c2=="5")
-      #int
+      c2 = X[:, 2]
+      x5 = c2 == "4"
+      x6 = c2 == "5"
+      # int
       i = X[:, 3].astype(float)
-      
-      y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1+i
+  
+      y = (
+          (x2 + 2 * x3 + 3 * x4) * x5 * x1
+          + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
+          + i
+      )
       return y
   
   n_iter = 15
-  vartype = ["cont", ("cate", 3), ("cate", 2),"int"]
-  xlimits = np.array(
-      [[-5, 5], ["1","2","3"],["4","5"],[0,2]]
-  )
+  vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+  xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KB"
   sm = KRG(print_global=False, vartype=vartype)
   
-  n_doe=6
-  samp=LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
-  xdoe=samp(n_doe)
-  xdoe=sm._project_values(xdoe)
-  ydoe = function_test_cate_mixed(sm._assign_labels(xdoe,xlimits))
+  n_doe = 6
+  samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
+  xdoe = samp(n_doe)
+  xdoe = sm._project_values(xdoe)
+  ydoe = function_test_cate_mixed(sm._assign_labels(xdoe, xlimits))
   
   ego = EGO(
-      n_iter=n_iter, criterion=criterion, xdoe=xdoe,ydoe=ydoe, xlimits=xlimits, surrogate=sm,qEI=qEI
+      n_iter=n_iter,
+      criterion=criterion,
+      xdoe=xdoe,
+      ydoe=ydoe,
+      xlimits=xlimits,
+      surrogate=sm,
+      qEI=qEI,
   )
   
-  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(fun=function_test_cate_mixed)
+  x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
+      fun=function_test_cate_mixed
+  )
   
-  mini=np.zeros(n_iter)
+  mini = np.zeros(n_iter)
   for k in range(n_iter):
-          mini[k]=np.log(np.abs(np.min(y_data[0:k+5])+15))
-  x_plot = np.linspace(1,n_iter+0.5, n_iter)
+      mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+  x_plot = np.linspace(1, n_iter + 0.5, n_iter)
   
-  u= max(np.floor(max(mini))+1,-100)
-  l= max(np.floor(min(mini))-.2,-10)
-  fig= plt.figure()
-  axes = fig.add_axes([0.1,0.1,0.8,0.8])
-  epm, = axes.plot(x_plot,mini,color='r')
-  axes.set_ylim([l,u])      
-  plt.title("minimum convergence plot" , loc='center')
+  u = max(np.floor(max(mini)) + 1, -100)
+  l = max(np.floor(min(mini)) - 0.2, -10)
+  fig = plt.figure()
+  axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+  (epm,) = axes.plot(x_plot, mini, color="r")
+  axes.set_ylim([l, u])
+  plt.title("minimum convergence plot", loc="center")
   plt.xlabel("number of iterations")
   plt.ylabel("log of the difference w.r.t the best")
   plt.show()
@@ -510,7 +518,6 @@ Usage with mixed variable
 .. figure:: ego_TestEGO_run_ego_example_mixed.png
   :scale: 80 %
   :align: center
-
 
 
 Options
@@ -562,7 +569,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001D9AE743898>
+     -  <smt.applications.ego.Evaluator object at 0x0000020237B773C8>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -597,7 +604,7 @@ Options
      -  ['int']
      -  1 to enable tunneling in ei
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001D9AEFF7978>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000020237EF39E8>
      -  None
      -  None
      -  surrogate model to use

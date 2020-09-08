@@ -52,7 +52,6 @@ class TestEGO(SMTestCase):
         y = (x - 3.5) * np.sin((x - 3.5) / (np.pi))
         return y.reshape((-1, 1))
 
-    @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_evaluator(self):
         print("evaluator")
         x = [[1], [2], [3]]
@@ -70,13 +69,12 @@ class TestEGO(SMTestCase):
 
         ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
 
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
         print(x_opt, y_opt)
 
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
-    @unittest.skipIf(PYTHON_2, "ParallelEvaluator not implemented in Python 2")
     def test_function_test_1d_parallel(self):
         print("test_1D_para")
 
@@ -94,7 +92,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             evaluator=ParallelEvaluator(),
         )
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
@@ -109,8 +107,33 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
+        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
+        self.assertAlmostEqual(0.0, float(y_opt), delta=1)
+
+
+    def test_rosenbrock_2D_parallel(self):
+        n_iter = 15
+        n_parallel = 5
+        fun = Rosenbrock(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        qEI = "KB"
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            n_parallel=n_parallel,
+            qEI=qEI,
+            evaluator=ParallelEvaluator(),
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
+        print("Rosenbrock: ", x_opt)
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
@@ -124,7 +147,7 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
@@ -138,9 +161,10 @@ class TestEGO(SMTestCase):
         print("test_branin_para")
         n_iter = 10
         fun = Branin(ndim=2)
-        n_parallel = 5
+        n_parallel = 5        
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        qEI = "KB"
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -151,7 +175,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
         )
 
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         print(x_opt)
@@ -162,6 +186,37 @@ class TestEGO(SMTestCase):
         )
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+
+    def test_branin_2D_mixed_parallel(self):
+        n_parallel = 5
+        n_iter = 20
+        fun = Branin(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        qEI="KB"
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        s = KRG(print_global=False, vartype=["int", "cont"])
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            n_parallel=n_parallel,
+            qEI=qEI,
+            evaluator=ParallelEvaluator(),
+            surrogate=s
+        )
+
+
+        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
+        # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
+        self.assertTrue(
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+            or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
+            or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
+        )
+        self.assertAlmostEqual(0.494, float(y_opt), delta=1)
+
 
     def test_branin_2D_mixed(self):
         print("test_branin_mixed")
@@ -177,7 +232,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s,
         )
 
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
@@ -216,7 +271,7 @@ class TestEGO(SMTestCase):
         ego = EGO(
             n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s
         )
-        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=1)
 
@@ -234,12 +289,12 @@ class TestEGO(SMTestCase):
         ego = EGO(
             xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits
         )
-        _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
+        _, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
-    def test_find_points(self):
-        print("test_points")
+
+    def test_find_best_point(self):
         fun = TestEGO.function_test_1d
         xlimits = np.array([[0.0, 25.0]])
         xdoe = FullFactorial(xlimits=xlimits)(3)
@@ -253,9 +308,29 @@ class TestEGO(SMTestCase):
             n_start=30,
             tunnel=0,
         )
-        _, _, _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_points(xdoe, ydoe, tunnel=0)
+        _, _, _, _, _ = ego.optimize(fun=fun)
+        x, _ = ego._find_best_point(xdoe, ydoe, tunnel=0)
         self.assertAlmostEqual(6.5, float(x), delta=1)
+
+    def test_qei_criterion_default(self):
+        fun = TestEGO.function_test_1d
+        xlimits = np.array([[0.0, 25.0]])
+        xdoe = FullFactorial(xlimits=xlimits)(3)
+        ydoe = fun(xdoe)
+        ego = EGO(
+            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="SBO", xlimits=xlimits, n_start=30
+        )
+        ego._setup_optimizer(fun)
+        ego.gpr.set_training_values(xdoe, ydoe)
+        ego.gpr.train()
+        xtest = np.array([[10.0]])
+        # test that default virtual point should be equal to 3sigma lower bound kriging interval
+        expected = float(
+            ego.gpr.predict_values(xtest)
+            - 3 * np.sqrt(ego.gpr.predict_variances(xtest))
+        )
+        actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
+        self.assertAlmostEqual(expected, actual)
 
     @staticmethod
     def run_ego_example():
@@ -288,9 +363,7 @@ class TestEGO(SMTestCase):
 
         ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
 
-        x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-            fun=function_test_1d
-        )
+        x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
         print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
 
         x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -405,7 +478,7 @@ class TestEGO(SMTestCase):
             qEI=qEI,
         )
 
-        x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
+        x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
             fun=function_test_cate_mixed
         )
 
@@ -493,9 +566,7 @@ class TestEGO(SMTestCase):
             evaluator=ParallelEvaluator(),
         )
 
-        x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-            fun=function_test_1d
-        )
+        x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
         print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
 
         x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -517,7 +588,7 @@ class TestEGO(SMTestCase):
                 y_gp_plot_var = ego.gpr.predict_variances(x_plot)
 
                 x_data_sub = np.append(x_data_sub, x_data[k + p])
-                y_KB = ego.set_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
+                y_KB = ego._get_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
 
                 y_data_sub = np.append(y_data_sub, y_KB)
 
