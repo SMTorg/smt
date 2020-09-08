@@ -17,6 +17,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
 from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_rms_error
+from smt.surrogate_models import RMTB, RMTC
 
 
 class TestMOE(SMTestCase):
@@ -173,6 +174,30 @@ class TestMOE(SMTestCase):
         moe = MOE(derivatives_support=True)
         expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTB", "RMTC"]
         self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+
+    def test_fix_moe_rmts_bug(self):
+        def myfunc(x):
+            return -0.5 * (
+                np.sin(40 * (x - 0.85) ** 4) * np.cos(2.5 * (x - 0.95))
+                + 0.5 * (x - 0.9)
+                + 1
+            )
+
+        nt1 = 11
+        nt2 = 15
+        ne = 101
+
+        # Training data
+        X1 = np.linspace(0.001, 0.3, nt1).reshape(nt1, 1)
+        X1 = np.concatenate((X1, np.array([[0.35]])), axis=0)
+        X2 = np.linspace(0.4, 1.0, nt2).reshape(nt2, 1)
+        xt = np.concatenate((X1, X2), axis=0)
+        yt = myfunc(xt)
+
+        moe = MOE(smooth_recombination=True, n_clusters=2, heaviside_optimization=True)
+        moe._surrogate_type = {"RMTB": RMTB, "RMTC": RMTC}
+        moe.set_training_values(xt, yt)
+        moe.train()
 
     @staticmethod
     def run_moe_example():
