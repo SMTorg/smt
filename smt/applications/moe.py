@@ -407,14 +407,14 @@ class MOE(SurrogateBasedApplication):
 
         for name, sm_class in six.iteritems(self.expert_types):
             kwargs = {}
-            # if name in ['KRG', 'KPLS', 'KPLSK']:
-            #     nb = dim if name is 'KRG' else 1
-            #     kwargs = {'theta0': nb*[1e-2]}  # default parameterization for Kriging() based surrogates
             if name in ["RMTB", "RMTC"]:
+                # Note: RMTS checks for xlimits,
+                # we take limits on all x (not just the trained_values ones) as
+                # the surrogate is finally re-trained on the whole x set.
                 xlimits = np.zeros((dim, 2))
                 for i in range(dim):
-                    xlimits[i][0] = np.amin(training_values[:, i])
-                    xlimits[i][1] = np.amax(training_values[:, i])
+                    xlimits[i][0] = np.amin(self.x[:, i])
+                    xlimits[i][1] = np.amax(self.x[:, i])
                 kwargs = {"xlimits": xlimits}
 
             sm = sm_class(**kwargs)
