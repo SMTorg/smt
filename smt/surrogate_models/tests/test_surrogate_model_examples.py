@@ -207,7 +207,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-    
+
     def test_krg_mixed(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -216,16 +216,16 @@ class Test(unittest.TestCase):
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
-        
+
         ##    Vartype example
-    
+
         # vartype =["cont","int",("cate",3),("cate",2)]
-        #"cont" means x1 continuous
-        #"int" means x2 integer
-        #"(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
-        #"(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
-        
-        vartype = ["int"]     
+        # "cont" means x1 continuous
+        # "int" means x2 integer
+        # "(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
+        # "(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
+
+        vartype = ["int"]
         sm = KRG(theta0=[1e-2], vartype=vartype)
         sm.set_training_values(xt, yt)
         sm.train()

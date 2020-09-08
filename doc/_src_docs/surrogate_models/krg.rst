@@ -32,7 +32,7 @@ Kriging with mixed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The goal is to be able to build a model for mixed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
@@ -40,7 +40,9 @@ For categorical, we add as many continuous dimensions with bounds [0,1] as possi
 
 More details avalaible here : 
 
-[2] E. C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
+.. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
+
+.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35. 
 
 Implementation Note
 -------------------
@@ -91,7 +93,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039978
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -99,9 +101,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009995
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000100
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg.png
@@ -161,7 +163,7 @@ Usage with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0039988
+     Training - done. Time (sec):  0.0020316
   ___________________________________________________________________________
      
    Evaluation
@@ -169,9 +171,9 @@ Usage with mixed variables
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009992
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000100
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg_mixed.png
@@ -216,11 +218,6 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
-  *  -  vartype
-     -  None
-     -  None
-     -  None
-     -  For mixed integer : variables types
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -241,3 +238,8 @@ Options
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 

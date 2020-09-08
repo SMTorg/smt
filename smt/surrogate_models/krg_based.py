@@ -64,6 +64,12 @@ class KrgBased(SurrogateModel):
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
+        declare(
+            "vartype",
+            types=list,
+            desc='For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) ',
+        )
+
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -405,8 +411,7 @@ class KrgBased(SurrogateModel):
         ---------
         x : np.ndarray [n_evals, dim]
             Continuous evaluation point input variable values 
-        vartype : list
-            The type of the each dimension (cont, int or cate). 
+      
         Returns
         -------
         y : np.ndarray
@@ -415,13 +420,9 @@ class KrgBased(SurrogateModel):
         if self.options["vartype"] is None:
             return x
 
-        if type(self.options["vartype"]) is list:
-            dim = np.shape(x)[1]
-            vartype = self._transform_vartype(dim)
-            self.options["vartype"] = vartype
-
-        vartype = self.options["vartype"]
-
+        if type(self.options["vartype"]) is list and not hasattr(self, "vartype"):
+            self.vartype = self._transform_vartype()
+        vartype = self.vartype
         for j in range(0, np.shape(x)[0]):
             i = 0
             while i < np.shape(x[j])[0]:
@@ -445,7 +446,7 @@ class KrgBased(SurrogateModel):
                     ##Categorial : The biggest level is selected.
         return x
 
-    def _transform_vartype(self, dim):
+    def _transform_vartype(self):
         """
         This function unfold vartype list to a coded array with
         0 for continuous variables, 1 for integers and n>1 for each 
@@ -455,10 +456,9 @@ class KrgBased(SurrogateModel):
         --------
         Arguments
         ---------
-        vartype : list
-            The type of the each dimension  (cont, int or cate).
         dim : int
             The number of dimension
+            
         Returns
         -------
         vartype : np.ndarray
@@ -466,7 +466,7 @@ class KrgBased(SurrogateModel):
         """
         vartype = self.options["vartype"]
         if vartype is None:
-            vartype = np.zeros(dim)
+            return None
         if isinstance(vartype, list):
             temp = []
             ind_cate = 2
@@ -486,13 +486,12 @@ class KrgBased(SurrogateModel):
                 else:
                     raise Exception("type_error")
             temp = np.array(temp)
-            vartype = temp
+            self.vartype = temp
         ## Assign 0 to continuous variables, 1 for int and n>1 for each
         # categorical variable.
+        return self.vartype
 
-        return vartype
-
-    def _relax_limits(self, xlimits):
+    def _relax_limits(self, xlimits, dim=0):
         """
         This function unfold xlimits to add contiuous dimensions
         Each level correspond to a new continuous dimension in [0,1].
@@ -501,10 +500,11 @@ class KrgBased(SurrogateModel):
         --------
         Arguments
         ---------
-        vartype : list
-        The type of the each original dimension  (cont, int or cate).
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
+        dim : int
+        The number of dimension
+    
         Returns
         -------
         xlimits : np.ndarray
@@ -515,16 +515,15 @@ class KrgBased(SurrogateModel):
         if self.options["vartype"] is None:
             return xlimits
 
-        self.options["vartype"] = self._transform_vartype(self.options["vartype"])
         xlim = xlimits
-        vt = self.options["vartype"]
-
-        # continuous or integer => no cate
+        self.vartype = self._transform_vartype()
+        vt = self.vartype
+        # continuous or integer variables only (float) => no categorical one
         if isinstance(xlim[0][0], np.float64):
             for ty in vt:
                 if not (ty == 0 or ty == 1):
                     raise Exception("xlimits used an incorrect type")
-        # cate not found => error
+        # Not a float (string or list) => must have a categorical variable
         elif isinstance(xlim[0][0], np.str_) or isinstance(xlim[0], list):
             rais = 1
             xlim = np.zeros((np.size(vt), 2))
@@ -551,7 +550,7 @@ class KrgBased(SurrogateModel):
                         raise Exception("missing labels in xlimits")
 
                 else:
-                    # if not cate : recopy bounds
+                    # if it is not a categorical variable : recopy bounds
                     no_cate = 0
                     while no_cate == 0:
                         try:
@@ -579,6 +578,7 @@ class KrgBased(SurrogateModel):
         Continuous evaluation point input variable values 
         xlimits : np.ndarray
         The bounds of the each original dimension and their labels .
+        
         Returns
         -------
         x_labeled : np.ndarray [n_evals, dim]
@@ -589,9 +589,11 @@ class KrgBased(SurrogateModel):
         if self.options["vartype"] is None:
             return x
 
-        self.options["vartype"] = self._transform_vartype(self.options["vartype"])
+        if type(self.options["vartype"]) is list and not hasattr(self, "vartype"):
+            self.vartype = self._transform_vartype()
+        vt = self.vartype
+
         xlim = xlimits
-        vt = self.options["vartype"]
         x2 = np.copy(x)
         nbpt = np.shape(x)[0]
 
@@ -630,7 +632,6 @@ class KrgBased(SurrogateModel):
                                 j = j + 1
 
                         cpt = cpt + 1
-
         return x2
 
     def _optimize_hyperparam(self, D):
