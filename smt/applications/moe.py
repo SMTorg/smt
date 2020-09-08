@@ -409,8 +409,8 @@ class MOE(SurrogateBasedApplication):
             kwargs = {}
             if name in ["RMTB", "RMTC"]:
                 # Note: RMTS checks for xlimits,
-                # we take limits on the all x (not just the trained_values) as
-                # the surrogate is finally re-trained on the whole x set set
+                # we take limits on all x (not just the trained_values ones) as
+                # the surrogate is finally re-trained on the whole x set.
                 xlimits = np.zeros((dim, 2))
                 for i in range(dim):
                     xlimits[i][0] = np.amin(self.x[:, i])
