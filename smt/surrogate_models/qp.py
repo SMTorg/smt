@@ -120,7 +120,9 @@ class QP(SurrogateModel):
 
         linear_coef = self.coef[1 + kx, :]
         quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
-        cross_coef = np.zeros(self.ny)
+        neval = np.size(quad_coef, 0)
+        cross_coef = np.zeros(neval)
+
         for i in range(dim):
             if i > kx:
                 k = int(
