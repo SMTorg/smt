@@ -60,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0099998
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -135,6 +135,11 @@ Options
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 
   *  -  n_comp
      -  1
      -  None

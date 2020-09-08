@@ -27,6 +27,28 @@ More details about the kriging approach could be found in [1]_.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
 
+
+Kriging with mixed variables 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The goal is to be able to build a model for mixed variables. 
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+
+To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
+For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
+For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
+
+More details avalaible here : 
+
+.. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
+
+.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35. 
+
+Implementation Note
+-------------------
+
+The mixed variables are avalaible for all kriging models like KPLS or KPLSK but not to use with gradient.
+
 Usage
 -----
 
@@ -88,6 +110,76 @@ Usage
   :scale: 80 %
   :align: center
 
+Usage with mixed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG
+  
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  ##    Vartype example
+  
+  # vartype =["cont","int",("cate",3),("cate",2)]
+  #"cont" means x1 continuous
+  #"int" means x2 integer
+  #"(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
+  #"(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
+  
+  vartype = ["int"]     
+  sm = KRG(theta0=[1e-2], vartype=vartype)
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+                                    Kriging
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 5
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.0020316
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: krg_Test_test_krg_mixed.png
+  :scale: 80 %
+  :align: center
+
 Options
 -------
 
@@ -146,3 +238,8 @@ Options
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  vartype
+     -  None
+     -  None
+     -  ['list']
+     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 

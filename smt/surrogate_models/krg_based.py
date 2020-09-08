@@ -8,6 +8,7 @@ This package is distributed under New BSD license.
 TODO:
 - fail_iteration and nb_iter_max to remove from options
 - define outputs['sol'] = self.sol
+
 """
 
 from __future__ import division
@@ -24,8 +25,8 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
 from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
-    abs_exp,
     squar_exp,
+    abs_exp,
     standardization,
     l1_cross_distances,
 )
@@ -63,6 +64,12 @@ class KrgBased(SurrogateModel):
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
+        declare(
+            "vartype",
+            types=list,
+            desc='For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) ',
+        )
+
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -89,15 +96,21 @@ class KrgBased(SurrogateModel):
             X, y = self._compute_pls(X.copy(), y.copy())
 
         # Center and scale X and y
-        self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, self.y_std = standardization(
-            X, y
-        )
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_mean,
+            self.y_mean,
+            self.X_std,
+            self.y_std,
+        ) = standardization(X, y)
 
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
-        if np.min(np.sum(D, axis=1)) == 0.0:
+        ###
+        if np.min(np.sum(D, axis=1)) == 0.0 and self.options["vartype"] is None:
             raise Exception("Multiple input features cannot have the same value.")
-
+        ####
         # Regression matrix and parameters
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
         n_samples_F = self.F.shape[0]
@@ -108,9 +121,11 @@ class KrgBased(SurrogateModel):
         self._check_F(n_samples_F, p)
 
         # Optimization
-        self.optimal_rlf_value, self.optimal_par, self.optimal_theta = self._optimize_hyperparam(
-            D
-        )
+        (
+            self.optimal_rlf_value,
+            self.optimal_par,
+            self.optimal_theta,
+        ) = self._optimize_hyperparam(D)
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
@@ -272,6 +287,9 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
+        if not (self.options["vartype"] is None):
+            x = self._project_values(x)
+
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -352,6 +370,9 @@ class KrgBased(SurrogateModel):
     def _predict_variances(self, x):
 
         # Initialization
+        if not (self.options["vartype"] is None):
+            x = self._project_values(x)
+
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -380,6 +401,238 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
+
+    def _project_values(self, x):
+        """
+        This function project continuously relaxed values 
+        to their closer assessable values.
+        --------
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Continuous evaluation point input variable values 
+      
+        Returns
+        -------
+        y : np.ndarray
+            Feasible evaluation point input variable values.
+        """
+        if self.options["vartype"] is None:
+            return x
+
+        if type(self.options["vartype"]) is list and not hasattr(self, "vartype"):
+            self.vartype = self._transform_vartype()
+        vartype = self.vartype
+        for j in range(0, np.shape(x)[0]):
+            i = 0
+            while i < np.shape(x[j])[0]:
+                if i < np.shape(x[j])[0] and vartype[i] == 0:
+                    i = i + 1
+                    ##Continuous : Do nothing
+                elif i < np.shape(x[j])[0] and vartype[i] == 1:
+                    x[j][i] = np.round(x[j][i])
+                    i = i + 1
+                    ##Integer : Round
+                elif i < np.shape(x[j])[0] and vartype[i] > 1:
+                    k = []
+                    i0 = i
+                    ind = vartype[i]
+                    while (i < np.shape(x[j])[0]) and (vartype[i] == ind):
+                        k.append(x[j][i])
+                        i = i + 1
+                    y = np.zeros(np.shape(k))
+                    y[np.argmax(k)] = 1
+                    x[j][i0:i] = y
+                    ##Categorial : The biggest level is selected.
+        return x
+
+    def _transform_vartype(self):
+        """
+        This function unfold vartype list to a coded array with
+        0 for continuous variables, 1 for integers and n>1 for each 
+        level of the n-th categorical variable.
+        Each level correspond to a new continuous dimension.
+        
+        --------
+        Arguments
+        ---------
+        dim : int
+            The number of dimension
+            
+        Returns
+        -------
+        vartype : np.ndarray
+            The type of the each dimension. 
+        """
+        vartype = self.options["vartype"]
+        if vartype is None:
+            return None
+        if isinstance(vartype, list):
+            temp = []
+            ind_cate = 2
+            for i in vartype:
+                if i == "cont":
+                    temp.append(0)
+                    ##new continuous dimension : append 0
+                elif i == "int":
+                    temp.append(1)
+                    ##new integer dimension : append 1
+                elif i[0] == "cate":
+                    for j in range(i[1]):
+                        temp.append(ind_cate)
+                    ##For each level
+                    ##new categorical dimension : append n
+                    ind_cate = ind_cate + 1
+                else:
+                    raise Exception("type_error")
+            temp = np.array(temp)
+            self.vartype = temp
+        ## Assign 0 to continuous variables, 1 for int and n>1 for each
+        # categorical variable.
+        return self.vartype
+
+    def _relax_limits(self, xlimits, dim=0):
+        """
+        This function unfold xlimits to add contiuous dimensions
+        Each level correspond to a new continuous dimension in [0,1].
+        Integer dimensions are relaxed continuously.
+        
+        --------
+        Arguments
+        ---------
+        xlimits : np.ndarray
+        The bounds of the each original dimension and their labels .
+        dim : int
+        The number of dimension
+    
+        Returns
+        -------
+        xlimits : np.ndarray
+        The bounds of the each original dimension  (cont, int or cate).
+        """
+
+        # Continuous optimization : do nothing
+        if self.options["vartype"] is None:
+            return xlimits
+
+        xlim = xlimits
+        self.vartype = self._transform_vartype()
+        vt = self.vartype
+        # continuous or integer variables only (float) => no categorical one
+        if isinstance(xlim[0][0], np.float64):
+            for ty in vt:
+                if not (ty == 0 or ty == 1):
+                    raise Exception("xlimits used an incorrect type")
+        # Not a float (string or list) => must have a categorical variable
+        elif isinstance(xlim[0][0], np.str_) or isinstance(xlim[0], list):
+            rais = 1
+            xlim = np.zeros((np.size(vt), 2))
+            ind_r = 0
+            ind_o = -1
+            tmp = 0
+            count = 0
+            for ty in vt:
+                # if cate : add dimensions
+                if not (ty == 0 or ty == 1):
+                    rais = 0
+                    xlim[ind_r] = [0, 1]
+
+                    # if (cate,n) we should have n labels
+                    if ty == tmp:
+                        count = count + 1
+                    else:
+                        ind_o = ind_o + 1
+                        tmp = ty
+                        count = 0
+                    try:
+                        err = xlimits[ind_o][count]
+                    except:
+                        raise Exception("missing labels in xlimits")
+
+                else:
+                    # if it is not a categorical variable : recopy bounds
+                    no_cate = 0
+                    while no_cate == 0:
+                        try:
+                            ind_o = ind_o + 1
+                            xlim[ind_r] = xlimits[ind_o]
+                            no_cate = 1
+                        except:
+                            if ind_o == np.size(vt) + 1:
+                                raise Exception("xlimits used an incorrect type")
+                ind_r = ind_r + 1
+            if rais == 1:
+                raise Exception("xlimits used an incorrect type")
+
+        return xlim
+
+    def _assign_labels(self, x, xlimits):
+        """
+        This function reduce inputs from relaxed space to original space by 
+        assigning labels to categorical variables.
+                
+        --------
+        Arguments
+        ---------
+         x : np.ndarray [n_evals, dim]
+        Continuous evaluation point input variable values 
+        xlimits : np.ndarray
+        The bounds of the each original dimension and their labels .
+        
+        Returns
+        -------
+        x_labeled : np.ndarray [n_evals, dim]
+        Evaluation point input variable values and corresponding labels
+        """
+
+        # Continuous optimization : do nothing
+        if self.options["vartype"] is None:
+            return x
+
+        if type(self.options["vartype"]) is list and not hasattr(self, "vartype"):
+            self.vartype = self._transform_vartype()
+        vt = self.vartype
+
+        xlim = xlimits
+        x2 = np.copy(x)
+        nbpt = np.shape(x)[0]
+
+        # continuous or integer => no cate
+        if isinstance(xlim[0][0], np.float64):
+            for ty in vt:
+                if not (ty == 0 or ty == 1):
+                    raise Exception("xlimits used an incorrect type")
+
+        # cate => to label
+        elif isinstance(xlim[0][0], np.str_) or isinstance(xlim[0], list):
+            dim_out_cate = int(max(0, np.max(vt) - 1))
+            dim_out = (vt == 0).sum() + (vt == 1).sum() + dim_out_cate
+            x2 = np.array(np.zeros((nbpt, dim_out)), dtype=np.str_)
+
+            for p in range(nbpt):
+                j = 0
+                tmp = 0
+                cpt = 0
+                for i in range(np.shape(x)[1]):
+                    if vt[i] == 0 or vt[i] == 1:
+                        x2[p][j] = x[p][i]
+                        j = j + 1
+                    else:
+                        tmp2 = vt[i]
+                        if tmp2 == tmp:
+                            tmp = tmp2
+                            if x[p][i] > 0.999:
+                                x2[p][j] = xlimits[j][cpt]
+                                j = j + 1
+                        else:
+                            tmp = tmp2
+                            cpt = 0
+                            if x[p][i] > 0.999:
+                                x2[p][j] = xlimits[j][cpt]
+                                j = j + 1
+
+                        cpt = cpt + 1
+        return x2
 
     def _optimize_hyperparam(self, D):
         """
@@ -421,7 +674,12 @@ class KrgBased(SurrogateModel):
             n_iter = 0
 
         for ii in range(n_iter, -1, -1):
-            best_optimal_theta, best_optimal_rlf_value, best_optimal_par, constraints = (
+            (
+                best_optimal_theta,
+                best_optimal_rlf_value,
+                best_optimal_par,
+                constraints,
+            ) = (
                 [],
                 [],
                 [],
@@ -476,7 +734,10 @@ class KrgBased(SurrogateModel):
                                         > best_optimal_rlf_value
                                     ):
                                         best_optimal_theta = self._thetaMemory
-                                        best_optimal_rlf_value, best_optimal_par = self._reduced_likelihood_function(
+                                        (
+                                            best_optimal_rlf_value,
+                                            best_optimal_par,
+                                        ) = self._reduced_likelihood_function(
                                             theta=best_optimal_theta
                                         )
                     else:
@@ -492,7 +753,10 @@ class KrgBased(SurrogateModel):
                             else:
                                 if self.best_iteration_fail > best_optimal_rlf_value:
                                     best_optimal_theta = self._thetaMemory.copy()
-                                    best_optimal_rlf_value, best_optimal_par = self._reduced_likelihood_function(
+                                    (
+                                        best_optimal_rlf_value,
+                                        best_optimal_par,
+                                    ) = self._reduced_likelihood_function(
                                         theta=best_optimal_theta
                                     )
                     k += 1
@@ -506,7 +770,10 @@ class KrgBased(SurrogateModel):
                         if self.best_iteration_fail is not None:
                             if self.best_iteration_fail > best_optimal_rlf_value:
                                 best_optimal_theta = self._thetaMemory
-                                best_optimal_rlf_value, best_optimal_par = self._reduced_likelihood_function(
+                                (
+                                    best_optimal_rlf_value,
+                                    best_optimal_par,
+                                ) = self._reduced_likelihood_function(
                                     theta=best_optimal_theta
                                 )
                     # Optimization fail
