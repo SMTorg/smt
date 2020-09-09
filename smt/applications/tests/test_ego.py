@@ -38,12 +38,8 @@ class ParallelEvaluator(Evaluator):
 
 
 class TestEGO(SMTestCase):
-    """
-    Test class
-    """
-
+    
     plot = None
-
     @staticmethod
     def function_test_1d(x):
         # function xsinx
@@ -53,7 +49,6 @@ class TestEGO(SMTestCase):
         return y.reshape((-1, 1))
 
     def test_evaluator(self):
-        print("evaluator")
         x = [[1], [2], [3]]
         expected = TestEGO.function_test_1d(x)
         actual = ParallelEvaluator().run(TestEGO.function_test_1d, x)
@@ -61,7 +56,6 @@ class TestEGO(SMTestCase):
             self.assertAlmostEqual(expected[i, 0], actual[i, 0])
 
     def test_function_test_1d(self):
-        print("test_1D")
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
 
@@ -76,8 +70,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
     def test_function_test_1d_parallel(self):
-        print("test_1D_para")
-
         n_iter = 3
         xlimits = np.array([[0.0, 25.0]])
 
@@ -98,7 +90,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
     def test_rosenbrock_2D(self):
-        print("test_rosen")
         n_iter = 30
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
@@ -138,7 +129,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_branin_2D(self):
-        print("test_branin")
         n_iter = 15
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
@@ -158,7 +148,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
     def test_branin_2D_parallel(self):
-        print("test_branin_para")
         n_iter = 10
         fun = Branin(ndim=2)
         n_parallel = 5        
@@ -219,8 +208,6 @@ class TestEGO(SMTestCase):
 
 
     def test_branin_2D_mixed(self):
-        print("test_branin_mixed")
-
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
@@ -243,7 +230,6 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def function_test_cate_mixed(X):
-
         x1 = X[:, 0].astype(float)
         #  cate 1
         c1 = X[:, 1]
@@ -259,7 +245,6 @@ class TestEGO(SMTestCase):
         return y
 
     def test_function_test_cate_mixed(self):
-        print("test_cate_mixed")
         n_iter = 15
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
         xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
@@ -269,15 +254,13 @@ class TestEGO(SMTestCase):
         s = KRG(print_global=False, vartype=v)
 
         ego = EGO(
-            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s
+            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s, enable_tunneling=True
         )
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=1)
 
     def test_ydoe_option(self):
-        print("test_y_doe")
-
         n_iter = 10
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
@@ -306,10 +289,10 @@ class TestEGO(SMTestCase):
             criterion="UCB",
             xlimits=xlimits,
             n_start=30,
-            tunnel=0,
+            enable_tunneling=False,
         )
         _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_best_point(xdoe, ydoe, tunnel=0)
+        x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     def test_qei_criterion_default(self):
@@ -416,7 +399,8 @@ class TestEGO(SMTestCase):
             )
         plt.show()
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
-
+  
+    @staticmethod
     def run_ego_example_mixed():
         import numpy as np
         import six
@@ -465,8 +449,8 @@ class TestEGO(SMTestCase):
         n_doe = 6
         samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
         xdoe = samp(n_doe)
-        xdoe = sm._project_values(xdoe)
-        ydoe = function_test_cate_mixed(sm._assign_labels(xdoe, xlimits))
+        xdoe = sm.project_values(xdoe)
+        ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
 
         ego = EGO(
             n_iter=n_iter,

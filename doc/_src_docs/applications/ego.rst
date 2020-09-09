@@ -159,9 +159,10 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
-Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. [8]_
-
-You can penalize already evaluated point in EI via tunneling (not recommanded for high dimensional problems).
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_.
+The expected improvement is continuously computed and optimized so that can lead to an infill point that will be projected, in the mixed case, to an already evaluated point.
+To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
+However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
 
 
 References
@@ -272,7 +273,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.8 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -482,8 +483,8 @@ Usage with mixed variable
   n_doe = 6
   samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
   xdoe = samp(n_doe)
-  xdoe = sm._project_values(xdoe)
-  ydoe = function_test_cate_mixed(sm._assign_labels(xdoe, xlimits))
+  xdoe = sm.project_values(xdoe)
+  ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
   
   ego = EGO(
       n_iter=n_iter,
@@ -569,7 +570,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000020237B773C8>
+     -  <smt.applications.ego.Evaluator object at 0x0000013973CA6D30>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -598,13 +599,13 @@ Options
      -  None
      -  ['bool']
      -  Print computation information
-  *  -  tunnel
-     -  0
+  *  -  enable_tunneling
+     -  False
      -  None
-     -  ['int']
-     -  1 to enable tunneling in ei
+     -  ['bool']
+     -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000020237EF39E8>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000013973CB06A0>
      -  None
-     -  None
-     -  surrogate model to use
+     -  ['KRG', 'KPLS', 'KPLSK']
+     -  SMT kriging-based surrogate model used internaly

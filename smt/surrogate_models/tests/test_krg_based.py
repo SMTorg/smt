@@ -42,7 +42,7 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
@@ -55,7 +55,7 @@ class TestKrgBased(unittest.TestCase):
                 Z[i, j] = sm.predict_values(
                     np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
                 )
-        x_out = sm._assign_labels(xt, fun.xlimits)
+        x_out = sm.assign_labels(xt, fun.xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][1]) - int(float(x_out[i, :][1]))) > 10e-8:
@@ -76,11 +76,11 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
-        x_out = sm._assign_labels(xt, xlimits)
+        x_out = sm.assign_labels(xt, xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
@@ -103,11 +103,11 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(xlimits, dim=5)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
-        x_out = sm._assign_labels(xt, xlimits)
+        x_out = sm.assign_labels(xt, xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
@@ -133,7 +133,7 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
@@ -146,7 +146,7 @@ class TestKrgBased(unittest.TestCase):
                 Z[i, j] = sm.predict_values(
                     np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
                 )
-        x_out = sm._assign_labels(xt, fun.xlimits)
+        x_out = sm.assign_labels(xt, fun.xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][1]) - int(float(x_out[i, :][1]))) > 10e-8:
@@ -167,11 +167,11 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
-        x_out = sm._assign_labels(xt, xlimits)
+        x_out = sm.assign_labels(xt, xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
@@ -193,7 +193,7 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
@@ -206,7 +206,7 @@ class TestKrgBased(unittest.TestCase):
                 Z[i, j] = sm.predict_values(
                     np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
                 )
-        x_out = sm._assign_labels(xt, fun.xlimits)
+        x_out = sm.assign_labels(xt, fun.xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][1]) - int(float(x_out[i, :][1]))) > 10e-8:
@@ -227,11 +227,11 @@ class TestKrgBased(unittest.TestCase):
         xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
-        xt = sm._project_values(xt)
+        xt = sm.project_values(xt)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
-        x_out = sm._assign_labels(xt, xlimits)
+        x_out = sm.assign_labels(xt, xlimits)
         Equality_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
