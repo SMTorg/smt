@@ -99,6 +99,9 @@ class EGO(SurrogateBasedApplication):
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
+        declare("enable_tunneling", False, types=bool, desc="Enable the penalization of points that have been already evaluated in EI criterion")
+
+        declare("surrogate", KRG(print_global=False), types=(KRG, KPLS, KPLSK), desc="SMT kriging-based surrogate model used internaly")
 
     def optimize(self, fun):
         """
@@ -126,10 +129,11 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
+            
             # Virtual enrichement loop
             for p in range(n_parallel):
-                # find next best x-coord point to evaluate
-                x_et_k, success = self._find_best_point(x_data, y_data)
+               # find next best x-coord point to evaluate
+                x_et_k, success = self._find_best_point(x_data, y_data, self.options["enable_tunneling"])
                 if not success:
                     self.log(
                         "Internal optimization failed at EGO iter = {}.{}".format(k, p)
@@ -150,7 +154,9 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = self._evaluator.run(fun, x_to_compute)
+            y = self._evaluator.run(
+                fun, self.gpr.assign_labels(x_to_compute, self.options["xlimits"])
+            )
             y_data[-n_parallel:] = y
 
         # Find the optimal point
@@ -164,7 +170,7 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    def EI(self, points, y_data):
+    def EI(self, points, y_data, enable_tunneling=False, x_data=None):
         """ Expected improvement """
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
@@ -174,8 +180,22 @@ class EGO(SurrogateBasedApplication):
         args2 = sig * norm.pdf(args0)
         if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
             return 0.0
-
         ei = args1 + args2
+        # penalize the points already evaluated with tunneling
+        if enable_tunneling:
+            for i in range(len(points)):
+                p = np.atleast_2d(points[i])
+                EIp = self.EI(p, y_data, enable_tunneling=False)
+                for x in x_data:
+                    x = np.atleast_2d(x)
+                    # if np.abs(p-x)<1:
+                    # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
+                    pena = (EIp - self.EI(x, y_data, enable_tunneling=False)) / np.power(
+                        np.linalg.norm(p - x), 4
+                    )
+                    if pena > 0:
+                        ei[i] = ei[i] - pena
+                    ei[i] = max(ei[i], 0)
         return ei
 
     def SBO(self, point):
@@ -207,33 +227,38 @@ class EGO(SurrogateBasedApplication):
         ndarray: initial coord-y doe = fun(xdoe)
 
         """
-        # Set the bounds of the optimization problem
-        xlimits = self.options["xlimits"]
+        # Set the model
+        self.gpr = self.options["surrogate"]
+
+        # Set the continuous bounds of the optimization problem
+        self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
 
         # Build initial DOE
-        self._sampling = LHS(xlimits=xlimits, criterion="ese")
+        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
         self._evaluator = self.options["evaluator"]
-
-        xdoe = self.options["xdoe"]
+        enable_tunneling = self.options["enable_tunneling"]
+        xdoe = self.options["xdoe"] 
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = self._sampling(n_doe)
+
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
 
+        x_doe = self.gpr.project_values(x_doe)
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self._evaluator.run(fun, x_doe)
+            y_doe = self._evaluator.run(
+                fun, self.gpr.assign_labels(x_doe, self.options["xlimits"])
+            )
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
-        self.gpr = KRG(print_global=False)
-
         return x_doe, y_doe
 
-    def _find_best_point(self, x_data, y_data):
+    def _find_best_point(self, x_data=None, y_data=None, enable_tunneling=False):
         """
         Function that analyse a set of x_data and y_data and give back the 
         more interesting point to evaluates according to the selected criterion
@@ -257,10 +282,10 @@ class EGO(SurrogateBasedApplication):
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
-        bounds = self.options["xlimits"]
+        bounds = self.xlimits
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data, enable_tunneling, x_data)
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
         elif criterion == "UCB":
@@ -272,6 +297,7 @@ class EGO(SurrogateBasedApplication):
             opt_all = []
             x_start = self._sampling(n_start)
             for ii in range(n_start):
+
                 opt_all.append(
                     minimize(
                         lambda x: float(self.obj_k(x)),
@@ -294,10 +320,10 @@ class EGO(SurrogateBasedApplication):
         if n_optim >= n_max_optim:
             # self.log("Internal optimization failed at EGO iter = {}".format(k))
             return np.atleast_2d(0), False
-
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
+        self.gpr.project_values(x_et_k)
         return x_et_k, True
 
     def _get_virtual_point(self, x, y_data):
@@ -323,7 +349,6 @@ class EGO(SurrogateBasedApplication):
 
         if qEI == "KB":
             return self.gpr.predict_values(x)
-
         if qEI == "KBUB":
             conf = 3.0
 
@@ -332,7 +357,7 @@ class EGO(SurrogateBasedApplication):
 
         if qEI == "KBRand":
             conf = np.random.randn()
-
         pred = self.gpr.predict_values(x)
         var = self.gpr.predict_variances(x)
+
         return pred + conf * np.sqrt(var)

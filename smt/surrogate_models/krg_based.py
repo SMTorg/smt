@@ -288,7 +288,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         if not (self.options["vartype"] is None):
-            x = self._project_values(x)
+            x = self.project_values(x)
 
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -371,7 +371,7 @@ class KrgBased(SurrogateModel):
 
         # Initialization
         if not (self.options["vartype"] is None):
-            x = self._project_values(x)
+            x = self.project_values(x)
 
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
@@ -402,7 +402,7 @@ class KrgBased(SurrogateModel):
         MSE[MSE < 0.0] = 0.0
         return MSE
 
-    def _project_values(self, x):
+    def project_values(self, x):
         """
         This function project continuously relaxed values 
         to their closer assessable values.
@@ -566,7 +566,7 @@ class KrgBased(SurrogateModel):
 
         return xlim
 
-    def _assign_labels(self, x, xlimits):
+    def assign_labels(self, x, xlimits):
         """
         This function reduce inputs from relaxed space to original space by 
         assigning labels to categorical variables.

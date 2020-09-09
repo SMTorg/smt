@@ -159,6 +159,11 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_.
+The expected improvement is continuously computed and optimized so that can lead to an infill point that will be projected, in the mixed case, to an already evaluated point.
+To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
+However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
+
 
 References
 ----------
@@ -176,6 +181,8 @@ References
 .. [6] Roux, E. , Tillier, Y. , Kraria, S., & Bouchard, P.-O. (2020). An efficient parallel global optimization strategy based on Kriging properties suitable for material parameter identification.In AME, accepted for publication. 
 
 .. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
+
+.. [8] E.C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
 
 Usage
 -----
@@ -211,9 +218,7 @@ Usage
   
   ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
   
-  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-      fun=function_test_1d
-  )
+  x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
   print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -233,17 +238,17 @@ Usage
   
       ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
       ax1 = ax.twinx()
-      ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+      (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
   
-      true_fun, = ax.plot(x_plot, y_plot)
-      data, = ax.plot(
+      (true_fun,) = ax.plot(x_plot, y_plot)
+      (data,) = ax.plot(
           x_data_k, y_data_k, linestyle="", marker="o", color="orange"
       )
       if i < n_iter - 1:
-          opt, = ax.plot(
+          (opt,) = ax.plot(
               x_data[k], y_data[k], linestyle="", marker="*", color="r"
           )
-      gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+      (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
       sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
       sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
       un_gp = ax.fill_between(
@@ -268,7 +273,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.8 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -345,9 +350,7 @@ Usage with parallel options
       evaluator=ParallelEvaluator(),
   )
   
-  x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe = ego.optimize(
-      fun=function_test_1d
-  )
+  x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
   print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
@@ -369,23 +372,23 @@ Usage with parallel options
           y_gp_plot_var = ego.gpr.predict_variances(x_plot)
   
           x_data_sub = np.append(x_data_sub, x_data[k + p])
-          y_KB = ego.set_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
+          y_KB = ego._get_virtual_point(np.atleast_2d(x_data[k + p]), y_data_sub)
   
           y_data_sub = np.append(y_data_sub, y_KB)
   
           ax = fig.add_subplot(n_iter, n_parallel, i * (n_parallel) + p + 1)
           ax1 = ax.twinx()
-          ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+          (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
   
-          true_fun, = ax.plot(x_plot, y_plot)
-          data, = ax.plot(
+          (true_fun,) = ax.plot(x_plot, y_plot)
+          (data,) = ax.plot(
               x_data_sub[: -1 - p],
               y_data_sub[: -1 - p],
               linestyle="",
               marker="o",
               color="orange",
           )
-          virt_data, = ax.plot(
+          (virt_data,) = ax.plot(
               x_data_sub[-p - 1 : -1],
               y_data_sub[-p - 1 : -1],
               linestyle="",
@@ -393,10 +396,10 @@ Usage with parallel options
               color="g",
           )
   
-          opt, = ax.plot(
+          (opt,) = ax.plot(
               x_data_sub[-1], y_data_sub[-1], linestyle="", marker="*", color="r"
           )
-          gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+          (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
           sig_plus = y_gp_plot + 3.0 * np.sqrt(y_gp_plot_var)
           sig_moins = y_gp_plot - 3.0 * np.sqrt(y_gp_plot_var)
           un_gp = ax.fill_between(
@@ -427,6 +430,96 @@ Usage with parallel options
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
   :align: center
+
+
+Usage with mixed variable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+  import numpy as np
+  import six
+  from smt.applications import EGO
+  from smt.sampling_methods import FullFactorial
+  
+  import sklearn
+  import matplotlib.pyplot as plt
+  from matplotlib import colors
+  from mpl_toolkits.mplot3d import Axes3D
+  from scipy.stats import norm
+  from smt.surrogate_models import KRG
+  from smt.sampling_methods import LHS
+  
+  def function_test_cate_mixed(X):
+      import numpy as np
+  
+      # float
+      x1 = X[:, 0].astype(float)
+      #  cate 1
+      c1 = X[:, 1]
+      x2 = c1 == "1"
+      x3 = c1 == "2"
+      x4 = c1 == "3"
+      #  cate 2
+      c2 = X[:, 2]
+      x5 = c2 == "4"
+      x6 = c2 == "5"
+      # int
+      i = X[:, 3].astype(float)
+  
+      y = (
+          (x2 + 2 * x3 + 3 * x4) * x5 * x1
+          + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
+          + i
+      )
+      return y
+  
+  n_iter = 15
+  vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+  xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
+  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  qEI = "KB"
+  sm = KRG(print_global=False, vartype=vartype)
+  
+  n_doe = 6
+  samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
+  xdoe = samp(n_doe)
+  xdoe = sm.project_values(xdoe)
+  ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
+  
+  ego = EGO(
+      n_iter=n_iter,
+      criterion=criterion,
+      xdoe=xdoe,
+      ydoe=ydoe,
+      xlimits=xlimits,
+      surrogate=sm,
+      qEI=qEI,
+  )
+  
+  x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
+      fun=function_test_cate_mixed
+  )
+  
+  mini = np.zeros(n_iter)
+  for k in range(n_iter):
+      mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+  x_plot = np.linspace(1, n_iter + 0.5, n_iter)
+  
+  u = max(np.floor(max(mini)) + 1, -100)
+  l = max(np.floor(min(mini)) - 0.2, -10)
+  fig = plt.figure()
+  axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+  (epm,) = axes.plot(x_plot, mini, color="r")
+  axes.set_ylim([l, u])
+  plt.title("minimum convergence plot", loc="center")
+  plt.xlabel("number of iterations")
+  plt.ylabel("log of the difference w.r.t the best")
+  plt.show()
+  
+.. figure:: ego_TestEGO_run_ego_example_mixed.png
+  :scale: 80 %
+  :align: center
+
 
 Options
 -------
@@ -477,7 +570,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000000008AE19B0>
+     -  <smt.applications.ego.Evaluator object at 0x0000013973CA6D30>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -506,3 +599,13 @@ Options
      -  None
      -  ['bool']
      -  Print computation information
+  *  -  enable_tunneling
+     -  False
+     -  None
+     -  ['bool']
+     -  Enable the penalization of points that have been already evaluated in EI criterion
+  *  -  surrogate
+     -  <smt.surrogate_models.krg.KRG object at 0x0000013973CB06A0>
+     -  None
+     -  ['KRG', 'KPLS', 'KPLSK']
+     -  SMT kriging-based surrogate model used internaly
