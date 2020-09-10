@@ -318,7 +318,6 @@ class TestEGO(SMTestCase):
     @staticmethod
     def run_ego_example():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
 
@@ -403,7 +402,6 @@ class TestEGO(SMTestCase):
     @staticmethod
     def run_ego_example_mixed():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
 
@@ -485,7 +483,6 @@ class TestEGO(SMTestCase):
     @staticmethod
     def run_ego_parallel_example():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.applications.ego import EGO, Evaluator
         from smt.sampling_methods import FullFactorial

@@ -10,7 +10,6 @@ import inspect
 
 from copy import deepcopy
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct

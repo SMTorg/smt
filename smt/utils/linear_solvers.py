@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 import numpy as np
 import scipy.sparse.linalg
 import scipy.linalg
-from six.moves import range
 import contextlib
 
 from smt.utils.options_dictionary import OptionsDictionary

@@ -9,7 +9,6 @@ import numpy as np
 import unittest
 import inspect
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import TensorProduct

@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 LHS sampling; uses the pyDOE2 package.
 """
 from pyDOE2 import lhs
-from six.moves import range
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 

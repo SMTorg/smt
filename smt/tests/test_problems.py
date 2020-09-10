@@ -7,8 +7,6 @@ This package is distributed under New BSD license.
 import numpy as np
 import unittest
 
-from six.moves import range
-
 from smt.problems import (
     CantileverBeam,
     Sphere,
