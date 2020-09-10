@@ -190,7 +190,6 @@ Usage
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.sampling_methods import FullFactorial
   
@@ -285,7 +284,6 @@ Usage with parallel options
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.applications.ego import EGO, Evaluator
   from smt.sampling_methods import FullFactorial
@@ -425,7 +423,7 @@ Usage with parallel options
   
 ::
 
-  Minimum in x=19.0 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
@@ -437,7 +435,6 @@ Usage with mixed variable
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.sampling_methods import FullFactorial
   
@@ -570,7 +567,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000013973CA6D30>
+     -  <smt.applications.ego.Evaluator object at 0x00000000050952B0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -605,7 +602,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000013973CB06A0>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000000005163E80>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly

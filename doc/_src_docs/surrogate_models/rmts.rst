@@ -85,10 +85,7 @@ The number of elements in each dimension is an option that trades off efficiency
 
 In general, RMTB is the better choice when training time is the most important,
 while RMTC is the better choice when accuracy of the interpolant is the most important.
-More details of these methods are given [1]_.
-
-References
-----------
+More details of these methods are given in [1]_.
 
 .. [1] Hwang, J. T., & Martins, J. R. (2018). A fast-prediction surrogate model for large datasets. Aerospace Science and Technology, 75, 74-87.
 
@@ -167,7 +164,7 @@ Usage (RMTB)
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
         Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0100002
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -250,15 +247,15 @@ Usage (RMTC)
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.121320344e+00 2.250000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.922777301e-15 1.133573309e-15
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0000000
+              Solving for output 0 - done. Time (sec):  0.0100002
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0100002
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.799115482e-15 1.133573309e-15
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0100002
+     Training - done. Time (sec):  0.0100002
   ___________________________________________________________________________
      
    Evaluation

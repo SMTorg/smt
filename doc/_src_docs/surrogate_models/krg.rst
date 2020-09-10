@@ -25,29 +25,23 @@ These three types are available in SMT.
 
 More details about the kriging approach could be found in [1]_.
 
-.. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
+Kriging with categorical or integer variables 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-Kriging with mixed variables 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The goal is to be able to build a model for mixed variables. 
+The goal is to be able to build a model for mixed typed variables. 
 This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
-More details avalaible here : 
+More details available in [2]_. 
+
+Note : Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
 
-.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35. 
-
-Implementation Note
--------------------
-
-The mixed variables are avalaible for all kriging models like KPLS or KPLSK but not to use with gradient.
+.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35.
 
 Usage
 -----
@@ -126,12 +120,12 @@ Usage with mixed variables
   ##    Vartype example
   
   # vartype =["cont","int",("cate",3),("cate",2)]
-  #"cont" means x1 continuous
-  #"int" means x2 integer
-  #"(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
-  #"(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
+  # "cont" means x1 continuous
+  # "int" means x2 integer
+  # "(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
+  # "(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
   
-  vartype = ["int"]     
+  vartype = ["int"]
   sm = KRG(theta0=[1e-2], vartype=vartype)
   sm.set_training_values(xt, yt)
   sm.train()
@@ -163,7 +157,7 @@ Usage with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0020316
+     Training - done. Time (sec):  0.0100002
   ___________________________________________________________________________
      
    Evaluation
