@@ -7,7 +7,6 @@ Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of
 order 1 (AR1)
 """
 
-from __future__ import division
 from sys import exit
 import copy
 from types import FunctionType

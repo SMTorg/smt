@@ -5,7 +5,6 @@ Created on Mon May 07 14:20:11 2018
 @author: m.meliani
 """
 
-from __future__ import print_function, division
 import matplotlib
 
 matplotlib.use("Agg")

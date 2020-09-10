@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 
 Random sampling.
 """
-from __future__ import division
 import numpy as np
 from six.moves import range
 

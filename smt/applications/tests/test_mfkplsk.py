@@ -7,7 +7,6 @@ Created on Mon May 07 14:20:11 2018
 Adapted to new SMT version in march 2020 by Nathalie Bartoli
 """
 
-from __future__ import print_function, division
 import matplotlib
 
 matplotlib.use("Agg")

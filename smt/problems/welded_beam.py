@@ -8,7 +8,6 @@ Welded beam problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
 Deb, K. An Efficient Constraint Handling Method for Genetic Algorithms. Computer methods in applied mechanics and engineering, 186(2), pp. 311-338. 2000.
 """
-from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 from smt.problems.problem import Problem

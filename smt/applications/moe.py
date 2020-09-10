@@ -11,7 +11,6 @@ Mixture of Experts
 # TODO : implement verbosity 'print_global'
 # TODO : documentation
 
-from __future__ import division
 import six
 import numpy as np
 import warnings
