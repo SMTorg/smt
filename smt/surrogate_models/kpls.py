@@ -3,8 +3,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
-from __future__ import division
 import warnings
 import numpy as np
 

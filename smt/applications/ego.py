@@ -5,8 +5,6 @@ This package is distributed under New BSD license.
 
 """
 
-from __future__ import division
-import six
 import numpy as np
 
 from types import FunctionType
@@ -99,9 +97,19 @@ class EGO(SurrogateBasedApplication):
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
-        declare("enable_tunneling", False, types=bool, desc="Enable the penalization of points that have been already evaluated in EI criterion")
+        declare(
+            "enable_tunneling",
+            False,
+            types=bool,
+            desc="Enable the penalization of points that have been already evaluated in EI criterion",
+        )
 
-        declare("surrogate", KRG(print_global=False), types=(KRG, KPLS, KPLSK), desc="SMT kriging-based surrogate model used internaly")
+        declare(
+            "surrogate",
+            KRG(print_global=False),
+            types=(KRG, KPLS, KPLSK),
+            desc="SMT kriging-based surrogate model used internaly",
+        )
 
     def optimize(self, fun):
         """
@@ -129,11 +137,13 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
-            
+
             # Virtual enrichement loop
             for p in range(n_parallel):
-               # find next best x-coord point to evaluate
-                x_et_k, success = self._find_best_point(x_data, y_data, self.options["enable_tunneling"])
+                # find next best x-coord point to evaluate
+                x_et_k, success = self._find_best_point(
+                    x_data, y_data, self.options["enable_tunneling"]
+                )
                 if not success:
                     self.log(
                         "Internal optimization failed at EGO iter = {}.{}".format(k, p)
@@ -190,9 +200,9 @@ class EGO(SurrogateBasedApplication):
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena = (EIp - self.EI(x, y_data, enable_tunneling=False)) / np.power(
-                        np.linalg.norm(p - x), 4
-                    )
+                    pena = (
+                        EIp - self.EI(x, y_data, enable_tunneling=False)
+                    ) / np.power(np.linalg.norm(p - x), 4)
                     if pena > 0:
                         ei[i] = ei[i] - pena
                     ei[i] = max(ei[i], 0)
@@ -237,7 +247,7 @@ class EGO(SurrogateBasedApplication):
         self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
         self._evaluator = self.options["evaluator"]
         enable_tunneling = self.options["enable_tunneling"]
-        xdoe = self.options["xdoe"] 
+        xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
@@ -285,7 +295,9 @@ class EGO(SurrogateBasedApplication):
         bounds = self.xlimits
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data, enable_tunneling, x_data)
+            self.obj_k = lambda x: -self.EI(
+                np.atleast_2d(x), y_data, enable_tunneling, x_data
+            )
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
         elif criterion == "UCB":

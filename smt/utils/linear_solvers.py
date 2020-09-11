@@ -4,12 +4,9 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function
-
 import numpy as np
 import scipy.sparse.linalg
 import scipy.linalg
-from six.moves import range
 import contextlib
 
 from smt.utils.options_dictionary import OptionsDictionary

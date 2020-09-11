@@ -10,12 +10,6 @@ TODO:
 - define outputs['sol'] = self.sol
 
 """
-
-from __future__ import division
-
-# import warnings
-# warnings.filterwarnings("ignore")
-
 import numpy as np
 from scipy import linalg, optimize
 from types import FunctionType
@@ -679,12 +673,7 @@ class KrgBased(SurrogateModel):
                 best_optimal_rlf_value,
                 best_optimal_par,
                 constraints,
-            ) = (
-                [],
-                [],
-                [],
-                [],
-            )
+            ) = ([], [], [], [])
 
             for i in range(len(self.options["theta0"])):
                 constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))

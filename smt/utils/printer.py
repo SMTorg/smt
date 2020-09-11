@@ -4,8 +4,6 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function
-
 import time
 import contextlib
 

@@ -6,7 +6,6 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function
 from setuptools import setup, Extension
 import os
 import sys
@@ -125,10 +124,9 @@ metadata = dict(
         "pyDOE2",
         "matplotlib",
         "numpydoc",
-        "six>=1.10",
         "scipy",
     ],
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*",
+    python_requires=">=3.6",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo

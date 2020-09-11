@@ -9,8 +9,6 @@ Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for 
 Forrester, A., Sobester, A., and Keane, A., 2008,
 Engineering Design Via Surrogate Modelling: A Practical Guide, John Wiley & Sons, United Kingdom.
 """
-
-from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 

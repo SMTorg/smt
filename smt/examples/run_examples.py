@@ -5,7 +5,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 from smt.utils import compute_rms_error

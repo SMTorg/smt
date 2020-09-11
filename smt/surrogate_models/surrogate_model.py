@@ -5,9 +5,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 Paul Saves : Mixed Integer
 """
-
-from __future__ import division
-
 import numpy as np
 from collections import defaultdict
 
@@ -279,13 +276,13 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-             y = self._predict_values(x2)
+            y = self._predict_values(x2)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
-    
+
     def predict_derivatives(self, x, kx):
         """
         Predict the dy_dx derivatives at a set of points.

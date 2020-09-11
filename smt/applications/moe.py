@@ -11,8 +11,6 @@ Mixture of Experts
 # TODO : implement verbosity 'print_global'
 # TODO : documentation
 
-from __future__ import division
-import six
 import numpy as np
 import warnings
 
@@ -77,7 +75,7 @@ class MOE(SurrogateBasedApplication):
         )
 
         # TODO: should we add leaf surrogate models options?
-        # for name, smclass in self._surrogate_type.iteritems():
+        # for name, smclass in self._surrogate_type.items():
         #     sm_options = smclass().options
         #     declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
 
@@ -240,19 +238,19 @@ class MOE(SurrogateBasedApplication):
         """
         prototypes = {
             name: smclass()
-            for name, smclass in six.iteritems(self._surrogate_type)
+            for name, smclass in self._surrogate_type.items()
             if name in self.experts
         }
         if self.options["derivatives_support"]:
             prototypes = {
                 name: proto
-                for name, proto in six.iteritems(prototypes)
+                for name, proto in prototypes.items()
                 if proto.supports["derivatives"]
             }
         if self.options["variances_support"]:
             prototypes = {
                 name: proto
-                for name, proto in six.iteritems(prototypes)
+                for name, proto in prototypes.items()
                 if proto.supports["variances"]
             }
         return {name: self._surrogate_type[name] for name in prototypes}
@@ -405,7 +403,7 @@ class MOE(SurrogateBasedApplication):
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
 
-        for name, sm_class in six.iteritems(self.expert_types):
+        for name, sm_class in self.expert_types.items():
             kwargs = {}
             if name in ["RMTB", "RMTC"]:
                 # Note: RMTS checks for xlimits,
@@ -434,7 +432,7 @@ class MOE(SurrogateBasedApplication):
 
         best_name = None
         best_score = None
-        for name, rmse in six.iteritems(scores):
+        for name, rmse in scores.items():
             if best_score is None or rmse < best_score:
                 best_name, best_score = name, rmse
 
