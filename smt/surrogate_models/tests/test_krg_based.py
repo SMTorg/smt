@@ -39,7 +39,7 @@ class TestKrgBased(unittest.TestCase):
         vartype = ["cont", "int"]
         sm = KRG(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=2)
-        xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
+        xlimits_relaxed = sm.relax_limits(fun.xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -70,10 +70,10 @@ class TestKrgBased(unittest.TestCase):
         from smt.surrogate_models import KRG
 
         vartype = ["cont", ("cate", 2), "int"]
-        xlimits = [[-10, 10], ["blue", "red"], [-10, -10]]
+        xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]
         sm = KRG(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=4)
-        xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
+        xlimits_relaxed = sm.relax_limits(xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -85,7 +85,7 @@ class TestKrgBased(unittest.TestCase):
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
                 Equality_check = False
-            if not (x_out[i, :][1] == "blue" or x_out[i, :][1] == "red"):
+            if not (x_out[i, :][1] == 0 or x_out[i, :][1] == 1):
                 Equality_check = False
         self.assertTrue(Equality_check)
 
@@ -97,10 +97,10 @@ class TestKrgBased(unittest.TestCase):
         from smt.surrogate_models import KRG
 
         vartype = ["cont", ("cate", 3), "int"]
-        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, -10]]
+        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         sm = KRG(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=5)
-        xlimits_relaxed = sm._relax_limits(xlimits, dim=5)
+        xlimits_relaxed = sm.relax_limits(xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -112,11 +112,7 @@ class TestKrgBased(unittest.TestCase):
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
                 Equality_check = False
-            if not (
-                x_out[i, :][1] == "blue"
-                or x_out[i, :][1] == "red"
-                or x_out[i, :][1] == "green"
-            ):
+            if not (x_out[i, :][1] == 0 or x_out[i, :][1] == 1 or x_out[i, :][1] == 2):
                 Equality_check = False
         self.assertTrue(Equality_check)
 
@@ -130,7 +126,7 @@ class TestKrgBased(unittest.TestCase):
         vartype = ["cont", "int"]
         sm = KPLS(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=2)
-        xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
+        xlimits_relaxed = sm.relax_limits(fun.xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -164,7 +160,7 @@ class TestKrgBased(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red"], [-10, -10]]
         sm = KPLS(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=4)
-        xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
+        xlimits_relaxed = sm.relax_limits(xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -176,7 +172,7 @@ class TestKrgBased(unittest.TestCase):
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
                 Equality_check = False
-            if not (x_out[i, :][1] == "blue" or x_out[i, :][1] == "red"):
+            if not (x_out[i, :][1] == 0 or x_out[i, :][1] == 1):
                 Equality_check = False
         self.assertTrue(Equality_check)
 
@@ -190,7 +186,7 @@ class TestKrgBased(unittest.TestCase):
         vartype = ["cont", "int"]
         sm = KPLSK(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=2)
-        xlimits_relaxed = sm._relax_limits(fun.xlimits, dim=2)
+        xlimits_relaxed = sm.relax_limits(fun.xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -221,10 +217,10 @@ class TestKrgBased(unittest.TestCase):
         from smt.surrogate_models import KPLSK
 
         vartype = ["cont", ("cate", 2), "int"]
-        xlimits = [[-10, 10], ["blue", "red"], [-10, -10]]
+        xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]
         sm = KPLSK(vartype=vartype, print_prediction=False)
         fun = Sphere(ndim=4)
-        xlimits_relaxed = sm._relax_limits(xlimits, dim=4)
+        xlimits_relaxed = sm.relax_limits(xlimits)
         sampling = LHS(xlimits=xlimits_relaxed, criterion="m")
         xt = sampling(20)
         xt = sm.project_values(xt)
@@ -236,7 +232,7 @@ class TestKrgBased(unittest.TestCase):
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
                 Equality_check = False
-            if not (x_out[i, :][1] == "blue" or x_out[i, :][1] == "red"):
+            if not (x_out[i, :][1] == 0 or x_out[i, :][1] == 1):
                 Equality_check = False
         self.assertTrue(Equality_check)
 
