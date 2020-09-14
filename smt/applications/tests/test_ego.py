@@ -38,8 +38,9 @@ class ParallelEvaluator(Evaluator):
 
 
 class TestEGO(SMTestCase):
-    
+
     plot = None
+
     @staticmethod
     def function_test_1d(x):
         # function xsinx
@@ -103,7 +104,6 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
-
     def test_rosenbrock_2D_parallel(self):
         n_iter = 15
         n_parallel = 5
@@ -150,7 +150,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
-        n_parallel = 5        
+        n_parallel = 5
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
@@ -182,7 +182,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        qEI="KB"
+        qEI = "KB"
         xdoe = FullFactorial(xlimits=xlimits)(10)
         s = KRG(print_global=False, vartype=["int", "cont"])
         ego = EGO(
@@ -193,11 +193,10 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
-            surrogate=s
+            surrogate=s,
         )
 
-
-        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
@@ -205,7 +204,6 @@ class TestEGO(SMTestCase):
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
-
 
     def test_branin_2D_mixed(self):
         n_iter = 20
@@ -216,10 +214,10 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(10)
         s = KRG(print_global=False, vartype=["int", "cont"])
         ego = EGO(
-            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s,
+            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s
         )
 
-        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
@@ -230,16 +228,16 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def function_test_cate_mixed(X):
-        x1 = X[:, 0].astype(float)
+        x1 = X[:, 0]
         #  cate 1
         c1 = X[:, 1]
-        x2 = c1 == "1"
-        x3 = c1 == "2"
-        x4 = c1 == "3"
+        x2 = c1 == 0
+        x3 = c1 == 1
+        x4 = c1 == 2
         #  cate 2
         c2 = X[:, 2]
-        x5 = c2 == "4"
-        x6 = c2 == "5"
+        x5 = c2 == 0
+        x6 = c2 == 1
 
         y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
         return y
@@ -248,15 +246,19 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
         xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
-        n_doe = xdoe.size
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         v = ["int", ("cate", 3), ("cate", 2)]
         s = KRG(print_global=False, vartype=v)
 
         ego = EGO(
-            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s, enable_tunneling=True
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xlimits=xlimits,
+            surrogate=s,
+            enable_tunneling=True,
         )
-        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=1)
 
@@ -275,7 +277,6 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
-
 
     def test_find_best_point(self):
         fun = TestEGO.function_test_1d
@@ -398,7 +399,7 @@ class TestEGO(SMTestCase):
             )
         plt.show()
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
-  
+
     @staticmethod
     def run_ego_example_mixed():
         import numpy as np
@@ -445,7 +446,7 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False, vartype=vartype)
 
         n_doe = 6
-        samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
+        samp = LHS(xlimits=sm.relax_limits(xlimits), criterion="ese")
         xdoe = samp(n_doe)
         xdoe = sm.project_values(xdoe)
         ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
@@ -473,7 +474,7 @@ class TestEGO(SMTestCase):
         l = max(np.floor(min(mini)) - 0.2, -10)
         fig = plt.figure()
         axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        (epm,) = axes.plot(x_plot, mini, color="r")
+        axes.plot(x_plot, mini, color="r")
         axes.set_ylim([l, u])
         plt.title("minimum convergence plot", loc="center")
         plt.xlabel("number of iterations")

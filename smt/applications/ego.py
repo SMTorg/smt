@@ -241,12 +241,11 @@ class EGO(SurrogateBasedApplication):
         self.gpr = self.options["surrogate"]
 
         # Set the continuous bounds of the optimization problem
-        self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
+        self.xlimits = self.gpr.relax_limits(self.options["xlimits"])
 
         # Build initial DOE
         self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
         self._evaluator = self.options["evaluator"]
-        enable_tunneling = self.options["enable_tunneling"]
         xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
