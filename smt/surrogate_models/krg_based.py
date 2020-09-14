@@ -4,7 +4,6 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
 This package is distributed under New BSD license.
-
 """
 import numpy as np
 from scipy import linalg, optimize
@@ -47,17 +46,7 @@ class KrgBased(SurrogateModel):
             desc="Correlation function type",
         )
         declare(
-            "data_dir",
-            types=str,
-            desc="Directory for loading / saving cached data; None means do not save or load",
-        )
-        declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
-        )
-        declare(
-            "vartype",
-            types=list,
-            desc='For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) ',
         )
 
         self.name = "KrigingBased"
@@ -67,10 +56,6 @@ class KrgBased(SurrogateModel):
         supports["variances"] = True
 
     def _new_train(self):
-
-        """
-        Train the model
-        """
         self._check_param()
 
         # Sampling points X and y
@@ -94,8 +79,10 @@ class KrgBased(SurrogateModel):
         # Calculate matrix of distances D between samples
         D, self.ij = l1_cross_distances(self.X_norma)
         ###
-        if np.min(np.sum(D, axis=1)) == 0.0 and self.options["vartype"] is None:
-            raise Exception("Multiple input features cannot have the same value.")
+        if np.min(np.sum(D, axis=1)) == 0.0:
+            print(
+                "Warning: multiple x input features have the same value (at least same row twice)."
+            )
         ####
         # Regression matrix and parameters
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
@@ -118,9 +105,6 @@ class KrgBased(SurrogateModel):
         del self.y_norma, self.D
 
     def _train(self):
-        """
-        Train the model
-        """
         self._new_train()
 
     def _reduced_likelihood_function(self, theta):
@@ -273,9 +257,6 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if not (self.options["vartype"] is None):
-            x = self.project_values(x)
-
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -356,9 +337,6 @@ class KrgBased(SurrogateModel):
     def _predict_variances(self, x):
 
         # Initialization
-        if not (self.options["vartype"] is None):
-            x = self.project_values(x)
-
         n_eval, n_features_x = x.shape
         x = (x - self.X_mean) / self.X_std
         # Get pairwise componentwise L1-distances to the input training set
@@ -387,128 +365,6 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
-
-    def project_values(self, x):
-        """
-        This function project continuously relaxed values 
-        to their closer assessable values.
-
-        Parameters
-        ----------
-        x : np.ndarray [n_evals, dim]
-            Continuous evaluation point input variable values 
-      
-        Returns
-        -------
-        np.ndarray
-            Feasible evaluation point value in categorical space.
-        """
-        if self.options["vartype"] is None:
-            return x.copy()
-
-        ret = x.copy()
-        x_col = 0
-        for vt in self.options["vartype"]:
-            if vt == "cont":
-                x_col += 1
-                continue
-
-            elif vt == "int":
-                ret[:, x_col] = np.round(x[:, x_col])
-                x_col += 1
-
-            elif isinstance(vt, tuple) and vt[0] == "cate":
-                # Categorial : The biggest level is selected.
-                xcate = ret[:, x_col : x_col + vt[1]]
-                maxx = np.max(xcate, axis=1).reshape((-1, 1))
-                mask = xcate < maxx
-                xcate[mask] = 0
-                xcate[~mask] = 1
-                x_col = x_col + vt[1]
-            else:
-                raise ValueError(
-                    "Bad var type specification: "
-                    "should be 'cont', 'int' or ('cate', n), got {}".format(vt)
-                )
-        return ret
-
-    def relax_limits(self, xlimits):
-        """
-        This function unfold xlimits to add continuous dimensions
-        Each level correspond to a new continuous dimension in [0,1].
-        Integer dimensions are relaxed continuously.
-        
-        Parameters
-        ---------
-        xlimits : list
-        The bounds of each original dimension and their labels .
-    
-        Returns
-        -------
-        np.ndarray
-        The bounds of the each original dimension  (cont, int or cate).
-        """
-
-        # Continuous optimization : do nothing
-        if self.options["vartype"] is None:
-            return np.array(xlimits)
-
-        xlims = []
-        for i, vt in enumerate(self.options["vartype"]):
-            if vt == "cont" or vt == "int":
-                xlims.append(xlimits[i])
-            elif isinstance(vt, tuple) and vt[0] == "cate":
-                if vt[1] == len(xlimits[i]):
-                    xlims.extend(vt[1] * [[0, 1]])
-                else:
-                    raise ValueError(
-                        "Bad xlimits for categorical var[{}] "
-                        "should have {} categories, got only {} in {}".format(
-                            k, vt[1], len(xlimits[i]), xlimits[i]
-                        )
-                    )
-            else:
-                raise ValueError(
-                    "Bad var type specification: "
-                    "should be 'cont', 'int' or ('cate', n), got {}".format(vt)
-                )
-        return np.array(xlims)
-
-    def assign_labels(self, x, xlimits):
-        """
-        This function reduce inputs from relaxed space to original space by 
-        assigning labels to categorical variables.
-                
-        Parameters
-        ---------
-        x: np.ndarray [n_evals, dim]
-        Continuous evaluation point input variable values 
-        xlimits: np.ndarray
-        The bounds of the each original dimension and their labels .
-        
-        Returns
-        -------
-        np.ndarray [n_evals, dim]
-        Evaluation point input variable values with label index for categorical variables
-        """
-
-        # Continuous optimization : do nothing
-        if self.options["vartype"] is None:
-            return x
-
-        xlbl = np.zeros((x.shape[0], len(self.options["vartype"])))
-        for i, vt in enumerate(self.options["vartype"]):
-            if vt == "cont" or vt == "int":
-                xlbl[:, i] = x[:, i]
-            elif isinstance(vt, tuple) and vt[0] == "cate":
-                index = np.argmax(x[:, i : i + vt[1]], axis=1)
-                xlbl[:, i] = index
-            else:
-                raise ValueError(
-                    "Bad var type specification: "
-                    "should be 'cont', 'int' or ('cate', n), got {}".format(vt)
-                )
-        return xlbl
 
     def _optimize_hyperparam(self, D):
         """

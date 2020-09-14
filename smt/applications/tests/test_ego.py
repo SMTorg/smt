@@ -24,6 +24,7 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.surrogate_models import KRG
+from smt.applications.mixed_integer import FLOAT, INT, ENUM
 
 PYTHON_2 = sys.version_info.major == 2
 
@@ -184,11 +185,12 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False, vartype=["int", "cont"])
+        s = KRG(print_global=False)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
+            xtypes=[INT, FLOAT],
             xlimits=xlimits,
             n_parallel=n_parallel,
             qEI=qEI,
@@ -208,13 +210,19 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
+        xtypes = [INT, FLOAT]
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False, vartype=["int", "cont"])
+        s = KRG(print_global=False)
         ego = EGO(
-            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=s,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -247,13 +255,14 @@ class TestEGO(SMTestCase):
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
         xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        v = ["int", ("cate", 3), ("cate", 2)]
-        s = KRG(print_global=False, vartype=v)
+        xtypes = [INT, (ENUM, 3), (ENUM, 2)]
+        s = KRG(print_global=False)
 
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
+            xtypes=xtypes,
             xlimits=xlimits,
             surrogate=s,
             enable_tunneling=True,
@@ -405,6 +414,14 @@ class TestEGO(SMTestCase):
         import numpy as np
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
+        from smt.applications.mixed_integer import (
+            FLOAT,
+            INT,
+            ENUM,
+            unfold_to_continuous_limits,
+            cast_to_discrete_values,
+            fold_with_enum_indexes,
+        )
 
         import sklearn
         import matplotlib.pyplot as plt
@@ -418,18 +435,18 @@ class TestEGO(SMTestCase):
             import numpy as np
 
             # float
-            x1 = X[:, 0].astype(float)
+            x1 = X[:, 0]
             #  cate 1
             c1 = X[:, 1]
-            x2 = c1 == "1"
-            x3 = c1 == "2"
-            x4 = c1 == "3"
+            x2 = c1 == 0
+            x3 = c1 == 1
+            x4 = c1 == 2
             #  cate 2
             c2 = X[:, 2]
-            x5 = c2 == "4"
-            x6 = c2 == "5"
+            x5 = c2 == 0
+            x6 = c2 == 1
             # int
-            i = X[:, 3].astype(float)
+            i = X[:, 3]
 
             y = (
                 (x2 + 2 * x3 + 3 * x4) * x5 * x1
@@ -439,31 +456,32 @@ class TestEGO(SMTestCase):
             return y
 
         n_iter = 15
-        vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
-        sm = KRG(print_global=False, vartype=vartype)
+        sm = KRG(print_global=False)
 
         n_doe = 6
-        samp = LHS(xlimits=sm.relax_limits(xlimits), criterion="ese")
+        samp = LHS(
+            xlimits=unfold_to_continuous_limits(xtypes, xlimits), criterion="ese"
+        )
         xdoe = samp(n_doe)
-        xdoe = sm.project_values(xdoe)
-        ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
+        xdoe = cast_to_discrete_values(xtypes, xdoe)
+        ydoe = function_test_cate_mixed(fold_with_enum_indexes(xtypes, xdoe))
 
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             ydoe=ydoe,
+            xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
             qEI=qEI,
         )
 
-        x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
-            fun=function_test_cate_mixed
-        )
+        _, _, _, _, y_data = ego.optimize(fun=function_test_cate_mixed)
 
         mini = np.zeros(n_iter)
         for k in range(n_iter):
