@@ -7,9 +7,9 @@ import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 
-FLOAT = "cont"
-INT = "int"
-ENUM = "cate"
+FLOAT = "float_type"
+INT = "int_type"
+ENUM = "enum_type"
 
 
 def check_xspec_consistency(xtypes, xlimits):
@@ -56,26 +56,27 @@ def compute_x_unfold_dimension(xtypes):
         else:
             raise ValueError(
                 "Bad var type specification: "
-                "should be 'cont', 'int' or ('cate', n), got {}".format(xtyp)
+                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
             )
     return res
 
 
 def unfold_to_continuous_limits(xtypes, xlimits):
     """
-    This function unfold xlimits to add continuous dimensions
-    Each level correspond to a new continuous dimension in [0,1].
-    Integer dimensions are relaxed continuously.
+    Expand xlimits to add continuous dimensions for enumerate x features
+    Each level of an enumerate gives a new continuous dimension in [0, 1].
+    Each integer dimensions are relaxed continuously.
     
     Parameters
     ---------
     xlimits : list
-    The bounds of each original dimension and their labels .
+        bounds of each original dimension (bounds of enumerates being the list of levels).
 
     Returns
     -------
-    np.ndarray
-    The bounds of the each original dimension  (cont, int or cate).
+    np.ndarray [nx continuous, 2]
+        bounds of the each dimension where limits for enumerates (ENUM) 
+        are expanded ([0, 1] for each level).
     """
 
     # Continuous optimization : do nothing
@@ -96,18 +97,18 @@ def unfold_to_continuous_limits(xtypes, xlimits):
         else:
             raise ValueError(
                 "Bad var type specification: "
-                "should be 'cont', 'int' or ('cate', n), got {}".format(xtyp)
+                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
             )
     return np.array(xlims)
 
 
 def cast_to_discrete_values(xtypes, x):
     """
-    This function project continuously relaxed values to their closer assessable values.
+    Project continuously relaxed values to their closer assessable values.
     Note: categorical (or enum) x dimensions are still expanded that is 
     there are still as many columns as categorical possible values for the given x dimension. 
     For instance, if an input dimension is typed ["blue", "red", "green"] in xlimits a sample/row of 
-    the input x may contain the values (or mask) [..., 0, 0, 1, ...] to specuify "green" for 
+    the input x may contain the values (or mask) [..., 0, 0, 1, ...] to specify "green" for 
     this original dimension.
 
     Parameters
@@ -134,23 +135,23 @@ def cast_to_discrete_values(xtypes, x):
 
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             # Categorial : The biggest level is selected.
-            xcate = ret[:, x_col : x_col + xtyp[1]]
-            maxx = np.max(xcate, axis=1).reshape((-1, 1))
-            mask = xcate < maxx
-            xcate[mask] = 0
-            xcate[~mask] = 1
+            xenum = ret[:, x_col : x_col + xtyp[1]]
+            maxx = np.max(xenum, axis=1).reshape((-1, 1))
+            mask = xenum < maxx
+            xenum[mask] = 0
+            xenum[~mask] = 1
             x_col = x_col + xtyp[1]
         else:
             raise ValueError(
                 "Bad var type specification: "
-                "should be 'cont', 'int' or ('cate', n), got {}".format(xtyp)
+                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
             )
     return ret
 
 
 def fold_with_enum_indexes(xtypes, x):
     """
-    This function reduce categorical inputs from discrete unfold space to  
+    This function reduce categorical inputs from discrete unfolded space to  
     initial x dimension space where categorical x dimensions are valued by the index
     in the corresponding enumerate list.
     For instance, if an input dimension is typed ["blue", "red", "green"] a sample/row of 
@@ -179,7 +180,7 @@ def fold_with_enum_indexes(xtypes, x):
         else:
             raise ValueError(
                 "Bad var type specification: "
-                "should be 'cont', 'int' or ('cate', n), got {}".format(xtyp)
+                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
             )
     return xfold
 
@@ -190,7 +191,6 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = unfold_to_continuous_limits(xtypes, xlimits)
-        print("XLIMITS", self._xlimits)
         self._sampling_method = sampling_method_class(xlimits=self._xlimits, **kwargs)
 
     def __call__(self, nt):
