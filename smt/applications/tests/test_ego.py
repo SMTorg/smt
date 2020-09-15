@@ -269,7 +269,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=1)
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ydoe_option(self):
         n_iter = 10
