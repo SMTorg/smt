@@ -272,7 +272,7 @@ Usage
   
 ::
 
-  Minimum in x=18.8 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -423,7 +423,7 @@ Usage with parallel options
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=19.0 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
@@ -437,6 +437,14 @@ Usage with mixed variable
   import numpy as np
   from smt.applications import EGO
   from smt.sampling_methods import FullFactorial
+  from smt.applications.mixed_integer import (
+      FLOAT,
+      INT,
+      ENUM,
+      unfold_to_continuous_limits,
+      cast_to_discrete_values,
+      fold_with_enum_indexes,
+  )
   
   import sklearn
   import matplotlib.pyplot as plt
@@ -450,18 +458,18 @@ Usage with mixed variable
       import numpy as np
   
       # float
-      x1 = X[:, 0].astype(float)
+      x1 = X[:, 0]
       #  cate 1
       c1 = X[:, 1]
-      x2 = c1 == "1"
-      x3 = c1 == "2"
-      x4 = c1 == "3"
+      x2 = c1 == 0
+      x3 = c1 == 1
+      x4 = c1 == 2
       #  cate 2
       c2 = X[:, 2]
-      x5 = c2 == "4"
-      x6 = c2 == "5"
+      x5 = c2 == 0
+      x6 = c2 == 1
       # int
-      i = X[:, 3].astype(float)
+      i = X[:, 3]
   
       y = (
           (x2 + 2 * x3 + 3 * x4) * x5 * x1
@@ -471,31 +479,32 @@ Usage with mixed variable
       return y
   
   n_iter = 15
-  vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
   xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KB"
-  sm = KRG(print_global=False, vartype=vartype)
+  sm = KRG(print_global=False)
   
   n_doe = 6
-  samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
+  samp = LHS(
+      xlimits=unfold_to_continuous_limits(xtypes, xlimits), criterion="ese"
+  )
   xdoe = samp(n_doe)
-  xdoe = sm.project_values(xdoe)
-  ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
+  xdoe = cast_to_discrete_values(xtypes, xdoe)
+  ydoe = function_test_cate_mixed(fold_with_enum_indexes(xtypes, xdoe))
   
   ego = EGO(
       n_iter=n_iter,
       criterion=criterion,
       xdoe=xdoe,
       ydoe=ydoe,
+      xtypes=xtypes,
       xlimits=xlimits,
       surrogate=sm,
       qEI=qEI,
   )
   
-  x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
-      fun=function_test_cate_mixed
-  )
+  _, _, _, _, y_data = ego.optimize(fun=function_test_cate_mixed)
   
   mini = np.zeros(n_iter)
   for k in range(n_iter):
@@ -506,7 +515,7 @@ Usage with mixed variable
   l = max(np.floor(min(mini)) - 0.2, -10)
   fig = plt.figure()
   axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-  (epm,) = axes.plot(x_plot, mini, color="r")
+  axes.plot(x_plot, mini, color="r")
   axes.set_ylim([l, u])
   plt.title("minimum convergence plot", loc="center")
   plt.xlabel("number of iterations")
@@ -567,7 +576,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000050952B0>
+     -  <smt.applications.ego.Evaluator object at 0x00000000051A67B8>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -602,7 +611,12 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000000005163E80>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000000008777B38>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels

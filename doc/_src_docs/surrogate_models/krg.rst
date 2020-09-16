@@ -26,18 +26,19 @@ These three types are available in SMT.
 More details about the kriging approach could be found in [1]_.
 
 Kriging with categorical or integer variables 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------------------
 
 The goal is to be able to build a model for mixed typed variables. 
 This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
-For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and then we round in the prediction to the output dimension giving the greatest continuous prediction.
+For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
+then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
-More details available in [2]_. 
+More details available in [2]_. See also :ref:Mixed-Integer Sampling and Surrogate.
 
-Note : Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
+Implementation Note: Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
 
@@ -87,7 +88,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0099998
   ___________________________________________________________________________
      
    Evaluation
@@ -105,7 +106,7 @@ Usage
   :align: center
 
 Usage with mixed variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 .. code-block:: python
 
@@ -113,20 +114,20 @@ Usage with mixed variables
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import KRG
+  from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
-  ##    Vartype example
+  # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+  # FLOAT means x1 continuous
+  # INT means x2 integer
+  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
-  # vartype =["cont","int",("cate",3),("cate",2)]
-  # "cont" means x1 continuous
-  # "int" means x2 integer
-  # "(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
-  # "(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
-  
-  vartype = ["int"]
-  sm = KRG(theta0=[1e-2], vartype=vartype)
+  sm = MixedIntegerSurrogate(
+      xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+  )
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -170,7 +171,7 @@ Usage with mixed variables
      Prediction time/pt. (sec) :  0.0000000
      
   
-.. figure:: krg_Test_test_krg_mixed.png
+.. figure:: krg_Test_test_mixed_int_krg.png
   :scale: 80 %
   :align: center
 
@@ -222,18 +223,8 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  None
      -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
-  *  -  vartype
-     -  None
-     -  None
-     -  ['list']
-     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 

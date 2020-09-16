@@ -208,7 +208,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    def test_krg_mixed(self):
+    def test_mixed_int_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
@@ -218,9 +218,7 @@ class Test(unittest.TestCase):
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
 
-        ##    Vartype example
-
-        # vartype =[FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
         # FLOAT means x1 continuous
         # INT means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
