@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import MixedIntegerContext, unfold_with_enum_mask
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK
@@ -172,7 +172,7 @@ class EGO(SurrogateBasedApplication):
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             if self.mixint:
-                x_to_compute = self.mixint.fold_with_enum_indexes(x_to_compute)
+                x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
@@ -302,7 +302,7 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
-            bounds = self.mixint.unfold_to_continuous_limits(self.xlimits)
+            bounds = self.mixint.unfold_with_continuous_limits(self.xlimits)
         else:
             bounds = self.xlimits
 
@@ -320,6 +320,8 @@ class EGO(SurrogateBasedApplication):
         while not success and n_optim <= n_max_optim:
             opt_all = []
             x_start = self._sampling(n_start)
+            if self.mixint:
+                x_start = self.mixint.unfold_with_enum_mask(x_start)
             for ii in range(n_start):
 
                 opt_all.append(

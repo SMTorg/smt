@@ -6,6 +6,10 @@ from smt.applications.mixed_integer import (
     ENUM,
     INT,
     check_xspec_consistency,
+    fold_with_enum_index,
+    unfold_with_enum_mask,
+    compute_x_unfold_dimension,
+    cast_to_enum_values,
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
@@ -38,7 +42,7 @@ class TestMixedInteger(unittest.TestCase):
         sm.set_training_values(xt, yt)
         sm.train()
 
-        x_out = mixint.fold_with_enum_indexes(xt)
+        x_out = mixint.fold_with_enum_index(xt)
         eq_check = True
         for i in range(x_out.shape[0]):
             if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
@@ -47,10 +51,35 @@ class TestMixedInteger(unittest.TestCase):
                 eq_check = False
         self.assertTrue(eq_check)
 
+    def test_compute_unfold_dimension(self):
+        xtypes = [FLOAT, (ENUM, 2)]
+        self.assertEqual(3, compute_x_unfold_dimension(xtypes))
+
+    def test_unfold_with_enum_mask(self):
+        xtypes = [FLOAT, (ENUM, 2)]
+        x = np.array([[1.5, 1], [1.5, 0], [1.5, 1]])
+        expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
+        self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
+
+    def test_fold_with_enum_index(self):
+        xtypes = [FLOAT, (ENUM, 2)]
+        x = np.array([[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]])
+        expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
+        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+
+    def test_cast_to_enum_values(self):
+        xlimits = [[0.0, 4.0], ["blue", "red"]]
+        x_col = 1
+        enum_indexes = [1, 1, 0, 1, 0]
+        expected = ["red", "red", "blue", "red", "blue"]
+        self.assertListEqual(
+            expected, cast_to_enum_values(xlimits, x_col, enum_indexes)
+        )
+
     def test_mixed_integer_lhs(self):
         import numpy as np
-        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
         import matplotlib.pyplot as plt
+        from matplotlib import colors
 
         from smt.sampling_methods import LHS
         from smt.applications.mixed_integer import (
@@ -69,12 +98,8 @@ class TestMixedInteger(unittest.TestCase):
 
         print(x.shape)
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
-        ax.scatter(x[:, 0], x[:, 1], x[:, 2], "o")
-        ax.set_xlabel("x0 blue (1) or not (0)")
-        ax.set_ylabel("x1 red (1) or not (0)")
-        ax.set_zlabel("x2 float")
+        cmap = colors.ListedColormap(["blue", "red"])
+        plt.scatter(x[:, 1], np.zeros(num), c=x[:, 0], cmap=cmap)
         plt.show()
 
     def test_mixed_integer_qp(self):
