@@ -208,25 +208,25 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    def test_krg_mixed(self):
+    def test_mixed_int_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG
+        from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
 
-        ##    Vartype example
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
-        # vartype =["cont","int",("cate",3),("cate",2)]
-        # "cont" means x1 continuous
-        # "int" means x2 integer
-        # "(cate, 3)" means x3,x4 & x5 are 3 levels of the same categorical variable
-        # "(cate, 2)" means x6 & x7 are 2 levels of the same categorical variable
-
-        vartype = ["int"]
-        sm = KRG(theta0=[1e-2], vartype=vartype)
+        sm = MixedIntegerSurrogate(
+            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+        )
         sm.set_training_values(xt, yt)
         sm.train()
 

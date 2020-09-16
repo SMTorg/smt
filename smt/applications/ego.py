@@ -14,6 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
+from smt.applications.mixed_integer import MixedIntegerContext
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK
@@ -103,12 +104,18 @@ class EGO(SurrogateBasedApplication):
             types=bool,
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
-
         declare(
             "surrogate",
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK),
             desc="SMT kriging-based surrogate model used internaly",
+        )
+        declare(
+            "xtypes",
+            None,
+            types=list,
+            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            "or (ENUM n) for categorical doimension with n levels",
         )
 
     def optimize(self, fun):
@@ -164,9 +171,9 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = self._evaluator.run(
-                fun, self.gpr.assign_labels(x_to_compute, self.options["xlimits"])
-            )
+            if self.mixint:
+                x_to_compute = self.mixint.fold_with_enum_indexes(x_to_compute)
+            y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
         # Find the optimal point
@@ -239,29 +246,32 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
+        self.xlimits = self.options["xlimits"]
 
-        # Set the continuous bounds of the optimization problem
-        self.xlimits = self.gpr.relax_limits(self.options["xlimits"])
+        # Handle mixed integer optimization
+        xtypes = self.options["xtypes"]
+        if xtypes:
+            self.mixint = MixedIntegerContext(xtypes, self.xlimits)
+            self.gpr = self.mixint.build_surrogate(self.gpr)
+            self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
+        else:
+            self.mixint = None
+            self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
 
-        # Build initial DOE
-        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
+        # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = self._sampling(n_doe)
-
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
 
-        x_doe = self.gpr.project_values(x_doe)
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self._evaluator.run(
-                fun, self.gpr.assign_labels(x_doe, self.options["xlimits"])
-            )
+            y_doe = self._evaluator.run(fun, x_doe)
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -291,7 +301,10 @@ class EGO(SurrogateBasedApplication):
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
-        bounds = self.xlimits
+        if self.mixint:
+            bounds = self.mixint.unfold_to_continuous_limits(self.xlimits)
+        else:
+            bounds = self.xlimits
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(
@@ -334,7 +347,10 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
-        self.gpr.project_values(x_et_k)
+
+        if self.mixint:
+            self.mixint.cast_to_discrete_values(x_et_k)
+
         return x_et_k, True
 
     def _get_virtual_point(self, x, y_data):
