@@ -23,11 +23,8 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG
+from smt.surrogate_models import KRG, QP
 from smt.applications.mixed_integer import FLOAT, INT, ENUM
-
-PYTHON_2 = sys.version_info.major == 2
-
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
@@ -154,7 +151,6 @@ class TestEGO(SMTestCase):
         n_parallel = 5
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        qEI = "KB"
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(

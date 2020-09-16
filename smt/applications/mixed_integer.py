@@ -129,7 +129,6 @@ def cast_to_discrete_values(xtypes, x):
             continue
 
         elif xtyp == INT:
-            print(x)
             ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
 
