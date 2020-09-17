@@ -172,7 +172,7 @@ class EGO(SurrogateBasedApplication):
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             if self.mixint:
-                x_to_compute = self.mixint.fold_with_enum_indexes(x_to_compute)
+                x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
@@ -251,7 +251,9 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.mixint = MixedIntegerContext(xtypes, self.xlimits)
+            self.mixint = MixedIntegerContext(
+                xtypes, self.xlimits, work_in_folded_space=False
+            )
             self.gpr = self.mixint.build_surrogate(self.gpr)
             self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
         else:
@@ -268,6 +270,8 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
+            if self.mixint:
+                x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -302,7 +306,7 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
-            bounds = self.mixint.unfold_to_continuous_limits(self.xlimits)
+            bounds = self.mixint.unfold_with_continuous_limits(self.xlimits)
         else:
             bounds = self.xlimits
 
@@ -347,9 +351,6 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
-
-        if self.mixint:
-            self.mixint.cast_to_discrete_values(x_et_k)
 
         return x_et_k, True
 

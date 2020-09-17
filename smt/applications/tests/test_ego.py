@@ -231,14 +231,14 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
     @staticmethod
-    def function_test_cate_mixed(X):
+    def function_test_mixed_integer(X):
         x1 = X[:, 0]
-        #  cate 1
+        #  enum 1
         c1 = X[:, 1]
         x2 = c1 == 0
         x3 = c1 == 1
         x4 = c1 == 2
-        #  cate 2
+        #  enum 2
         c2 = X[:, 2]
         x5 = c2 == 0
         x6 = c2 == 1
@@ -246,10 +246,10 @@ class TestEGO(SMTestCase):
         y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
         return y
 
-    def test_function_test_cate_mixed(self):
+    def test_ego_mixed_integer(self):
         n_iter = 15
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
-        xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
+        xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]
         s = KRG(print_global=False)
@@ -261,9 +261,9 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=s,
-            enable_tunneling=True,
+            enable_tunneling=False,
         )
-        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
@@ -406,7 +406,7 @@ class TestEGO(SMTestCase):
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
 
     @staticmethod
-    def run_ego_example_mixed():
+    def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
@@ -414,9 +414,7 @@ class TestEGO(SMTestCase):
             FLOAT,
             INT,
             ENUM,
-            unfold_to_continuous_limits,
-            cast_to_discrete_values,
-            fold_with_enum_indexes,
+            MixedIntegerSamplingMethod,
         )
 
         import sklearn
@@ -427,17 +425,17 @@ class TestEGO(SMTestCase):
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
 
-        def function_test_cate_mixed(X):
+        def function_test_mixed_integer(X):
             import numpy as np
 
             # float
             x1 = X[:, 0]
-            #  cate 1
+            #  enum 1
             c1 = X[:, 1]
             x2 = c1 == 0
             x3 = c1 == 1
             x4 = c1 == 2
-            #  cate 2
+            #  enum 2
             c2 = X[:, 2]
             x5 = c2 == 0
             x6 = c2 == 1
@@ -458,13 +456,10 @@ class TestEGO(SMTestCase):
         qEI = "KB"
         sm = KRG(print_global=False)
 
-        n_doe = 6
-        samp = LHS(
-            xlimits=unfold_to_continuous_limits(xtypes, xlimits), criterion="ese"
-        )
-        xdoe = samp(n_doe)
-        xdoe = cast_to_discrete_values(xtypes, xdoe)
-        ydoe = function_test_cate_mixed(fold_with_enum_indexes(xtypes, xdoe))
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+        xdoe = sampling(n_doe)
+        ydoe = function_test_mixed_integer(xdoe)
 
         ego = EGO(
             n_iter=n_iter,
@@ -477,13 +472,13 @@ class TestEGO(SMTestCase):
             qEI=qEI,
         )
 
-        _, _, _, _, y_data = ego.optimize(fun=function_test_cate_mixed)
+        _, _, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
 
+        min_ref = -15
         mini = np.zeros(n_iter)
         for k in range(n_iter):
-            mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+            mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
         x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-
         u = max(np.floor(max(mini)) + 1, -100)
         l = max(np.floor(min(mini)) - 0.2, -10)
         fig = plt.figure()
@@ -641,6 +636,6 @@ if __name__ == "__main__":
         TestEGO.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestEGO.run_ego_parallel_example()
+        TestEGO.run_ego_mixed_integer_example()
         exit()
     unittest.main()
