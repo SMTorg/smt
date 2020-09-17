@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext, unfold_with_enum_mask
+from smt.applications.mixed_integer import MixedIntegerContext
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK
@@ -251,7 +251,9 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.mixint = MixedIntegerContext(xtypes, self.xlimits)
+            self.mixint = MixedIntegerContext(
+                xtypes, self.xlimits, work_in_folded_space=False
+            )
             self.gpr = self.mixint.build_surrogate(self.gpr)
             self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
         else:
@@ -268,6 +270,8 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
+            if self.mixint:
+                x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -320,8 +324,6 @@ class EGO(SurrogateBasedApplication):
         while not success and n_optim <= n_max_optim:
             opt_all = []
             x_start = self._sampling(n_start)
-            if self.mixint:
-                x_start = self.mixint.unfold_with_enum_mask(x_start)
             for ii in range(n_start):
 
                 opt_all.append(
@@ -349,9 +351,6 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
-
-        if self.mixint:
-            self.mixint.cast_to_discrete_values(x_et_k)
 
         return x_et_k, True
 

@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
+from smt.utils.checks import check_2d_array
 
 FLOAT = "float_type"
 INT = "int_type"
@@ -224,7 +225,7 @@ def unfold_with_enum_mask(xtypes, x):
     return xunfold
 
 
-def cast_to_enum_values(xlimits, x_col, enum_indexes):
+def cast_to_enum_value(xlimits, x_col, enum_indexes):
     """
     Return enumerate level from indices for the given x feature.
 
@@ -250,59 +251,87 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = unfold_with_continuous_limits(xtypes, xlimits)
+        self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
+        kwargs.pop("output_in_folded_space", None)
         self._sampling_method = sampling_method_class(xlimits=self._xlimits, **kwargs)
 
     def __call__(self, nt):
         doe = self._sampling_method(nt)
         unfold_xdoe = cast_to_discrete_values(self._xtypes, doe)
-        xdoe = fold_with_enum_index(self._xtypes, unfold_xdoe)
-        return xdoe
+        if self._output_in_folded_space:
+            return fold_with_enum_index(self._xtypes, unfold_xdoe)
+        else:
+            return unfold_xdoe
 
 
 class MixedIntegerSurrogate(SurrogateModel):
-    def __init__(self, xtypes, xlimits, surrogate):
-        super()
+    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True):
+        super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
         self._xtypes = xtypes
         self._xlimits = xlimits
-        self._fold_dim = len(xtypes)
-        self._unfold_dim = compute_x_unfold_dimension(xtypes)
+        self._input_in_folded_space = input_in_folded_space
+        self.name = "MixedInteger" + self._surrogate.name
+        self.supports = self._surrogate.supports
+        self.options["print_global"] = False
 
     def _initialize(self):
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):
-        self._surrogate.set_training_values(xt, yt, name)
+        xt = check_2d_array(xt, "xt")
+        if self._input_in_folded_space:
+            xt2 = unfold_with_enum_mask(self._xtypes, xt)
+        else:
+            xt2 = xt
+        super().set_training_values(xt2, yt)
+        self._surrogate.set_training_values(xt2, yt, name)
 
     def update_training_values(self, yt, name=None):
+        super().update_training_values(yt, name)
         self._surrogate.update_training_values(yt, name)
 
-    def train(self):
-        self._surrogate.train()
+    def _train(self):
+        self._surrogate._train()
 
-    def predict_values(self, x):
-        return self._surrogate.predict_values(cast_to_discrete_values(self._xtypes, x))
+    def _predict_values(self, x):
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xtypes, x)
+        else:
+            x2 = x
+        return self._surrogate.predict_values(cast_to_discrete_values(self._xtypes, x2))
 
-    def predict_variances(self, x):
+    def _predict_variances(self, x):
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xtypes, x)
+        else:
+            x2 = x
         return self._surrogate.predict_variances(
-            cast_to_discrete_values(self._xtypes, x)
+            cast_to_discrete_values(self._xtypes, x2)
         )
 
 
 class MixedIntegerContext(object):
-    def __init__(self, xtypes, xlimits):
+    def __init__(self, xtypes, xlimits, work_in_folded_space=True):
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = xlimits
+        self._work_in_folded_space = work_in_folded_space
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
+        kwargs["output_in_folded_space"] = self._work_in_folded_space
         return MixedIntegerSamplingMethod(
             self._xtypes, self._xlimits, sampling_method_class, **kwargs
         )
 
     def build_surrogate(self, surrogate):
-        return MixedIntegerSurrogate(self._xtypes, self._xlimits, surrogate)
+        return MixedIntegerSurrogate(
+            self._xtypes,
+            self._xlimits,
+            surrogate,
+            input_in_folded_space=self._work_in_folded_space,
+        )
 
     def unfold_with_continuous_limits(self, xlimits):
         return unfold_with_continuous_limits(self._xtypes, xlimits)
@@ -316,6 +345,6 @@ class MixedIntegerContext(object):
     def unfold_with_enum_mask(self, x):
         return unfold_with_enum_mask(self._xtypes, x)
 
-    def cast_to_enum_values(self, x_col, enum_indexes):
-        return cast_to_enum_values(self._xlimits, x_col, enum_indexes)
+    def cast_to_enum_value(self, x_col, enum_indexes):
+        return cast_to_enum_value(self._xlimits, x_col, enum_indexes)
 

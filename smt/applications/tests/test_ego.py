@@ -231,14 +231,14 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
     @staticmethod
-    def function_test_cate_mixed(X):
+    def function_test_mixed_integer(X):
         x1 = X[:, 0]
-        #  cate 1
+        #  enum 1
         c1 = X[:, 1]
         x2 = c1 == 0
         x3 = c1 == 1
         x4 = c1 == 2
-        #  cate 2
+        #  enum 2
         c2 = X[:, 2]
         x5 = c2 == 0
         x6 = c2 == 1
@@ -249,7 +249,7 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer(self):
         n_iter = 15
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
-        xdoe = np.array([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
+        xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]
         s = KRG(print_global=False)
@@ -261,9 +261,9 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=s,
-            enable_tunneling=True,
+            enable_tunneling=False,
         )
-        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
@@ -406,7 +406,7 @@ class TestEGO(SMTestCase):
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
 
     @staticmethod
-    def run_ego_example_mixed():
+    def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
@@ -430,12 +430,12 @@ class TestEGO(SMTestCase):
 
             # float
             x1 = X[:, 0]
-            #  cate 1
+            #  enum 1
             c1 = X[:, 1]
             x2 = c1 == 0
             x3 = c1 == 1
             x4 = c1 == 2
-            #  cate 2
+            #  enum 2
             c2 = X[:, 2]
             x5 = c2 == 0
             x6 = c2 == 1
@@ -636,6 +636,6 @@ if __name__ == "__main__":
         TestEGO.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestEGO.run_ego_parallel_example()
+        TestEGO.run_ego_mixed_integer_example()
         exit()
     unittest.main()

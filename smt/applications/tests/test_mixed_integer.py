@@ -1,5 +1,9 @@
 import unittest
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     FLOAT,
@@ -9,7 +13,7 @@ from smt.applications.mixed_integer import (
     fold_with_enum_index,
     unfold_with_enum_mask,
     compute_x_unfold_dimension,
-    cast_to_enum_values,
+    cast_to_enum_value,
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
@@ -28,7 +32,7 @@ class TestMixedInteger(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_xspec_consistency(xtypes, xlimits)
 
-    def test_krg_mixed_5D(self):
+    def test_krg_mixed_3D(self):
         xtypes = [FLOAT, (ENUM, 3), INT]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -36,18 +40,17 @@ class TestMixedInteger(unittest.TestCase):
         sm = mixint.build_surrogate(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
-        fun = Sphere(ndim=5)
+        fun = Sphere(ndim=3)
         xt = sampling(20)
         yt = fun(xt)
         sm.set_training_values(xt, yt)
         sm.train()
 
-        x_out = mixint.fold_with_enum_index(xt)
         eq_check = True
-        for i in range(x_out.shape[0]):
-            if abs(float(x_out[i, :][2]) - int(float(x_out[i, :][2]))) > 10e-8:
+        for i in range(xt.shape[0]):
+            if abs(float(xt[i, :][2]) - int(float(xt[i, :][2]))) > 10e-8:
                 eq_check = False
-            if not (x_out[i, :][1] == 0 or x_out[i, :][1] == 1 or x_out[i, :][1] == 2):
+            if not (xt[i, :][1] == 0 or xt[i, :][1] == 1 or xt[i, :][1] == 2):
                 eq_check = False
         self.assertTrue(eq_check)
 
@@ -67,14 +70,12 @@ class TestMixedInteger(unittest.TestCase):
         expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
         self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
 
-    def test_cast_to_enum_values(self):
+    def test_cast_to_enum_value(self):
         xlimits = [[0.0, 4.0], ["blue", "red"]]
         x_col = 1
         enum_indexes = [1, 1, 0, 1, 0]
         expected = ["red", "red", "blue", "red", "blue"]
-        self.assertListEqual(
-            expected, cast_to_enum_values(xlimits, x_col, enum_indexes)
-        )
+        self.assertListEqual(expected, cast_to_enum_value(xlimits, x_col, enum_indexes))
 
     def test_mixed_integer_lhs(self):
         import numpy as np
