@@ -472,7 +472,9 @@ class TestEGO(SMTestCase):
             qEI=qEI,
         )
 
-        _, _, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
+        x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
+        print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
+        print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
 
         min_ref = -15
         mini = np.zeros(n_iter)

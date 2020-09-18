@@ -16,6 +16,7 @@ from smt.applications.mixed_integer import (
     unfold_with_enum_mask,
     compute_x_unfold_dimension,
     cast_to_enum_value,
+    cast_to_mixed_integer,
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
@@ -72,6 +73,14 @@ class TestMixedInteger(unittest.TestCase):
         expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
         self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
 
+    def test_fold_with_enum_index_with_list(self):
+        xtypes = [FLOAT, (ENUM, 2)]
+        expected = [[1.5, 1]]
+        x = np.array([1.5, 0, 1])
+        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+        x = [1.5, 0, 1]
+        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+
     def test_cast_to_enum_value(self):
         xlimits = [[0.0, 4.0], ["blue", "red"]]
         x_col = 1
@@ -85,6 +94,16 @@ class TestMixedInteger(unittest.TestCase):
         sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
         doe = sampling(10)
         self.assertEqual((10, 4), doe.shape)
+
+    def test_cast_to_mixed_integer(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]]
+        )
+        x = np.array([1.5, 0, 2, 1])
+        self.assertEqual(
+            [1.5, "blue", "long", 1], cast_to_mixed_integer(xtypes, xlimits, x)
+        )
 
     def test_mixed_integer_lhs(self):
         import numpy as np
