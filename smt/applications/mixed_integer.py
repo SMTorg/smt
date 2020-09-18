@@ -100,7 +100,9 @@ def unfold_with_continuous_limits(xtypes, xlimits):
                 "Bad var type specification: "
                 "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
             )
-    return np.array(xlims)
+    return np.array(xlims).astype(
+        float
+    )  # avoid possible weird typing of initial xlimits ndarray
 
 
 def cast_to_discrete_values(xtypes, x):

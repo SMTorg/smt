@@ -6,10 +6,12 @@ matplotlib.use("Agg")
 
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
+    MixedIntegerSamplingMethod,
     FLOAT,
     ENUM,
     INT,
     check_xspec_consistency,
+    unfold_with_continuous_limits,
     fold_with_enum_index,
     unfold_with_enum_mask,
     compute_x_unfold_dimension,
@@ -76,6 +78,13 @@ class TestMixedInteger(unittest.TestCase):
         enum_indexes = [1, 1, 0, 1, 0]
         expected = ["red", "red", "blue", "red", "blue"]
         self.assertListEqual(expected, cast_to_enum_value(xlimits, x_col, enum_indexes))
+
+    def test_unfolded_xlimits_type(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 2), INT]
+        xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], [0, 2]])
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+        doe = sampling(10)
+        self.assertEqual((10, 4), doe.shape)
 
     def test_mixed_integer_lhs(self):
         import numpy as np
