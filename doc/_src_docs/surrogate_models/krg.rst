@@ -36,7 +36,7 @@ For integer, we add a continuous dimension with the same bounds and then we roun
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
 then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
-More details available in [2]_. See also :ref:Mixed-Integer Sampling and Surrogate.
+More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
 
 Implementation Note: Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
@@ -88,7 +88,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0099998
+     Training - done. Time (sec):  0.0100000
   ___________________________________________________________________________
      
    Evaluation
@@ -144,21 +144,6 @@ Usage with mixed variables
   
 ::
 
-  ___________________________________________________________________________
-     
-                                    Kriging
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 5
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.0100002
   ___________________________________________________________________________
      
    Evaluation

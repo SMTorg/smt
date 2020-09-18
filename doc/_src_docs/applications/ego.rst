@@ -272,7 +272,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.8 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -441,9 +441,7 @@ Usage with mixed variable
       FLOAT,
       INT,
       ENUM,
-      unfold_to_continuous_limits,
-      cast_to_discrete_values,
-      fold_with_enum_indexes,
+      MixedIntegerSamplingMethod,
   )
   
   import sklearn
@@ -454,17 +452,17 @@ Usage with mixed variable
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS
   
-  def function_test_cate_mixed(X):
+  def function_test_mixed_integer(X):
       import numpy as np
   
       # float
       x1 = X[:, 0]
-      #  cate 1
+      #  enum 1
       c1 = X[:, 1]
       x2 = c1 == 0
       x3 = c1 == 1
       x4 = c1 == 2
-      #  cate 2
+      #  enum 2
       c2 = X[:, 2]
       x5 = c2 == 0
       x6 = c2 == 1
@@ -485,13 +483,10 @@ Usage with mixed variable
   qEI = "KB"
   sm = KRG(print_global=False)
   
-  n_doe = 6
-  samp = LHS(
-      xlimits=unfold_to_continuous_limits(xtypes, xlimits), criterion="ese"
-  )
-  xdoe = samp(n_doe)
-  xdoe = cast_to_discrete_values(xtypes, xdoe)
-  ydoe = function_test_cate_mixed(fold_with_enum_indexes(xtypes, xdoe))
+  n_doe = 2
+  sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+  xdoe = sampling(n_doe)
+  ydoe = function_test_mixed_integer(xdoe)
   
   ego = EGO(
       n_iter=n_iter,
@@ -504,13 +499,13 @@ Usage with mixed variable
       qEI=qEI,
   )
   
-  _, _, _, _, y_data = ego.optimize(fun=function_test_cate_mixed)
+  _, _, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
   
+  min_ref = -15
   mini = np.zeros(n_iter)
   for k in range(n_iter):
-      mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+      mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
   x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-  
   u = max(np.floor(max(mini)) + 1, -100)
   l = max(np.floor(min(mini)) - 0.2, -10)
   fig = plt.figure()
@@ -522,7 +517,7 @@ Usage with mixed variable
   plt.ylabel("log of the difference w.r.t the best")
   plt.show()
   
-.. figure:: ego_TestEGO_run_ego_example_mixed.png
+.. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
   :align: center
 
@@ -576,7 +571,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000051A67B8>
+     -  <smt.applications.ego.Evaluator object at 0x00000000050DC198>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -611,7 +606,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000000008777B38>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000000050DC208>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly

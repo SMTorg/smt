@@ -8,11 +8,11 @@ categorical (or enumerate) and integer variables using continuous relaxation.
 
 For integer variables, values are rounded to the closer integer.
 For enum variables, as many x features as enumerated levels are created with [0, 1] bounds 
-and the max of these float features values will correspond to the choice of one the enum value. 
+and the max of these feature float values will correspond to the choice of one the enum value. 
 
-For instance, for an enum with three levels ["blue", "red", "green"],
+For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"],
 3 continuous float features x0, x1, x2 are created, the max(x0, x1, x2), 
-let say x1, will give "red" as the value for the original categorical dimension. 
+let say x1, will give "red" as the value for the original categorical feature. 
 
 The user specifies x feature types through a list of types to be either:
 
@@ -23,7 +23,7 @@ The user specifies x feature types through a list of types to be either:
 In the case of mixed integer sampling, bounds of each x feature have to be adapted 
 to take into account feature types. While FLOAT and INT feature still have an interval
 [lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list
-of possible values. 
+of possible values (levels). 
 
 For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
 a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
@@ -31,10 +31,10 @@ a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["shor
 Mixed integer sampling method
 -----------------------------
 
-To use a sampling method with mixed integer constraints, the user instanciates
-a ``MixedIntegerSamplingMethod`` with the selected sampling method.
+To use a sampling method with mixed integer typed features, the user instanciates
+a ``MixedIntegerSamplingMethod`` with a given sampling method.
 The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface 
-and decorates the original sampling method to provide a DOE with regards to integer 
+and decorates the original sampling method to provide a DOE while conforming to integer 
 and categorical types.
 
 Example of mixed-integer LHS sampling method
@@ -43,8 +43,8 @@ Example of mixed-integer LHS sampling method
 .. code-block:: python
 
   import numpy as np
-  from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
   import matplotlib.pyplot as plt
+  from matplotlib import colors
   
   from smt.sampling_methods import LHS
   from smt.applications.mixed_integer import (
@@ -63,17 +63,13 @@ Example of mixed-integer LHS sampling method
   
   print(x.shape)
   
-  fig = plt.figure()
-  ax = fig.add_subplot(111, projection="3d")
-  ax.scatter(x[:, 0], x[:, 1], x[:, 2], "o")
-  ax.set_xlabel("x0 blue (1) or not (0)")
-  ax.set_ylabel("x1 red (1) or not (0)")
-  ax.set_zlabel("x2 float")
+  cmap = colors.ListedColormap(["blue", "red"])
+  plt.scatter(x[:, 1], np.zeros(num), c=x[:, 0], cmap=cmap)
   plt.show()
   
 ::
 
-  (40, 3)
+  (40, 2)
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_integer_lhs.png
   :scale: 80 %
@@ -84,11 +80,11 @@ Mixed integer surrogate
 
 To use a surrogate with mixed integer constraints, the user instanciates
 a ``MixedIntegerSurrogate`` with the given surrogate.
-The ``MixedIntegerSuroogate`` implements the ``SurrogateModel`` interface 
-and decorates the given surrogate to respect integer and categorical types.
+The ``MixedIntegerSurrogate`` implements the ``SurrogateModel`` interface 
+and decorates the given surrogate while respecting integer and categorical types.
 
-Example of mixed-integer Kriging surrogate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example of mixed-integer Polynomial (QP) surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -124,21 +120,6 @@ Example of mixed-integer Kriging surrogate
   
 ::
 
-  ___________________________________________________________________________
-     
-                                      QP
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 5
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.0009999
   ___________________________________________________________________________
      
    Evaluation
