@@ -47,6 +47,13 @@ def check_xspec_consistency(xtypes, xlimits):
             )
 
 
+def _raise_value_error(xtyp):
+    raise ValueError(
+        "Bad xtype specification: "
+        "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
+    )
+
+
 def compute_x_unfold_dimension(xtypes):
     res = 0
     for xtyp in xtypes:
@@ -55,10 +62,7 @@ def compute_x_unfold_dimension(xtypes):
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             res += xtyp[1]
         else:
-            raise ValueError(
-                "Bad var type specification: "
-                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
-            )
+            _raise_value_error(xtyp)
     return res
 
 
@@ -96,13 +100,9 @@ def unfold_with_continuous_limits(xtypes, xlimits):
                     )
                 )
         else:
-            raise ValueError(
-                "Bad var type specification: "
-                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
-            )
-    return np.array(xlims).astype(
-        float
-    )  # avoid possible weird typing of initial xlimits ndarray
+            _raise_value_error(xtyp)
+    # avoid possible weird typing of initial xlimits ndarray
+    return np.array(xlims).astype(float)
 
 
 def cast_to_discrete_values(xtypes, x):
@@ -124,7 +124,7 @@ def cast_to_discrete_values(xtypes, x):
     np.ndarray
         feasible evaluation point value in categorical space.
     """
-    ret = x.copy()
+    ret = check_2d_array(x, "x").copy()
     x_col = 0
     for xtyp in xtypes:
         if xtyp == FLOAT:
@@ -144,10 +144,7 @@ def cast_to_discrete_values(xtypes, x):
             xenum[~mask] = 1
             x_col = x_col + xtyp[1]
         else:
-            raise ValueError(
-                "Bad var type specification: "
-                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
-            )
+            _raise_value_error(xtyp)
     return ret
 
 
@@ -173,6 +170,7 @@ def fold_with_enum_index(xtypes, x):
     np.ndarray [n_evals, dim]
         evaluation point input variable values with enumerate index for categorical variables
     """
+    x = np.atleast_2d(x)
     xfold = np.zeros((x.shape[0], len(xtypes)))
     unfold_index = 0
     for i, xtyp in enumerate(xtypes):
@@ -184,10 +182,7 @@ def fold_with_enum_index(xtypes, x):
             xfold[:, i] = index
             unfold_index += xtyp[1]
         else:
-            raise ValueError(
-                "Bad var type specification: "
-                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
-            )
+            _raise_value_error(xtyp)
     return xfold
 
 
@@ -211,6 +206,7 @@ def unfold_with_enum_mask(xtypes, x):
     np.ndarray [n_evals, nx continuous]
         evaluation point input variable values with enumerate index for categorical variables
     """
+    x = np.atleast_2d(x)
     xunfold = np.zeros((x.shape[0], compute_x_unfold_dimension(xtypes)))
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == INT:
@@ -220,10 +216,7 @@ def unfold_with_enum_mask(xtypes, x):
             for row in range(x.shape[0]):
                 enum_slice[row, x[row, i].astype(int)] = 1
         else:
-            raise ValueError(
-                "Bad var type specification: "
-                "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
-            )
+            _raise_value_error(xtyp)
     return xunfold
 
 
@@ -245,6 +238,21 @@ def cast_to_enum_value(xlimits, x_col, enum_indexes):
         list of levels (labels) for the given enum feature
     """
     return [xlimits[x_col][index] for index in enum_indexes]
+
+
+def cast_to_mixed_integer(xtypes, xlimits, x):
+    res = []
+    for i, xtyp in enumerate(xtypes):
+        xi = x[i]
+        if xtyp == FLOAT:
+            res.append(xi)
+        elif xtyp == INT:
+            res.append(int(xi))
+        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
+            res.append(xlimits[i][int(xi)])
+        else:
+            _raise_value_error(xtyp)
+    return res
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
@@ -349,4 +357,7 @@ class MixedIntegerContext(object):
 
     def cast_to_enum_value(self, x_col, enum_indexes):
         return cast_to_enum_value(self._xlimits, x_col, enum_indexes)
+
+    def cast_to_mixed_integer(self, x):
+        return cast_to_mixed_integer(self._xtypes, self._xlimits, x)
 

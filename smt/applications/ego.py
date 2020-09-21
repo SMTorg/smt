@@ -181,6 +181,9 @@ class EGO(SurrogateBasedApplication):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
+        if self.mixint:
+            x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
+
         return x_opt, y_opt, ind_best, x_data, y_data
 
     def log(self, msg):
