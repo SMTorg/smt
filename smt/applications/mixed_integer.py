@@ -55,6 +55,9 @@ def _raise_value_error(xtyp):
 
 
 def compute_x_unfold_dimension(xtypes):
+    """
+    Returns x dimension (int) taking into account  unfolded categorical features
+    """
     res = 0
     for xtyp in xtypes:
         if xtyp == FLOAT or xtyp == INT:
@@ -222,16 +225,16 @@ def unfold_with_enum_mask(xtypes, x):
 
 def cast_to_enum_value(xlimits, x_col, enum_indexes):
     """
-    Return enumerate level from indices for the given x feature.
+    Return enumerate levels from indexes for the given x feature specified by x_col.
 
     Parameters
     ----------
-        xlimits: array-like
-            bounds of x features
-        x_col: int 
-            index of the feature typed as enum
-        enum_indexes: list
-            list of indexes in the possible values for the enum
+    xlimits: array-like
+        bounds of x features
+    x_col: int 
+        index of the feature typed as enum
+    enum_indexes: list
+        list of indexes in the possible values for the enum
 
     Returns
     -------
@@ -241,6 +244,22 @@ def cast_to_enum_value(xlimits, x_col, enum_indexes):
 
 
 def cast_to_mixed_integer(xtypes, xlimits, x):
+    """
+    Convert an x point with enum indexes to x point with enum levels
+
+    Parameters
+    ----------
+    xtypes: x types list
+        x type specification
+    xlimits:  array-like
+        bounds of x features
+    x: array-like
+        point to convert
+    
+    Returns
+    -------
+        x as a list with enum levels if any
+    """
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
@@ -256,7 +275,28 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
+    """
+    Sampling method decorator that takes an SMT continuous sampling method and
+    cast values according x types specification to implement a sampling method 
+    handling integer (INT) or categorical (ENUM) features 
+    """
+
     def __init__(self, xtypes, xlimits, sampling_method_class, **kwargs):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x type specification
+        xlimits: array-like
+            bounds of x features
+        sampling_method_class: class name
+            SMT sampling method class
+        kwargs: options of the given sampling method
+            options used to instanciate the SMT sampling method 
+            with the additional 'output_in_folded_space' boolean option
+            specifying if doe output should be in folded space (enum indexes) 
+            or not (enum masks) 
+        """
         super()
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -275,7 +315,25 @@ class MixedIntegerSamplingMethod(SamplingMethod):
 
 
 class MixedIntegerSurrogate(SurrogateModel):
+    """
+    Surrogate model decorator that takes an SMT continuous surrogate model and
+    cast values according x types specification to implement a surrogate model 
+    handling integer (INT) or categorical (ENUM) features 
+    """
+
     def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x type specification
+        xlimits: array-like
+            bounds of x features
+        surrogate: SMT surrogate model
+            instance of a SMT surrogate model
+        input_in_folded_space: bool
+            whether x data are in given in folded space (enum indexes) or not (enum masks)  
+        """
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
@@ -323,19 +381,40 @@ class MixedIntegerSurrogate(SurrogateModel):
 
 
 class MixedIntegerContext(object):
+    """
+    Class which acts as sampling method and surrogate model factory
+    to handle integer and categorical variables consistently.  
+    """
+
     def __init__(self, xtypes, xlimits, work_in_folded_space=True):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x type specification
+        xlimits: array-like
+            bounds of x features
+        work_in_folded_space: bool
+            whether x data are in given in folded space (enum indexes) or not (enum masks)  
+        """
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._work_in_folded_space = work_in_folded_space
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
+        """
+        Build MixedIntegerSamplingMethod from given SMT sampling method.
+        """
         kwargs["output_in_folded_space"] = self._work_in_folded_space
         return MixedIntegerSamplingMethod(
             self._xtypes, self._xlimits, sampling_method_class, **kwargs
         )
 
     def build_surrogate(self, surrogate):
+        """
+        Build MixedIntegerSurrogate from given SMT surrogate.
+        """
         return MixedIntegerSurrogate(
             self._xtypes,
             self._xlimits,
