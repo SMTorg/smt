@@ -202,7 +202,6 @@ class TestMOE(SMTestCase):
     @staticmethod
     def run_moe_example():
         import numpy as np
-        import six
         from smt.applications import MOE
         from smt.problems import LpNorm
         from smt.sampling_methods import FullFactorial
@@ -241,7 +240,7 @@ class TestMOE(SMTestCase):
         fig.set_size_inches(12, 11)
 
         # Cluster display
-        colors_ = list(six.iteritems(colors.cnames))
+        colors_ = list(colors.cnames.items())
         GMM = moe.cluster
         weight = GMM.weights_
         mean = GMM.means_

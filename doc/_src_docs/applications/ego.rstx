@@ -197,7 +197,7 @@ Usage with parallel options
 
 Usage with mixed variable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_example_mixed, 80
+.. embed-test-print-plot :: smt.applications.tests.test_ego , TestEGO , run_ego_mixed_integer_example, 80
 
 
 Options

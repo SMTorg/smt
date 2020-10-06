@@ -8,7 +8,6 @@ Partial Least Square decomposition added on highest fidelity level
 Adapted March 2020 by Nathalie Bartoli to the new SMT version
 """
 
-from __future__ import division
 import numpy as np
 from copy import deepcopy
 from sys import exit

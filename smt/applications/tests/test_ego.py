@@ -23,10 +23,8 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG
-
-PYTHON_2 = sys.version_info.major == 2
-
+from smt.surrogate_models import KRG, QP
+from smt.applications.mixed_integer import FLOAT, INT, ENUM
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
@@ -38,8 +36,9 @@ class ParallelEvaluator(Evaluator):
 
 
 class TestEGO(SMTestCase):
-    
+
     plot = None
+
     @staticmethod
     def function_test_1d(x):
         # function xsinx
@@ -103,7 +102,6 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
-
     def test_rosenbrock_2D_parallel(self):
         n_iter = 15
         n_parallel = 5
@@ -150,10 +148,9 @@ class TestEGO(SMTestCase):
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
-        n_parallel = 5        
+        n_parallel = 5
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        qEI = "KB"
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -182,22 +179,22 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        qEI="KB"
+        qEI = "KB"
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False, vartype=["int", "cont"])
+        s = KRG(print_global=False)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
+            xtypes=[INT, FLOAT],
             xlimits=xlimits,
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
-            surrogate=s
+            surrogate=s,
         )
 
-
-        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
@@ -206,20 +203,25 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
-
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
+        xtypes = [INT, FLOAT]
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False, vartype=["int", "cont"])
+        s = KRG(print_global=False)
         ego = EGO(
-            xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits, surrogate=s,
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=s,
         )
 
-        x_opt, y_opt, _, _, _  = ego.optimize(fun=fun)
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
@@ -229,36 +231,41 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
     @staticmethod
-    def function_test_cate_mixed(X):
-        x1 = X[:, 0].astype(float)
-        #  cate 1
+    def function_test_mixed_integer(X):
+        x1 = X[:, 0]
+        #  enum 1
         c1 = X[:, 1]
-        x2 = c1 == "1"
-        x3 = c1 == "2"
-        x4 = c1 == "3"
-        #  cate 2
+        x2 = c1 == 0
+        x3 = c1 == 1
+        x4 = c1 == 2
+        #  enum 2
         c2 = X[:, 2]
-        x5 = c2 == "4"
-        x6 = c2 == "5"
+        x5 = c2 == 0
+        x6 = c2 == 1
 
         y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
         return y
 
-    def test_function_test_cate_mixed(self):
+    def test_ego_mixed_integer(self):
         n_iter = 15
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
-        xdoe = np.atleast_2d([[5, 4], [1, 1], [0, 0], [0, 0], [1, 1], [0, 0]]).T
-        n_doe = xdoe.size
+        xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        v = ["int", ("cate", 3), ("cate", 2)]
-        s = KRG(print_global=False, vartype=v)
+        xtypes = [INT, (ENUM, 3), (ENUM, 2)]
+        s = KRG(print_global=False)
 
         ego = EGO(
-            n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits, surrogate=s, enable_tunneling=True
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=s,
+            enable_tunneling=False,
         )
-        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_cate_mixed)
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=1)
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ydoe_option(self):
         n_iter = 10
@@ -275,7 +282,6 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
-
 
     def test_find_best_point(self):
         fun = TestEGO.function_test_1d
@@ -318,7 +324,6 @@ class TestEGO(SMTestCase):
     @staticmethod
     def run_ego_example():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
 
@@ -399,13 +404,18 @@ class TestEGO(SMTestCase):
             )
         plt.show()
         # Check the optimal point is x_opt=18.9, y_opt =-15.1
-  
+
     @staticmethod
-    def run_ego_example_mixed():
+    def run_ego_mixed_integer_example():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.sampling_methods import FullFactorial
+        from smt.applications.mixed_integer import (
+            FLOAT,
+            INT,
+            ENUM,
+            MixedIntegerSamplingMethod,
+        )
 
         import sklearn
         import matplotlib.pyplot as plt
@@ -415,22 +425,22 @@ class TestEGO(SMTestCase):
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
 
-        def function_test_cate_mixed(X):
+        def function_test_mixed_integer(X):
             import numpy as np
 
             # float
-            x1 = X[:, 0].astype(float)
-            #  cate 1
+            x1 = X[:, 0]
+            #  enum 1
             c1 = X[:, 1]
-            x2 = c1 == "1"
-            x3 = c1 == "2"
-            x4 = c1 == "3"
-            #  cate 2
+            x2 = c1 == 0
+            x3 = c1 == 1
+            x4 = c1 == 2
+            #  enum 2
             c2 = X[:, 2]
-            x5 = c2 == "4"
-            x6 = c2 == "5"
+            x5 = c2 == 0
+            x6 = c2 == 1
             # int
-            i = X[:, 3].astype(float)
+            i = X[:, 3]
 
             y = (
                 (x2 + 2 * x3 + 3 * x4) * x5 * x1
@@ -440,42 +450,42 @@ class TestEGO(SMTestCase):
             return y
 
         n_iter = 15
-        vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
         xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
-        sm = KRG(print_global=False, vartype=vartype)
+        sm = KRG(print_global=False)
 
-        n_doe = 6
-        samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
-        xdoe = samp(n_doe)
-        xdoe = sm.project_values(xdoe)
-        ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+        xdoe = sampling(n_doe)
+        ydoe = function_test_mixed_integer(xdoe)
 
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             ydoe=ydoe,
+            xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
             qEI=qEI,
         )
 
-        x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
-            fun=function_test_cate_mixed
-        )
+        x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
+        print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
+        print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
 
+        min_ref = -15
         mini = np.zeros(n_iter)
         for k in range(n_iter):
-            mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+            mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
         x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-
         u = max(np.floor(max(mini)) + 1, -100)
         l = max(np.floor(min(mini)) - 0.2, -10)
         fig = plt.figure()
         axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        (epm,) = axes.plot(x_plot, mini, color="r")
+        axes.plot(x_plot, mini, color="r")
         axes.set_ylim([l, u])
         plt.title("minimum convergence plot", loc="center")
         plt.xlabel("number of iterations")
@@ -485,7 +495,6 @@ class TestEGO(SMTestCase):
     @staticmethod
     def run_ego_parallel_example():
         import numpy as np
-        import six
         from smt.applications import EGO
         from smt.applications.ego import EGO, Evaluator
         from smt.sampling_methods import FullFactorial
@@ -629,6 +638,6 @@ if __name__ == "__main__":
         TestEGO.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestEGO.run_ego_parallel_example()
+        TestEGO.run_ego_mixed_integer_example()
         exit()
     unittest.main()

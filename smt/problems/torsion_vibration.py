@@ -8,7 +8,6 @@ Torsion vibration problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
 Wang, L., Beeson, D., Wiggs, G., and Rayasam, M. A Comparison of Metamodeling Methods Using Practical Industry Requirements. In Proceedings of the 47th AIAA/ASME/ASCE/AHS/ASC structures, structural dynamics, and materials conference, Newport, RI, pp. AIAA 2006-1811.
 """
-from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 

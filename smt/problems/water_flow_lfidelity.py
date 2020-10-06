@@ -5,7 +5,6 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Water flow problem from:
 Xiong, S., Qian, P. Z., & Wu, C. J. (2013). Sequential design and analysis of high-accuracy and low-accuracy computer codes. Technometrics, 55(1), 37-46.
 """
-from __future__ import division
 import numpy as np
 from scipy.misc import derivative
 

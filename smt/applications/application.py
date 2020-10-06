@@ -4,9 +4,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>, R. Lafage
 This package is distributed under New BSD license.
 """
 
-from __future__ import division
 from smt.utils.options_dictionary import OptionsDictionary
-
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
 
 try:

@@ -5,8 +5,6 @@ This package is distributed under New BSD license.
 
 """
 
-from __future__ import division
-import six
 import numpy as np
 
 from types import FunctionType
@@ -16,6 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
+from smt.applications.mixed_integer import MixedIntegerContext
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK
@@ -99,9 +98,25 @@ class EGO(SurrogateBasedApplication):
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
-        declare("enable_tunneling", False, types=bool, desc="Enable the penalization of points that have been already evaluated in EI criterion")
-
-        declare("surrogate", KRG(print_global=False), types=(KRG, KPLS, KPLSK), desc="SMT kriging-based surrogate model used internaly")
+        declare(
+            "enable_tunneling",
+            False,
+            types=bool,
+            desc="Enable the penalization of points that have been already evaluated in EI criterion",
+        )
+        declare(
+            "surrogate",
+            KRG(print_global=False),
+            types=(KRG, KPLS, KPLSK),
+            desc="SMT kriging-based surrogate model used internaly",
+        )
+        declare(
+            "xtypes",
+            None,
+            types=list,
+            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            "or (ENUM n) for categorical doimension with n levels",
+        )
 
     def optimize(self, fun):
         """
@@ -129,11 +144,13 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
-            
+
             # Virtual enrichement loop
             for p in range(n_parallel):
-               # find next best x-coord point to evaluate
-                x_et_k, success = self._find_best_point(x_data, y_data, self.options["enable_tunneling"])
+                # find next best x-coord point to evaluate
+                x_et_k, success = self._find_best_point(
+                    x_data, y_data, self.options["enable_tunneling"]
+                )
                 if not success:
                     self.log(
                         "Internal optimization failed at EGO iter = {}.{}".format(k, p)
@@ -154,15 +171,18 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = self._evaluator.run(
-                fun, self.gpr.assign_labels(x_to_compute, self.options["xlimits"])
-            )
+            if self.mixint:
+                x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
+            y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
         # Find the optimal point
         ind_best = np.argmin(y_data)
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
+
+        if self.mixint:
+            x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
 
@@ -190,9 +210,9 @@ class EGO(SurrogateBasedApplication):
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena = (EIp - self.EI(x, y_data, enable_tunneling=False)) / np.power(
-                        np.linalg.norm(p - x), 4
-                    )
+                    pena = (
+                        EIp - self.EI(x, y_data, enable_tunneling=False)
+                    ) / np.power(np.linalg.norm(p - x), 4)
                     if pena > 0:
                         ei[i] = ei[i] - pena
                     ei[i] = max(ei[i], 0)
@@ -229,30 +249,36 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
+        self.xlimits = self.options["xlimits"]
 
-        # Set the continuous bounds of the optimization problem
-        self.xlimits = self.gpr._relax_limits(self.options["xlimits"])
+        # Handle mixed integer optimization
+        xtypes = self.options["xtypes"]
+        if xtypes:
+            self.mixint = MixedIntegerContext(
+                xtypes, self.xlimits, work_in_folded_space=False
+            )
+            self.gpr = self.mixint.build_surrogate(self.gpr)
+            self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
+        else:
+            self.mixint = None
+            self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
 
-        # Build initial DOE
-        self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
+        # Build DOE
         self._evaluator = self.options["evaluator"]
-        enable_tunneling = self.options["enable_tunneling"]
-        xdoe = self.options["xdoe"] 
+        xdoe = self.options["xdoe"]
         if xdoe is None:
             self.log("Build initial DOE with LHS")
             n_doe = self.options["n_doe"]
             x_doe = self._sampling(n_doe)
-
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
+            if self.mixint:
+                x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
-        x_doe = self.gpr.project_values(x_doe)
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self._evaluator.run(
-                fun, self.gpr.assign_labels(x_doe, self.options["xlimits"])
-            )
+            y_doe = self._evaluator.run(fun, x_doe)
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 
@@ -282,10 +308,15 @@ class EGO(SurrogateBasedApplication):
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
-        bounds = self.xlimits
+        if self.mixint:
+            bounds = self.mixint.unfold_with_continuous_limits(self.xlimits)
+        else:
+            bounds = self.xlimits
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data, enable_tunneling, x_data)
+            self.obj_k = lambda x: -self.EI(
+                np.atleast_2d(x), y_data, enable_tunneling, x_data
+            )
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
         elif criterion == "UCB":
@@ -323,7 +354,7 @@ class EGO(SurrogateBasedApplication):
         ind_min = np.argmin(obj_success)
         opt = opt_success[ind_min]
         x_et_k = np.atleast_2d(opt["x"])
-        self.gpr.project_values(x_et_k)
+
         return x_et_k, True
 
     def _get_virtual_point(self, x, y_data):

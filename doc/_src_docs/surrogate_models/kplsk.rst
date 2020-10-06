@@ -67,7 +67,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0099998
   ___________________________________________________________________________
      
    Evaluation
@@ -75,9 +75,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0100002
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001000
      
   ___________________________________________________________________________
      
@@ -143,21 +143,11 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  None
      -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
-  *  -  vartype
-     -  None
-     -  None
-     -  ['list']
-     -  For mixed integer : variables types between continuous: "cont", integer: "int", and categorial with n levels: ("cate",n) 
   *  -  n_comp
      -  1
      -  None

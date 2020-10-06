@@ -190,7 +190,6 @@ Usage
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.sampling_methods import FullFactorial
   
@@ -285,7 +284,6 @@ Usage with parallel options
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.applications.ego import EGO, Evaluator
   from smt.sampling_methods import FullFactorial
@@ -437,9 +435,14 @@ Usage with mixed variable
 .. code-block:: python
 
   import numpy as np
-  import six
   from smt.applications import EGO
   from smt.sampling_methods import FullFactorial
+  from smt.applications.mixed_integer import (
+      FLOAT,
+      INT,
+      ENUM,
+      MixedIntegerSamplingMethod,
+  )
   
   import sklearn
   import matplotlib.pyplot as plt
@@ -449,22 +452,22 @@ Usage with mixed variable
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS
   
-  def function_test_cate_mixed(X):
+  def function_test_mixed_integer(X):
       import numpy as np
   
       # float
-      x1 = X[:, 0].astype(float)
-      #  cate 1
+      x1 = X[:, 0]
+      #  enum 1
       c1 = X[:, 1]
-      x2 = c1 == "1"
-      x3 = c1 == "2"
-      x4 = c1 == "3"
-      #  cate 2
+      x2 = c1 == 0
+      x3 = c1 == 1
+      x4 = c1 == 2
+      #  enum 2
       c2 = X[:, 2]
-      x5 = c2 == "4"
-      x6 = c2 == "5"
+      x5 = c2 == 0
+      x6 = c2 == 1
       # int
-      i = X[:, 3].astype(float)
+      i = X[:, 3]
   
       y = (
           (x2 + 2 * x3 + 3 * x4) * x5 * x1
@@ -474,49 +477,47 @@ Usage with mixed variable
       return y
   
   n_iter = 15
-  vartype = ["cont", ("cate", 3), ("cate", 2), "int"]
+  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
   xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KB"
-  sm = KRG(print_global=False, vartype=vartype)
+  sm = KRG(print_global=False)
   
-  n_doe = 6
-  samp = LHS(xlimits=sm._relax_limits(xlimits), criterion="ese")
-  xdoe = samp(n_doe)
-  xdoe = sm.project_values(xdoe)
-  ydoe = function_test_cate_mixed(sm.assign_labels(xdoe, xlimits))
+  n_doe = 2
+  sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+  xdoe = sampling(n_doe)
+  ydoe = function_test_mixed_integer(xdoe)
   
   ego = EGO(
       n_iter=n_iter,
       criterion=criterion,
       xdoe=xdoe,
       ydoe=ydoe,
+      xtypes=xtypes,
       xlimits=xlimits,
       surrogate=sm,
       qEI=qEI,
   )
   
-  x_opt, y_opt, ind_best, x_data, y_data = ego.optimize(
-      fun=function_test_cate_mixed
-  )
+  _, _, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
   
+  min_ref = -15
   mini = np.zeros(n_iter)
   for k in range(n_iter):
-      mini[k] = np.log(np.abs(np.min(y_data[0 : k + 5]) + 15))
+      mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
   x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-  
   u = max(np.floor(max(mini)) + 1, -100)
   l = max(np.floor(min(mini)) - 0.2, -10)
   fig = plt.figure()
   axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-  (epm,) = axes.plot(x_plot, mini, color="r")
+  axes.plot(x_plot, mini, color="r")
   axes.set_ylim([l, u])
   plt.title("minimum convergence plot", loc="center")
   plt.xlabel("number of iterations")
   plt.ylabel("log of the difference w.r.t the best")
   plt.show()
   
-.. figure:: ego_TestEGO_run_ego_example_mixed.png
+.. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
   :align: center
 
@@ -570,7 +571,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000013973CA6D30>
+     -  <smt.applications.ego.Evaluator object at 0x00000000050DC198>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -605,7 +606,12 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000013973CB06A0>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000000050DC208>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels

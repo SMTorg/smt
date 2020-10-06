@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 
 Multi-dimensional Rosenbrock function.
 """
-from __future__ import division
 import numpy as np
 
 from smt.problems.problem import Problem

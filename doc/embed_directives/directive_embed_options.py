@@ -1,5 +1,3 @@
-from six import iteritems
-
 from sphinx_auto_embed.directive import Directive
 
 
@@ -22,7 +20,7 @@ class DirectiveEmbedOptions(Directive):
         options = getattr(obj, attribute_name)
 
         outputs = []
-        for option_name, option_data in iteritems(options._declared_entries):
+        for option_name, option_data in options._declared_entries.items():
             name = option_name
             default = option_data["default"]
             values = option_data["values"]
