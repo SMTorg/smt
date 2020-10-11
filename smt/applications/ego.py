@@ -309,7 +309,7 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
-            bounds = self.mixint.unfold_with_continuous_limits(self.xlimits)
+            bounds = self.mixint.get_unfolded_xlimits()
         else:
             bounds = self.xlimits
 
