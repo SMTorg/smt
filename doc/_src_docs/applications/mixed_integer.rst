@@ -54,8 +54,8 @@ Example of mixed-integer LHS sampling method
       MixedIntegerSamplingMethod,
   )
   
-  xtypes = [(ENUM, 2), FLOAT]
-  xlimits = [["blue", "red"], [0.0, 4.0]]
+  xtypes = [FLOAT, (ENUM, 2)]
+  xlimits = [[0.0, 4.0], ["blue", "red"]]
   sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
   
   num = 40
@@ -63,15 +63,15 @@ Example of mixed-integer LHS sampling method
   
   print(x.shape)
   
-  cmap = colors.ListedColormap(["blue", "red"])
-  plt.scatter(x[:, 1], np.zeros(num), c=x[:, 0], cmap=cmap)
+  cmap = colors.ListedColormap(xlimits[1])
+  plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
   plt.show()
   
 ::
 
   (40, 2)
   
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_integer_lhs.png
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_lhs_example.png
   :scale: 80 %
   :align: center
 
@@ -132,11 +132,126 @@ Example of mixed-integer Polynomial (QP) surrogate
      Prediction time/pt. (sec) :  0.0000000
      
   
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_integer_qp.png
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
   :scale: 80 %
   :align: center
 
+Mixed integer context
+---------------------
 
+the ``MixedIntegerContext`` class help the user to use mixed integer sampling methods and surrogate models consistently 
+by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
+
+.. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.__init__
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.fold_with_enum_index
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.unfold_with_enum_mask
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_mixed_integer
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_enum_value
+
+Example of mixed-integer context usage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from matplotlib import colors
+  from mpl_toolkits.mplot3d import Axes3D
+  
+  from smt.surrogate_models import KRG
+  from smt.sampling_methods import LHS, Random
+  from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, INT, ENUM
+  
+  xtypes = [INT, FLOAT, (ENUM, 4)]
+  xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
+  
+  def ftest(x):
+      return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
+  
+  # context to create consistent DOEs and surrogate
+  mixint = MixedIntegerContext(xtypes, xlimits)
+  
+  # DOE for training
+  lhs = mixint.build_sampling_method(LHS, criterion="ese")
+  
+  num = mixint.get_unfolded_dimension() * 4
+  print("DOE point nb = {}".format(num))
+  xt = lhs(num)
+  yt = ftest(xt)
+  
+  # Surrogate
+  sm = mixint.build_surrogate(KRG())
+  print(xt)
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  # DOE for validation
+  rand = mixint.build_sampling_method(Random)
+  xv = rand(50)
+  yv = ftest(xv)
+  yp = sm.predict_values(xv)
+  
+  plt.plot(yv, yv)
+  plt.plot(yv, yp, "o")
+  plt.xlabel("actual")
+  plt.ylabel("prediction")
+  
+  plt.show()
+  
+::
+
+  DOE point nb = 24
+  [[3.         1.20199429 0.        ]
+   [1.         3.35739098 0.        ]
+   [3.         0.15288083 1.        ]
+   [0.         1.44785525 2.        ]
+   [4.         1.83025708 3.        ]
+   [1.         2.65101498 1.        ]
+   [4.         0.85787228 2.        ]
+   [5.         2.37589264 3.        ]
+   [5.         2.81159676 1.        ]
+   [3.         3.98391152 2.        ]
+   [1.         3.78681854 2.        ]
+   [2.         0.55009327 2.        ]
+   [3.         0.66845374 3.        ]
+   [4.         3.11512566 3.        ]
+   [4.         1.65223649 1.        ]
+   [4.         3.51994265 0.        ]
+   [1.         2.23817414 3.        ]
+   [0.         0.49602415 0.        ]
+   [2.         1.95565568 0.        ]
+   [3.         1.07329349 1.        ]
+   [2.         0.29963987 3.        ]
+   [1.         2.91024405 3.        ]
+   [2.         3.27372775 2.        ]
+   [2.         2.10790514 0.        ]]
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 50
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
+  :scale: 80 %
+  :align: center
 
 
 

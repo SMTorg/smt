@@ -131,7 +131,7 @@ Usage with mixed variables
   sm.set_training_values(xt, yt)
   sm.train()
   
-  num = 100
+  num = 10
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
@@ -148,7 +148,7 @@ Usage with mixed variables
      
    Evaluation
      
-        # eval points. : 100
+        # eval points. : 10
      
      Predicting ...
      Predicting - done. Time (sec):  0.0000000
