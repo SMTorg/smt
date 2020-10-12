@@ -108,11 +108,7 @@ Usage
    Training
      
      Training ...
-<<<<<<< HEAD
-     Training - done. Time (sec):  0.0195000
-=======
      Training - done. Time (sec):  0.0200000
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   ___________________________________________________________________________
      
    Evaluation
@@ -120,15 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-<<<<<<< HEAD
-     Predicting - done. Time (sec):  0.0005000
-     
-     Prediction time/pt. (sec) :  0.0000050
-=======
      Predicting - done. Time (sec):  0.0000000
      
      Prediction time/pt. (sec) :  0.0000000
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
      
   ___________________________________________________________________________
      
@@ -137,15 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-<<<<<<< HEAD
-     Predicting - done. Time (sec):  0.0005000
-     
-     Prediction time/pt. (sec) :  0.0000050
-=======
      Predicting - done. Time (sec):  0.0000000
      
      Prediction time/pt. (sec) :  0.0000000
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
      
   
 .. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
@@ -200,14 +184,6 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  None
      -  Correlation function type
-<<<<<<< HEAD
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-=======
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   *  -  theta0
      -  None
      -  None

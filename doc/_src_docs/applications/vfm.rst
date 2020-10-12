@@ -118,11 +118,7 @@ Usage
    Training
      
      Training ...
-<<<<<<< HEAD
-     Training - done. Time (sec):  0.0320001
-=======
      Training - done. Time (sec):  0.0299997
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
   :scale: 80 %

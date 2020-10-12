@@ -88,11 +88,7 @@ Usage
    Training
      
      Training ...
-<<<<<<< HEAD
-     Training - done. Time (sec):  0.0055001
-=======
      Training - done. Time (sec):  0.0100000
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   ___________________________________________________________________________
      
    Evaluation

@@ -107,23 +107,6 @@ Usage
    Training
      
      Training ...
-<<<<<<< HEAD
-  epoch = 0, mini-batch = 0, avg cost = 16.629
-  epoch = 1, mini-batch = 0, avg cost =  0.901
-  epoch = 2, mini-batch = 0, avg cost =  0.721
-  epoch = 3, mini-batch = 0, avg cost =  0.665
-  epoch = 4, mini-batch = 0, avg cost =  0.640
-  epoch = 5, mini-batch = 0, avg cost =  0.628
-  epoch = 6, mini-batch = 0, avg cost =  0.614
-  epoch = 7, mini-batch = 0, avg cost =  0.606
-  epoch = 8, mini-batch = 0, avg cost =  0.600
-  epoch = 9, mini-batch = 0, avg cost =  0.594
-  epoch = 10, mini-batch = 0, avg cost =  0.589
-  epoch = 11, mini-batch = 0, avg cost =  0.585
-  epoch = 12, mini-batch = 0, avg cost =  0.582
-  epoch = 13, mini-batch = 0, avg cost =  0.579
-  epoch = 14, mini-batch = 0, avg cost =  0.578
-=======
   epoch = 0, mini-batch = 0, avg cost = 16.627
   epoch = 1, mini-batch = 0, avg cost =  0.878
   epoch = 2, mini-batch = 0, avg cost =  0.684
@@ -139,17 +122,12 @@ Usage
   epoch = 12, mini-batch = 0, avg cost =  0.580
   epoch = 13, mini-batch = 0, avg cost =  0.579
   epoch = 14, mini-batch = 0, avg cost =  0.577
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   epoch = 15, mini-batch = 0, avg cost =  0.576
   epoch = 16, mini-batch = 0, avg cost =  0.575
   epoch = 17, mini-batch = 0, avg cost =  0.575
   epoch = 18, mini-batch = 0, avg cost =  0.575
   epoch = 19, mini-batch = 0, avg cost =  0.575
-<<<<<<< HEAD
-     Training - done. Time (sec):  4.6659999
-=======
      Training - done. Time (sec):  4.4600000
->>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   ___________________________________________________________________________
      
    Evaluation
@@ -157,9 +135,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005002
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000008
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: genn_Test_test_genn.png
