@@ -201,13 +201,11 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
 
-        t1, _ = plt.plot(xt, yt[:, 0], "o", "C0")
-        p1 = plt.plot(x, y[:, 0], "C0", label="Prediction 1")
-        t2, _ = plt.plot(xt, yt[:, 1], "o", "C1")
-        p2 = plt.plot(x, y[:, 1], "C1", label="Prediction 2")
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
         plt.xlabel("x")
         plt.ylabel("y")
-        plt.legend()
+        plt.legend(["Training data", "Prediction"])
         plt.show()
 
     def test_mixed_int_krg(self):
