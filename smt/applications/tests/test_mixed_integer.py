@@ -67,6 +67,12 @@ class TestMixedInteger(unittest.TestCase):
         expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
         self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
 
+    def test_unfold_with_enum_mask_with_enum_first(self):
+        xtypes = [(ENUM, 2), FLOAT]
+        x = np.array([[1, 1.5], [0, 1.5], [1, 1.5]])
+        expected = [[0, 1, 1.5], [1, 0, 1.5], [0, 1, 1.5]]
+        self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
+
     def test_fold_with_enum_index(self):
         xtypes = [FLOAT, (ENUM, 2)]
         x = np.array([[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]])
