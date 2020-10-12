@@ -208,13 +208,16 @@ def unfold_with_enum_mask(xtypes, x):
     """
     x = np.atleast_2d(x)
     xunfold = np.zeros((x.shape[0], compute_x_unfold_dimension(xtypes)))
+    unfold_index = 0
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == INT:
-            xunfold[:, i] = x[:, i]
+            xunfold[:, unfold_index] = x[:, i]
+            unfold_index += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-            enum_slice = xunfold[:, i : i + xtyp[1]]
+            enum_slice = xunfold[:, unfold_index : unfold_index + xtyp[1]]
             for row in range(x.shape[0]):
                 enum_slice[row, x[row, i].astype(int)] = 1
+            unfold_index += xtyp[1]
         else:
             _raise_value_error(xtyp)
     return xunfold
