@@ -86,12 +86,13 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["KRG"] = 1e0
+        t_errors["KRG"] = 1.2
         t_errors["MFK"] = 1e0
-        t_errors["KPLS"] = 1e0
+        t_errors["KPLS"] = 1.2
         t_errors["KPLSK"] = 1e0
-        t_errors["GEKPLS"] = 1e0
-        t_errors["GENN"] = 1e0
+        t_errors["MGP"] = 1e0
+        t_errors["GEKPLS"] = 1.2
+        t_errors["GENN"] = 1.2
         if compiled_available:
             t_errors["IDW"] = 1e0
             t_errors["RBF"] = 1e-2
@@ -103,10 +104,10 @@ class Test(SMTestCase):
         e_errors["QP"] = 1.5
         e_errors["KRG"] = 1e-2
         e_errors["MFK"] = 1e-2
-        e_errors["KPLS"] = 1e-2
+        e_errors["KPLS"] = 2e-2
         e_errors["KPLSK"] = 1e-2
-        e_errors["MGP"] = 1e-2
-        e_errors["GEKPLS"] = 1e-2
+        e_errors["MGP"] = 2e-2
+        e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 1e-2
         if compiled_available:
             e_errors["IDW"] = 1e0
@@ -149,6 +150,10 @@ class Test(SMTestCase):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
 
+        if sname in ["KPLS", "KRG", "KPLSK", "GEKPLS"]:
+            optname = method_name.split("_")[3]
+            sm.options["hyper_opt"] = optname
+
         sm.set_training_values(xt, yt[:, 0])
         if sm.supports["training_derivatives"]:
             for i in range(self.ndim):
@@ -163,25 +168,43 @@ class Test(SMTestCase):
         if sm.supports["variances"]:
             sm.predict_variances(xe)
 
+        if pname == "cos":
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1.2)
+        else:
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1e-4)
+        self.assertLessEqual(t_error, self.t_errors[sname] + 1e-4)
+
     def test_exp_LS(self):
         self.run_test()
 
     def test_exp_QP(self):
         self.run_test()
 
-    def test_exp_KRG(self):
+    def test_exp_KRG_Cobyla(self):
         self.run_test()
 
-    def test_exp_KPLS(self):
+    def test_exp_KRG_TNC(self):
         self.run_test()
 
-    def test_exp_KPLSK(self):
+    def test_exp_KPLS_Cobyla(self):
         self.run_test()
-    
+
+    def test_exp_KPLS_TNC(self):
+        self.run_test()
+
+    def test_exp_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_exp_KPLSK_TNC(self):
+        self.run_test()
+
     def test_exp_MGP(self):
         self.run_test()
 
-    def test_exp_GEKPLS(self):
+    def test_exp_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_exp_GEKPLS_TNC(self):
         self.run_test()
 
     def test_exp_GENN(self):
@@ -212,19 +235,31 @@ class Test(SMTestCase):
     def test_tanh_QP(self):
         self.run_test()
 
-    def test_tanh_KRG(self):
+    def test_tanh_KRG_Cobyla(self):
         self.run_test()
 
-    def test_tanh_KPLS(self):
+    def test_tanh_KRG_TNC(self):
         self.run_test()
 
-    def test_tanh_KPLSK(self):
+    def test_tanh_KPLS_Cobyla(self):
+        self.run_test()
+
+    def test_tanh_KPLS_TNC(self):
+        self.run_test()
+
+    def test_tanh_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_tanh_KPLSK_TNC(self):
         self.run_test()
 
     def test_tanh_MGP(self):
         self.run_test()
 
-    def test_tanh_GEKPLS(self):
+    def test_tanh_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_tanh_GEKPLS_TNC(self):
         self.run_test()
 
     def test_tanh_GENN(self):
@@ -255,19 +290,31 @@ class Test(SMTestCase):
     def test_cos_QP(self):
         self.run_test()
 
-    def test_cos_KRG(self):
+    def test_cos_KRG_Cobyla(self):
         self.run_test()
 
-    def test_cos_KPLS(self):
+    def test_cos_KRG_TNC(self):
         self.run_test()
 
-    def test_cos_KPLSK(self):
+    def test_cos_KPLS_Cobyla(self):
         self.run_test()
-    
+
+    def test_cos_KPLS_TNC(self):
+        self.run_test()
+
+    def test_cos_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_cos_KPLSK_TNC(self):
+        self.run_test()
+
     def test_cos_MGP(self):
         self.run_test()
 
-    def test_cos_GEKPLS(self):
+    def test_cos_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_cos_GEKPLS_TNC(self):
         self.run_test()
 
     def test_cos_GENN(self):

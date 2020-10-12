@@ -187,13 +187,9 @@ class Optimizer(object):
         # Stopping criteria (Vanderplaats, ch. 3, p. 121)
         converged = False
         N1 = 0
-        N1_max = (
-            100
-        )  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
+        N1_max = 100  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
         N2 = 0
-        N2_max = (
-            100
-        )  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
+        N2_max = 100  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
         epsilon_absolute = 1e-7  # absolute error criterion
         epsilon_relative = 1e-7  # relative error criterion
 

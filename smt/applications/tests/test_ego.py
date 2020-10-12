@@ -256,17 +256,17 @@ class TestEGO(SMTestCase):
 
             ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
             ax1 = ax.twinx()
-            ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+            (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
 
-            true_fun, = ax.plot(x_plot, y_plot)
-            data, = ax.plot(
+            (true_fun,) = ax.plot(x_plot, y_plot)
+            (data,) = ax.plot(
                 x_data_k, y_data_k, linestyle="", marker="o", color="orange"
             )
             if i < n_iter - 1:
-                opt, = ax.plot(
+                (opt,) = ax.plot(
                     x_data[k], y_data[k], linestyle="", marker="*", color="r"
                 )
-            gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+            (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
             sig_plus = y_gp_plot + 3 * np.sqrt(y_gp_plot_var)
             sig_moins = y_gp_plot - 3 * np.sqrt(y_gp_plot_var)
             un_gp = ax.fill_between(
@@ -388,17 +388,17 @@ class TestEGO(SMTestCase):
 
                 ax = fig.add_subplot(n_iter, n_parallel, i * (n_parallel) + p + 1)
                 ax1 = ax.twinx()
-                ei, = ax1.plot(x_plot, y_ei_plot, color="red")
+                (ei,) = ax1.plot(x_plot, y_ei_plot, color="red")
 
-                true_fun, = ax.plot(x_plot, y_plot)
-                data, = ax.plot(
+                (true_fun,) = ax.plot(x_plot, y_plot)
+                (data,) = ax.plot(
                     x_data_sub[: -1 - p],
                     y_data_sub[: -1 - p],
                     linestyle="",
                     marker="o",
                     color="orange",
                 )
-                virt_data, = ax.plot(
+                (virt_data,) = ax.plot(
                     x_data_sub[-p - 1 : -1],
                     y_data_sub[-p - 1 : -1],
                     linestyle="",
@@ -406,10 +406,10 @@ class TestEGO(SMTestCase):
                     color="g",
                 )
 
-                opt, = ax.plot(
+                (opt,) = ax.plot(
                     x_data_sub[-1], y_data_sub[-1], linestyle="", marker="*", color="r"
                 )
-                gp, = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
+                (gp,) = ax.plot(x_plot, y_gp_plot, linestyle="--", color="g")
                 sig_plus = y_gp_plot + 3.0 * np.sqrt(y_gp_plot_var)
                 sig_moins = y_gp_plot - 3.0 * np.sqrt(y_gp_plot_var)
                 un_gp = ax.fill_between(

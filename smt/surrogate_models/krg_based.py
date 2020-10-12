@@ -37,6 +37,7 @@ import time
 
 # TODO : compute variance derivatives
 
+
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -102,7 +103,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name not in ["Kriging","MGP"]:
+        if self.name not in ["Kriging", "MGP"]:
             X, y = self._compute_pls(X.copy(), y.copy())
 
         # Center and scale X and y
@@ -764,6 +765,7 @@ class KrgBased(SurrogateModel):
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
         if self.name in ["MGP"]:
+
             def minus_reduced_likelihood_function(theta):
                 res = -self._reduced_likelihood_function(theta)[0]
                 return res
@@ -773,6 +775,7 @@ class KrgBased(SurrogateModel):
                 return grad
 
         else:
+
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
 
@@ -787,7 +790,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
-        if "KPLSK" in self.name :
+        if "KPLSK" in self.name:
             n_iter = 1
         else:
             n_iter = 0
@@ -812,7 +815,7 @@ class KrgBased(SurrogateModel):
                     constraints.append(lambda theta, i=i: theta[i] + 100)
                     constraints.append(lambda theta, i=i: 100 - theta[i])
                     bounds_hyp.append((-100.0, 100.0))
-                else:                 
+                else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
                     constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
                     bounds_hyp.append((-6.0, 2.0))
@@ -850,23 +853,27 @@ class KrgBased(SurrogateModel):
                         bounds_hyp.append((10, 16))
                 try:
 
-                    if self.options["hyper_opt"] == "Cobyla":                        
+                    if self.options["hyper_opt"] == "Cobyla":
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0,
-                            constraints=[{'fun':con,'type':'ineq'} for con in constraints],
+                            constraints=[
+                                {"fun": con, "type": "ineq"} for con in constraints
+                            ],
                             method="COBYLA",
-                            options = {'rhobeg':_rhobeg,'tol':1e-4,'maxiter':limit}
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-                        
+
                         optimal_theta_res_2 = optimal_theta = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_rand,
-                            constraints=[{'fun':con,'type':'ineq'} for con in constraints],
+                            constraints=[
+                                {"fun": con, "type": "ineq"} for con in constraints
+                            ],
                             method="COBYLA",
-                            options = {'rhobeg':_rhobeg,'tol':1e-4,'maxiter':limit}
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-                        
+
                     elif self.options["hyper_opt"] == "TNC":
 
                         optimal_theta_res = optimize.minimize(
@@ -989,12 +996,11 @@ class KrgBased(SurrogateModel):
 
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
-    
     def _check_param(self):
         """
         This function check some parameters of the model.
         """
-        # FIXME: _check_param should be overriden in corresponding subclasses        
+        # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
 
             d = self.options["n_comp"]
@@ -1005,18 +1011,12 @@ class KrgBased(SurrogateModel):
 
         if self.name in ["MGP"]:
             if self.options["corr"] != "act_exp":
-                raise ValueError(
-                    "MGP must be used with act_exp correlation function"
-                )
+                raise ValueError("MGP must be used with act_exp correlation function")
             if self.options["hyper_opt"] != "TNC":
-                raise ValueError(
-                    "MGP must be used with TNC hyperparameters optimizer"
-                )
+                raise ValueError("MGP must be used with TNC hyperparameters optimizer")
         else:
             if self.options["corr"] == "act_exp":
-                raise ValueError(
-                    "act_exp correlation function must be used With MGP"
-                )
+                raise ValueError("act_exp correlation function must be used With MGP")
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:

@@ -264,9 +264,11 @@ class MFK(KrgBased):
             self.nt = self.nt_all[lvl]
             self.q = self.q_all[lvl]
             self.p = self.p_all[lvl]
-            self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[
-                lvl
-            ] = self._optimize_hyperparam(D)
+            (
+                self.optimal_rlf_value[lvl],
+                self.optimal_par[lvl],
+                self.optimal_theta[lvl],
+            ) = self._optimize_hyperparam(D)
             if self.options["eval_noise"]:
                 tmp_list = self.optimal_theta[lvl]
                 self.optimal_theta[lvl] = tmp_list[:-1]
