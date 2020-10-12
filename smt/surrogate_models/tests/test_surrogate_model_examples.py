@@ -201,6 +201,41 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
 
+        t1, _ = plt.plot(xt, yt[:, 0], "o", "C0")
+        p1 = plt.plot(x, y[:, 0], "C0", label="Prediction 1")
+        t2, _ = plt.plot(xt, yt[:, 1], "o", "C1")
+        p2 = plt.plot(x, y[:, 1], "C1", label="Prediction 2")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend()
+        plt.show()
+
+    def test_mixed_int_krg(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG
+        from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
+
+        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+
+        sm = MixedIntegerSurrogate(
+            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num)
+        y = sm.predict_values(x)
+
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.xlabel("x")

@@ -4,11 +4,8 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function, division
 import numpy as np
 import unittest
-
-from six.moves import range
 
 from smt.problems import (
     CantileverBeam,

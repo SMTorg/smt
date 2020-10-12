@@ -4,9 +4,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
-from __future__ import division
-
 import numpy as np
 from scipy.sparse import csc_matrix
 from smt.surrogate_models.surrogate_model import SurrogateModel

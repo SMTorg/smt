@@ -4,17 +4,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 
 This package is distributed under New BSD license.
-
-TODO:
-- fail_iteration and nb_iter_max to remove from options
-- define outputs['sol'] = self.sol
 """
-
-from __future__ import division
-
-# import warnings
-# warnings.filterwarnings("ignore")
-
 import numpy as np
 from scipy import linalg, optimize
 
@@ -22,8 +12,8 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
 from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
-    abs_exp,
     squar_exp,
+    abs_exp,
     act_exp,
     standardization,
     cross_distances,
@@ -33,7 +23,6 @@ from smt.utils.kriging_utils import (
 
 from scipy.stats import multivariate_normal as m_norm
 
-import time
 
 # TODO : compute variance derivatives
 
@@ -67,11 +56,6 @@ class KrgBased(SurrogateModel):
             desc="Correlation function type",
         )
         declare(
-            "data_dir",
-            types=str,
-            desc="Directory for loading / saving cached data; None means do not save or load",
-        )
-        declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
         declare(
@@ -87,15 +71,7 @@ class KrgBased(SurrogateModel):
         supports["derivatives"] = True
         supports["variances"] = True
 
-    ############################################################################
-    # Model functions
-    ############################################################################
-
     def _new_train(self):
-
-        """
-        Train the model
-        """
         self._check_param()
 
         # Sampling points X and y
@@ -119,8 +95,10 @@ class KrgBased(SurrogateModel):
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
-            raise Exception("Multiple input features cannot have the same value.")
-
+            print(
+                "Warning: multiple x input features have the same value (at least same row twice)."
+            )
+        ####
         # Regression matrix and parameters
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
         n_samples_F = self.F.shape[0]
@@ -603,8 +581,8 @@ class KrgBased(SurrogateModel):
         """
         Evaluates the model at a set of points.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
 
@@ -637,7 +615,7 @@ class KrgBased(SurrogateModel):
         """
         Evaluates the derivatives at a set of points.
 
-        Arguments
+        Parameters
         ---------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
@@ -838,7 +816,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
-                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
+                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:                   
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
                             [theta0, np.log10(np.array([self.options["noise0"]]))]
@@ -977,18 +955,21 @@ class KrgBased(SurrogateModel):
                         print("fmin_cobyla failed but the best value is retained")
 
             if "KPLSK" in self.name:
+                if self.name == "MFKPLSK" and self.options["eval_noise"]:
+                    # best_optimal_theta contains [theta, noise] if eval_noise = True
+                    theta = best_optimal_theta[:-1]
+                else:
+                    # best_optimal_theta contains [theta] if eval_noise = False
+                    theta = best_optimal_theta
 
                 if exit_function:
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (
-                        best_optimal_theta * self.coeff_pls ** 2
-                    ).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
                 else:
-                    self.options["theta0"] = (
-                        best_optimal_theta * np.abs(self.coeff_pls)
-                    ).sum(1)
+                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+
                 self.options["n_comp"] = int(self.nx)
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
@@ -1000,6 +981,7 @@ class KrgBased(SurrogateModel):
         """
         This function check some parameters of the model.
         """
+
         # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
 

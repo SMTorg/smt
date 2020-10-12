@@ -1,16 +1,14 @@
 build: false
-version: 0.4.{build}
+version: 0.6.{build}
 platform:
   - x64
 
 environment:
   matrix:
-    - PYTHON: 2.7
-      CONDA: "C:\\Miniconda-x64"
-    - PYTHON: 3.6
+    - PYTHON: 3.7
       CONDA: "C:\\Miniconda36-x64"
-    # - PYTHON: 3.7
-    #   CONDA: "C:\\Miniconda37-x64"
+    - PYTHON: 3.8
+      CONDA: "C:\\Miniconda37-x64"
 
 install:
   - set PATH=%CONDA%;%CONDA%\Library\bin;%CONDA%\bin;%CONDA%\Scripts;%PATH%
@@ -29,3 +27,9 @@ test_script:
   - cd doc
   - sphinx_auto_embed
   - make html
+
+notifications:
+  - provider: GitHubPullRequest
+    on_build_success: false
+    on_build_failure: false
+    on_build_status_changed: false

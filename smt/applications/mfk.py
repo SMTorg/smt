@@ -7,7 +7,9 @@ Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of
 order 1 (AR1)
 """
 
-from __future__ import division
+from sys import exit
+import copy
+from types import FunctionType
 from sys import exit
 import copy
 from types import FunctionType
@@ -25,7 +27,6 @@ from smt.utils.kriging_utils import (
     differences,
 )
 from sys import exit
-
 
 class NestedLHS(object):
     def __init__(self, nlevel, xlimits):
@@ -356,8 +357,7 @@ class MFK(KrgBased):
 
         # scaled predictor
         if descale:
-            for i in range(lvl):  # Predictor
-                mu[:, i] = self.y_mean + self.y_std * mu[:, i]
+            mu = mu * self.y_std + self.y_mean
 
         return mu[:, -1].reshape((n_eval, 1))
 
@@ -443,7 +443,8 @@ class MFK(KrgBased):
         G = self.optimal_par[0]["G"]
 
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
-        MSE[:, 0] = self.optimal_par[0]["sigma2"] * (
+        sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
+        MSE[:, 0] = sigma2 * (
             1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
         )
 
@@ -466,10 +467,8 @@ class MFK(KrgBased):
             beta = self.optimal_par[i]["beta"]
 
             # scaled predictor
-            sigma2 = self.optimal_par[i]["sigma2"]
+            sigma2 = self.optimal_par[i]["sigma2"] / self.y_std ** 2
             q = self.q_all[i]
-            p = self.p_all[i]
-            Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
             u_ = solve_triangular(G.T, f - np.dot(Ft.T, r_t), lower=True)
             sigma2_rho = np.dot(
                 g,
@@ -479,17 +478,12 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            MSE[:, i] = (
-                sigma2_rho * MSE[:, i - 1]
-                + Q_
-                / (2 * (self.nt_all[i] - p - q))
-                * (1 + self.noise[i] - (r_t ** 2).sum(axis=0))
-                + sigma2 * (u_ ** 2).sum(axis=0)
+            MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+                1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
             )
 
         # scaled predictor
-        for i in range(nlevel):  # Predictor
-            MSE[:, i] = self.y_std ** 2 * MSE[:, i]
+        MSE *= self.y_std ** 2
 
         return MSE, sigma2_rhos
 

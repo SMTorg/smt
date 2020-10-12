@@ -125,10 +125,9 @@ metadata = dict(
         "pyDOE2",
         "matplotlib",
         "numpydoc",
-        "six>=1.10",
         "scipy",
     ],
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*",
+    python_requires=">=3.6",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo

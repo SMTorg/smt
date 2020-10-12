@@ -7,7 +7,6 @@ Variable-fidelity modeling: two types of bridge functions are available; i.e.,
 additive and multiplicative
 """
 
-from __future__ import division
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary

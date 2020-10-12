@@ -125,11 +125,6 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  None
      -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
   *  -  theta0
      -  [0.01]
      -  None

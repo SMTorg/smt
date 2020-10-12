@@ -7,7 +7,6 @@ Created on Mon May 07 14:20:11 2018
 Adapted to new SMT version in march 2020 by Nathalie Bartoli
 """
 
-from __future__ import print_function, division
 import matplotlib
 
 matplotlib.use("Agg")
@@ -17,7 +16,6 @@ import numpy as np
 import unittest
 import inspect
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
@@ -66,6 +64,10 @@ class TestMFKPLSK(SMTestCase):
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
+
+            # to test some options
+            sm.options["eval_noise"] = True
+            sm.options["optim_var"] = True
 
             # modif MM
             sm.options["n_comp"] = self.n_comp

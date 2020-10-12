@@ -27,7 +27,6 @@ from smt.utils.kriging_utils import (
     componentwise_distance,
     componentwise_distance_PLS,
     standardization,
-    differences,
 )
 from smt.applications import MFKPLS
 

@@ -8,7 +8,6 @@ Partial Least Square decomposition added on highest fidelity level
 Adapted March 2020 by Nathalie Bartoli to the new SMT version
 """
 
-from __future__ import division
 import numpy as np
 from copy import deepcopy
 from sys import exit
@@ -27,7 +26,6 @@ from smt.utils.kriging_utils import (
     cross_distances,
     componentwise_distance,
     standardization,
-    differences,
 )
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
@@ -228,11 +226,9 @@ class MFKPLS(KrgBased):
         self.nt = self.nt_all[lvl]
         self.q = self.q_all[lvl]
         self.p = self.p_all[lvl]
-        (
-            self.optimal_rlf_value[lvl],
-            self.optimal_par[lvl],
-            self.optimal_theta[lvl],
-        ) = self._optimize_hyperparam(D)
+        self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[
+            lvl
+        ] = self._optimize_hyperparam(D)
         if self.options["eval_noise"]:
             tmp_list = self.optimal_theta[lvl]
             self.optimal_theta[lvl] = tmp_list[:-1]
@@ -282,7 +278,7 @@ class MFKPLS(KrgBased):
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
 
-        dx = differences(X, Y=self.X_norma_all[0])
+        dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
@@ -304,7 +300,7 @@ class MFKPLS(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -383,7 +379,7 @@ class MFKPLS(KrgBased):
         #        if self.normalize:
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = differences(X, Y=self.X_norma_all[0])
+        dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
 
         # Get regression function and correlation
@@ -416,7 +412,7 @@ class MFKPLS(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -504,7 +500,7 @@ class MFKPLS(KrgBased):
                 "The derivative is only available for regression rho constant"
             )
         # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma_all[0])
+        dx = manhattan_distances(x, Y=self.X_norma_all[0], sum_over_features=False)
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r_ = self._correlation_types[self.options["corr"]](
@@ -528,7 +524,7 @@ class MFKPLS(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](x)
-            dx = differences(x, Y=self.X_norma_all[i])
+            dx = manhattan_distances(x, Y=self.X_norma_all[i], sum_over_features=False)
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d

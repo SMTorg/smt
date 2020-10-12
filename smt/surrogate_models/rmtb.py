@@ -3,12 +3,8 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
-from __future__ import division
-
 import numpy as np
 import scipy.sparse
-from six.moves import range
 from numbers import Integral
 
 from smt.utils.linear_solvers import get_solver
