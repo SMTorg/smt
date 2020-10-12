@@ -240,7 +240,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             return unfold_xdoe
 
 
-class MixedIntegerSurrogate(SurrogateModel):
+class MixedIntegerSurrogateModel(SurrogateModel):
     """
     Surrogate model decorator that takes an SMT continuous surrogate model and
     cast values according x types specification to implement a surrogate model 
@@ -343,11 +343,11 @@ class MixedIntegerContext(object):
             self._xtypes, self._xlimits, sampling_method_class, **kwargs
         )
 
-    def build_surrogate(self, surrogate):
+    def build_surrogate_model(self, surrogate):
         """
-        Build MixedIntegerSurrogate from given SMT surrogate.
+        Build MixedIntegerSurrogateModel from given SMT surrogate model.
         """
-        return MixedIntegerSurrogate(
+        return MixedIntegerSurrogateModel(
             self._xtypes,
             self._xlimits,
             surrogate,

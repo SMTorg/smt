@@ -88,7 +88,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -114,7 +114,7 @@ Usage with mixed variables
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -125,13 +125,13 @@ Usage with mixed variables
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
-  sm = MixedIntegerSurrogate(
+  sm = MixedIntegerSurrogateModel(
       xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
   )
   sm.set_training_values(xt, yt)
   sm.train()
   
-  num = 10
+  num = 100
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
@@ -148,7 +148,7 @@ Usage with mixed variables
      
    Evaluation
      
-        # eval points. : 10
+        # eval points. : 100
      
      Predicting ...
      Predicting - done. Time (sec):  0.0000000

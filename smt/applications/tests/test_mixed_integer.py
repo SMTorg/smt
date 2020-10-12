@@ -40,7 +40,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
-        sm = mixint.build_surrogate(KRG(print_prediction=False))
+        sm = mixint.build_surrogate_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
         fun = Sphere(ndim=3)
@@ -136,7 +136,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import QP
-        from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -147,7 +147,7 @@ class TestMixedInteger(unittest.TestCase):
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
-        sm = MixedIntegerSurrogate(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
+        sm = MixedIntegerSurrogateModel(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -184,13 +184,13 @@ class TestMixedInteger(unittest.TestCase):
         # DOE for training
         lhs = mixint.build_sampling_method(LHS, criterion="ese")
 
-        num = mixint.get_unfolded_dimension() * 4
+        num = mixint.get_unfolded_dimension() * 5
         print("DOE point nb = {}".format(num))
         xt = lhs(num)
         yt = ftest(xt)
 
         # Surrogate
-        sm = mixint.build_surrogate(KRG())
+        sm = mixint.build_surrogate_model(KRG())
         print(xt)
         sm.set_training_values(xt, yt)
         sm.train()

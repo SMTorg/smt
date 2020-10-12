@@ -46,8 +46,8 @@ Mixed integer surrogate
 -----------------------
 
 To use a surrogate with mixed integer constraints, the user instanciates
-a ``MixedIntegerSurrogate`` with the given surrogate.
-The ``MixedIntegerSurrogate`` implements the ``SurrogateModel`` interface 
+a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface 
 and decorates the given surrogate while respecting integer and categorical types.
 
 Example of mixed-integer Polynomial (QP) surrogate
@@ -67,7 +67,7 @@ by acting as a factory for those objects given a x specification: (xtypes, xlimi
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
 
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
 

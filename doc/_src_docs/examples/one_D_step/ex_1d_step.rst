@@ -141,8 +141,8 @@ RMTB
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.032652876e-01 8.436300000e-03
                  Iteration (num., iy, grad. norm, func.) :   0   0 8.326567782e-09 2.218506146e-13
-              Solving for output 0 - done. Time (sec):  0.0100002
-           Solving initial startup problem (n=100) - done. Time (sec):  0.0100002
+              Solving for output 0 - done. Time (sec):  0.0100000
+           Solving initial startup problem (n=100) - done. Time (sec):  0.0100000
            Solving nonlinear problem (n=100) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.550397729e-11 2.217742297e-13
@@ -166,10 +166,10 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  17   0 1.842351695e-16 8.453270514e-15
                  Iteration (num., iy, grad. norm, func.) :  18   0 1.015886357e-16 8.453270452e-15
                  Iteration (num., iy, grad. norm, func.) :  19   0 1.015887329e-16 8.453270452e-15
-              Solving for output 0 - done. Time (sec):  0.1099997
-           Solving nonlinear problem (n=100) - done. Time (sec):  0.1099997
-        Solving for degrees of freedom - done. Time (sec):  0.1199999
-     Training - done. Time (sec):  0.1199999
+              Solving for output 0 - done. Time (sec):  0.1200001
+           Solving nonlinear problem (n=100) - done. Time (sec):  0.1200001
+        Solving for degrees of freedom - done. Time (sec):  0.1300001
+     Training - done. Time (sec):  0.1300001
   ___________________________________________________________________________
      
    Evaluation
@@ -265,10 +265,10 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  17   0 2.828383946e-16 1.108940346e-14
                  Iteration (num., iy, grad. norm, func.) :  18   0 2.828383946e-16 1.108940346e-14
                  Iteration (num., iy, grad. norm, func.) :  19   0 2.828383946e-16 1.108940346e-14
-              Solving for output 0 - done. Time (sec):  0.0899997
-           Solving nonlinear problem (n=82) - done. Time (sec):  0.0899997
-        Solving for degrees of freedom - done. Time (sec):  0.0999999
-     Training - done. Time (sec):  0.0999999
+              Solving for output 0 - done. Time (sec):  0.0899999
+           Solving nonlinear problem (n=82) - done. Time (sec):  0.0899999
+        Solving for degrees of freedom - done. Time (sec):  0.1000001
+     Training - done. Time (sec):  0.1000001
   ___________________________________________________________________________
      
    Evaluation

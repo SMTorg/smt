@@ -79,8 +79,8 @@ Mixed integer surrogate
 -----------------------
 
 To use a surrogate with mixed integer constraints, the user instanciates
-a ``MixedIntegerSurrogate`` with the given surrogate.
-The ``MixedIntegerSurrogate`` implements the ``SurrogateModel`` interface 
+a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface 
 and decorates the given surrogate while respecting integer and categorical types.
 
 Example of mixed-integer Polynomial (QP) surrogate
@@ -92,7 +92,7 @@ Example of mixed-integer Polynomial (QP) surrogate
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import QP
-  from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -103,7 +103,7 @@ Example of mixed-integer Polynomial (QP) surrogate
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
-  sm = MixedIntegerSurrogate(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
+  sm = MixedIntegerSurrogateModel(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -139,7 +139,7 @@ Example of mixed-integer Polynomial (QP) surrogate
 Mixed integer context
 ---------------------
 
-the ``MixedIntegerContext`` class help the user to use mixed integer sampling methods and surrogate models consistently 
+the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently 
 by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
 
 .. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
@@ -148,7 +148,7 @@ by acting as a factory for those objects given a x specification: (xtypes, xlimi
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
 
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
 
@@ -186,13 +186,13 @@ Example of mixed-integer context usage
   # DOE for training
   lhs = mixint.build_sampling_method(LHS, criterion="ese")
   
-  num = mixint.get_unfolded_dimension() * 4
+  num = mixint.get_unfolded_dimension() * 5
   print("DOE point nb = {}".format(num))
   xt = lhs(num)
   yt = ftest(xt)
   
   # Surrogate
-  sm = mixint.build_surrogate(KRG())
+  sm = mixint.build_surrogate_model(KRG())
   print(xt)
   sm.set_training_values(xt, yt)
   sm.train()
@@ -212,31 +212,37 @@ Example of mixed-integer context usage
   
 ::
 
-  DOE point nb = 24
-  [[3.         1.20199429 0.        ]
-   [1.         3.35739098 0.        ]
-   [3.         0.15288083 1.        ]
-   [0.         1.44785525 2.        ]
-   [4.         1.83025708 3.        ]
-   [1.         2.65101498 1.        ]
-   [4.         0.85787228 2.        ]
-   [5.         2.37589264 3.        ]
-   [5.         2.81159676 1.        ]
-   [3.         3.98391152 2.        ]
-   [1.         3.78681854 2.        ]
-   [2.         0.55009327 2.        ]
-   [3.         0.66845374 3.        ]
-   [4.         3.11512566 3.        ]
-   [4.         1.65223649 1.        ]
-   [4.         3.51994265 0.        ]
-   [1.         2.23817414 3.        ]
-   [0.         0.49602415 0.        ]
-   [2.         1.95565568 0.        ]
-   [3.         1.07329349 1.        ]
-   [2.         0.29963987 3.        ]
-   [1.         2.91024405 3.        ]
-   [2.         3.27372775 2.        ]
-   [2.         2.10790514 0.        ]]
+  DOE point nb = 30
+  [[3.         0.11372683 2.        ]
+   [2.         1.29731973 2.        ]
+   [3.         1.77309337 0.        ]
+   [3.         3.20691511 1.        ]
+   [5.         2.66278991 2.        ]
+   [1.         0.68098974 3.        ]
+   [2.         3.88249968 2.        ]
+   [4.         2.18426386 0.        ]
+   [0.         2.3606789  0.        ]
+   [0.         2.06980172 2.        ]
+   [3.         3.02319142 0.        ]
+   [5.         2.78522404 1.        ]
+   [4.         0.84570077 0.        ]
+   [4.         1.99059195 3.        ]
+   [1.         3.68522148 2.        ]
+   [2.         0.18345547 0.        ]
+   [4.         0.53813874 3.        ]
+   [4.         3.49695577 3.        ]
+   [1.         1.70540995 1.        ]
+   [3.         2.52217695 3.        ]
+   [1.         3.85453451 3.        ]
+   [1.         3.41355148 0.        ]
+   [5.         0.51329226 1.        ]
+   [4.         2.84351901 1.        ]
+   [1.         1.49269381 0.        ]
+   [2.         3.1901953  3.        ]
+   [3.         1.10317051 3.        ]
+   [0.         1.41919232 0.        ]
+   [2.         0.31305758 1.        ]
+   [2.         1.04164054 2.        ]]
   ___________________________________________________________________________
      
    Evaluation

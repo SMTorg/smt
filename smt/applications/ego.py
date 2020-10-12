@@ -257,7 +257,7 @@ class EGO(SurrogateBasedApplication):
             self.mixint = MixedIntegerContext(
                 xtypes, self.xlimits, work_in_folded_space=False
             )
-            self.gpr = self.mixint.build_surrogate(self.gpr)
+            self.gpr = self.mixint.build_surrogate_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
         else:
             self.mixint = None
