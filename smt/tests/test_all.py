@@ -19,7 +19,7 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -74,6 +74,7 @@ class Test(SMTestCase):
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
+        sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * ncomp, n_comp=ncomp, delta_x=1e-1)
         sms["GENN"] = genn()
         if compiled_available:
@@ -104,6 +105,7 @@ class Test(SMTestCase):
         e_errors["MFK"] = 1e-2
         e_errors["KPLS"] = 1e-2
         e_errors["KPLSK"] = 1e-2
+        e_errors["MGP"] = 1e-2
         e_errors["GEKPLS"] = 1e-2
         e_errors["GENN"] = 1e-2
         if compiled_available:
@@ -175,6 +177,9 @@ class Test(SMTestCase):
 
     def test_exp_KPLSK(self):
         self.run_test()
+    
+    def test_exp_MGP(self):
+        self.run_test()
 
     def test_exp_GEKPLS(self):
         self.run_test()
@@ -216,6 +221,9 @@ class Test(SMTestCase):
     def test_tanh_KPLSK(self):
         self.run_test()
 
+    def test_tanh_MGP(self):
+        self.run_test()
+
     def test_tanh_GEKPLS(self):
         self.run_test()
 
@@ -254,6 +262,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_KPLSK(self):
+        self.run_test()
+    
+    def test_cos_MGP(self):
         self.run_test()
 
     def test_cos_GEKPLS(self):

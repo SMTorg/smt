@@ -21,7 +21,7 @@ from smt.utils.kriging_utils import (
     matern32,
 )
 from smt.sampling_methods.lhs import LHS
-from smt.surrogate_models import KRG, AKRG
+from smt.surrogate_models import KRG, MGP
 
 print_output = False
 
@@ -137,7 +137,7 @@ class Test(SMTestCase):
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
-                    kr = AKRG(print_global=False)
+                    kr = MGP(print_global=False)
                     theta = np.random.rand(4)
                 else:
                     kr = KRG(print_global=False)
@@ -181,7 +181,7 @@ class Test(SMTestCase):
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
-                    kr = AKRG(print_global=False)
+                    kr = MGP(print_global=False)
                     theta = np.random.rand(4)
                 else:
                     kr = KRG(print_global=False)

@@ -5,8 +5,7 @@ from .krg import KRG
 from .gekpls import GEKPLS
 from .kplsk import KPLSK
 from .genn import GENN
-from .krg_act import AKRG
-from .kpls_act import AKPLS
+from .krg_mgp import MGP
 
 try:
     from .idw import IDW

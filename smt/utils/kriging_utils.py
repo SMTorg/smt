@@ -17,6 +17,7 @@ else:
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
+# TODO: Create hyperclass Kernels and a class for each kernel
 
 def standardization(X, y, copy=False):
 

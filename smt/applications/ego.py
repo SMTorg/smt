@@ -237,11 +237,11 @@ class EGO(SurrogateBasedApplication):
         bounds = self.options["xlimits"]
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)[0]
         elif criterion == "SBO":
-            self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
+            self.obj_k = lambda x: self.SBO(np.atleast_2d(x))[0]
         elif criterion == "UCB":
-            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))[0]
 
         success = False
         n_optim = 1  # in order to have some success optimizations with SLSQP

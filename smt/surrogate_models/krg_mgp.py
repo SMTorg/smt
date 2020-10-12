@@ -1,36 +1,29 @@
 """
-Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+Author: Remy Priem (remy.priem@onera.fr)
 
 This package is distributed under New BSD license.
 """
 
 from __future__ import division
-import warnings
 import numpy as np
-from scipy import linalg, optimize, sparse
-import matplotlib.pyplot as plt
-
-from packaging import version
-from sklearn import __version__ as sklversion
-
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from scipy import linalg
 
 from smt.utils.kriging_utils import differences
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
-import time
 
 """
 The Active kriging class.
 """
 
 
-class AKPLS(KrgBased):
+class MGP(KrgBased):
     def _initialize(self):
-        super(AKPLS, self)._initialize()
+        """
+        Initialized MGP
+
+        """
+        super(MGP, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of active dimensions")
         declare(
@@ -42,37 +35,55 @@ class AKPLS(KrgBased):
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
         self.options["noise"] = 0.0
-        self.name = "Active KPLS"
+        self.name = "MGP"
 
-    def _componentwise_distance(self, dx, opt=0, small=False):
+    def _componentwise_distance(self, dx, small=False, opt=0):
+        """
+        Compute the componentwise distance with respect to the correlation kernel
+        
+
+        Parameters
+        ----------
+        dx : numpy.ndarray
+            Distance matrix.
+        small : bool, optional
+            Compute the componentwise distance in small (n_components) dimension 
+            or in initial dimension. The default is False.
+        opt : int, optional
+            useless for MGP
+
+        Returns
+        -------
+        d : numpy.ndarray
+            Component wise distance.
+
+        """
         if small:
             d = componentwise_distance(dx, self.options["corr"], self.options["n_comp"])
         else:
             d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def predict_variances(self, x, both=False, restricted_domain=None):
+    def predict_variances(self, x, both=False):
         """
-        Predict variances 
-        
+        Predict the variance of a specific point
+
         Parameters
         ----------
-        x : TYPE
-            DESCRIPTION.
-        both : TYPE, optional
-            DESCRIPTION. The default is False.
-        small : TYPE, optional
-            DESCRIPTION. The default is False.
+        x : numpy.ndarray
+            Point to compute.
+        both : bool, optional
+            True if MSE and MGP-MSE wanted. The default is False.
 
         Raises
         ------
         ValueError
-            DESCRIPTION.
+            The number fo dimension is not good.
 
         Returns
         -------
-        TYPE
-            DESCRIPTION.
+        numpy.nd array
+            MSE or (MSE, MGP-MSE).
 
         """
         n_eval, n_features = x.shape
@@ -83,7 +94,7 @@ class AKPLS(KrgBased):
                     "dim(u) should be equal to %i" % self.options["n_comp"]
                 )
             u = x
-            x, _ = self.get_x_from_u(u, restricted_domain)
+            x = self.get_x_from_u(u)
 
             u = u * self.embedding["norm"] - self.U_mean
             x = (x - self.X_mean) / self.X_std
@@ -96,40 +107,43 @@ class AKPLS(KrgBased):
         dy = self._predict_value_derivatives_hyper(x, u)
         dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
 
-        arg_1 = np.einsum("ij,ij->i", dy.T, self.sigma_R.dot(dy).T)
+        arg_1 = np.einsum("ij,ij->i", dy.T, linalg.solve(self.inv_sigma_R, dy).T)
 
-        arg_2 = np.einsum("ij,ij->i", dMSE.T, self.sigma_R.dot(dMSE).T)
+        arg_2 = np.einsum("ij,ij->i", dMSE.T, linalg.solve(self.inv_sigma_R, dMSE).T)
 
-        AMSE = np.zeros(x.shape[0])
+        MGPMSE = np.zeros(x.shape[0])
 
-        AMSE[MSE != 0] = (
+        MGPMSE[MSE != 0] = (
             (4.0 / 3.0) * MSE[MSE != 0]
             + arg_1[MSE != 0]
             + (1.0 / (3.0 * MSE[MSE != 0])) * arg_2[MSE != 0]
         )
 
-        AMSE[AMSE < 0.0] = 0.0
+        MGPMSE[MGPMSE < 0.0] = 0.0
 
         if both:
-            return AMSE, MSE
+            return MGPMSE, MSE
         else:
-            return AMSE
+            return MGPMSE
 
-    def predict_values(self, x, restricted_domain=None):
+    def predict_values(self, x):
         """
-        Predict values
+        Predict the value of the MGP for a given point
 
         Parameters
         ----------
-        x : TYPE
-            DESCRIPTION.
-        u : TYPE, optional
-            DESCRIPTION. The default is None.
+        x : numpy.ndarray
+            Point to compute.
+
+        Raises
+        ------
+        ValueError
+            The number fo dimension is not good.
 
         Returns
         -------
-        y : TYPE
-            DESCRIPTION.
+        y : numpy.ndarray
+            Value of the MGP at the given point x.
 
         """
         n_eval, n_features = x.shape
@@ -143,7 +157,7 @@ class AKPLS(KrgBased):
             )
             # Get pairwise componentwise L1-distances to the input training set
             u = x
-            x, _ = self.get_x_from_u(u, restricted_domain)
+            x = self.get_x_from_u(u)
 
             u = u * self.embedding["norm"] - self.U_mean
             du = differences(u, Y=self.U_norma.copy())
@@ -178,23 +192,21 @@ class AKPLS(KrgBased):
 
     def _reduced_log_prior(self, theta, grad=False, hessian=False):
         """
-        Compute the reduced log value, gradient or heassian of the hyperparameters prior
+        Compute the reduced log prior at given hyperparameters
 
         Parameters
         ----------
-        theta : list(n_comp), optional
-            - An array containing the autocorrelation parameters at which the
-              Gaussian Process model parameters should be determined.
-              
-        grad : boulean, optional
-            True if the gradient must be computed. The default is False.
-        hessian : boulean, optional
-            True if the hessian must be computed. The default is False.
+        theta : numpy.ndarray
+            Hyperparameters.
+        grad : bool, optional
+            True to compuyte gradient. The default is False.
+        hessian : bool, optional
+            True to compute hessian. The default is False.
 
         Returns
         -------
-        res : float or np.ndarray
-            Reduced log value, gradient or hessian of the hyperparameters prior
+        res : numpy.ndarray
+            Value, gradient, hessian of the reduced log prior.
 
         """
         nb_theta = len(theta)
@@ -216,19 +228,19 @@ class AKPLS(KrgBased):
 
     def _predict_value_derivatives_hyper(self, x, u=None):
         """
-        Predict the value derivatives with respect to the hyperparameters
+        Compute the derivatives of the mean of the GP with respect to the hyperparameters
 
         Parameters
         ----------
-        x : TYPE
-            DESCRIPTION.
-        u : TYPE, optional
-            DESCRIPTION. The default is None.
+        x : numpy.ndarray
+            Point to compute in initial dimension.
+        u : numpy.ndarray, optional
+            Point to compute in small dimension. The default is None.
 
         Returns
         -------
-        dy : TYPE
-            DESCRIPTION.
+        dy : numpy.ndarray
+            Derivatives of the mean of the GP with respect to the hyperparameters.
 
         """
         # Initialization
@@ -284,21 +296,21 @@ class AKPLS(KrgBased):
 
     def _predict_variance_derivatives_hyper(self, x, u=None):
         """
-        Predict the variance derivatives with respect to the hyperparameters
+        Compute the derivatives of the variance of the GP with respect to the hyperparameters
 
         Parameters
         ----------
-        x : TYPE
-            DESCRIPTION.
-        u : TYPE, optional
-            DESCRIPTION. The default is None.
+        x : numpy.ndarray
+            Point to compute in initial dimension.
+        u : numpy.ndarray, optional
+            Point to compute in small dimension. The default is None.
 
         Returns
         -------
-        dMSE : TYPE
-            DESCRIPTION.
+        dMSE : numpy.ndarrray
+            derivatives of the variance of the GP with respect to the hyperparameters.
         MSE : TYPE
-            DESCRIPTION.
+            Variance of the GP.
 
         """
         # Initialization
@@ -402,81 +414,54 @@ class AKPLS(KrgBased):
 
         return dMSE, MSE
 
-    def get_x_from_u(self, u, restricted_domain=None):
+    def get_x_from_u(self, u):
         """
-        Compute x from u
+        Compute the point in initial dimension from a point in low dimension
 
         Parameters
         ----------
-        u : np.ndarray [n_evals, n_comp]
-            Evaluation point input variable in embedding space
+        u : numpy.ndarray
+            Point in low dimension.
 
         Returns
         -------
-        x : np.ndarray [n_evals, dim]
-            Return point input variable values in original space
+        res : numpy.ndarray
+            point in initial dimension.
 
         """
-        res = []
         u = np.atleast_2d(u)
 
         self.embedding["Q_C"], self.embedding["R_C"]
 
-        res = []
         x_temp = np.dot(
             self.embedding["Q_C"],
             linalg.solve_triangular(self.embedding["R_C"].T, u.T, lower=True),
         ).T
 
-        if restricted_domain is None:
-            bounds = None
-            res = x_temp
-        else:
-            bounds = [
-                (restricted_domain[i, 0], restricted_domain[i, 1])
-                for i in range(self.nx)
-            ]
-            for i, u_i in enumerate(u):
-                con_fun = lambda x: self.get_u_from_x(x) - u_i
-                con = [{"type": "eq", "fun": con_fun}]
-                obj = lambda x: linalg.norm(x - x_temp[i, :])
-                res_i = optimize.minimize(
-                    obj,
-                    np.random.rand(len(self.X_std)) * 2.0 - 1.0,
-                    method="SLSQP",
-                    bounds=bounds,
-                    constraints=con,
-                )
-                res.append(res_i["x"])
-
-        res = np.atleast_2d(res)
-        return res, x_temp
+        res = np.atleast_2d(x_temp)
+        return res
 
     def get_u_from_x(self, x):
         """
-        Compute u from x
+        Compute the point in low dimension from a point in initial dimension
 
         Parameters
         ----------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values in original space
+        x : numpy.ndarray
+            Point in initial dimension.
 
         Returns
         -------
-        u : np.ndarray [n_evals, n_comp]
-            Return point input variable in embedding space
+        u : numpy.ndarray
+             Point in low dimension.
+
         """
         u = x.dot(self.embedding["C"])
         return u
 
     def _specific_train(self):
         """
-        Specific training of Active Kriging
-
-        Returns
-        -------
-        None.
-
+        Compute the specific training values necessary for MGP (Hessian)
         """
         # Compute covariance matrix of hyperparameters
         var_R = np.zeros((len(self.optimal_theta), len(self.optimal_theta)))
@@ -484,7 +469,7 @@ class AKPLS(KrgBased):
         var_R[r_ij[:, 0], r_ij[:, 1]] = r[:, 0]
         var_R[r_ij[:, 1], r_ij[:, 0]] = r[:, 0]
 
-        self.sigma_R = -linalg.inv(var_R)
+        self.inv_sigma_R = -var_R
 
         # Compute normalise embedding
         self.optimal_par = par
@@ -500,14 +485,6 @@ class AKPLS(KrgBased):
         self.embedding["norm"] = norm_B
         self.embedding["Q_C"], self.embedding["R_C"] = linalg.qr(C, mode="economic")
 
-        U = []
-        for i in range(C.shape[1]):
-            ub = np.sum(np.abs(C[:, i]))
-            lb = -ub
-            U.append((lb, ub))
-
-        self.embedding["bounds"] = U
-
         # Compute normalisation in embeding base
         self.U_norma = self.X_norma.dot(A)
         self.U_mean = self.X_mean.dot(C) * norm_B
@@ -517,18 +494,3 @@ class AKPLS(KrgBased):
         svd_cumsum = np.cumsum(svd[1])
         svd_sum = np.sum(svd[1])
         self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
-        # self.best_ncomp = 1
-
-        # u_plot = np.atleast_2d(np.linspace(lb,ub,1000)).T
-        # y_plot = self.predict_values(u_plot)
-        # plt.plot(self.U_norma, self.y_mean + self.y_std * self.y_norma,linestyle=' ',marker='x')
-        # plt.plot(u_plot * self.embedding["norm"] - self.U_mean,y_plot)
-        # plt.show()
-        # time.sleep(3)
-
-    def _compute_pls(self, X, y):
-        _pls = pls(self.options["n_comp"])
-        self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-        # print(self.coeff_pls)
-
-        return X, y
