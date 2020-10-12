@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 Reduced problem class - selects a subset of input variables.
 """
 import numpy as np
-from six.moves import range
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem

@@ -7,7 +7,6 @@ Robot arm problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
 An, J., and Owen, A. Quasi-Regression. Journal of complexity, 17(4), pp. 588-607, 2001.
 """
-from __future__ import division
 import numpy as np
 
 from smt.problems.problem import Problem

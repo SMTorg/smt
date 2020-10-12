@@ -67,7 +67,11 @@ Usage
    Training
      
      Training ...
+<<<<<<< HEAD
      Training - done. Time (sec):  0.0090003
+=======
+     Training - done. Time (sec):  0.0099998
+>>>>>>> edd4d2b82ba190fde37837235b0fa6b774e4ac10
   ___________________________________________________________________________
      
    Evaluation
@@ -75,9 +79,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0100002
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001000
      
   ___________________________________________________________________________
      
@@ -143,11 +147,6 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  None
      -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
   *  -  theta0
      -  [0.01]
      -  None

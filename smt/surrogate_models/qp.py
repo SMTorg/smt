@@ -7,9 +7,6 @@ This package is distributed under New BSD license.
 TO DO:
 - define outputs['sol'] = self.sol
 """
-
-from __future__ import division
-
 import numpy as np
 import scipy
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -120,7 +117,9 @@ class QP(SurrogateModel):
 
         linear_coef = self.coef[1 + kx, :]
         quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
-        cross_coef = np.zeros(self.ny)
+        neval = np.size(quad_coef, 0)
+        cross_coef = np.zeros(neval)
+
         for i in range(dim):
             if i > kx:
                 k = int(
