@@ -40,22 +40,49 @@ and categorical types.
 Example of mixed-integer LHS sampling method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_integer_lhs , 80
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_lhs_example , 80
 
 Mixed integer surrogate
 -----------------------
 
 To use a surrogate with mixed integer constraints, the user instanciates
-a ``MixedIntegerSurrogate`` with the given surrogate.
-The ``MixedIntegerSurrogate`` implements the ``SurrogateModel`` interface 
+a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface 
 and decorates the given surrogate while respecting integer and categorical types.
 
 Example of mixed-integer Polynomial (QP) surrogate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_integer_qp , 80
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_qp_example , 80
 
+Mixed integer context
+---------------------
 
+the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently 
+by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
+
+.. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.__init__
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.fold_with_enum_index
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.unfold_with_enum_mask
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_mixed_integer
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_enum_value
+
+Example of mixed-integer context usage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_context_example , 80
 
 
 

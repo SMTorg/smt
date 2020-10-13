@@ -148,8 +148,8 @@ Tips for an efficient use
 * Since the maximization of the `EI` is a highly multimodal optimization problem, it could be necessary to increase the `n_start` parameter of the algorithm. 
 
 
-Implementation Note
--------------------
+Implementation Notes
+--------------------
 
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
@@ -164,6 +164,13 @@ The expected improvement is continuously computed and optimized so that can lead
 To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
 However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
 
+When considering a mixed integer optimization, the function to be optimized by EGO
+has to handle categorical variables as indexes in the given enumaration type. For instance, 
+with a categorical enumeration ``["red", "green", "blue"]``,  passing ``"blue"`` to the 
+function should be handled by passing the value ``2`` which is the index of ``"blue"`` 
+in the enumeration list. This choice was made to keep on using a numerical ndarray as interface
+of the function to be optimized ``f: [n_samples, n_features] -> [n_eval, 1]`` allowing parallel
+evaluations.
 
 References
 ----------
