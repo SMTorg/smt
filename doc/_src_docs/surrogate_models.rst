@@ -17,6 +17,7 @@ SMT contains the surrogate modeling methods listed below.
    surrogate_models/kplsk
    surrogate_models/gekpls
    surrogate_models/genn
+   surrogate_models/mgp
 
 
 Usage

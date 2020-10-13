@@ -60,7 +60,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0079780
   ___________________________________________________________________________
      
    Evaluation
@@ -68,9 +68,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009961
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -118,18 +118,28 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  None
+     -  ['str']
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  None
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['str']
      -  Correlation function type
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'TNC']
+     -  ['str']
+     -  Optimiser for hyperparameters optimisation
+  *  -  noise
+     -  0.0
+     -  None
+     -  ['float']
+     -  Noise in kriging
   *  -  n_comp
      -  1
      -  None

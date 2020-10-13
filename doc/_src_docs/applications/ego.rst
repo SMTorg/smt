@@ -272,7 +272,7 @@ Usage
   
 ::
 
-  Minimum in x=18.8 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -423,7 +423,7 @@ Usage with parallel options
   
 ::
 
-  Minimum in x=19.0 with f(x)=-15.1
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
@@ -499,7 +499,9 @@ Usage with mixed variable
       qEI=qEI,
   )
   
-  _, _, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
+  x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
+  print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
+  print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
   
   min_ref = -15
   mini = np.zeros(n_iter)
@@ -516,6 +518,11 @@ Usage with mixed variable
   plt.xlabel("number of iterations")
   plt.ylabel("log of the difference w.r.t the best")
   plt.show()
+  
+::
+
+  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
+  Minimum in typed x=[-5.0, '3', '4', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -571,7 +578,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000050DC198>
+     -  <smt.applications.ego.Evaluator object at 0x0000021674684648>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -606,7 +613,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000000050DC208>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000021674684348>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly

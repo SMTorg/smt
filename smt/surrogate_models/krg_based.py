@@ -48,12 +48,14 @@ class KrgBased(SurrogateModel):
             "constant",
             values=("constant", "linear", "quadratic"),
             desc="Regression function type",
+            types=(str),
         )
         declare(
             "corr",
             "squar_exp",
             values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32"),
             desc="Correlation function type",
+            types=(str),
         )
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
@@ -62,7 +64,8 @@ class KrgBased(SurrogateModel):
             "hyper_opt",
             "Cobyla",
             values=("Cobyla", "TNC"),
-            desc="optimiseur for Hyperparameters optimisation",
+            desc="Optimiser for hyperparameters optimisation",
+            types=(str),
         )
         declare("noise", 0.0, types=float, desc="Noise in kriging")
         self.name = "KrigingBased"
@@ -816,7 +819,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
-                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:                   
+                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
                             [theta0, np.log10(np.array([self.options["noise0"]]))]

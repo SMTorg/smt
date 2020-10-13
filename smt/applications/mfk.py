@@ -28,6 +28,7 @@ from smt.utils.kriging_utils import (
 )
 from sys import exit
 
+
 class NestedLHS(object):
     def __init__(self, nlevel, xlimits):
         """
