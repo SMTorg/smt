@@ -8,7 +8,8 @@ import unittest
 
 import matplotlib
 
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
+
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC

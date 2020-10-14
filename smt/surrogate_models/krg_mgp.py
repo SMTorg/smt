@@ -111,6 +111,8 @@ class MGP(KrgBased):
 
         arg_2 = np.einsum("ij,ij->i", dMSE.T, linalg.solve(self.inv_sigma_R, dMSE).T)
 
+        
+
         MGPMSE = np.zeros(x.shape[0])
 
         MGPMSE[MSE != 0] = (

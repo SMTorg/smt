@@ -2,17 +2,18 @@ Marginal Gaussian Process (MGP)
 ===============================
 
 Marginal Gaussian Processes (MGP) are Gaussian Processes taking into account the uncertainty of the 
-hyperparameters defined as a density probabilty function. Especially we suppose that the function
+hyperparameters defined as a density probability function. Especially we suppose that the function
 to model :math:`f : \Omega \mapsto \mathbb{R}`, where :math:`\Omega \subset \mathbb{R}^d` and 
 :math:`d` is the number of design variables, lies in a linear embedding :math:`\mathcal{A}`
 such as :math:`\mathcal{A} = \{ u = Ax, x\in\Omega\}`, :math:`A \in \mathbb{R}^{d \times d_e}`
 and :math:`f(x)=f_{\mathcal{A}}(Ax)` with :math:`f(x)=f_{\mathcal{A}} : \mathcal{A} \mapsto \mathbb{R}`
 et :math:`d_e \ll d`.
 Then, we must use a kernel :math:`k(x,x')=k_{\mathcal{A}}(Ax,Ax')` whose each component of the transfert 
-matrix :math:`A` is an hyperparameter. Thus we have :math:`d_e \cdot d` hyperparameters to find.
-Moreover, we suppose that :math:`A` follow a normal distribution :math:`\mathcal{N}(vect(\hat A),\Sigma)`,
-with a mean :math:`\hat A` and a covariance matrix :math:`\Sigma`, which is taken into account in the Gaussian Process building.
-Using a kriging model using :math:`\hat A` as hyperparameters and some approximations, 
+matrix :math:`A` is an hyperparameter. Thus we have :math:`d_e \times d` hyperparameters to find.
+(Note that :math:`d_e` is defined as :math:`n\_comp` in the code).
+Moreover, we suppose that :math:`A` follows a normal distribution :math:`\mathcal{N}(vect(\hat A),\Sigma)`,
+with a mean vector :math:`vect(\hat A)` and a covariance matrix :math:`\Sigma`, which are taken into account in the Gaussian Process building.
+Using a Gaussian Process with :math:`\hat A` as hyperparameters and some approximations, 
 we obtain the prediction and variance of the MGP considering the normal distribution of :math:`A`.
 For more theory on the MGP, refer to [1]_.
 

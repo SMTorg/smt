@@ -423,7 +423,7 @@ Usage with parallel options
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=19.0 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
@@ -521,8 +521,8 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
-  Minimum in typed x=[-5.0, '3', '4', 0]
+  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
+  Minimum in typed x=[-5.0, '3', '5', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -578,7 +578,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000021674684648>
+     -  <smt.applications.ego.Evaluator object at 0x000001A1FF0E45C8>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -613,7 +613,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000021674684348>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001A1FF13F9C8>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly
