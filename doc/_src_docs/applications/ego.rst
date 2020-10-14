@@ -148,8 +148,8 @@ Tips for an efficient use
 * Since the maximization of the `EI` is a highly multimodal optimization problem, it could be necessary to increase the `n_start` parameter of the algorithm. 
 
 
-Implementation Note
--------------------
+Implementation Notes
+--------------------
 
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
@@ -164,6 +164,13 @@ The expected improvement is continuously computed and optimized so that can lead
 To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
 However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
 
+When considering a mixed integer optimization, the function to be optimized by EGO
+has to handle categorical variables as indexes in the given enumaration type. For instance, 
+with a categorical enumeration ``["red", "green", "blue"]``,  passing ``"blue"`` to the 
+function should be handled by passing the value ``2`` which is the index of ``"blue"`` 
+in the enumeration list. This choice was made to keep on using a numerical ndarray as interface
+of the function to be optimized ``f: [n_samples, n_features] -> [n_eval, 1]`` allowing parallel
+evaluations.
 
 References
 ----------
@@ -272,7 +279,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.1 with f(x)=-14.6
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -452,9 +459,11 @@ Usage with mixed variable
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS
   
+  # Regarding the interface, the function to be optimized should handle
+  # categorical values as index values in the enumeration type specification.
+  # For instance, here "blue" will be passed to the function as the index value 2.
+  # This allows to keep the numpy ndarray X handling numerical values.
   def function_test_mixed_integer(X):
-      import numpy as np
-  
       # float
       x1 = X[:, 0]
       #  enum 1
@@ -478,7 +487,9 @@ Usage with mixed variable
   
   n_iter = 15
   xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
-  xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
+  xlimits = np.array(
+      [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
+  )
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KB"
   sm = KRG(print_global=False)
@@ -521,8 +532,8 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
-  Minimum in typed x=[-5.0, '3', '5', 0]
+  Minimum in x=[-5.  2.  0.  1.] with f(x)=-14.0
+  Minimum in typed x=[-5.0, 'blue', 'square', 1]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -578,7 +589,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001A1FF0E45C8>
+     -  <smt.applications.ego.Evaluator object at 0x00000107E41BDE08>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -613,7 +624,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001A1FF13F9C8>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000107E41C0988>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly

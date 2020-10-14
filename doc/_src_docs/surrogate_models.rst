@@ -90,7 +90,7 @@ Usage
   :align: center
 
 SurrogateModel class API
-------------
+------------------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 

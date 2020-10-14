@@ -425,9 +425,11 @@ class TestEGO(SMTestCase):
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
 
+        # Regarding the interface, the function to be optimized should handle
+        # categorical values as index values in the enumeration type specification.
+        # For instance, here "blue" will be passed to the function as the index value 2.
+        # This allows to keep the numpy ndarray X handling numerical values.
         def function_test_mixed_integer(X):
-            import numpy as np
-
             # float
             x1 = X[:, 0]
             #  enum 1
@@ -451,7 +453,9 @@ class TestEGO(SMTestCase):
 
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
-        xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"], [0, 2]])
+        xlimits = np.array(
+            [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
+        )
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
         sm = KRG(print_global=False)
