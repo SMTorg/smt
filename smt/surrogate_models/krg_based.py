@@ -844,16 +844,18 @@ class KrgBased(SurrogateModel):
                             method="COBYLA",
                             options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-
-                        optimal_theta_res_2 = optimal_theta = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_rand,
-                            constraints=[
-                                {"fun": con, "type": "ineq"} for con in constraints
-                            ],
-                            method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        )
+                        
+                        optimal_theta_res_2 = optimal_theta_res
+                        
+                        # optimal_theta_res_2 = optimal_theta = optimize.minimize(
+                        #     minus_reduced_likelihood_function,
+                        #     theta0_rand,
+                        #     constraints=[
+                        #         {"fun": con, "type": "ineq"} for con in constraints
+                        #     ],
+                        #     method="COBYLA",
+                        #     options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                        # )
 
                     elif self.options["hyper_opt"] == "TNC":
 
