@@ -14,9 +14,9 @@ install:
   - set PATH=%CONDA%;%CONDA%\Library\bin;%CONDA%\bin;%CONDA%\Scripts;%PATH%
   - conda config --set always_yes yes
   - conda update conda
-  - conda install python=%PYTHON% numpy scipy Cython sphinxcontrib-websupport==1.1.2 sphinx pip --quiet
+  - conda install python=%PYTHON% numpy scipy Cython sphinx pip --quiet
   - python -m pip install -U pip
-  - pip install testflo==1.3.6
+  - pip install testflo
   - pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
   - pip install -e . 
   - pip list
