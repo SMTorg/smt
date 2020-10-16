@@ -52,7 +52,7 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["KRG"] = 1e-5
+        t_errors["KRG"] = 1e-4
         t_errors["IDW"] = 1e-15
         t_errors["RBF"] = 1e-2
 
