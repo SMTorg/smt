@@ -89,7 +89,7 @@ class Test(SMTestCase):
         t_errors["KPLS"] = 1.2
         t_errors["KPLSK"] = 1e0
         t_errors["MGP"] = 1e0
-        t_errors["GEKPLS"] = 1.2
+        t_errors["GEKPLS"] = 1.4
         t_errors["GENN"] = 1.2
         if compiled_available:
             t_errors["IDW"] = 1e0
