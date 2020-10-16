@@ -89,7 +89,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
     def test_rosenbrock_2D(self):
-        n_iter = 30
+        n_iter = 40
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
