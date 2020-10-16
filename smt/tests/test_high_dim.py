@@ -52,7 +52,7 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["KRG"] = 2e-6
+        t_errors["KRG"] = 1e-5
         t_errors["IDW"] = 1e-15
         t_errors["RBF"] = 1e-2
 
@@ -105,8 +105,8 @@ class Test(SMTestCase):
         if print_output:
             print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
 
-        self.assert_error(t_error, 0.0, self.t_errors[sname],1e-6)
-        self.assert_error(e_error, 0.0, self.e_errors[sname],1e-6)
+        self.assert_error(t_error, 0.0, self.t_errors[sname],1e-5)
+        self.assert_error(e_error, 0.0, self.e_errors[sname],1e-5)
 
     # --------------------------------------------------------------------
     # Function: sphere

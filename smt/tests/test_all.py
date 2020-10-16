@@ -167,7 +167,7 @@ class Test(SMTestCase):
             sm.predict_variances(xe)
 
         if pname == "cos":
-            self.assertLessEqual(e_error, self.e_errors[sname] + 1.2)
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1.5)
         else:
             self.assertLessEqual(e_error, self.e_errors[sname] + 1e-4)
         self.assertLessEqual(t_error, self.t_errors[sname] + 1e-4)
