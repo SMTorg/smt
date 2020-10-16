@@ -103,7 +103,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_rosenbrock_2D_parallel(self):
-        n_iter = 15
+        n_iter = 20
         n_parallel = 5
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
