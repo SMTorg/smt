@@ -127,7 +127,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_branin_2D(self):
-        n_iter = 15
+        n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
@@ -268,7 +268,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ydoe_option(self):
-        n_iter = 10
+        n_iter = 15
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
