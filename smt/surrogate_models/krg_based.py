@@ -816,7 +816,7 @@ class KrgBased(SurrogateModel):
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
-            k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
+            k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
                 if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
@@ -895,6 +895,8 @@ class KrgBased(SurrogateModel):
                             stop += 1
                             if incr != 0:
                                 return
+                            if stop > max_retry:
+                                raise ValueError('%d attempt to train the model failed' %max_retry)
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:
