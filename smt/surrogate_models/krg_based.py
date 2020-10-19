@@ -9,7 +9,6 @@ import numpy as np
 from scipy import linalg, optimize
 from types import FunctionType
 from smt.utils.caching import cached_operation
-import pandas as pd
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from sklearn.metrics.pairwise import manhattan_distances
@@ -293,7 +292,31 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] != "gower_corr":
+        if self.options["corr"] == "gower_corr":
+            # Compute the correlation function
+            
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+               
+            if not isinstance(x, np.ndarray): 
+                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+                cat_features = is_number(x.dtypes)    
+            else:
+                cat_features = np.zeros(n_features_x, dtype=bool)
+                for col in range(n_features_x):
+                    if not np.issubdtype(type(x[0, col]), np.number):
+                        cat_features[col]=True   
+            
+                if not isinstance(x, np.ndarray): x = np.asarray(x)
+                
+            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+            X_cont = (X_cont - self.X_mean) / self.X_std
+            # Compute the regression function
+            f = self._regression_types[self.options["poly"]](X_cont)
+            # Scaled predictor
+            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+            # Predictor
+            y = (self.y_mean + self.y_std * y_).ravel()
+        else:
             x = (x - self.X_mean) / self.X_std
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
@@ -307,35 +330,7 @@ class KrgBased(SurrogateModel):
             y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
             # Predictor
             y = (self.y_mean + self.y_std * y_).ravel()
-            print(r)
-        else:
-
-            # Compute the correlation function
-            Xt = x
-            x_n_rows, x_n_cols = Xt.shape
             
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
-            n_samples, n_features = x.shape
-               
-            if not isinstance(Xt, np.ndarray): 
-                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(Xt.dtypes)    
-            else:
-                cat_features = np.zeros(x_n_cols, dtype=bool)
-                for col in range(x_n_cols):
-                    if not np.issubdtype(type(Xt[0, col]), np.number):
-                        cat_features[col]=True   
-            
-                if not isinstance(Xt, np.ndarray): Xt = np.asarray(Xt)
-                
-            X_cont = Xt[:,np.logical_not(cat_features)].astype(np.float)
-            X_cont = (X_cont - self.X_mean) / self.X_std
-            # Compute the regression function
-            f = self._regression_types[self.options["poly"]](X_cont)
-            # Scaled predictor
-            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
-            # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
 
         return y
 
@@ -357,7 +352,9 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] != "gower_corr":
+        if self.options["corr"] == "gower_corr":
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+        else:
             x = (x - self.X_mean) / self.X_std
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
@@ -365,8 +362,8 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d                                  
             ).reshape(n_eval, self.nt)
-        else:
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+            
+            
         # Compute the correlation function
        
 
@@ -406,7 +403,32 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
 
-        if self.options["corr"] != "gower_corr":
+        if self.options["corr"] == "gower_corr":
+            # Compute the correlation function
+            
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+               
+            if not isinstance(x, np.ndarray): 
+                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+                cat_features = is_number(x.dtypes)    
+            else:
+                cat_features = np.zeros(n_features_x, dtype=bool)
+                for col in range(n_features_x):
+                    if not np.issubdtype(type(x[0, col]), np.number):
+                        cat_features[col]=True   
+            
+                if not isinstance(x, np.ndarray): x = np.asarray(x)
+          
+            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+            C = self.optimal_par["C"]
+            rt = linalg.solve_triangular(C, r.T, lower=True)
+
+            u = linalg.solve_triangular(
+                self.optimal_par["G"].T,
+                np.dot(self.optimal_par["Ft"].T, rt)
+                - self._regression_types[self.options["poly"]](X_cont).T,
+                ) 
+        else:
             x = (x - self.X_mean) / self.X_std
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(x, Y=self.X_norma.copy(), sum_over_features=False)
@@ -421,37 +443,7 @@ class KrgBased(SurrogateModel):
             self.optimal_par["G"].T,
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](x).T,
-        )
-        else:
-            # Compute the correlation function
-            Xt = x
-            x_n_rows, x_n_cols = Xt.shape
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
-            n_samples, n_features = x.shape
-                
-            if not isinstance(Xt, np.ndarray): 
-                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(Xt.dtypes)    
-            else:
-                cat_features = np.zeros(x_n_cols, dtype=bool)
-                for col in range(x_n_cols):
-                    if not np.issubdtype(type(Xt[0, col]), np.number):
-                        cat_features[col]=True   
-                
-                if not isinstance(Xt, np.ndarray): Xt = np.asarray(Xt)
-                    
-                
-    
-                    
-            X_cont = Xt[:,np.logical_not(cat_features)].astype(np.float)
-            C = self.optimal_par["C"]
-            rt = linalg.solve_triangular(C, r.T, lower=True)
-
-            u = linalg.solve_triangular(
-                self.optimal_par["G"].T,
-                np.dot(self.optimal_par["Ft"].T, rt)
-                - self._regression_types[self.options["poly"]](X_cont).T,
-        )
+            )
 
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
