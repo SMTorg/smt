@@ -8,7 +8,7 @@ import unittest
 
 import matplotlib
 
-# matplotlib.use("Agg")
+matplotlib.use("Agg")
 
 
 try:

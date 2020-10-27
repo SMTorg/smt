@@ -896,7 +896,7 @@ class KrgBased(SurrogateModel):
                             if incr != 0:
                                 return
                             if stop > max_retry:
-                                raise ValueError('%d attempt to train the model failed' %max_retry)
+                                raise ValueError('%d attempts to train the model failed' %max_retry)
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:
