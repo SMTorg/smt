@@ -139,7 +139,6 @@ class EGO(SurrogateBasedApplication):
         [ndoe, 1]: coord-y initial doe
         """
         x_data, y_data = self._setup_optimizer(fun)
-
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
 
