@@ -11,10 +11,10 @@ from smt.applications.mixed_integer import (
     ENUM,
     INT,
     check_xspec_consistency,
-    unfold_xlimits_with_continuous_limits,
+    unfold_with_continuous_limits,
     fold_with_enum_index,
     unfold_with_enum_mask,
-    compute_unfolded_dimension,
+    compute_x_unfold_dimension,
     cast_to_enum_value,
     cast_to_mixed_integer,
 )
@@ -40,7 +40,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
-        sm = mixint.build_surrogate_model(KRG(print_prediction=False))
+        sm = mixint.build_surrogate(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
         fun = Sphere(ndim=3)
@@ -57,20 +57,14 @@ class TestMixedInteger(unittest.TestCase):
                 eq_check = False
         self.assertTrue(eq_check)
 
-    def test_compute_unfolded_dimension(self):
+    def test_compute_unfold_dimension(self):
         xtypes = [FLOAT, (ENUM, 2)]
-        self.assertEqual(3, compute_unfolded_dimension(xtypes))
+        self.assertEqual(3, compute_x_unfold_dimension(xtypes))
 
     def test_unfold_with_enum_mask(self):
         xtypes = [FLOAT, (ENUM, 2)]
         x = np.array([[1.5, 1], [1.5, 0], [1.5, 1]])
         expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
-        self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
-
-    def test_unfold_with_enum_mask_with_enum_first(self):
-        xtypes = [(ENUM, 2), FLOAT]
-        x = np.array([[1, 1.5], [0, 1.5], [1, 1.5]])
-        expected = [[0, 1, 1.5], [1, 0, 1.5], [0, 1, 1.5]]
         self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
 
     def test_fold_with_enum_index(self):
@@ -111,7 +105,7 @@ class TestMixedInteger(unittest.TestCase):
             [1.5, "blue", "long", 1], cast_to_mixed_integer(xtypes, xlimits, x)
         )
 
-    def run_mixed_integer_lhs_example(self):
+    def test_mixed_integer_lhs(self):
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib import colors
@@ -124,8 +118,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSamplingMethod,
         )
 
-        xtypes = [FLOAT, (ENUM, 2)]
-        xlimits = [[0.0, 4.0], ["blue", "red"]]
+        xtypes = [(ENUM, 2), FLOAT]
+        xlimits = [["blue", "red"], [0.0, 4.0]]
         sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
 
         num = 40
@@ -133,16 +127,16 @@ class TestMixedInteger(unittest.TestCase):
 
         print(x.shape)
 
-        cmap = colors.ListedColormap(xlimits[1])
-        plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
+        cmap = colors.ListedColormap(["blue", "red"])
+        plt.scatter(x[:, 1], np.zeros(num), c=x[:, 0], cmap=cmap)
         plt.show()
 
-    def run_mixed_integer_qp_example(self):
+    def test_mixed_integer_qp(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import QP
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+        from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -153,7 +147,7 @@ class TestMixedInteger(unittest.TestCase):
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
-        sm = MixedIntegerSurrogateModel(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
+        sm = MixedIntegerSurrogate(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -167,53 +161,40 @@ class TestMixedInteger(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-
-    def run_mixed_integer_context_example(self):
+        
+    def test_mixed_gower(self):
+        # This part do a surrogate model using Gower's distance.
+    # It can only be use to 
+    
         import numpy as np
-        import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-
         from smt.surrogate_models import KRG
-        from smt.sampling_methods import LHS, Random
-        from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, INT, ENUM
-
-        xtypes = [INT, FLOAT, (ENUM, 4)]
-        xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
-
-        def ftest(x):
-            return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
-
-        # context to create consistent DOEs and surrogate
-        mixint = MixedIntegerContext(xtypes, xlimits)
-
-        # DOE for training
-        lhs = mixint.build_sampling_method(LHS, criterion="ese")
-
-        num = mixint.get_unfolded_dimension() * 5
-        print("DOE point nb = {}".format(num))
-        xt = lhs(num)
-        yt = ftest(xt)
-
-        # Surrogate
-        sm = mixint.build_surrogate_model(KRG())
-        print(xt)
-        sm.set_training_values(xt, yt)
+        from smt.applications.mixed_integer import MixedIntegerSurrogate
+        import matplotlib.pyplot as plt
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+        
+        xt = np.linspace(1.0, 5.0, 5)
+        x_train = np.array(["%.2f" % i for i in xt],dtype=object)
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        
+        xlimits =  [["0.0", "1.0"," 2.0", "3.0", "4.0"]]
+        
+        sm = MixedIntegerSurrogate(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
+        sm.set_training_values(x_train, yt)
         sm.train()
-
-        # DOE for validation
-        rand = mixint.build_sampling_method(Random)
-        xv = rand(50)
-        yv = ftest(xv)
-        yp = sm.predict_values(xv)
-
-        plt.plot(yv, yv)
-        plt.plot(yv, yp, "o")
-        plt.xlabel("actual")
-        plt.ylabel("prediction")
-
+        
+        num = 101
+        x = np.linspace(0, 5, num)
+        x_pred = np.array(["%.2f" % i for i in x],dtype=object)
+        
+        y = sm.predict_values(x_pred)
+        
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
         plt.show()
-
-
-if __name__ == "__main__":
-    TestMixedInteger().run_mixed_integer_context_example()
