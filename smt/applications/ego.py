@@ -17,7 +17,7 @@ from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import MixedIntegerContext
 from smt.utils.misc import compute_rms_error
 
-from smt.surrogate_models import KPLS, KRG, KPLSK
+from smt.surrogate_models import KPLS, KRG, KPLSK,MGP
 from smt.sampling_methods import LHS
 
 
@@ -107,7 +107,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK),
+            types=(KRG, KPLS, KPLSK,MGP),
             desc="SMT kriging-based surrogate model used internaly",
         )
         declare(
