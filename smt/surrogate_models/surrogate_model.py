@@ -262,25 +262,25 @@ class SurrogateModel(object):
         check_nx(self.nx, x)
         n = x.shape[0]
         x2 = np.copy(x)
-        self.printer.active = (
-            self.options["print_global"] and self.options["print_prediction"]
-        )
+        # self.printer.active = (
+        #     self.options["print_global"] and self.options["print_prediction"]
+        # )
 
-        if self.name == "MixExp":
-            # Mixture of experts model
-            self.printer._title("Evaluation of the Mixture of experts")
-        else:
-            self.printer._title("Evaluation")
-        self.printer("   %-12s : %i" % ("# eval points.", n))
-        self.printer()
+        # if self.name == "MixExp":
+        #     # Mixture of experts model
+        #     self.printer._title("Evaluation of the Mixture of experts")
+        # else:
+        #     self.printer._title("Evaluation")
+        # self.printer("   %-12s : %i" % ("# eval points.", n))
+        # self.printer()
 
         # Evaluate the unknown points using the specified model-method
-        with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x2)
-        time_pt = self.printer._time("prediction")[-1] / n
-        self.printer()
-        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
-        self.printer()
+        # with self.printer._timed_context("Predicting", key="prediction"):
+        y = self._predict_values(x2)
+        # time_pt = self.printer._time("prediction")[-1] / n
+        # self.printer()
+        # self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        # self.printer()
         return y.reshape((n, self.ny))
 
     def predict_derivatives(self, x, kx):

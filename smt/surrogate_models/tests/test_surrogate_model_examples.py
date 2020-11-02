@@ -213,7 +213,7 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+        from smt.applications.mixed_integer import MixedIntegerSurrogate, INT
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -224,7 +224,7 @@ class Test(unittest.TestCase):
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerSurrogate(
             xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
         )
         sm.set_training_values(xt, yt)
@@ -234,6 +234,44 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
 
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
+        plt.show()
+        
+    def test_mixed_gower_krg(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.surrogate_models import KRG
+        from smt.applications.mixed_integer import MixedIntegerSurrogate
+        from smt.applications.mixed_integer import (
+        ENUM,
+        )
+        
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+        
+        xt = np.linspace(1.0, 5.0, 5)
+        x_train = np.array(["%.2f" % i for i in xt],dtype=object)
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        
+        xlimits =  [["0.0", "1.0"," 2.0", "3.0", "4.0"]]
+        
+        sm = MixedIntegerSurrogate(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
+        sm.set_training_values(x_train, yt)
+        sm.train()
+        
+        num = 101
+        x = np.linspace(0, 5, num)
+        x_pred = np.array(["%.2f" % i for i in x],dtype=object)
+        
+        y = sm.predict_values(x_pred)
+        
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.xlabel("x")
