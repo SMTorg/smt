@@ -383,4 +383,3 @@ class MixedIntegerContext(object):
 
     def cast_to_mixed_integer(self, x):
         return cast_to_mixed_integer(self._xtypes, self._xlimits, x)
-

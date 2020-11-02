@@ -279,7 +279,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.1 with f(x)=-14.6
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -589,7 +589,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000050F93C8>
+     -  <smt.applications.ego.Evaluator object at 0x00000107E41BDE08>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -624,7 +624,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000000050F9390>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000107E41C0988>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK']
      -  SMT kriging-based surrogate model used internaly

@@ -10,6 +10,9 @@ order 1 (AR1)
 from sys import exit
 import copy
 from types import FunctionType
+from sys import exit
+import copy
+from types import FunctionType
 import numpy as np
 from sklearn.metrics.pairwise import manhattan_distances
 from scipy.linalg import solve_triangular
@@ -18,10 +21,12 @@ from scipy.spatial.distance import cdist
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
 from smt.utils.kriging_utils import (
-    l1_cross_distances,
+    cross_distances,
     componentwise_distance,
     standardization,
+    differences,
 )
+from sys import exit
 
 
 class NestedLHS(object):
@@ -210,7 +215,7 @@ class MFK(KrgBased):
             self.X_norma = self.X_norma_all[lvl]
             self.y_norma = self.y_norma_all[lvl]
             # Calculate matrix of distances D between samples
-            self.D_all[lvl] = l1_cross_distances(self.X_norma)
+            self.D_all[lvl] = cross_distances(self.X_norma)
 
             # Regression matrix and parameters
             self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
@@ -316,7 +321,7 @@ class MFK(KrgBased):
         ##                X = (X - self.X_mean[0]) / self.X_std[0]
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
+        dx = differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
@@ -338,7 +343,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
+            dx = differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -416,7 +421,7 @@ class MFK(KrgBased):
         #        if self.normalize:
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = manhattan_distances(X, Y=self.X_norma_all[0], sum_over_features=False)
+        dx = differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
@@ -449,7 +454,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = manhattan_distances(X, Y=self.X_norma_all[i], sum_over_features=False)
+            dx = differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -528,7 +533,7 @@ class MFK(KrgBased):
                 "The derivative is only available for regression rho constant"
             )
         # Get pairwise componentwise L1-distances to the input training set
-        dx = manhattan_distances(x, Y=self.X_norma_all[0], sum_over_features=False)
+        dx = differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r_ = self._correlation_types[self.options["corr"]](
@@ -552,7 +557,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](x)
-            dx = manhattan_distances(x, Y=self.X_norma_all[i], sum_over_features=False)
+            dx = differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d

@@ -10,6 +10,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
@@ -437,6 +438,72 @@ class Test(unittest.TestCase):
         ax.plot(xt, yt, "k+", mew=3, ms=10)
         ax.set(xlabel="x", ylabel="y", title="GENN")
         ax.legend(["Predicted", "True", "Test", "Train"])
+        plt.show()
+
+    def test_mgp(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.surrogate_models import MGP
+        from smt.sampling_methods import LHS
+
+        # Construction of the DOE
+        dim = 3
+        def fun(x):
+            import numpy as np
+            res = np.sum(x, axis=1) ** 2 - np.sum(x, axis=1) + 0.2 * (np.sum(x, axis=1) * 1.2) ** 3
+            return res
+            
+        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
+        xt = sampling(8)
+        yt = np.atleast_2d(fun(xt)).T
+
+        # Build the MGP model
+        sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+        sm.set_training_values(xt, yt[:, 0])
+        sm.train()
+
+        # Get the transfert matrix A
+        emb = sm.embedding["C"]
+        
+        # Compute the smallest box containing all points of A
+        upper = np.sum(np.abs(emb), axis=0)
+        lower = -upper
+
+        # Test the model
+        u_plot = np.atleast_2d(np.arange(lower, upper, 0.01)).T
+        x_plot = sm.get_x_from_u(u_plot) # Get corresponding points in Omega
+        y_plot_true = fun(x_plot)
+        y_plot_pred = sm.predict_values(u_plot)
+        sigma_MGP, sigma_KRG = sm.predict_variances(u_plot, True)
+
+        u_train = sm.get_u_from_x(xt) # Get corresponding points in A
+
+        # Plots
+        fig, ax = plt.subplots()
+        ax.plot(u_plot, y_plot_pred, label="Predicted")
+        ax.plot(u_plot, y_plot_true, "k--", label="True")
+        ax.plot(u_train, yt, "k+", mew=3, ms=10, label="Train")
+        ax.fill_between(
+            u_plot[:, 0],
+            y_plot_pred - 3 * sigma_MGP,
+            y_plot_pred + 3 * sigma_MGP,
+            color="r",
+            alpha=0.5,
+            label="Variance with hyperparameters uncertainty",
+        )
+        ax.fill_between(
+            u_plot[:, 0],
+            y_plot_pred - 3 * sigma_KRG,
+            y_plot_pred + 3 * sigma_KRG,
+            color="b",
+            alpha=0.5,
+            label="Variance without hyperparameters uncertainty",
+        )
+
+        ax.set(xlabel="x", ylabel="y", title="MGP")
+        fig.legend(loc="upper center", ncol=2)
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.74)
         plt.show()
 
 

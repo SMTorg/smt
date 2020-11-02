@@ -7,30 +7,46 @@ This package is distributed under New BSD license.
 """
 import numpy as np
 from scipy import linalg, optimize
-from types import FunctionType
-from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from sklearn.metrics.pairwise import manhattan_distances
+from smt.utils.kriging_utils import differences
 from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
     squar_exp,
     abs_exp,
+    act_exp,
     standardization,
+
     l1_cross_distances,
     gower_distances,
     gower_corr,
     gower_matrix
+    cross_distances,
+    matern52,
+    matern32,
+
 )
 
-from scipy.optimize import minimize
+from scipy.stats import multivariate_normal as m_norm
+
+
+# TODO : compute variance derivatives
 
 
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
-    _correlation_types = {"abs_exp": abs_exp, "squar_exp": squar_exp, "gower_corr": gower_corr}
+
+    _correlation_types = {
+        "abs_exp": abs_exp, 
+        "squar_exp": squar_exp,
+        "act_exp": act_exp,
+        "matern52": matern52,
+        "matern32": matern32, 
+        "gower_corr": gower_corr
+    }
+
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
@@ -41,17 +57,28 @@ class KrgBased(SurrogateModel):
             "constant",
             values=("constant", "linear", "quadratic"),
             desc="Regression function type",
+            types=(str),
         )
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp","gower_corr"),
+
+            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32,"gower_corr"),
+
             desc="Correlation function type",
+            types=(str),
         )
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
-
+        declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla", "TNC"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=(str),
+        )
+        declare("noise", 0.0, types=float, desc="Noise in kriging")
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -66,8 +93,9 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name != "Kriging":
+        if self.name not in ["Kriging", "MGP"]:
             X, y = self._compute_pls(X.copy(), y.copy())
+
         
         if self.options["corr"] == "gower_corr":
 
@@ -110,9 +138,9 @@ class KrgBased(SurrogateModel):
                 ) = standardization(X, y)
 
             # Calculate matrix of distances D between samples
-            D, self.ij = l1_cross_distances(self.X_norma)
-        ###
+            D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(D, axis=1)) == 0.0:
+
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
             )
@@ -136,9 +164,18 @@ class KrgBased(SurrogateModel):
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-        del self.y_norma, self.D
+        elif self.name in ["MGP"]:
+            self._specific_train()
+
+        # if self.name != "MGP":
+        #     del self.y_norma, self.D
 
     def _train(self):
+        """
+        Train the model
+        """
+        # outputs['sol'] = self.sol
+
         self._new_train()
 
     def _reduced_likelihood_function(self, theta):
@@ -178,7 +215,7 @@ class KrgBased(SurrogateModel):
             Cholesky decomposition of the correlation matrix [R].
             Ft
             Solution of the linear equation system : [R] x Ft = F
-            G
+            Q, G
             QR decomposition of the matrix Ft.
         """
         # Initialize output
@@ -193,7 +230,9 @@ class KrgBased(SurrogateModel):
                 # it is very probable that lower-fidelity correlation matrix
                 # becomes ill-conditionned
                 nugget = 10.0 * nugget
-        noise = 0.0
+        elif self.name in ["MGP"]:
+            nugget = 100.0 * nugget
+        noise = self.options["noise"]
         tmp_var = theta
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             if self.options["eval_noise"]:
@@ -211,6 +250,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
+            # raise e
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
@@ -251,13 +291,17 @@ class KrgBased(SurrogateModel):
             ) - n_samples * np.log10(detR)
         else:
             sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt)
-            reduced_likelihood_function_value = -sigma2.sum() * detR
+            reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
         par["C"] = C
         par["Ft"] = Ft
         par["G"] = G
+        par["Q"] = Q
+
+        if self.name in ["MGP"]:
+            reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
         # A particular case when f_min_cobyla fail
         if (self.best_iteration_fail is not None) and (
@@ -276,6 +320,310 @@ class KrgBased(SurrogateModel):
 
         return reduced_likelihood_function_value, par
 
+    def _reduced_likelihood_gradient(self, theta):
+        """
+        Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
+        
+        Arguments
+        ---------
+        theta : list(n_comp), optional
+            - An array containing the autocorrelation parameters at which the
+              Gaussian Process model parameters should be determined.
+
+        Returns
+        -------
+        grad_red : np.ndarray (dim,1)
+            Derivative of the reduced_likelihood
+            
+        par: dict()
+            - A dictionary containing the requested Gaussian Process model
+              parameters:
+
+            sigma2
+            Gaussian Process variance.
+            beta
+            Generalized least-squares regression weights for
+            Universal Kriging or for Ordinary Kriging.
+            gamma
+            Gaussian Process weights.
+            C
+            Cholesky decomposition of the correlation matrix [R].
+            Ft
+            Solution of the linear equation system : [R] x Ft = F
+            Q, G
+            QR decomposition of the matrix Ft.
+            dr
+            List of all the correlation matrix derivative
+            tr
+            List of all the trace part in the reduce likelihood derivatives
+            dmu
+            List of all the mean derivatives
+            arg
+            List of all minus_Cinv_dRdomega_gamma
+            dsigma
+            List of all sigma derivatives
+        """
+        red, par = self._reduced_likelihood_function(theta)
+
+        C = par["C"]
+        gamma = par["gamma"]
+        Q = par["Q"]
+        G = par["G"]
+        sigma_2 = par["sigma2"]
+
+        nb_theta = len(theta)
+        grad_red = np.zeros(nb_theta)
+
+        dr_all = []
+        tr_all = []
+        dmu_all = []
+        arg_all = []
+        dsigma_all = []
+        dbeta_all = []
+
+        for i_der in range(nb_theta):
+            # Compute R derivatives
+            dr = self._correlation_types[self.options["corr"]](
+                theta, self.D, grad_ind=i_der
+            )
+
+            dr_all.append(dr)
+
+            dR = np.zeros((self.nt, self.nt))
+            dR[self.ij[:, 0], self.ij[:, 1]] = dr[:, 0]
+            dR[self.ij[:, 1], self.ij[:, 0]] = dr[:, 0]
+
+            # Compute beta derivatives
+            Cinv_dR_gamma = linalg.solve_triangular(C, np.dot(dR, gamma), lower=True)
+            dbeta = -linalg.solve_triangular(G, np.dot(Q.T, Cinv_dR_gamma))
+            arg_all.append(Cinv_dR_gamma)
+
+            dbeta_all.append(dbeta)
+
+            # Compute mu derivatives
+            dmu = np.dot(self.F, dbeta)
+            dmu_all.append(dmu)
+
+            # Compute log(detR) derivatives
+            tr_1 = linalg.solve_triangular(C, dR, lower=True)
+            tr = linalg.solve_triangular(C.T, tr_1)
+            tr_all.append(tr)
+
+            # Compute Sigma2 Derivatives
+            dsigma_2 = (
+                (1 / self.nt)
+                * (
+                    -dmu.T.dot(gamma)
+                    - gamma.T.dot(dmu)
+                    - np.dot(gamma.T, dR.dot(gamma))
+                )
+                * self.y_std ** 2.0
+            )
+            dsigma_all.append(dsigma_2)
+
+            # Compute reduced log likelihood derivatives
+            grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+
+        par["dr"] = dr_all
+        par["tr"] = tr_all
+        par["dmu"] = dmu_all
+        par["arg"] = arg_all
+        par["dsigma"] = dsigma_all
+        par["dbeta_all"] = dbeta_all
+
+        grad_red = np.atleast_2d(grad_red).T
+
+        if self.name in ["MGP"]:
+            grad_red += self._reduced_log_prior(theta, grad=True)
+        return grad_red, par
+
+    def _reduced_likelihood_hessian(self, theta):
+        """
+        Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
+        
+        Arguments
+        ---------
+        theta : list(n_comp), optional
+            - An array containing the autocorrelation parameters at which the
+              Gaussian Process model parameters should be determined.
+
+        Returns
+        -------
+        hess : np.ndarray
+            Hessian values.
+        
+        hess_ij: np.ndarray [nb_theta * (nb_theta + 1) / 2, 2]
+            - The indices i and j of the vectors in theta associated to the hessian in hess.
+            
+        par: dict()
+            - A dictionary containing the requested Gaussian Process model
+              parameters:
+
+            sigma2
+            Gaussian Process variance.
+            beta
+            Generalized least-squares regression weights for
+            Universal Kriging or for Ordinary Kriging.
+            gamma
+            Gaussian Process weights.
+            C
+            Cholesky decomposition of the correlation matrix [R].
+            Ft
+            Solution of the linear equation system : [R] x Ft = F
+            Q, G
+            QR decomposition of the matrix Ft.
+            dr
+            List of all the correlation matrix derivative
+            tr
+            List of all the trace part in the reduce likelihood derivatives
+            dmu
+            List of all the mean derivatives
+            arg
+            List of all minus_Cinv_dRdomega_gamma
+            dsigma
+            List of all sigma derivatives
+        """
+        dred, par = self._reduced_likelihood_gradient(theta)
+
+        C = par["C"]
+        gamma = par["gamma"]
+        Q = par["Q"]
+        G = par["G"]
+        sigma_2 = par["sigma2"]
+
+        nb_theta = len(theta)
+
+        dr_all = par["dr"]
+        tr_all = par["tr"]
+        dmu_all = par["dmu"]
+        arg_all = par["arg"]
+        dsigma = par["dsigma"]
+        Rinv_dRdomega_gamma_all = []
+        Rinv_dmudomega_all = []
+
+        n_val_hess = nb_theta * (nb_theta + 1) // 2
+        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
+        hess = np.zeros((n_val_hess, 1))
+        ind_1 = 0
+
+        if self.name in ["MGP"]:
+            log_prior = self._reduced_log_prior(theta, hessian=True)
+
+        for omega in range(nb_theta):
+            ind_0 = ind_1
+            ind_1 = ind_0 + nb_theta - omega
+            hess_ij[ind_0:ind_1, 0] = omega
+            hess_ij[ind_0:ind_1, 1] = np.arange(omega, nb_theta)
+
+            dRdomega = np.zeros((self.nt, self.nt))
+            dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
+            dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:, 0]
+
+            dmudomega = dmu_all[omega]
+            Cinv_dmudomega = linalg.solve_triangular(C, dmudomega, lower=True)
+            Rinv_dmudomega = linalg.solve_triangular(C.T, Cinv_dmudomega)
+            Rinv_dmudomega_all.append(Rinv_dmudomega)
+            Rinv_dRdomega_gamma = linalg.solve_triangular(C.T, arg_all[omega])
+            Rinv_dRdomega_gamma_all.append(Rinv_dRdomega_gamma)
+
+            for i, eta in enumerate(hess_ij[ind_0:ind_1, 1]):
+                dRdeta = np.zeros((self.nt, self.nt))
+                dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:, 0]
+                dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:, 0]
+
+                dr_eta_omega = self._correlation_types[self.options["corr"]](
+                    theta, self.D, grad_ind=omega, hess_ind=eta
+                )
+                dRdetadomega = np.zeros((self.nt, self.nt))
+                dRdetadomega[self.ij[:, 0], self.ij[:, 1]] = dr_eta_omega[:, 0]
+                dRdetadomega[self.ij[:, 1], self.ij[:, 0]] = dr_eta_omega[:, 0]
+
+                # Compute beta second derivatives
+                dRdeta_Rinv_dmudomega = np.dot(dRdeta, Rinv_dmudomega)
+
+                dmudeta = dmu_all[eta]
+                Cinv_dmudeta = linalg.solve_triangular(C, dmudeta, lower=True)
+                Rinv_dmudeta = linalg.solve_triangular(C.T, Cinv_dmudeta)
+                dRdomega_Rinv_dmudeta = np.dot(dRdomega, Rinv_dmudeta)
+
+                dRdeta_Rinv_dRdomega_gamma = np.dot(dRdeta, Rinv_dRdomega_gamma)
+
+                Rinv_dRdeta_gamma = linalg.solve_triangular(C.T, arg_all[eta])
+                dRdomega_Rinv_dRdeta_gamma = np.dot(dRdomega, Rinv_dRdeta_gamma)
+
+                dRdetadomega_gamma = np.dot(dRdetadomega, gamma)
+
+                beta_sum = (
+                    dRdeta_Rinv_dmudomega
+                    + dRdomega_Rinv_dmudeta
+                    + dRdeta_Rinv_dRdomega_gamma
+                    + dRdomega_Rinv_dRdeta_gamma
+                    - dRdetadomega_gamma
+                )
+
+                Qt_Cinv_beta_sum = np.dot(
+                    Q.T, linalg.solve_triangular(C, beta_sum, lower=True)
+                )
+                dbetadetadomega = linalg.solve_triangular(G, Qt_Cinv_beta_sum)
+
+                # Compute mu second derivatives
+                dmudetadomega = np.dot(self.F, dbetadetadomega)
+
+                # Compute sigma2 second derivatives
+                sigma_arg_1 = (
+                    -np.dot(dmudetadomega.T, gamma)
+                    + np.dot(dmudomega.T, Rinv_dRdeta_gamma)
+                    + np.dot(dmudeta.T, Rinv_dRdomega_gamma)
+                )
+
+                sigma_arg_2 = (
+                    -np.dot(gamma.T, dmudetadomega)
+                    + np.dot(gamma.T, dRdeta_Rinv_dmudomega)
+                    + np.dot(gamma.T, dRdomega_Rinv_dmudeta)
+                )
+
+                sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(
+                    dmudomega.T, Rinv_dmudeta
+                )
+
+                sigma_arg_4_in = (
+                    -dRdetadomega_gamma
+                    + dRdeta_Rinv_dRdomega_gamma
+                    + dRdomega_Rinv_dRdeta_gamma
+                )
+                sigma_arg_4 = np.dot(gamma.T, sigma_arg_4_in)
+
+                dsigma2detadomega = (
+                    (1 / self.nt)
+                    * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
+                    * self.y_std ** 2.0
+                )
+
+                # Compute Hessian
+                dreddetadomega_tr_1 = np.trace(np.dot(tr_all[eta], tr_all[omega]))
+
+                dreddetadomega_tr_2 = np.trace(
+                    linalg.solve_triangular(
+                        C.T, linalg.solve_triangular(C, dRdetadomega, lower=True)
+                    )
+                )
+
+                dreddetadomega_arg1 = (self.nt / sigma_2) * (
+                    dsigma2detadomega - (1 / sigma_2) * dsigma[omega] * dsigma[eta]
+                )
+                dreddetadomega = (
+                    -(dreddetadomega_arg1 - dreddetadomega_tr_1 + dreddetadomega_tr_2)
+                    / self.nt
+                )
+
+                hess[ind_0 + i, 0] = dreddetadomega
+
+                if self.name in ["MGP"] and eta == omega:
+                    hess[ind_0 + i, 0] += log_prior[eta]
+            par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
+            par["Rinv_dmu"] = Rinv_dmudomega_all
+        return hess, hess_ij, par
+
     def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
@@ -292,6 +640,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
+
         if self.options["corr"] == "gower_corr":
             # Compute the correlation function
             
@@ -330,7 +679,7 @@ class KrgBased(SurrogateModel):
             y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
             # Predictor
             y = (self.y_mean + self.y_std * y_).ravel()
-            
+
 
         return y
 
@@ -352,6 +701,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
+
         if self.options["corr"] == "gower_corr":
             r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
         else:
@@ -362,8 +712,7 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d                                  
             ).reshape(n_eval, self.nt)
-            
-            
+
         # Compute the correlation function
        
 
@@ -399,9 +748,35 @@ class KrgBased(SurrogateModel):
         return y
 
     def _predict_variances(self, x):
+        """
+        Provide uncertainty of the model at a set of points
 
+        Parameters
+        ----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        MSE : np.ndarray
+            Evaluation point output variable MSE
+        """
         # Initialization
         n_eval, n_features_x = x.shape
+
+        x = (x - self.X_mean) / self.X_std
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)
+
+        # Compute the correlation function
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
+
+        C = self.optimal_par["C"]
+        rt = linalg.solve_triangular(C, r.T, lower=True)
+
 
         if self.options["corr"] == "gower_corr":
             # Compute the correlation function
@@ -483,8 +858,29 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        def minus_reduced_likelihood_function(log10t):
-            return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+        if self.name in ["MGP"]:
+
+            def minus_reduced_likelihood_function(theta):
+                res = -self._reduced_likelihood_function(theta)[0]
+                return res
+
+            def grad_minus_reduced_likelihood_function(theta):
+                grad = -self._reduced_likelihood_gradient(theta)[0]
+                return grad
+
+        else:
+
+            def minus_reduced_likelihood_function(log10t):
+                return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+
+            def grad_minus_reduced_likelihood_function(log10t):
+                log10t_2d = np.atleast_2d(log10t).T
+                res = (
+                    -np.log(10.0)
+                    * (10.0 ** log10t_2d)
+                    * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+                )
+                return res
 
         limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
@@ -499,44 +895,121 @@ class KrgBased(SurrogateModel):
                 best_optimal_rlf_value,
                 best_optimal_par,
                 constraints,
-            ) = ([], [], [], [])
+            ) = (
+                [],
+                [],
+                [],
+                [],
+            )
+
+            bounds_hyp = []
 
             for i in range(len(self.options["theta0"])):
-                constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+                if self.name in ["MGP"]:
+                    constraints.append(lambda theta, i=i: theta[i] + 100)
+                    constraints.append(lambda theta, i=i: 100 - theta[i])
+                    bounds_hyp.append((-100.0, 100.0))
+                else:
+                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
+                    constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+                    bounds_hyp.append((-6.0, 2.0))
+
+            if self.name in ["MGP"]:
+                theta0_rand = m_norm.rvs(
+                    self.options["prior"]["mean"] * len(self.options["theta0"]),
+                    self.options["prior"]["var"],
+                    1,
+                )
+                theta0 = self.options["theta0"]
+            else:
+                theta0_rand = np.random.rand(len(self.options["theta0"]))
+                theta0_rand = theta0_rand * 8.0 - 6.0
+                theta0 = np.log10(self.options["theta0"])
 
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
-            k, incr, stop, best_optimal_rlf_value = 0, 0, 1, -1e20
+            k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                theta0 = self.options["theta0"]
                 if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
                     if self.options["eval_noise"]:
                         theta0 = np.concatenate(
-                            [theta0, np.array([self.options["noise0"]])]
+                            [theta0, np.log10(np.array([self.options["noise0"]]))]
                         )
+                        theta0_rand = np.concatenate(
+                            [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
+                        )
+
                         constraints.append(lambda log10t: log10t[-1] + 16)
                         constraints.append(lambda log10t: 10 - log10t[-1])
+
+                        bounds_hyp.append((10, 16))
                 try:
-                    optimal_theta = 10.0 ** optimize.fmin_cobyla(
-                        minus_reduced_likelihood_function,
-                        np.log10(theta0),
-                        constraints,
-                        rhobeg=_rhobeg,
-                        rhoend=1e-4,
-                        maxfun=limit,
-                    )
+
+                    if self.options["hyper_opt"] == "Cobyla":
+                        optimal_theta_res = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            theta0,
+                            constraints=[
+                                {"fun": con, "type": "ineq"} for con in constraints
+                            ],
+                            method="COBYLA",
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                        )
+                        
+                        optimal_theta_res_2 = optimal_theta_res
+                        
+                        # optimal_theta_res_2 = optimal_theta = optimize.minimize(
+                        #     minus_reduced_likelihood_function,
+                        #     theta0_rand,
+                        #     constraints=[
+                        #         {"fun": con, "type": "ineq"} for con in constraints
+                        #     ],
+                        #     method="COBYLA",
+                        #     options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                        # )
+
+                    elif self.options["hyper_opt"] == "TNC":
+
+                        optimal_theta_res = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            theta0,
+                            method="TNC",
+                            jac=grad_minus_reduced_likelihood_function,
+                            bounds=bounds_hyp,
+                            options={"maxiter": 100},
+                        )
+
+                        optimal_theta_res_2 = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            theta0_rand,
+                            method="TNC",
+                            jac=grad_minus_reduced_likelihood_function,
+                            bounds=bounds_hyp,
+                            options={"maxiter": 100},
+                        )
+
+                    if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
+                        optimal_theta_res = optimal_theta_res_2
+
+                    optimal_theta = optimal_theta_res["x"]
+
+                    if self.name not in ["MGP"]:
+                        optimal_theta = 10 ** optimal_theta
+
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
+
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
                             stop += 1
                             if incr != 0:
                                 return
+                            if stop > max_retry:
+                                raise ValueError('%d attempts to train the model failed' %max_retry)
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:
@@ -576,6 +1049,7 @@ class KrgBased(SurrogateModel):
                                     )
                     k += 1
                 except ValueError as ve:
+                    # raise ve
                     # If iteration is max when fmin_cobyla fail is not reached
                     if self.nb_ill_matrix > 0:
                         self.nb_ill_matrix -= 1
@@ -632,8 +1106,19 @@ class KrgBased(SurrogateModel):
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
 
             d = self.options["n_comp"]
+        elif self.name in ["MGP"]:
+            d = self.options["n_comp"] * self.nx
         else:
             d = self.nx
+
+        if self.name in ["MGP"]:
+            if self.options["corr"] != "act_exp":
+                raise ValueError("MGP must be used with act_exp correlation function")
+            if self.options["hyper_opt"] != "TNC":
+                raise ValueError("MGP must be used with TNC hyperparameters optimizer")
+        else:
+            if self.options["corr"] == "act_exp":
+                raise ValueError("act_exp correlation function must be used With MGP")
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:

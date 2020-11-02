@@ -127,9 +127,15 @@ class SurrogateModel(object):
         ----------
         yt : np.ndarray[nt, ny] or np.ndarray[nt]
             The output values for the nt training points.
-        name : str or None
+        name : str or None, optional
             An optional label for the group of training points being set.
-            This is only used in special situations (e.g., multi-fidelity applications).
+            This is only used in special situations (e.g., multi-fidelity applications). The default is None.
+
+        Raises
+        ------
+        ValueError
+            The training points must be set first with set_training_values before calling update_training_values.
+            The number of training points does not agree with the earlier call of set_training_values.
         """
         yt = check_2d_array(yt, "yt")
 
@@ -191,9 +197,15 @@ class SurrogateModel(object):
             The derivatives values for the nt training points.
         kx : int
             0-based index of the derivatives being set.
-        name : str or None
+        name :str or None, optional
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
+
+        Raises
+        ------
+        ValueError
+            The training points must be set first with set_training_values before calling update_training_values..
+            The number of training points does not agree with the earlier call of set_training_values.
         """
         check_support(self, "training_derivatives")
 

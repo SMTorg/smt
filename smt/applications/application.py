@@ -72,4 +72,3 @@ class SurrogateBasedApplication(object):
         self.options.declare('option_name', default_value, types=(bool, int), desc='description')
         """
         pass
-
