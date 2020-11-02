@@ -465,4 +465,3 @@ class MixedIntegerContext(object):
             x as a list with enum levels if any
         """
         return cast_to_mixed_integer(self._xtypes, self._xlimits, x)
-

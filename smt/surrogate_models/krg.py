@@ -3,8 +3,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
-import warnings
-import numpy as np
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance

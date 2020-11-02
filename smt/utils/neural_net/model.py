@@ -288,6 +288,7 @@ class Model(object):
         Plot the convergence history of the neural network learning algorithm
         """
         import matplotlib.pyplot as plt
+
         if self.training_history:
             if len(self.training_history.keys()) > 1:
                 x_label = "epoch"

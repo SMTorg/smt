@@ -15,6 +15,9 @@ else:
     from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
+from sklearn.metrics.pairwise import check_pairwise_arrays
+
+# TODO: Create hyperclass Kernels and a class for each kernel
 
 
 def standardization(X, y, copy=False):
@@ -79,10 +82,10 @@ def standardization(X, y, copy=False):
         return X, y, X_mean, y_mean, X_std, y_std
 
 
-def l1_cross_distances(X):
+def cross_distances(X):
 
     """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
+    Computes the nonzero componentwise cross-distances between the vectors
     in X.
 
     Parameters
@@ -95,7 +98,7 @@ def l1_cross_distances(X):
     -------
 
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
-            - The L1 cross-distances between the vectors in X.
+            - The cross-distances between the vectors in X.
 
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
@@ -113,12 +116,18 @@ def l1_cross_distances(X):
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1) : n_samples])
+        D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
 
     return D, ij.astype(np.int)
 
 
-def abs_exp(theta, d):
+def differences(X, Y):
+    X, Y = check_pairwise_arrays(X, Y)
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+    return D.reshape((-1, X.shape[1]))
+
+
+def abs_exp(theta, d, grad_ind=None, hess_ind=None):
 
     """
     Absolute exponential autocorrelation model.
@@ -143,21 +152,38 @@ def abs_exp(theta, d):
 
     # Construct/split the correlation matrix
     i, nb_limit = 0, int(1e4)
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                -np.sum(
-                    theta.reshape(1, n_components)
-                    * d[i * nb_limit : (i + 1) * nb_limit, :],
-                    axis=1,
-                )
+    while i * nb_limit <= d.shape[0]:
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                theta.reshape(1, n_components)
+                * d[i * nb_limit : (i + 1) * nb_limit, :],
+                axis=1,
+            )
+        )
+        i += 1
+
+    i = 0
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
             )
             i += 1
 
+    i = 0
+    if hess_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
 
-def squar_exp(theta, d):
+    return r
+
+
+def squar_exp(theta, d, grad_ind=None, hess_ind=None):
 
     """
     Squared exponential correlation model.
@@ -182,18 +208,265 @@ def squar_exp(theta, d):
     # Construct/split the correlation matrix
     i, nb_limit = 0, int(1e4)
 
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                -np.sum(
-                    theta.reshape(1, n_components)
-                    * d[i * nb_limit : (i + 1) * nb_limit, :],
-                    axis=1,
-                )
+    while i * nb_limit <= d.shape[0]:
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                theta.reshape(1, n_components)
+                * d[i * nb_limit : (i + 1) * nb_limit, :],
+                axis=1,
+            )
+        )
+        i += 1
+
+    i = 0
+
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
             )
             i += 1
+
+    i = 0
+    if hess_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    return r
+
+
+def matern52(theta, d, grad_ind=None, hess_ind=None):
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+
+    while i * nb_limit <= d.shape[0]:
+        ll = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+            1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll ** 2.0
+        ).prod(axis=1) * np.exp(-np.sqrt(5.0) * (ll.sum(axis=1)))
+        i += 1
+    i = 0
+
+    M52 = r.copy()
+
+    if grad_ind is not None:
+        theta_r = theta.reshape(1, n_components)
+        while i * nb_limit <= d.shape[0]:
+            fact_1 = (
+                np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                + 10.0
+                / 3.0
+                * theta_r[0, grad_ind]
+                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind] ** 2.0
+            )
+            fact_2 = (
+                1.0
+                + np.sqrt(5)
+                * theta_r[0, grad_ind]
+                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                + 5.0
+                / 3.0
+                * (theta_r[0, grad_ind] ** 2)
+                * (d[i * nb_limit : (i + 1) * nb_limit, grad_ind] ** 2)
+            )
+            fact_3 = np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (fact_1 / fact_2 - fact_3) * r[
+                i * nb_limit : (i + 1) * nb_limit, 0
+            ]
+            i += 1
+    i = 0
+
+    if hess_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            fact_1 = (
+                np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                + 10.0
+                / 3.0
+                * theta_r[0, hess_ind]
+                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0
+            )
+            fact_2 = (
+                1.0
+                + np.sqrt(5)
+                * theta_r[0, hess_ind]
+                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                + 5.0
+                / 3.0
+                * (theta_r[0, hess_ind] ** 2)
+                * (d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2)
+            )
+            fact_3 = np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (fact_1 / fact_2 - fact_3) * r[
+                i * nb_limit : (i + 1) * nb_limit, 0
+            ]
+
+            if hess_ind == grad_ind:
+                fact_4 = (
+                    10.0
+                    / 3.0
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0
+                    * fact_2
+                )
+                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                    ((fact_4 - fact_1 ** 2) / (fact_2) ** 2)
+                    * M52[i * nb_limit : (i + 1) * nb_limit, 0]
+                    + r[i * nb_limit : (i + 1) * nb_limit, 0]
+                )
+
+            i += 1
+    return r
+
+
+def matern32(theta, d, grad_ind=None, hess_ind=None):
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+
+    theta_r = theta.reshape(1, n_components)
+
+    while i * nb_limit <= d.shape[0]:
+        ll = theta_r * d[i * nb_limit : (i + 1) * nb_limit, :]
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = (1.0 + np.sqrt(3.0) * ll).prod(
+            axis=1
+        ) * np.exp(-np.sqrt(3.0) * (ll.sum(axis=1)))
+        i += 1
+    i = 0
+
+    M32 = r.copy()
+
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            fact_1 = (
+                1.0
+                / (
+                    1.0
+                    + np.sqrt(3.0)
+                    * theta_r[0, grad_ind]
+                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                )
+                - 1.0
+            )
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                fact_1
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                * np.sqrt(3.0)
+                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+            )
+
+            i += 1
+        i = 0
+
+    if hess_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            fact_2 = (
+                1.0
+                / (
+                    1.0
+                    + np.sqrt(3.0)
+                    * theta_r[0, hess_ind]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                )
+                - 1.0
+            )
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                r[i * nb_limit : (i + 1) * nb_limit, 0]
+                * fact_2
+                * np.sqrt(3.0)
+                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+            )
+            if grad_ind == hess_ind:
+                fact_3 = (
+                    (3.0 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0)
+                    / (
+                        1.0
+                        + np.sqrt(3.0)
+                        * theta_r[0, hess_ind]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                    )
+                    ** 2.0
+                )
+                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                    r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    - fact_3 * M32[i * nb_limit : (i + 1) * nb_limit, 0]
+                )
+            i += 1
+
+    return r
+
+
+def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
+    """
+    Active learning exponential correlation model
+
+    Parameters
+    ----------
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the gradient must be computed. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    if len(theta) % n_components != 0:
+        raise Exception("Length of theta must be a multiple of n_components")
+
+    n_small_components = len(theta) // n_components
+
+    A = np.reshape(theta, (n_small_components, n_components)).T
+
+    d_A = d.dot(A)
+
+    # Necessary when working in embeddings space
+    if d_x is not None:
+        d = d_x
+        n_components = d.shape[1]
+
+    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A ** 2.0, axis=1))
+
+    if grad_ind is not None:
+        d_grad_ind = grad_ind % n_components
+        d_A_grad_ind = grad_ind // n_components
+
+        if hess_ind is None:
+            r[:, 0] = -d[:, d_grad_ind] * d_A[:, d_A_grad_ind] * r[:, 0]
+
+        elif hess_ind is not None:
+            d_hess_ind = hess_ind % n_components
+            d_A_hess_ind = hess_ind // n_components
+            fact = -d_A[:, d_A_grad_ind] * d_A[:, d_A_hess_ind]
+            if d_A_hess_ind == d_A_grad_ind:
+                fact = 1 + fact
+            r[:, 0] = -d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+
+    return r
 
 
 def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
@@ -371,8 +644,12 @@ def componentwise_distance(D, corr, dim):
                 D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
                     D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
                 )
+            elif corr == "act_exp":
+                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
+                    i * nb_limit : (i + 1) * nb_limit, :
+                ]
             else:
-                # abs_exp
+                # abs_exp or matern
                 D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
                     D[i * nb_limit : (i + 1) * nb_limit, :]
                 )

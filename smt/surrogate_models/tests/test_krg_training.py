@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 23 15:20:29 2020
+
+@author: ninamoello
+"""
+
+from __future__ import print_function, division
+import numpy as np
+import unittest
+from smt.utils.sm_test_case import SMTestCase
+from smt.utils.kriging_utils import (
+    abs_exp,
+    squar_exp,
+    act_exp,
+    cross_distances,
+    componentwise_distance,
+    standardization,
+    matern52,
+    matern32,
+)
+from smt.sampling_methods.lhs import LHS
+from smt.surrogate_models import KRG, MGP
+
+print_output = False
+
+
+class Test(SMTestCase):
+    def setUp(self):
+        eps = 1e-8
+        xlimits = np.asarray([[0, 1], [0, 1]])
+        lhs = LHS(xlimits=xlimits)
+        X = lhs(8)
+        y = LHS(xlimits=np.asarray([[0, 1]]))(8)
+        X_norma, y_norma, X_mean, y_mean, X_std, y_std = standardization(X, y)
+        D, ij = cross_distances(X_norma)
+        theta = np.random.rand(2)
+        corr_str = ["abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
+        corr_def = [abs_exp, squar_exp, act_exp, matern32, matern52]
+
+        self.eps = eps
+        self.X = X
+        self.y = y
+        self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, self.y_std = (
+            X_norma,
+            y_norma,
+            X_mean,
+            y_mean,
+            X_std,
+            y_std,
+        )
+        self.D, self.ij = D, ij
+        self.theta = theta
+        self.corr_str = corr_str
+        self.corr_def = corr_def
+
+    def test_corr_derivatives(self):
+        for ind, corr in enumerate(self.corr_def):  # For every kernel
+            self.corr_str[ind] = self.corr_def[ind]
+            D = componentwise_distance(self.D, self.corr_str, self.X.shape[1])
+
+            k = corr(self.theta, D)
+            K = np.eye(self.X.shape[0])
+            K[self.ij[:, 0], self.ij[:, 1]] = k[:, 0]
+            K[self.ij[:, 1], self.ij[:, 0]] = k[:, 0]
+            grad_norm_all = []
+            diff_norm_all = []
+            ind_theta = []
+            for i, theta_i in enumerate(self.theta):
+                eps_theta = np.zeros(self.theta.shape)
+                eps_theta[i] = self.eps
+
+                k_dk = corr(self.theta + eps_theta, D)
+
+                K_dk = np.eye(self.X.shape[0])
+                K_dk[self.ij[:, 0], self.ij[:, 1]] = k_dk[:, 0]
+                K_dk[self.ij[:, 1], self.ij[:, 0]] = k_dk[:, 0]
+
+                grad_eps = (K_dk - K) / self.eps
+
+                dk = corr(self.theta, D, grad_ind=i)
+                dK = np.zeros((self.X.shape[0], self.X.shape[0]))
+                dK[self.ij[:, 0], self.ij[:, 1]] = dk[:, 0]
+                dK[self.ij[:, 1], self.ij[:, 0]] = dk[:, 0]
+                grad_norm_all.append(np.linalg.norm(dK))
+                diff_norm_all.append(np.linalg.norm(grad_eps))
+                ind_theta.append(r"$x_%d$" % i)
+            self.assert_error(
+                np.array(grad_norm_all), np.array(diff_norm_all), 1e-5, 1e-5
+            )  # from utils/smt_test_case.py
+
+    def test_corr_hessian(self):
+        for ind, corr in enumerate(self.corr_def):  # For every kernel
+            self.corr_str[ind] = self.corr_def[ind]
+            D = componentwise_distance(self.D, self.corr_str, self.X.shape[1])
+
+            grad_norm_all = []
+            diff_norm_all = []
+            for i, theta_i in enumerate(self.theta):
+                k = corr(self.theta, D, grad_ind=i)
+
+                K = np.eye(self.X.shape[0])
+                K[self.ij[:, 0], self.ij[:, 1]] = k[:, 0]
+                K[self.ij[:, 1], self.ij[:, 0]] = k[:, 0]
+                for j, omega_j in enumerate(self.theta):
+                    eps_omega = np.zeros(self.theta.shape)
+                    eps_omega[j] = self.eps
+
+                    k_dk = corr(self.theta + eps_omega, D, grad_ind=i)
+
+                    K_dk = np.eye(self.X.shape[0])
+                    K_dk[self.ij[:, 0], self.ij[:, 1]] = k_dk[:, 0]
+                    K_dk[self.ij[:, 1], self.ij[:, 0]] = k_dk[:, 0]
+
+                    grad_eps = (K_dk - K) / self.eps
+
+                    dk = corr(self.theta, D, grad_ind=i, hess_ind=j)
+                    dK = np.zeros((self.X.shape[0], self.X.shape[0]))
+                    dK[self.ij[:, 0], self.ij[:, 1]] = dk[:, 0]
+                    dK[self.ij[:, 1], self.ij[:, 0]] = dk[:, 0]
+
+                    grad_norm_all.append(np.linalg.norm(dK))
+                    diff_norm_all.append(np.linalg.norm(grad_eps))
+
+            self.assert_error(
+                np.array(grad_norm_all), np.array(diff_norm_all), 1e-5, 1e-5
+            )  # from utils/smt_test_case.py
+
+    def test_likelihood_derivatives(self):
+        for corr_str in [
+            "abs_exp",
+            "squar_exp",
+            "act_exp",
+            "matern32",
+            "matern52",
+        ]:  # For every kernel
+            for poly_str in ["constant", "linear", "quadratic"]:  # For every method
+                if corr_str == "act_exp":
+                    kr = MGP(print_global=False)
+                    theta = np.random.rand(4)
+                else:
+                    kr = KRG(print_global=False)
+                    theta = self.theta
+                kr.options["poly"] = poly_str
+                kr.options["corr"] = corr_str
+                kr.set_training_values(self.X, self.y)
+                kr.train()
+
+                grad_red, dpar = kr._reduced_likelihood_gradient(theta)
+                red, par = kr._reduced_likelihood_function(theta)
+
+                grad_norm_all = []
+                diff_norm_all = []
+                ind_theta = []
+                for i, theta_i in enumerate(theta):
+                    eps_theta = theta.copy()
+                    eps_theta[i] = eps_theta[i] + self.eps
+
+                    red_dk, par_dk = kr._reduced_likelihood_function(eps_theta)
+                    dred_dk = (red_dk - red) / self.eps
+
+                    grad_norm_all.append(grad_red[i])
+                    diff_norm_all.append(float(dred_dk))
+                    ind_theta.append(r"$x_%d$" % i)
+
+                grad_norm_all = np.atleast_2d(grad_norm_all)
+                diff_norm_all = np.atleast_2d(diff_norm_all).T
+
+                self.assert_error(
+                    grad_norm_all, diff_norm_all, atol=1e-5, rtol=1e-3
+                )  # from utils/smt_test_case.py
+
+    def test_likelihood_hessian(self):
+        for corr_str in [
+            "abs_exp",
+            "squar_exp",
+            "act_exp",
+            "matern32",
+            "matern52",
+        ]:  # For every kernel
+            for poly_str in ["constant", "linear", "quadratic"]:  # For every method
+                if corr_str == "act_exp":
+                    kr = MGP(print_global=False)
+                    theta = np.random.rand(4)
+                else:
+                    kr = KRG(print_global=False)
+                    theta = self.theta
+                kr.options["poly"] = poly_str
+                kr.options["corr"] = corr_str
+                kr.set_training_values(self.X, self.y)
+                kr.train()
+                grad_red, dpar = kr._reduced_likelihood_gradient(theta)
+
+                hess, hess_ij, _ = kr._reduced_likelihood_hessian(theta)
+                Hess = np.zeros((theta.shape[0], theta.shape[0]))
+                Hess[hess_ij[:, 0], hess_ij[:, 1]] = hess[:, 0]
+                Hess[hess_ij[:, 1], hess_ij[:, 0]] = hess[:, 0]
+
+                grad_norm_all = []
+                diff_norm_all = []
+                ind_theta = []
+                for j, omega_j in enumerate(theta):
+                    eps_omega = theta.copy()
+                    eps_omega[j] += self.eps
+
+                    grad_red_eps, _ = kr._reduced_likelihood_gradient(eps_omega)
+                    for i, theta_i in enumerate(theta):
+
+                        hess_eps = (grad_red_eps[i] - grad_red[i]) / self.eps
+
+                        grad_norm_all.append(
+                            np.linalg.norm(Hess[i, j]) / np.linalg.norm(Hess)
+                        )
+                        diff_norm_all.append(
+                            np.linalg.norm(hess_eps) / np.linalg.norm(Hess)
+                        )
+                        ind_theta.append(r"$x_%d,x_%d$" % (j, i))
+                self.assert_error(
+                    np.array(grad_norm_all),
+                    np.array(diff_norm_all),
+                    atol=1e-5,
+                    rtol=1e-3,
+                )  # from utils/smt_test_case.py
+
+
+if __name__ == "__main__":
+    print_output = True
+    unittest.main()

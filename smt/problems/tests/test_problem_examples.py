@@ -2,6 +2,7 @@ import unittest
 
 import matplotlib
 import matplotlib.pyplot
+
 matplotlib.use("Agg")
 matplotlib.pyplot.switch_backend("Agg")
 

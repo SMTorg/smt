@@ -1,5 +1,5 @@
 Multi-Fidelity Kriging KPLSK (MFKPLSK)
-====================================
+======================================
 
 Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
 interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
