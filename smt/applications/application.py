@@ -5,7 +5,7 @@ This package is distributed under New BSD license.
 """
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, MGP
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -29,6 +29,7 @@ class SurrogateBasedApplication(object):
             "RMTC": RMTC,
             "RMTB": RMTB,
             "IDW": IDW,
+            "MGP": MGP,
         }
     else:
         _surrogate_type = {
@@ -38,6 +39,7 @@ class SurrogateBasedApplication(object):
             "KPLS": KPLS,
             "KPLSK": KPLSK,
             "GEKPLS": GEKPLS,
+            "MGP": MGP,
         }
 
     def __init__(self, **kwargs):

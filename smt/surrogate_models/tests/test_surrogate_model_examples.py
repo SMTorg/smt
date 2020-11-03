@@ -410,35 +410,45 @@ class Test(unittest.TestCase):
 
         # Construction of the DOE
         dim = 3
+
         def fun(x):
             import numpy as np
-            res = np.sum(x, axis=1) ** 2 - np.sum(x, axis=1) + 0.2 * (np.sum(x, axis=1) * 1.2) ** 3
+
+            res = (
+                np.sum(x, axis=1) ** 2
+                - np.sum(x, axis=1)
+                + 0.2 * (np.sum(x, axis=1) * 1.2) ** 3
+            )
             return res
-            
+
         sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
         xt = sampling(8)
         yt = np.atleast_2d(fun(xt)).T
 
         # Build the MGP model
-        sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+        sm = MGP(
+            theta0=[1e-2],
+            print_prediction=False,
+            n_comp=1,
+        )
         sm.set_training_values(xt, yt[:, 0])
         sm.train()
 
         # Get the transfert matrix A
         emb = sm.embedding["C"]
-        
+
         # Compute the smallest box containing all points of A
         upper = np.sum(np.abs(emb), axis=0)
         lower = -upper
 
         # Test the model
         u_plot = np.atleast_2d(np.arange(lower, upper, 0.01)).T
-        x_plot = sm.get_x_from_u(u_plot) # Get corresponding points in Omega
+        x_plot = sm.get_x_from_u(u_plot)  # Get corresponding points in Omega
         y_plot_true = fun(x_plot)
         y_plot_pred = sm.predict_values(u_plot)
         sigma_MGP, sigma_KRG = sm.predict_variances(u_plot, True)
 
-        u_train = sm.get_u_from_x(xt) # Get corresponding points in A
+        u_train = sm.get_u_from_x(xt)  # Get corresponding points in A
 
         # Plots
         fig, ax = plt.subplots()
