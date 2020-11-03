@@ -293,7 +293,7 @@ class MOE(SurrogateBasedApplication):
 
     def _predict_hard_output(self, x):
         """
-        This method predicts the output of a x samples for a 
+        This method predicts the output of a x samples for a
         discontinuous recombination.
 
         Arguments
@@ -329,7 +329,7 @@ class MOE(SurrogateBasedApplication):
         - distribs: distribution list (optional)
             array of membership distributions (use self ones if None)
 
-        Returns 
+        Returns
         -------
         - predicted_values : array_like
             predicted output
@@ -488,8 +488,8 @@ class MOE(SurrogateBasedApplication):
         Returns:
         --------
         - distribs: array_like
-            Array of frozen multivariate normal distributions 
-            with clusters means and covariances 
+            Array of frozen multivariate normal distributions
+            with clusters means and covariances
 
         """
         distribs = []
@@ -569,7 +569,7 @@ class MOE(SurrogateBasedApplication):
         Returns
         -------
         - prob: array_like
-            x membership probability for each cluster 
+            x membership probability for each cluster
         """
         weights = np.array(self.cluster.weights_)
         rvs = np.array([distribs[k].pdf(x) for k in range(len(weights))])
