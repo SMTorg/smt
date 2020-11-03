@@ -76,10 +76,10 @@ class MFKPLS(KrgBased):
         """
         checks if the data structure is compatible with MFKPLS.
         sets class attributes such as (number of levels of Fidelity, training points in each level, ...)
-        
+
         Arguments :
         X : list of arrays, each array corresponds to a fidelity level. starts from lowest to highest
-        y : same as X 
+        y : same as X
         """
 
         if type(X) is not list:
