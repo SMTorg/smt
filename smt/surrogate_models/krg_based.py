@@ -209,7 +209,7 @@ class KrgBased(SurrogateModel):
             # raise e
             return reduced_likelihood_function_value, par
 
-        # Get generalized least squares solution
+        # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
         Q, G = linalg.qr(Ft, mode="economic")
         sv = linalg.svd(G, compute_uv=False)
@@ -279,7 +279,7 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_gradient(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        
+
         Arguments
         ---------
         theta : list(n_comp), optional
@@ -290,7 +290,7 @@ class KrgBased(SurrogateModel):
         -------
         grad_red : np.ndarray (dim,1)
             Derivative of the reduced_likelihood
-            
+
         par: dict()
             - A dictionary containing the requested Gaussian Process model
               parameters:
@@ -396,7 +396,7 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_hessian(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        
+
         Arguments
         ---------
         theta : list(n_comp), optional
@@ -407,10 +407,10 @@ class KrgBased(SurrogateModel):
         -------
         hess : np.ndarray
             Hessian values.
-        
+
         hess_ij: np.ndarray [nb_theta * (nb_theta + 1) / 2, 2]
             - The indices i and j of the vectors in theta associated to the hessian in hess.
-            
+
         par: dict()
             - A dictionary containing the requested Gaussian Process model
               parameters:
@@ -418,7 +418,7 @@ class KrgBased(SurrogateModel):
             sigma2
             Gaussian Process variance.
             beta
-            Generalized least-squares regression weights for
+            Generalized least-squared regression weights for
             Universal Kriging or for Ordinary Kriging.
             gamma
             Gaussian Process weights.
@@ -643,7 +643,7 @@ class KrgBased(SurrogateModel):
 
         if self.options["corr"] != "squar_exp":
             raise ValueError(
-                "The derivative is only available for square exponential kernel"
+                "The derivative is only available for squared exponential kernel"
             )
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -844,9 +844,9 @@ class KrgBased(SurrogateModel):
                             method="COBYLA",
                             options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-                        
+
                         optimal_theta_res_2 = optimal_theta_res
-                        
+
                         # optimal_theta_res_2 = optimal_theta = optimize.minimize(
                         #     minus_reduced_likelihood_function,
                         #     theta0_rand,
@@ -896,7 +896,9 @@ class KrgBased(SurrogateModel):
                             if incr != 0:
                                 return
                             if stop > max_retry:
-                                raise ValueError('%d attempts to train the model failed' %max_retry)
+                                raise ValueError(
+                                    "%d attempts to train the model failed" % max_retry
+                                )
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:
@@ -986,7 +988,7 @@ class KrgBased(SurrogateModel):
 
     def _check_param(self):
         """
-        This function check some parameters of the model.
+        This function checks some parameters of the model.
         """
 
         # FIXME: _check_param should be overriden in corresponding subclasses
@@ -1005,7 +1007,7 @@ class KrgBased(SurrogateModel):
                 raise ValueError("MGP must be used with TNC hyperparameters optimizer")
         else:
             if self.options["corr"] == "act_exp":
-                raise ValueError("act_exp correlation function must be used With MGP")
+                raise ValueError("act_exp correlation function must be used with MGP")
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
@@ -1020,6 +1022,17 @@ class KrgBased(SurrogateModel):
             if not (1 in self.training_points[None]):
                 raise Exception(
                     "Derivative values are needed for using the GEKPLS model."
+                )
+        if self.name in ["KPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+
+        if self.name in ["KPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
 
     def _check_F(self, n_samples_F, p):
