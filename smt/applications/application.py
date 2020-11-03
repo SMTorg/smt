@@ -40,7 +40,6 @@ class SurrogateBasedApplication(object):
             "KPLSK": KPLSK,
             "GEKPLS": GEKPLS,
             "MGP": MGP,
-
         }
 
     def __init__(self, **kwargs):

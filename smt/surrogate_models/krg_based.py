@@ -279,7 +279,7 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_gradient(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        
+
         Arguments
         ---------
         theta : list(n_comp), optional
@@ -290,7 +290,7 @@ class KrgBased(SurrogateModel):
         -------
         grad_red : np.ndarray (dim,1)
             Derivative of the reduced_likelihood
-            
+
         par: dict()
             - A dictionary containing the requested Gaussian Process model
               parameters:
@@ -396,7 +396,7 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_hessian(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        
+
         Arguments
         ---------
         theta : list(n_comp), optional
@@ -407,10 +407,10 @@ class KrgBased(SurrogateModel):
         -------
         hess : np.ndarray
             Hessian values.
-        
+
         hess_ij: np.ndarray [nb_theta * (nb_theta + 1) / 2, 2]
             - The indices i and j of the vectors in theta associated to the hessian in hess.
-            
+
         par: dict()
             - A dictionary containing the requested Gaussian Process model
               parameters:
@@ -844,9 +844,9 @@ class KrgBased(SurrogateModel):
                             method="COBYLA",
                             options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-                        
+
                         optimal_theta_res_2 = optimal_theta_res
-                        
+
                         # optimal_theta_res_2 = optimal_theta = optimize.minimize(
                         #     minus_reduced_likelihood_function,
                         #     theta0_rand,
@@ -896,7 +896,9 @@ class KrgBased(SurrogateModel):
                             if incr != 0:
                                 return
                             if stop > max_retry:
-                                raise ValueError('%d attempts to train the model failed' %max_retry)
+                                raise ValueError(
+                                    "%d attempts to train the model failed" % max_retry
+                                )
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:

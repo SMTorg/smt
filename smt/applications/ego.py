@@ -17,7 +17,7 @@ from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import MixedIntegerContext
 from smt.utils.misc import compute_rms_error
 
-from smt.surrogate_models import KPLS, KRG, KPLSK,MGP
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
 from smt.sampling_methods import LHS
 
 
@@ -107,7 +107,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK,MGP),
+            types=(KRG, KPLS, KPLSK, MGP),
             desc="SMT kriging-based surrogate model used internaly",
         )
         declare(
@@ -132,7 +132,7 @@ class EGO(SurrogateBasedApplication):
 
         [nx, 1]: x optimum
         [1, 1]: y optimum
-        int: index of optimum in data arrays 
+        int: index of optimum in data arrays
         [ndoe + n_iter, nx]: coord-x data
         [ndoe + n_iter, 1]: coord-y data
         [ndoe, nx]: coord-x initial doe
@@ -231,7 +231,7 @@ class EGO(SurrogateBasedApplication):
 
     def _setup_optimizer(self, fun):
         """
-        Instanciate internal surrogate used for optimization 
+        Instanciate internal surrogate used for optimization
         and setup function evaluator wrt options
 
         Parameters
@@ -285,21 +285,21 @@ class EGO(SurrogateBasedApplication):
 
     def _find_best_point(self, x_data=None, y_data=None, enable_tunneling=False):
         """
-        Function that analyse a set of x_data and y_data and give back the 
+        Function that analyse a set of x_data and y_data and give back the
         more interesting point to evaluates according to the selected criterion
-        
+
         Parameters
         ----------
 
         x_data: ndarray(n_points, nx)
         y_data: ndarray(n_points, 1)
-        
+
         Returns
         -------
 
         ndarray(nx, 1): the next best point to evaluate
         boolean: success flag
-        
+
         """
         self.gpr.set_training_values(x_data, y_data)
         self.gpr.train()
