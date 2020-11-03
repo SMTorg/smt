@@ -110,12 +110,19 @@ class SurrogateModel(object):
 
         if xt.shape[0] != yt.shape[0]:
             raise ValueError(
-                "the first dimension of xt and yt must have the same length"
+                "The first dimension of xt and yt must have the same length"
             )
 
         self.nt = xt.shape[0]
         self.nx = xt.shape[1]
         self.ny = yt.shape[1]
+        if yt.shape[1] != 1:
+            raise ValueError(
+                "The output dimension (yt.shape[1]) should be 1 (y in real space), "
+                "in case you have multiple outputs, please add an external loop to build "
+                "a surrogate for each output"
+            )
+
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
