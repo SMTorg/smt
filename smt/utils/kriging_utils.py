@@ -319,10 +319,10 @@ def matern52(theta, d, grad_ind=None, hess_ind=None):
                     * fact_2
                 )
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    ((fact_4 - fact_1 ** 2) / (fact_2) ** 2)
-                    * M52[i * nb_limit : (i + 1) * nb_limit, 0]
-                    + r[i * nb_limit : (i + 1) * nb_limit, 0]
-                )
+                    (fact_4 - fact_1 ** 2) / (fact_2) ** 2
+                ) * M52[i * nb_limit : (i + 1) * nb_limit, 0] + r[
+                    i * nb_limit : (i + 1) * nb_limit, 0
+                ]
 
             i += 1
     return r
@@ -389,15 +389,13 @@ def matern32(theta, d, grad_ind=None, hess_ind=None):
             )
             if grad_ind == hess_ind:
                 fact_3 = (
-                    (3.0 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0)
-                    / (
-                        1.0
-                        + np.sqrt(3.0)
-                        * theta_r[0, hess_ind]
-                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
-                    )
-                    ** 2.0
-                )
+                    3.0 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0
+                ) / (
+                    1.0
+                    + np.sqrt(3.0)
+                    * theta_r[0, hess_ind]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                ) ** 2.0
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
                     r[i * nb_limit : (i + 1) * nb_limit, 0]
                     - fact_3 * M32[i * nb_limit : (i + 1) * nb_limit, 0]
