@@ -105,8 +105,8 @@ class Test(SMTestCase):
         if print_output:
             print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
 
-        self.assert_error(t_error, 0.0, self.t_errors[sname],1e-5)
-        self.assert_error(e_error, 0.0, self.e_errors[sname],1e-5)
+        self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
+        self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
 
     # --------------------------------------------------------------------
     # Function: sphere

@@ -39,14 +39,14 @@ class MGP(KrgBased):
     def _componentwise_distance(self, dx, small=False, opt=0):
         """
         Compute the componentwise distance with respect to the correlation kernel
-        
+
 
         Parameters
         ----------
         dx : numpy.ndarray
             Distance matrix.
         small : bool, optional
-            Compute the componentwise distance in small (n_components) dimension 
+            Compute the componentwise distance in small (n_components) dimension
             or in initial dimension. The default is False.
         opt : int, optional
             useless for MGP
@@ -109,8 +109,6 @@ class MGP(KrgBased):
         arg_1 = np.einsum("ij,ij->i", dy.T, linalg.solve(self.inv_sigma_R, dy).T)
 
         arg_2 = np.einsum("ij,ij->i", dMSE.T, linalg.solve(self.inv_sigma_R, dMSE).T)
-
-        
 
         MGPMSE = np.zeros(x.shape[0])
 
