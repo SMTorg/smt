@@ -209,7 +209,7 @@ class KrgBased(SurrogateModel):
             # raise e
             return reduced_likelihood_function_value, par
 
-        # Get generalized least squares solution
+        # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
         Q, G = linalg.qr(Ft, mode="economic")
         sv = linalg.svd(G, compute_uv=False)
@@ -418,7 +418,7 @@ class KrgBased(SurrogateModel):
             sigma2
             Gaussian Process variance.
             beta
-            Generalized least-squares regression weights for
+            Generalized least-squared regression weights for
             Universal Kriging or for Ordinary Kriging.
             gamma
             Gaussian Process weights.
@@ -643,7 +643,7 @@ class KrgBased(SurrogateModel):
 
         if self.options["corr"] != "squar_exp":
             raise ValueError(
-                "The derivative is only available for square exponential kernel"
+                "The derivative is only available for squared exponential kernel"
             )
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -988,7 +988,7 @@ class KrgBased(SurrogateModel):
 
     def _check_param(self):
         """
-        This function check some parameters of the model.
+        This function checks some parameters of the model.
         """
 
         # FIXME: _check_param should be overriden in corresponding subclasses
@@ -1007,7 +1007,7 @@ class KrgBased(SurrogateModel):
                 raise ValueError("MGP must be used with TNC hyperparameters optimizer")
         else:
             if self.options["corr"] == "act_exp":
-                raise ValueError("act_exp correlation function must be used With MGP")
+                raise ValueError("act_exp correlation function must be used with MGP")
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
@@ -1022,6 +1022,17 @@ class KrgBased(SurrogateModel):
             if not (1 in self.training_points[None]):
                 raise Exception(
                     "Derivative values are needed for using the GEKPLS model."
+                )
+        if self.name in ["KPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+
+        if self.name in ["KPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
 
     def _check_F(self, n_samples_F, p):
