@@ -24,6 +24,14 @@ class KPLSK(KrgBased):
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
         self.name = "KPLSK"
+        # KPLSK used only with "squar_exp" correlations
+        declare(
+            "corr",
+            "squar_exp",
+            values=("squar_exp"),
+            desc="Correlation function type",
+            types=(str),
+        )
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])

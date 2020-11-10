@@ -80,7 +80,7 @@ def unfold_with_continuous_limits(xtypes, xlimits):
     Returns
     -------
     np.ndarray [nx continuous, 2]
-        bounds of the each dimension where limits for enumerates (ENUM) 
+        bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
 
@@ -256,7 +256,25 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
+
+
     def __init__(self, xtypes, xlimits, sampling_method_class, **kwargs):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x types specification
+        xlimits: array-like
+            bounds of x features
+        sampling_method_class: class name
+            SMT sampling method class
+        kwargs: options of the given sampling method
+            options used to instanciate the SMT sampling method
+            with the additional 'output_in_folded_space' boolean option
+            specifying if doe output should be in folded space (enum indexes)
+            or not (enum masks)
+        """
+
         super()
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -274,8 +292,28 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             return unfold_xdoe
 
 
-class MixedIntegerSurrogate(SurrogateModel):
-    def __init__(self,xtypes, xlimits, surrogate, input_in_folded_space=True,type_surrogate = "Continuous Relaxation"):
+
+class MixedIntegerSurrogateModel(SurrogateModel):
+    """
+    Surrogate model decorator that takes an SMT continuous surrogate model and
+    cast values according x types specification to implement a surrogate model
+    handling integer (INT) or categorical (ENUM) features
+    """
+
+    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x type specification
+        xlimits: array-like
+            bounds of x features
+        surrogate: SMT surrogate model
+            instance of a SMT surrogate model
+        input_in_folded_space: bool
+            whether x data are in given in folded space (enum indexes) or not (enum masks)
+        """
+
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
@@ -346,7 +384,24 @@ class MixedIntegerSurrogate(SurrogateModel):
 
 
 class MixedIntegerContext(object):
+
+    """
+    Class which acts as sampling method and surrogate model factory
+    to handle integer and categorical variables consistently.
+    """
+
     def __init__(self, xtypes, xlimits, work_in_folded_space=True):
+        """
+        Parameters
+        ----------
+        xtypes: x types list
+            x type specification: list of either FLOAT, INT or (ENUM, n) spec.
+        xlimits: array-like
+            bounds of x features
+        work_in_folded_space: bool
+            whether x data are in given in folded space (enum indexes) or not (enum masks)
+        """
+
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = xlimits
@@ -370,12 +425,68 @@ class MixedIntegerContext(object):
         return unfold_with_continuous_limits(self._xtypes, xlimits)
 
     def cast_to_discrete_values(self, x):
+
+        """
+        Project continuously relaxed values to their closer assessable values.
+        Note: categorical (or enum) x dimensions are still expanded that is
+        there are still as many columns as categorical possible values for the given x dimension.
+        For instance, if an input dimension is typed ["blue", "red", "green"] in xlimits a sample/row of
+        the input x may contain the values (or mask) [..., 0, 0, 1, ...] to specify "green" for
+        this original dimension.
+
+        Parameters
+        ----------
+        x : np.ndarray [n_evals, dim]
+            continuous evaluation point input variable values
+
+        Returns
+        -------
+        np.ndarray
+            feasible evaluation point value in categorical space.
+        """
         return cast_to_discrete_values(self._xtypes, x)
 
     def fold_with_enum_index(self, x):
+        """
+        Reduce categorical inputs from discrete unfolded space to
+        initial x dimension space where categorical x dimensions are valued by the index
+        in the corresponding enumerate list.
+        For instance, if an input dimension is typed ["blue", "red", "green"] a sample/row of
+        the input x may contain the mask [..., 0, 0, 1, ...] which will be contracted in [..., 2, ...]
+        meaning the "green" value.
+        This function is the opposite of unfold_with_enum_mask().
+
+        Parameters
+        ----------
+        x: np.ndarray [n_evals, dim]
+            continuous evaluation point input variable values
+
+        Returns
+        -------
+        np.ndarray [n_evals, dim]
+            evaluation point input variable values with enumerate index for categorical variables
+        """
         return fold_with_enum_index(self._xtypes, x)
 
     def unfold_with_enum_mask(self, x):
+        """
+        Expand categorical inputs from initial x dimension space where categorical x dimensions
+        are valued by the index in the corresponding enumerate list to the discrete unfolded space.
+        For instance, if an input dimension is typed ["blue", "red", "green"] a sample/row of
+        the input x may contain [..., 2, ...] which will be expanded in [..., 0, 0, 1, ...].
+        This function is the opposite of fold_with_enum_index().
+
+        Parameters
+        ----------
+        x: np.ndarray [n_evals, nx]
+            continuous evaluation point input variable values
+
+        Returns
+        -------
+        np.ndarray [n_evals, nx continuous]
+            evaluation point input variable values with enumerate index for categorical variables
+        """
+
         return unfold_with_enum_mask(self._xtypes, x)
 
     def cast_to_enum_value(self, x_col, enum_indexes):
