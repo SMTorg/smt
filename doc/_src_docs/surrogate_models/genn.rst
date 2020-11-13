@@ -109,25 +109,25 @@ Usage
      Training ...
   epoch = 0, mini-batch = 0, avg cost = 22.980
   epoch = 1, mini-batch = 0, avg cost =  7.601
-  epoch = 2, mini-batch = 0, avg cost =  7.438
-  epoch = 3, mini-batch = 0, avg cost =  4.173
-  epoch = 4, mini-batch = 0, avg cost =  0.686
-  epoch = 5, mini-batch = 0, avg cost =  0.641
-  epoch = 6, mini-batch = 0, avg cost =  0.636
-  epoch = 7, mini-batch = 0, avg cost =  0.632
-  epoch = 8, mini-batch = 0, avg cost =  0.630
-  epoch = 9, mini-batch = 0, avg cost =  0.629
-  epoch = 10, mini-batch = 0, avg cost =  0.628
-  epoch = 11, mini-batch = 0, avg cost =  0.628
-  epoch = 12, mini-batch = 0, avg cost =  0.628
+  epoch = 2, mini-batch = 0, avg cost =  7.445
+  epoch = 3, mini-batch = 0, avg cost =  7.365
+  epoch = 4, mini-batch = 0, avg cost =  3.411
+  epoch = 5, mini-batch = 0, avg cost =  0.692
+  epoch = 6, mini-batch = 0, avg cost =  0.649
+  epoch = 7, mini-batch = 0, avg cost =  0.639
+  epoch = 8, mini-batch = 0, avg cost =  0.636
+  epoch = 9, mini-batch = 0, avg cost =  0.633
+  epoch = 10, mini-batch = 0, avg cost =  0.631
+  epoch = 11, mini-batch = 0, avg cost =  0.630
+  epoch = 12, mini-batch = 0, avg cost =  0.629
   epoch = 13, mini-batch = 0, avg cost =  0.628
   epoch = 14, mini-batch = 0, avg cost =  0.627
-  epoch = 15, mini-batch = 0, avg cost =  0.627
-  epoch = 16, mini-batch = 0, avg cost =  0.627
-  epoch = 17, mini-batch = 0, avg cost =  0.627
-  epoch = 18, mini-batch = 0, avg cost =  0.627
-  epoch = 19, mini-batch = 0, avg cost =  0.627
-     Training - done. Time (sec):  3.6964500
+  epoch = 15, mini-batch = 0, avg cost =  0.626
+  epoch = 16, mini-batch = 0, avg cost =  0.626
+  epoch = 17, mini-batch = 0, avg cost =  0.626
+  epoch = 18, mini-batch = 0, avg cost =  0.626
+  epoch = 19, mini-batch = 0, avg cost =  0.626
+     Training - done. Time (sec):  5.1800001
   ___________________________________________________________________________
      
    Evaluation
@@ -135,9 +135,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000016
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: genn_Test_test_genn.png
