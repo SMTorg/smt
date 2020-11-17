@@ -23,7 +23,7 @@ else:
 from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.utils.kriging_utils import (
-    l1_cross_distances,
+    cross_distances,
     componentwise_distance,
     componentwise_distance_PLS,
     standardization,

@@ -23,7 +23,7 @@ else:
 from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.utils.kriging_utils import (
-    l1_cross_distances,
+    cross_distances,
     componentwise_distance,
     standardization,
 )
@@ -76,10 +76,10 @@ class MFKPLS(KrgBased):
         """
         checks if the data structure is compatible with MFKPLS.
         sets class attributes such as (number of levels of Fidelity, training points in each level, ...)
-        
+
         Arguments :
         X : list of arrays, each array corresponds to a fidelity level. starts from lowest to highest
-        y : same as X 
+        y : same as X
         """
 
         if type(X) is not list:
@@ -175,7 +175,7 @@ class MFKPLS(KrgBased):
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]
         # Calculate matrix of distances D between samples
-        self.D_all[lvl] = l1_cross_distances(self.X_norma)
+        self.D_all[lvl] = cross_distances(self.X_norma)
 
         # Regression matrix and parameters
         self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
@@ -226,9 +226,11 @@ class MFKPLS(KrgBased):
         self.nt = self.nt_all[lvl]
         self.q = self.q_all[lvl]
         self.p = self.p_all[lvl]
-        self.optimal_rlf_value[lvl], self.optimal_par[lvl], self.optimal_theta[
-            lvl
-        ] = self._optimize_hyperparam(D)
+        (
+            self.optimal_rlf_value[lvl],
+            self.optimal_par[lvl],
+            self.optimal_theta[lvl],
+        ) = self._optimize_hyperparam(D)
         if self.options["eval_noise"]:
             tmp_list = self.optimal_theta[lvl]
             self.optimal_theta[lvl] = tmp_list[:-1]

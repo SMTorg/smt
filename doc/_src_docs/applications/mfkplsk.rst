@@ -1,5 +1,5 @@
 Multi-Fidelity Kriging KPLSK (MFKPLSK)
-====================================
+======================================
 
 Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
 interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0199997
+     Training - done. Time (sec):  0.0200000
   ___________________________________________________________________________
      
    Evaluation
@@ -177,18 +177,28 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  None
+     -  ['str']
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  None
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['str']
      -  Correlation function type
   *  -  theta0
      -  None
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'TNC']
+     -  ['str']
+     -  Optimiser for hyperparameters optimisation
+  *  -  noise
+     -  0.0
+     -  None
+     -  ['float']
+     -  Noise in kriging
   *  -  n_comp
      -  1
      -  None

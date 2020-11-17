@@ -17,6 +17,7 @@ SMT contains the surrogate modeling methods listed below.
    surrogate_models/kplsk
    surrogate_models/gekpls
    surrogate_models/genn
+   surrogate_models/mgp
 
 
 Usage
@@ -69,9 +70,9 @@ Usage
         Initializing linear solver - done. Time (sec):  0.0000000
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
-        Solving linear system (col. 0) - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0100000
+        Solving linear system (col. 0) - done. Time (sec):  0.0100000
+     Training - done. Time (sec):  0.0100000
   ___________________________________________________________________________
      
    Evaluation
@@ -89,7 +90,7 @@ Usage
   :align: center
 
 SurrogateModel class API
-------------
+------------------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 
