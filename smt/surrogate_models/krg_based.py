@@ -768,7 +768,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 10* len(self.options["theta0"]), 0.35
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -796,8 +796,8 @@ class KrgBased(SurrogateModel):
                     constraints.append(lambda theta, i=i: 100 - theta[i])
                     bounds_hyp.append((-100.0, 100.0))
                 else:
-                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                    constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-9))
+                    constraints.append(lambda log10t, i=i: np.log10(40) - log10t[i])
                     bounds_hyp.append((-6.0, 2.0))
 
             if self.name in ["MGP"]:
@@ -841,7 +841,7 @@ class KrgBased(SurrogateModel):
                                 {"fun": con, "type": "ineq"} for con in constraints
                             ],
                             method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": 0.5*limit},
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
 
                         optimal_theta_res_2 = optimal_theta_res
