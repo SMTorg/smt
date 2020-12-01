@@ -247,7 +247,10 @@ class KrgBased(SurrogateModel):
             ) - n_samples * np.log10(detR)
         else:
             sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt)
-            reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
+            if self.name in ["MGP"]:
+                reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
+            else:
+                reduced_likelihood_function_value = -sigma2.sum() * detR
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
