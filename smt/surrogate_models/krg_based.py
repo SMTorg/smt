@@ -262,8 +262,7 @@ class KrgBased(SurrogateModel):
         # A particular case when f_min_cobyla fail
         if (self.best_iteration_fail is not None) and (
             not np.isinf(reduced_likelihood_function_value)
-        ):
-
+        ): 	
             if reduced_likelihood_function_value > self.best_iteration_fail:
                 self.best_iteration_fail = reduced_likelihood_function_value
                 self._thetaMemory = np.array(tmp_var)
@@ -842,7 +841,7 @@ class KrgBased(SurrogateModel):
                                 {"fun": con, "type": "ineq"} for con in constraints
                             ],
                             method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": 0.5*limit},
                         )
 
                         optimal_theta_res_2 = optimal_theta_res
