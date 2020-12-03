@@ -237,17 +237,15 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
+        p=0
+        q=0
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            n_samples = self.nt
             p = self.p
             q = self.q
-            sigma2 = (rho ** 2.0).sum(axis=0) / (n_samples - p - q)
-            reduced_likelihood_function_value = -(n_samples - p - q) * np.log10(
-                sigma2
-            ) - n_samples * np.log10(detR)
-        else:
-            sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt)
-            reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
+        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
+        reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
+            sigma2) - self.nt * np.log10(detR)
+  
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
