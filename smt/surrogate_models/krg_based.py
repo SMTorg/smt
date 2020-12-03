@@ -187,6 +187,8 @@ class KrgBased(SurrogateModel):
             QR decomposition of the matrix Ft.
         """
         # Initialize output
+        print(theta)
+
         reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
@@ -205,7 +207,6 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"]:
             theta = tmp_var[:-1]
             noise = tmp_var[-1]
-            print(noise)
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
      
         R = np.eye(self.nt) * (1.0 + nugget + noise)
@@ -282,7 +283,6 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
-
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
