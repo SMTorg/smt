@@ -67,7 +67,15 @@ class KrgBased(SurrogateModel):
             desc="Optimiser for hyperparameters optimisation",
             types=(str),
         )
-        declare("noise", 0.0, types=float, desc="Noise in kriging")
+        declare(
+            "eval_noise",
+            False,
+            types=bool,
+            values=(True, False),
+            desc="noise evaluation flag",
+        )
+        declare("noise0", 1e-6, types=float, desc="Initial noise hyperparameter")        
+      #  declare("noise", 0.0, types=float, desc="Noise in kriging")
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -116,12 +124,16 @@ class KrgBased(SurrogateModel):
             self.optimal_rlf_value,
             self.optimal_par,
             self.optimal_theta,
-        ) = self._optimize_hyperparam(D)
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
+        ) = self._optimize_hyperparam(D)         
+        if self.name in ["MGP"]:
+            self._specific_train()
+        else:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-        elif self.name in ["MGP"]:
-            self._specific_train()
+    
+
+
+
 
         # if self.name != "MGP":
         #     del self.y_norma, self.D
@@ -188,19 +200,18 @@ class KrgBased(SurrogateModel):
                 nugget = 10.0 * nugget
         elif self.name in ["MGP"]:
             nugget = 100.0 * nugget
-        noise = self.options["noise"]
+        noise = 0
         tmp_var = theta
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            if self.options["eval_noise"]:
-                theta = tmp_var[:-1]
-                noise = tmp_var[-1]
-
+        if self.options["eval_noise"]:
+            theta = tmp_var[:-1]
+            noise = tmp_var[-1]
+            print(noise)
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
-
+     
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-
+ 
         # Cholesky decomposition of R
         try:
             C = linalg.cholesky(R, lower=True)
@@ -817,19 +828,18 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-                    if self.options["eval_noise"]:
-                        theta0 = np.concatenate(
-                            [theta0, np.log10(np.array([self.options["noise0"]]))]
-                        )
-                        theta0_rand = np.concatenate(
-                            [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
-                        )
+                if self.options["eval_noise"]:
+                    theta0 = np.concatenate(
+                        [theta0, np.log10(np.array([self.options["noise0"]]))]
+                    )
+                    theta0_rand = np.concatenate(
+                        [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
+                    )
 
-                        constraints.append(lambda log10t: log10t[-1] + 16)
-                        constraints.append(lambda log10t: 10 - log10t[-1])
+                    constraints.append(lambda log10t: log10t[-1] + 16)
+                    constraints.append(lambda log10t: 10 - log10t[-1])
 
-                        bounds_hyp.append((10, 16))
+                    bounds_hyp.append((10, 16))
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
@@ -962,7 +972,7 @@ class KrgBased(SurrogateModel):
                         print("fmin_cobyla failed but the best value is retained")
 
             if "KPLSK" in self.name:
-                if self.name == "MFKPLSK" and self.options["eval_noise"]:
+                if self.options["eval_noise"]:
                     # best_optimal_theta contains [theta, noise] if eval_noise = True
                     theta = best_optimal_theta[:-1]
                 else:
