@@ -148,11 +148,11 @@ class MFKPLS(KrgBased):
         X = self.X
         y = self.y
 
-        _, _, self.X_mean, self.y_mean, self.X_std, self.y_std = standardization(
+        _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
             np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
         )
 
-        #         self.X_mean, self.y_mean, self.X_std, \
+        #         self.X_offset, self.y_mean, self.X_scale, \
         #             self.y_std = 0.,0.,1.,1.
 
         nlevel = self.nlvl
@@ -166,7 +166,7 @@ class MFKPLS(KrgBased):
         self.optimal_rlf_value = nlevel * [0]
         self.optimal_par = nlevel * [{}]
         self.optimal_theta = nlevel * [0]
-        self.X_norma_all = [(x - self.X_mean) / self.X_std for x in X]
+        self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
     def _new_train_iteration(self, lvl):
@@ -275,8 +275,8 @@ class MFKPLS(KrgBased):
         mu = np.zeros((n_eval, lvl))
         #        if self.normalize:
         if descale:
-            X = (X - self.X_mean) / self.X_std
-        ##                X = (X - self.X_mean[0]) / self.X_std[0]
+            X = (X - self.X_offset) / self.X_scale
+        ##                X = (X - self.X_offset[0]) / self.X_scale[0]
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
 
@@ -375,7 +375,7 @@ class MFKPLS(KrgBased):
         n_eval, n_features_X = X.shape
         #        if n_features_X != self.n_features:
         #            raise ValueError("Design must be an array of n_features columns.")
-        X = (X - self.X_mean) / self.X_std
+        X = (X - self.X_offset) / self.X_scale
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
         #        if self.normalize:
@@ -468,7 +468,7 @@ class MFKPLS(KrgBased):
 
         Returns
         -------
-        y : np.ndarray*self.y_std/self.X_std[kx])
+        y : np.ndarray*self.y_std/self.X_scale[kx])
             Derivative values.
         """
 
@@ -476,7 +476,7 @@ class MFKPLS(KrgBased):
         # Initialization
 
         n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+        x = (x - self.X_offset) / self.X_scale
 
         dy_dx = np.zeros((n_eval, lvl))
 
@@ -548,7 +548,7 @@ class MFKPLS(KrgBased):
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
-        return dy_dx[:, -1] * self.y_std / self.X_std[kx]
+        return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
 
     def _get_theta(self, i):
         return np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)
