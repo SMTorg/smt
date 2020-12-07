@@ -187,8 +187,6 @@ class KrgBased(SurrogateModel):
             QR decomposition of the matrix Ft.
         """
         # Initialize output
-        print(theta)
-
         reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
@@ -386,7 +384,7 @@ class KrgBased(SurrogateModel):
             dsigma_all.append(dsigma_2)
 
             # Compute reduced log likelihood derivatives
-            grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+            grad_red[i_der] = -self.nt/np.log(10)*(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
 
         par["dr"] = dr_all
         par["tr"] = tr_all
@@ -580,7 +578,7 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i, 0] = dreddetadomega
+                hess[ind_0 + i, 0] = self.nt/np.log(10)*dreddetadomega
 
                 if self.name in ["MGP"] and eta == omega:
                     hess[ind_0 + i, 0] += log_prior[eta]
