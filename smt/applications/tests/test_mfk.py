@@ -169,7 +169,7 @@ class TestMFK(SMTestCase):
         yt_e = hf_function(xt_e)
         yt_c = lf_function(xt_c)
 
-        sm = MFK(theta0=np.array(xt_e.shape[1] * [1.0]))
+        sm = MFK(theta0=xt_e.shape[1] * [1.0])
 
         # low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(xt_c, yt_c, name=0)
