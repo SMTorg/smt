@@ -122,7 +122,6 @@ class MFK(KrgBased):
             values=(True, False),
             desc="Turning this option to True, forces variance to zero at HF samples ",
         )
-      # declare("noise0", 1e-6, types=float, desc="Initial noise hyperparameter")
         self.name = "MFK"
 
     def _check_list_structure(self, X, y):

@@ -74,8 +74,7 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="noise evaluation flag",
         )
-        declare("noise0", 1e-6, types=float, desc="Initial noise hyperparameter")        
-      #  declare("noise", 0.0, types=float, desc="Noise in kriging")
+        declare("noise0", 1e-6, types=float, desc="Initial noise hyperparameter")
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -124,17 +123,12 @@ class KrgBased(SurrogateModel):
             self.optimal_rlf_value,
             self.optimal_par,
             self.optimal_theta,
-        ) = self._optimize_hyperparam(D)         
+        ) = self._optimize_hyperparam(D)
         if self.name in ["MGP"]:
             self._specific_train()
         else:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-    
-
-
-
-
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -206,11 +200,11 @@ class KrgBased(SurrogateModel):
             theta = tmp_var[:-1]
             noise = tmp_var[-1]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
-     
+
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
- 
+
         # Cholesky decomposition of R
         try:
             C = linalg.cholesky(R, lower=True)
@@ -247,14 +241,15 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
-        p=0
-        q=0
+        p = 0
+        q = 0
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             p = self.p
             q = self.q
         sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
-            sigma2.sum()) - self.nt * np.log10(detR)    
+            sigma2.sum()
+        ) - self.nt * np.log10(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -384,7 +379,9 @@ class KrgBased(SurrogateModel):
             dsigma_all.append(dsigma_2)
 
             # Compute reduced log likelihood derivatives
-            grad_red[i_der] = -self.nt/np.log(10)*(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+            grad_red[i_der] = (
+                -self.nt / np.log(10) * (dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+            )
 
         par["dr"] = dr_all
         par["tr"] = tr_all
@@ -578,7 +575,7 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i, 0] = self.nt/np.log(10)*dreddetadomega
+                hess[ind_0 + i, 0] = self.nt / np.log(10) * dreddetadomega
 
                 if self.name in ["MGP"] and eta == omega:
                     hess[ind_0 + i, 0] += log_prior[eta]
