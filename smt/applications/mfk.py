@@ -216,19 +216,16 @@ class MFK(KrgBased):
         if isinstance(self.options["noise0"], float):
             self.options["noise0"] = self.nlvl * [self.options["noise0"]]
         noise0 = self.options["noise0"].copy()
-
-        if isinstance(self.options["theta0"], list):
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] = self.nx * [self.options["theta0"]]
-
+       
+        if isinstance(self.options["theta0"], list) or len(self.options["theta0"].shape) == 1:
             if len(self.options["theta0"]) == self.nx:
                 self.options["theta0"] = np.repeat(
                     np.array(self.options["theta0"]).reshape(1, -1), self.nlvl, axis=0
-                )
+                    )
             elif len(self.options["theta0"]) == self.nlvl:
                 self.options["theta0"] = np.repeat(
                     np.array(self.options["theta0"]).reshape(-1, 1), self.nx, axis=1
-                )
+                    )
         theta0 = self.options["theta0"].copy()
 
         for lvl in range(nlevel):

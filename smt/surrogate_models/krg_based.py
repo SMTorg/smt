@@ -1020,8 +1020,7 @@ class KrgBased(SurrogateModel):
             if self.options["corr"] == "act_exp":
                 raise ValueError("act_exp correlation function must be used with MGP")
 
-        #### modified by A. Lopez-Lopera, 27/11/2020 ####
-        if self.name in ["MFK"] and isinstance(self.options["theta0"], np.ndarray):
+        if self.name in ["MFK"] and isinstance(self.options["theta0"], np.ndarray) and len(self.options["theta0"].shape) > 1:
             if self.options["theta0"].shape != (self.nlvl, d):
                 raise ValueError(
                     "the number of dim %s should coincide to the dimensions of theta0 %s."
@@ -1038,8 +1037,7 @@ class KrgBased(SurrogateModel):
                         "the number of dim %s should be equal to the length of theta0 %s."
                         % (d, len(self.options["theta0"]))
                     )
-        #### ####
-
+                    
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
                 raise Exception(
