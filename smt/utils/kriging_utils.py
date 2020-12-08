@@ -23,7 +23,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 def standardization(X, y, copy=False, is_Unit_X=False):
 
     """
-    
+
     We substract the mean from each variable. Then, we divide the values of each
     variable by its standard deviation. If isUnitX, we scale the input space X to
     the unit hypercube [0,1]^dim with dim the input dimension.
@@ -42,7 +42,7 @@ def standardization(X, y, copy=False, is_Unit_X=False):
             - Matrices X and y will be used. The matrices X and y will be
               normalized (copy = False).
             - (copy = False by default).
-            
+
     isUnitX: bool
             - We substract the mean from each variable and then divide the values
             - of each variable by its standard deviation (isUnitX=False).
@@ -71,16 +71,16 @@ def standardization(X, y, copy=False, is_Unit_X=False):
             The standard deviation of the output variable.
 
     """
-    
+
     if is_Unit_X:
         X_offset = np.min(X, axis=0)
         X_max = np.max(X, axis=0)
-        X_scale = (X_max - X_offset)
+        X_scale = X_max - X_offset
     else:
         X_offset = np.mean(X, axis=0)
         X_scale = X.std(axis=0, ddof=1)
         X_scale[X_scale == 0.0] = 1.0
-        
+
     y_mean = np.mean(y, axis=0)
     y_std = y.std(axis=0, ddof=1)
     y_std[y_std == 0.0] = 1.0
@@ -95,6 +95,7 @@ def standardization(X, y, copy=False, is_Unit_X=False):
         X = (X - X_offset) / X_scale
         y = (y - y_mean) / y_std
         return X, y, X_offset, y_mean, X_scale, y_std
+
 
 def cross_distances(X):
 

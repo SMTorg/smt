@@ -67,7 +67,9 @@ class KrgBased(SurrogateModel):
             desc="Optimiser for hyperparameters optimisation",
             types=(str),
         )
-        declare("noise", 0.0, types=float, desc="Noise in kriging") # to define it as noise0 (initial noise)
+        declare(
+            "noise", 0.0, types=float, desc="Noise in kriging"
+        )  # to define it as noise0 (initial noise)
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -175,7 +177,7 @@ class KrgBased(SurrogateModel):
             QR decomposition of the matrix Ft.
         """
         # Initialize output
-        
+
         reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
@@ -805,7 +807,9 @@ class KrgBased(SurrogateModel):
                     bounds_hyp.append((-theta_max, theta_max))
                 else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                    constraints.append(lambda log10t, i=i: np.log10(theta_max) - log10t[i])
+                    constraints.append(
+                        lambda log10t, i=i: np.log10(theta_max) - log10t[i]
+                    )
                     bounds_hyp.append((np.log10(1e-6), np.log10(theta_max)))
 
             if self.name in ["MGP"]:
@@ -1022,9 +1026,9 @@ class KrgBased(SurrogateModel):
                 raise ValueError(
                     "the number of dim %s should coincide to the dimensions of theta0 %s."
                     % ((d, self.nlvl), self.options["theta0"].shape)
-                    )
+                )
         elif self.name in ["MFK"] and len(self.options["theta0"]) == self.nlvl:
-             pass
+            pass
         else:
             if len(self.options["theta0"]) != d:
                 if len(self.options["theta0"]) == 1:
@@ -1033,7 +1037,7 @@ class KrgBased(SurrogateModel):
                     raise ValueError(
                         "the number of dim %s should be equal to the length of theta0 %s."
                         % (d, len(self.options["theta0"]))
-                        )
+                    )
         #### ####
 
         if self.supports["training_derivatives"]:

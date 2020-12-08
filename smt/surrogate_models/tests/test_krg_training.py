@@ -42,7 +42,14 @@ class Test(SMTestCase):
         self.eps = eps
         self.X = X
         self.y = y
-        self.X_norma, self.y_norma, self.X_offset, self.y_mean, self.X_scale, self.y_std = (
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = (
             X_norma,
             y_norma,
             X_offset,
