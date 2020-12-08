@@ -20,13 +20,13 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 # TODO: Create hyperclass Kernels and a class for each kernel
 
 
-def standardization(X, y, copy=False, is_Unit_X=False):
+def standardization(X, y, copy=False, scale_X_to_unit=False):
 
     """
 
     We substract the mean from each variable. Then, we divide the values of each
-    variable by its standard deviation. If isUnitX, we scale the input space X to
-    the unit hypercube [0,1]^dim with dim the input dimension.
+    variable by its standard deviation. If scale_X_to_unit, we scale the input
+    space X to the unit hypercube [0,1]^dim with dim the input dimension.
 
     Parameters
     ----------
@@ -45,8 +45,8 @@ def standardization(X, y, copy=False, is_Unit_X=False):
 
     isUnitX: bool
             - We substract the mean from each variable and then divide the values
-            - of each variable by its standard deviation (isUnitX=False).
-            - We scale X to the unit hypercube [0,1]^dim (isUnitX=True).
+              of each variable by its standard deviation (scale_X_to_unit=False).
+            - We scale X to the unit hypercube [0,1]^dim (scale_X_to_unit=True).
 
     Returns
     -------
@@ -58,21 +58,21 @@ def standardization(X, y, copy=False, is_Unit_X=False):
           The standardized output vector.
 
     X_offset: list(dim)
-            The mean (or the min if isUnitX=True) of each input variable.
+            The mean (or the min if scale_X_to_unit=True) of each input variable.
 
     y_mean: list(1)
             The mean of the output variable.
 
     X_scale:  list(dim)
             The standard deviation (or the difference between the max and the
-            min if isUnitX=True) of each input variable.
+            min if scale_X_to_unit=True) of each input variable.
 
     y_std:  list(1)
             The standard deviation of the output variable.
 
     """
 
-    if is_Unit_X:
+    if scale_X_to_unit:
         X_offset = np.min(X, axis=0)
         X_max = np.max(X, axis=0)
         X_scale = X_max - X_offset
@@ -85,7 +85,7 @@ def standardization(X, y, copy=False, is_Unit_X=False):
     y_std = y.std(axis=0, ddof=1)
     y_std[y_std == 0.0] = 1.0
 
-    # center and scale X
+    # scale X and y
     if copy:
         Xr = (X.copy() - X_offset) / X_scale
         yr = (y.copy() - y_mean) / y_std
