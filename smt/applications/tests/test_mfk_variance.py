@@ -374,7 +374,7 @@ class TestMFK_variance(SMTestCase):
         y_t_hf = HF(x_t_hf)
 
         sm = MFK(
-            theta0=np.array(x_t_hf.shape[1] * [1e-2]),
+            theta0= x_t_hf.shape[1] * [1e-2],
             print_global=False,
             rho_regr="constant",
         )
