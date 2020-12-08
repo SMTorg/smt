@@ -211,7 +211,6 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
         
-        #### added by A. Lopez-Lopera, 27/11/2020 ####
         if isinstance(self.options["noise0"], float):
             self.options["noise0"] = self.nlvl*[self.options["noise0"]]
         noise0 = self.options["noise0"].copy()
@@ -225,14 +224,10 @@ class MFK(KrgBased):
             elif len(self.options["theta0"]) == self.nlvl:
                 self.options["theta0"] = np.repeat(np.array(self.options["theta0"]).reshape(-1,1), self.nx, axis = 1)
         theta0 = self.options["theta0"].copy()
-        #### ####
         
         for lvl in range(nlevel):
-            #### added by A. lopez-lopera, 27/11/2020 ####
-            # if self.nlvl > 1:
             self.options["noise0"] = noise0[lvl]
             self.options["theta0"] = theta0[lvl,:]
-            #### ####
 
             self.X_norma = self.X_norma_all[lvl]
             self.y_norma = self.y_norma_all[lvl]
@@ -299,10 +294,8 @@ class MFK(KrgBased):
                 self.noise[lvl] = tmp_list[-1]
             del self.y_norma, self.D
         
-        #### added by A. Lopez-Lopera, 27/11/2020 ####
         self.options["noise0"] = noise0
         self.options["theta0"] = theta0
-        #### ####
         
         if self.options["eval_noise"] and self.options["optim_var"]:
             for lvl in range(self.nlvl - 1):

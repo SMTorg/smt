@@ -20,7 +20,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 # TODO: Create hyperclass Kernels and a class for each kernel
 
 
-def standardization(X, y, copy=False, isUnitX=False):
+def standardization(X, y, copy=False, is_Unit_X=False):
 
     """
     
@@ -72,7 +72,7 @@ def standardization(X, y, copy=False, isUnitX=False):
 
     """
     
-    if isUnitX:
+    if is_Unit_X:
         X_offset = np.min(X, axis=0)
         X_max = np.max(X, axis=0)
         X_scale = (X_max - X_offset)
