@@ -64,12 +64,12 @@ def LF(point):
 class TestMFK_variance(SMTestCase):
     @staticmethod
     def corr(x1, x2, sm, lvl):
-        # Normalization of data with   X_std and X_mean from sm
+        # Normalization of data with   X_scale and X_offset from sm
         # lvl start to 1
-        X_std = sm.X_std
-        X_mean = sm.X_mean
-        X1 = (x1 - X_mean) / X_std
-        X2 = (x2 - X_mean) / X_std
+        X_scale = sm.X_scale
+        X_offset = sm.X_offset
+        X1 = (x1 - X_offset) / X_scale
+        X2 = (x2 - X_offset) / X_scale
         thetas = sm.optimal_theta[lvl - 1]
         if sm.options["corr"] == "abs_exp":
             p = 1
