@@ -43,7 +43,7 @@ def standardization(X, y, copy=False, scale_X_to_unit=False):
               normalized (copy = False).
             - (copy = False by default).
 
-    isUnitX: bool
+    scale_X_to_unit: bool
             - We substract the mean from each variable and then divide the values
               of each variable by its standard deviation (scale_X_to_unit=False).
             - We scale X to the unit hypercube [0,1]^dim (scale_X_to_unit=True).

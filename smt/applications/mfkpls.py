@@ -276,7 +276,6 @@ class MFKPLS(KrgBased):
         #        if self.normalize:
         if descale:
             X = (X - self.X_offset) / self.X_scale
-        ##                X = (X - self.X_offset[0]) / self.X_scale[0]
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
 
