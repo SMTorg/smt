@@ -20,7 +20,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 # TODO: Create hyperclass Kernels and a class for each kernel
 
 
-def standardization(X, y, copy=False, scale_X_to_unit=False):
+def standardization(X, y, scale_X_to_unit=False):
 
     """
 
@@ -36,12 +36,6 @@ def standardization(X, y, copy=False, scale_X_to_unit=False):
 
     y: np.ndarray [n_obs, 1]
             - The output variable.
-
-    copy: bool
-            - A copy of matrices X and y will be used (copy = True).
-            - Matrices X and y will be used. The matrices X and y will be
-              normalized (copy = False).
-            - (copy = False by default).
 
     scale_X_to_unit: bool
             - We substract the mean from each variable and then divide the values
@@ -86,15 +80,9 @@ def standardization(X, y, copy=False, scale_X_to_unit=False):
     y_std[y_std == 0.0] = 1.0
 
     # scale X and y
-    if copy:
-        Xr = (X.copy() - X_offset) / X_scale
-        yr = (y.copy() - y_mean) / y_std
-        return Xr, yr, X_offset, y_mean, X_scale, y_std
-
-    else:
-        X = (X - X_offset) / X_scale
-        y = (y - y_mean) / y_std
-        return X, y, X_offset, y_mean, X_scale, y_std
+    X = (X - X_offset) / X_scale
+    y = (y - y_mean) / y_std
+    return X, y, X_offset, y_mean, X_scale, y_std
 
 
 def cross_distances(X):
