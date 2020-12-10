@@ -33,7 +33,7 @@ class Test(SMTestCase):
         lhs = LHS(xlimits=xlimits)
         X = lhs(8)
         y = LHS(xlimits=np.asarray([[0, 1]]))(8)
-        X_norma, y_norma, X_mean, y_mean, X_std, y_std = standardization(X, y)
+        X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
         theta = np.random.rand(2)
         corr_str = ["abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
@@ -42,12 +42,19 @@ class Test(SMTestCase):
         self.eps = eps
         self.X = X
         self.y = y
-        self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, self.y_std = (
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = (
             X_norma,
             y_norma,
-            X_mean,
+            X_offset,
             y_mean,
-            X_std,
+            X_scale,
             y_std,
         )
         self.D, self.ij = D, ij
