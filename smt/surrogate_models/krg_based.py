@@ -67,7 +67,9 @@ class KrgBased(SurrogateModel):
             desc="Optimiser for hyperparameters optimisation",
             types=(str),
         )
-        declare("noise", 0.0, types=float, desc="Noise in kriging")
+        declare(
+            "noise", 0.0, types=float, desc="Noise in kriging"
+        )  # to define it as noise0 (initial noise)
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -89,9 +91,9 @@ class KrgBased(SurrogateModel):
         (
             self.X_norma,
             self.y_norma,
-            self.X_mean,
+            self.X_offset,
             self.y_mean,
-            self.X_std,
+            self.X_scale,
             self.y_std,
         ) = standardization(X, y)
 
@@ -175,6 +177,7 @@ class KrgBased(SurrogateModel):
             QR decomposition of the matrix Ft.
         """
         # Initialize output
+
         reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
@@ -596,7 +599,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+        x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
@@ -632,7 +635,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+        x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
@@ -668,7 +671,7 @@ class KrgBased(SurrogateModel):
         y = (
             (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
             * self.y_std
-            / self.X_std[kx]
+            / self.X_scale[kx]
         )
         return y
 
@@ -688,7 +691,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_mean) / self.X_std
+        x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
@@ -792,14 +795,22 @@ class KrgBased(SurrogateModel):
             bounds_hyp = []
 
             for i in range(len(self.options["theta0"])):
+                # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
+                # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
+                # By standardising X in R, X_norm = (X-X_mean)/X_std, then
+                # X_norm in [-1,1] if considering one std intervals. This leads
+                # to theta in (0,2e1]
+                theta_max = 2e1
                 if self.name in ["MGP"]:
-                    constraints.append(lambda theta, i=i: theta[i] + 100)
-                    constraints.append(lambda theta, i=i: 100 - theta[i])
-                    bounds_hyp.append((-100.0, 100.0))
+                    constraints.append(lambda theta, i=i: theta[i] + theta_max)
+                    constraints.append(lambda theta, i=i: theta_max - theta[i])
+                    bounds_hyp.append((-theta_max, theta_max))
                 else:
                     constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                    constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
-                    bounds_hyp.append((-6.0, 2.0))
+                    constraints.append(
+                        lambda log10t, i=i: np.log10(theta_max) - log10t[i]
+                    )
+                    bounds_hyp.append((np.log10(1e-6), np.log10(theta_max)))
 
             if self.name in ["MGP"]:
                 theta0_rand = m_norm.rvs(
@@ -1009,14 +1020,27 @@ class KrgBased(SurrogateModel):
             if self.options["corr"] == "act_exp":
                 raise ValueError("act_exp correlation function must be used with MGP")
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
-            else:
+        if (
+            self.name in ["MFK"]
+            and isinstance(self.options["theta0"], np.ndarray)
+            and len(self.options["theta0"].shape) > 1
+        ):
+            if self.options["theta0"].shape != (self.nlvl, d):
                 raise ValueError(
-                    "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    "the number of dim %s should coincide to the dimensions of theta0 %s."
+                    % ((d, self.nlvl), self.options["theta0"].shape)
                 )
+        elif self.name in ["MFK"] and len(self.options["theta0"]) == self.nlvl:
+            pass
+        else:
+            if len(self.options["theta0"]) != d:
+                if len(self.options["theta0"]) == 1:
+                    self.options["theta0"] *= np.ones(d)
+                else:
+                    raise ValueError(
+                        "the number of dim %s should be equal to the length of theta0 %s."
+                        % (d, len(self.options["theta0"]))
+                    )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
