@@ -68,8 +68,15 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
-            "noise", 0.0, types=float, desc="Noise in kriging"
-        )  # to define it as noise0 (initial noise)
+            "eval_noise",
+            False,
+            types=bool,
+            values=(True, False),
+            desc="noise evaluation flag",
+        )
+        declare(
+            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameter"
+        )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -119,12 +126,11 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
+        if self.name in ["MGP"]:
+            self._specific_train()
+        else:
             if self.options["eval_noise"]:
                 self.optimal_theta = self.optimal_theta[:-1]
-        elif self.name in ["MGP"]:
-            self._specific_train()
-
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -191,13 +197,11 @@ class KrgBased(SurrogateModel):
                 nugget = 10.0 * nugget
         elif self.name in ["MGP"]:
             nugget = 100.0 * nugget
-        noise = self.options["noise"]
+        noise = 0
         tmp_var = theta
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            if self.options["eval_noise"]:
-                theta = tmp_var[:-1]
-                noise = tmp_var[-1]
-
+        if self.options["eval_noise"]:
+            theta = tmp_var[:-1]
+            noise = tmp_var[-1]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
         R = np.eye(self.nt) * (1.0 + nugget + noise)
@@ -240,17 +244,15 @@ class KrgBased(SurrogateModel):
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
+        p = 0
+        q = 0
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            n_samples = self.nt
             p = self.p
             q = self.q
-            sigma2 = (rho ** 2.0).sum(axis=0) / (n_samples - p - q)
-            reduced_likelihood_function_value = -(n_samples - p - q) * np.log10(
-                sigma2
-            ) - n_samples * np.log10(detR)
-        else:
-            sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt)
-            reduced_likelihood_function_value = -np.log(sigma2.sum()) - np.log(detR)
+        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
+        reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
+            sigma2.sum()
+        ) - self.nt * np.log10(detR)
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -276,7 +278,6 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
-
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -381,7 +382,9 @@ class KrgBased(SurrogateModel):
             dsigma_all.append(dsigma_2)
 
             # Compute reduced log likelihood derivatives
-            grad_red[i_der] = -(dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+            grad_red[i_der] = (
+                -self.nt / np.log(10) * (dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
+            )
 
         par["dr"] = dr_all
         par["tr"] = tr_all
@@ -575,7 +578,7 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i, 0] = dreddetadomega
+                hess[ind_0 + i, 0] = self.nt / np.log(10) * dreddetadomega
 
                 if self.name in ["MGP"] and eta == omega:
                     hess[ind_0 + i, 0] += log_prior[eta]
@@ -830,19 +833,18 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-                    if self.options["eval_noise"]:
-                        theta0 = np.concatenate(
-                            [theta0, np.log10(np.array([self.options["noise0"]]))]
-                        )
-                        theta0_rand = np.concatenate(
-                            [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
-                        )
+                if self.options["eval_noise"]:
+                    theta0 = np.concatenate(
+                        [theta0, np.log10(np.array([self.options["noise0"]]))]
+                    )
+                    theta0_rand = np.concatenate(
+                        [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
+                    )
 
-                        constraints.append(lambda log10t: log10t[-1] + 16)
-                        constraints.append(lambda log10t: 10 - log10t[-1])
+                    constraints.append(lambda log10t: log10t[-1] + 16)
+                    constraints.append(lambda log10t: 10 - log10t[-1])
 
-                        bounds_hyp.append((10, 16))
+                    bounds_hyp.append((10, 16))
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
@@ -975,7 +977,7 @@ class KrgBased(SurrogateModel):
                         print("fmin_cobyla failed but the best value is retained")
 
             if "KPLSK" in self.name:
-                if self.name == "MFKPLSK" and self.options["eval_noise"]:
+                if self.options["eval_noise"]:
                     # best_optimal_theta contains [theta, noise] if eval_noise = True
                     theta = best_optimal_theta[:-1]
                 else:
