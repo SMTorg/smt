@@ -112,20 +112,15 @@ class MFK(KrgBased):
             values=("constant", "linear", "quadratic"),
             desc="Regression function type for rho",
         )
-        declare("theta0", types=(list, np.ndarray), desc="Initial hyperparameters")
+        declare(
+            "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
+        )
         declare(
             "optim_var",
             False,
             types=bool,
             values=(True, False),
             desc="Turning this option to True, forces variance to zero at HF samples ",
-        )
-        declare(
-            "eval_noise",
-            False,
-            types=bool,
-            values=(True, False),
-            desc="noise evaluation flag",
         )
         declare(
             "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameters"

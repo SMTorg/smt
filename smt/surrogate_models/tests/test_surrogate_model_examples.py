@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import IDW
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = IDW(p=2)
         sm.set_training_values(xt, yt)
@@ -53,7 +53,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RBF
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = RBF(d0=5)
         sm.set_training_values(xt, yt)
@@ -78,7 +78,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RMTB
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
@@ -111,7 +111,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RMTC
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
@@ -142,7 +142,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import LS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = LS()
         sm.set_training_values(xt, yt)
@@ -166,7 +166,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import QP
 
         xt = np.array([[0.0, 1.0, 2.0, 3.0, 4.0]]).T
-        yt = np.array([[0.2, 1.4, 1.5, 0.5, 1.0], [0.0, 1.0, 2.0, 4, 3]]).T
+        yt = np.array([[0.2, 1.4, 1.5, 0.9, 1.0], [0.0, 1.0, 2.0, 4, 3]]).T
 
         sm = QP()
         sm.set_training_values(xt, yt)
@@ -192,7 +192,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import KRG
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = KRG(theta0=[1e-2])
         sm.set_training_values(xt, yt)
@@ -217,7 +217,7 @@ class Test(unittest.TestCase):
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
         # FLOAT means x1 continuous
@@ -249,7 +249,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import KPLS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = KPLS(theta0=[1e-2])
         sm.set_training_values(xt, yt)
