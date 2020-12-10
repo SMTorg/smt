@@ -248,7 +248,7 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]])
+        xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]], dtype="object")
         xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]

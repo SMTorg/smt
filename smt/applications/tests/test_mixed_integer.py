@@ -104,7 +104,8 @@ class TestMixedInteger(unittest.TestCase):
     def test_cast_to_mixed_integer(self):
         xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]]
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
+            dtype="object",
         )
         x = np.array([1.5, 0, 2, 1])
         self.assertEqual(
