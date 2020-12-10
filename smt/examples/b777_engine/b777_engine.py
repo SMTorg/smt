@@ -94,74 +94,50 @@ def plot_b777_engine(xt, yt, limits, interp):
     ind_t_2 = -1
 
     plt.close()
-    plt.figure(figsize=(15, 25))
-    plt.subplots_adjust(hspace=0.5)
 
     # --------------------
 
-    plt.subplot(nrow, ncol, 1)
-    plt.title("M={}".format(val_M[ind_M_1]))
-    plt.xlabel("throttle")
-    plt.ylabel("thrust (x 1e6 N)")
+    fig, axs = plt.subplots(6, 2, gridspec_kw={"hspace": 0.5}, figsize=(15, 25))
 
-    plt.subplot(nrow, ncol, 2)
-    plt.title("M={}".format(val_M[ind_M_1]))
-    plt.xlabel("throttle")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[0, 0].set_title("M={}".format(val_M[ind_M_1]))
+    axs[0, 0].set(xlabel="throttle", ylabel="thrust (x 1e6 N)")
 
-    plt.subplot(nrow, ncol, 3)
-    plt.title("M={}".format(val_M[ind_M_2]))
-    plt.xlabel("throttle")
-    plt.ylabel("thrust (x 1e6 N)")
+    axs[0, 1].set_title("M={}".format(val_M[ind_M_1]))
+    axs[0, 1].set(xlabel="throttle", ylabel="SFC (x 1e-3 N/N/s)")
 
-    plt.subplot(nrow, ncol, 4)
-    plt.title("M={}".format(val_M[ind_M_2]))
-    plt.xlabel("throttle")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[1, 0].set_title("M={}".format(val_M[ind_M_2]))
+    axs[1, 0].set(xlabel="throttle", ylabel="thrust (x 1e6 N)")
+
+    axs[1, 1].set_title("M={}".format(val_M[ind_M_2]))
+    axs[1, 1].set(xlabel="throttle", ylabel="SFC (x 1e-3 N/N/s)")
 
     # --------------------
 
-    plt.subplot(nrow, ncol, 5)
-    plt.title("throttle={}".format(val_t[ind_t_1]))
-    plt.xlabel("altitude (km)")
-    plt.ylabel("thrust (x 1e6 N)")
+    axs[2, 0].set_title("throttle={}".format(val_t[ind_t_1]))
+    axs[2, 0].set(xlabel="altitude (km)", ylabel="thrust (x 1e6 N)")
 
-    plt.subplot(nrow, ncol, 6)
-    plt.title("throttle={}".format(val_t[ind_t_1]))
-    plt.xlabel("altitude (km)")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[2, 1].set_title("throttle={}".format(val_t[ind_t_1]))
+    axs[2, 1].set(xlabel="altitude (km)", ylabel="SFC (x 1e-3 N/N/s)")
 
-    plt.subplot(nrow, ncol, 7)
-    plt.title("throttle={}".format(val_t[ind_t_2]))
-    plt.xlabel("altitude (km)")
-    plt.ylabel("thrust (x 1e6 N)")
+    axs[3, 0].set_title("throttle={}".format(val_t[ind_t_2]))
+    axs[3, 0].set(xlabel="altitude (km)", ylabel="thrust (x 1e6 N)")
 
-    plt.subplot(nrow, ncol, 8)
-    plt.title("throttle={}".format(val_t[ind_t_2]))
-    plt.xlabel("altitude (km)")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[3, 1].set_title("throttle={}".format(val_t[ind_t_2]))
+    axs[3, 1].set(xlabel="altitude (km)", ylabel="SFC (x 1e-3 N/N/s)")
 
     # --------------------
 
-    plt.subplot(nrow, ncol, 9)
-    plt.title("throttle={}".format(val_t[ind_t_1]))
-    plt.xlabel("Mach number")
-    plt.ylabel("thrust (x 1e6 N)")
+    axs[4, 0].set_title("throttle={}".format(val_t[ind_t_1]))
+    axs[4, 0].set(xlabel="Mach number", ylabel="thrust (x 1e6 N)")
 
-    plt.subplot(nrow, ncol, 10)
-    plt.title("throttle={}".format(val_t[ind_t_1]))
-    plt.xlabel("Mach number")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[4, 1].set_title("throttle={}".format(val_t[ind_t_1]))
+    axs[4, 1].set(xlabel="Mach number", ylabel="SFC (x 1e-3 N/N/s)")
 
-    plt.subplot(nrow, ncol, 11)
-    plt.title("throttle={}".format(val_t[ind_t_2]))
-    plt.xlabel("Mach number")
-    plt.ylabel("thrust (x 1e6 N)")
+    axs[5, 0].set_title("throttle={}".format(val_t[ind_t_2]))
+    axs[5, 0].set(xlabel="Mach number", ylabel="thrust (x 1e6 N)")
 
-    plt.subplot(nrow, ncol, 12)
-    plt.title("throttle={}".format(val_t[ind_t_2]))
-    plt.xlabel("Mach number")
-    plt.ylabel("SFC (x 1e-3 N/N/s)")
+    axs[5, 1].set_title("throttle={}".format(val_t[ind_t_2]))
+    axs[5, 1].set(xlabel="Mach number", ylabel="SFC (x 1e-3 N/N/s)")
 
     ind_h_list = [0, 4, 7, 10]
     ind_h_list = [4, 7, 10]
@@ -179,27 +155,25 @@ def plot_b777_engine(xt, yt, limits, interp):
         x = get_x(ind_M=ind_M, ind_h=ind_h)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 1)
         xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_h=ind_h)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_t, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 2)
+        axs[0, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[0, 0].plot(lins_t, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_h=ind_h)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_t, y[:, 1] / 1e-4, colors[k])
+        axs[0, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[0, 1].plot(lins_t, y[:, 1] / 1e-4, colors[k])
 
         ind_M = ind_M_2
         x = get_x(ind_M=ind_M, ind_h=ind_h)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 3)
         xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_h=ind_h)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_t, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 4)
+        axs[1, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[1, 0].plot(lins_t, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_h=ind_h)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_t, y[:, 1] / 1e-4, colors[k])
+        axs[1, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[1, 1].plot(lins_t, y[:, 1] / 1e-4, colors[k])
 
     # -----------------------------------------------------------------------------
 
@@ -209,27 +183,25 @@ def plot_b777_engine(xt, yt, limits, interp):
         x = get_x(ind_M=ind_M, ind_t=ind_t)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 5)
         xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_h, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 6)
+        axs[2, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[2, 0].plot(lins_h, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_h, y[:, 1] / 1e-4, colors[k])
+        axs[2, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[2, 1].plot(lins_h, y[:, 1] / 1e-4, colors[k])
 
         ind_t = ind_t_2
         x = get_x(ind_M=ind_M, ind_t=ind_t)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 7)
         xt_, yt_ = get_pts(xt, yt, 0, ind_M=ind_M, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_h, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 8)
+        axs[3, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[3, 0].plot(lins_h, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_M=ind_M, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_h, y[:, 1] / 1e-4, colors[k])
+        axs[3, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[3, 1].plot(lins_h, y[:, 1] / 1e-4, colors[k])
 
     # -----------------------------------------------------------------------------
 
@@ -239,48 +211,46 @@ def plot_b777_engine(xt, yt, limits, interp):
         x = get_x(ind_t=ind_t, ind_h=ind_h)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 9)
         xt_, yt_ = get_pts(xt, yt, 0, ind_h=ind_h, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_M, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 10)
+        axs[4, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[4, 0].plot(lins_M, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_h=ind_h, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_M, y[:, 1] / 1e-4, colors[k])
+        axs[4, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[4, 1].plot(lins_M, y[:, 1] / 1e-4, colors[k])
 
         ind_t = ind_t_2
         x = get_x(ind_t=ind_t, ind_h=ind_h)
         y = interp.predict_values(x)
 
-        plt.subplot(nrow, ncol, 11)
         xt_, yt_ = get_pts(xt, yt, 0, ind_h=ind_h, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_M, y[:, 0] / 1e6, colors[k])
-        plt.subplot(nrow, ncol, 12)
+        axs[5, 0].plot(xt_, yt_, "o" + colors[k])
+        axs[5, 0].plot(lins_M, y[:, 0] / 1e6, colors[k])
+
         xt_, yt_ = get_pts(xt, yt, 1, ind_h=ind_h, ind_t=ind_t)
-        plt.plot(xt_, yt_, "o" + colors[k])
-        plt.plot(lins_M, y[:, 1] / 1e-4, colors[k])
+        axs[5, 1].plot(xt_, yt_, "o" + colors[k])
+        axs[5, 1].plot(lins_M, y[:, 1] / 1e-4, colors[k])
 
     # -----------------------------------------------------------------------------
 
-    for k in range(4):
+    for k in range(2):
         legend_entries = []
         for ind_h in ind_h_list:
             legend_entries.append("h={}".format(val_h[ind_h]))
             legend_entries.append("")
 
-        plt.subplot(nrow, ncol, k + 1)
-        plt.legend(legend_entries)
+        axs[k, 0].legend(legend_entries)
+        axs[k, 1].legend(legend_entries)
 
-        plt.subplot(nrow, ncol, k + 9)
-        plt.legend(legend_entries)
+        axs[k + 4, 0].legend(legend_entries)
+        axs[k + 4, 1].legend(legend_entries)
 
         legend_entries = []
         for ind_M in ind_M_list:
             legend_entries.append("M={}".format(val_M[ind_M]))
             legend_entries.append("")
 
-        plt.subplot(nrow, ncol, k + 5)
-        plt.legend(legend_entries)
+        axs[k + 2, 0].legend(legend_entries)
+        axs[k + 2, 1].legend(legend_entries)
 
     plt.show()
