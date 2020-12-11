@@ -6,6 +6,7 @@ source =
 directory = coverage_html_report
 
 [run]
+relative_files = True
 omit =
 	*/tests/*
 	*/examples/*
