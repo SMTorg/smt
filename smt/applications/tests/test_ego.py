@@ -69,7 +69,6 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
-        print(x_opt, y_opt)
 
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
@@ -111,7 +110,6 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
@@ -147,7 +145,13 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            random_state=42,
+        )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
