@@ -60,7 +60,13 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"
 
-        ego = EGO(n_iter=n_iter, criterion=criterion, n_doe=3, xlimits=xlimits)
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            n_doe=3,
+            xlimits=xlimits,
+            random_state=42,
+        )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
         print(x_opt, y_opt)
@@ -82,6 +88,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             n_parallel=n_parallel,
             evaluator=ParallelEvaluator(),
+            random_state=42,
         )
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
@@ -95,7 +102,13 @@ class TestEGO(SMTestCase):
         criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
-        ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            random_state=42,
+        )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
@@ -119,6 +132,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -159,6 +173,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xlimits=xlimits,
             n_parallel=n_parallel,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -192,6 +207,7 @@ class TestEGO(SMTestCase):
             qEI=qEI,
             evaluator=ParallelEvaluator(),
             surrogate=s,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -219,6 +235,7 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=s,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -262,6 +279,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             surrogate=s,
             enable_tunneling=False,
+            random_state=42,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -296,6 +314,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             n_start=30,
             enable_tunneling=False,
+            random_state=42,
         )
         _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
@@ -461,7 +480,9 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False)
 
         n_doe = 2
-        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+        sampling = MixedIntegerSamplingMethod(
+            xtypes, xlimits, LHS, criterion="ese", random_state=42
+        )
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
 
@@ -474,6 +495,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             surrogate=sm,
             qEI=qEI,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
@@ -561,6 +583,7 @@ class TestEGO(SMTestCase):
             qEI=qEI,
             n_start=n_start,
             evaluator=ParallelEvaluator(),
+            random_state=42,
         )
 
         x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
