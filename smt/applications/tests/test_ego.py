@@ -154,7 +154,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-
+        print(x_opt)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.2)
