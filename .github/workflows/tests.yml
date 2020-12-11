@@ -1,4 +1,4 @@
-name: Test using Conda
+name: Tests
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-linux:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,21 +16,47 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Add conda to system path
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
+
     - name: Install dependencies
       run: |
         conda install numpy scipy cython scikit-learn pytest
         pip install --upgrade pip
         pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
         pip install -e .
+
     - name: Test with pytest
+      if: runner.os != 'Linux' && matrix.python-version != '3.7' 
       run: |
         conda install pytest
         pytest
+
+    - name: Test with pytest and coverage
+      if: runner.os == 'Linux' && matrix.python-version == '3.7'  # coverage only with Linux py37
+      env: 
+        COVERALLS_PARALLEL: true
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        conda install pytest coverage coveralls
+        coverage run --source=smt -m pytest
+        coveralls
+
+  complete_coverals:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      if: runner.os == 'Linux' && matrix.python-version == '3.7'  # coveralls only with Linux py37
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true

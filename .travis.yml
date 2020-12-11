@@ -6,7 +6,7 @@ language: generic
 matrix:
   include:
     - os: linux
-      env: PY=3.6 COVERAGE=1
+      env: PY=3.6
     - os: linux
       env: PY=3.7
     - os: linux
