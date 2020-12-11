@@ -339,15 +339,21 @@ class EGO(SurrogateBasedApplication):
             x_start = self._sampling(n_start)
             for ii in range(n_start):
 
-                opt_all.append(
-                    minimize(
-                        lambda x: float(self.obj_k(x)),
-                        x_start[ii, :],
-                        method="SLSQP",
-                        bounds=bounds,
-                        options={"maxiter": 200},
+                try:
+                    opt_all.append(
+                        minimize(
+                            lambda x: float(self.obj_k(x)),
+                            x_start[ii, :],
+                            method="SLSQP",
+                            bounds=bounds,
+                            options={"maxiter": 200},
+                        )
                     )
-                )
+                except ValueError:  # in case "x0 violates bound constraints" error
+                    print("warning: `x0` violates bound constraints")
+                    print("x0={}".format(x_start[ii, :]))
+                    print("bounds={}".format(bounds))
+                    opt_all.append({"success": False})
 
             opt_all = np.asarray(opt_all)
 
