@@ -27,23 +27,16 @@ To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. M
 SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE2 and Cython. 
 
 # Installation
-Clone the repository from github then run:
+If you want to install the latest release
 
 ```
-pip install -e <smt_folder>
+pip install smt
 ```
 
-# Tests
-To run tests, first install the python testing framework using:
+or else if you want to install from the current master branch
 
 ```
-pip install testflo
-```
-
-and run
-
-```
-testflo
+pip install git+https://github.com/SMTOrg/smt.git@master
 ```
 
 # Usage
@@ -52,8 +45,4 @@ For examples demonstrating how to use SMT, you can take a look at the [tutorial 
 # Documentation
 http://smt.readthedocs.io
 
-# Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera, the French Aerospace Lab](https://github.com/OneraHub).
 
-
-Email: bouhlel.mohamed.amine@gmail.com
