@@ -117,6 +117,11 @@ class EGO(SurrogateBasedApplication):
             desc="x type specifications: either FLOAT for continuous, INT for integer "
             "or (ENUM n) for categorical doimension with n levels",
         )
+        self.options.declare(
+            "random_state",
+            types=(type(None), int, np.random.RandomState),
+            desc="Numpy RandomState object or seed number which controls random draws",
+        )
 
     def optimize(self, fun):
         """
@@ -257,10 +262,16 @@ class EGO(SurrogateBasedApplication):
                 xtypes, self.xlimits, work_in_folded_space=False
             )
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
-            self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
+            self._sampling = self.mixint.build_sampling_method(
+                LHS, criterion="ese", random_state=self.options["random_state"]
+            )
         else:
             self.mixint = None
-            self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
+            self._sampling = LHS(
+                xlimits=self.xlimits,
+                criterion="ese",
+                random_state=self.options["random_state"],
+            )
 
         # Build DOE
         self._evaluator = self.options["evaluator"]
