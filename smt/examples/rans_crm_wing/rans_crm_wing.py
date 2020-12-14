@@ -358,7 +358,7 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
     ncol = 2
 
     plt.close()
-    plt.figure(figsize=(15, 15))
+    fig, axs = plt.subplots(3, 2, figsize=(15, 15))
 
     # -----------------------------------------------------------------------------
 
@@ -373,30 +373,22 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
         CD = interp.predict_values(x)[:, 0]
         CL = interp.predict_values(x)[:, 1]
 
-        plt.subplot(nrow, ncol, 1)
+        mask = np.abs(xt[:, 1] - mach) < 1e-10
+        axs[0, 0].plot(xt[mask, 0] * rad2deg, yt[mask, 0], "o" + colors[ind])
+        axs[0, 0].plot(alpha_sweep, CD, colors[ind])
 
         mask = np.abs(xt[:, 1] - mach) < 1e-10
-        plt.plot(xt[mask, 0] * rad2deg, yt[mask, 0], "o" + colors[ind])
-        plt.plot(alpha_sweep, CD, colors[ind])
-
-        plt.subplot(nrow, ncol, 2)
-
-        mask = np.abs(xt[:, 1] - mach) < 1e-10
-        plt.plot(xt[mask, 0] * rad2deg, yt[mask, 1], "o" + colors[ind])
-        plt.plot(alpha_sweep, CL, colors[ind])
+        axs[0, 1].plot(xt[mask, 0] * rad2deg, yt[mask, 1], "o" + colors[ind])
+        axs[0, 1].plot(alpha_sweep, CL, colors[ind])
 
         legend_entries.append("M={}".format(mach))
         legend_entries.append("exact")
 
-    plt.subplot(nrow, ncol, 1)
-    plt.xlabel("alpha (deg)")
-    plt.ylabel("CD")
-    plt.legend(legend_entries)
+    axs[0, 0].set(xlabel="alpha (deg)", ylabel="CD")
+    axs[0, 0].legend(legend_entries)
 
-    plt.subplot(nrow, ncol, 2)
-    plt.xlabel("alpha (deg)")
-    plt.ylabel("CL")
-    plt.legend(legend_entries)
+    axs[0, 1].set(xlabel="alpha (deg)", ylabel="CL")
+    axs[0, 1].legend(legend_entries)
 
     # -----------------------------------------------------------------------------
 
@@ -411,23 +403,16 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
         CD = interp.predict_values(x)[:, 0]
         CL = interp.predict_values(x)[:, 1]
 
-        plt.subplot(nrow, ncol, 3)
-        plt.plot(mach_sweep, CD, colors[ind])
-
-        plt.subplot(nrow, ncol, 4)
-        plt.plot(mach_sweep, CL, colors[ind])
+        axs[1, 0].plot(mach_sweep, CD, colors[ind])
+        axs[1, 1].plot(mach_sweep, CL, colors[ind])
 
         legend_entries.append("alpha={}".format(alpha))
 
-    plt.subplot(nrow, ncol, 3)
-    plt.xlabel("Mach number")
-    plt.ylabel("CD")
-    plt.legend(legend_entries)
+    axs[1, 0].set(xlabel="Mach number", ylabel="CD")
+    axs[1, 0].legend(legend_entries)
 
-    plt.subplot(nrow, ncol, 4)
-    plt.xlabel("Mach number")
-    plt.ylabel("CL")
-    plt.legend(legend_entries)
+    axs[1, 1].set(xlabel="Mach number", ylabel="CL")
+    axs[1, 1].legend(legend_entries)
 
     # -----------------------------------------------------------------------------
 
@@ -441,22 +426,30 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
         (num_a, num_M)
     )
 
-    plt.subplot(nrow, ncol, 5)
-    plt.plot(xt[:, 1], xt[:, 0] * rad2deg, "o")
-    plt.contour(x[:, :, 1], x[:, :, 0] * rad2deg, CD, 20)
-    plt.pcolormesh(x[:, :, 1], x[:, :, 0] * rad2deg, CD, cmap=plt.get_cmap("rainbow"))
-    plt.xlabel("Mach number")
-    plt.ylabel("alpha (deg)")
-    plt.title("CD")
-    plt.colorbar()
+    axs[2, 0].plot(xt[:, 1], xt[:, 0] * rad2deg, "o")
+    axs[2, 0].contour(x[:, :, 1], x[:, :, 0] * rad2deg, CD, 20)
+    pcm1 = axs[2, 0].pcolormesh(
+        x[:, :, 1],
+        x[:, :, 0] * rad2deg,
+        CD,
+        cmap=plt.get_cmap("rainbow"),
+        shading="auto",
+    )
+    fig.colorbar(pcm1, ax=axs[2, 0])
+    axs[2, 0].set(xlabel="Mach number", ylabel="alpha (deg)")
+    axs[2, 0].set_title("CD")
 
-    plt.subplot(nrow, ncol, 6)
-    plt.plot(xt[:, 1], xt[:, 0] * rad2deg, "o")
-    plt.contour(x[:, :, 1], x[:, :, 0] * rad2deg, CL, 20)
-    plt.pcolormesh(x[:, :, 1], x[:, :, 0] * rad2deg, CL, cmap=plt.get_cmap("rainbow"))
-    plt.xlabel("Mach number")
-    plt.ylabel("alpha (deg)")
-    plt.title("CL")
-    plt.colorbar()
+    axs[2, 1].plot(xt[:, 1], xt[:, 0] * rad2deg, "o")
+    axs[2, 1].contour(x[:, :, 1], x[:, :, 0] * rad2deg, CL, 20)
+    pcm2 = axs[2, 1].pcolormesh(
+        x[:, :, 1],
+        x[:, :, 0] * rad2deg,
+        CL,
+        cmap=plt.get_cmap("rainbow"),
+        shading="auto",
+    )
+    fig.colorbar(pcm2, ax=axs[2, 1])
+    axs[2, 1].set(xlabel="Mach number", ylabel="alpha (deg)")
+    axs[2, 1].set_title("CL")
 
     plt.show()

@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/SMTorg/smt.svg?branch=master)](https://travis-ci.org/SMTorg/smt) [![Build status](https://ci.appveyor.com/api/projects/status/q3rnqmyp2f7wd172?svg=true)](https://ci.appveyor.com/project/SMTOrgAdmin/smt) [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master) [![Documentation Status](https://readthedocs.org/projects/smt/badge/?version=latest)](https://smt.readthedocs.io/en/latest/?badge=latest)
+[![Tests](https://github.com/SMTOrg/smt/workflows/Tests/badge.svg)](https://github.com/SMTorg/smt/actions?query=workflow%3ATests)
+[![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master) 
+[![Documentation Status](https://readthedocs.org/projects/smt/badge/?version=latest)](https://smt.readthedocs.io/en/latest/?badge=latest)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
@@ -27,23 +29,16 @@ To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. M
 SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE2 and Cython. 
 
 # Installation
-Clone the repository from github then run:
+If you want to install the latest release
 
 ```
-pip install -e <smt_folder>
+pip install smt
 ```
 
-# Tests
-To run tests, first install the python testing framework using:
+or else if you want to install from the current master branch
 
 ```
-pip install testflo
-```
-
-and run
-
-```
-testflo
+pip install git+https://github.com/SMTOrg/smt.git@master
 ```
 
 # Usage
@@ -52,8 +47,4 @@ For examples demonstrating how to use SMT, you can take a look at the [tutorial 
 # Documentation
 http://smt.readthedocs.io
 
-# Contact
-This repository was created by Mohamed Amine Bouhlel and is maintained by the [MDOlab](https://github.com/mdolab) and [Onera, the French Aerospace Lab](https://github.com/OneraHub).
 
-
-Email: bouhlel.mohamed.amine@gmail.com

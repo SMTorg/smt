@@ -96,12 +96,12 @@ class MGP(KrgBased):
             x = self.get_x_from_u(u)
 
             u = u * self.embedding["norm"] - self.U_mean
-            x = (x - self.X_mean) / self.X_std
+            x = (x - self.X_offset) / self.X_scale
         else:
             if n_features != self.nx:
-                raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
+                raise ValueError("dim(x) should be equal to %i" % self.X_scale.shape[0])
             u = None
-            x = (x - self.X_mean) / self.X_std
+            x = (x - self.X_offset) / self.X_scale
 
         dy = self._predict_value_derivatives_hyper(x, u)
         dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
@@ -163,16 +163,16 @@ class MGP(KrgBased):
             d = self._componentwise_distance(du, small=True)
 
             # Get an approximation of x
-            x = (x - self.X_mean) / self.X_std
+            x = (x - self.X_offset) / self.X_scale
             dx = differences(x, Y=self.X_norma.copy())
             d_x = self._componentwise_distance(dx)
         else:
             if n_features != self.nx:
-                raise ValueError("dim(x) should be equal to %i" % self.X_std.shape[0])
+                raise ValueError("dim(x) should be equal to %i" % self.X_scale.shape[0])
             theta = self.optimal_theta
 
             # Get pairwise componentwise L1-distances to the input training set
-            x = (x - self.X_mean) / self.X_std
+            x = (x - self.X_offset) / self.X_scale
             dx = differences(x, Y=self.X_norma.copy())
             d = self._componentwise_distance(dx)
             d_x = None
@@ -474,7 +474,7 @@ class MGP(KrgBased):
         self.optimal_par = par
 
         A = np.reshape(self.optimal_theta, (self.options["n_comp"], self.nx)).T
-        B = (A.T / self.X_std).T
+        B = (A.T / self.X_scale).T
         norm_B = np.linalg.norm(B)
         C = B / norm_B
 
@@ -486,7 +486,7 @@ class MGP(KrgBased):
 
         # Compute normalisation in embeding base
         self.U_norma = self.X_norma.dot(A)
-        self.U_mean = self.X_mean.dot(C) * norm_B
+        self.U_mean = self.X_offset.dot(C) * norm_B
 
         # Compute best number of Components for Active Kriging
         svd = linalg.svd(A)

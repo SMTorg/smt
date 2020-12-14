@@ -30,24 +30,32 @@ class Test(SMTestCase):
     def setUp(self):
         eps = 1e-8
         xlimits = np.asarray([[0, 1], [0, 1]])
-        lhs = LHS(xlimits=xlimits)
+        self.random = np.random.RandomState(42)
+        lhs = LHS(xlimits=xlimits, random_state=self.random)
         X = lhs(8)
-        y = LHS(xlimits=np.asarray([[0, 1]]))(8)
-        X_norma, y_norma, X_mean, y_mean, X_std, y_std = standardization(X, y)
+        y = LHS(xlimits=np.asarray([[0, 1]]), random_state=self.random)(8)
+        X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
-        theta = np.random.rand(2)
+        theta = self.random.rand(2)
         corr_str = ["abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
         corr_def = [abs_exp, squar_exp, act_exp, matern32, matern52]
 
         self.eps = eps
         self.X = X
         self.y = y
-        self.X_norma, self.y_norma, self.X_mean, self.y_mean, self.X_std, self.y_std = (
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = (
             X_norma,
             y_norma,
-            X_mean,
+            X_offset,
             y_mean,
-            X_std,
+            X_scale,
             y_std,
         )
         self.D, self.ij = D, ij
@@ -138,7 +146,7 @@ class Test(SMTestCase):
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
                     kr = MGP(print_global=False)
-                    theta = np.random.rand(4)
+                    theta = self.random.rand(4)
                 else:
                     kr = KRG(print_global=False)
                     theta = self.theta
@@ -166,7 +174,6 @@ class Test(SMTestCase):
 
                 grad_norm_all = np.atleast_2d(grad_norm_all)
                 diff_norm_all = np.atleast_2d(diff_norm_all).T
-
                 self.assert_error(
                     grad_norm_all, diff_norm_all, atol=1e-5, rtol=1e-3
                 )  # from utils/smt_test_case.py
@@ -182,7 +189,7 @@ class Test(SMTestCase):
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
                     kr = MGP(print_global=False)
-                    theta = np.random.rand(4)
+                    theta = self.random.rand(4)
                 else:
                     kr = KRG(print_global=False)
                     theta = self.theta

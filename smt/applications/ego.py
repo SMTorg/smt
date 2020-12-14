@@ -117,6 +117,11 @@ class EGO(SurrogateBasedApplication):
             desc="x type specifications: either FLOAT for continuous, INT for integer "
             "or (ENUM n) for categorical doimension with n levels",
         )
+        self.options.declare(
+            "random_state",
+            types=(type(None), int, np.random.RandomState),
+            desc="Numpy RandomState object or seed number which controls random draws",
+        )
 
     def optimize(self, fun):
         """
@@ -257,10 +262,16 @@ class EGO(SurrogateBasedApplication):
                 xtypes, self.xlimits, work_in_folded_space=False
             )
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
-            self._sampling = self.mixint.build_sampling_method(LHS, criterion="ese")
+            self._sampling = self.mixint.build_sampling_method(
+                LHS, criterion="ese", random_state=self.options["random_state"]
+            )
         else:
             self.mixint = None
-            self._sampling = LHS(xlimits=self.xlimits, criterion="ese")
+            self._sampling = LHS(
+                xlimits=self.xlimits,
+                criterion="ese",
+                random_state=self.options["random_state"],
+            )
 
         # Build DOE
         self._evaluator = self.options["evaluator"]
@@ -328,15 +339,21 @@ class EGO(SurrogateBasedApplication):
             x_start = self._sampling(n_start)
             for ii in range(n_start):
 
-                opt_all.append(
-                    minimize(
-                        lambda x: float(self.obj_k(x)),
-                        x_start[ii, :],
-                        method="SLSQP",
-                        bounds=bounds,
-                        options={"maxiter": 200},
+                try:
+                    opt_all.append(
+                        minimize(
+                            lambda x: float(self.obj_k(x)),
+                            x_start[ii, :],
+                            method="SLSQP",
+                            bounds=bounds,
+                            options={"maxiter": 200},
+                        )
                     )
-                )
+                except ValueError:  # in case "x0 violates bound constraints" error
+                    print("warning: `x0` violates bound constraints")
+                    print("x0={}".format(x_start[ii, :]))
+                    print("bounds={}".format(bounds))
+                    opt_all.append({"success": False})
 
             opt_all = np.asarray(opt_all)
 

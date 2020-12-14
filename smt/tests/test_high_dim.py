@@ -76,7 +76,7 @@ class Test(SMTestCase):
         sname = method_name.split("_")[2]
 
         prob = self.problems[pname]
-        sampling = LHS(xlimits=prob.xlimits)
+        sampling = LHS(xlimits=prob.xlimits, random_state=42)
 
         np.random.seed(0)
         xt = sampling(self.nt)

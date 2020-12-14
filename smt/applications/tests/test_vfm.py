@@ -67,7 +67,7 @@ class TestVFM(SMTestCase):
         optionsB = {"theta0": [1e-2] * ndim, "print_prediction": False, "deriv": False}
 
         # Construct low/high fidelity data and validation points
-        sampling = LHS(xlimits=funLF.xlimits, criterion="m")
+        sampling = LHS(xlimits=funLF.xlimits, criterion="m", random_state=42)
         xLF = sampling(ndoeLF)
         yLF = funLF(xLF)
         if deriv1:
@@ -76,7 +76,7 @@ class TestVFM(SMTestCase):
                 yd = funLF(xLF, kx=i)
                 dy_LF = np.concatenate((dy_LF, yd), axis=1)
 
-        sampling = LHS(xlimits=funHF.xlimits, criterion="m")
+        sampling = LHS(xlimits=funHF.xlimits, criterion="m", random_state=43)
         xHF = sampling(ndoeHF)
         yHF = funHF(xHF)
         if deriv2:
