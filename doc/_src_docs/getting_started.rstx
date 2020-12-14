@@ -18,13 +18,13 @@ with :code:`conda` command then use :code:`pip` command as follows to terminate 
 Installing
 ----------
 
-To install the latest tagged version of SMT: 
+To install the `latest released version <https://pypi.org/project/smt/>`_ of SMT: 
 
 :code:`pip install smt`
 
-To install the latest version of SMT from the GitHub repository:
+Or else to install the current version from the GitHub repository master:
 
-:code:`pip install git+https://github.com/SMTOrg/smt.git`
+:code:`pip install git+https://github.com/SMTOrg/smt.git@master`
 
 If you want to contribute to SMT, see :ref:`contributing` section.
 
