@@ -93,7 +93,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0200000
+     Training - done. Time (sec):  0.0100000
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -157,11 +157,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
-     -  ['float']
-     -  Noise in kriging
+     -  ['float', 'list']
+     -  Initial noise hyperparameter
   *  -  xlimits
      -  None
      -  None

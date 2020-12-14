@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0200000
+     Training - done. Time (sec):  0.0100000
   ___________________________________________________________________________
      
    Evaluation
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0100000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000990
      
   
 .. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
@@ -194,11 +194,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
      -  ['float']
-     -  Noise in kriging
+     -  Initial noise hyperparameter
   *  -  n_comp
      -  1
      -  None
@@ -214,13 +219,3 @@ Options
      -  [True, False]
      -  ['bool']
      -  Turning this option to True, forces variance to zero at HF samples 
-  *  -  eval_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  noise evaluation flag
-  *  -  noise0
-     -  1e-06
-     -  None
-     -  ['float']
-     -  Initial noise hyperparameter

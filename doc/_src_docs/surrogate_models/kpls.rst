@@ -27,7 +27,7 @@ Usage
   from smt.surrogate_models import KPLS
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = KPLS(theta0=[1e-2])
   sm.set_training_values(xt, yt)
@@ -135,11 +135,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
-     -  ['float']
-     -  Noise in kriging
+     -  ['float', 'list']
+     -  Initial noise hyperparameter
   *  -  n_comp
      -  1
      -  None

@@ -194,11 +194,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
      -  ['float']
-     -  Noise in kriging
+     -  Initial noise hyperparameter
   *  -  n_comp
      -  1
      -  None
@@ -214,13 +219,3 @@ Options
      -  [True, False]
      -  ['bool']
      -  Turning this option to True, forces variance to zero at HF samples 
-  *  -  eval_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  noise evaluation flag
-  *  -  noise0
-     -  1e-06
-     -  None
-     -  ['float']
-     -  Initial noise hyperparameter

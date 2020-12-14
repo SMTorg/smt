@@ -55,7 +55,7 @@ Usage
   yt_e = hf_function(xt_e)
   yt_c = lf_function(xt_c)
   
-  sm = MFK(theta0=np.array(xt_e.shape[1] * [1.0]))
+  sm = MFK(theta0=xt_e.shape[1] * [1.0])
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -180,7 +180,7 @@ Options
      -  ['str']
      -  Correlation function type
   *  -  theta0
-     -  None
+     -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
@@ -189,11 +189,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
-     -  ['float']
-     -  Noise in kriging
+     -  ['float', 'list']
+     -  Initial noise hyperparameters
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -204,13 +209,3 @@ Options
      -  [True, False]
      -  ['bool']
      -  Turning this option to True, forces variance to zero at HF samples 
-  *  -  eval_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  noise evaluation flag
-  *  -  noise0
-     -  1e-06
-     -  None
-     -  ['float']
-     -  Initial noise hyperparameter

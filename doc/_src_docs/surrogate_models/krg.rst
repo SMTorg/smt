@@ -55,7 +55,7 @@ Usage
   from smt.surrogate_models import KRG
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = KRG(theta0=[1e-2])
   sm.set_training_values(xt, yt)
@@ -117,7 +117,7 @@ Usage with mixed variables
   from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
   # FLOAT means x1 continuous
@@ -218,8 +218,13 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
-     -  ['float']
-     -  Noise in kriging
+     -  ['float', 'list']
+     -  Initial noise hyperparameter
