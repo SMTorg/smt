@@ -133,7 +133,6 @@ class KrgBased(SurrogateModel):
                 self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
-
     def _train(self):
         """
         Train the model
@@ -934,21 +933,43 @@ class KrgBased(SurrogateModel):
                         if np.isinf(optimal_rlf_value):
                             stop += 1
                         else:
-                            if optimal_rlf_value >= self.best_iteration_fail:
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
+                            # if optimal_rlf_value >= self.best_iteration_fail:
+                            #     if optimal_rlf_value > best_optimal_rlf_value:
+                            #         best_optimal_rlf_value = optimal_rlf_value
+                            #         best_optimal_par = optimal_par
+                            #         best_optimal_theta = optimal_theta
 
-                            else:
-                                if self.best_iteration_fail > best_optimal_rlf_value:
-                                    best_optimal_theta = self._thetaMemory.copy()
-                                    (
-                                        best_optimal_rlf_value,
-                                        best_optimal_par,
-                                    ) = self._reduced_likelihood_function(
-                                        theta=best_optimal_theta
-                                    )
+                            # else:
+                            #     if self.best_iteration_fail > best_optimal_rlf_value:
+                            #         best_optimal_theta = self._thetaMemory.copy()
+                            #         (
+                            #             best_optimal_rlf_value,
+                            #             best_optimal_par,
+                            #         ) = self._reduced_likelihood_function(
+                            #             theta=best_optimal_theta
+                            #         )
+                            # if optimal_rlf_value >= self.best_iteration_fail:
+                            #     if optimal_rlf_value > best_optimal_rlf_value:
+                            #         best_optimal_rlf_value = optimal_rlf_value
+                            #         best_optimal_par = optimal_par
+                            #         best_optimal_theta = optimal_theta
+
+                            # else:
+                            #     if self.best_iteration_fail > best_optimal_rlf_value:
+                            #         best_optimal_theta = self._thetaMemory.copy()
+                            #         (
+                            #             best_optimal_rlf_value,
+                            #             best_optimal_par,
+                            #         ) = self._reduced_likelihood_function(
+                            #             theta=best_optimal_theta
+                            #         )
+                                    
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
+  
+                            
+                            
                     k += 1
                 except ValueError as ve:
                     # raise ve
