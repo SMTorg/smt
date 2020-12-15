@@ -125,7 +125,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0799999
+     Training - done. Time (sec):  0.1899998
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -189,11 +189,16 @@ Options
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
-  *  -  noise
-     -  0.0
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
      -  None
-     -  ['float']
-     -  Noise in kriging
+     -  ['float', 'list']
+     -  Initial noise hyperparameter
   *  -  n_comp
      -  1
      -  None

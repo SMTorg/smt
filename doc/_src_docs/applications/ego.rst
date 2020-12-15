@@ -353,6 +353,7 @@ Usage with parallel options
       qEI=qEI,
       n_start=n_start,
       evaluator=ParallelEvaluator(),
+      random_state=42,
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -495,7 +496,9 @@ Usage with mixed variable
   sm = KRG(print_global=False)
   
   n_doe = 2
-  sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+  sampling = MixedIntegerSamplingMethod(
+      xtypes, xlimits, LHS, criterion="ese", random_state=42
+  )
   xdoe = sampling(n_doe)
   ydoe = function_test_mixed_integer(xdoe)
   
@@ -508,6 +511,7 @@ Usage with mixed variable
       xlimits=xlimits,
       surrogate=sm,
       qEI=qEI,
+      random_state=42,
   )
   
   x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
@@ -532,8 +536,9 @@ Usage with mixed variable
   
 ::
 
+  Warning: multiple x input features have the same value (at least same row twice).
   Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
-  Minimum in typed x=[-5.0, 'blue', 'circle', 0]
+  Minimum in typed x=[-4.999999999999994, 'blue', 'circle', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -589,7 +594,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000057C53D0>
+     -  <smt.applications.ego.Evaluator object at 0x0000000008AC2AC0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -624,7 +629,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000000057C5F40>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000000008AC2820>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly
@@ -633,3 +638,8 @@ Options
      -  None
      -  ['list']
      -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels
+  *  -  random_state
+     -  None
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws

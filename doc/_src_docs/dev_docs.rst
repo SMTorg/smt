@@ -32,7 +32,7 @@ Developer API
 Testing
 -------
 
-Install the test runner: ``pip install testflo`` then run: ``testflo`` 
+Install the test runner: ``pip install pytest`` then run: ``pytest`` 
 
 Building the documentation
 --------------------------

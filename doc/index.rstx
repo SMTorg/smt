@@ -13,7 +13,9 @@ The code is available open-source on `GitHub <https://github.com/SMTorg/SMT>`_.
 
 Cite us
 -------
-To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins.  `A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019 <http://mdolab.engin.umich.edu/content/python-surrogate-modeling-framework-derivatives>`_. 
+To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins.  
+
+`A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019 <https://hal.archives-ouvertes.fr/hal-02294310/document>`_. 
 
 .. code-block:: none
 

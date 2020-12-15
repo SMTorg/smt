@@ -72,3 +72,8 @@ Options
      -  ['center', 'maximin', 'centermaximin', 'correlation', 'c', 'm', 'cm', 'corr', 'ese']
      -  ['str']
      -  criterion used to construct the LHS design c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively
+  *  -  random_state
+     -  None
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws
