@@ -85,6 +85,9 @@ class KrgBased(SurrogateModel):
         declare(
             "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameter"
         )
+        declare( # I let the bounds previously imposed by default (how were they fixed?)
+            "noise_bounds", [1e-16, 1e10], types=(list, np.ndarray), desc="bounds for hyperparameters"
+        )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -138,6 +141,7 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
+                self.noise = self.optimal_theta[-1]
                 self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
@@ -825,10 +829,11 @@ class KrgBased(SurrogateModel):
                         [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
                     )
 
-                    constraints.append(lambda log10t: log10t[-1] + 16)
-                    constraints.append(lambda log10t: 10 - log10t[-1])
+                    noise_bounds = np.log10(self.options["noise_bounds"])
+                    constraints.append(lambda log10t: log10t[-1] - noise_bounds[0])
+                    constraints.append(lambda log10t: noise_bounds[1] - log10t[-1])
 
-                    bounds_hyp.append((10, 16))
+                    bounds_hyp.append(noise_bounds)
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
