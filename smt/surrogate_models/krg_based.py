@@ -180,8 +180,8 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
-                self.noise = self.optimal_theta[self.nx :]
-                self.optimal_theta = self.optimal_theta[0 : self.nx]
+                self.noise = self.optimal_theta[self.D.shape[1] :]
+                self.optimal_theta = self.optimal_theta[0 : self.D.shape[1]]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -244,8 +244,8 @@ class KrgBased(SurrogateModel):
         noise = 0
         tmp_var = theta
         if self.options["eval_noise"]:
-            theta = tmp_var[0 : self.nx]
-            noise = tmp_var[self.nx :]
+            theta = tmp_var[0 : self.D.shape[1]]
+            noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
         if self.options["is_noise_het"]:
@@ -1066,12 +1066,14 @@ class KrgBased(SurrogateModel):
 
         # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
-
             d = self.options["n_comp"]
         elif self.name in ["MGP"]:
             d = self.options["n_comp"] * self.nx
         else:
             d = self.nx
+        # self.n_features_x = d
+        # if self.name in ["KPLS", "MFKPLSK"]:
+        #     self.n_features_x = self.nx
 
         if self.name in ["MGP"]:
             if self.options["corr"] != "act_exp":

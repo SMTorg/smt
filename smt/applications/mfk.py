@@ -123,7 +123,10 @@ class MFK(KrgBased):
             desc="Turning this option to True, forces variance to zero at HF samples ",
         )
         declare(
-            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameters"
+            "noise0",
+            [1e-6],
+            types=(list, np.ndarray),
+            desc="Initial noise hyperparameters",
         )
         self.name = "MFK"
 
@@ -208,8 +211,8 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
-        if isinstance(self.options["noise0"], float):
-            self.options["noise0"] = self.nlvl * [self.options["noise0"]]
+        if len(self.options["noise0"]) == 1:
+            self.options["noise0"] = self.nlvl * self.options["noise0"]
         noise0 = self.options["noise0"].copy()
 
         if (
@@ -227,7 +230,7 @@ class MFK(KrgBased):
         theta0 = self.options["theta0"].copy()
 
         for lvl in range(nlevel):
-            self.options["noise0"] = noise0[lvl]
+            self.options["noise0"] = [noise0[lvl]]
             self.options["theta0"] = theta0[lvl, :]
 
             self.X_norma = self.X_norma_all[lvl]
