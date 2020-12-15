@@ -133,6 +133,7 @@ class KrgBased(SurrogateModel):
                 self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
+
     def _train(self):
         """
         Train the model
@@ -916,7 +917,7 @@ class KrgBased(SurrogateModel):
                                 if optimal_rlf_value > best_optimal_rlf_value:
                                     best_optimal_rlf_value = optimal_rlf_value
                                     best_optimal_par = optimal_par
-                                         = optimal_theta
+                                    best_optimal_theta = optimal_theta
                                 else:
                                     if (
                                         self.best_iteration_fail
@@ -932,10 +933,10 @@ class KrgBased(SurrogateModel):
                     else:
                         if np.isinf(optimal_rlf_value):
                             stop += 1
-                        else:     
-                                best_optimal_rlf_value = optimal_rlf_value
-                                best_optimal_par = optimal_par
-                                best_optimal_theta = optimal_theta
+                        else:
+                            best_optimal_rlf_value = optimal_rlf_value
+                            best_optimal_par = optimal_par
+                            best_optimal_theta = optimal_theta
                     k += 1
                 except ValueError as ve:
                     # raise ve
