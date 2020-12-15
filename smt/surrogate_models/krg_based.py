@@ -83,10 +83,17 @@ class KrgBased(SurrogateModel):
             desc="noise evaluation flag",
         )
         declare(
-            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameter"
+            "noise0", [1e-6], types=(list, np.ndarray), desc="Initial noise hyperparameter"
         )
         declare( # I let the bounds previously imposed by default (how were they fixed?)
             "noise_bounds", [1e-16, 1e10], types=(list, np.ndarray), desc="bounds for hyperparameters"
+        )
+        declare(
+            "is_noise_het",
+            False,
+            types=bool,
+            values=(True, False),
+            desc="heteroscedastic noise evaluation flag",
         )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
@@ -114,6 +121,29 @@ class KrgBased(SurrogateModel):
             self.X_scale,
             self.y_std,
         ) = standardization(X, y)
+        
+        if self.options["eval_noise"] and self.options["is_noise_het"]:
+            # hetGP works with unique design variables
+            (
+                self.X_norma,
+                self.index_unique, # do we need to store it?
+                self.nt_reps # do we need to store it?
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis = 0)
+            self.nt = self.X_norma.shape[0]
+
+            # computing the mean of the output per unique design variable (see Binois et al., 2018)
+            y_norma_unique = []
+            for i in range(self.nt):
+                y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+        
+            # pointwise sensible estimates of the noise variances as noise0 (see Ankenman et al., 2010)
+            noise0 = self.options["noise0"] * np.ones(self.nt)
+            for i in range(self.nt):
+                diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                if np.sum(diff**2) != 0.0:
+                    noise0[i] = np.std(diff, ddof = 1)**2
+            self.options["noise0"] = noise0.tolist()
+            self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
@@ -141,8 +171,8 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
-                self.noise = self.optimal_theta[-1]
-                self.optimal_theta = self.optimal_theta[:-1]
+                self.noise = self.optimal_theta[self.nx:]
+                self.optimal_theta = self.optimal_theta[0:self.nx]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -195,17 +225,24 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         nugget = self.options["nugget"]
-        if not self.options["nugget"]:
-            MACHINE_EPSILON = np.finfo(np.double).eps
-            nugget = 1e2 * MACHINE_EPSILON
+        if self.options["eval_noise"]:
+            nugget = 0
+        else:
+            if not self.options["nugget"]:
+                MACHINE_EPSILON = np.finfo(np.double).eps
+                nugget = 1e2 * MACHINE_EPSILON
+
         noise = 0
         tmp_var = theta
         if self.options["eval_noise"]:
-            theta = tmp_var[:-1]
-            noise = tmp_var[-1]
+            theta = tmp_var[0:self.nx]
+            noise = tmp_var[self.nx:]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        R = np.eye(self.nt) * (1.0 + nugget + noise)
+        if self.options["is_noise_het"]:
+            R = np.eye(self.nt) * (1.0 + nugget + noise/self.nt_reps)
+        else:
+            R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -242,6 +279,9 @@ class KrgBased(SurrogateModel):
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
+        nt = self.nt
+        if self.options["is_noise_het"]:
+            nt = self.nt_reps.sum()
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
@@ -254,6 +294,9 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
+        # if self.options["is_noise_het"]:
+        #     lambdas = (self.nt_reps-1) * noise + np.log10(self.nt_reps)
+        #     reduced_likelihood_function_value += lambdas.sum()
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -823,17 +866,17 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 if self.options["eval_noise"]:
                     theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.options["noise0"]]))]
+                        [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
+                        [theta0_rand, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
 
-                    noise_bounds = np.log10(self.options["noise_bounds"])
-                    constraints.append(lambda log10t: log10t[-1] - noise_bounds[0])
-                    constraints.append(lambda log10t: noise_bounds[1] - log10t[-1])
-
-                    bounds_hyp.append(noise_bounds)
+                    for i in range(len(self.options["noise0"])):
+                        noise_bounds = np.log10(self.options["noise_bounds"])
+                        constraints.append(lambda log10t: log10t[i+len(self.options["theta0"])] - noise_bounds[0])
+                        constraints.append(lambda log10t: noise_bounds[1] - log10t[i+len(self.options["theta0"])])
+                        bounds_hyp.append(noise_bounds)
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
