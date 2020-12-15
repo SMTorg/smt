@@ -58,7 +58,17 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
+            "nugget", [], types=(float, list), desc="a jitter for numerical stability"
+        )       
+        declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
+        )
+        # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty), i.e.
+        # theta in (0,1e1], is a good choice to avoid overfitting. By standardising
+        # X in R, X_norm = (X-X_mean)/X_std, then X_norm in [-1,1] if considering
+        # one std intervals. This leads to theta in (0,2e1]
+        declare(
+            "theta_bounds", [1e-6, 2e1], types=(list, np.ndarray), desc="bounds for hyperparameters"
         )
         declare(
             "hyper_opt",
@@ -75,7 +85,17 @@ class KrgBased(SurrogateModel):
             desc="noise evaluation flag",
         )
         declare(
-            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameter"
+            "noise0", [1e-6], types=(list, np.ndarray), desc="Initial noise hyperparameter"
+        )
+        declare( # I let the bounds previously imposed by default (how were they fixed?)
+            "noise_bounds", [1e-16, 1e10], types=(list, np.ndarray), desc="bounds for hyperparameters"
+        )
+        declare(
+            "is_noise_het",
+            False,
+            types=bool,
+            values=(True, False),
+            desc="heteroscedastic noise evaluation flag",
         )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
@@ -104,6 +124,29 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X, y)
 
+        if self.options["eval_noise"] and self.options["is_noise_het"]:
+            # hetGP works with unique design variables
+            (
+                self.X_norma,
+                self.index_unique, # do we need to store it?
+                self.nt_reps # do we need to store it?
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis = 0)
+            self.nt = self.X_norma.shape[0]
+
+            # computing the mean of the output per unique design variable (see Binois et al., 2018)
+            y_norma_unique = []
+            for i in range(self.nt):
+                y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+        
+            # pointwise sensible estimates of the noise variances as noise0 (see Ankenman et al., 2010)
+            noise0 = self.options["noise0"] * np.ones(self.nt)
+            for i in range(self.nt):
+                diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                if np.sum(diff**2) != 0.0:
+                    noise0[i] = np.std(diff, ddof = 1)**2
+            self.options["noise0"] = noise0.tolist()
+            self.y_norma = y_norma_unique
+            
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
@@ -130,7 +173,8 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
-                self.optimal_theta = self.optimal_theta[:-1]
+                self.noise = self.optimal_theta[self.nx:]
+                self.optimal_theta = self.optimal_theta[0:self.nx]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -187,24 +231,22 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -np.inf
         par = {}
         # Set up R
-        MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 10.0 * MACHINE_EPSILON
-        if self.name == "MFK":
-            if self._lvl != self.nlvl:
-                # in the case of multi-fidelity optimization
-                # it is very probable that lower-fidelity correlation matrix
-                # becomes ill-conditionned
-                nugget = 10.0 * nugget
-        elif self.name in ["MGP"]:
-            nugget = 100.0 * nugget
+        nugget = self.options["nugget"]
+        if not self.options["nugget"]:
+            MACHINE_EPSILON = np.finfo(np.double).eps
+            nugget = 1e2 * MACHINE_EPSILON
+        
         noise = 0
         tmp_var = theta
         if self.options["eval_noise"]:
-            theta = tmp_var[:-1]
-            noise = tmp_var[-1]
+            theta = tmp_var[0:self.nx]
+            noise = tmp_var[self.nx:]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        R = np.eye(self.nt) * (1.0 + nugget + noise)
+        if self.options["is_noise_het"]:
+            R = np.eye(self.nt) * (1.0 + nugget + noise/self.nt_reps)
+        else:
+            R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -241,7 +283,11 @@ class KrgBased(SurrogateModel):
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        detR = (np.diag(C) ** (2.0 / self.nt)).prod()
+        nt = self.nt
+        if self.options["is_noise_het"]:
+            nt = self.nt_reps.sum()
+        
+        detR = (np.diag(C) ** (2.0 / nt)).prod()
 
         # Compute/Organize output
         p = 0
@@ -249,10 +295,13 @@ class KrgBased(SurrogateModel):
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             p = self.p
             q = self.q
-        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
-        reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
+        sigma2 = (rho ** 2.0).sum(axis=0) / (nt - p - q)
+        reduced_likelihood_function_value = -(nt - p - q) * np.log10(
             sigma2.sum()
-        ) - self.nt * np.log10(detR)
+        ) - nt * np.log10(detR)
+        # if self.options["is_noise_het"]:
+        #     lambdas = (self.nt_reps-1) * noise + np.log10(self.nt_reps)
+        #     reduced_likelihood_function_value += lambdas.sum()
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -775,7 +824,8 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        theta0 = self.options["theta0"]
+        limit, _rhobeg = 10 * len(theta0), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -797,35 +847,42 @@ class KrgBased(SurrogateModel):
 
             bounds_hyp = []
 
-            for i in range(len(self.options["theta0"])):
+            for i in range(len(theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
                 # By standardising X in R, X_norm = (X-X_mean)/X_std, then
                 # X_norm in [-1,1] if considering one std intervals. This leads
                 # to theta in (0,2e1]
-                theta_max = 2e1
-                if self.name in ["MGP"]:
-                    constraints.append(lambda theta, i=i: theta[i] + theta_max)
-                    constraints.append(lambda theta, i=i: theta_max - theta[i])
-                    bounds_hyp.append((-theta_max, theta_max))
-                else:
-                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                    constraints.append(
-                        lambda log10t, i=i: np.log10(theta_max) - log10t[i]
+                theta_bounds = self.options["theta_bounds"]
+                if theta0[i] < theta_bounds[0] or theta0[i] > theta_bounds[1]:
+                    theta0[i] = np.random.rand()
+                    theta0[i] = theta0[i] * (theta_bounds[1]-theta_bounds[0]) + theta_bounds[0]
+                    print(
+                        "\n Warning: theta0 is out the feasible bounds. A random initialisation will be used instead.\n"
                     )
-                    bounds_hyp.append((np.log10(1e-6), np.log10(theta_max)))
+  
+                if self.name in ["MGP"]:
+                    constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
+                    constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
+                    bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
+                else:
+                    log10t_bounds = np.log10(theta_bounds)
+                    constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
+                    constraints.append(
+                        lambda log10t, i=i: log10t_bounds[1] - log10t[i]
+                    )
+                    bounds_hyp.append(log10t_bounds)
 
             if self.name in ["MGP"]:
                 theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.options["theta0"]),
+                    self.options["prior"]["mean"] * len(theta0),
                     self.options["prior"]["var"],
                     1,
                 )
-                theta0 = self.options["theta0"]
             else:
-                theta0_rand = np.random.rand(len(self.options["theta0"]))
-                theta0_rand = theta0_rand * 8.0 - 6.0
-                theta0 = np.log10(self.options["theta0"])
+                theta0_rand = np.random.rand(len(theta0))
+                theta0_rand = theta0_rand * (log10t_bounds[1]-log10t_bounds[0]) + log10t_bounds[0]
+                theta0 = np.log10(theta0)
 
             self.D = self._componentwise_distance(D, opt=ii)
 
@@ -835,16 +892,17 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 if self.options["eval_noise"]:
                     theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.options["noise0"]]))]
+                        [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [theta0_rand, np.log10(np.array([self.options["noise0"]]))]
+                        [theta0_rand, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
-
-                    constraints.append(lambda log10t: log10t[-1] + 16)
-                    constraints.append(lambda log10t: 10 - log10t[-1])
-
-                    bounds_hyp.append((10, 16))
+                    
+                    for i in range(len(self.options["noise0"])):
+                        noise_bounds = np.log10(self.options["noise_bounds"])
+                        constraints.append(lambda log10t: log10t[i+len(self.options["theta0"])] + noise_bounds[0])
+                        constraints.append(lambda log10t: noise_bounds[1] - log10t[i+len(self.options["theta0"])])
+                        bounds_hyp.append(noise_bounds)
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
@@ -1006,7 +1064,6 @@ class KrgBased(SurrogateModel):
 
         # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
-
             d = self.options["n_comp"]
         elif self.name in ["MGP"]:
             d = self.options["n_comp"] * self.nx
