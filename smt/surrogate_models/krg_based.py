@@ -61,6 +61,13 @@ class KrgBased(SurrogateModel):
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
+        # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty), i.e.
+        # theta in (0,1e1], is a good choice to avoid overfitting. By standardising
+        # X in R, X_norm = (X-X_mean)/X_std, then X_norm in [-1,1] if considering
+        # one std intervals. This leads to theta in (0,2e1]
+        declare(
+            "theta_bounds", [1e-6, 2e1], types=(list, np.ndarray), desc="bounds for hyperparameters"
+        )
         declare(
             "hyper_opt",
             "Cobyla",
@@ -772,17 +779,25 @@ class KrgBased(SurrogateModel):
                 # By standardising X in R, X_norm = (X-X_mean)/X_std, then
                 # X_norm in [-1,1] if considering one std intervals. This leads
                 # to theta in (0,2e1]
-                theta_max = 2e1
-                if self.name in ["MGP"]:
-                    constraints.append(lambda theta, i=i: theta[i] + theta_max)
-                    constraints.append(lambda theta, i=i: theta_max - theta[i])
-                    bounds_hyp.append((-theta_max, theta_max))
-                else:
-                    constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                    constraints.append(
-                        lambda log10t, i=i: np.log10(theta_max) - log10t[i]
+                theta_bounds = self.options["theta_bounds"]
+                if self.options["theta0"][i] < theta_bounds[0] or self.options["theta0"][i] > theta_bounds[1]:
+                    self.options["theta0"][i] = np.random.rand()
+                    self.options["theta0"][i] = self.options["theta0"][i] * (theta_bounds[1]-theta_bounds[0]) + theta_bounds[0]
+                    print(
+                        "\n Warning: theta0 is out the feasible bounds. A random initialisation is used instead.\n"
                     )
-                    bounds_hyp.append((np.log10(1e-6), np.log10(theta_max)))
+                    
+                if self.name in ["MGP"]:
+                    constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
+                    constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
+                    bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
+                else:
+                    log10t_bounds = np.log10(theta_bounds)
+                    constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
+                    constraints.append(
+                        lambda log10t, i=i: log10t_bounds[1] - log10t[i]
+                    )
+                    bounds_hyp.append(log10t_bounds)
 
             if self.name in ["MGP"]:
                 theta0_rand = m_norm.rvs(
@@ -793,7 +808,7 @@ class KrgBased(SurrogateModel):
                 theta0 = self.options["theta0"]
             else:
                 theta0_rand = np.random.rand(len(self.options["theta0"]))
-                theta0_rand = theta0_rand * 8.0 - 6.0
+                theta0_rand = theta0_rand * (log10t_bounds[1]-log10t_bounds[0]) + log10t_bounds[0]
                 theta0 = np.log10(self.options["theta0"])
 
             self.D = self._componentwise_distance(D, opt=ii)
@@ -903,21 +918,24 @@ class KrgBased(SurrogateModel):
                         if np.isinf(optimal_rlf_value):
                             stop += 1
                         else:
-                            if optimal_rlf_value >= self.best_iteration_fail:
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
+                            # if optimal_rlf_value >= self.best_iteration_fail:
+                            #     if optimal_rlf_value > best_optimal_rlf_value:
+                            #         best_optimal_rlf_value = optimal_rlf_value
+                            #         best_optimal_par = optimal_par
+                            #         best_optimal_theta = optimal_theta
 
-                            else:
-                                if self.best_iteration_fail > best_optimal_rlf_value:
-                                    best_optimal_theta = self._thetaMemory.copy()
-                                    (
-                                        best_optimal_rlf_value,
-                                        best_optimal_par,
-                                    ) = self._reduced_likelihood_function(
-                                        theta=best_optimal_theta
-                                    )
+                            # else:
+                            #     if self.best_iteration_fail > best_optimal_rlf_value:
+                            #         best_optimal_theta = self._thetaMemory.copy()
+                            #         (
+                            #             best_optimal_rlf_value,
+                            #             best_optimal_par,
+                            #         ) = self._reduced_likelihood_function(
+                            #             theta=best_optimal_theta
+                            #         )
+                            best_optimal_rlf_value = optimal_rlf_value
+                            best_optimal_par = optimal_par
+                            best_optimal_theta = optimal_theta
                     k += 1
                 except ValueError as ve:
                     # raise ve
