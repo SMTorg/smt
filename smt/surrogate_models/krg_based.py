@@ -154,7 +154,7 @@ class KrgBased(SurrogateModel):
                 diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
                 if np.sum(diff ** 2) != 0.0:
                     self.noise[i] = np.std(diff, ddof=1) ** 2
-            self.noise = self.noise.tolist()/self.nt_reps
+            self.noise = self.noise.tolist() / self.nt_reps
             self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
