@@ -154,7 +154,7 @@ class KrgBased(SurrogateModel):
                 diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
                 if np.sum(diff ** 2) != 0.0:
                     self.noise[i] = np.std(diff, ddof=1) ** 2
-            self.noise = self.noise.tolist()
+            self.noise = self.noise.tolist()/self.nt_reps
             self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
@@ -250,10 +250,7 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        if self.options["use_het_noise"]:
-            R = np.eye(self.nt) * (1.0 + nugget + noise / self.nt_reps)
-        else:
-            R = np.eye(self.nt) * (1.0 + nugget + noise)
+        R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
