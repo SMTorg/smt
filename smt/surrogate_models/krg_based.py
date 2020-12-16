@@ -101,7 +101,7 @@ class KrgBased(SurrogateModel):
             desc="bounds for hyperparameters",
         )
         declare(
-            "is_noise_het",
+            "use_het_noise",
             False,
             types=bool,
             values=(True, False),
@@ -134,7 +134,7 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X, y)
 
-        if self.options["eval_noise"] and self.options["is_noise_het"]:
+        if self.options["eval_noise"] and self.options["use_het_noise"]:
             # hetGP works with unique design variables
             (
                 self.X_norma,
@@ -183,7 +183,7 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
-                if not self.options["is_noise_het"]:
+                if not self.options["use_het_noise"]:
                     self.noise = self.optimal_theta[self.D.shape[1] :]
                 self.optimal_theta = self.optimal_theta[0 : self.D.shape[1]]
         # if self.name != "MGP":
@@ -243,14 +243,14 @@ class KrgBased(SurrogateModel):
 
         noise = 0
         tmp_var = theta
-        if self.options["is_noise_het"]:
+        if self.options["use_het_noise"]:
             noise = self.noise
-        elif self.options["eval_noise"] and not self.options["is_noise_het"]:
+        elif self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        if self.options["is_noise_het"]:
+        if self.options["use_het_noise"]:
             R = np.eye(self.nt) * (1.0 + nugget + noise / self.nt_reps)
         else:
             R = np.eye(self.nt) * (1.0 + nugget + noise)
@@ -291,7 +291,7 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         nt = self.nt
-        if self.options["is_noise_het"]:
+        if self.options["use_het_noise"]:
             nt = self.nt_reps.sum()
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
@@ -879,7 +879,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                if self.options["eval_noise"] and not self.options["is_noise_het"]:
+                if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
