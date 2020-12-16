@@ -20,15 +20,15 @@ Four types of correlation functions are available in SMT:
   
 .. math ::
   \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right), \\
-  \text{Gaussian correlation function}
+  \text{Squared Exponential correlation function}
   
 .. math ::
-  \left(1 + \sqrt{5}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\sum\limits_{l=1}^{nx}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
-  \text{Mat\'ern 5/2 corralation function}
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
+  \text{Mat\'ern 5/2 correlation function}
   
 .. math ::
-  \left(1 + \sqrt{3}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
-  \text{Mat\'ern 3/2 corralation function}
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
+  \text{Mat\'ern 3/2 correlation function}
 
 These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
 
