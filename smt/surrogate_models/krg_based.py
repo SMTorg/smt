@@ -305,9 +305,6 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        # if self.options["is_noise_het"]:
-        #     lambdas = (self.nt_reps-1) * noise + np.log10(self.nt_reps)
-        #     reduced_likelihood_function_value += lambdas.sum()
         par["sigma2"] = sigma2 * self.y_std ** 2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
