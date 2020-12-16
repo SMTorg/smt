@@ -12,15 +12,23 @@ Kriging is an interpolating model that is a linear combination of a known functi
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
 
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
-Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions
+Four types of correlation functions are available in SMT:
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
-  \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+ \\
+  \text{Exponential correlation function (Ornstein-Uhlenbeck process)}
   
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
-  \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right), \\
+  \text{Gaussian correlation function}
+  
+.. math ::
+  \left(1 + \sqrt{5}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\sum\limits_{l=1}^{nx}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
+  \text{Mat\'ern 5/2 corralation function}
+  
+.. math ::
+  \left(1 + \sqrt{3}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\sum\limits_{l=1}^{nx}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
+  \text{Mat\'ern 3/2 corralation function}
 
 These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
 
