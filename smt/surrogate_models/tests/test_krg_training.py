@@ -74,7 +74,7 @@ class Test(SMTestCase):
         y = sm.predict_values(x)
         self.assert_error(
             np.array(sm.optimal_theta), np.array([0.11798507]), 1e-5, 1e-5
-        )  # from utils/smt_test_case.py
+        )  
 
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
