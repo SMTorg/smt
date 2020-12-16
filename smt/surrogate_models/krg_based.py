@@ -738,38 +738,31 @@ class KrgBased(SurrogateModel):
         - dr: array_like
         The derivation of the correlation term of the kriging model
         """
+        #init
+        mat_x =self.X_norma
+        xn_x = x - mat_x
+        theta= self.optimal_theta
+        dim=np.shape(x)[1]
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)
+        n_eval, n_features_x = x.shape
+
         if self.options["corr"] == "squar_exp":
-
-            mat_x =self.X_norma
-            xn_x = x - mat_x
-            theta= self.optimal_theta
-            sqr = square(xn_x)
-            p = 2
-            sqr_0 = np.dot(sqr, theta)
-            r = []
-            for i in range(len(sqr_0)):
-                r.append(math.exp(-sqr_0[i]))
-            r = np.array([r])
-            mat = -p * np.einsum("j,ij->ij", theta.T, xn_x)
+            r = self._correlation_types[self.options["corr"]](
+             self.optimal_theta, d
+             ).reshape(n_eval, self.nt)
+            mat = -2 * np.einsum("j,ij->ij", theta.T, xn_x)
             dr = np.einsum("i,ij->ij", r[0], mat)
-
             return r.T, dr
 
-        elif self.corr == "absolute_exponential":
+        elif self.options["corr"] == "abs_exp":
+            r = self._correlation_types[self.options["corr"]](
+             self.optimal_theta, d
+             ).reshape(n_eval, self.nt)
 
-            mat_x = self.model.X
-            xn_x = x - mat_x
-            theta = self.model.theta_.T
-            theta = np.resize(theta, (self.dimension,))
-            abs_ = abs(xn_x)
-            abs_0 = np.dot(abs_, theta)
-            r = []
-            for i in range(len(abs_0)):
-                r.append(math.exp(-abs_0[i]))
-            r = np.array([r])
             der = np.zeros(xn_x.shape)
             for i in range(len(der)):
-                for j in range(self.dimension):
+                for j in range(dim):
                     if xn_x[i][j] < 0:
                         der[i][j] = -1
                     else:
@@ -779,12 +772,7 @@ class KrgBased(SurrogateModel):
 
             return r.T, dr
 
-        elif self.corr == "matern32":
-
-            mat_x = self.model.X
-            xn_x = x - mat_x
-            theta = self.model.theta_.T
-            theta = np.resize(theta, (self.dimension,))
+        elif self.options["corr"] == "matern32":
             abs_ = abs(xn_x)
             abs_0 = np.dot(abs_, theta)
 
@@ -796,7 +784,7 @@ class KrgBased(SurrogateModel):
 
             for j in range(len(abs_0)):
                 coef = 1
-                for k in range(self.dimension):
+                for k in range(dim):
                     coef = coef * (1 + math.sqrt(3) * abs_[j][k] * theta[k])
                 B[j][0] = coef
 
@@ -807,35 +795,30 @@ class KrgBased(SurrogateModel):
 
             der = np.zeros(xn_x.shape)
             for i in range(len(der)):
-                for j in range(self.dimension):
+                for j in range(dim):
                     if xn_x[i][j] < 0:
                         der[i][j] = -1
                     else:
                         der[i][j] = 1
 
-            dB = np.zeros((mat_x.shape[0], self.dimension))
+            dB = np.zeros((mat_x.shape[0], dim))
             for j in range(mat_x.shape[0]):
-                for k in range(self.dimension):
+                for k in range(dim):
                     coef = 1
-                    for l in range(self.dimension):
+                    for l in range(dim):
                         if l != k:
                             coef = coef * (1 + math.sqrt(3) * abs_[j][l] * theta[l])
                     dB[j][k] = math.sqrt(3) * theta[k] * der[j][k] * coef
 
             for j in range(mat_x.shape[0]):
-                for k in range(self.dimension):
+                for k in range(dim):
                     dr[j][k] = (
                         -math.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
                     )
 
             return r, dr
 
-        elif self.corr == "matern52":
-
-            mat_x = self.model.X
-            xn_x = x - mat_x
-            theta = self.model.theta_.T
-            theta = np.resize(theta, (self.dimension,))
+        elif self.options["corr"] == "matern52":        
             abs_ = abs(xn_x)
             sqr = square(xn_x)
             abs_0 = np.dot(abs_, theta)
@@ -848,7 +831,7 @@ class KrgBased(SurrogateModel):
 
             for j in range(len(abs_0)):
                 coef = 1
-                for k in range(self.dimension):
+                for k in range(dim):
                     coef = coef * (
                         1
                         + math.sqrt(5) * abs_[j][k] * theta[k]
@@ -863,17 +846,17 @@ class KrgBased(SurrogateModel):
 
             der = np.zeros(xn_x.shape)
             for i in range(len(der)):
-                for j in range(self.dimension):
+                for j in range(dim):
                     if xn_x[i][j] < 0:
                         der[i][j] = -1
                     else:
                         der[i][j] = 1
 
-            dB = np.zeros((mat_x.shape[0], self.dimension))
+            dB = np.zeros((mat_x.shape[0], dim))
             for j in range(mat_x.shape[0]):
-                for k in range(self.dimension):
+                for k in range(dim):
                     coef = 1
-                    for l in range(self.dimension):
+                    for l in range(dim):
                         if l != k:
                             coef = coef * (
                                 1
@@ -886,7 +869,7 @@ class KrgBased(SurrogateModel):
                     ) * coef
 
             for j in range(mat_x.shape[0]):
-                for k in range(self.dimension):
+                for k in range(dim):
                     dr[j][k] = (
                         -math.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
                     )
@@ -896,9 +879,6 @@ class KrgBased(SurrogateModel):
         else:
 
             raise ValueError("Jacobians are not available for this correlation kernel")
-    
-    
-    
     
     
     def predict_derivatives_variances(self, x):
@@ -913,30 +893,22 @@ class KrgBased(SurrogateModel):
         - derived_variance: array_like
         The jacobian of the variance of the kriging model
         """
-        # x_mean = self.X_mean
-        # x_std = self.model.X_std
-        # x = (x - x_mean) / x_std
-        # x = np.atleast_2d(x)
+  
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_offset) / self.X_scale
+        
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
         
-        #sigma2 = self.model.sigma2
         sigma2 = self.optimal_par["sigma2"]
         theta= self.optimal_theta
-        #cholesky_k = self.model.C
         cholesky_k =self.optimal_par["C"]
         
-        #r, dr = self._compute_r_and_dr(x)
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt).T
-
         r, dr = self._compute_r_and_dr(x)
-        
+
+   
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
@@ -948,17 +920,8 @@ class KrgBased(SurrogateModel):
 
         p2 = np.dot(invKr.T, dr)
 
-        # f_x = self.model.regr(x).T
         f_x=self._regression_types[self.options["poly"]](x).T
-        # mat_x =self.X_norma.copy()
-        # F = []
-        # for x_ in mat_x:
-        #     x_ = np.atleast_2d(x_)
-        #     f = self.model.regr(x_)
-        #     F.append(f[0])
-        # F = np.array(F)
         F = self.F
-        
         
         rho2 = solve_triangular(cholesky_k, F, lower=True)
         invKF = solve_triangular(cholesky_k.T, rho2)
@@ -970,13 +933,7 @@ class KrgBased(SurrogateModel):
         rho3 = cholesky(B, lower=True)
         invBAt = solve_triangular(rho3, A.T, lower=True)
         D = solve_triangular(rho3.T, invBAt)
-        # if self._regression_types[self.options["poly"]] == "linear":
-        #     df = linear(x, self.nt).T
-        # elif self._regression_types[self.options["poly"]] == "quadratic":
-        #     df = quadra(x[0], self.nt).T
-        # else:
-        #     df = np.array([0])
-        #     df = np.resize(df, (self.nt, f_x.shape[0]))
+       
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
@@ -989,23 +946,21 @@ class KrgBased(SurrogateModel):
             )
             
         dA = df.T - np.dot(dr.T, invKF)
+        print("dA",dA)
         p3 = np.dot(dA, D).T
-
+        print("D",D)
         p4 = np.dot(D.T, dA.T)
-
+        print("p3",p3)
+        print("p4",p4)
         prime = -p1 - p2 + p3 + p4
 
         derived_variance = []
-
-        for i in range(len(self.X_scale)):
-            derived_variance.append(sigma2 * prime.T[i] / self.X_scale[i])
+        x_std = np.resize(self.X_scale, self.nx)
+        
+        for i in range(len(x_std)):
+            derived_variance.append(sigma2 * prime.T[i] /  x_std[i])
 
         return np.array(derived_variance).T
-        
-        
-        
-        
-        
         
     def _optimize_hyperparam(self, D):
         """
