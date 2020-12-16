@@ -56,7 +56,10 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
-            "nugget", [], types=(float, list), desc="a jitter for numerical stability"
+            "nugget",
+            100.0 * np.finfo(np.double).eps,
+            types=(float),
+            desc="a jitter for numerical stability",
         )
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
@@ -237,10 +240,6 @@ class KrgBased(SurrogateModel):
         nugget = self.options["nugget"]
         if self.options["eval_noise"]:
             nugget = 0
-        else:
-            if not self.options["nugget"]:
-                MACHINE_EPSILON = np.finfo(np.double).eps
-                nugget = 1e2 * MACHINE_EPSILON
 
         noise = 0
         tmp_var = theta
