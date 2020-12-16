@@ -200,7 +200,7 @@ class MFK(KrgBased):
         n_samples = self.nt_all
 
         # initialize lists
-        self.noise = nlevel * [0]
+        self.noise_all = nlevel * [0]
         self.D_all = nlevel * [0]
         self.F_all = nlevel * [0]
         self.p_all = nlevel * [0]
@@ -235,6 +235,33 @@ class MFK(KrgBased):
 
             self.X_norma = self.X_norma_all[lvl]
             self.y_norma = self.y_norma_all[lvl]
+            
+            if self.options["eval_noise"] and self.options["use_het_noise"]:
+            # hetGP works with unique design variables
+                (
+                    self.X_norma,
+                    self.index_unique,  # do we need to store it?
+                    self.nt_reps,  # do we need to store it?
+                    ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
+                self.nt_all[lvl] = self.X_norma.shape[0]
+
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt_all[lvl]):
+                    y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                for i in range(self.nt_all[lvl]):
+                    diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.noise[i] = np.std(diff, ddof=1) ** 2
+                self.noise = self.noise.tolist() / self.nt_reps
+                self.y_norma = y_norma_unique
+                
+                self.X_norma_all[lvl] = self.X_norma
+                self.y_norma_all[lvl] = self.y_norma
+            
             # Calculate matrix of distances D between samples
             self.D_all[lvl] = cross_distances(self.X_norma)
 
@@ -294,8 +321,8 @@ class MFK(KrgBased):
             ) = self._optimize_hyperparam(D)
             if self.options["eval_noise"]:
                 tmp_list = self.optimal_theta[lvl]
-                self.optimal_theta[lvl] = tmp_list[:-1]
-                self.noise[lvl] = tmp_list[-1]
+                self.optimal_theta[lvl] = tmp_list[0 : D.shape[1]]
+                self.noise_all[lvl] = tmp_list[D.shape[1] :]              
             del self.y_norma, self.D
 
         self.options["noise0"] = noise0
@@ -470,7 +497,8 @@ class MFK(KrgBased):
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
         sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
         MSE[:, 0] = sigma2 * (
-            1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            # 1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            1 - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)            
         )
 
         # Calculate recursively kriging variance at level i
@@ -504,7 +532,8 @@ class MFK(KrgBased):
             sigma2_rhos.append(sigma2_rho)
 
             MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-                1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                # 1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                1 - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
             )
 
         # scaled predictor
