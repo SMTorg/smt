@@ -6,8 +6,9 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 import numpy as np
+import math
 from scipy import linalg, optimize
-
+from scipy.linalg import solve_triangular, cholesky
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
 from smt.utils.kriging_utils import constant, linear, quadratic
@@ -20,7 +21,7 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
 )
-
+from numpy import square
 from scipy.stats import multivariate_normal as m_norm
 
 
@@ -721,7 +722,291 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
+    
+    
+    def _compute_r_and_dr(self, x):
+        """
+        Compute the correlation term and the derivation term of the kriging model
+        Parameters:
+        -----------
+        - x: array_like
+        Input
+        Returns:
+        --------
+        - r: array_like
+        The correlation term of the kriging model
+        - dr: array_like
+        The derivation of the correlation term of the kriging model
+        """
+        if self.options["corr"] == "squar_exp":
 
+            mat_x =self.X_norma
+            xn_x = x - mat_x
+            theta= self.optimal_theta
+            sqr = square(xn_x)
+            p = 2
+            sqr_0 = np.dot(sqr, theta)
+            r = []
+            for i in range(len(sqr_0)):
+                r.append(math.exp(-sqr_0[i]))
+            r = np.array([r])
+            mat = -p * np.einsum("j,ij->ij", theta.T, xn_x)
+            dr = np.einsum("i,ij->ij", r[0], mat)
+
+            return r.T, dr
+
+        elif self.corr == "absolute_exponential":
+
+            mat_x = self.model.X
+            xn_x = x - mat_x
+            theta = self.model.theta_.T
+            theta = np.resize(theta, (self.dimension,))
+            abs_ = abs(xn_x)
+            abs_0 = np.dot(abs_, theta)
+            r = []
+            for i in range(len(abs_0)):
+                r.append(math.exp(-abs_0[i]))
+            r = np.array([r])
+            der = np.zeros(xn_x.shape)
+            for i in range(len(der)):
+                for j in range(self.dimension):
+                    if xn_x[i][j] < 0:
+                        der[i][j] = -1
+                    else:
+                        der[i][j] = 1
+            mat = -np.einsum("j,ij->ij", theta.T, der)
+            dr = np.einsum("i,ij->ij", r[0], mat)
+
+            return r.T, dr
+
+        elif self.corr == "matern32":
+
+            mat_x = self.model.X
+            xn_x = x - mat_x
+            theta = self.model.theta_.T
+            theta = np.resize(theta, (self.dimension,))
+            abs_ = abs(xn_x)
+            abs_0 = np.dot(abs_, theta)
+
+            r = np.zeros((mat_x.shape[0], 1))
+            dr = np.zeros(mat_x.shape)
+
+            A = np.zeros((mat_x.shape[0], 1))
+            B = np.zeros((mat_x.shape[0], 1))
+
+            for j in range(len(abs_0)):
+                coef = 1
+                for k in range(self.dimension):
+                    coef = coef * (1 + math.sqrt(3) * abs_[j][k] * theta[k])
+                B[j][0] = coef
+
+            for i in range(len(abs_0)):
+                A[i][0] = math.exp(-math.sqrt(3) * abs_0[i])
+
+            r = np.multiply(A, B)
+
+            der = np.zeros(xn_x.shape)
+            for i in range(len(der)):
+                for j in range(self.dimension):
+                    if xn_x[i][j] < 0:
+                        der[i][j] = -1
+                    else:
+                        der[i][j] = 1
+
+            dB = np.zeros((mat_x.shape[0], self.dimension))
+            for j in range(mat_x.shape[0]):
+                for k in range(self.dimension):
+                    coef = 1
+                    for l in range(self.dimension):
+                        if l != k:
+                            coef = coef * (1 + math.sqrt(3) * abs_[j][l] * theta[l])
+                    dB[j][k] = math.sqrt(3) * theta[k] * der[j][k] * coef
+
+            for j in range(mat_x.shape[0]):
+                for k in range(self.dimension):
+                    dr[j][k] = (
+                        -math.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                    )
+
+            return r, dr
+
+        elif self.corr == "matern52":
+
+            mat_x = self.model.X
+            xn_x = x - mat_x
+            theta = self.model.theta_.T
+            theta = np.resize(theta, (self.dimension,))
+            abs_ = abs(xn_x)
+            sqr = square(xn_x)
+            abs_0 = np.dot(abs_, theta)
+
+            r = np.zeros((mat_x.shape[0], 1))
+            dr = np.zeros(mat_x.shape)
+
+            A = np.zeros((mat_x.shape[0], 1))
+            B = np.zeros((mat_x.shape[0], 1))
+
+            for j in range(len(abs_0)):
+                coef = 1
+                for k in range(self.dimension):
+                    coef = coef * (
+                        1
+                        + math.sqrt(5) * abs_[j][k] * theta[k]
+                        + (5.0 / 3) * sqr[j][k] * theta[k] ** 2
+                    )
+                B[j][0] = coef
+
+            for i in range(len(abs_0)):
+                A[i][0] = math.exp(-math.sqrt(5) * abs_0[i])
+
+            r = np.multiply(A, B)
+
+            der = np.zeros(xn_x.shape)
+            for i in range(len(der)):
+                for j in range(self.dimension):
+                    if xn_x[i][j] < 0:
+                        der[i][j] = -1
+                    else:
+                        der[i][j] = 1
+
+            dB = np.zeros((mat_x.shape[0], self.dimension))
+            for j in range(mat_x.shape[0]):
+                for k in range(self.dimension):
+                    coef = 1
+                    for l in range(self.dimension):
+                        if l != k:
+                            coef = coef * (
+                                1
+                                + math.sqrt(5) * abs_[j][l] * theta[l]
+                                + (5.0 / 3) * sqr[j][l] * theta[l] ** 2
+                            )
+                    dB[j][k] = (
+                        math.sqrt(5) * theta[k] * der[j][k]
+                        + 2 * (5.0 / 3) * der[j][k] * abs_[j][k] * theta[k] ** 2
+                    ) * coef
+
+            for j in range(mat_x.shape[0]):
+                for k in range(self.dimension):
+                    dr[j][k] = (
+                        -math.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                    )
+
+            return r, dr
+
+        else:
+
+            raise ValueError("Jacobians are not available for this correlation kernel")
+    
+    
+    
+    
+    
+    def predict_derivatives_variances(self, x):
+        """
+        Give the derivation of the variance of the kriging model (for one input)
+        Parameters:
+        -----------
+        - x: array_like
+        Input
+        Returns:
+        --------
+        - derived_variance: array_like
+        The jacobian of the variance of the kriging model
+        """
+        # x_mean = self.X_mean
+        # x_std = self.model.X_std
+        # x = (x - x_mean) / x_std
+        # x = np.atleast_2d(x)
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_offset) / self.X_scale
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)
+        
+        #sigma2 = self.model.sigma2
+        sigma2 = self.optimal_par["sigma2"]
+        theta= self.optimal_theta
+        #cholesky_k = self.model.C
+        cholesky_k =self.optimal_par["C"]
+        
+        #r, dr = self._compute_r_and_dr(x)
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt).T
+
+        r, dr = self._compute_r_and_dr(x)
+        
+        rho1 = solve_triangular(cholesky_k, r, lower=True)
+        invKr = solve_triangular(cholesky_k.T, rho1)
+
+        mat_x =self.X_norma.copy()
+        xn_x = x - mat_x
+        abs_ = abs(xn_x)
+
+        p1 = np.dot(dr.T, invKr).T
+
+        p2 = np.dot(invKr.T, dr)
+
+        # f_x = self.model.regr(x).T
+        f_x=self._regression_types[self.options["poly"]](x).T
+        # mat_x =self.X_norma.copy()
+        # F = []
+        # for x_ in mat_x:
+        #     x_ = np.atleast_2d(x_)
+        #     f = self.model.regr(x_)
+        #     F.append(f[0])
+        # F = np.array(F)
+        F = self.F
+        
+        
+        rho2 = solve_triangular(cholesky_k, F, lower=True)
+        invKF = solve_triangular(cholesky_k.T, rho2)
+
+        A = f_x.T - np.dot(r.T, invKF)
+
+        B = np.dot(F.T, invKF)
+
+        rho3 = cholesky(B, lower=True)
+        invBAt = solve_triangular(rho3, A.T, lower=True)
+        D = solve_triangular(rho3.T, invBAt)
+        # if self._regression_types[self.options["poly"]] == "linear":
+        #     df = linear(x, self.nt).T
+        # elif self._regression_types[self.options["poly"]] == "quadratic":
+        #     df = quadra(x[0], self.nt).T
+        # else:
+        #     df = np.array([0])
+        #     df = np.resize(df, (self.nt, f_x.shape[0]))
+        if self.options["poly"] == "constant":
+            df = np.zeros((1, self.nx))
+        elif self.options["poly"] == "linear":
+            df = np.zeros((self.nx + 1, self.nx))
+            df[1:, :] = np.eye(self.nx)
+        else:
+            raise ValueError(
+                "The derivative is only available for ordinary kriging or "
+                + "universal kriging using a linear trend"
+            )
+            
+        dA = df.T - np.dot(dr.T, invKF)
+        p3 = np.dot(dA, D).T
+
+        p4 = np.dot(D.T, dA.T)
+
+        prime = -p1 - p2 + p3 + p4
+
+        derived_variance = []
+
+        for i in range(len(self.X_scale)):
+            derived_variance.append(sigma2 * prime.T[i] / self.X_scale[i])
+
+        return np.array(derived_variance).T
+        
+        
+        
+        
+        
+        
     def _optimize_hyperparam(self, D):
         """
         This function evaluates the Gaussian Process model at x.
