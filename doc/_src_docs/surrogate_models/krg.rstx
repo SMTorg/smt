@@ -30,7 +30,7 @@ Four types of correlation functions are available in SMT:
   \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
   \text{Mat\'ern 3/2 correlation function}
   
-These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern32' and 'matern52' in SMT.
+These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
 
 The deterministic term :math:`\sum\limits_{i=1}^k\beta_i f_i({\bf x})` can be replaced by a constant, a linear model, or a quadratic model.
 These three types are available in SMT.
