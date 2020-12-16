@@ -145,13 +145,13 @@ class KrgBased(SurrogateModel):
             for i in range(self.nt):
                 y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
 
-            # pointwise sensible estimates of the noise variances as noise0 (see Ankenman et al., 2010)
-            noise0 = self.options["noise0"] * np.ones(self.nt)
+            # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+            self.noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
                 if np.sum(diff ** 2) != 0.0:
-                    noise0[i] = np.std(diff, ddof=1) ** 2
-            self.options["noise0"] = noise0.tolist()
+                    self.noise[i] = np.std(diff, ddof=1) ** 2
+            self.noise = self.noise.tolist()
             self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
@@ -180,7 +180,8 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"]:
-                self.noise = self.optimal_theta[self.D.shape[1] :]
+                if not self.options["is_noise_het"]:
+                    self.noise = self.optimal_theta[self.D.shape[1] :]
                 self.optimal_theta = self.optimal_theta[0 : self.D.shape[1]]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
@@ -243,7 +244,9 @@ class KrgBased(SurrogateModel):
 
         noise = 0
         tmp_var = theta
-        if self.options["eval_noise"]:
+        if self.options["is_noise_het"]:
+            noise = self.noise
+        elif self.options["eval_noise"] and not self.options["is_noise_het"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
@@ -880,7 +883,7 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                if self.options["eval_noise"]:
+                if self.options["eval_noise"] and not self.options["is_noise_het"]:
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
                     )
@@ -1071,9 +1074,6 @@ class KrgBased(SurrogateModel):
             d = self.options["n_comp"] * self.nx
         else:
             d = self.nx
-        # self.n_features_x = d
-        # if self.name in ["KPLS", "MFKPLSK"]:
-        #     self.n_features_x = self.nx
 
         if self.name in ["MGP"]:
             if self.options["corr"] != "act_exp":
