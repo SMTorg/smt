@@ -288,8 +288,6 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         nt = self.nt
-        if self.options["use_het_noise"]:  # to be checked
-            nt = self.nt_reps.sum()
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
