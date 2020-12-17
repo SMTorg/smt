@@ -1075,6 +1075,15 @@ class KrgBased(SurrogateModel):
             if self.options["corr"] == "act_exp":
                 raise ValueError("act_exp correlation function must be used with MGP")
 
+        if len(self.options["theta0"]) != d:
+            if len(self.options["theta0"]) == 1:
+                self.options["theta0"] *= np.ones(d)
+            else:
+                raise ValueError(
+                    "the number of dim %s should be equal to the length of theta0 %s."
+                    % (d, len(self.options["theta0"]))
+                )
+
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
                 raise Exception(
