@@ -6,7 +6,6 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 import numpy as np
-import math
 from scipy import linalg, optimize
 from scipy.linalg import solve_triangular, cholesky
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -21,11 +20,7 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
 )
-from numpy import square
 from scipy.stats import multivariate_normal as m_norm
-
-
-# TODO : compute variance derivatives
 
 
 class KrgBased(SurrogateModel):
@@ -724,161 +719,6 @@ class KrgBased(SurrogateModel):
         return MSE
     
     
-    def _compute_r_and_dr(self, x):
-        """
-        Compute the correlation term and the derivation term of the kriging model
-        Parameters:
-        -----------
-        - x: array_like
-        Input
-        Returns:
-        --------
-        - r: array_like
-        The correlation term of the kriging model
-        - dr: array_like
-        The derivation of the correlation term of the kriging model
-        """
-        #init
-        mat_x =self.X_norma
-        xn_x = x - mat_x
-        dx = differences(x, Y=self.X_norma.copy()) 
-        d = self._componentwise_distance(dx)
-        n_eval, n_features_x = x.shape
-        theta= self.optimal_theta
-        dim=np.shape(x)[1]
-        
-        if self.options["corr"] == "squar_exp":
-            r = self._correlation_types[self.options["corr"]](
-              theta, d
-              ).reshape(n_eval, self.nt)
-            mat = -2 * np.einsum("j,ij->ij", theta.T, xn_x)
-            dr = np.einsum("i,ij->ij", r[0], mat)
-            return r.T, dr
-
-        elif self.options["corr"] == "abs_exp":
-            r = self._correlation_types[self.options["corr"]](
-             self.optimal_theta, d
-             ).reshape(n_eval, self.nt)
-
-            der = np.zeros(xn_x.shape)
-            for i in range(len(der)):
-                for j in range(dim):
-                    if xn_x[i][j] < 0:
-                        der[i][j] = -1
-                    else:
-                        der[i][j] = 1
-            mat = -np.einsum("j,ij->ij", theta.T, der)
-            dr = np.einsum("i,ij->ij", r[0], mat)
-
-            return r.T, dr
-
-        elif self.options["corr"] == "matern32":
-            abs_ = abs(xn_x)
-            abs_0 = np.dot(abs_, theta)
-
-            r = np.zeros((mat_x.shape[0], 1))
-            dr = np.zeros(mat_x.shape)
-
-            A = np.zeros((mat_x.shape[0], 1))
-            B = np.zeros((mat_x.shape[0], 1))
-
-            for j in range(len(abs_0)):
-                coef = 1
-                for k in range(dim):
-                    coef = coef * (1 + math.sqrt(3) * abs_[j][k] * theta[k])
-                B[j][0] = coef
-
-            for i in range(len(abs_0)):
-                A[i][0] = math.exp(-math.sqrt(3) * abs_0[i])
-
-            r = np.multiply(A, B)
-
-            der = np.zeros(xn_x.shape)
-            for i in range(len(der)):
-                for j in range(dim):
-                    if xn_x[i][j] < 0:
-                        der[i][j] = -1
-                    else:
-                        der[i][j] = 1
-
-            dB = np.zeros((mat_x.shape[0], dim))
-            for j in range(mat_x.shape[0]):
-                for k in range(dim):
-                    coef = 1
-                    for l in range(dim):
-                        if l != k:
-                            coef = coef * (1 + math.sqrt(3) * abs_[j][l] * theta[l])
-                    dB[j][k] = math.sqrt(3) * theta[k] * der[j][k] * coef
-
-            for j in range(mat_x.shape[0]):
-                for k in range(dim):
-                    dr[j][k] = (
-                        -math.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
-                    )
-
-            return r, dr
-
-        elif self.options["corr"] == "matern52":        
-            abs_ = abs(xn_x)
-            sqr = square(xn_x)
-            abs_0 = np.dot(abs_, theta)
-
-            r = np.zeros((mat_x.shape[0], 1))
-            dr = np.zeros(mat_x.shape)
-
-            A = np.zeros((mat_x.shape[0], 1))
-            B = np.zeros((mat_x.shape[0], 1))
-
-            for j in range(len(abs_0)):
-                coef = 1
-                for k in range(dim):
-                    coef = coef * (
-                        1
-                        + math.sqrt(5) * abs_[j][k] * theta[k]
-                        + (5.0 / 3) * sqr[j][k] * theta[k] ** 2
-                    )
-                B[j][0] = coef
-
-            for i in range(len(abs_0)):
-                A[i][0] = math.exp(-math.sqrt(5) * abs_0[i])
-
-            r = np.multiply(A, B)
-
-            der = np.zeros(xn_x.shape)
-            for i in range(len(der)):
-                for j in range(dim):
-                    if xn_x[i][j] < 0:
-                        der[i][j] = -1
-                    else:
-                        der[i][j] = 1
-
-            dB = np.zeros((mat_x.shape[0], dim))
-            for j in range(mat_x.shape[0]):
-                for k in range(dim):
-                    coef = 1
-                    for l in range(dim):
-                        if l != k:
-                            coef = coef * (
-                                1
-                                + math.sqrt(5) * abs_[j][l] * theta[l]
-                                + (5.0 / 3) * sqr[j][l] * theta[l] ** 2
-                            )
-                    dB[j][k] = (
-                        math.sqrt(5) * theta[k] * der[j][k]
-                        + 2 * (5.0 / 3) * der[j][k] * abs_[j][k] * theta[k] ** 2
-                    ) * coef
-
-            for j in range(mat_x.shape[0]):
-                for k in range(dim):
-                    dr[j][k] = (
-                        -math.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
-                    )
-
-            return r, dr
-
-        else:
-
-            raise ValueError("Jacobians are not available for this correlation kernel")
     
     
     def predict_derivatives_variances(self, x):
@@ -897,16 +737,21 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_offset) / self.X_scale
-        
+        theta=self.optimal_theta
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
         
         sigma2 = self.optimal_par["sigma2"]
-        theta= self.optimal_theta
+   
         cholesky_k =self.optimal_par["C"]
         
-        r, dr = self._compute_r_and_dr(x)
+   #     r, dr = self._compute_r_and_dr(x)
+
+        derivative_dic= {"x": x, "X_norma":self.X_norma,"nt":self.nt}
+        r,dr = self._correlation_types[self.options["corr"]](
+          theta, d, derivative_params=derivative_dic
+          )
        
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
@@ -1095,15 +940,6 @@ class KrgBased(SurrogateModel):
 
                         optimal_theta_res_2 = optimal_theta_res
 
-                        # optimal_theta_res_2 = optimal_theta = optimize.minimize(
-                        #     minus_reduced_likelihood_function,
-                        #     theta0_rand,
-                        #     constraints=[
-                        #         {"fun": con, "type": "ineq"} for con in constraints
-                        #     ],
-                        #     method="COBYLA",
-                        #     options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        # )
 
                     elif self.options["hyper_opt"] == "TNC":
 

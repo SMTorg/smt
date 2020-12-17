@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-
 from packaging import version
 from sklearn import __version__ as sklversion
 
@@ -123,14 +122,12 @@ def cross_distances(X):
 
     return D, ij.astype(np.int)
 
-
 def differences(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
     D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     return D.reshape((-1, X.shape[1]))
 
-
-def abs_exp(theta, d, grad_ind=None, hess_ind=None):
+def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     """
     Absolute exponential autocorrelation model.
@@ -182,11 +179,31 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None):
                 * r[i * nb_limit : (i + 1) * nb_limit, 0]
             )
             i += 1
+            
+    if derivative_params is not None :
+        x= derivative_params["x"]
+        X_norma= derivative_params["X_norma"]
+        nt=derivative_params["nt"]
+        n_eval, dim = x.shape
+        xn_x=x-X_norma
+        r=r.reshape(n_eval,nt)
+  
+        der = np.zeros(xn_x.shape)
+        for i in range(len(der)):
+            for j in range(dim):
+                if xn_x[i][j] < 0:
+                    der[i][j] = -1
+                else:
+                    der[i][j] = 1
+        mat = -np.einsum("j,ij->ij", theta.T, der)
+        dr = np.einsum("i,ij->ij", r[0], mat)
 
+        return r.T, dr
+    
     return r
 
 
-def squar_exp(theta, d, grad_ind=None, hess_ind=None):
+def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     """
     Squared exponential correlation model.
@@ -204,7 +221,6 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None):
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
         An array containing the values of the autocorrelation model.
     """
-
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
@@ -239,11 +255,23 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None):
                 * r[i * nb_limit : (i + 1) * nb_limit, 0]
             )
             i += 1
-
+    if derivative_params is not None :
+        x= derivative_params["x"]
+        X_norma= derivative_params["X_norma"]
+        nt=derivative_params["nt"]
+        n_eval, dim = x.shape
+        xn_x=x-X_norma
+        r=r.reshape(n_eval,nt)
+  
+        mat = -2 * np.einsum("j,ij->ij", theta.T, xn_x)
+        dr = np.einsum("i,ij->ij", r[0], mat)
+        
+        return r.T,dr
+    
     return r
 
 
-def matern52(theta, d, grad_ind=None, hess_ind=None):
+def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
@@ -328,10 +356,63 @@ def matern52(theta, d, grad_ind=None, hess_ind=None):
                 ]
 
             i += 1
+    if derivative_params is not None :
+        x= derivative_params["x"]
+        X_norma= derivative_params["X_norma"]
+        nt=derivative_params["nt"]
+        n_eval, dim = x.shape
+        xn_x=x-X_norma
+        r=r.reshape(n_eval,nt).T
+        
+        abs_ = abs(xn_x)
+        sqr = np.square(xn_x)
+        abs_0 = np.dot(abs_, theta)
+
+        dr = np.zeros(X_norma.shape)
+
+        A = np.zeros((X_norma.shape[0], 1))
+        for i in range(len(abs_0)):
+            A[i][0] = np.exp(-np.sqrt(5) * abs_0[i])
+
+
+        der = np.ones(xn_x.shape)
+        for i in range(len(der)):
+            for j in range(dim):
+                if xn_x[i][j] < 0:
+                    der[i][j] = -1
+
+        dB = np.zeros((X_norma.shape[0], dim))
+        for j in range(X_norma.shape[0]):
+            for k in range(dim):
+                coef = 1
+                for l in range(dim):
+                    if l != k:
+                        coef = coef * (
+                            1
+                            + np.sqrt(5) * abs_[j][l] * theta[l]
+                            + (5.0 / 3) * sqr[j][l] * theta[l] ** 2
+                        )
+                dB[j][k] = (
+                    np.sqrt(5) * theta[k] * der[j][k]
+                    + 2 * (5.0 / 3) * der[j][k] * abs_[j][k] * theta[k] ** 2
+                ) * coef
+
+        for j in range(X_norma.shape[0]):
+            for k in range(dim):
+                dr[j][k] = (
+                    -np.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                )
+
+        return r, dr
+
+
     return r
 
 
-def matern32(theta, d, grad_ind=None, hess_ind=None):
+    return r
+
+
+def matern32(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
@@ -404,11 +485,48 @@ def matern32(theta, d, grad_ind=None, hess_ind=None):
                     - fact_3 * M32[i * nb_limit : (i + 1) * nb_limit, 0]
                 )
             i += 1
+    if derivative_params is not None :
+        x= derivative_params["x"]
+        X_norma= derivative_params["X_norma"]
+        nt=derivative_params["nt"]
+        n_eval, dim = x.shape
+        xn_x=x-X_norma
+        r=r.reshape(n_eval,nt).T
+        
+        abs_ = abs(xn_x)
+        abs_0 = np.dot(abs_, theta)
+        dr = np.zeros(X_norma.shape)
+        
+        A = np.zeros((X_norma.shape[0], 1))
+        for i in range(len(abs_0)):
+            A[i][0] = np.exp(-np.sqrt(3) * abs_0[i])
+
+        der = np.ones(xn_x.shape)
+        for i in range(len(der)):
+            for j in range(dim):
+                if xn_x[i][j] < 0:
+                    der[i][j] = -1
+                    
+        dB = np.zeros((X_norma.shape[0], dim))
+        for j in range(X_norma.shape[0]):
+            for k in range(dim):
+                coef = 1
+                for l in range(dim):
+                    if l != k:
+                        coef = coef * (1 + np.sqrt(3) * abs_[j][l] * theta[l])
+                dB[j][k] = np.sqrt(3) * theta[k] * der[j][k] * coef
+
+        for j in range(X_norma.shape[0]):
+            for k in range(dim):
+                dr[j][k] = (
+                    -np.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                )
+        return r, dr
 
     return r
 
 
-def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
+def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=None):
     """
     Active learning exponential correlation model
 
@@ -466,6 +584,9 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
             if d_A_hess_ind == d_A_grad_ind:
                 fact = 1 + fact
             r[:, 0] = -d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+        
+    if derivative_params is not None :
+        raise ValueError("Jacobians are not available for this correlation kernel")
 
     return r
 
