@@ -1061,19 +1061,11 @@ class KrgBased(SurrogateModel):
         # FIXME: _check_param should be overriden in corresponding subclasses
         if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
             d = self.options["n_comp"]
-        elif self.name in ["MGP"]:
-            d = self.options["n_comp"] * self.nx
         else:
             d = self.nx
 
-        if self.name in ["MGP"]:
-            if self.options["corr"] != "act_exp":
-                raise ValueError("MGP must be used with act_exp correlation function")
-            if self.options["hyper_opt"] != "TNC":
-                raise ValueError("MGP must be used with TNC hyperparameters optimizer")
-        else:
-            if self.options["corr"] == "act_exp":
-                raise ValueError("act_exp correlation function must be used with MGP")
+        if self.options["corr"] == "act_exp":
+            raise ValueError("act_exp correlation function must be used with MGP")
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
@@ -1089,6 +1081,7 @@ class KrgBased(SurrogateModel):
                 raise Exception(
                     "Derivative values are needed for using the GEKPLS model."
                 )
+
         if self.name in ["KPLS"]:
             if self.options["corr"] not in ["squar_exp", "abs_exp"]:
                 raise ValueError(

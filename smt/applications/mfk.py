@@ -659,9 +659,3 @@ class MFK(KrgBased):
 
         if len(self.options["noise0"]) == 1:
             self.options["noise0"] = self.nlvl * self.options["noise0"]
-
-        if self.supports["training_derivatives"]:  # do we need this for MFK?
-            if not (1 in self.training_points[None]):
-                raise Exception(
-                    "Derivative values are needed for using the GEKPLS model."
-                )
