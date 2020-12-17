@@ -704,7 +704,7 @@ class KrgBased(SurrogateModel):
         r = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d
         ).reshape(n_eval, self.nt)
-
+       
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
@@ -741,16 +741,16 @@ class KrgBased(SurrogateModel):
         #init
         mat_x =self.X_norma
         xn_x = x - mat_x
-        theta= self.optimal_theta
-        dim=np.shape(x)[1]
-        dx = differences(x, Y=self.X_norma.copy())
+        dx = differences(x, Y=self.X_norma.copy()) 
         d = self._componentwise_distance(dx)
         n_eval, n_features_x = x.shape
-
+        theta= self.optimal_theta
+        dim=np.shape(x)[1]
+        
         if self.options["corr"] == "squar_exp":
             r = self._correlation_types[self.options["corr"]](
-             self.optimal_theta, d
-             ).reshape(n_eval, self.nt)
+              theta, d
+              ).reshape(n_eval, self.nt)
             mat = -2 * np.einsum("j,ij->ij", theta.T, xn_x)
             dr = np.einsum("i,ij->ij", r[0], mat)
             return r.T, dr
@@ -907,8 +907,7 @@ class KrgBased(SurrogateModel):
         cholesky_k =self.optimal_par["C"]
         
         r, dr = self._compute_r_and_dr(x)
-
-   
+       
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
@@ -946,12 +945,8 @@ class KrgBased(SurrogateModel):
             )
             
         dA = df.T - np.dot(dr.T, invKF)
-        print("dA",dA)
         p3 = np.dot(dA, D).T
-        print("D",D)
         p4 = np.dot(D.T, dA.T)
-        print("p3",p3)
-        print("p4",p4)
         prime = -p1 - p2 + p3 + p4
 
         derived_variance = []
