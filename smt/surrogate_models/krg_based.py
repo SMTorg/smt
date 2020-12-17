@@ -288,7 +288,7 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         nt = self.nt
-        if self.options["use_het_noise"]:
+        if self.options["use_het_noise"]:  # to be checked
             nt = self.nt_reps.sum()
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
@@ -1076,28 +1076,6 @@ class KrgBased(SurrogateModel):
         else:
             if self.options["corr"] == "act_exp":
                 raise ValueError("act_exp correlation function must be used with MGP")
-
-        if (
-            self.name in ["MFK"]
-            and isinstance(self.options["theta0"], np.ndarray)
-            and len(self.options["theta0"].shape) > 1
-        ):
-            if self.options["theta0"].shape != (self.nlvl, d):
-                raise ValueError(
-                    "the number of dim %s should coincide to the dimensions of theta0 %s."
-                    % ((d, self.nlvl), self.options["theta0"].shape)
-                )
-        elif self.name in ["MFK"] and len(self.options["theta0"]) == self.nlvl:
-            pass
-        else:
-            if len(self.options["theta0"]) != d:
-                if len(self.options["theta0"]) == 1:
-                    self.options["theta0"] *= np.ones(d)
-                else:
-                    raise ValueError(
-                        "the number of dim %s should be equal to the length of theta0 %s."
-                        % (d, len(self.options["theta0"]))
-                    )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
