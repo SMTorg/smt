@@ -746,13 +746,61 @@ class KrgBased(SurrogateModel):
    
         cholesky_k =self.optimal_par["C"]
         
-   #     r, dr = self._compute_r_and_dr(x)
+        derivative_dic= {"dx":dx, "cpls":self.coeff_pls}
 
-        derivative_dic= {"x": x, "X_norma":self.X_norma,"nt":self.nt}
         r,dr = self._correlation_types[self.options["corr"]](
           theta, d, derivative_params=derivative_dic
           )
-       
+        
+    
+        ###dr_num_spatial
+        l=1e-6
+        
+        x[0,0]-=l
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)        
+        dr3=np.zeros( (np.shape(r)[0],n_features_x ))
+        r001=self._correlation_types[self.options["corr"]](
+          theta, d
+          )
+        x[0,0]+=l
+        
+        x[0,0]+=l
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)        
+        r201=self._correlation_types[self.options["corr"]](
+          theta, d
+          )
+        x[0,0]-=l
+        
+        dr3[:,0]=(r201-r001).T[0]/(2*l)
+        x[0,1]-=l
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)     
+        
+
+        r002=self._correlation_types[self.options["corr"]](
+          theta, d
+          )
+        x[0,1]+=l
+        
+        x[0,1]+=l
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)          
+        r022=self._correlation_types[self.options["corr"]](
+          theta, d
+          )
+        x[0,1]-=l
+        dr3[:,1]=(r022-r002).T[0]/(2*l)
+        
+        
+        print("dr_numeric_spatial",dr3)
+        print("dr_formula",dr)
+        print("relative_err", np.sum(dr-dr3)/np.sum(dr))
+  #      print("somme",np.sum(dr3))
+
+
+        
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
