@@ -39,8 +39,8 @@ class KPLS(KrgBased):
 
         return X, y
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx, opt=0,return_derivative=False):
         d = componentwise_distance_PLS(
-            dx, self.options["corr"], self.options["n_comp"], self.coeff_pls
+            dx, self.options["corr"], self.options["n_comp"], self.coeff_pls,return_derivative=return_derivative
         )
         return d

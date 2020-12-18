@@ -741,12 +741,12 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        
+        dd = self._componentwise_distance(dx,return_derivative=True)
         sigma2 = self.optimal_par["sigma2"]
    
         cholesky_k =self.optimal_par["C"]
         
-        derivative_dic= {"dx":dx, "cpls":self.coeff_pls}
+        derivative_dic= {"dx":dx, "dd":dd}
 
         r,dr = self._correlation_types[self.options["corr"]](
           theta, d, derivative_params=derivative_dic
@@ -794,19 +794,17 @@ class KrgBased(SurrogateModel):
         dr3[:,1]=(r022-r002).T[0]/(2*l)
         
         
-        print("dr_numeric_spatial",dr3)
-        print("dr_formula",dr)
-        print("relative_err", np.sum(dr-dr3)/np.sum(dr))
+    #    print("dr_numeric_spatial",dr3)
+   #     print("dr_formula",dr)
+        print("relative_err", np.sum(dr-dr3))
   #      print("somme",np.sum(dr3))
-
-
+        dr=dr3
+    
         
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
-        mat_x =self.X_norma.copy()
-        xn_x = x - mat_x
-        abs_ = abs(xn_x)
+        abs_ = abs(dx)
 
         p1 = np.dot(dr.T, invKr).T
 

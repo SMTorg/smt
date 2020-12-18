@@ -192,17 +192,10 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             i += 1
             
     if derivative_params is not None :
-        r=r.T
         dx= derivative_params["dx"]
-        
-        #derivative of absolute value : +1/-1
-        der = np.ones(dx.shape)
-        for i in range(len(der)):
-            for j in range(n_components):
-                if dx[i][j] < 0:
-                    der[i][j] = -1
-
-        mat = -np.einsum("j,ij->ij", theta.T, der)
+        dd = derivative_params["dd"]
+        r=r.T
+        mat = -np.einsum("j,ij->ij", theta.T, dd)
         dr = np.einsum("i,ij->ij", r[0], mat)
 
         return r.T, dr
@@ -275,45 +268,13 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             i += 1
     if derivative_params is not None :
         dx= derivative_params["dx"]
+        dd= derivative_params["dd"]
         r=r.T
-        abs_=np.abs(dx)
-        der = np.ones(dx.shape)
-        if np.abs(np.sum(np.square(dx)-d))< 1e-10 :
-            print("krg")
-            mat = -2 * np.einsum("j,ij->ij", theta.T,dx)
-            dr = np.einsum("i,ij->ij", r[0], mat) 
-            return r.T,dr
-        
-        for i in range(len(der)):
-            for j in range(n_components):
-                if dx[i][j] < 0:
-                    der[i][j] = -1 
-                    
-        # for i in range(len(dx)):
-        #     coef_sqr[i,:]=d[i,:]/np.square(abs_[i,:])
-        # print( np.einsum("j,ij->ij", theta.T, coef_sqr))
-        # coef_sqr=coef_sqr*der
-        else : 
-            abs_=np.abs(dx)
-            der = np.ones(dx.shape)
-            for i in range(dx.shape[0]):
-                for j in range(dx.shape[1]):
-                    if dx[i][j] < 0:
-                        der[i][j] = -1
-            print(der)
-            coeff_pls=derivative_params["cpls"]
-            dr=np.zeros(dx.shape)
-            for i in range(dx.shape[0]):
-                 for j in range(dx.shape[1]):
-                     coef = 0
-                     for l in range(coeff_pls.shape[1]):
-                         coef = coef + theta[l] * coeff_pls[j][l] ** 2
-                     coef = -2 * coef
-                     dr[i][j] = coef * der[i][j] * abs_[i][j] * r[0][i]
+        mat = -np.einsum("j,ij->ij", theta.T, dd)         
+        dr = np.einsum("i,ij->ij", r[0], mat)
 
-            
-            return r.T,dr
-        
+        return r.T,dr
+    
     return r
 
 
@@ -470,9 +431,6 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
                 )
 
         return r, dr
-
-
-    return r
 
 
     return r
@@ -816,7 +774,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 
-def componentwise_distance(D, corr, dim):
+def componentwise_distance(D, corr, dim,return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -835,6 +793,9 @@ def componentwise_distance(D, corr, dim):
     dim: int
             - Number of dimension.
 
+    return_derivative: boolean
+            - Return spatial derivative of cross-spatial-correlation-distance
+            
     Returns
     -------
 
@@ -848,28 +809,45 @@ def componentwise_distance(D, corr, dim):
 
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == "squar_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
-                    D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
-                )
-            elif corr == "act_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
-                    i * nb_limit : (i + 1) * nb_limit, :
-                ]
+    if return_derivative==False : 
+        while True:
+            if i * nb_limit > D_corr.shape[0]:
+                return D_corr
             else:
-                # abs_exp or matern
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
-                    D[i * nb_limit : (i + 1) * nb_limit, :]
-                )
-            i += 1
+                if corr == "squar_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
+                    )
+                elif corr == "act_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
+                        i * nb_limit : (i + 1) * nb_limit, :
+                    ]
+                else:
+                    # abs_exp or matern
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
+                        D[i * nb_limit : (i + 1) * nb_limit, :]
+                    )
+                i += 1
+    else : 
+        if corr == "squar_exp":
+            return 2*D
+        elif corr == "act_exp":
+            raise ValueError("this option is not implemented for active learning")
+        else:
+            # abs_exp or matern
+            #derivative of absolute value : +1/-1
+            der = np.ones(D.shape)
+            for i in range(D.shape[0]):
+                for j in range(D.shape[1]):
+                    if D[i][j] < 0:
+                        der[i][j] = -1
+            return der
+
+        
+        i += 1        
 
 
-def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
+def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -890,7 +868,9 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
 
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
-
+            
+    return_derivative: boolean
+            - Return spatial derivative of cross-spatial-correlation-distance
     Returns
     -------
 
@@ -904,21 +884,51 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
 
     D_corr = np.zeros((D.shape[0], n_comp))
     i, nb_limit = 0, int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == "squar_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                    D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
-                )
+    if return_derivative==False :
+        while True:
+            if i * nb_limit > D_corr.shape[0]:
+             #   print("D_corr",D_corr)
+                return D_corr
             else:
-                # abs_exp
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                    np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]), np.abs(coeff_pls)
-                )
-            i += 1
+                if corr == "squar_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
+                    )
+                else:
+                    # abs_exp
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
+                        np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]), np.abs(coeff_pls)
+                    )
+                i += 1
+
+    else :
+        if corr == "squar_exp":
+            D_corr=np.zeros(np.shape(D))
+            for i in range(D.shape[0]):
+                for j in range(D.shape[1]):
+                    coef = 0
+                    for l in range(n_comp):
+                        coef = coef + coeff_pls[j][l] ** 2
+                    coef = 2 * coef
+                    D_corr[i][j]=coef*D[i][j]
+            return D_corr   
+                    
+        else : 
+             # abs_exp
+            D_corr=np.zeros(np.shape(D))
+            der= np.ones(np.shape(D))
+            for i in range(D.shape[0]):
+                for j in range(D.shape[1]):
+                    if D[i][j] < 0:
+                      der[i][j] = -1
+                    coef = 0
+                    for l in range(n_comp):
+                        coef = coef + coeff_pls[j][l] ** 2
+                    D_corr[i][j]=coef*der[i][j]  
+                    
+            return D_corr
+    
+
 
 
 # sklearn.gaussian_process.regression_models
