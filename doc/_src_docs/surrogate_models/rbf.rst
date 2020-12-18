@@ -65,7 +65,7 @@ Usage
   from smt.surrogate_models import RBF
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
