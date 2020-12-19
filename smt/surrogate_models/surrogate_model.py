@@ -379,6 +379,7 @@ class SurrogateModel(object):
         x2 = np.copy(x)
         s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
+
     def predict_derivatives_variances(self, x):
         """
         Give the derivation of the variance of the kriging model (for one input)
@@ -419,10 +420,7 @@ class SurrogateModel(object):
         self.printer()
 
         return y.reshape((n, self.ny))
-    
-    
-    
-    
+
     def _initialize(self):
         """
         Implemented by surrogate models to declare options and declare what they support (optional).

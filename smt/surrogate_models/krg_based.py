@@ -698,7 +698,7 @@ class KrgBased(SurrogateModel):
         r = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d
         ).reshape(n_eval, self.nt)
-       
+
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
@@ -715,11 +715,8 @@ class KrgBased(SurrogateModel):
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
-        return MSE  
-    
-    
-    
-    
+        return MSE
+
     def predict_derivatives_variances(self, x):
         """
         Give the derivation of the variance of the kriging model (for one input)
@@ -732,25 +729,26 @@ class KrgBased(SurrogateModel):
         - derived_variance: array_like
         The jacobian of the variance of the kriging model
         """
-        
-        
+
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_offset) / self.X_scale
-        theta=self.optimal_theta
+        theta = self.optimal_theta
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx) 
-        dd = self._componentwise_distance(dx,theta=self.optimal_theta,return_derivative=True)
+        d = self._componentwise_distance(dx)
+        dd = self._componentwise_distance(
+            dx, theta=self.optimal_theta, return_derivative=True
+        )
         sigma2 = self.optimal_par["sigma2"]
-   
-        cholesky_k =self.optimal_par["C"]
-        
-        derivative_dic= {"dx":dx, "dd":dd}
 
-        r,dr = self._correlation_types[self.options["corr"]](
-          theta, d, derivative_params=derivative_dic
-          )        
+        cholesky_k = self.optimal_par["C"]
+
+        derivative_dic = {"dx": dx, "dd": dd}
+
+        r, dr = self._correlation_types[self.options["corr"]](
+            theta, d, derivative_params=derivative_dic
+        )
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
@@ -760,9 +758,9 @@ class KrgBased(SurrogateModel):
 
         p2 = np.dot(invKr.T, dr)
 
-        f_x=self._regression_types[self.options["poly"]](x).T
+        f_x = self._regression_types[self.options["poly"]](x).T
         F = self.F
-        
+
         rho2 = solve_triangular(cholesky_k, F, lower=True)
         invKF = solve_triangular(cholesky_k.T, rho2)
 
@@ -773,7 +771,7 @@ class KrgBased(SurrogateModel):
         rho3 = cholesky(B, lower=True)
         invBAt = solve_triangular(rho3, A.T, lower=True)
         D = solve_triangular(rho3.T, invBAt)
-       
+
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
@@ -784,7 +782,7 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for ordinary kriging or "
                 + "universal kriging using a linear trend"
             )
-            
+
         dA = df.T - np.dot(dr.T, invKF)
         p3 = np.dot(dA, D).T
         p4 = np.dot(D.T, dA.T)
@@ -792,12 +790,12 @@ class KrgBased(SurrogateModel):
 
         derived_variance = []
         x_std = np.resize(self.X_scale, self.nx)
-        
+
         for i in range(len(x_std)):
-            derived_variance.append(sigma2 * prime.T[i] /  x_std[i])
+            derived_variance.append(sigma2 * prime.T[i] / x_std[i])
 
         return np.array(derived_variance).T
-        
+
     def _optimize_hyperparam(self, D):
         """
         This function evaluates the Gaussian Process model at x.
@@ -935,7 +933,6 @@ class KrgBased(SurrogateModel):
                         )
 
                         optimal_theta_res_2 = optimal_theta_res
-
 
                     elif self.options["hyper_opt"] == "TNC":
 
