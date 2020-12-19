@@ -715,7 +715,7 @@ class KrgBased(SurrogateModel):
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
-        return MSE
+        return MSE  
     
     
     
@@ -732,7 +732,8 @@ class KrgBased(SurrogateModel):
         - derived_variance: array_like
         The jacobian of the variance of the kriging model
         """
-  
+        
+        
         # Initialization
         n_eval, n_features_x = x.shape
         x = (x - self.X_offset) / self.X_scale
@@ -749,8 +750,7 @@ class KrgBased(SurrogateModel):
 
         r,dr = self._correlation_types[self.options["corr"]](
           theta, d, derivative_params=derivative_dic
-          )
-    
+          )        
         rho1 = solve_triangular(cholesky_k, r, lower=True)
         invKr = solve_triangular(cholesky_k.T, rho1)
 
