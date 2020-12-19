@@ -850,7 +850,7 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
 
 
 def componentwise_distance_PLS(
-    D, corr, n_comp, coeff_pls, theta, return_derivative=False
+    D, corr, n_comp, coeff_pls, theta=None, return_derivative=False
 ):
 
     """
