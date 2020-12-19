@@ -191,14 +191,11 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             )
             i += 1
             
-    if derivative_params is not None :
-        dx= derivative_params["dx"]
+    if derivative_params is not None :        
         dd = derivative_params["dd"]
         r=r.T
-        mat = -np.einsum("j,ij->ij", theta.T, dd)
-        dr = np.einsum("i,ij->ij", r[0], mat)
-
-        return r.T, dr
+        dr = -np.einsum("i,ij->ij", r[0], dd)
+        return r.T, dr  
     
     return r
 
@@ -267,11 +264,9 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             )
             i += 1
     if derivative_params is not None :
-        dx= derivative_params["dx"]
         dd= derivative_params["dd"]
         r=r.T
-        mat = -np.einsum("j,ij->ij", theta.T, dd)         
-        dr = np.einsum("i,ij->ij", r[0], mat)
+        dr = -np.einsum("i,ij->ij", r[0], dd)
 
         return r.T,dr
     
@@ -774,7 +769,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 
-def componentwise_distance(D, corr, dim,return_derivative=False):
+def componentwise_distance(D, corr, dim,theta=None, return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -793,8 +788,11 @@ def componentwise_distance(D, corr, dim,return_derivative=False):
     dim: int
             - Number of dimension.
 
+    theta: np.ndarray [n_comp]
+            - The theta values associated to the coeff_pls.
+                    
     return_derivative: boolean
-            - Return spatial derivative of cross-spatial-correlation-distance
+            - Return d/dx derivative of theta*cross-spatial-correlation-distance
             
     Returns
     -------
@@ -810,7 +808,7 @@ def componentwise_distance(D, corr, dim,return_derivative=False):
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, int(limit)
     if return_derivative==False : 
-        while True:
+         while True:
             if i * nb_limit > D_corr.shape[0]:
                 return D_corr
             else:
@@ -829,8 +827,11 @@ def componentwise_distance(D, corr, dim,return_derivative=False):
                     )
                 i += 1
     else : 
+        if theta is None : 
+            raise ValueError("Missing theta to compute spatial derivative of theta cross-spatial correlation distance")
         if corr == "squar_exp":
-            return 2*D
+            D_corr =2* np.einsum("j,ij->ij", theta.T, D)
+            return D_corr   
         elif corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
         else:
@@ -841,13 +842,13 @@ def componentwise_distance(D, corr, dim,return_derivative=False):
                 for j in range(D.shape[1]):
                     if D[i][j] < 0:
                         der[i][j] = -1
-            return der
-
-        
+            D_corr =np.einsum("j,ij->ij", theta.T, der)
+            return D_corr
+      
         i += 1        
 
 
-def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=False):
+def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,theta, return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -869,8 +870,11 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=Fals
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
             
+    theta: np.ndarray [n_comp]
+            - The theta values associated to the coeff_pls.
+                    
     return_derivative: boolean
-            - Return spatial derivative of cross-spatial-correlation-distance
+            - Return d/dx derivative of theta*cross-spatial-correlation-distance
     Returns
     -------
 
@@ -887,7 +891,6 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=Fals
     if return_derivative==False :
         while True:
             if i * nb_limit > D_corr.shape[0]:
-             #   print("D_corr",D_corr)
                 return D_corr
             else:
                 if corr == "squar_exp":
@@ -902,13 +905,16 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=Fals
                 i += 1
 
     else :
+        if theta is None : 
+            raise ValueError("Missing theta to compute spatial derivative of theta cross-spatial correlation distance")
+      
         if corr == "squar_exp":
             D_corr=np.zeros(np.shape(D))
             for i in range(D.shape[0]):
                 for j in range(D.shape[1]):
                     coef = 0
                     for l in range(n_comp):
-                        coef = coef + coeff_pls[j][l] ** 2
+                        coef = coef + theta[l]* coeff_pls[j][l] ** 2
                     coef = 2 * coef
                     D_corr[i][j]=coef*D[i][j]
             return D_corr   
@@ -923,7 +929,7 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls,return_derivative=Fals
                       der[i][j] = -1
                     coef = 0
                     for l in range(n_comp):
-                        coef = coef + coeff_pls[j][l] ** 2
+                        coef = coef +theta[l]* np.abs(coeff_pls[j][l])
                     D_corr[i][j]=coef*der[i][j]  
                     
             return D_corr

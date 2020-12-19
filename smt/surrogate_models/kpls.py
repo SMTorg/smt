@@ -36,11 +36,10 @@ class KPLS(KrgBased):
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
         self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-
         return X, y
 
-    def _componentwise_distance(self, dx, opt=0,return_derivative=False):
+    def _componentwise_distance(self, dx, opt=0,theta=None,return_derivative=False):
         d = componentwise_distance_PLS(
-            dx, self.options["corr"], self.options["n_comp"], self.coeff_pls,return_derivative=return_derivative
+            dx, self.options["corr"], self.options["n_comp"], self.coeff_pls,theta=theta, return_derivative=return_derivative
         )
         return d

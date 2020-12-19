@@ -13,6 +13,6 @@ class KRG(KrgBased):
         super(KRG, self)._initialize()
         self.name = "Kriging"
 
-    def _componentwise_distance(self, dx, opt=0,return_derivative=False):
-        d = componentwise_distance(dx, self.options["corr"], self.nx,return_derivative=return_derivative)
+    def _componentwise_distance(self, dx, opt=0,theta=None,return_derivative=False):
+        d = componentwise_distance(dx, self.options["corr"], self.nx, theta=theta,return_derivative=return_derivative)
         return d
