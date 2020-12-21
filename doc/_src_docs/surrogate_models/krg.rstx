@@ -23,12 +23,13 @@ Four types of correlation functions are available in SMT:
   \text{Squared Exponential (Gaussian) correlation function}
   
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
-  \text{Mat\'ern 5/2 correlation function}
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \\
+       \quad \text{.} \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
+  \text{Matérn 5/2 correlation function}
   
 .. math ::
   \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
-  \text{Mat\'ern 3/2 correlation function}
+  \text{Matérn 3/2 correlation function}
   
 These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
 
