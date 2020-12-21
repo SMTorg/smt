@@ -274,10 +274,10 @@ class Test(SMTestCase):
             diff_d = (y_predicted[3][0] - y_predicted[4][0]) / (2 * e)
 
             jac_rel_error1 = abs((y_jacob[0] - diff_g) / y_jacob[0])
-            self.assert_error(jac_rel_error1, 1e-8, atol=1e-3, rtol=1e-3)
+            self.assert_error(jac_rel_error1, 1e-3, atol=0.01, rtol=0.01)
 
             jac_rel_error2 = abs((y_jacob[1] - diff_d) / y_jacob[1])
-            self.assert_error(jac_rel_error2, 1e-8, atol=1e-3, rtol=1e-3)
+            self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
 
     #      jac_rel_error = (jac_rel_error1 + jac_rel_error2) / 2
 
