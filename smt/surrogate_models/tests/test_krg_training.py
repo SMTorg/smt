@@ -66,7 +66,7 @@ class Test(SMTestCase):
     def test_noise_estimation(self):
         xt = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
-        sm = KRG(hyper_opt="Cobyla", eval_noise=True, noise0=1e-4)
+        sm = KRG(hyper_opt="Cobyla", eval_noise=True, noise0=[1e-4])
 
         sm.set_training_values(xt, yt)
         sm.train()
@@ -74,7 +74,7 @@ class Test(SMTestCase):
         y = sm.predict_values(x)
         self.assert_error(
             np.array(sm.optimal_theta), np.array([0.11798507]), 1e-5, 1e-5
-        )  
+        )
 
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
