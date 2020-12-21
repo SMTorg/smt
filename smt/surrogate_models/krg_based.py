@@ -205,11 +205,13 @@ class KrgBased(SurrogateModel):
         equivalent to maximizing the likelihood of the assumed joint Gaussian
         distribution of the observations y evaluated onto the design of
         experiments X.
+
         Parameters
         ----------
         theta: list(n_comp), optional
             - An array containing the autocorrelation parameters at which the
               Gaussian Process model parameters should be determined.
+
         Returns
         -------
         reduced_likelihood_function_value: real
@@ -330,11 +332,13 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_gradient(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        Arguments
+
+        Parameters
         ---------
         theta : list(n_comp), optional
             - An array containing the autocorrelation parameters at which the
               Gaussian Process model parameters should be determined.
+
         Returns
         -------
         grad_red : np.ndarray (dim,1)
@@ -445,11 +449,13 @@ class KrgBased(SurrogateModel):
     def _reduced_likelihood_hessian(self, theta):
         """
         Evaluates the reduced_likelihood_gradient at a set of hyperparameters.
-        Arguments
-        ---------
+
+        Parameters
+        ----------
         theta : list(n_comp), optional
             - An array containing the autocorrelation parameters at which the
               Gaussian Process model parameters should be determined.
+
         Returns
         -------
         hess : np.ndarray
@@ -627,10 +633,12 @@ class KrgBased(SurrogateModel):
     def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
+
         Parameters
         ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+
         Returns
         -------
         y : np.ndarray
@@ -659,12 +667,14 @@ class KrgBased(SurrogateModel):
     def _predict_derivatives(self, x, kx):
         """
         Evaluates the derivatives at a set of points.
+
         Parameters
         ---------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
         kx : int
             The 0-based index of the input variable with respect to which derivatives are desired.
+
         Returns
         -------
         y : np.ndarray
@@ -757,11 +767,13 @@ class KrgBased(SurrogateModel):
     def _optimize_hyperparam(self, D):
         """
         This function evaluates the Gaussian Process model at x.
+
         Parameters
         ----------
         D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
+
         Returns
         -------
         best_optimal_rlf_value: real
