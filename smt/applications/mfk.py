@@ -123,7 +123,10 @@ class MFK(KrgBased):
             desc="Turning this option to True, forces variance to zero at HF samples ",
         )
         declare(
-            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameters"
+            "noise0",
+            [1e-6],
+            types=(list, np.ndarray),
+            desc="Initial noise hyperparameters",
         )
         self.name = "MFK"
 
@@ -197,7 +200,7 @@ class MFK(KrgBased):
         n_samples = self.nt_all
 
         # initialize lists
-        self.noise = nlevel * [0]
+        self.noise_all = nlevel * [0]
         self.D_all = nlevel * [0]
         self.F_all = nlevel * [0]
         self.p_all = nlevel * [0]
@@ -208,30 +211,44 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
-        if isinstance(self.options["noise0"], float):
-            self.options["noise0"] = self.nlvl * [self.options["noise0"]]
         noise0 = self.options["noise0"].copy()
-
-        if (
-            isinstance(self.options["theta0"], list)
-            or len(self.options["theta0"].shape) == 1
-        ):
-            if len(self.options["theta0"]) == self.nx:
-                self.options["theta0"] = np.repeat(
-                    np.array(self.options["theta0"]).reshape(1, -1), self.nlvl, axis=0
-                )
-            elif len(self.options["theta0"]) == self.nlvl:
-                self.options["theta0"] = np.repeat(
-                    np.array(self.options["theta0"]).reshape(-1, 1), self.nx, axis=1
-                )
         theta0 = self.options["theta0"].copy()
 
         for lvl in range(nlevel):
-            self.options["noise0"] = noise0[lvl]
+            self.options["noise0"] = [noise0[lvl]]
             self.options["theta0"] = theta0[lvl, :]
 
             self.X_norma = self.X_norma_all[lvl]
             self.y_norma = self.y_norma_all[lvl]
+
+            if self.options["eval_noise"] and self.options["use_het_noise"]:
+                # hetGP works with unique design variables
+                (
+                    self.X_norma,
+                    self.index_unique,  # do we need to store it?
+                    self.nt_reps,  # do we need to store it?
+                ) = np.unique(
+                    self.X_norma, return_inverse=True, return_counts=True, axis=0
+                )
+                self.nt_all[lvl] = self.X_norma.shape[0]
+
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt_all[lvl]):
+                    y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                for i in range(self.nt_all[lvl]):
+                    diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.noise[i] = np.std(diff, ddof=1) ** 2
+                self.noise = self.noise.tolist() / self.nt_reps
+                self.y_norma = y_norma_unique
+
+                self.X_norma_all[lvl] = self.X_norma
+                self.y_norma_all[lvl] = self.y_norma
+
             # Calculate matrix of distances D between samples
             self.D_all[lvl] = cross_distances(self.X_norma)
 
@@ -291,8 +308,8 @@ class MFK(KrgBased):
             ) = self._optimize_hyperparam(D)
             if self.options["eval_noise"]:
                 tmp_list = self.optimal_theta[lvl]
-                self.optimal_theta[lvl] = tmp_list[:-1]
-                self.noise[lvl] = tmp_list[-1]
+                self.optimal_theta[lvl] = tmp_list[0 : D.shape[1]]
+                self.noise_all[lvl] = tmp_list[D.shape[1] :]
             del self.y_norma, self.D
 
         self.options["noise0"] = noise0
@@ -467,7 +484,10 @@ class MFK(KrgBased):
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
         sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
         MSE[:, 0] = sigma2 * (
-            1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            # 1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            1
+            - (r_t ** 2).sum(axis=0)
+            + (u_ ** 2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -501,7 +521,10 @@ class MFK(KrgBased):
             sigma2_rhos.append(sigma2_rho)
 
             MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-                1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                # 1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                1
+                - (r_t ** 2).sum(axis=0)
+                + (u_ ** 2).sum(axis=0)
             )
 
         # scaled predictor
@@ -599,3 +622,40 @@ class MFK(KrgBased):
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
         return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+
+    def _check_param(self):
+        """
+        Overrides KrgBased implementation
+        This function checks some parameters of the model.
+        """
+
+        d = self.nx
+
+        if self.options["corr"] == "act_exp":
+            raise ValueError("act_exp correlation function must be used with MGP")
+
+        if isinstance(self.options["theta0"], np.ndarray):
+            if self.options["theta0"].shape != (self.nlvl, d):
+                raise ValueError(
+                    "the number of dim %s should coincide to the dimensions of theta0 %s."
+                    % ((self.nlvl, d), self.options["theta0"].shape)
+                )
+        else:
+            if len(self.options["theta0"]) != d:
+                if len(self.options["theta0"]) == 1:
+                    self.options["theta0"] *= np.ones((self.nlvl, d))
+                elif len(self.options["theta0"]) == self.nlvl:
+                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
+                        -1, 1
+                    )
+                    self.options["theta0"] *= np.ones((1, d))
+                else:
+                    raise ValueError(
+                        "the number of dim %s or levels %s should be equal to the length of theta0 %s."
+                        % (d, self.nlvl, len(self.options["theta0"]))
+                    )
+            else:
+                self.options["theta0"] *= np.ones((self.nlvl, 1))
+
+        if len(self.options["noise0"]) == 1:
+            self.options["noise0"] = self.nlvl * self.options["noise0"]

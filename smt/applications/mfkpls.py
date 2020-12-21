@@ -57,7 +57,12 @@ class MFKPLS(KrgBased):
             values=(True, False),
             desc="noise evaluation flag",
         )
-        declare("noise0", 1e-6, types=float, desc="Initial noise hyperparameter")
+        declare(
+            "noise0",
+            [1e-6],
+            types=(list, np.ndarray),
+            desc="Initial noise hyperparameter",
+        )
         self.name = "MFKPLS"
 
     def _componentwise_distance(self, dx, opt=0):

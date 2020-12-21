@@ -12,16 +12,33 @@ Kriging is an interpolating model that is a linear combination of a known functi
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
 
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
-Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions
+Four types of correlation functions are available in SMT:
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
-  \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
-
-These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+ \\
+  \text{Exponential correlation function (Ornstein-Uhlenbeck process)}
+  
+.. math ::
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right), \\
+  \text{Squared Exponential (Gaussian) correlation function}
+  
+.. math ::
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
+  \text{Mat\'ern 5/2 correlation function}
+  
+.. math ::
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
+  \text{Mat\'ern 3/2 correlation function}
+  
+These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
 
 The deterministic term :math:`\sum\limits_{i=1}^k\beta_i f_i({\bf x})` can be replaced by a constant, a linear model, or a quadratic model.
 These three types are available in SMT.
+
+In the implementations, data are normalized by substracting the mean from each variable (indexed by columns in X), and then dividing the values of each variable by its standard deviation:
+
+.. math ::
+  X_{\text{norm}} = \frac{X - X_{\text{mean}}}{X_{\text{std}}}
 
 More details about the kriging approach could be found in [1]_.
 
