@@ -229,9 +229,9 @@ class TestVFM(SMTestCase):
             yp = M.predict_values(np.atleast_2d(xt[0]))
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
 
-        self.assert_error(yp, np.array([[0.01569909, 0.3669085]]), atol=1e-2, rtol=1e-2)
+        self.assert_error(yp, np.array([[0.01569909, 0.3669085]]), atol=2e-2, rtol=2e-2)
         self.assert_error(
-            dyp, np.array([[0.11448649, 5.2084347]]), atol=4e-1, rtol=7e-2
+            dyp, np.array([[0.11448649, 5.2084347]]), atol=5e-1, rtol=8e-2
         )
 
     def test_QP_KRG_mult(self):
