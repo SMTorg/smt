@@ -1,69 +1,49 @@
 Kriging
 =======
-
 Kriging is an interpolating model that is a linear combination of a known function :math:`f_i({\bf x})` which is added to a realization of a stochastic process :math:`Z({\bf x})`
-
 .. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
-
 :math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
-
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
-
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
-Four types of correlation functions are available in SMT:
-
+Four types of correlation functions are available in SMT.
+Exponential correlation function (Ornstein-Uhlenbeck process):
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+ \\
-  \text{Exponential correlation function (Ornstein-Uhlenbeck process)}
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
+Squared Exponential (Gaussian) correlation function:
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right), \\
-  \text{Squared Exponential (Gaussian) correlation function}
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
+Matérn 5/2 correlation function:
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
-  \text{Mat\'ern 5/2 correlation function}
-  
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+Matérn 3/2 correlation function:
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
-  \text{Mat\'ern 3/2 correlation function}
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
 These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
-
 The deterministic term :math:`\sum\limits_{i=1}^k\beta_i f_i({\bf x})` can be replaced by a constant, a linear model, or a quadratic model.
 These three types are available in SMT.
-
 In the implementations, data are normalized by substracting the mean from each variable (indexed by columns in X), and then dividing the values of each variable by its standard deviation:
-
 .. math ::
   X_{\text{norm}} = \frac{X - X_{\text{mean}}}{X_{\text{std}}}
-
-More details about the kriging approach could be found in [1]_.
-
+More details about the Kriging approach could be found in [1]_.
 Kriging with categorical or integer variables 
 ---------------------------------------------
-
 The goal is to be able to build a model for mixed typed variables. 
 This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
-
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
 then we round in the prediction to the output dimension giving the greatest continuous prediction.
-
 More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
-
-Implementation Note: Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
-
+Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
-
 .. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35.
-
 Usage
 -----
-
 .. code-block:: python
 
   import numpy as np
@@ -105,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0029919
   ___________________________________________________________________________
      
    Evaluation
@@ -121,10 +101,8 @@ Usage
 .. figure:: krg_Test_test_krg.png
   :scale: 80 %
   :align: center
-
 Usage with mixed variables
 --------------------------
-
 .. code-block:: python
 
   import numpy as np
@@ -176,10 +154,8 @@ Usage with mixed variables
 .. figure:: krg_Test_test_mixed_int_krg.png
   :scale: 80 %
   :align: center
-
 Options
 -------
-
 .. list-table:: List of options
   :header-rows: 1
   :widths: 15, 10, 20, 20, 30
@@ -225,11 +201,21 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
      -  ['Cobyla', 'TNC']
@@ -241,7 +227,18 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  1e-06
+     -  [1e-06]
      -  None
-     -  ['float', 'list']
+     -  ['list', 'ndarray']
      -  Initial noise hyperparameter
+  *  -  noise_bounds
+     -  [1e-16, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
+Collapse
