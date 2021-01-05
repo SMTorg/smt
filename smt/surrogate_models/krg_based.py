@@ -94,7 +94,7 @@ class KrgBased(SurrogateModel):
             types=(list, np.ndarray),
             desc="Initial noise hyperparameter",
         )
-        declare(  # I let the bounds previously imposed by default (how were they fixed?)
+        declare(
             "noise_bounds",
             [1e-16, 1e10],
             types=(list, np.ndarray),
@@ -107,6 +107,14 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
+        declare(
+            "is_het_noise_given",
+            False,
+            types=bool,
+            values=(True, False),
+            desc="given heteroscedastic noise flag",
+        )
+
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -134,28 +142,29 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X, y)
 
-        if self.options["eval_noise"] and self.options["use_het_noise"]:
-            # hetGP works with unique design variables
-            (
-                self.X_norma,
-                self.index_unique,  # do we need to store it?
-                self.nt_reps,  # do we need to store it?
-            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
-            self.nt = self.X_norma.shape[0]
+        if self.options["use_het_noise"]:
+            if self.options["is_het_noise_given"]:
+                self.noise = np.array(self.options["noise0"])
+            else:
+                # hetGP works with unique design variables when noise variance are not given
+                (self.X_norma, index_unique, nt_reps,) = np.unique(
+                    self.X_norma, return_inverse=True, return_counts=True, axis=0
+                )
+                self.nt = self.X_norma.shape[0]
 
-            # computing the mean of the output per unique design variable (see Binois et al., 2018)
-            y_norma_unique = []
-            for i in range(self.nt):
-                y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt):
+                    y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
 
-            # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-            self.noise = self.options["noise0"] * np.ones(self.nt)
-            for i in range(self.nt):
-                diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                if np.sum(diff ** 2) != 0.0:
-                    self.noise[i] = np.std(diff, ddof=1) ** 2
-            self.noise = self.noise.tolist() / self.nt_reps
-            self.y_norma = y_norma_unique
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.noise = self.options["noise0"] * np.ones(self.nt)
+                for i in range(self.nt):
+                    diff = self.y_norma[index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.noise[i] = np.std(diff, ddof=1) ** 2
+                self.noise = self.noise / nt_reps
+                self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
@@ -1072,6 +1081,14 @@ class KrgBased(SurrogateModel):
                     "the number of dim %s should be equal to the length of theta0 %s."
                     % (d, len(self.options["theta0"]))
                 )
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"] and self.options["is_het_noise_given"]:
+                if len(self.options["noise0"]) != self.nt:
+                    raise ValueError(
+                        "the number of observations %s should be equal to the length of noise0 %s."
+                        % (self.nt, len(self.options["noise0"]))
+                    )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
