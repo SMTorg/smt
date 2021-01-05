@@ -10,9 +10,6 @@ order 1 (AR1)
 from sys import exit
 import copy
 from types import FunctionType
-from sys import exit
-import copy
-from types import FunctionType
 import numpy as np
 from sklearn.metrics.pairwise import manhattan_distances
 from scipy.linalg import solve_triangular

@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 """
 import numpy as np
 from scipy import linalg, optimize
+import copy
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
@@ -90,15 +91,15 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "noise0",
-            [1e-6],
+            [0],
             types=(list, np.ndarray),
-            desc="Initial noise hyperparameter",
+            desc="Initial noise hyperparameters",
         )
         declare(
             "noise_bounds",
             [1e-16, 1e10],
             types=(list, np.ndarray),
-            desc="bounds for hyperparameters",
+            desc="bounds for noise hyperparameters",
         )
         declare(
             "use_het_noise",
@@ -107,13 +108,13 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
-        declare(
-            "is_het_noise_given",
-            False,
-            types=bool,
-            values=(True, False),
-            desc="given heteroscedastic noise flag",
-        )
+        # declare(
+        #     "is_het_noise_given",
+        #     False,
+        #     types=bool,
+        #     values=(True, False),
+        #     desc="given heteroscedastic noise flag",
+        # )
 
         self.name = "KrigingBased"
         self.best_iteration_fail = None
@@ -142,10 +143,10 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X, y)
 
-        if self.options["use_het_noise"]:
-            if self.options["is_het_noise_given"]:
-                self.noise = np.array(self.options["noise0"])
-            else:
+        if not self.options["eval_noise"]:
+            self.noise = np.array(self.options["noise0"])
+        else:
+            if self.options["use_het_noise"]:
                 # hetGP works with unique design variables when noise variance are not given
                 (self.X_norma, index_unique, nt_reps,) = np.unique(
                     self.X_norma, return_inverse=True, return_counts=True, axis=0
@@ -252,11 +253,11 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"]:
             nugget = 0
 
-        noise = 0
+        noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
             noise = self.noise
-        elif self.options["eval_noise"] and not self.options["use_het_noise"]:
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
@@ -844,24 +845,22 @@ class KrgBased(SurrogateModel):
 
             bounds_hyp = []
 
-            for i in range(len(self.options["theta0"])):
+            self.theta0 = copy.deepcopy(self.options["theta0"])
+            for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
                 # By standardising X in R, X_norm = (X-X_mean)/X_std, then
                 # X_norm in [-1,1] if considering one std intervals. This leads
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
-                if (
-                    self.options["theta0"][i] < theta_bounds[0]
-                    or self.options["theta0"][i] > theta_bounds[1]
-                ):
-                    self.options["theta0"][i] = np.random.rand()
-                    self.options["theta0"][i] = (
-                        self.options["theta0"][i] * (theta_bounds[1] - theta_bounds[0])
+                if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                    self.theta0[i] = np.random.rand()
+                    self.theta0[i] = (
+                        self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
                     )
                     print(
-                        "\n Warning: theta0 is out the feasible bounds. A random initialisation is used instead.\n"
+                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
                 if self.name in ["MGP"]:
@@ -876,18 +875,18 @@ class KrgBased(SurrogateModel):
 
             if self.name in ["MGP"]:
                 theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.options["theta0"]),
+                    self.options["prior"]["mean"] * len(self.theta0),
                     self.options["prior"]["var"],
                     1,
                 )
-                theta0 = self.options["theta0"]
+                theta0 = self.theta0
             else:
-                theta0_rand = np.random.rand(len(self.options["theta0"]))
+                theta0_rand = np.random.rand(len(self.theta0))
                 theta0_rand = (
                     theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
                     + log10t_bounds[0]
                 )
-                theta0 = np.log10(self.options["theta0"])
+                theta0 = np.log10(self.theta0)
 
             self.D = self._componentwise_distance(D, opt=ii)
 
@@ -895,28 +894,41 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
-                if self.options["eval_noise"] and not self.options["use_het_noise"]:
-                    theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
-                    )
-                    theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([self.options["noise0"]]).flatten()),
-                        ]
-                    )
+                self.noise0 = np.array(self.options["noise0"])
+                noise_bounds = self.options["noise_bounds"]
+                if self.options["eval_noise"]:
+                    self.noise0[self.noise0 == 0.0] = noise_bounds[0]
+                    if not self.options["use_het_noise"]:
+                        if (
+                            self.noise0[i] < noise_bounds[0]
+                            or self.noise0[i] > noise_bounds[1]
+                        ):
+                            self.noise0[i] = noise_bounds[0]
+                            print(
+                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                            )
 
-                    for i in range(len(self.options["noise0"])):
-                        noise_bounds = np.log10(self.options["noise_bounds"])
-                        constraints.append(
-                            lambda log10t: log10t[i + len(self.options["theta0"])]
-                            - noise_bounds[0]
+                        theta0 = np.concatenate(
+                            [theta0, np.log10(np.array([self.noise0]).flatten())]
                         )
-                        constraints.append(
-                            lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.options["theta0"])]
+                        theta0_rand = np.concatenate(
+                            [
+                                theta0_rand,
+                                np.log10(np.array([self.noise0]).flatten()),
+                            ]
                         )
-                        bounds_hyp.append(noise_bounds)
+
+                        for i in range(len(self.noise0)):
+                            noise_bounds = np.log10(noise_bounds)
+                            constraints.append(
+                                lambda log10t: log10t[i + len(self.theta0)]
+                                - noise_bounds[0]
+                            )
+                            constraints.append(
+                                lambda log10t: noise_bounds[1]
+                                - log10t[i + len(self.theta0)]
+                            )
+                            bounds_hyp.append(noise_bounds)
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
@@ -1048,9 +1060,9 @@ class KrgBased(SurrogateModel):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
+                    self.theta0 = (theta * self.coeff_pls ** 2).sum(1)
                 else:
-                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+                    self.theta0 = (theta * np.abs(self.coeff_pls)).sum(1)
 
                 self.options["n_comp"] = int(self.nx)
                 limit = 10 * self.options["n_comp"]
@@ -1078,17 +1090,25 @@ class KrgBased(SurrogateModel):
                 self.options["theta0"] *= np.ones(d)
             else:
                 raise ValueError(
-                    "the number of dim (%s) should be equal to the length of theta0 (%s)."
-                    % (d, len(self.options["theta0"]))
+                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                    % (len(self.options["theta0"]), d)
                 )
 
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"] and self.options["is_het_noise_given"]:
-                if len(self.options["noise0"]) != self.nt:
+        if self.options["use_het_noise"] and not self.options["eval_noise"]:
+            if len(self.options["noise0"]) != self.nt:
+                if len(self.options["noise0"]) == 1:
+                    self.options["noise0"] *= np.ones(self.nt)
+                else:
                     raise ValueError(
-                        "the number of observations (%s) should be equal to the length of noise0 (%s)."
-                        % (self.nt, len(self.options["noise0"]))
+                        "for the heteroscedastic case, the length of noise0 (%s) should be equal to the number of observations (%s)."
+                        % (len(self.options["noise0"]), self.nt)
                     )
+        if not self.options["use_het_noise"]:
+            if len(self.options["noise0"]) != 1:
+                raise ValueError(
+                    "for the homoscedastic case, the length of noise0 (%s) should be equal to one."
+                    % (len(self.options["noise0"]))
+                )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
