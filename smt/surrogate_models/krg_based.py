@@ -1078,7 +1078,7 @@ class KrgBased(SurrogateModel):
                 self.options["theta0"] *= np.ones(d)
             else:
                 raise ValueError(
-                    "the number of dim %s should be equal to the length of theta0 %s."
+                    "the number of dim (%s) should be equal to the length of theta0 (%s)."
                     % (d, len(self.options["theta0"]))
                 )
 
@@ -1086,7 +1086,7 @@ class KrgBased(SurrogateModel):
             if self.options["use_het_noise"] and self.options["is_het_noise_given"]:
                 if len(self.options["noise0"]) != self.nt:
                     raise ValueError(
-                        "the number of observations %s should be equal to the length of noise0 %s."
+                        "the number of observations (%s) should be equal to the length of noise0 (%s)."
                         % (self.nt, len(self.options["noise0"]))
                     )
 
