@@ -110,14 +110,11 @@ class MFK(KrgBased):
             desc="Regression function type for rho",
         )
         declare(
-            "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
-        )
-        declare(
             "optim_var",
             False,
             types=bool,
             values=(True, False),
-            desc="Turning this option to True, forces variance to zero at HF samples ",
+            desc="If True, the variance at HF samples is forced to zero",
         )
         self.name = "MFK"
 
@@ -167,7 +164,14 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model
         """
+        self._new_train_init()
 
+        for lvl in range(self.nlvl):
+            self._new_train_iteration(lvl)
+
+        self._new_train_finalize(lvl)
+
+    def _new_train_init(self):
         xt = []
         yt = []
         i = 0
@@ -188,7 +192,6 @@ class MFK(KrgBased):
         )
 
         nlevel = self.nlvl
-        n_samples = self.nt_all
 
         # initialize lists
         self.noise_all = nlevel * [0]
@@ -202,116 +205,117 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
+    def _new_train_iteration(self, lvl):
         noise0 = self.options["noise0"].copy()
         theta0 = self.options["theta0"].copy()
 
-        for lvl in range(nlevel):
-            self.options["noise0"] = np.array(noise0[lvl])
-            self.options["theta0"] = theta0[lvl, :]
+        n_samples = self.nt_all
+        self.options["noise0"] = np.array(noise0[lvl])
+        self.options["theta0"] = theta0[lvl, :]
 
-            self.X_norma = self.X_norma_all[lvl]
-            self.y_norma = self.y_norma_all[lvl]
+        self.X_norma = self.X_norma_all[lvl]
+        self.y_norma = self.y_norma_all[lvl]
 
-            if self.options["eval_noise"]:
-                if self.options["use_het_noise"]:
-                    # hetGP works with unique design variables
-                    (
-                        self.X_norma,
-                        self.index_unique,  # do we need to store it?
-                        self.nt_reps,  # do we need to store it?
-                    ) = np.unique(
-                        self.X_norma, return_inverse=True, return_counts=True, axis=0
-                    )
-                    self.nt_all[lvl] = self.X_norma.shape[0]
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                # hetGP works with unique design variables
+                (
+                    self.X_norma,
+                    self.index_unique,  # do we need to store it?
+                    self.nt_reps,  # do we need to store it?
+                ) = np.unique(
+                    self.X_norma, return_inverse=True, return_counts=True, axis=0
+                )
+                self.nt_all[lvl] = self.X_norma.shape[0]
 
-                    # computing the mean of the output per unique design variable (see Binois et al., 2018)
-                    y_norma_unique = []
-                    for i in range(self.nt_all[lvl]):
-                        y_norma_unique.append(
-                            np.mean(self.y_norma[self.index_unique == i])
-                        )
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt_all[lvl]):
+                    y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
 
-                    # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                    self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
-                    for i in range(self.nt_all[lvl]):
-                        diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                        if np.sum(diff ** 2) != 0.0:
-                            self.noise[i] = np.std(diff, ddof=1) ** 2
-                    self.noise = self.noise / self.nt_reps
-                    self.y_norma = y_norma_unique
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                for i in range(self.nt_all[lvl]):
+                    diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.noise[i] = np.std(diff, ddof=1) ** 2
+                self.noise = self.noise / self.nt_reps
+                self.y_norma = y_norma_unique
 
-                    self.X_norma_all[lvl] = self.X_norma
-                    self.y_norma_all[lvl] = self.y_norma
-            else:
-                self.noise = self.options["noise0"]
+                self.X_norma_all[lvl] = self.X_norma
+                self.y_norma_all[lvl] = self.y_norma
+        else:
+            self.noise = self.options["noise0"]
 
-            # Calculate matrix of distances D between samples
-            self.D_all[lvl] = cross_distances(self.X_norma)
+        # Calculate matrix of distances D between samples
+        self.D_all[lvl] = cross_distances(self.X_norma)
 
-            # Regression matrix and parameters
-            self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
-            self.p_all[lvl] = self.F_all[lvl].shape[1]
+        # Regression matrix and parameters
+        self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
+        self.p_all[lvl] = self.F_all[lvl].shape[1]
 
-            # Concatenate the autoregressive part for levels > 0
-            if lvl > 0:
-                F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
-                self.q_all[lvl] = F_rho.shape[1]
-                self.F_all[lvl] = np.hstack(
-                    (
-                        F_rho
-                        * np.dot(
-                            self._predict_intermediate_values(
-                                self.X_norma, lvl, descale=False
-                            ),
-                            np.ones((1, self.q_all[lvl])),
+        # Concatenate the autoregressive part for levels > 0
+        if lvl > 0:
+            F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
+            self.q_all[lvl] = F_rho.shape[1]
+            self.F_all[lvl] = np.hstack(
+                (
+                    F_rho
+                    * np.dot(
+                        self._predict_intermediate_values(
+                            self.X_norma, lvl, descale=False
                         ),
-                        self.F_all[lvl],
-                    )
+                        np.ones((1, self.q_all[lvl])),
+                    ),
+                    self.F_all[lvl],
                 )
-            else:
-                self.q_all[lvl] = 0
+            )
+        else:
+            self.q_all[lvl] = 0
 
-            n_samples_F_i = self.F_all[lvl].shape[0]
+        n_samples_F_i = self.F_all[lvl].shape[0]
 
-            if n_samples_F_i != n_samples[lvl]:
-                raise Exception(
-                    "Number of rows in F and X do not match. Most "
-                    "likely something is going wrong with the "
-                    "regression model."
+        if n_samples_F_i != n_samples[lvl]:
+            raise Exception(
+                "Number of rows in F and X do not match. Most "
+                "likely something is going wrong with the "
+                "regression model."
+            )
+
+        if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
+            raise Exception(
+                (
+                    "Ordinary least squares problem is undetermined "
+                    "n_samples=%d must be greater than the regression"
+                    " model size p+q=%d."
                 )
+                % (n_samples_F_i, self.p_all[lvl] + self.q_all[lvl])
+            )
 
-            if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
-                raise Exception(
-                    (
-                        "Ordinary least squares problem is undetermined "
-                        "n_samples=%d must be greater than the regression"
-                        " model size p+q=%d."
-                    )
-                    % (n_samples[i], self.p_all[lvl] + self.q_all[lvl])
-                )
-
-            # Determine Gaussian Process model parameters
-            self.F = self.F_all[lvl]
-            D, self.ij = self.D_all[lvl]
-            self._lvl = lvl
-            self.nt = self.nt_all[lvl]
-            self.q = self.q_all[lvl]
-            self.p = self.p_all[lvl]
-            (
-                self.optimal_rlf_value[lvl],
-                self.optimal_par[lvl],
-                self.optimal_theta[lvl],
-            ) = self._optimize_hyperparam(D)
-            if self.options["eval_noise"]:
-                tmp_list = self.optimal_theta[lvl]
-                self.optimal_theta[lvl] = tmp_list[0 : D.shape[1]]
-                self.noise_all[lvl] = tmp_list[D.shape[1] :]
-            del self.y_norma, self.D
+        # Determine Gaussian Process model parameters
+        self.F = self.F_all[lvl]
+        D, self.ij = self.D_all[lvl]
+        self._lvl = lvl
+        self.nt = self.nt_all[lvl]
+        self.q = self.q_all[lvl]
+        self.p = self.p_all[lvl]
+        (
+            self.optimal_rlf_value[lvl],
+            self.optimal_par[lvl],
+            self.optimal_theta[lvl],
+        ) = self._optimize_hyperparam(D)
+        if self.options["eval_noise"]:
+            tmp_list = self.optimal_theta[lvl]
+            self.optimal_theta[lvl] = tmp_list[0 : D.shape[1]]
+            self.noise_all[lvl] = tmp_list[D.shape[1] :]
+        del self.y_norma, self.D
 
         self.options["noise0"] = noise0
         self.options["theta0"] = theta0
 
+    def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
+            X = self.X
             for lvl in range(self.nlvl - 1):
                 self.set_training_values(
                     X[lvl], self._predict_intermediate_values(X[lvl], lvl + 1), name=lvl
