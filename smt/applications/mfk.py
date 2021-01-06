@@ -119,12 +119,6 @@ class MFK(KrgBased):
             values=(True, False),
             desc="Turning this option to True, forces variance to zero at HF samples ",
         )
-        declare(
-            "noise0",
-            [1e-6],
-            types=(list, np.ndarray),
-            desc="Initial noise hyperparameters",
-        )
         self.name = "MFK"
 
     def _check_list_structure(self, X, y):
@@ -212,39 +206,44 @@ class MFK(KrgBased):
         theta0 = self.options["theta0"].copy()
 
         for lvl in range(nlevel):
-            self.options["noise0"] = [noise0[lvl]]
+            self.options["noise0"] = np.array(noise0[lvl])
             self.options["theta0"] = theta0[lvl, :]
 
             self.X_norma = self.X_norma_all[lvl]
             self.y_norma = self.y_norma_all[lvl]
 
-            if self.options["eval_noise"] and self.options["use_het_noise"]:
-                # hetGP works with unique design variables
-                (
-                    self.X_norma,
-                    self.index_unique,  # do we need to store it?
-                    self.nt_reps,  # do we need to store it?
-                ) = np.unique(
-                    self.X_norma, return_inverse=True, return_counts=True, axis=0
-                )
-                self.nt_all[lvl] = self.X_norma.shape[0]
+            if self.options["eval_noise"]:
+                if self.options["use_het_noise"]:
+                    # hetGP works with unique design variables
+                    (
+                        self.X_norma,
+                        self.index_unique,  # do we need to store it?
+                        self.nt_reps,  # do we need to store it?
+                    ) = np.unique(
+                        self.X_norma, return_inverse=True, return_counts=True, axis=0
+                    )
+                    self.nt_all[lvl] = self.X_norma.shape[0]
 
-                # computing the mean of the output per unique design variable (see Binois et al., 2018)
-                y_norma_unique = []
-                for i in range(self.nt_all[lvl]):
-                    y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+                    # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                    y_norma_unique = []
+                    for i in range(self.nt_all[lvl]):
+                        y_norma_unique.append(
+                            np.mean(self.y_norma[self.index_unique == i])
+                        )
 
-                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
-                for i in range(self.nt_all[lvl]):
-                    diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                    if np.sum(diff ** 2) != 0.0:
-                        self.noise[i] = np.std(diff, ddof=1) ** 2
-                self.noise = self.noise.tolist() / self.nt_reps
-                self.y_norma = y_norma_unique
+                    # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                    self.noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                    for i in range(self.nt_all[lvl]):
+                        diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                        if np.sum(diff ** 2) != 0.0:
+                            self.noise[i] = np.std(diff, ddof=1) ** 2
+                    self.noise = self.noise / self.nt_reps
+                    self.y_norma = y_norma_unique
 
-                self.X_norma_all[lvl] = self.X_norma
-                self.y_norma_all[lvl] = self.y_norma
+                    self.X_norma_all[lvl] = self.X_norma
+                    self.y_norma_all[lvl] = self.y_norma
+            else:
+                self.noise = self.options["noise0"]
 
             # Calculate matrix of distances D between samples
             self.D_all[lvl] = cross_distances(self.X_norma)
@@ -634,25 +633,29 @@ class MFK(KrgBased):
         if isinstance(self.options["theta0"], np.ndarray):
             if self.options["theta0"].shape != (self.nlvl, d):
                 raise ValueError(
-                    "the number of dim %s should coincide to the dimensions of theta0 %s."
-                    % ((self.nlvl, d), self.options["theta0"].shape)
+                    "the dimensions of theta0 %s should coincide to the number of dim %s"
+                    % (self.options["theta0"].shape, (self.nlvl, d))
                 )
         else:
             if len(self.options["theta0"]) != d:
                 if len(self.options["theta0"]) == 1:
                     self.options["theta0"] *= np.ones((self.nlvl, d))
                 elif len(self.options["theta0"]) == self.nlvl:
-                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
-                        -1, 1
-                    )
+                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(-1, 1)
                     self.options["theta0"] *= np.ones((1, d))
                 else:
                     raise ValueError(
-                        "the number of dim %s or levels %s should be equal to the length of theta0 %s."
-                        % (d, self.nlvl, len(self.options["theta0"]))
+                        "the length of theta0 (%s) should be equal to the number of dim (%s) or levels of fidelity (%s)."
+                        % (len(self.options["theta0"]), d, self.nlvl)
                     )
             else:
                 self.options["theta0"] *= np.ones((self.nlvl, 1))
 
-        if len(self.options["noise0"]) == 1:
-            self.options["noise0"] = self.nlvl * self.options["noise0"]
+        if len(self.options["noise0"]) != self.nlvl:
+            if len(self.options["noise0"]) == 1:
+                self.options["noise0"] = self.nlvl * self.options["noise0"]
+            else:
+                raise ValueError(
+                    "the length of noise0 (%s) should be equal to the number of levels of fidelity (%s)."
+                    % (len(self.options["noise0"]), self.nlvl)
+                )
