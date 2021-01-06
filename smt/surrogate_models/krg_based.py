@@ -91,13 +91,13 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "noise0",
-            [0],
+            [0.],
             types=(list, np.ndarray),
             desc="Initial noise hyperparameters",
         )
         declare(
             "noise_bounds",
-            [1e-16, 1e10],
+            [100.0 * np.finfo(np.double).eps, 1e10],
             types=(list, np.ndarray),
             desc="bounds for noise hyperparameters",
         )
@@ -108,13 +108,6 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
-        # declare(
-        #     "is_het_noise_given",
-        #     False,
-        #     types=bool,
-        #     values=(True, False),
-        #     desc="given heteroscedastic noise flag",
-        # )
 
         self.name = "KrigingBased"
         self.best_iteration_fail = None
@@ -863,7 +856,7 @@ class KrgBased(SurrogateModel):
                         "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
-                if self.name in ["MGP"]:
+                if self.name in ["MGP"]: # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
                     constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
                     bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
@@ -899,14 +892,15 @@ class KrgBased(SurrogateModel):
                 if self.options["eval_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                     if not self.options["use_het_noise"]:
-                        if (
-                            self.noise0[i] < noise_bounds[0]
-                            or self.noise0[i] > noise_bounds[1]
-                        ):
-                            self.noise0[i] = noise_bounds[0]
-                            print(
-                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
-                            )
+                        for i in range(len(self.noise0)):
+                            if (
+                                self.noise0[i] < noise_bounds[0]
+                                or self.noise0[i] > noise_bounds[1]
+                            ):
+                                self.noise0[i] = noise_bounds[0]
+                                print(
+                                    "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                                )
 
                         theta0 = np.concatenate(
                             [theta0, np.log10(np.array([self.noise0]).flatten())]
