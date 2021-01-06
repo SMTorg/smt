@@ -5,16 +5,25 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of
 order 1 (AR1)
+Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
+from copy import deepcopy
 from sys import exit
-import copy
-from types import FunctionType
 import numpy as np
-from sklearn.metrics.pairwise import manhattan_distances
 from scipy.linalg import solve_triangular
 from scipy import linalg
 from scipy.spatial.distance import cdist
+
+from packaging import version
+from sklearn import __version__ as sklversion
+
+if version.parse(sklversion) < version.parse("0.22"):
+    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
+else:
+    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.metrics.pairwise import manhattan_distances
+
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
 from smt.utils.kriging_utils import (
@@ -23,7 +32,6 @@ from smt.utils.kriging_utils import (
     standardization,
     differences,
 )
-from sys import exit
 
 
 class NestedLHS(object):
@@ -102,7 +110,6 @@ class MFK(KrgBased):
     def _initialize(self):
         super(MFK, self)._initialize()
         declare = self.options.declare
-
         declare(
             "rho_regr",
             "constant",
@@ -117,6 +124,16 @@ class MFK(KrgBased):
             desc="If True, the variance at HF samples is forced to zero",
         )
         self.name = "MFK"
+
+    def differences(self, X, Y):
+        """
+        Overrides differences function
+        Compute the manhattan_distances
+        """
+        if "MFK" in self.name:
+            return differences(X, Y)
+        else:
+            return manhattan_distances(X, Y, sum_over_features=False)
 
     def _check_list_structure(self, X, y):
         """
@@ -165,13 +182,30 @@ class MFK(KrgBased):
         Trains the Multi-Fidelity model
         """
         self._new_train_init()
+        theta0 = self.options["theta0"].copy()
+        noise0 = self.options["noise0"].copy()
+        if self.name is "MFKPLSK":
+            self.n_comp = self.options["n_comp"]
 
         for lvl in range(self.nlvl):
+            self.options["theta0"] = theta0
+            self.options["noise0"] = noise0
+            if self.name is "MFKPLSK":
+                self.options["n_comp"] = self.n_comp
             self._new_train_iteration(lvl)
 
         self._new_train_finalize(lvl)
 
     def _new_train_init(self):
+        if "MFKPLS" in self.name:
+            _pls = pls(self.options["n_comp"])
+            # PLS done on the highest fidelity identified by the key None
+            self.m_pls = _pls.fit(
+                self.training_points[None][0][0].copy(),
+                self.training_points[None][0][1].copy(),
+            )
+            self.coeff_pls = self.m_pls.x_rotations_
+
         xt = []
         yt = []
         i = 0
@@ -206,12 +240,9 @@ class MFK(KrgBased):
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
     def _new_train_iteration(self, lvl):
-        noise0 = self.options["noise0"].copy()
-        theta0 = self.options["theta0"].copy()
-
         n_samples = self.nt_all
-        self.options["noise0"] = np.array(noise0[lvl])
-        self.options["theta0"] = theta0[lvl, :]
+        self.options["noise0"] = np.array(self.options["noise0"][lvl])
+        self.options["theta0"] = self.options["theta0"][lvl, :]
 
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]
@@ -310,9 +341,6 @@ class MFK(KrgBased):
             self.noise_all[lvl] = tmp_list[D.shape[1] :]
         del self.y_norma, self.D
 
-        self.options["noise0"] = noise0
-        self.options["theta0"] = theta0
-
     def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
             X = self.X
@@ -353,13 +381,12 @@ class MFK(KrgBased):
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, lvl))
-        #        if self.normalize:
         if descale:
             X = (X - self.X_offset) / self.X_scale
-        ##                X = (X - self.X_offset[0]) / self.X_scale[0]
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = differences(X, Y=self.X_norma_all[0])
+
+        dx = self.differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
@@ -381,7 +408,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = self.differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -459,7 +486,7 @@ class MFK(KrgBased):
         #        if self.normalize:
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = differences(X, Y=self.X_norma_all[0])
+        dx = self.differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
         F = self.F_all[0]
@@ -495,7 +522,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = self.differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -571,13 +598,15 @@ class MFK(KrgBased):
                 "The derivative is only available for ordinary kriging or "
                 + "universal kriging using a linear trend"
             )
-        df0 = copy.deepcopy(df)
+
+        df0 = deepcopy(df)
+
         if self.options["rho_regr"] != "constant":
             raise ValueError(
                 "The derivative is only available for regression rho constant"
             )
         # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma_all[0])
+        dx = self.differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r_ = self._correlation_types[self.options["corr"]](
@@ -601,7 +630,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](x)
-            dx = differences(x, Y=self.X_norma_all[i])
+            dx = self.differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -617,11 +646,18 @@ class MFK(KrgBased):
             d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma_all[i][:, kx].reshape(
                 (1, self.nt_all[i])
             )
-            theta = self.optimal_theta[i]
+
+            theta = self._get_theta(i)
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
         return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+
+    def _get_theta(self, i):
+        if "MFKPLS" in self.name:
+            return np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)
+        else:
+            return self.optimal_theta[i]
 
     def _check_param(self):
         """
