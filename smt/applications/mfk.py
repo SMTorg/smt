@@ -130,7 +130,7 @@ class MFK(KrgBased):
         Overrides differences function
         Compute the manhattan_distances
         """
-        if "MFK" in self.name:
+        if self.name == "MFK":
             return differences(X, Y)
         else:
             return manhattan_distances(X, Y, sum_over_features=False)
@@ -184,14 +184,10 @@ class MFK(KrgBased):
         self._new_train_init()
         theta0 = self.options["theta0"].copy()
         noise0 = self.options["noise0"].copy()
-        if self.name is "MFKPLSK":
-            self.n_comp = self.options["n_comp"]
 
         for lvl in range(self.nlvl):
             self.options["theta0"] = theta0
             self.options["noise0"] = noise0
-            if self.name is "MFKPLSK":
-                self.options["n_comp"] = self.n_comp
             self._new_train_iteration(lvl)
 
         self._new_train_finalize(lvl)
@@ -488,6 +484,7 @@ class MFK(KrgBased):
         f0 = self._regression_types[self.options["poly"]](X)
         dx = self.differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
+
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]["C"]
@@ -547,12 +544,23 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-                # 1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-                1
-                - (r_t ** 2).sum(axis=0)
-                + (u_ ** 2).sum(axis=0)
-            )
+            if "MFKPLS" in self.name:
+                p = self.p_all[i]
+                Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
+                MSE[:, i] = (
+                    sigma2_rho * MSE[:, i - 1]
+                    + Q_ / (2 * (self.nt_all[i] - p - q))
+                    # * (1 + self.noise[i] - (r_t ** 2).sum(axis=0))
+                    * (1 - (r_t ** 2).sum(axis=0))
+                    + sigma2 * (u_ ** 2).sum(axis=0)
+                )
+            else:
+                MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+                    # 1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                    1
+                    - (r_t ** 2).sum(axis=0)
+                    + (u_ ** 2).sum(axis=0)
+                )
 
         # scaled predictor
         MSE *= self.y_std ** 2

@@ -11,7 +11,6 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 import numpy as np
-from copy import deepcopy
 
 from scipy.linalg import solve_triangular
 from packaging import version
@@ -21,13 +20,11 @@ if version.parse(sklversion) < version.parse("0.22"):
     from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 else:
     from sklearn.cross_decomposition import PLSRegression as pls
-from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.utils.kriging_utils import (
     cross_distances,
     componentwise_distance,
     componentwise_distance_PLS,
-    standardization,
 )
 from smt.applications import MFKPLS
 
@@ -47,3 +44,21 @@ class MFKPLSK(MFKPLS):
             d = super(MFKPLSK, self)._componentwise_distance(dx, opt)
 
         return d
+
+    def _new_train(self):
+        """
+        Overrides MFK implementation
+        Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging (MFKPLSK)
+        """
+        self._new_train_init()
+        theta0 = self.options["theta0"].copy()
+        noise0 = self.options["noise0"].copy()
+        self.n_comp = self.options["n_comp"]
+
+        for lvl in range(self.nlvl):
+            self.options["theta0"] = theta0
+            self.options["noise0"] = noise0
+            self.options["n_comp"] = self.n_comp
+            self._new_train_iteration(lvl)
+
+        self._new_train_finalize(lvl)
