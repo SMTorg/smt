@@ -5,7 +5,7 @@ This package is distributed under New BSD license.
 """
 import numpy as np
 from scipy import linalg, optimize
-import copy
+from copy import deepcopy
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
@@ -91,7 +91,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "noise0",
-            [0.],
+            [0.0],
             types=(list, np.ndarray),
             desc="Initial noise hyperparameters",
         )
@@ -116,8 +116,6 @@ class KrgBased(SurrogateModel):
         supports["variances"] = True
 
     def _new_train(self):
-        self._check_param()
-
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -125,6 +123,8 @@ class KrgBased(SurrogateModel):
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
             X, y = self._compute_pls(X.copy(), y.copy())
+
+        self._check_param()
 
         # Center and scale X and y
         (
@@ -185,10 +185,9 @@ class KrgBased(SurrogateModel):
         if self.name in ["MGP"]:
             self._specific_train()
         else:
-            if self.options["eval_noise"]:
-                if not self.options["use_het_noise"]:
-                    self.noise = self.optimal_theta[self.D.shape[1] :]
-                self.optimal_theta = self.optimal_theta[0 : self.D.shape[1]]
+            if self.options["eval_noise"] and not self.options["use_het_noise"]:
+                self.noise = self.optimal_theta[-1]
+                self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -837,8 +836,8 @@ class KrgBased(SurrogateModel):
             )
 
             bounds_hyp = []
-            
-            self.theta0 = copy.deepcopy(self.options["theta0"])
+
+            self.theta0 = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -856,7 +855,7 @@ class KrgBased(SurrogateModel):
                         "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
-                if self.name in ["MGP"]: # to be discussed with R. Priem
+                if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
                     constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
                     bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
@@ -889,18 +888,17 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
                 noise_bounds = self.options["noise_bounds"]
-                if self.options["eval_noise"]:
+                if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
-                    if not self.options["use_het_noise"]:
-                        for i in range(len(self.noise0)):
-                            if (
-                                self.noise0[i] < noise_bounds[0]
-                                or self.noise0[i] > noise_bounds[1]
-                            ):
-                                self.noise0[i] = noise_bounds[0]
-                                print(
-                                    "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
-                                )
+                    for i in range(len(self.noise0)):
+                        if (
+                            self.noise0[i] < noise_bounds[0]
+                            or self.noise0[i] > noise_bounds[1]
+                        ):
+                            self.noise0[i] = noise_bounds[0]
+                            print(
+                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                            )
 
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
