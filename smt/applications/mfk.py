@@ -9,7 +9,7 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 from copy import deepcopy
-from sys import exit
+
 import numpy as np
 from scipy.linalg import solve_triangular
 from scipy import linalg
@@ -22,7 +22,6 @@ if version.parse(sklversion) < version.parse("0.22"):
     from sklearn.cross_decomposition.pls_ import PLSRegression as pls
 else:
     from sklearn.cross_decomposition import PLSRegression as pls
-from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
@@ -127,13 +126,9 @@ class MFK(KrgBased):
 
     def differences(self, X, Y):
         """
-        Overrides differences function
-        Compute the manhattan_distances
+        Compute the distances
         """
-        if self.name == "MFK":
-            return differences(X, Y)
-        else:
-            return manhattan_distances(X, Y, sum_over_features=False)
+        return differences(X, Y)
 
     def _check_list_structure(self, X, y):
         """
@@ -385,12 +380,8 @@ class MFK(KrgBased):
         dx = self.differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Get regression function and correlation
-        F = self.F_all[0]
-        C = self.optimal_par[0]["C"]
 
         beta = self.optimal_par[0]["beta"]
-        Ft = solve_triangular(C, F, lower=True)
-        yt = solve_triangular(C, self.y_norma_all[0], lower=True)
         r_ = self._correlation_types[self.options["corr"]](
             self.optimal_theta[0], d
         ).reshape(n_eval, self.nt_all[0])
@@ -401,8 +392,6 @@ class MFK(KrgBased):
 
         # Calculate recursively kriging mean and variance at level i
         for i in range(1, lvl):
-            F = self.F_all[i]
-            C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
             dx = self.differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
@@ -410,8 +399,6 @@ class MFK(KrgBased):
                 self.optimal_theta[i], d
             ).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
-            Ft = solve_triangular(C, F, lower=True)
-            yt = solve_triangular(C, self.y_norma_all[i], lower=True)
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
             # scaled predictor
@@ -635,8 +622,6 @@ class MFK(KrgBased):
 
         # Calculate recursively derivative at level i
         for i in range(1, lvl):
-            F = self.F_all[i]
-            C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](x)
             dx = self.differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
@@ -645,8 +630,6 @@ class MFK(KrgBased):
             ).reshape(n_eval, self.nt_all[i])
             df = np.vstack((g.T * dy_dx[:, i - 1], df0.T))
 
-            Ft = solve_triangular(C, F, lower=True)
-            yt = solve_triangular(C, self.y_norma_all[i], lower=True)
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
 
@@ -673,10 +656,25 @@ class MFK(KrgBased):
         This function checks some parameters of the model.
         """
 
-        d = self.nx
+        if "MFKPLS" in self.name:
+            d = self.options["n_comp"]
+        else:
+            d = self.nx
 
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
+
+        if self.name in ["MFKPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "MFKPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+
+        if self.name in ["MFKPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
+                )
 
         if isinstance(self.options["theta0"], np.ndarray):
             if self.options["theta0"].shape != (self.nlvl, d):

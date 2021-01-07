@@ -10,23 +10,8 @@ Adapted on March 2020 by Nathalie Bartoli to the new SMT version
 Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
-import numpy as np
-
-from scipy.linalg import solve_triangular
-from packaging import version
-from sklearn import __version__ as sklversion
-
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
-
-from smt.utils.kriging_utils import (
-    cross_distances,
-    componentwise_distance,
-    componentwise_distance_PLS,
-)
 from smt.applications import MFKPLS
+from smt.utils.kriging_utils import componentwise_distance
 
 
 class MFKPLSK(MFKPLS):

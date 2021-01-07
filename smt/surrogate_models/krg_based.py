@@ -837,7 +837,7 @@ class KrgBased(SurrogateModel):
             )
 
             bounds_hyp = []
-
+            
             self.theta0 = copy.deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
@@ -902,27 +902,27 @@ class KrgBased(SurrogateModel):
                                     "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
                                 )
 
-                        theta0 = np.concatenate(
-                            [theta0, np.log10(np.array([self.noise0]).flatten())]
-                        )
-                        theta0_rand = np.concatenate(
-                            [
-                                theta0_rand,
-                                np.log10(np.array([self.noise0]).flatten()),
-                            ]
-                        )
+                    theta0 = np.concatenate(
+                        [theta0, np.log10(np.array([self.noise0]).flatten())]
+                    )
+                    theta0_rand = np.concatenate(
+                        [
+                            theta0_rand,
+                            np.log10(np.array([self.noise0]).flatten()),
+                        ]
+                    )
 
-                        for i in range(len(self.noise0)):
-                            noise_bounds = np.log10(noise_bounds)
-                            constraints.append(
-                                lambda log10t: log10t[i + len(self.theta0)]
-                                - noise_bounds[0]
-                            )
-                            constraints.append(
-                                lambda log10t: noise_bounds[1]
-                                - log10t[i + len(self.theta0)]
-                            )
-                            bounds_hyp.append(noise_bounds)
+                    for i in range(len(self.noise0)):
+                        noise_bounds = np.log10(noise_bounds)
+                        constraints.append(
+                            lambda log10t: log10t[i + len(self.theta0)]
+                            - noise_bounds[0]
+                        )
+                        constraints.append(
+                            lambda log10t: noise_bounds[1]
+                            - log10t[i + len(self.theta0)]
+                        )
+                        bounds_hyp.append(noise_bounds)
                 try:
 
                     if self.options["hyper_opt"] == "Cobyla":
@@ -1054,9 +1054,9 @@ class KrgBased(SurrogateModel):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.theta0 = (theta * self.coeff_pls ** 2).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
                 else:
-                    self.theta0 = (theta * np.abs(self.coeff_pls)).sum(1)
+                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
 
                 self.options["n_comp"] = int(self.nx)
                 limit = 10 * self.options["n_comp"]
@@ -1071,7 +1071,7 @@ class KrgBased(SurrogateModel):
         """
 
         # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
+        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
             d = self.options["n_comp"]
         else:
             d = self.nx

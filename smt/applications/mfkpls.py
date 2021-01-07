@@ -6,13 +6,9 @@ Created on Fri May 04 10:26:49 2018
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of order 1 (AR1)
 Partial Least Square decomposition added on highest fidelity level
 Adapted March 2020 by Nathalie Bartoli to the new SMT version
+Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
-from copy import deepcopy
-from sys import exit
-import numpy as np
-from scipy.linalg import solve_triangular
-from scipy import linalg
 from packaging import version
 from sklearn import __version__ as sklversion
 
@@ -22,11 +18,6 @@ else:
     from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import manhattan_distances
 
-from smt.utils.kriging_utils import (
-    cross_distances,
-    componentwise_distance,
-    standardization,
-)
 from smt.applications import MFK
 from smt.utils.kriging_utils import componentwise_distance_PLS
 
@@ -37,6 +28,13 @@ class MFKPLS(MFK):
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
         self.name = "MFKPLS"
+
+    def differences(self, X, Y):
+        """
+        Overrides differences function for MFK
+        Compute the manhattan_distances
+        """
+        return manhattan_distances(X, Y, sum_over_features=False)
 
     def _componentwise_distance(self, dx, opt=0):
         d = componentwise_distance_PLS(
