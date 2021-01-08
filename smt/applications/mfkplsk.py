@@ -16,6 +16,15 @@ from smt.applications import MFKPLS
 class MFKPLSK(MFKPLS):
     def _initialize(self):
         super(MFKPLSK, self)._initialize()
+        declare = self.options.declare
+        # Like KPLSK, MFKPLSK used only with "squar_exp" correlations
+        declare(
+            "corr",
+            "squar_exp",
+            values=("squar_exp"),
+            desc="Correlation function type",
+            types=(str),
+        )
         self.name = "MFKPLSK"
 
     def _componentwise_distance(self, dx, opt=0):

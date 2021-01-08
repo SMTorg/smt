@@ -1081,8 +1081,7 @@ class KrgBased(SurrogateModel):
                 raise ValueError(
                     "KPLS only works with a squared exponential or an absolute exponential kernel"
                 )
-
-        if self.name in ["KPLSK"]:
+        elif self.name in ["KPLSK"]:
             if self.options["corr"] not in ["squar_exp"]:
                 raise ValueError(
                     "KPLSK only works with a squared exponential kernel (until we prove the contrary)"

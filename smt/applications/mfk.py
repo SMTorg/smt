@@ -124,7 +124,7 @@ class MFK(KrgBased):
         )
         self.name = "MFK"
 
-    def differences(self, X, Y):
+    def _differences(self, X, Y):
         """
         Compute the distances
         """
@@ -188,14 +188,14 @@ class MFK(KrgBased):
         self._new_train_finalize(lvl)
 
     def _new_train_init(self):
-        # if "MFKPLS" in self.name:
-        #     _pls = pls(self.options["n_comp"])
-        #     # PLS done on the highest fidelity identified by the key None
-        #     self.m_pls = _pls.fit(
-        #         self.training_points[None][0][0].copy(),
-        #         self.training_points[None][0][1].copy(),
-        #     )
-        #     self.coeff_pls = self.m_pls.x_rotations_
+        if self.name in ["MFKPLS", "MFKPLSK"]:
+            _pls = pls(self.options["n_comp"])
+            # PLS is done on the highest fidelity identified by the key None
+            self.m_pls = _pls.fit(
+                self.training_points[None][0][0].copy(),
+                self.training_points[None][0][1].copy(),
+            )
+            self.coeff_pls = self.m_pls.x_rotations_
 
         xt = []
         yt = []
@@ -381,7 +381,7 @@ class MFK(KrgBased):
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
 
-        dx = self.differences(X, Y=self.X_norma_all[0])
+        dx = self._differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
 
         beta = self.optimal_par[0]["beta"]
@@ -396,7 +396,7 @@ class MFK(KrgBased):
         # Calculate recursively kriging mean and variance at level i
         for i in range(1, lvl):
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = self.differences(X, Y=self.X_norma_all[i])
+            dx = self._differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -472,7 +472,7 @@ class MFK(KrgBased):
         mu = np.zeros((n_eval, nlevel))
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = self.differences(X, Y=self.X_norma_all[0])
+        dx = self._differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
 
         # Get regression function and correlation
@@ -481,7 +481,7 @@ class MFK(KrgBased):
 
         beta = self.optimal_par[0]["beta"]
         Ft = solve_triangular(C, F, lower=True)
-        yt = solve_triangular(C, self.y_norma_all[0], lower=True)
+        # yt = solve_triangular(C, self.y_norma_all[0], lower=True)
         r_ = self._correlation_types[self.options["corr"]](
             self.optimal_theta[0], d
         ).reshape(n_eval, self.nt_all[0])
@@ -509,7 +509,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = self.differences(X, Y=self.X_norma_all[i])
+            dx = self._differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -534,30 +534,30 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            # if "MFKPLS" in self.name:
-            #     p = self.p_all[i]
-            #     Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
-            #     MSE[:, i] = (
-            #         sigma2_rho * MSE[:, i - 1]
-            #         + Q_ / (2 * (self.nt_all[i] - p - q))
-            #         # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
-            #         * (1 - (r_t ** 2).sum(axis=0))
-            #         + sigma2 * (u_ ** 2).sum(axis=0)
-            #     )
-            # else:
-            #     MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-            #         # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-            #         1
-            #         - (r_t ** 2).sum(axis=0)
-            #         + (u_ ** 2).sum(axis=0)
-            #     )
-            
-            MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-                # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-                1
-                - (r_t ** 2).sum(axis=0)
-                + (u_ ** 2).sum(axis=0)
-            )
+            if self.name in ["MFKPLS", "MFKPLSK"]:
+                p = self.p_all[i]
+                Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
+                MSE[:, i] = (
+                    sigma2_rho * MSE[:, i - 1]
+                    + Q_ / (2 * (self.nt_all[i] - p - q))
+                    # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
+                    * (1 - (r_t ** 2).sum(axis=0))
+                    + sigma2 * (u_ ** 2).sum(axis=0)
+                )
+            else:
+                MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+                    # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                    1
+                    - (r_t ** 2).sum(axis=0)
+                    + (u_ ** 2).sum(axis=0)
+                )
+
+            # MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+            #     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            #     1
+            #     - (r_t ** 2).sum(axis=0)
+            #     + (u_ ** 2).sum(axis=0)
+            # )
 
         # scaled predictor
         MSE *= self.y_std ** 2
@@ -611,7 +611,7 @@ class MFK(KrgBased):
                 "The derivative is only available for regression rho constant"
             )
         # Get pairwise componentwise L1-distances to the input training set
-        dx = self.differences(x, Y=self.X_norma_all[0])
+        dx = self._differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r_ = self._correlation_types[self.options["corr"]](
@@ -626,14 +626,14 @@ class MFK(KrgBased):
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma_all[0][:, kx].reshape(
             (1, self.nt_all[0])
         )
-        theta = self.optimal_theta[0]
 
+        theta = self._get_theta(0)
         dy_dx[:, 0] = np.ravel((df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma)))
 
         # Calculate recursively derivative at level i
         for i in range(1, lvl):
             g = self._regression_types[self.options["rho_regr"]](x)
-            dx = self.differences(x, Y=self.X_norma_all[i])
+            dx = self._differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -656,10 +656,6 @@ class MFK(KrgBased):
         return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
 
     def _get_theta(self, i):
-        # if "MFKPLS" in self.name:
-        #     return np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)
-        # else:
-        #     return self.optimal_theta[i]
         return self.optimal_theta[i]
 
     def _check_param(self):
@@ -668,26 +664,24 @@ class MFK(KrgBased):
         This function checks some parameters of the model.
         """
 
-        # if "MFKPLS" in self.name:
-        #     d = self.options["n_comp"]
-        # else:
-        #     d = self.nx
-        d = self.nx
+        if self.name in ["MFKPLS", "MFKPLSK"]:
+            d = self.options["n_comp"]
+        else:
+            d = self.nx
 
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 
-        # if self.name in ["MFKPLS"]:
-        #     if self.options["corr"] not in ["squar_exp", "abs_exp"]:
-        #         raise ValueError(
-        #             "MFKPLS only works with a squared exponential or an absolute exponential kernel"
-        #         )
-
-        # if self.name in ["MFKPLSK"]:
-        #     if self.options["corr"] not in ["squar_exp"]:
-        #         raise ValueError(
-        #             "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
-        #         )
+        if self.name in ["MFKPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "MFKPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+        elif self.name in ["MFKPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
+                )
 
         if isinstance(self.options["theta0"], np.ndarray):
             if self.options["theta0"].shape != (self.nlvl, d):
