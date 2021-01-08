@@ -6,7 +6,8 @@ Created on Fri May 04 10:26:49 2018
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of order 1 (AR1)
 Partial Least Square decomposition added on highest fidelity level
 KPLSK model combined PLS followed by a Krging model in the initial dimension
-Adapted March 2020 by Nathalie Bartoli to the new SMT version
+Adapted on March 2020 by Nathalie Bartoli to the new SMT version
+Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 from smt.utils.kriging_utils import componentwise_distance

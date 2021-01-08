@@ -552,13 +552,6 @@ class MFK(KrgBased):
                     + (u_ ** 2).sum(axis=0)
                 )
 
-            # MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-            #     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-            #     1
-            #     - (r_t ** 2).sum(axis=0)
-            #     + (u_ ** 2).sum(axis=0)
-            # )
-
         # scaled predictor
         MSE *= self.y_std ** 2
 

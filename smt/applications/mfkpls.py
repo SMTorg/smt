@@ -5,7 +5,8 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of order 1 (AR1)
 Partial Least Square decomposition added on highest fidelity level
-Adapted March 2020 by Nathalie Bartoli to the new SMT version
+Adapted on March 2020 by Nathalie Bartoli to the new SMT version
+Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 import numpy as np
