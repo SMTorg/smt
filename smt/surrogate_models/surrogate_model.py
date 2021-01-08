@@ -7,13 +7,14 @@ Paul Saves : Mixed Integer
 """
 import numpy as np
 from collections import defaultdict
+from abc import ABCMeta, abstractmethod
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_support, check_nx, check_2d_array
 
 
-class SurrogateModel(object):
+class SurrogateModel(object, metaclass=ABCMeta):
     """
     Base class for all surrogate models.
 
@@ -397,6 +398,7 @@ class SurrogateModel(object):
         """
         pass
 
+    @abstractmethod
     def _predict_values(self, x):
         """
         Implemented by surrogate models to predict the output values.
