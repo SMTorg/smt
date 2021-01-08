@@ -13,6 +13,14 @@ class GEKPLS(KPLS):
     def _initialize(self):
         super(GEKPLS, self)._initialize()
         declare = self.options.declare
+        # Like KPLS, GEKPLS used only with "abs_exp" and "squar_exp" correlations
+        declare(
+            "corr",
+            "squar_exp",
+            values=("abs_exp", "squar_exp"),
+            desc="Correlation function type",
+            types=(str),
+        )
         declare(
             "xlimits",
             types=np.ndarray,
@@ -26,7 +34,6 @@ class GEKPLS(KPLS):
             desc="Number of extra points per training point",
         )
         self.supports["training_derivatives"] = True
-
         self.name = "GEKPLS"
 
     def _compute_pls(self, X, y):

@@ -1076,6 +1076,18 @@ class KrgBased(SurrogateModel):
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 
+        if self.name in ["KPLS", "GEKPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+
+        if self.name in ["KPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
+                )
+
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
@@ -1105,18 +1117,6 @@ class KrgBased(SurrogateModel):
             if not (1 in self.training_points[None]):
                 raise Exception(
                     "Derivative values are needed for using the GEKPLS model."
-                )
-
-        if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential or an absolute exponential kernel"
-                )
-
-        if self.name in ["KPLSK"]:
-            if self.options["corr"] not in ["squar_exp"]:
-                raise ValueError(
-                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
 
     def _check_F(self, n_samples_F, p):
