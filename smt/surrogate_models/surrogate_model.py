@@ -380,6 +380,22 @@ class SurrogateModel(object):
         s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
+    def __call__(self, x):
+        """
+        Predict the output values at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output values at the prediction points.
+        """
+        return self.predict_values(x)
+
     def _initialize(self):
         """
         Implemented by surrogate models to declare options and declare what they support (optional).
