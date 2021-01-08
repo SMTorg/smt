@@ -839,10 +839,10 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
             # abs_exp or matern
             # derivative of absolute value : +1/-1
             der = np.ones(D.shape)
-            for i in range(D.shape[0]):
-                for j in range(D.shape[1]):
-                    if D[i][j] < 0:
-                        der[i][j] = -1
+            for i, j in np.ndindex(D.shape):
+                if D[i][j] < 0:
+                      der[i][j] = -1
+                
             D_corr = np.einsum("j,ij->ij", theta.T, der)
             return D_corr
 
@@ -916,27 +916,25 @@ def componentwise_distance_PLS(
 
         if corr == "squar_exp":
             D_corr = np.zeros(np.shape(D))
-            for i in range(D.shape[0]):
-                for j in range(D.shape[1]):
-                    coef = 0
-                    for l in range(n_comp):
-                        coef = coef + theta[l] * coeff_pls[j][l] ** 2
-                    coef = 2 * coef
-                    D_corr[i][j] = coef * D[i][j]
+            for i, j in np.ndindex(D.shape):
+                coef = 0
+                for l in range(n_comp):
+                    coef = coef + theta[l] * coeff_pls[j][l] ** 2
+                coef = 2 * coef
+                D_corr[i][j] = coef * D[i][j]
             return D_corr
 
         else:
             # abs_exp
             D_corr = np.zeros(np.shape(D))
             der = np.ones(np.shape(D))
-            for i in range(D.shape[0]):
-                for j in range(D.shape[1]):
-                    if D[i][j] < 0:
-                        der[i][j] = -1
-                    coef = 0
-                    for l in range(n_comp):
-                        coef = coef + theta[l] * np.abs(coeff_pls[j][l])
-                    D_corr[i][j] = coef * der[i][j]
+            for i, j in np.ndindex(D.shape):
+                if D[i][j] < 0:
+                      der[i][j] = -1
+                coef = 0
+                for l in range(n_comp):
+                    coef = coef + theta[l] * np.abs(coeff_pls[j][l])
+                D_corr[i][j] = coef * der[i][j]
 
             return D_corr
 

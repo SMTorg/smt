@@ -736,7 +736,7 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        # Compute the correlation  function
+        # Compute the correlation function
         r = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d
         ).reshape(n_eval, self.nt)
@@ -759,17 +759,17 @@ class KrgBased(SurrogateModel):
         MSE[MSE < 0.0] = 0.0
         return MSE
 
-    def predict_derivatives_variances(self, x):
+    def _predict_variance_derivatives(self, x):
         """
-        Give the derivation of the variance of the kriging model (for one input)
-        Parameters:
+        Provide the derivative of the variance of the model at a set of points
+        Parameters
         -----------
-        - x: array_like
-        Input
-        Returns:
-        --------
-        - derived_variance: array_like
-        The jacobian of the variance of the kriging model
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        Returns
+        -------
+         derived_variance:  np.ndarray
+             The jacobian of the variance of the kriging model
         """
 
         # Initialization

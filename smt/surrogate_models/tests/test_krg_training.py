@@ -244,8 +244,7 @@ class Test(SMTestCase):
                     rtol=1e-3,
                 )  # from utils/smt_test_case.py
 
-    def test_derivatives_variances(self):
-        print("test")
+    def test_variance_derivatives(self):
         for corr_str in [
             "abs_exp",
             "squar_exp",
@@ -267,7 +266,7 @@ class Test(SMTestCase):
             y_jacob = np.zeros((2, 5))
 
             for i in range(np.shape(x_valid)[0]):
-                l = kr.predict_derivatives_variances(np.atleast_2d(x_valid[i]))[0]
+                l = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]))[0]
                 y_jacob[:, i] = l
 
             diff_g = (y_predicted[1][0] - y_predicted[2][0]) / (2 * e)
@@ -278,9 +277,6 @@ class Test(SMTestCase):
 
             jac_rel_error2 = abs((y_jacob[1] - diff_d) / y_jacob[1])
             self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
-
-    #      jac_rel_error = (jac_rel_error1 + jac_rel_error2) / 2
-
 
 if __name__ == "__main__":
     print_output = True

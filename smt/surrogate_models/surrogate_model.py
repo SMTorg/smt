@@ -380,7 +380,7 @@ class SurrogateModel(object):
         s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
-    def predict_derivatives_variances(self, x):
+    def predict_variance_derivatives(self, x):
         """
         Give the derivation of the variance of the kriging model (for one input)
         Parameters:
@@ -412,14 +412,14 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_derivatives_variances(x)
+            y = self._predict_variance_derivatives(x)
 
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
 
-        return y.reshape((n, self.ny))
+        return y
 
     def _initialize(self):
         """
