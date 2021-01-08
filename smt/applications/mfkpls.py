@@ -272,7 +272,7 @@ class MFKPLS(KrgBased):
             self.optimal_theta[lvl] = tmp_list[:-1]
             self.optimal_noise = tmp_list[-1]
             self.optimal_noise_all[lvl] = self.optimal_noise
-        del self.y_norma, self.D
+        del self.y_norma, self.D, self.optimal_noise
 
     def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
