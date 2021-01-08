@@ -5,12 +5,13 @@ This package is distributed under New BSD license.
 
 Base class for sampling algorithms.
 """
+from collections.abc import Generator
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-class SamplingMethod(object):
+class SamplingMethod(Generator, object):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -89,3 +90,35 @@ class SamplingMethod(object):
             The sampling locations in the input space.
         """
         raise Exception("This sampling method has not been implemented correctly")
+
+    def send(self, value=None):
+        """
+        Sends a value to the sampling method (allowing for coroutines
+        but may not be supported by the Sampler).
+        See: https://www.python.org/dev/peps/pep-0342/
+        See: https://docs.python.org/3/reference/expressions.html#generator-iterator-methods
+
+        By default the value is ignored but subclasses may support this feature.
+
+        Arguments
+        ---------
+        value : Any
+            Number of points requested.
+
+        Returns
+        -------
+        ndarray[1, nx]
+            The next sample or raises StopIteration.
+        """
+        return self.__call__(1)
+
+    def throw(self, exception_type, value=None, traceback=None):
+        """Raises an exception of type type at the point where
+        the generator was paused, and returns the next value
+        yielded by the generator function. If the generator
+        exits without yielding another value, a StopIteration
+        exception is raised. If the generator function does not
+        catch the passed-in exception, or raises a different exception,
+        then that exception propagates to the caller.
+        """
+        super().throw(exception_type, value, traceback)

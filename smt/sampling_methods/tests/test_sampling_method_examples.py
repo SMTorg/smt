@@ -63,6 +63,20 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
+    def test_interface(self):
+        from typing import Generator, Iterator, Callable
+        import numpy as np
+        from smt.sampling_methods.sampling_method import SamplingMethod
+        from smt.sampling_methods import Random
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = Random(xlimits=xlimits)
+
+        self.assertIsInstance(sampling, Generator)
+        self.assertIsInstance(sampling, Iterator)
+        self.assertIsInstance(sampling, Callable)
+        self.assertIsInstance(sampling, SamplingMethod)
+
 
 if __name__ == "__main__":
     unittest.main()
