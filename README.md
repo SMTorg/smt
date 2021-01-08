@@ -47,4 +47,21 @@ For examples demonstrating how to use SMT, you can take a look at the [tutorial 
 # Documentation
 http://smt.readthedocs.io
 
+# Contributing
+Set up the local environment
+```bash
+git clone https://github.com/SMTOrg/smt
+cd smt
+pip install virtualenv
+python -m venv env
+# Activate the virtual environment. Use .\env\Scripts\activate on Windows
+source env/bin/activate
+pip install numpy Cython pytest
+pip install -e .
+```
+Run the tests
+```bash
+pytest
+```
 
+[Read the development docs](https://smt.readthedocs.io/en/latest/_src_docs/dev_docs.html) and start pull-requesting.
