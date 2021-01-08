@@ -137,7 +137,7 @@ class KrgBased(SurrogateModel):
         ) = standardization(X, y)
 
         if not self.options["eval_noise"]:
-            self.noise = np.array(self.options["noise0"])
+            self.optimal_noise = np.array(self.options["noise0"])
         else:
             if self.options["use_het_noise"]:
                 # hetGP works with unique design variables when noise variance are not given
@@ -152,12 +152,12 @@ class KrgBased(SurrogateModel):
                     y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
 
                 # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.noise = self.options["noise0"] * np.ones(self.nt)
+                self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
                 for i in range(self.nt):
                     diff = self.y_norma[index_unique == i] - y_norma_unique[i]
                     if np.sum(diff ** 2) != 0.0:
-                        self.noise[i] = np.std(diff, ddof=1) ** 2
-                self.noise = self.noise / nt_reps
+                        self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
+                self.optimal_noise = self.optimal_noise / nt_reps
                 self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
@@ -186,7 +186,7 @@ class KrgBased(SurrogateModel):
             self._specific_train()
         else:
             if self.options["eval_noise"] and not self.options["use_het_noise"]:
-                self.noise = self.optimal_theta[-1]
+                self.optimal_noise = self.optimal_theta[-1]
                 self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
@@ -248,7 +248,7 @@ class KrgBased(SurrogateModel):
         noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
-            noise = self.noise
+            noise = self.optimal_noise
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
@@ -291,7 +291,6 @@ class KrgBased(SurrogateModel):
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        nt = self.nt
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output

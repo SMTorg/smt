@@ -6,12 +6,11 @@ Created on Fri May 04 10:26:49 2018
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of order 1 (AR1)
 Partial Least Square decomposition added on highest fidelity level
 KPLSK model combined PLS followed by a Krging model in the initial dimension
-Adapted on March 2020 by Nathalie Bartoli to the new SMT version
-Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
+Adapted March 2020 by Nathalie Bartoli to the new SMT version
 """
 
-from smt.applications import MFKPLS
 from smt.utils.kriging_utils import componentwise_distance
+from smt.applications import MFKPLS
 
 
 class MFKPLSK(MFKPLS):
@@ -32,18 +31,21 @@ class MFKPLSK(MFKPLS):
 
     def _new_train(self):
         """
-        Overrides MFK implementation
-        Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging (MFKPLSK)
+        Overrides KrgBased implementation
+        Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
         """
         self._new_train_init()
+        self.n_comp = self.options["n_comp"]
         theta0 = self.options["theta0"].copy()
         noise0 = self.options["noise0"].copy()
-        self.n_comp = self.options["n_comp"]
 
         for lvl in range(self.nlvl):
+            self._new_train_iteration(lvl)
+            self.options["n_comp"] = self.n_comp
             self.options["theta0"] = theta0
             self.options["noise0"] = noise0
-            self.options["n_comp"] = self.n_comp
-            self._new_train_iteration(lvl)
 
         self._new_train_finalize(lvl)
+
+    def _get_theta(self, i):
+        return self.optimal_theta[i]
