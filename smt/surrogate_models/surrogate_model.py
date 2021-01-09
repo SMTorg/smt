@@ -354,6 +354,7 @@ class SurrogateModel(object):
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
         check_support(self, "output_derivatives")
+        x = check_2d_array(x, "x")
         check_nx(self.nx, x)
 
         dy_dyt = self._predict_output_derivatives(x)
@@ -374,6 +375,7 @@ class SurrogateModel(object):
             Variances.
         """
         check_support(self, "variances")
+        x = check_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         x2 = np.copy(x)
