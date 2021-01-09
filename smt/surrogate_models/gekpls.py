@@ -19,6 +19,7 @@ class GEKPLS(KrgBased):
     """
     - GEKPLS
     """
+    name = "GEKPLS"
 
     def _initialize(self):
         super(GEKPLS, self)._initialize()
@@ -40,8 +41,6 @@ class GEKPLS(KrgBased):
             desc="Number of extra points per training point",
         )
         self.supports["training_derivatives"] = True
-
-        self.name = "GEKPLS"
 
     def _compute_pls(self, X, y):
         if 0 in self.training_points[None]:

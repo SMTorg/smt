@@ -19,11 +19,12 @@ from smt.utils.kriging_utils import componentwise_distance_PLS, componentwise_di
 
 
 class KPLSK(KrgBased):
+    name = "KPLSK"
+
     def _initialize(self):
         super(KPLSK, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
-        self.name = "KPLSK"
         # KPLSK used only with "squar_exp" correlations
         declare(
             "corr",

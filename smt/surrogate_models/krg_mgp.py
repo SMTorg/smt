@@ -18,6 +18,8 @@ The Active kriging class.
 
 
 class MGP(KrgBased):
+    name = "MGP"
+
     def _initialize(self):
         """
         Initialized MGP
@@ -34,7 +36,6 @@ class MGP(KrgBased):
         )
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
-        self.name = "MGP"
 
     def _componentwise_distance(self, dx, small=False, opt=0):
         """

@@ -272,9 +272,12 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
-        self.name = "MixedInteger" + self._surrogate.name
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
+
+    @property
+    def name(self):
+        return "MixedInteger" + self._surrogate.name
 
     def _initialize(self):
         self.supports["derivatives"] = False

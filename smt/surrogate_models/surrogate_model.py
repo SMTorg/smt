@@ -92,6 +92,11 @@ class SurrogateModel(object, metaclass=ABCMeta):
         self.training_points = defaultdict(dict)
         self.printer = Printer()
 
+    @property
+    @abstractmethod
+    def name(self):
+        pass
+
     def set_training_values(self, xt, yt, name=None):
         """
         Set training data (values).

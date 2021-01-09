@@ -22,6 +22,8 @@ class LS(SurrogateModel):
     Default-parameters from scikit-learn are used herein.
     """
 
+    name = "LS"
+
     def _initialize(self):
         super(LS, self)._initialize()
         declare = self.options.declare
@@ -34,7 +36,6 @@ class LS(SurrogateModel):
             desc="Directory for loading / saving cached data; None means do not save or load",
         )
 
-        self.name = "LS"
         supports["derivatives"] = True
 
     ############################################################################
