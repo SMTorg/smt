@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Base class for benchmarking/test problems.
 """
+from typing import Optional
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
@@ -38,7 +39,7 @@ class Problem(object):
 
         self._setup()
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """
         Implemented by problem to declare options (optional).
 
@@ -48,10 +49,10 @@ class Problem(object):
         """
         pass
 
-    def _setup(self):
+    def _setup(self) -> None:
         pass
 
-    def __call__(self, x, kx=None):
+    def __call__(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
         """
         Evaluate the function.
 
@@ -86,7 +87,7 @@ class Problem(object):
         else:
             return np.real(y)
 
-    def _evaluate(self, x, kx=None):
+    def _evaluate(self, x:  np.ndarray, kx: Optional[int] = None) -> np.ndarray:
         """
         Implemented by surrogate models to evaluate the function.
 
