@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from smt.utils.checks import check_2d_array
 
 
 def compute_rms_error(sm, xe=None, ye=None, kx=None):

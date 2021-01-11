@@ -8,7 +8,7 @@ Base class for benchmarking/test problems.
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.utils.checks import check_2d_array
+from smt.utils.checks import ensure_2d_array
 
 
 class Problem(object):
@@ -68,7 +68,7 @@ class Problem(object):
         ndarray[n, 1]
             Functions values if kx=None or derivative values if kx is an int.
         """
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
 
         if x.shape[1] != self.options["ndim"]:
             raise ValueError(
