@@ -8,7 +8,6 @@ Created on Mon Mar 23 15:20:29 2020
 
 from __future__ import print_function, division
 import numpy as np
-import random
 import unittest
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.kriging_utils import (
@@ -258,8 +257,8 @@ class Test(SMTestCase):
             kr.train()
 
             e = 1e-6
-            xa = random.random()
-            xb = random.random()
+            xa = self.random.random()
+            xb = self.random.random()
             x_valid = [[xa, xb], [xa + e, xb], [xa - e, xb], [xa, xb + e], [xa, xb - e]]
 
             y_predicted = kr.predict_variances(np.array(x_valid))
