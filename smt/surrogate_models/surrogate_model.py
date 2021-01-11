@@ -380,6 +380,47 @@ class SurrogateModel(object):
         s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
+    def predict_variance_derivatives(self, x):
+        """
+        Give the derivation of the variance of the kriging model (for one input)
+        Parameters:
+        -----------
+        - x: array_like
+        Input
+        Returns:
+        --------
+        - derived_variance: array_like
+        The jacobian of the variance of the kriging model
+        """
+        check_support(self, "derivatives")
+        check_support(self, "variances")
+
+        x = check_2d_array(x, "x")
+        check_nx(self.nx, x)
+        n = x.shape[0]
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
+
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
+
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_variance_derivatives(x)
+
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+
+        return y
+
     def _initialize(self):
         """
         Implemented by surrogate models to declare options and declare what they support (optional).

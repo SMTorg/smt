@@ -20,11 +20,7 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
 )
-
 from scipy.stats import multivariate_normal as m_norm
-
-
-# TODO : compute variance derivatives
 
 
 class KrgBased(SurrogateModel):
@@ -742,7 +738,6 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-
         # Compute the correlation function
         r = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d
@@ -765,6 +760,85 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
         return MSE
+
+    def _predict_variance_derivatives(self, x):
+        """
+        Provide the derivative of the variance of the model at a set of points
+        Parameters
+        -----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        Returns
+        -------
+         derived_variance:  np.ndarray
+             The jacobian of the variance of the kriging model
+        """
+
+        # Initialization
+        n_eval, n_features_x = x.shape
+        x = (x - self.X_offset) / self.X_scale
+        theta = self.optimal_theta
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)
+        dd = self._componentwise_distance(
+            dx, theta=self.optimal_theta, return_derivative=True
+        )
+        sigma2 = self.optimal_par["sigma2"]
+
+        cholesky_k = self.optimal_par["C"]
+
+        derivative_dic = {"dx": dx, "dd": dd}
+
+        r, dr = self._correlation_types[self.options["corr"]](
+            theta, d, derivative_params=derivative_dic
+        )
+        rho1 = solve_triangular(cholesky_k, r, lower=True)
+        invKr = solve_triangular(cholesky_k.T, rho1)
+
+        abs_ = abs(dx)
+
+        p1 = np.dot(dr.T, invKr).T
+
+        p2 = np.dot(invKr.T, dr)
+
+        f_x = self._regression_types[self.options["poly"]](x).T
+        F = self.F
+
+        rho2 = solve_triangular(cholesky_k, F, lower=True)
+        invKF = solve_triangular(cholesky_k.T, rho2)
+
+        A = f_x.T - np.dot(r.T, invKF)
+
+        B = np.dot(F.T, invKF)
+
+        rho3 = cholesky(B, lower=True)
+        invBAt = solve_triangular(rho3, A.T, lower=True)
+        D = solve_triangular(rho3.T, invBAt)
+
+        if self.options["poly"] == "constant":
+            df = np.zeros((1, self.nx))
+        elif self.options["poly"] == "linear":
+            df = np.zeros((self.nx + 1, self.nx))
+            df[1:, :] = np.eye(self.nx)
+        else:
+            raise ValueError(
+                "The derivative is only available for ordinary kriging or "
+                + "universal kriging using a linear trend"
+            )
+
+        dA = df.T - np.dot(dr.T, invKF)
+        p3 = np.dot(dA, D).T
+        p4 = np.dot(D.T, dA.T)
+        prime = -p1 - p2 + p3 + p4
+
+        derived_variance = []
+        x_std = np.resize(self.X_scale, self.nx)
+
+        for i in range(len(x_std)):
+            derived_variance.append(sigma2 * prime.T[i] / x_std[i])
+
+        return np.array(derived_variance).T
 
     def _optimize_hyperparam(self, D):
         """
@@ -935,16 +1009,6 @@ class KrgBased(SurrogateModel):
                         )
 
                         optimal_theta_res_2 = optimal_theta_res
-
-                        # optimal_theta_res_2 = optimal_theta = optimize.minimize(
-                        #     minus_reduced_likelihood_function,
-                        #     theta0_rand,
-                        #     constraints=[
-                        #         {"fun": con, "type": "ineq"} for con in constraints
-                        #     ],
-                        #     method="COBYLA",
-                        #     options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        # )
 
                     elif self.options["hyper_opt"] == "TNC":
 
