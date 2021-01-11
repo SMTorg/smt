@@ -21,4 +21,5 @@ smt/src/rmts/rmtsclib.cpp
 /dist
 .vscode/
 .pytest_cache/
-
+/env
+/venv
