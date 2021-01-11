@@ -8,13 +8,16 @@ import unittest
 import numpy as np
 from smt.surrogate_models import KRG
 from smt.problems import Sphere
-from smt.sampling_methods import FullFactorial
+from smt.sampling_methods import FullFactorial,LHS
 
 
 class TestKRG(unittest.TestCase):
     def test_predict_output_shape(self):
-        x = np.random.random((10, 3))
-        y = np.random.random((10, 2))
+        d, n = (3, 10)
+        sx = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),d,axis=0), criterion="m", random_state=42) 
+        x=sx(n)
+        sy = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),2,axis=0), criterion="m", random_state=42) 
+        y=sy(n)
 
         kriging = KRG()
         kriging.set_training_values(x, y)
