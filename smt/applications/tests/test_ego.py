@@ -106,7 +106,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             xlimits=xlimits,
-            random_state=0,  # change seed as it fails on travis macos py3.7
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -299,7 +299,12 @@ class TestEGO(SMTestCase):
         ydoe = fun(xdoe)
 
         ego = EGO(
-            xdoe=xdoe, ydoe=ydoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits
+            xdoe=xdoe,
+            ydoe=ydoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            random_state=42,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=fun)
 
