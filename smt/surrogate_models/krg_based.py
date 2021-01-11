@@ -793,10 +793,8 @@ class KrgBased(SurrogateModel):
         r, dr = self._correlation_types[self.options["corr"]](
             theta, d, derivative_params=derivative_dic
         )
-        rho1 = solve_triangular(cholesky_k, r, lower=True)
-        invKr = solve_triangular(cholesky_k.T, rho1)
-
-        abs_ = abs(dx)
+        rho1 = linalg.solve_triangular(cholesky_k, r, lower=True)
+        invKr = linalg.solve_triangular(cholesky_k.T, rho1)
 
         p1 = np.dot(dr.T, invKr).T
 
@@ -805,16 +803,16 @@ class KrgBased(SurrogateModel):
         f_x = self._regression_types[self.options["poly"]](x).T
         F = self.F
 
-        rho2 = solve_triangular(cholesky_k, F, lower=True)
-        invKF = solve_triangular(cholesky_k.T, rho2)
+        rho2 = linalg.solve_triangular(cholesky_k, F, lower=True)
+        invKF = linalg.solve_triangular(cholesky_k.T, rho2)
 
         A = f_x.T - np.dot(r.T, invKF)
 
         B = np.dot(F.T, invKF)
 
-        rho3 = cholesky(B, lower=True)
-        invBAt = solve_triangular(rho3, A.T, lower=True)
-        D = solve_triangular(rho3.T, invBAt)
+        rho3 = linalg.cholesky(B, lower=True)
+        invBAt = linalg.solve_triangular(rho3, A.T, lower=True)
+        D = linalg.solve_triangular(rho3.T, invBAt)
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
