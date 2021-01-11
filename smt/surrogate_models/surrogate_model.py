@@ -359,6 +359,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
+        x = check_2d_array(x, "x")
         check_support(self, "output_derivatives")
         check_nx(self.nx, x)
 
@@ -379,6 +380,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
+        x = check_2d_array(x, "x")
         check_support(self, "variances")
         check_nx(self.nx, x)
         n = x.shape[0]

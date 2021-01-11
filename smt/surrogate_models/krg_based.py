@@ -3,9 +3,11 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
+
 import numpy as np
 from scipy import linalg, optimize
-from scipy.linalg import solve_triangular, cholesky
+from copy import deepcopy
+
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
 from smt.utils.kriging_utils import constant, linear, quadratic
@@ -88,15 +90,15 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "noise0",
-            [1e-6],
+            [0.0],
             types=(list, np.ndarray),
-            desc="Initial noise hyperparameter",
+            desc="Initial noise hyperparameters",
         )
-        declare(  # I let the bounds previously imposed by default (how were they fixed?)
+        declare(
             "noise_bounds",
-            [1e-16, 1e10],
+            [100.0 * np.finfo(np.double).eps, 1e10],
             types=(list, np.ndarray),
-            desc="bounds for hyperparameters",
+            desc="bounds for noise hyperparameters",
         )
         declare(
             "use_het_noise",
@@ -111,8 +113,6 @@ class KrgBased(SurrogateModel):
         supports["variances"] = True
 
     def _new_train(self):
-        self._check_param()
-
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -120,6 +120,8 @@ class KrgBased(SurrogateModel):
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
             X, y = self._compute_pls(X.copy(), y.copy())
+
+        self._check_param()
 
         # Center and scale X and y
         (
@@ -131,28 +133,29 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X, y)
 
-        if self.options["eval_noise"] and self.options["use_het_noise"]:
-            # hetGP works with unique design variables
-            (
-                self.X_norma,
-                self.index_unique,  # do we need to store it?
-                self.nt_reps,  # do we need to store it?
-            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
-            self.nt = self.X_norma.shape[0]
+        if not self.options["eval_noise"]:
+            self.optimal_noise = np.array(self.options["noise0"])
+        else:
+            if self.options["use_het_noise"]:
+                # hetGP works with unique design variables when noise variance are not given
+                (self.X_norma, index_unique, nt_reps,) = np.unique(
+                    self.X_norma, return_inverse=True, return_counts=True, axis=0
+                )
+                self.nt = self.X_norma.shape[0]
 
-            # computing the mean of the output per unique design variable (see Binois et al., 2018)
-            y_norma_unique = []
-            for i in range(self.nt):
-                y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt):
+                    y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
 
-            # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-            self.noise = self.options["noise0"] * np.ones(self.nt)
-            for i in range(self.nt):
-                diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                if np.sum(diff ** 2) != 0.0:
-                    self.noise[i] = np.std(diff, ddof=1) ** 2
-            self.noise = self.noise.tolist() / self.nt_reps
-            self.y_norma = y_norma_unique
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
+                for i in range(self.nt):
+                    diff = self.y_norma[index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
+                self.optimal_noise = self.optimal_noise / nt_reps
+                self.y_norma = y_norma_unique
 
         # Calculate matrix of distances D between samples
         D, self.ij = cross_distances(self.X_norma)
@@ -179,10 +182,9 @@ class KrgBased(SurrogateModel):
         if self.name in ["MGP"]:
             self._specific_train()
         else:
-            if self.options["eval_noise"]:
-                if not self.options["use_het_noise"]:
-                    self.noise = self.optimal_theta[self.D.shape[1] :]
-                self.optimal_theta = self.optimal_theta[0 : self.D.shape[1]]
+            if self.options["eval_noise"] and not self.options["use_het_noise"]:
+                self.optimal_noise = self.optimal_theta[-1]
+                self.optimal_theta = self.optimal_theta[:-1]
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
@@ -240,11 +242,11 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"]:
             nugget = 0
 
-        noise = 0
+        noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
-            noise = self.noise
-        elif self.options["eval_noise"] and not self.options["use_het_noise"]:
+            noise = self.optimal_noise
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
@@ -286,7 +288,6 @@ class KrgBased(SurrogateModel):
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        nt = self.nt
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
         # Compute/Organize output
@@ -792,10 +793,8 @@ class KrgBased(SurrogateModel):
         r, dr = self._correlation_types[self.options["corr"]](
             theta, d, derivative_params=derivative_dic
         )
-        rho1 = solve_triangular(cholesky_k, r, lower=True)
-        invKr = solve_triangular(cholesky_k.T, rho1)
-
-        abs_ = abs(dx)
+        rho1 = linalg.solve_triangular(cholesky_k, r, lower=True)
+        invKr = linalg.solve_triangular(cholesky_k.T, rho1)
 
         p1 = np.dot(dr.T, invKr).T
 
@@ -804,16 +803,16 @@ class KrgBased(SurrogateModel):
         f_x = self._regression_types[self.options["poly"]](x).T
         F = self.F
 
-        rho2 = solve_triangular(cholesky_k, F, lower=True)
-        invKF = solve_triangular(cholesky_k.T, rho2)
+        rho2 = linalg.solve_triangular(cholesky_k, F, lower=True)
+        invKF = linalg.solve_triangular(cholesky_k.T, rho2)
 
         A = f_x.T - np.dot(r.T, invKF)
 
         B = np.dot(F.T, invKF)
 
-        rho3 = cholesky(B, lower=True)
-        invBAt = solve_triangular(rho3, A.T, lower=True)
-        D = solve_triangular(rho3.T, invBAt)
+        rho3 = linalg.cholesky(B, lower=True)
+        invBAt = linalg.solve_triangular(rho3, A.T, lower=True)
+        D = linalg.solve_triangular(rho3.T, invBAt)
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -910,27 +909,25 @@ class KrgBased(SurrogateModel):
 
             bounds_hyp = []
 
-            for i in range(len(self.options["theta0"])):
+            self.theta0 = deepcopy(self.options["theta0"])
+            for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
                 # By standardising X in R, X_norm = (X-X_mean)/X_std, then
                 # X_norm in [-1,1] if considering one std intervals. This leads
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
-                if (
-                    self.options["theta0"][i] < theta_bounds[0]
-                    or self.options["theta0"][i] > theta_bounds[1]
-                ):
-                    self.options["theta0"][i] = np.random.rand()
-                    self.options["theta0"][i] = (
-                        self.options["theta0"][i] * (theta_bounds[1] - theta_bounds[0])
+                if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                    self.theta0[i] = np.random.rand()
+                    self.theta0[i] = (
+                        self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
                     )
                     print(
-                        "\n Warning: theta0 is out the feasible bounds. A random initialisation is used instead.\n"
+                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
-                if self.name in ["MGP"]:
+                if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
                     constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
                     bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
@@ -942,18 +939,18 @@ class KrgBased(SurrogateModel):
 
             if self.name in ["MGP"]:
                 theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.options["theta0"]),
+                    self.options["prior"]["mean"] * len(self.theta0),
                     self.options["prior"]["var"],
                     1,
                 )
-                theta0 = self.options["theta0"]
+                theta0 = self.theta0
             else:
-                theta0_rand = np.random.rand(len(self.options["theta0"]))
+                theta0_rand = np.random.rand(len(self.theta0))
                 theta0_rand = (
                     theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
                     + log10t_bounds[0]
                 )
-                theta0 = np.log10(self.options["theta0"])
+                theta0 = np.log10(self.theta0)
 
             self.D = self._componentwise_distance(D, opt=ii)
 
@@ -961,26 +958,39 @@ class KrgBased(SurrogateModel):
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
+                self.noise0 = np.array(self.options["noise0"])
+                noise_bounds = self.options["noise_bounds"]
                 if self.options["eval_noise"] and not self.options["use_het_noise"]:
+                    self.noise0[self.noise0 == 0.0] = noise_bounds[0]
+                    for i in range(len(self.noise0)):
+                        if (
+                            self.noise0[i] < noise_bounds[0]
+                            or self.noise0[i] > noise_bounds[1]
+                        ):
+                            self.noise0[i] = noise_bounds[0]
+                            print(
+                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                            )
+
                     theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.options["noise0"]]).flatten())]
+                        [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
                         [
                             theta0_rand,
-                            np.log10(np.array([self.options["noise0"]]).flatten()),
+                            np.log10(np.array([self.noise0]).flatten()),
                         ]
                     )
 
-                    for i in range(len(self.options["noise0"])):
-                        noise_bounds = np.log10(self.options["noise_bounds"])
+                    for i in range(len(self.noise0)):
+                        noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[i + len(self.options["theta0"])]
+                            lambda log10t: log10t[i + len(self.theta0)]
                             - noise_bounds[0]
                         )
                         constraints.append(
                             lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.options["theta0"])]
+                            - log10t[i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
                 try:
@@ -1121,7 +1131,7 @@ class KrgBased(SurrogateModel):
         """
 
         # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS", "MFKPLS", "MFKPLSK"]:
+        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
             d = self.options["n_comp"]
         else:
             d = self.nx
@@ -1129,31 +1139,46 @@ class KrgBased(SurrogateModel):
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 
+        if self.name in ["KPLS", "GEKPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+        elif self.name in ["KPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
+                )
+
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
                 raise ValueError(
-                    "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                    % (len(self.options["theta0"]), d)
+                )
+
+        if self.options["use_het_noise"] and not self.options["eval_noise"]:
+            if len(self.options["noise0"]) != self.nt:
+                if len(self.options["noise0"]) == 1:
+                    self.options["noise0"] *= np.ones(self.nt)
+                else:
+                    raise ValueError(
+                        "for the heteroscedastic case, the length of noise0 (%s) should be equal to the number of observations (%s)."
+                        % (len(self.options["noise0"]), self.nt)
+                    )
+        if not self.options["use_het_noise"]:
+            if len(self.options["noise0"]) != 1:
+                raise ValueError(
+                    "for the homoscedastic case, the length of noise0 (%s) should be equal to one."
+                    % (len(self.options["noise0"]))
                 )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
                 raise Exception(
                     "Derivative values are needed for using the GEKPLS model."
-                )
-
-        if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential or an absolute exponential kernel"
-                )
-
-        if self.name in ["KPLSK"]:
-            if self.options["corr"] not in ["squar_exp"]:
-                raise ValueError(
-                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
 
     def _check_F(self, n_samples_F, p):
