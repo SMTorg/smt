@@ -278,6 +278,7 @@ class Test(SMTestCase):
             jac_rel_error2 = abs((y_jacob[1] - diff_d) / y_jacob[1])
             self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
 
+
 if __name__ == "__main__":
     print_output = True
     unittest.main()

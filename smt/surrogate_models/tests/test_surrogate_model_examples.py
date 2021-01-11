@@ -201,10 +201,10 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
-        #estimated variance
+        # estimated variance
         s2 = sm.predict_variances(x)
-        #derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0) 
+        # derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
 
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
@@ -212,18 +212,20 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-        
-        #add a plot with variance
+
+        # add a plot with variance
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
-        plt.fill_between(np.ravel(x), np.ravel(y-3*np.sqrt(s2)), np.ravel(y+3*np.sqrt(s2)),color='lightgrey')
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
         plt.show()
-    
-       
-    
 
     def test_mixed_int_krg(self):
         import numpy as np
@@ -250,7 +252,7 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
-        #estimated variance
+        # estimated variance
         s2 = sm.predict_variances(x)
 
         plt.plot(xt, yt, "o")
@@ -259,11 +261,16 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-        
-        #add a plot with variance
+
+        # add a plot with variance
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
-        plt.fill_between(np.ravel(x), np.ravel(y-3*np.sqrt(s2)), np.ravel(y+3*np.sqrt(s2)),color='lightgrey')
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
@@ -285,10 +292,10 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
-        #estimated variance
+        # estimated variance
         s2 = sm.predict_variances(x)
-        #to compute the derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0) 
+        # to compute the derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
 
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
@@ -296,11 +303,16 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-        
-        #add a plot with variance
+
+        # add a plot with variance
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
-        plt.fill_between(np.ravel(x), np.ravel(y-3*np.sqrt(s2)), np.ravel(y+3*np.sqrt(s2)),color='lightgrey')
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
@@ -322,22 +334,27 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
-        #estimated variance
+        # estimated variance
         s2 = sm.predict_variances(x)
-        #derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0) 
-        
+        # derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
+
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
         plt.show()
-        
-        #add a plot with variance
+
+        # add a plot with variance
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
-        plt.fill_between(np.ravel(x), np.ravel(y-3*np.sqrt(s2)), np.ravel(y+3*np.sqrt(s2)),color='lightgrey')
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
