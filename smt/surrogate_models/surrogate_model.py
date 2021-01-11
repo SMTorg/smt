@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.utils.checks import check_support, check_nx, check_2d_array
+from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 
 class SurrogateModel(object, metaclass=ABCMeta):
@@ -111,8 +111,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        xt = check_2d_array(xt, "xt")
-        yt = check_2d_array(yt, "yt")
+        xt = ensure_2d_array(xt, "xt")
+        yt = ensure_2d_array(yt, "yt")
 
         if xt.shape[0] != yt.shape[0]:
             raise ValueError(
@@ -143,7 +143,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
             The training points must be set first with set_training_values before calling update_training_values.
             The number of training points does not agree with the earlier call of set_training_values.
         """
-        yt = check_2d_array(yt, "yt")
+        yt = ensure_2d_array(yt, "yt")
 
         kx = 0
 
@@ -180,8 +180,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
         """
         check_support(self, "training_derivatives")
 
-        xt = check_2d_array(xt, "xt")
-        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
+        xt = ensure_2d_array(xt, "xt")
+        dyt_dxt = ensure_2d_array(dyt_dxt, "dyt_dxt")
 
         if xt.shape[0] != dyt_dxt.shape[0]:
             raise ValueError(
@@ -215,7 +215,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         """
         check_support(self, "training_derivatives")
 
-        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
+        dyt_dxt = ensure_2d_array(dyt_dxt, "dyt_dxt")
 
         if kx not in self.training_points[name]:
             raise ValueError(
@@ -276,7 +276,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         x2 = np.copy(x)
@@ -318,7 +318,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
             Derivatives.
         """
         check_support(self, "derivatives")
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
@@ -359,8 +359,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
             Dictionary of output derivatives.
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
-        x = check_2d_array(x, "x")
         check_support(self, "output_derivatives")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
 
         dy_dyt = self._predict_output_derivatives(x)
@@ -380,8 +380,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
-        x = check_2d_array(x, "x")
         check_support(self, "variances")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         x2 = np.copy(x)
@@ -403,7 +403,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         check_support(self, "derivatives")
         check_support(self, "variances")
 
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
