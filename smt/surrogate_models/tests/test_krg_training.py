@@ -8,6 +8,7 @@ Created on Mon Mar 23 15:20:29 2020
 
 from __future__ import print_function, division
 import numpy as np
+import random
 import unittest
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.kriging_utils import (
@@ -62,6 +63,19 @@ class Test(SMTestCase):
         self.theta = theta
         self.corr_str = corr_str
         self.corr_def = corr_def
+
+    def test_noise_estimation(self):
+        xt = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
+        sm = KRG(hyper_opt="Cobyla", eval_noise=True, noise0=[1e-4])
+
+        sm.set_training_values(xt, yt)
+        sm.train()
+        x = np.linspace(0, 4, 100)
+        y = sm.predict_values(x)
+        self.assert_error(
+            np.array(sm.optimal_theta), np.array([0.11798507]), 1e-5, 1e-5
+        )
 
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
@@ -230,6 +244,39 @@ class Test(SMTestCase):
                     rtol=1e-3,
                 )  # from utils/smt_test_case.py
 
+    def test_variance_derivatives(self):
+        for corr_str in [
+            "abs_exp",
+            "squar_exp",
+            "matern32",
+            "matern52",
+        ]:
+            kr = KRG(print_global=False)
+            kr.options["poly"] = "constant"
+            kr.options["corr"] = corr_str
+            kr.set_training_values(self.X, self.y)
+            kr.train()
+
+            e = 1e-6
+            xa = random.random()
+            xb = random.random()
+            x_valid = [[xa, xb], [xa + e, xb], [xa - e, xb], [xa, xb + e], [xa, xb - e]]
+
+            y_predicted = kr.predict_variances(np.array(x_valid))
+            y_jacob = np.zeros((2, 5))
+
+            for i in range(np.shape(x_valid)[0]):
+                l = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]))[0]
+                y_jacob[:, i] = l
+
+            diff_g = (y_predicted[1][0] - y_predicted[2][0]) / (2 * e)
+            diff_d = (y_predicted[3][0] - y_predicted[4][0]) / (2 * e)
+
+            jac_rel_error1 = abs((y_jacob[0] - diff_g) / y_jacob[0])
+            self.assert_error(jac_rel_error1, 1e-3, atol=0.01, rtol=0.01)
+
+            jac_rel_error2 = abs((y_jacob[1] - diff_d) / y_jacob[1])
+            self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
 
 if __name__ == "__main__":
     print_output = True
