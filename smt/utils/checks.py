@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 
 
-def check_2d_array(array, name):
+def ensure_2d_array(array, name):
     if not isinstance(array, np.ndarray):
         raise ValueError("{} must be a NumPy array".format(name))
 
