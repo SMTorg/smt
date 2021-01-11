@@ -10,25 +10,29 @@ Kriging is an interpolating model that is a linear combination of a known functi
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
-
+	
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
-Four types of correlation functions are available in SMT:
+Four types of correlation functions are available in SMT.
+
+Exponential correlation function (Ornstein-Uhlenbeck process):
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+ \\
-  \text{Exponential correlation function (Ornstein-Uhlenbeck process)}
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
+Squared Exponential (Gaussian) correlation function:
+
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right), \\
-  \text{Squared Exponential (Gaussian) correlation function}
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
+Matérn 5/2 correlation function:
+
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right), \\
-  \text{Mat\'ern 5/2 correlation function}
-  
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+Matérn 3/2 correlation function:
+
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right).\\
-  \text{Mat\'ern 3/2 correlation function}
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
 These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
 
@@ -40,7 +44,7 @@ In the implementations, data are normalized by substracting the mean from each v
 .. math ::
   X_{\text{norm}} = \frac{X - X_{\text{mean}}}{X_{\text{std}}}
 
-More details about the kriging approach could be found in [1]_.
+More details about the Kriging approach could be found in [1]_.
 
 Kriging with categorical or integer variables 
 ---------------------------------------------
@@ -55,7 +59,7 @@ then we round in the prediction to the output dimension giving the greatest cont
 
 More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
 
-Implementation Note: Mixed variables handling is available for all kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
+Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
 
@@ -105,7 +109,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0029919
   ___________________________________________________________________________
      
    Evaluation
@@ -168,9 +172,9 @@ Usage with mixed variables
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -225,11 +229,21 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
      -  ['Cobyla', 'TNC']
@@ -241,7 +255,17 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  1e-06
+     -  [1e-06]
      -  None
-     -  ['float', 'list']
+     -  ['list', 'ndarray']
      -  Initial noise hyperparameter
+  *  -  noise_bounds
+     -  [1e-16, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
