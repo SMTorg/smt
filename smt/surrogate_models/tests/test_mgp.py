@@ -14,11 +14,19 @@ from smt.sampling_methods import FullFactorial, LHS
 class TestMGP(unittest.TestCase):
     def test_predict_output(self):
         d, n = (3, 10)
-        sx = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),d,axis=0), criterion="m", random_state=42) 
-        x=sx(n)
-        sy = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),1,axis=0), criterion="m", random_state=42) 
-        y=sy(n)
-        y= y.flatten()
+        sx = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        x = sx(n)
+        sy = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        y = sy(n)
+        y = y.flatten()
 
         kriging = MGP(n_comp=2)
         kriging.set_training_values(x, y)

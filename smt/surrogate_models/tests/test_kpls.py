@@ -14,11 +14,18 @@ from smt.sampling_methods import FullFactorial, LHS
 class TestKPLS(unittest.TestCase):
     def test_predict_output(self):
         d, n = (3, 10)
-        sx = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),d,axis=0), criterion="m", random_state=42) 
-        x=sx(n)
-        sy = LHS(xlimits=np.repeat(np.atleast_2d([0.0,1.0]),1,axis=0), criterion="m", random_state=42) 
-        y=sy(n)
-
+        sx = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        x = sx(n)
+        sy = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        y = sy(n)
 
         kriging = KPLS(n_comp=2)
         kriging.set_training_values(x, y)
@@ -29,11 +36,9 @@ class TestKPLS(unittest.TestCase):
 
         self.assertRaises(ValueError, lambda: kriging.predict_values(x_fail_1))
         self.assertRaises(ValueError, lambda: kriging.predict_values(x_fail_2))
-        var= kriging.predict_variances(x)
+        var = kriging.predict_variances(x)
         self.assertEqual(y.shape[0], var.shape[0])
 
-
-    
 
 if __name__ == "__main__":
     unittest.main()
