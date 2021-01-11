@@ -3,8 +3,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
-import warnings
-import numpy as np
 
 from packaging import version
 from sklearn import __version__ as sklversion
@@ -23,7 +21,6 @@ class KPLS(KrgBased):
         super(KPLS, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
-        self.name = "KPLS"
         # KPLS used only with "abs_exp" and "squar_exp" correlations
         declare(
             "corr",
@@ -32,6 +29,7 @@ class KPLS(KrgBased):
             desc="Correlation function type",
             types=(str),
         )
+        self.name = "KPLS"
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
