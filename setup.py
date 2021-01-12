@@ -2,6 +2,7 @@
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Remi Lafage <remi.lafage@onera.fr>
+        Lucas Alber <lucasd.alber@gmail.com>
 
 This package is distributed under New BSD license.
 """
