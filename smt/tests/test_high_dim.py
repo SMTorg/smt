@@ -146,7 +146,7 @@ class Test(SMTestCase):
 
     def test_exp_KRG(self):
         self.run_test()
-        
+
     def test_exp_KPLS(self):
         self.run_test()
 
@@ -172,7 +172,7 @@ class Test(SMTestCase):
 
     def test_tanh_KPLS(self):
         self.run_test()
-        
+
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
@@ -192,7 +192,7 @@ class Test(SMTestCase):
 
     def test_cos_KRG(self):
         self.run_test()
-        
+
     def test_cos_KPLS(self):
         self.run_test()
 

@@ -8,13 +8,25 @@ import unittest
 import numpy as np
 from smt.surrogate_models import MGP
 from smt.problems import Sphere
-from smt.sampling_methods import FullFactorial
+from smt.sampling_methods import FullFactorial, LHS
 
 
 class TestMGP(unittest.TestCase):
     def test_predict_output(self):
-        x = np.random.random((10, 3))
-        y = np.random.random((10))
+        d, n = (3, 10)
+        sx = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        x = sx(n)
+        sy = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        y = sy(n)
+        y = y.flatten()
 
         kriging = MGP(n_comp=2)
         kriging.set_training_values(x, y)
