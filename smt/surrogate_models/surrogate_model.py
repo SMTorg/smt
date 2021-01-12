@@ -397,10 +397,8 @@ class SurrogateModel(object):
         derived_variance: np.ndarray
             The jacobian of the variance
         """
-        check_support(self, "derivatives")
-        check_support(self, "variances")
-
         x = ensure_2d_array(x, "x")
+        check_support(self, "variance_derivatives")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
