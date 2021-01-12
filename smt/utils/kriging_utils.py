@@ -841,8 +841,8 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
             der = np.ones(D.shape)
             for i, j in np.ndindex(D.shape):
                 if D[i][j] < 0:
-                      der[i][j] = -1
-                
+                    der[i][j] = -1
+
             D_corr = np.einsum("j,ij->ij", theta.T, der)
             return D_corr
 
@@ -930,7 +930,7 @@ def componentwise_distance_PLS(
             der = np.ones(np.shape(D))
             for i, j in np.ndindex(D.shape):
                 if D[i][j] < 0:
-                      der[i][j] = -1
+                    der[i][j] = -1
                 coef = 0
                 for l in range(n_comp):
                     coef = coef + theta[l] * np.abs(coeff_pls[j][l])

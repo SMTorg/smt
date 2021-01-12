@@ -687,7 +687,9 @@ class MFK(KrgBased):
                 if len(self.options["theta0"]) == 1:
                     self.options["theta0"] *= np.ones((self.nlvl, d))
                 elif len(self.options["theta0"]) == self.nlvl:
-                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(-1, 1)
+                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
+                        -1, 1
+                    )
                     self.options["theta0"] *= np.ones((1, d))
                 else:
                     raise ValueError(
