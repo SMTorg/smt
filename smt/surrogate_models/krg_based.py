@@ -111,6 +111,7 @@ class KrgBased(SurrogateModel):
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
         supports["variances"] = True
+        supports["variance_derivatives"] = True
 
     def _new_train(self):
         # Sampling points X and y
