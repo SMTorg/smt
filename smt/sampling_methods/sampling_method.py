@@ -38,7 +38,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         self._initialize()
         self.options.update(kwargs)
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """
         Implemented by sampling methods to declare options (optional).
 
@@ -48,7 +48,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         """
         pass
 
-    def __call__(self, nt):
+    def __call__(self, nt: int) -> np.ndarray:
         """
         Compute the requested number of sampling points.
 
@@ -74,7 +74,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         return x
 
     @abstractmethod
-    def _compute(self, nt):
+    def _compute(self, nt: int) -> np.ndarray:
         """
         Implemented by sampling methods to compute the requested number of sampling points.
 

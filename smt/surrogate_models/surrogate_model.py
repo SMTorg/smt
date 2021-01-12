@@ -5,6 +5,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 Paul Saves : Mixed Integer
 """
+from typing import Optional
 import numpy as np
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
@@ -98,7 +99,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
     def name(self):
         pass
 
-    def set_training_values(self, xt, yt, name=None):
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
         """
         Set training data (values).
 
@@ -126,7 +127,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
-    def update_training_values(self, yt, name=None):
+    def update_training_values(self, yt: np.ndarray, name: Optional[str] = None) -> None:
         """
         Update the training data (values) at the previously set input values.
 
@@ -163,7 +164,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         self.training_points[name][kx][1] = np.array(yt)
 
-    def set_training_derivatives(self, xt, dyt_dxt, kx, name=None):
+    def set_training_derivatives(self, xt: np.ndarray, dyt_dxt: np.ndarray,
+                                 kx: int, name: Optional[str] = None) -> None:
         """
         Set training data (derivatives).
 
@@ -194,7 +196,8 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
-    def update_training_derivatives(self, dyt_dxt, kx, name=None):
+    def update_training_derivatives(self, dyt_dxt: np.ndarray, kx: int,
+                                    name: Optional[str] = None) -> None:
         """
         Update the training data (values) at the previously set input values.
 
@@ -233,7 +236,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         self.training_points[name][kx + 1][1] = np.array(dyt_dxt)
 
-    def train(self):
+    def train(self) -> None:
         """
         Train the model
         """
@@ -263,7 +266,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         with self.printer._timed_context("Training", "training"):
             self._train()
 
-    def predict_values(self, x):
+    def predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the output values at a set of points.
 
@@ -302,7 +305,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         self.printer()
         return y.reshape((n, self.ny))
 
-    def predict_derivatives(self, x, kx):
+    def predict_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
         """
         Predict the dy_dx derivatives at a set of points.
 
@@ -345,7 +348,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         return y.reshape((n, self.ny))
 
-    def predict_output_derivatives(self, x):
+    def predict_output_derivatives(self, x: np.ndarray) -> dict:
         """
         Predict the derivatives dy_dyt at a set of points.
 
@@ -367,7 +370,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
 
-    def predict_variances(self, x):
+    def predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -441,14 +444,14 @@ class SurrogateModel(object, metaclass=ABCMeta):
         """
         pass
 
-    def _train(self):
+    def _train(self) -> None:
         """
         Implemented by surrogate models to perform training (optional, but typically implemented).
         """
         pass
 
     @abstractmethod
-    def _predict_values(self, x):
+    def _predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the output values.
 
@@ -464,7 +467,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         """
         raise Exception("This surrogate model is incorrectly implemented")
 
-    def _predict_derivatives(self, x, kx):
+    def _predict_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
         """
         Implemented by surrogate models to predict the dy_dx derivatives (optional).
 
@@ -489,7 +492,7 @@ class SurrogateModel(object, metaclass=ABCMeta):
         """
         check_support(self, "derivatives", fail=True)
 
-    def _predict_output_derivatives(self, x):
+    def _predict_output_derivatives(self, x: np.ndarray) -> dict:
         """
         Implemented by surrogate models to predict the dy_dyt derivatives (optional).
 
@@ -512,8 +515,9 @@ class SurrogateModel(object, metaclass=ABCMeta):
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
         check_support(self, "output_derivatives", fail=True)
+        return {}
 
-    def _predict_variances(self, x):
+    def _predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the variances at a set of points (optional).
 
