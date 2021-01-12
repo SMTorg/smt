@@ -6,9 +6,10 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 from setuptools import setup, Extension
-import os
 import sys
-from subprocess import call
+import numpy as np
+from Cython.Build import cythonize
+
 from smt import __version__
 
 CLASSIFIERS = """\
@@ -42,21 +43,6 @@ with respect to the training data. It also includes new surrogate models
 that are not available elsewhere: kriging by partial-least squares reduction 
 and energy-minimizing spline interpolation.
 """
-try:
-    import numpy as np
-except ImportError:
-    print("Numpy import failed: please install numpy module")
-    exit(-1)
-
-try:
-    import Cython
-except ImportError:
-    print("Cython import failed: try to install it using pip module...")
-    import pip
-
-    pip.main(["install", "Cython"])
-
-from Cython.Build import cythonize
 
 extra_compile_args = []
 if not sys.platform.startswith("win"):

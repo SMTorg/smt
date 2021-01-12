@@ -23,3 +23,4 @@ smt/src/rmts/rmtsclib.cpp
 .pytest_cache/
 /env
 /venv
+/pip-wheel-metadata
