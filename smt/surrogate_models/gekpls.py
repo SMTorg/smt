@@ -7,9 +7,10 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.surrogate_models import KPLS
 from smt.utils.kriging_utils import ge_compute_pls
-
-
+   
 class GEKPLS(KPLS):
+    name = "GEKPLS"
+  
     def _initialize(self):
         super(GEKPLS, self)._initialize()
         declare = self.options.declare
@@ -34,7 +35,6 @@ class GEKPLS(KPLS):
             desc="Number of extra points per training point",
         )
         self.supports["training_derivatives"] = True
-        self.name = "GEKPLS"
 
     def _compute_pls(self, X, y):
         if 0 in self.training_points[None]:

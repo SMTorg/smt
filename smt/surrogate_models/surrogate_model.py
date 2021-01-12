@@ -8,13 +8,14 @@ Paul Saves : Mixed Integer
 from typing import Optional
 import numpy as np
 from collections import defaultdict
+from abc import ABCMeta, abstractmethod
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 
-class SurrogateModel(object):
+class SurrogateModel(object, metaclass=ABCMeta):
     """
     Base class for all surrogate models.
 
@@ -57,6 +58,7 @@ class SurrogateModel(object):
         supports["output_derivatives"] = False
         supports["adjoint_api"] = False
         supports["variances"] = False
+        supports["variance_derivatives"] = False
 
         declare = self.options.declare
 
@@ -91,6 +93,11 @@ class SurrogateModel(object):
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)
         self.printer = Printer()
+
+    @property
+    @abstractmethod
+    def name(self):
+        pass
 
     def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
         """
@@ -387,20 +394,20 @@ class SurrogateModel(object):
 
     def predict_variance_derivatives(self, x):
         """
-        Give the derivation of the variance of the kriging model (for one input)
+        Predict the derivation of the variance at a point
+
         Parameters:
         -----------
-        - x: array_like
-        Input
+        x : np.ndarray
+            Input value for the prediction point.
+
         Returns:
         --------
-        - derived_variance: array_like
-        The jacobian of the variance of the kriging model
+        derived_variance: np.ndarray
+            The jacobian of the variance
         """
-        check_support(self, "derivatives")
-        check_support(self, "variances")
-
         x = ensure_2d_array(x, "x")
+        check_support(self, "variance_derivatives")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
@@ -443,6 +450,7 @@ class SurrogateModel(object):
         """
         pass
 
+    @abstractmethod
     def _predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the output values.
@@ -531,3 +539,19 @@ class SurrogateModel(object):
             Variances.
         """
         check_support(self, "variances", fail=True)
+
+    def _predict_variance_derivatives(self, x):
+        """
+        Implemented by surrogate models to predict the derivation of the variance at a point (optional).
+
+        Parameters:
+        -----------
+        x : np.ndarray
+            Input value for the prediction point.
+
+        Returns:
+        --------
+        derived_variance: np.ndarray
+            The jacobian of the variance
+        """
+        check_support(self, "variance_derivatives", fail=True)
