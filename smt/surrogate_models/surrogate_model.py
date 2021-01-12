@@ -56,6 +56,7 @@ class SurrogateModel(object):
         supports["output_derivatives"] = False
         supports["adjoint_api"] = False
         supports["variances"] = False
+        supports["variance_derivatives"] = False
 
         declare = self.options.declare
 
@@ -384,20 +385,20 @@ class SurrogateModel(object):
 
     def predict_variance_derivatives(self, x):
         """
-        Give the derivation of the variance of the kriging model (for one input)
+        Predict the derivation of the variance at a point
+
         Parameters:
         -----------
-        - x: array_like
-        Input
+        x : np.ndarray
+            Input value for the prediction point.
+
         Returns:
         --------
-        - derived_variance: array_like
-        The jacobian of the variance of the kriging model
+        derived_variance: np.ndarray
+            The jacobian of the variance
         """
-        check_support(self, "derivatives")
-        check_support(self, "variances")
-
         x = ensure_2d_array(x, "x")
+        check_support(self, "variance_derivatives")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
@@ -527,3 +528,19 @@ class SurrogateModel(object):
             Variances.
         """
         check_support(self, "variances", fail=True)
+
+    def _predict_variance_derivatives(self, x):
+        """
+        Implemented by surrogate models to predict the derivation of the variance at a point (optional).
+
+        Parameters:
+        -----------
+        x : np.ndarray
+            Input value for the prediction point.
+
+        Returns:
+        --------
+        derived_variance: np.ndarray
+            The jacobian of the variance
+        """
+        check_support(self, "variance_derivatives", fail=True)
