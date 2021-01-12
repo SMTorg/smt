@@ -234,13 +234,16 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         kwargs.pop("output_in_folded_space", None)
         self._sampling_method = sampling_method_class(xlimits=self._xlimits, **kwargs)
 
-    def __call__(self, nt):
+    def _compute(self, nt):
         doe = self._sampling_method(nt)
         unfold_xdoe = cast_to_discrete_values(self._xtypes, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
             return unfold_xdoe
+
+    def __call__(self, nt):
+        return self._compute(nt)
 
 
 class MixedIntegerSurrogateModel(SurrogateModel):
@@ -269,9 +272,12 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
-        self.name = "MixedInteger" + self._surrogate.name
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
+
+    @property
+    def name(self):
+        return "MixedInteger" + self._surrogate.name
 
     def _initialize(self):
         self.supports["derivatives"] = False
@@ -310,6 +316,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         return self._surrogate.predict_variances(
             cast_to_discrete_values(self._xtypes, x2)
         )
+
+    def _predict_values(self, x):
+        pass
 
 
 class MixedIntegerContext(object):

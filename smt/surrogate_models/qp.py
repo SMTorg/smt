@@ -19,6 +19,8 @@ class QP(SurrogateModel):
     Square polynomial approach
     """
 
+    name = "QP"
+
     def _initialize(self):
         super(QP, self)._initialize()
         declare = self.options.declare
@@ -30,8 +32,6 @@ class QP(SurrogateModel):
             types=str,
             desc="Directory for loading / saving cached data; None means do not save or load",
         )
-
-        self.name = "QP"
         supports["derivatives"] = True
 
     ############################################################################

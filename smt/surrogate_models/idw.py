@@ -21,6 +21,7 @@ class IDW(SurrogateModel):
     We do not need to fit this model because the response of an unknown point x
     is computed with respect to the distance between x and the training points.
     """
+    name = "IDW"
 
     def _initialize(self):
         super(IDW, self)._initialize()
@@ -37,8 +38,6 @@ class IDW(SurrogateModel):
 
         supports["derivatives"] = True
         supports["output_derivatives"] = True
-
-        self.name = "IDW"
 
     def _setup(self):
         xt = self.training_points[None][0][0]
