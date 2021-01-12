@@ -1,0 +1,2 @@
+pytest
+pytest-xdist # allows running parallel testing with pytest -n <num_workers>

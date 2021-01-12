@@ -45,6 +45,8 @@ class Test(SMTestCase):
         sms["LS"] = LS()
         sms["QP"] = QP()
         sms["KRG"] = KRG(theta0=[4e-1] * ndim)
+        sms["KPLS"] = KPLS()
+
         if compiled_available:
             sms["IDW"] = IDW()
             sms["RBF"] = RBF()
@@ -55,6 +57,7 @@ class Test(SMTestCase):
         t_errors["KRG"] = 1e-4
         t_errors["IDW"] = 1e-15
         t_errors["RBF"] = 1e-2
+        t_errors["KPLS"] = 1e-3
 
         e_errors = {}
         e_errors["LS"] = 2.5
@@ -62,6 +65,7 @@ class Test(SMTestCase):
         e_errors["KRG"] = 2.0
         e_errors["IDW"] = 4
         e_errors["RBF"] = 2
+        e_errors["KPLS"] = 2.5
 
         self.nt = nt
         self.ne = ne
@@ -120,6 +124,9 @@ class Test(SMTestCase):
     def test_sphere_KRG(self):
         self.run_test()
 
+    def test_sphere_KPLS(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_sphere_IDW(self):
         self.run_test()
@@ -138,6 +145,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_exp_KRG(self):
+        self.run_test()
+
+    def test_exp_KPLS(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
@@ -160,6 +170,9 @@ class Test(SMTestCase):
     def test_tanh_KRG(self):
         self.run_test()
 
+    def test_tanh_KPLS(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
@@ -178,6 +191,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_KRG(self):
+        self.run_test()
+
+    def test_cos_KPLS(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")

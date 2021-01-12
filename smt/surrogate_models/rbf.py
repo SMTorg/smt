@@ -19,6 +19,8 @@ class RBF(SurrogateModel):
     Radial basis function interpolant with global polynomial trend.
     """
 
+    name = "RBF"
+
     def _initialize(self):
         super(RBF, self)._initialize()
         declare = self.options.declare
@@ -53,8 +55,6 @@ class RBF(SurrogateModel):
 
         supports["derivatives"] = True
         supports["output_derivatives"] = True
-
-        self.name = "RBF"
 
     def _setup(self):
         options = self.options

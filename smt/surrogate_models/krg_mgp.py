@@ -18,6 +18,8 @@ The Active kriging class.
 
 
 class MGP(KrgBased):
+    name = "MGP"
+
     def _initialize(self):
         """
         Initialized MGP
@@ -34,7 +36,6 @@ class MGP(KrgBased):
         )
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
-        self.name = "MGP"
 
     def _componentwise_distance(self, dx, small=False, opt=0):
         """
@@ -493,3 +494,25 @@ class MGP(KrgBased):
         svd_cumsum = np.cumsum(svd[1])
         svd_sum = np.sum(svd[1])
         self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
+
+    def _check_param(self):
+        """
+        Overrides KrgBased implementation
+        This function checks some parameters of the model.
+        """
+
+        d = self.options["n_comp"] * self.nx
+
+        if self.options["corr"] != "act_exp":
+            raise ValueError("MGP must be used with act_exp correlation function")
+        if self.options["hyper_opt"] != "TNC":
+            raise ValueError("MGP must be used with TNC hyperparameters optimizer")
+
+        if len(self.options["theta0"]) != d:
+            if len(self.options["theta0"]) == 1:
+                self.options["theta0"] *= np.ones(d)
+            else:
+                raise ValueError(
+                    "the number of dim %s should be equal to the length of theta0 %s."
+                    % (d, len(self.options["theta0"]))
+                )

@@ -6,7 +6,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
-from smt.utils.checks import check_2d_array
+from smt.utils.checks import ensure_2d_array
 
 FLOAT = "float_type"
 INT = "int_type"
@@ -113,7 +113,7 @@ def cast_to_discrete_values(xtypes, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
-    ret = check_2d_array(x, "x").copy()
+    ret = ensure_2d_array(x, "x").copy()
     x_col = 0
     for xtyp in xtypes:
         if xtyp == FLOAT:
@@ -234,13 +234,16 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         kwargs.pop("output_in_folded_space", None)
         self._sampling_method = sampling_method_class(xlimits=self._xlimits, **kwargs)
 
-    def __call__(self, nt):
+    def _compute(self, nt):
         doe = self._sampling_method(nt)
         unfold_xdoe = cast_to_discrete_values(self._xtypes, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
             return unfold_xdoe
+
+    def __call__(self, nt):
+        return self._compute(nt)
 
 
 class MixedIntegerSurrogateModel(SurrogateModel):
@@ -269,15 +272,18 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
-        self.name = "MixedInteger" + self._surrogate.name
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
+
+    @property
+    def name(self):
+        return "MixedInteger" + self._surrogate.name
 
     def _initialize(self):
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):
-        xt = check_2d_array(xt, "xt")
+        xt = ensure_2d_array(xt, "xt")
         if self._input_in_folded_space:
             xt2 = unfold_with_enum_mask(self._xtypes, xt)
         else:
@@ -293,7 +299,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._surrogate._train()
 
     def predict_values(self, x):
-        xp = check_2d_array(x, "xp")
+        xp = ensure_2d_array(x, "xp")
         if self._input_in_folded_space:
             x2 = unfold_with_enum_mask(self._xtypes, xp)
         else:
@@ -302,7 +308,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         return self._surrogate.predict_values(castx)
 
     def predict_variances(self, x):
-        xp = check_2d_array(x, "xp")
+        xp = ensure_2d_array(x, "xp")
         if self._input_in_folded_space:
             x2 = unfold_with_enum_mask(self._xtypes, xp)
         else:
@@ -310,6 +316,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         return self._surrogate.predict_variances(
             cast_to_discrete_values(self._xtypes, x2)
         )
+
+    def _predict_values(self, x):
+        pass
 
 
 class MixedIntegerContext(object):

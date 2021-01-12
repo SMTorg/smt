@@ -5,19 +5,24 @@ Created on Fri May 04 10:26:49 2018
 @author: Mostafa Meliani <melimostafa@gmail.com>
 Multi-Fidelity co-Kriging: recursive formulation with autoregressive model of
 order 1 (AR1)
+Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
-from sys import exit
-import copy
-from types import FunctionType
-from sys import exit
-import copy
-from types import FunctionType
+from copy import deepcopy
+
 import numpy as np
-from sklearn.metrics.pairwise import manhattan_distances
 from scipy.linalg import solve_triangular
 from scipy import linalg
 from scipy.spatial.distance import cdist
+
+from packaging import version
+from sklearn import __version__ as sklversion
+
+if version.parse(sklversion) < version.parse("0.22"):
+    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
+else:
+    from sklearn.cross_decomposition import PLSRegression as pls
+
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
 from smt.utils.kriging_utils import (
@@ -26,7 +31,6 @@ from smt.utils.kriging_utils import (
     standardization,
     differences,
 )
-from sys import exit
 
 
 class NestedLHS(object):
@@ -105,7 +109,6 @@ class MFK(KrgBased):
     def _initialize(self):
         super(MFK, self)._initialize()
         declare = self.options.declare
-
         declare(
             "rho_regr",
             "constant",
@@ -113,19 +116,19 @@ class MFK(KrgBased):
             desc="Regression function type for rho",
         )
         declare(
-            "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
-        )
-        declare(
             "optim_var",
             False,
             types=bool,
             values=(True, False),
-            desc="Turning this option to True, forces variance to zero at HF samples ",
-        )
-        declare(
-            "noise0", 1e-6, types=(float, list), desc="Initial noise hyperparameters"
+            desc="If True, the variance at HF samples is forced to zero",
         )
         self.name = "MFK"
+
+    def _differences(self, X, Y):
+        """
+        Compute the distances
+        """
+        return differences(X, Y)
 
     def _check_list_structure(self, X, y):
         """
@@ -173,6 +176,26 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model
         """
+        self._new_train_init()
+        theta0 = self.options["theta0"].copy()
+        noise0 = self.options["noise0"].copy()
+
+        for lvl in range(self.nlvl):
+            self._new_train_iteration(lvl)
+            self.options["theta0"] = theta0
+            self.options["noise0"] = noise0
+
+        self._new_train_finalize(lvl)
+
+    def _new_train_init(self):
+        if self.name in ["MFKPLS", "MFKPLSK"]:
+            _pls = pls(self.options["n_comp"])
+            # PLS is done on the highest fidelity identified by the key None
+            self.m_pls = _pls.fit(
+                self.training_points[None][0][0].copy(),
+                self.training_points[None][0][1].copy(),
+            )
+            self.coeff_pls = self.m_pls.x_rotations_
 
         xt = []
         yt = []
@@ -194,10 +217,9 @@ class MFK(KrgBased):
         )
 
         nlevel = self.nlvl
-        n_samples = self.nt_all
 
         # initialize lists
-        self.noise = nlevel * [0]
+        self.optimal_noise_all = nlevel * [0]
         self.D_all = nlevel * [0]
         self.F_all = nlevel * [0]
         self.p_all = nlevel * [0]
@@ -208,97 +230,115 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
-        if isinstance(self.options["noise0"], float):
-            self.options["noise0"] = self.nlvl * [self.options["noise0"]]
-        noise0 = self.options["noise0"].copy()
+    def _new_train_iteration(self, lvl):
+        n_samples = self.nt_all
+        self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
+        self.options["theta0"] = self.options["theta0"][lvl, :]
 
-        if (
-            isinstance(self.options["theta0"], list)
-            or len(self.options["theta0"].shape) == 1
-        ):
-            if len(self.options["theta0"]) == self.nx:
-                self.options["theta0"] = np.repeat(
-                    np.array(self.options["theta0"]).reshape(1, -1), self.nlvl, axis=0
+        self.X_norma = self.X_norma_all[lvl]
+        self.y_norma = self.y_norma_all[lvl]
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                # hetGP works with unique design variables
+                (
+                    self.X_norma,
+                    self.index_unique,  # do we need to store it?
+                    self.nt_reps,  # do we need to store it?
+                ) = np.unique(
+                    self.X_norma, return_inverse=True, return_counts=True, axis=0
                 )
-            elif len(self.options["theta0"]) == self.nlvl:
-                self.options["theta0"] = np.repeat(
-                    np.array(self.options["theta0"]).reshape(-1, 1), self.nx, axis=1
-                )
-        theta0 = self.options["theta0"].copy()
+                self.nt_all[lvl] = self.X_norma.shape[0]
 
-        for lvl in range(nlevel):
-            self.options["noise0"] = noise0[lvl]
-            self.options["theta0"] = theta0[lvl, :]
+                # computing the mean of the output per unique design variable (see Binois et al., 2018)
+                y_norma_unique = []
+                for i in range(self.nt_all[lvl]):
+                    y_norma_unique.append(np.mean(self.y_norma[self.index_unique == i]))
+                y_norma_unique = np.array(y_norma_unique).reshape(-1, 1)
 
-            self.X_norma = self.X_norma_all[lvl]
-            self.y_norma = self.y_norma_all[lvl]
-            # Calculate matrix of distances D between samples
-            self.D_all[lvl] = cross_distances(self.X_norma)
+                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+                self.optimal_noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                for i in range(self.nt_all[lvl]):
+                    diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
+                    if np.sum(diff ** 2) != 0.0:
+                        self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
+                self.optimal_noise = self.optimal_noise / self.nt_reps
+                self.optimal_noise_all[lvl] = self.optimal_noise
+                self.y_norma = y_norma_unique
 
-            # Regression matrix and parameters
-            self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
-            self.p_all[lvl] = self.F_all[lvl].shape[1]
+                self.X_norma_all[lvl] = self.X_norma
+                self.y_norma_all[lvl] = self.y_norma
+        else:
+            self.optimal_noise = self.options["noise0"]
+            self.optimal_noise_all[lvl] = self.optimal_noise
 
-            # Concatenate the autoregressive part for levels > 0
-            if lvl > 0:
-                F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
-                self.q_all[lvl] = F_rho.shape[1]
-                self.F_all[lvl] = np.hstack(
-                    (
-                        F_rho
-                        * np.dot(
-                            self._predict_intermediate_values(
-                                self.X_norma, lvl, descale=False
-                            ),
-                            np.ones((1, self.q_all[lvl])),
+        # Calculate matrix of distances D between samples
+        self.D_all[lvl] = cross_distances(self.X_norma)
+
+        # Regression matrix and parameters
+        self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
+        self.p_all[lvl] = self.F_all[lvl].shape[1]
+
+        # Concatenate the autoregressive part for levels > 0
+        if lvl > 0:
+            F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
+            self.q_all[lvl] = F_rho.shape[1]
+            self.F_all[lvl] = np.hstack(
+                (
+                    F_rho
+                    * np.dot(
+                        self._predict_intermediate_values(
+                            self.X_norma, lvl, descale=False
                         ),
-                        self.F_all[lvl],
-                    )
+                        np.ones((1, self.q_all[lvl])),
+                    ),
+                    self.F_all[lvl],
                 )
-            else:
-                self.q_all[lvl] = 0
+            )
+        else:
+            self.q_all[lvl] = 0
 
-            n_samples_F_i = self.F_all[lvl].shape[0]
+        n_samples_F_i = self.F_all[lvl].shape[0]
 
-            if n_samples_F_i != n_samples[lvl]:
-                raise Exception(
-                    "Number of rows in F and X do not match. Most "
-                    "likely something is going wrong with the "
-                    "regression model."
+        if n_samples_F_i != n_samples[lvl]:
+            raise Exception(
+                "Number of rows in F and X do not match. Most "
+                "likely something is going wrong with the "
+                "regression model."
+            )
+
+        if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
+            raise Exception(
+                (
+                    "Ordinary least squares problem is undetermined "
+                    "n_samples=%d must be greater than the regression"
+                    " model size p+q=%d."
                 )
+                % (n_samples_F_i, self.p_all[lvl] + self.q_all[lvl])
+            )
 
-            if int(self.p_all[lvl] + self.q_all[lvl]) >= n_samples_F_i:
-                raise Exception(
-                    (
-                        "Ordinary least squares problem is undetermined "
-                        "n_samples=%d must be greater than the regression"
-                        " model size p+q=%d."
-                    )
-                    % (n_samples[i], self.p_all[lvl] + self.q_all[lvl])
-                )
+        # Determine Gaussian Process model parameters
+        self.F = self.F_all[lvl]
+        D, self.ij = self.D_all[lvl]
+        self._lvl = lvl
+        self.nt = self.nt_all[lvl]
+        self.q = self.q_all[lvl]
+        self.p = self.p_all[lvl]
+        (
+            self.optimal_rlf_value[lvl],
+            self.optimal_par[lvl],
+            self.optimal_theta[lvl],
+        ) = self._optimize_hyperparam(D)
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            tmp_list = self.optimal_theta[lvl]
+            self.optimal_theta[lvl] = tmp_list[:-1]
+            self.optimal_noise = tmp_list[-1]
+            self.optimal_noise_all[lvl] = self.optimal_noise
+        del self.y_norma, self.D, self.optimal_noise
 
-            # Determine Gaussian Process model parameters
-            self.F = self.F_all[lvl]
-            D, self.ij = self.D_all[lvl]
-            self._lvl = lvl
-            self.nt = self.nt_all[lvl]
-            self.q = self.q_all[lvl]
-            self.p = self.p_all[lvl]
-            (
-                self.optimal_rlf_value[lvl],
-                self.optimal_par[lvl],
-                self.optimal_theta[lvl],
-            ) = self._optimize_hyperparam(D)
-            if self.options["eval_noise"]:
-                tmp_list = self.optimal_theta[lvl]
-                self.optimal_theta[lvl] = tmp_list[:-1]
-                self.noise[lvl] = tmp_list[-1]
-            del self.y_norma, self.D
-
-        self.options["noise0"] = noise0
-        self.options["theta0"] = theta0
-
+    def _new_train_finalize(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
+            X = self.X
             for lvl in range(self.nlvl - 1):
                 self.set_training_values(
                     X[lvl], self._predict_intermediate_values(X[lvl], lvl + 1), name=lvl
@@ -336,21 +376,15 @@ class MFK(KrgBased):
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, lvl))
-        #        if self.normalize:
         if descale:
             X = (X - self.X_offset) / self.X_scale
-        ##                X = (X - self.X_offset[0]) / self.X_scale[0]
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = differences(X, Y=self.X_norma_all[0])
+
+        dx = self._differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
-        # Get regression function and correlation
-        F = self.F_all[0]
-        C = self.optimal_par[0]["C"]
 
         beta = self.optimal_par[0]["beta"]
-        Ft = solve_triangular(C, F, lower=True)
-        yt = solve_triangular(C, self.y_norma_all[0], lower=True)
         r_ = self._correlation_types[self.options["corr"]](
             self.optimal_theta[0], d
         ).reshape(n_eval, self.nt_all[0])
@@ -361,17 +395,13 @@ class MFK(KrgBased):
 
         # Calculate recursively kriging mean and variance at level i
         for i in range(1, lvl):
-            F = self.F_all[i]
-            C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = self._differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
             ).reshape(n_eval, self.nt_all[i])
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
-            Ft = solve_triangular(C, F, lower=True)
-            yt = solve_triangular(C, self.y_norma_all[i], lower=True)
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
             # scaled predictor
@@ -437,20 +467,21 @@ class MFK(KrgBased):
         #        if n_features_X != self.n_features:
         #            raise ValueError("Design must be an array of n_features columns.")
         X = (X - self.X_offset) / self.X_scale
+
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
-        #        if self.normalize:
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        dx = differences(X, Y=self.X_norma_all[0])
+        dx = self._differences(X, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
+
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]["C"]
 
         beta = self.optimal_par[0]["beta"]
         Ft = solve_triangular(C, F, lower=True)
-        yt = solve_triangular(C, self.y_norma_all[0], lower=True)
+        # yt = solve_triangular(C, self.y_norma_all[0], lower=True)
         r_ = self._correlation_types[self.options["corr"]](
             self.optimal_theta[0], d
         ).reshape(n_eval, self.nt_all[0])
@@ -467,7 +498,10 @@ class MFK(KrgBased):
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
         sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
         MSE[:, 0] = sigma2 * (
-            1 + self.noise[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            # 1 + self.optimal_noise_all[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+            1
+            - (r_t ** 2).sum(axis=0)
+            + (u_ ** 2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -475,7 +509,7 @@ class MFK(KrgBased):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](X)
-            dx = differences(X, Y=self.X_norma_all[i])
+            dx = self._differences(X, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
@@ -500,9 +534,23 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
-                1 + self.noise[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-            )
+            if self.name in ["MFKPLS", "MFKPLSK"]:
+                p = self.p_all[i]
+                Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
+                MSE[:, i] = (
+                    sigma2_rho * MSE[:, i - 1]
+                    + Q_ / (2 * (self.nt_all[i] - p - q))
+                    # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
+                    * (1 - (r_t ** 2).sum(axis=0))
+                    + sigma2 * (u_ ** 2).sum(axis=0)
+                )
+            else:
+                MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+                    # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
+                    1
+                    - (r_t ** 2).sum(axis=0)
+                    + (u_ ** 2).sum(axis=0)
+                )
 
         # scaled predictor
         MSE *= self.y_std ** 2
@@ -548,13 +596,15 @@ class MFK(KrgBased):
                 "The derivative is only available for ordinary kriging or "
                 + "universal kriging using a linear trend"
             )
-        df0 = copy.deepcopy(df)
+
+        df0 = deepcopy(df)
+
         if self.options["rho_regr"] != "constant":
             raise ValueError(
                 "The derivative is only available for regression rho constant"
             )
         # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma_all[0])
+        dx = self._differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
         r_ = self._correlation_types[self.options["corr"]](
@@ -569,24 +619,20 @@ class MFK(KrgBased):
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma_all[0][:, kx].reshape(
             (1, self.nt_all[0])
         )
-        theta = self.optimal_theta[0]
 
+        theta = self._get_theta(0)
         dy_dx[:, 0] = np.ravel((df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma)))
 
         # Calculate recursively derivative at level i
         for i in range(1, lvl):
-            F = self.F_all[i]
-            C = self.optimal_par[i]["C"]
             g = self._regression_types[self.options["rho_regr"]](x)
-            dx = differences(x, Y=self.X_norma_all[i])
+            dx = self._differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[i], d
             ).reshape(n_eval, self.nt_all[i])
             df = np.vstack((g.T * dy_dx[:, i - 1], df0.T))
 
-            Ft = solve_triangular(C, F, lower=True)
-            yt = solve_triangular(C, self.y_norma_all[i], lower=True)
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
 
@@ -594,8 +640,88 @@ class MFK(KrgBased):
             d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma_all[i][:, kx].reshape(
                 (1, self.nt_all[i])
             )
-            theta = self.optimal_theta[i]
+
+            theta = self._get_theta(i)
+
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
         return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+
+    def _get_theta(self, i):
+        return self.optimal_theta[i]
+
+    def _check_param(self):
+        """
+        Overrides KrgBased implementation
+        This function checks some parameters of the model.
+        """
+
+        if self.name in ["MFKPLS", "MFKPLSK"]:
+            d = self.options["n_comp"]
+        else:
+            d = self.nx
+
+        if self.options["corr"] == "act_exp":
+            raise ValueError("act_exp correlation function must be used with MGP")
+
+        if self.name in ["MFKPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "MFKPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+        elif self.name in ["MFKPLSK"]:
+            if self.options["corr"] not in ["squar_exp"]:
+                raise ValueError(
+                    "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
+                )
+
+        if isinstance(self.options["theta0"], np.ndarray):
+            if self.options["theta0"].shape != (self.nlvl, d):
+                raise ValueError(
+                    "the dimensions of theta0 %s should coincide to the number of dim %s"
+                    % (self.options["theta0"].shape, (self.nlvl, d))
+                )
+        else:
+            if len(self.options["theta0"]) != d:
+                if len(self.options["theta0"]) == 1:
+                    self.options["theta0"] *= np.ones((self.nlvl, d))
+                elif len(self.options["theta0"]) == self.nlvl:
+                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
+                        -1, 1
+                    )
+                    self.options["theta0"] *= np.ones((1, d))
+                else:
+                    raise ValueError(
+                        "the length of theta0 (%s) should be equal to the number of dim (%s) or levels of fidelity (%s)."
+                        % (len(self.options["theta0"]), d, self.nlvl)
+                    )
+            else:
+                self.options["theta0"] *= np.ones((self.nlvl, 1))
+
+        if len(self.options["noise0"]) != self.nlvl:
+            if len(self.options["noise0"]) == 1:
+                self.options["noise0"] = self.nlvl * [self.options["noise0"]]
+            else:
+                raise ValueError(
+                    "the length of noise0 (%s) should be equal to the number of levels of fidelity (%s)."
+                    % (len(self.options["noise0"]), self.nlvl)
+                )
+
+        for i in range(self.nlvl):
+            if self.options["use_het_noise"]:
+                if len(self.X[i]) == len(np.unique(self.X[i])):
+                    if len(self.options["noise0"][i]) != self.nt_all[i]:
+                        if len(self.options["noise0"][i]) == 1:
+                            self.options["noise0"][i] *= np.ones(self.nt_all[i])
+                        else:
+                            raise ValueError(
+                                "for the level of fidelity %s, the length of noise0 (%s) should be equal to the number of observations (%s)."
+                                % (i, len(self.options["noise0"][i]), self.nt_all[i])
+                            )
+            else:
+                if len(self.options["noise0"][i]) != 1:
+                    raise ValueError(
+                        "for the level of fidelity %s, the length of noise0 (%s) should be equal to one."
+                        % (i, len(self.options["noise0"][i]))
+                    )

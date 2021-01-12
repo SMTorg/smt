@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-
 from packaging import version
 from sklearn import __version__ as sklversion
 
@@ -130,23 +129,34 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def abs_exp(theta, d, grad_ind=None, hess_ind=None):
-
+def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
     Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)::
 
     Parameters
     ----------
-    theta : list[ncomp]
-        the autocorrelation parameter(s).
-
+      Parameters
+    ----------
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
 
     Returns
     -------
-    r : np.ndarray[n_obs * (n_obs - 1) / 2,1]
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
         An array containing the values of the autocorrelation model.
     """
 
@@ -183,21 +193,37 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None):
             )
             i += 1
 
+    if derivative_params is not None:
+        dd = derivative_params["dd"]
+        r = r.T
+        dr = -np.einsum("i,ij->ij", r[0], dd)
+        return r.T, dr
+
     return r
 
 
-def squar_exp(theta, d, grad_ind=None, hess_ind=None):
+def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     """
     Squared exponential correlation model.
 
-    Parameters
+     Parameters
     ----------
-    theta : list[ncomp]
-        the autocorrelation parameter(s).
-
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
 
     Returns
     -------
@@ -239,11 +265,41 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None):
                 * r[i * nb_limit : (i + 1) * nb_limit, 0]
             )
             i += 1
+    if derivative_params is not None:
+        dd = derivative_params["dd"]
+        r = r.T
+        dr = -np.einsum("i,ij->ij", r[0], dd)
+
+        return r.T, dr
 
     return r
 
 
-def matern52(theta, d, grad_ind=None, hess_ind=None):
+def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
+    """
+    Matern 5/2 correlation model.
+
+     Parameters
+    ----------
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
@@ -328,10 +384,80 @@ def matern52(theta, d, grad_ind=None, hess_ind=None):
                 ]
 
             i += 1
+    if derivative_params is not None:
+        dx = derivative_params["dx"]
+
+        abs_ = abs(dx)
+        sqr = np.square(dx)
+        abs_0 = np.dot(abs_, theta)
+
+        dr = np.zeros(dx.shape)
+
+        A = np.zeros((dx.shape[0], 1))
+        for i in range(len(abs_0)):
+            A[i][0] = np.exp(-np.sqrt(5) * abs_0[i])
+
+        der = np.ones(dx.shape)
+        for i in range(len(der)):
+            for j in range(n_components):
+                if dx[i][j] < 0:
+                    der[i][j] = -1
+
+        dB = np.zeros((dx.shape[0], n_components))
+        for j in range(dx.shape[0]):
+            for k in range(n_components):
+                coef = 1
+                for l in range(n_components):
+                    if l != k:
+                        coef = coef * (
+                            1
+                            + np.sqrt(5) * abs_[j][l] * theta[l]
+                            + (5.0 / 3) * sqr[j][l] * theta[l] ** 2
+                        )
+                dB[j][k] = (
+                    np.sqrt(5) * theta[k] * der[j][k]
+                    + 2 * (5.0 / 3) * der[j][k] * abs_[j][k] * theta[k] ** 2
+                ) * coef
+
+        for j in range(dx.shape[0]):
+            for k in range(n_components):
+                dr[j][k] = (
+                    -np.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                )
+
+        return r, dr
+
     return r
 
 
-def matern32(theta, d, grad_ind=None, hess_ind=None):
+def matern32(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
+    """
+    Matern 3/2 correlation model.
+
+     Parameters
+    ----------
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
@@ -404,11 +530,43 @@ def matern32(theta, d, grad_ind=None, hess_ind=None):
                     - fact_3 * M32[i * nb_limit : (i + 1) * nb_limit, 0]
                 )
             i += 1
+    if derivative_params is not None:
+        dx = derivative_params["dx"]
+
+        abs_ = abs(dx)
+        abs_0 = np.dot(abs_, theta)
+        dr = np.zeros(dx.shape)
+
+        A = np.zeros((dx.shape[0], 1))
+        for i in range(len(abs_0)):
+            A[i][0] = np.exp(-np.sqrt(3) * abs_0[i])
+
+        der = np.ones(dx.shape)
+        for i in range(len(der)):
+            for j in range(n_components):
+                if dx[i][j] < 0:
+                    der[i][j] = -1
+
+        dB = np.zeros((dx.shape[0], n_components))
+        for j in range(dx.shape[0]):
+            for k in range(n_components):
+                coef = 1
+                for l in range(n_components):
+                    if l != k:
+                        coef = coef * (1 + np.sqrt(3) * abs_[j][l] * theta[l])
+                dB[j][k] = np.sqrt(3) * theta[k] * der[j][k] * coef
+
+        for j in range(dx.shape[0]):
+            for k in range(n_components):
+                dr[j][k] = (
+                    -np.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
+                )
+        return r, dr
 
     return r
 
 
-def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
+def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=None):
     """
     Active learning exponential correlation model
 
@@ -419,9 +577,11 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
         d_i otherwise
     grad_ind : int, optional
-        Indice for which component the gradient must be computed. The default is None.
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
-        Indice for which component the gradient must be computed. The default is None.
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
     ------
@@ -433,6 +593,7 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
         An array containing the values of the autocorrelation model.
     """
+
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
@@ -466,6 +627,9 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None):
             if d_A_hess_ind == d_A_grad_ind:
                 fact = 1 + fact
             r[:, 0] = -d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+
+    if derivative_params is not None:
+        raise ValueError("Jacobians are not available for this correlation kernel")
 
     return r
 
@@ -604,7 +768,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 
-def componentwise_distance(D, corr, dim):
+def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -623,6 +787,12 @@ def componentwise_distance(D, corr, dim):
     dim: int
             - Number of dimension.
 
+    theta: np.ndarray [n_comp]
+            - The theta values associated to the coeff_pls.
+
+    return_derivative: boolean
+            - Return d/dx derivative of theta*cross-spatial-correlation-distance
+
     Returns
     -------
 
@@ -636,28 +806,52 @@ def componentwise_distance(D, corr, dim):
 
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == "squar_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
-                    D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
-                )
-            elif corr == "act_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
-                    i * nb_limit : (i + 1) * nb_limit, :
-                ]
+    if return_derivative == False:
+        while True:
+            if i * nb_limit > D_corr.shape[0]:
+                return D_corr
             else:
-                # abs_exp or matern
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
-                    D[i * nb_limit : (i + 1) * nb_limit, :]
-                )
-            i += 1
+                if corr == "squar_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
+                    )
+                elif corr == "act_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
+                        i * nb_limit : (i + 1) * nb_limit, :
+                    ]
+                else:
+                    # abs_exp or matern
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
+                        D[i * nb_limit : (i + 1) * nb_limit, :]
+                    )
+                i += 1
+    else:
+        if theta is None:
+            raise ValueError(
+                "Missing theta to compute spatial derivative of theta cross-spatial correlation distance"
+            )
+        if corr == "squar_exp":
+            D_corr = 2 * np.einsum("j,ij->ij", theta.T, D)
+            return D_corr
+        elif corr == "act_exp":
+            raise ValueError("this option is not implemented for active learning")
+        else:
+            # abs_exp or matern
+            # derivative of absolute value : +1/-1
+            der = np.ones(D.shape)
+            for i, j in np.ndindex(D.shape):
+                if D[i][j] < 0:
+                    der[i][j] = -1
+
+            D_corr = np.einsum("j,ij->ij", theta.T, der)
+            return D_corr
+
+        i += 1
 
 
-def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
+def componentwise_distance_PLS(
+    D, corr, n_comp, coeff_pls, theta=None, return_derivative=False
+):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -679,6 +873,11 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
     coeff_pls: np.ndarray [dim, n_comp]
             - The PLS-coefficients.
 
+    theta: np.ndarray [n_comp]
+            - The theta values associated to the coeff_pls.
+
+    return_derivative: boolean
+            - Return d/dx derivative of theta*cross-spatial-correlation-distance
     Returns
     -------
 
@@ -692,21 +891,52 @@ def componentwise_distance_PLS(D, corr, n_comp, coeff_pls):
 
     D_corr = np.zeros((D.shape[0], n_comp))
     i, nb_limit = 0, int(limit)
-
-    while True:
-        if i * nb_limit > D_corr.shape[0]:
-            return D_corr
-        else:
-            if corr == "squar_exp":
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                    D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
-                )
+    if return_derivative == False:
+        while True:
+            if i * nb_limit > D_corr.shape[0]:
+                return D_corr
             else:
-                # abs_exp
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                    np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]), np.abs(coeff_pls)
-                )
-            i += 1
+                if corr == "squar_exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
+                    )
+                else:
+                    # abs_exp
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
+                        np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]),
+                        np.abs(coeff_pls),
+                    )
+                i += 1
+
+    else:
+        if theta is None:
+            raise ValueError(
+                "Missing theta to compute spatial derivative of theta cross-spatial correlation distance"
+            )
+
+        if corr == "squar_exp":
+            D_corr = np.zeros(np.shape(D))
+            for i, j in np.ndindex(D.shape):
+                coef = 0
+                for l in range(n_comp):
+                    coef = coef + theta[l] * coeff_pls[j][l] ** 2
+                coef = 2 * coef
+                D_corr[i][j] = coef * D[i][j]
+            return D_corr
+
+        else:
+            # abs_exp
+            D_corr = np.zeros(np.shape(D))
+            der = np.ones(np.shape(D))
+            for i, j in np.ndindex(D.shape):
+                if D[i][j] < 0:
+                    der[i][j] = -1
+                coef = 0
+                for l in range(n_comp):
+                    coef = coef + theta[l] * np.abs(coeff_pls[j][l])
+                D_corr[i][j] = coef * der[i][j]
+
+            return D_corr
 
 
 # sklearn.gaussian_process.regression_models

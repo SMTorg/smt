@@ -18,6 +18,8 @@ class RMTS(SurrogateModel):
     Regularized Minimal-energy Tensor-product Spline interpolant base class for RMTC and RMTB.
     """
 
+    name = "RMTS"
+
     def _initialize(self):
         super(RMTS, self)._initialize()
         declare = self.options.declare
