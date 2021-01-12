@@ -48,7 +48,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         """
         pass
 
-    def __call__(self, nt) -> np.ndarray:
+    def __call__(self, nt: int) -> np.ndarray:
         """
         Compute the requested number of sampling points.
 
