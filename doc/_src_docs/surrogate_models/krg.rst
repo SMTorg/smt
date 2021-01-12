@@ -85,12 +85,30 @@ Usage
   num = 100
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
+  # estimated variance
+  s2 = sm.predict_variances(x)
+  # derivative according to the first variable
+  dydx = sm.predict_derivatives(xt, 0)
   
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
   plt.xlabel("x")
   plt.ylabel("y")
   plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+  # add a plot with variance
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(s2)),
+      np.ravel(y + 3 * np.sqrt(s2)),
+      color="lightgrey",
+  )
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
   plt.show()
   
 ::
@@ -109,12 +127,23 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0029919
+     Training - done. Time (sec):  0.0029914
   ___________________________________________________________________________
      
    Evaluation
      
         # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 5
      
      Predicting ...
      Predicting - done. Time (sec):  0.0000000
@@ -155,12 +184,28 @@ Usage with mixed variables
   num = 100
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
+  # estimated variance
+  s2 = sm.predict_variances(x)
   
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
   plt.xlabel("x")
   plt.ylabel("y")
   plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+  # add a plot with variance
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(s2)),
+      np.ravel(y + 3 * np.sqrt(s2)),
+      color="lightgrey",
+  )
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
   plt.show()
   
 ::
@@ -172,9 +217,9 @@ Usage with mixed variables
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000100
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -255,15 +300,15 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  [1e-06]
+     -  [0.0]
      -  None
      -  ['list', 'ndarray']
-     -  Initial noise hyperparameter
+     -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [1e-16, 10000000000.0]
+     -  [2.220446049250313e-14, 10000000000.0]
      -  None
      -  ['list', 'ndarray']
-     -  bounds for hyperparameters
+     -  bounds for noise hyperparameters
   *  -  use_het_noise
      -  False
      -  [True, False]

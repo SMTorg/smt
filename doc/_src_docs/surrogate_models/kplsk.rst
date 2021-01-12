@@ -34,7 +34,7 @@ Usage
   from smt.surrogate_models import KPLSK
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = KPLSK(theta0=[1e-2])
   sm.set_training_values(xt, yt)
@@ -43,12 +43,30 @@ Usage
   num = 100
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
-  yy = sm.predict_derivatives(xt, 0)
+  # estimated variance
+  s2 = sm.predict_variances(x)
+  # derivative according to the first variable
+  dydx = sm.predict_derivatives(xt, 0)
+  
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
   plt.xlabel("x")
   plt.ylabel("y")
   plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+  # add a plot with variance
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(s2)),
+      np.ravel(y + 3 * np.sqrt(s2)),
+      color="lightgrey",
+  )
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
   plt.show()
   
 ::
@@ -67,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100002
+     Training - done. Time (sec):  0.0059843
   ___________________________________________________________________________
      
    Evaluation
@@ -143,11 +161,21 @@ Options
      -  ['squar_exp']
      -  ['str']
      -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
      -  ['Cobyla', 'TNC']
@@ -159,10 +187,20 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  1e-06
+     -  [0.0]
      -  None
-     -  ['float', 'list']
-     -  Initial noise hyperparameter
+     -  ['list', 'ndarray']
+     -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
   *  -  n_comp
      -  1
      -  None
