@@ -7,8 +7,9 @@ This package is distributed under New BSD license.
 from smt.surrogate_models import KPLS
 from smt.utils.kriging_utils import componentwise_distance_PLS, componentwise_distance
 
-
 class KPLSK(KPLS):
+    name = "KPLSK"
+  
     def _initialize(self):
         super(KPLSK, self)._initialize()
         declare = self.options.declare

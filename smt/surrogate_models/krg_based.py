@@ -35,6 +35,8 @@ class KrgBased(SurrogateModel):
         "matern32": matern32,
     }
 
+    name = "KrigingBased"
+
     def _initialize(self):
         super(KrgBased, self)._initialize()
         declare = self.options.declare
@@ -105,12 +107,11 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
-
-        self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
         supports["variances"] = True
+        supports["variance_derivatives"] = True
 
     def _new_train(self):
         # Sampling points X and y

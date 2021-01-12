@@ -9,9 +9,7 @@ from smt.utils.kriging_utils import componentwise_distance
 
 
 class KRG(KrgBased):
-    def _initialize(self):
-        super(KRG, self)._initialize()
-        self.name = "Kriging"
+    name = "Kriging"
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         d = componentwise_distance(

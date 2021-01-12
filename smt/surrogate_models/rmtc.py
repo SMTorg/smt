@@ -35,6 +35,8 @@ class RMTC(RMTS):
     - The user must choose the number of elements in each dimension
     """
 
+    name = "RMTC"
+
     def _initialize(self):
         super(RMTC, self)._initialize()
         declare = self.options.declare
@@ -45,8 +47,6 @@ class RMTC(RMTS):
             types=(Integral, list, np.ndarray),
             desc="# elements in each dimension - ndarray [nx]",
         )
-
-        self.name = "RMTC"
 
     def _setup(self):
         options = self.options

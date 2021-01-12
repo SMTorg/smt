@@ -111,6 +111,8 @@ def smt_to_genn(training_points):
 
 
 class GENN(SurrogateModel):
+    name = "GENN"
+
     def _initialize(self):
         """API function: set default values for user options"""
         declare = self.options.declare
@@ -152,7 +154,6 @@ class GENN(SurrogateModel):
 
         self.supports["derivatives"] = True
         self.supports["training_derivatives"] = True
-        self.name = "GENN"
 
         self.model = Model()
 

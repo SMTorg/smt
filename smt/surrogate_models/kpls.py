@@ -17,6 +17,8 @@ from smt.utils.kriging_utils import componentwise_distance_PLS
 
 
 class KPLS(KrgBased):
+    name = "KPLS"
+
     def _initialize(self):
         super(KPLS, self)._initialize()
         declare = self.options.declare

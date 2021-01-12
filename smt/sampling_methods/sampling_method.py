@@ -5,12 +5,13 @@ This package is distributed under New BSD license.
 
 Base class for sampling algorithms.
 """
+from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-class SamplingMethod(object):
+class SamplingMethod(object, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -72,6 +73,7 @@ class SamplingMethod(object):
 
         return x
 
+    @abstractmethod
     def _compute(self, nt):
         """
         Implemented by sampling methods to compute the requested number of sampling points.

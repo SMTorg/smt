@@ -36,6 +36,8 @@ class RMTB(RMTS):
     training points
     """
 
+    name = "RMTB"
+
     def _initialize(self):
         super(RMTB, self)._initialize()
         declare = self.options.declare
@@ -52,8 +54,6 @@ class RMTB(RMTS):
             types=(Integral, tuple, list, np.ndarray),
             desc="# B-spline control points in each dimension - length [nx]",
         )
-
-        self.name = "RMTB"
 
     def _setup(self):
         options = self.options
