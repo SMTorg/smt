@@ -138,7 +138,6 @@ Options
   :header-rows: 1
   :widths: 15, 10, 20, 20, 30
   :stub-columns: 0
-
   *  -  Option
      -  Default
      -  Acceptable values
@@ -179,11 +178,21 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
      -  ['Cobyla', 'TNC']
@@ -195,10 +204,20 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  1e-06
+     -  [0.0]
      -  None
-     -  ['float', 'list']
+     -  ['list', 'ndarray']
      -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']
@@ -208,4 +227,4 @@ Options
      -  False
      -  [True, False]
      -  ['bool']
-     -  Turning this option to True, forces variance to zero at HF samples 
+     -  If True, the variance at HF samples is forced to zero

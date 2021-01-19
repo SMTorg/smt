@@ -89,26 +89,27 @@ Usage
   s2 = sm.predict_variances(x)
   # derivative according to the first variable
   dydx = sm.predict_derivatives(xt, 0)
+  fig, axs = plt.subplots(2)
   
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction"])
-  plt.show()
+  axs[0].plot(xt, yt, "o")
+  axs[0].plot(x, y)
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(["Training data", "Prediction"])
   
   # add a plot with variance
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.fill_between(
+  axs[1].plot(xt, yt, "o")
+  axs[1].plot(x, y)
+  axs[1].fill_between(
       np.ravel(x),
       np.ravel(y - 3 * np.sqrt(s2)),
       np.ravel(y + 3 * np.sqrt(s2)),
       color="lightgrey",
   )
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  
   plt.show()
   
 ::
@@ -127,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0029914
+     Training - done. Time (sec):  0.0029976
   ___________________________________________________________________________
      
    Evaluation
@@ -166,8 +167,8 @@ Usage with mixed variables
   from smt.surrogate_models import KRG
   from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
   
-  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
+  xt = np.array([0.0, 2.0, 3.0])
+  yt = np.array([0.0, 1.5, 0.9])
   
   # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
   # FLOAT means x1 continuous
@@ -181,31 +182,33 @@ Usage with mixed variables
   sm.set_training_values(xt, yt)
   sm.train()
   
-  num = 100
+  num = 500
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   # estimated variance
   s2 = sm.predict_variances(x)
   
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction"])
-  plt.show()
+  fig, axs = plt.subplots(2)
+  
+  axs[0].plot(xt, yt, "o")
+  axs[0].plot(x, y)
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(["Training data", "Prediction"])
   
   # add a plot with variance
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.fill_between(
+  axs[1].plot(xt, yt, "o")
+  axs[1].plot(x, y)
+  axs[1].fill_between(
       np.ravel(x),
       np.ravel(y - 3 * np.sqrt(s2)),
       np.ravel(y + 3 * np.sqrt(s2)),
       color="lightgrey",
   )
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  
   plt.show()
   
 ::
@@ -214,7 +217,7 @@ Usage with mixed variables
      
    Evaluation
      
-        # eval points. : 100
+        # eval points. : 500
      
      Predicting ...
      Predicting - done. Time (sec):  0.0000000

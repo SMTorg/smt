@@ -143,8 +143,7 @@ Options
   :header-rows: 1
   :widths: 15, 10, 20, 20, 30
   :stub-columns: 0
-
-  *  -  Option
+ *  -  Option
      -  Default
      -  Acceptable values
      -  Acceptable types
@@ -184,38 +183,11 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
-  *  -  theta0
-     -  None
-     -  None
-     -  ['list', 'ndarray']
-     -  Initial hyperparameters
-  *  -  hyper_opt
-     -  Cobyla
-     -  ['Cobyla', 'TNC']
-     -  ['str']
-     -  Optimiser for hyperparameters optimisation
-  *  -  eval_noise
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  noise evaluation flag
-  *  -  noise0
-     -  1e-06
+  *  -  nugget
+     -  2.220446049250313e-14
      -  None
      -  ['float']
-     -  Initial noise hyperparameter
-  *  -  n_comp
-     -  1
+     -  a jitter for numerical stability
+  *  -  theta0
+     -  [0.01]
      -  None
-     -  ['int']
-     -  Number of principal components
-  *  -  rho_regr
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
-     -  None
-     -  Regression function type for rho
-  *  -  optim_var
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  Turning this option to True, forces variance to zero at HF samples 
