@@ -8,10 +8,10 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.7', '3.8']
+        python-version: ['3.6', '3.7', '3.8']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
@@ -35,6 +35,28 @@ jobs:
         pip install -e .
 
     - name: Test with pytest
+      if: ${{ matrix.os }}!="ubuntu-latest" || ${{ matrix.python-version }}!="3.6"
+      run: pytest
+
+    - name: Test with pytest and coverage
+      if: ${{ matrix.os }}=="ubuntu-latest" && ${{ matrix.python-version }}=="3.6"
       run: |
-        conda install pytest
-        pytest
+        conda install coverage
+        coverage run --source=smt -m pytest
+
+    - name: Coveralls
+      uses: AndreMiras/coveralls-python-action@develop
+      if: ${{ matrix.os }}=="ubuntu-latest" && ${{ matrix.python-version }}=="3.6"
+      with:
+        parallel: true
+        flag-name: Test
+
+  coveralls_finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      if: ${{ matrix.os }}=="ubuntu-latest" && ${{ matrix.python-version }}=="3.6"
+      with:
+        parallel-finished: true
