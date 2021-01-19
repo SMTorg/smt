@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.7', '3.8']
+        os: [ubuntu-latest]
+        python-version: ['3.6']
 
     steps:
     - uses: actions/checkout@v2
@@ -31,11 +31,22 @@ jobs:
         pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
         pip install -e .
 
-    - name: Test with pytest
-      run: pytest
-
     - name: Test with pytest an coverage
       run: |
         pip install coverage
         coverage run --source=smt -m pytest
 
+    - name: Coveralls
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel: true
+        flag-name: Test
+
+  coveralls_finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true
