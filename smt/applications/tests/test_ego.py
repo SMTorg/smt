@@ -30,13 +30,6 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     INT,
-    check_xspec_consistency,
-    unfold_xlimits_with_continuous_limits,
-    fold_with_enum_index,
-    unfold_with_enum_mask,
-    compute_unfolded_dimension,
-    cast_to_enum_value,
-    cast_to_mixed_integer,
 )
 
 # This implementation only works with Python > 3.3
@@ -373,13 +366,7 @@ class TestEGO(SMTestCase):
     def run_ego_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.sampling_methods import FullFactorial
-
-        import sklearn
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-        from scipy.stats import norm
 
         def function_test_1d(x):
             # function xsinx
@@ -457,19 +444,13 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.sampling_methods import FullFactorial
         from smt.applications.mixed_integer import (
+            MixedIntegerContext,
             FLOAT,
-            INT,
             ENUM,
-            MixedIntegerSamplingMethod,
+            INT,
         )
-
-        import sklearn
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-        from scipy.stats import norm
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
 

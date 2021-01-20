@@ -178,7 +178,7 @@ class TestMFKPLS(SMTestCase):
 
         # choice of number of PLS components
         ncomp = 1
-        sm = MFKPLS(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
+        sm = MFKPLS(n_comp=ncomp, theta0=ncomp * [1.0])
 
         # low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(xt_c, yt_c, name=0)

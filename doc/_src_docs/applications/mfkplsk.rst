@@ -60,7 +60,7 @@ Usage
   
   # choice of number of PLS components
   ncomp = 1
-  sm = MFKPLSK(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
+  sm = MFKPLSK(n_comp=ncomp, theta0=ncomp * [1.0])
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100000
+     Training - done. Time (sec):  0.0149601
   ___________________________________________________________________________
      
    Evaluation
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0100000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000990
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
@@ -181,7 +181,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['squar_exp']
      -  ['str']
      -  Correlation function type
   *  -  nugget
@@ -234,3 +234,8 @@ Options
      -  [True, False]
      -  ['bool']
      -  If True, the variance at HF samples is forced to zero
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components
