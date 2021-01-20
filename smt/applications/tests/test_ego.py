@@ -24,8 +24,20 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.surrogate_models import KRG, QP
-from smt.applications.mixed_integer import FLOAT, INT, ENUM
-
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+    FLOAT,
+    ENUM,
+    INT,
+    check_xspec_consistency,
+    unfold_xlimits_with_continuous_limits,
+    fold_with_enum_index,
+    unfold_with_enum_mask,
+    compute_unfolded_dimension,
+    cast_to_enum_value,
+    cast_to_mixed_integer,
+)
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
     def run(self, fun, x):
@@ -154,7 +166,6 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        print(x_opt)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.2)
@@ -183,7 +194,6 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
-        print(x_opt)
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.5)
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.5)
@@ -199,8 +209,16 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
-        xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False)
+        xtypes=[INT, FLOAT]
+
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        sampling = mixint.build_sampling_method(
+            xtypes, xlimits, FullFactorial, random_state=42
+        )
+        xdoe = sampling(10)
+        
+        
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
@@ -210,7 +228,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
-            surrogate=s,
+            surrogate=sm,
             random_state=42,
         )
 
@@ -230,15 +248,21 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
-        xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False)
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        sampling = MixedIntegerSamplingMethod(
+            xtypes, xlimits, FullFactorial
+        )
+        xdoe = sampling(10)
+
+        
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
             xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=s,
+            surrogate=sm,
             random_state=42,
         )
 
@@ -273,15 +297,16 @@ class TestEGO(SMTestCase):
         xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]
-        s = KRG(print_global=False)
-
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=s,
+            surrogate=sm,
             enable_tunneling=False,
             random_state=42,
         )
@@ -487,10 +512,9 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
         sm = KRG(print_global=False)
-
-        n_doe = 2
-        sampling = MixedIntegerSamplingMethod(
-            xtypes, xlimits, LHS, criterion="ese", random_state=42
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        n_doe = 3
+        sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42
         )
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
