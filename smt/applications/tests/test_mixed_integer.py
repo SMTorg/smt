@@ -132,7 +132,6 @@ class TestMixedInteger(unittest.TestCase):
         num = 40
         x = sampling(num)
 
-
         cmap = colors.ListedColormap(xlimits[1])
         plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
         plt.show()

@@ -38,6 +38,7 @@ from smt.applications.mixed_integer import (
     cast_to_enum_value,
     cast_to_mixed_integer,
 )
+
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
     def run(self, fun, x):
@@ -209,14 +210,13 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
-        xtypes=[INT, FLOAT]
+        xtypes = [INT, FLOAT]
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         sampling = mixint.build_sampling_method(FullFactorial)
         xdoe = sampling(10)
-        
-        
+
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
@@ -248,12 +248,9 @@ class TestEGO(SMTestCase):
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
-        sampling = MixedIntegerSamplingMethod(
-            xtypes, xlimits, FullFactorial
-        )
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
         xdoe = sampling(10)
 
-        
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
@@ -297,7 +294,7 @@ class TestEGO(SMTestCase):
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
-        
+
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
@@ -512,8 +509,7 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         n_doe = 3
-        sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42
-        )
+        sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
 
