@@ -34,8 +34,4 @@ jobs:
     - name: Test with pytest
       run: pytest
 
-    - name: Test with pytest an coverage
-      run: |
-        pip install coverage
-        coverage run --source=smt -m pytest
 

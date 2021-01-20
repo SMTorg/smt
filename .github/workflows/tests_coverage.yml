@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
@@ -29,9 +29,10 @@ jobs:
         pip install --upgrade pip
         pip install numpy scipy cython scikit-learn==0.23.2 pytest
         pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+        pip list
         pip install -e .
 
-    - name: Test with pytest an coverage
+    - name: Test with pytest and coverage
       run: |
         pip install coverage
         coverage run --source=smt -m pytest
