@@ -207,6 +207,31 @@ class MOE(SurrogateBasedApplication):
             y = self._predict_hard_output(x)
         return y
 
+    def predict_variances(self, x):
+        """
+        Predict the output variances at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output variances at the prediction points.
+        """
+
+        if not self.options["variances_support"]:
+            raise RuntimeError('Experts not selected taking variance support into account: use variances_support=True '
+                               'when creating MOE')
+
+        if self.smooth_recombination:
+            y = self._predict_smooth_output(x, output_variances=True)
+        else:
+            y = self._predict_hard_output(x, output_variances=True)
+        return y
+
     def _check_inputs(self):
         """
         Check the input data given by the client is correct.
@@ -291,7 +316,7 @@ class MOE(SurrogateBasedApplication):
                 self.experts[i].set_training_values(x_trained, y_trained)
                 self.experts[i].train()
 
-    def _predict_hard_output(self, x):
+    def _predict_hard_output(self, x, output_variances=False):
         """
         This method predicts the output of a x samples for a
         discontinuous recombination.
@@ -313,12 +338,17 @@ class MOE(SurrogateBasedApplication):
 
         for i in range(len(sort_cluster)):
             model = self.experts[sort_cluster[i]]
-            predicted_values.append(model.predict_values(np.atleast_2d(x[i]))[0])
+
+            if output_variances:
+                predicted_values.append(model.predict_variances(np.atleast_2d(x[i]))[0])
+            else:
+                predicted_values.append(model.predict_values(np.atleast_2d(x[i]))[0])
+
         predicted_values = np.array(predicted_values)
 
         return predicted_values
 
-    def _predict_smooth_output(self, x, distribs=None):
+    def _predict_smooth_output(self, x, distribs=None, output_variances=False):
         """
         This method predicts the output of x with a smooth recombination.
 
@@ -343,11 +373,13 @@ class MOE(SurrogateBasedApplication):
         for i in range(len(sort_proba)):
             recombined_value = 0
             for j in range(len(self.experts)):
-                recombined_value = (
-                    recombined_value
-                    + self.experts[j].predict_values(np.atleast_2d(x[i]))[0]
-                    * sort_proba[i][j]
-                )
+
+                if output_variances:
+                    expert_value = self.experts[j].predict_variances(np.atleast_2d(x[i]))[0] * sort_proba[i][j]**2
+                else:
+                    expert_value = self.experts[j].predict_values(np.atleast_2d(x[i]))[0] * sort_proba[i][j]
+
+                recombined_value += expert_value
 
             predicted_values.append(recombined_value)
 
