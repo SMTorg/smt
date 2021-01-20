@@ -213,9 +213,7 @@ class TestEGO(SMTestCase):
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
-        sampling = mixint.build_sampling_method(
-            xtypes, xlimits, FullFactorial, random_state=42
-        )
+        sampling = mixint.build_sampling_method(FullFactorial)
         xdoe = sampling(10)
         
         
