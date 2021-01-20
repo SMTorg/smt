@@ -8,33 +8,30 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.7', '3.8']
-        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up python
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Python info
+      run: python --version
 
     - name: Install dependencies
       run: |
-        conda install numpy scipy cython scikit-learn pytest
         pip install --upgrade pip
+        pip install numpy scipy cython scikit-learn==0.23.2 pytest
         pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
         pip install -e .
 
     - name: Test with pytest
-      run: |
-        conda install pytest
-        pytest
+      run: pytest
+
+
