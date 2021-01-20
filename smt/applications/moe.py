@@ -7,7 +7,6 @@ Mixture of Experts
 """
 # TODO : choice of the surrogate model experts to be used
 # TODO : support for best number of clusters
-# TODO : add factory to get proper surrogate model object
 # TODO : implement verbosity 'print_global'
 # TODO : documentation
 
@@ -26,8 +25,57 @@ from scipy.stats import multivariate_normal
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
 from smt.utils.misc import compute_rms_error
+from smt.surrogate_models.surrogate_model import SurrogateModel
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+class MOESurrogateModel(SurrogateModel):
+    """Wrapper class exposing MOE features as a SurrogateModel subclass."""
+
+    name = 'MOE'
+
+    def _initialize(self):
+        super(MOESurrogateModel, self)._initialize()
+
+        # Copy over options from MOE object
+        self.moe = moe = MOE()
+        for key, data in moe.options._declared_entries.items():
+            self.options._declared_entries[key] = data
+
+            value = moe.options[key]
+            if value is not None:
+                self.options[key] = value
+
+    def _setup(self):
+        for key in self.moe.options._declared_entries:
+            if key in self.options:
+                self.moe.options[key] = self.options[key]
+
+        # self.supports['derivatives'] = self.options['derivatives_support']  # Interface not yet implemented
+        self.supports['variances'] = self.options['variances_support']
+
+    def train(self):
+        if len(self.training_points) == 0:
+            xt = self.options['xt']
+            yt = self.options['yt']
+            self.set_training_values(xt, yt)
+
+        super(MOESurrogateModel, self).train()
+
+    def _train(self):
+        self._setup()
+
+        for name in self.training_points:
+            xt, yt = self.training_points[name][0]
+            self.moe.set_training_values(xt, yt, name=name)
+        self.moe.train()
+
+    def _predict_values(self, x: np.ndarray) -> np.ndarray:
+        return self.moe.predict_values(x)
+
+    def _predict_variances(self, x: np.ndarray) -> np.ndarray:
+        return self.moe.predict_variances(x)
 
 
 class MOE(SurrogateBasedApplication):
