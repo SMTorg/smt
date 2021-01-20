@@ -197,7 +197,6 @@ class EGO(SurrogateBasedApplication):
     def EI(self, points, y_data, enable_tunneling=False, x_data=None):
         """ Expected improvement """
         f_min = np.min(y_data)
-        print("EI",points)
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
         args0 = (f_min - pred) / sig
@@ -341,8 +340,6 @@ class EGO(SurrogateBasedApplication):
             for ii in range(n_start):
 
                 try:
-                    print("slsqp")
-                    print("start",x_start)
                     opt_all.append(
                         minimize(
                             lambda x: float(self.obj_k(x)),
@@ -350,9 +347,9 @@ class EGO(SurrogateBasedApplication):
                             method="SLSQP",
                             bounds=bounds,
                             options={"maxiter": 200},
-                        ))
-                    print(opt_all)
-                    
+                        )
+                    )
+
                 except ValueError:  # in case "x0 violates bound constraints" error
                     print("warning: `x0` violates bound constraints")
                     print("x0={}".format(x_start[ii, :]))
