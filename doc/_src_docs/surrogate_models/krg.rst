@@ -10,22 +10,60 @@ Kriging is an interpolating model that is a linear combination of a known functi
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
-
+	
 where :math:`\sigma^2` is the process variance, and :math:`R` is the correlation.
-Two types of correlation functions are available in SMT: the exponential (Ornstein-Uhlenbeck process) and Gaussian correlation functions
+Four types of correlation functions are available in SMT.
+
+Exponential correlation function (Ornstein-Uhlenbeck process):
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l\in\mathbb{R}^+\\
-  \text{Exponential correlation function} \quad \qquad\text{Gaussian correlation function}\qquad \qquad
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  
+Squared Exponential (Gaussian) correlation function:
 
-These two correlation functions are called by 'abs_exp' (exponential) and 'squar_exp' (Gaussian) in SMT.
+.. math ::
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  
+Matérn 5/2 correlation function:
+
+.. math ::
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+Matérn 3/2 correlation function:
+
+.. math ::
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  
+These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
 
 The deterministic term :math:`\sum\limits_{i=1}^k\beta_i f_i({\bf x})` can be replaced by a constant, a linear model, or a quadratic model.
 These three types are available in SMT.
 
-More details about the kriging approach could be found in [1]_.
+In the implementations, data are normalized by substracting the mean from each variable (indexed by columns in X), and then dividing the values of each variable by its standard deviation:
+
+.. math ::
+  X_{\text{norm}} = \frac{X - X_{\text{mean}}}{X_{\text{std}}}
+
+More details about the Kriging approach could be found in [1]_.
+
+Kriging with categorical or integer variables 
+---------------------------------------------
+
+The goal is to be able to build a model for mixed typed variables. 
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+
+To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
+For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
+For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
+then we round in the prediction to the output dimension giving the greatest continuous prediction.
+
+More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
+
+Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
 .. [1] Sacks, J. and Schiller, S. B. and Welch, W. J., Designs for computer experiments, Technometrics 31 (1) (1989) 41--47.
+
+.. [2] E. C. Garrido-Merchan and D. Hernandez-Lobato, Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes, Neurocomputing 380 (2020) 20-–35.
 
 Usage
 -----
@@ -38,7 +76,7 @@ Usage
   from smt.surrogate_models import KRG
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = KRG(theta0=[1e-2])
   sm.set_training_values(xt, yt)
@@ -47,12 +85,31 @@ Usage
   num = 100
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
+  # estimated variance
+  s2 = sm.predict_variances(x)
+  # derivative according to the first variable
+  dydx = sm.predict_derivatives(xt, 0)
+  fig, axs = plt.subplots(2)
   
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction"])
+  axs[0].plot(xt, yt, "o")
+  axs[0].plot(x, y)
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(["Training data", "Prediction"])
+  
+  # add a plot with variance
+  axs[1].plot(xt, yt, "o")
+  axs[1].plot(x, y)
+  axs[1].fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(s2)),
+      np.ravel(y + 3 * np.sqrt(s2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  
   plt.show()
   
 ::
@@ -71,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0070000
+     Training - done. Time (sec):  0.0029976
   ___________________________________________________________________________
      
    Evaluation
@@ -79,12 +136,96 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 5
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg.png
+  :scale: 80 %
+  :align: center
+
+Usage with mixed variables
+--------------------------
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+  
+  xt = np.array([0.0, 2.0, 3.0])
+  yt = np.array([0.0, 1.5, 0.9])
+  
+  # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+  # FLOAT means x1 continuous
+  # INT means x2 integer
+  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+  
+  sm = MixedIntegerSurrogateModel(
+      xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+  )
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  num = 500
+  x = np.linspace(0.0, 4.0, num)
+  y = sm.predict_values(x)
+  # estimated variance
+  s2 = sm.predict_variances(x)
+  
+  fig, axs = plt.subplots(2)
+  
+  axs[0].plot(xt, yt, "o")
+  axs[0].plot(x, y)
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(["Training data", "Prediction"])
+  
+  # add a plot with variance
+  axs[1].plot(xt, yt, "o")
+  axs[1].plot(x, y)
+  axs[1].fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(s2)),
+      np.ravel(y + 3 * np.sqrt(s2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: krg_Test_test_mixed_int_krg.png
   :scale: 80 %
   :align: center
 
@@ -129,20 +270,50 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  None
+     -  ['str']
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  None
-     -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
+     -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'TNC']
+     -  ['str']
+     -  Optimiser for hyperparameters optimisation
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  [0.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag

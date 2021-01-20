@@ -7,9 +7,6 @@ This package is distributed under New BSD license.
 TO DO:
 - define outputs['sol'] = self.sol
 """
-
-from __future__ import division
-
 import numpy as np
 
 from sklearn import linear_model
@@ -25,6 +22,8 @@ class LS(SurrogateModel):
     Default-parameters from scikit-learn are used herein.
     """
 
+    name = "LS"
+
     def _initialize(self):
         super(LS, self)._initialize()
         declare = self.options.declare
@@ -37,7 +36,6 @@ class LS(SurrogateModel):
             desc="Directory for loading / saving cached data; None means do not save or load",
         )
 
-        self.name = "LS"
         supports["derivatives"] = True
 
     ############################################################################
@@ -105,6 +103,6 @@ class LS(SurrogateModel):
 
         # Initialization
         n_eval, n_features_x = x.shape
-        y = np.ones((n_eval, 1)) * self.mod.coef_[0, kx]
+        y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
 
         return y

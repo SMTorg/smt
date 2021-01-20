@@ -25,7 +25,7 @@ More details of such approach are given in [2]_.
 
 .. [1] Forrester, I. J. and Sobester, A. and Keane, A. J., Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008 (Chapter 7).
 
-.. [2] Bouhlel, M. A. and Martins, J. R. R. A., Gradient-enhanced kriging for high-dimensional problems (under review), Engineering with Computers, 2017.
+.. [2] Bouhlel, M. A., & Martins, J. R. (2019). Gradient-enhanced kriging for high-dimensional problems. Engineering with Computers, 35(1), 157-173.
 
 Usage
 -----

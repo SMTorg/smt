@@ -4,12 +4,10 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function, division
 import numpy as np
 import unittest
 import inspect
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
@@ -47,6 +45,8 @@ class Test(SMTestCase):
         sms["LS"] = LS()
         sms["QP"] = QP()
         sms["KRG"] = KRG(theta0=[4e-1] * ndim)
+        sms["KPLS"] = KPLS()
+
         if compiled_available:
             sms["IDW"] = IDW()
             sms["RBF"] = RBF()
@@ -54,9 +54,10 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["KRG"] = 1e-6
+        t_errors["KRG"] = 1e-4
         t_errors["IDW"] = 1e-15
         t_errors["RBF"] = 1e-2
+        t_errors["KPLS"] = 1e-3
 
         e_errors = {}
         e_errors["LS"] = 2.5
@@ -64,6 +65,7 @@ class Test(SMTestCase):
         e_errors["KRG"] = 2.0
         e_errors["IDW"] = 4
         e_errors["RBF"] = 2
+        e_errors["KPLS"] = 2.5
 
         self.nt = nt
         self.ne = ne
@@ -78,7 +80,7 @@ class Test(SMTestCase):
         sname = method_name.split("_")[2]
 
         prob = self.problems[pname]
-        sampling = LHS(xlimits=prob.xlimits)
+        sampling = LHS(xlimits=prob.xlimits, random_state=42)
 
         np.random.seed(0)
         xt = sampling(self.nt)
@@ -107,8 +109,8 @@ class Test(SMTestCase):
         if print_output:
             print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
 
-        self.assert_error(t_error, 0.0, self.t_errors[sname])
-        self.assert_error(e_error, 0.0, self.e_errors[sname])
+        self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
+        self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
 
     # --------------------------------------------------------------------
     # Function: sphere
@@ -120,6 +122,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_sphere_KRG(self):
+        self.run_test()
+
+    def test_sphere_KPLS(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
@@ -142,6 +147,9 @@ class Test(SMTestCase):
     def test_exp_KRG(self):
         self.run_test()
 
+    def test_exp_KPLS(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_exp_IDW(self):
         self.run_test()
@@ -162,6 +170,9 @@ class Test(SMTestCase):
     def test_tanh_KRG(self):
         self.run_test()
 
+    def test_tanh_KPLS(self):
+        self.run_test()
+
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
@@ -180,6 +191,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_KRG(self):
+        self.run_test()
+
+    def test_cos_KPLS(self):
         self.run_test()
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")

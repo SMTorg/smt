@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from smt.utils.neural_net.data import random_mini_batches
 from smt.utils.neural_net.optimizer import Adam
@@ -288,6 +287,8 @@ class Model(object):
         """
         Plot the convergence history of the neural network learning algorithm
         """
+        import matplotlib.pyplot as plt
+
         if self.training_history:
             if len(self.training_history.keys()) > 1:
                 x_label = "epoch"
@@ -440,6 +441,7 @@ class Model(object):
         return J
 
     def goodness_of_fit(self, X_test, Y_test, J_test=None, response=0, partial=0):
+        import matplotlib.pyplot as plt
 
         assert X_test.shape[1] == Y_test.shape[1]
         assert Y_test.shape[0] == Y_test.shape[0]

@@ -10,6 +10,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
@@ -27,7 +28,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import IDW
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = IDW(p=2)
         sm.set_training_values(xt, yt)
@@ -52,7 +53,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RBF
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = RBF(d0=5)
         sm.set_training_values(xt, yt)
@@ -77,7 +78,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RMTB
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
@@ -110,7 +111,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import RMTC
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         xlimits = np.array([[0.0, 4.0]])
 
@@ -141,7 +142,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import LS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = LS()
         sm.set_training_values(xt, yt)
@@ -164,8 +165,8 @@ class Test(unittest.TestCase):
 
         from smt.surrogate_models import QP
 
-        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        xt = np.array([[0.0, 1.0, 2.0, 3.0, 4.0]]).T
+        yt = np.array([[0.2, 1.4, 1.5, 0.9, 1.0], [0.0, 1.0, 2.0, 4, 3]]).T
 
         sm = QP()
         sm.set_training_values(xt, yt)
@@ -175,11 +176,13 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
 
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
+        t1, _ = plt.plot(xt, yt[:, 0], "o", "C0")
+        p1 = plt.plot(x, y[:, 0], "C0", label="Prediction 1")
+        t2, _ = plt.plot(xt, yt[:, 1], "o", "C1")
+        p2 = plt.plot(x, y[:, 1], "C1", label="Prediction 2")
         plt.xlabel("x")
         plt.ylabel("y")
-        plt.legend(["Training data", "Prediction"])
+        plt.legend()
         plt.show()
 
     def test_krg(self):
@@ -189,7 +192,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import KRG
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = KRG(theta0=[1e-2])
         sm.set_training_values(xt, yt)
@@ -198,12 +201,82 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
+        # estimated variance
+        s2 = sm.predict_variances(x)
+        # derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
+        fig, axs = plt.subplots(2)
+        
+        axs[0].plot(xt, yt, "o")
+        axs[0].plot(x, y)
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(["Training data", "Prediction"])
 
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend(["Training data", "Prediction"])
+        # add a plot with variance
+        axs[1].plot(xt, yt, "o")
+        axs[1].plot(x, y)
+        axs[1].fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        
+        plt.show()
+
+    def test_mixed_int_krg(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+
+        xt = np.array([0.0, 2.0, 3.0])
+        yt = np.array([0.0, 1.5, 0.9])
+
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+
+        sm = MixedIntegerSurrogateModel(
+            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        num = 500
+        x = np.linspace(0.0, 4.0, num)
+        y = sm.predict_values(x)
+        # estimated variance
+        s2 = sm.predict_variances(x)
+
+        fig, axs = plt.subplots(2)
+        
+        axs[0].plot(xt, yt, "o")
+        axs[0].plot(x, y)
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(["Training data", "Prediction"])
+
+        # add a plot with variance
+        axs[1].plot(xt, yt, "o")
+        axs[1].plot(x, y)
+        axs[1].fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        
         plt.show()
 
     def test_kpls(self):
@@ -213,7 +286,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import KPLS
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = KPLS(theta0=[1e-2])
         sm.set_training_values(xt, yt)
@@ -222,12 +295,30 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
+        # estimated variance
+        s2 = sm.predict_variances(x)
+        # to compute the derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
 
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
+        plt.show()
+
+        # add a plot with variance
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
         plt.show()
 
     def test_kplsk(self):
@@ -237,7 +328,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import KPLSK
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
         sm = KPLSK(theta0=[1e-2])
         sm.set_training_values(xt, yt)
@@ -246,12 +337,30 @@ class Test(unittest.TestCase):
         num = 100
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
-        yy = sm.predict_derivatives(xt, 0)
+        # estimated variance
+        s2 = sm.predict_variances(x)
+        # derivative according to the first variable
+        dydx = sm.predict_derivatives(xt, 0)
+
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(["Training data", "Prediction"])
+        plt.show()
+
+        # add a plot with variance
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.fill_between(
+            np.ravel(x),
+            np.ravel(y - 3 * np.sqrt(s2)),
+            np.ravel(y + 3 * np.sqrt(s2)),
+            color="lightgrey",
+        )
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
         plt.show()
 
     def test_gekpls(self):
@@ -364,6 +473,82 @@ class Test(unittest.TestCase):
         ax.plot(xt, yt, "k+", mew=3, ms=10)
         ax.set(xlabel="x", ylabel="y", title="GENN")
         ax.legend(["Predicted", "True", "Test", "Train"])
+        plt.show()
+
+    def test_mgp(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.surrogate_models import MGP
+        from smt.sampling_methods import LHS
+
+        # Construction of the DOE
+        dim = 3
+
+        def fun(x):
+            import numpy as np
+
+            res = (
+                np.sum(x, axis=1) ** 2
+                - np.sum(x, axis=1)
+                + 0.2 * (np.sum(x, axis=1) * 1.2) ** 3
+            )
+            return res
+
+        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
+        xt = sampling(8)
+        yt = np.atleast_2d(fun(xt)).T
+
+        # Build the MGP model
+        sm = MGP(
+            theta0=[1e-2],
+            print_prediction=False,
+            n_comp=1,
+        )
+        sm.set_training_values(xt, yt[:, 0])
+        sm.train()
+
+        # Get the transfert matrix A
+        emb = sm.embedding["C"]
+
+        # Compute the smallest box containing all points of A
+        upper = np.sum(np.abs(emb), axis=0)
+        lower = -upper
+
+        # Test the model
+        u_plot = np.atleast_2d(np.arange(lower, upper, 0.01)).T
+        x_plot = sm.get_x_from_u(u_plot)  # Get corresponding points in Omega
+        y_plot_true = fun(x_plot)
+        y_plot_pred = sm.predict_values(u_plot)
+        sigma_MGP, sigma_KRG = sm.predict_variances(u_plot, True)
+
+        u_train = sm.get_u_from_x(xt)  # Get corresponding points in A
+
+        # Plots
+        fig, ax = plt.subplots()
+        ax.plot(u_plot, y_plot_pred, label="Predicted")
+        ax.plot(u_plot, y_plot_true, "k--", label="True")
+        ax.plot(u_train, yt, "k+", mew=3, ms=10, label="Train")
+        ax.fill_between(
+            u_plot[:, 0],
+            y_plot_pred - 3 * sigma_MGP,
+            y_plot_pred + 3 * sigma_MGP,
+            color="r",
+            alpha=0.5,
+            label="Variance with hyperparameters uncertainty",
+        )
+        ax.fill_between(
+            u_plot[:, 0],
+            y_plot_pred - 3 * sigma_KRG,
+            y_plot_pred + 3 * sigma_KRG,
+            color="b",
+            alpha=0.5,
+            label="Variance without hyperparameters uncertainty",
+        )
+
+        ax.set(xlabel="x", ylabel="y", title="MGP")
+        fig.legend(loc="upper center", ncol=2)
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.74)
         plt.show()
 
 

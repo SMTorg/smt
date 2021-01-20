@@ -1,0 +1,34 @@
+Multi-Fidelity Kriging KPLSK (MFKPLSK)
+======================================
+
+Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
+interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
+maximize the variation of the quantity of interest.
+
+These principal components define rotations that can be applied to define bases changes.
+The principal components can be truncated at any number (called n_comp) to explain a
+’majority’ of the data variations.
+[1]_ used the PLS to define subspaces to make high-dimensional Kriging
+more efficient. 
+
+We apply the same idea to :ref:`mfk-ref-label`. The only difference is that we do
+not apply the PLS analysis step on all datasets. We apply the PLS analysis step on the
+high-fidelity to preserve the robustness to poor correlations between fidelity levels.
+A hyperparameter optimization is then performed in the subspace that maximizes the
+variations of HF data.
+
+MFKPLSK is a combination of :ref:`mfk-ref-label` and :ref:`kplsk-ref-label` techniques.
+
+References
+----------
+.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., & Morlier, J. (2016). An improved approach for estimating the hyperparameters of the kriging model for high-dimensional problems through the partial least squares method. Mathematical Problems in Engineering, 2016.
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.applications.tests.test_mfkplsk , TestMFKPLSK , run_mfkplsk_example , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.applications , MFKPLSK , options

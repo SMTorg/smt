@@ -3,19 +3,19 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
+Paul Saves : Mixed Integer
 """
-
-from __future__ import division
-
+from typing import Optional
 import numpy as np
 from collections import defaultdict
+from abc import ABCMeta, abstractmethod
 
 from smt.utils.printer import Printer
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.utils.checks import check_support, check_nx, check_2d_array
+from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 
-class SurrogateModel(object):
+class SurrogateModel(object, metaclass=ABCMeta):
     """
     Base class for all surrogate models.
 
@@ -58,6 +58,7 @@ class SurrogateModel(object):
         supports["output_derivatives"] = False
         supports["adjoint_api"] = False
         supports["variances"] = False
+        supports["variance_derivatives"] = False
 
         declare = self.options.declare
 
@@ -88,13 +89,17 @@ class SurrogateModel(object):
         declare(
             "print_solver", True, types=bool, desc="Whether to print solver information"
         )
-
         self._initialize()
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)
         self.printer = Printer()
 
-    def set_training_values(self, xt, yt, name=None):
+    @property
+    @abstractmethod
+    def name(self):
+        pass
+
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
         """
         Set training data (values).
 
@@ -108,8 +113,8 @@ class SurrogateModel(object):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
-        xt = check_2d_array(xt, "xt")
-        yt = check_2d_array(yt, "yt")
+        xt = ensure_2d_array(xt, "xt")
+        yt = ensure_2d_array(yt, "yt")
 
         if xt.shape[0] != yt.shape[0]:
             raise ValueError(
@@ -122,7 +127,7 @@ class SurrogateModel(object):
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
-    def update_training_values(self, yt, name=None):
+    def update_training_values(self, yt: np.ndarray, name: Optional[str] = None) -> None:
         """
         Update the training data (values) at the previously set input values.
 
@@ -130,11 +135,17 @@ class SurrogateModel(object):
         ----------
         yt : np.ndarray[nt, ny] or np.ndarray[nt]
             The output values for the nt training points.
-        name : str or None
+        name : str or None, optional
             An optional label for the group of training points being set.
-            This is only used in special situations (e.g., multi-fidelity applications).
+            This is only used in special situations (e.g., multi-fidelity applications). The default is None.
+
+        Raises
+        ------
+        ValueError
+            The training points must be set first with set_training_values before calling update_training_values.
+            The number of training points does not agree with the earlier call of set_training_values.
         """
-        yt = check_2d_array(yt, "yt")
+        yt = ensure_2d_array(yt, "yt")
 
         kx = 0
 
@@ -153,7 +164,8 @@ class SurrogateModel(object):
 
         self.training_points[name][kx][1] = np.array(yt)
 
-    def set_training_derivatives(self, xt, dyt_dxt, kx, name=None):
+    def set_training_derivatives(self, xt: np.ndarray, dyt_dxt: np.ndarray,
+                                 kx: int, name: Optional[str] = None) -> None:
         """
         Set training data (derivatives).
 
@@ -171,8 +183,8 @@ class SurrogateModel(object):
         """
         check_support(self, "training_derivatives")
 
-        xt = check_2d_array(xt, "xt")
-        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
+        xt = ensure_2d_array(xt, "xt")
+        dyt_dxt = ensure_2d_array(dyt_dxt, "dyt_dxt")
 
         if xt.shape[0] != dyt_dxt.shape[0]:
             raise ValueError(
@@ -184,7 +196,8 @@ class SurrogateModel(object):
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
-    def update_training_derivatives(self, dyt_dxt, kx, name=None):
+    def update_training_derivatives(self, dyt_dxt: np.ndarray, kx: int,
+                                    name: Optional[str] = None) -> None:
         """
         Update the training data (values) at the previously set input values.
 
@@ -194,13 +207,19 @@ class SurrogateModel(object):
             The derivatives values for the nt training points.
         kx : int
             0-based index of the derivatives being set.
-        name : str or None
+        name :str or None, optional
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
+
+        Raises
+        ------
+        ValueError
+            The training points must be set first with set_training_values before calling update_training_values..
+            The number of training points does not agree with the earlier call of set_training_values.
         """
         check_support(self, "training_derivatives")
 
-        dyt_dxt = check_2d_array(dyt_dxt, "dyt_dxt")
+        dyt_dxt = ensure_2d_array(dyt_dxt, "dyt_dxt")
 
         if kx not in self.training_points[name]:
             raise ValueError(
@@ -217,7 +236,7 @@ class SurrogateModel(object):
 
         self.training_points[name][kx + 1][1] = np.array(dyt_dxt)
 
-    def train(self):
+    def train(self) -> None:
         """
         Train the model
         """
@@ -247,7 +266,7 @@ class SurrogateModel(object):
         with self.printer._timed_context("Training", "training"):
             self._train()
 
-    def predict_values(self, x):
+    def predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the output values at a set of points.
 
@@ -261,9 +280,10 @@ class SurrogateModel(object):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
+        x2 = np.copy(x)
         self.printer.active = (
             self.options["print_global"] and self.options["print_prediction"]
         )
@@ -278,15 +298,14 @@ class SurrogateModel(object):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x)
-
+            y = self._predict_values(x2)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
         return y.reshape((n, self.ny))
 
-    def predict_derivatives(self, x, kx):
+    def predict_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
         """
         Predict the dy_dx derivatives at a set of points.
 
@@ -303,7 +322,7 @@ class SurrogateModel(object):
             Derivatives.
         """
         check_support(self, "derivatives")
-        x = check_2d_array(x, "x")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
         self.printer.active = (
@@ -329,7 +348,7 @@ class SurrogateModel(object):
 
         return y.reshape((n, self.ny))
 
-    def predict_output_derivatives(self, x):
+    def predict_output_derivatives(self, x: np.ndarray) -> dict:
         """
         Predict the derivatives dy_dyt at a set of points.
 
@@ -345,12 +364,13 @@ class SurrogateModel(object):
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
         check_support(self, "output_derivatives")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
 
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
 
-    def predict_variances(self, x):
+    def predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -365,10 +385,53 @@ class SurrogateModel(object):
             Variances.
         """
         check_support(self, "variances")
+        x = ensure_2d_array(x, "x")
         check_nx(self.nx, x)
         n = x.shape[0]
-        s2 = self._predict_variances(x)
+        x2 = np.copy(x)
+        s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
+
+    def predict_variance_derivatives(self, x):
+        """
+        Predict the derivation of the variance at a point
+
+        Parameters:
+        -----------
+        x : np.ndarray
+            Input value for the prediction point.
+
+        Returns:
+        --------
+        derived_variance: np.ndarray
+            The jacobian of the variance
+        """
+        x = ensure_2d_array(x, "x")
+        check_support(self, "variance_derivatives")
+        check_nx(self.nx, x)
+        n = x.shape[0]
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
+
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
+
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_variance_derivatives(x)
+
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+
+        return y
 
     def _initialize(self):
         """
@@ -381,13 +444,14 @@ class SurrogateModel(object):
         """
         pass
 
-    def _train(self):
+    def _train(self) -> None:
         """
         Implemented by surrogate models to perform training (optional, but typically implemented).
         """
         pass
 
-    def _predict_values(self, x):
+    @abstractmethod
+    def _predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the output values.
 
@@ -403,7 +467,7 @@ class SurrogateModel(object):
         """
         raise Exception("This surrogate model is incorrectly implemented")
 
-    def _predict_derivatives(self, x, kx):
+    def _predict_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
         """
         Implemented by surrogate models to predict the dy_dx derivatives (optional).
 
@@ -428,7 +492,7 @@ class SurrogateModel(object):
         """
         check_support(self, "derivatives", fail=True)
 
-    def _predict_output_derivatives(self, x):
+    def _predict_output_derivatives(self, x: np.ndarray) -> dict:
         """
         Implemented by surrogate models to predict the dy_dyt derivatives (optional).
 
@@ -451,8 +515,9 @@ class SurrogateModel(object):
             Key is None for derivatives wrt yt and kx for derivatives wrt dyt_dxt.
         """
         check_support(self, "output_derivatives", fail=True)
+        return {}
 
-    def _predict_variances(self, x):
+    def _predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the variances at a set of points (optional).
 
@@ -474,3 +539,19 @@ class SurrogateModel(object):
             Variances.
         """
         check_support(self, "variances", fail=True)
+
+    def _predict_variance_derivatives(self, x):
+        """
+        Implemented by surrogate models to predict the derivation of the variance at a point (optional).
+
+        Parameters:
+        -----------
+        x : np.ndarray
+            Input value for the prediction point.
+
+        Returns:
+        --------
+        derived_variance: np.ndarray
+            The jacobian of the variance
+        """
+        check_support(self, "variance_derivatives", fail=True)

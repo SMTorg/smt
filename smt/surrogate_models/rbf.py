@@ -3,9 +3,6 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
-from __future__ import division
-
 import numpy as np
 from scipy.sparse import csc_matrix
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -21,6 +18,8 @@ class RBF(SurrogateModel):
     """
     Radial basis function interpolant with global polynomial trend.
     """
+
+    name = "RBF"
 
     def _initialize(self):
         super(RBF, self)._initialize()
@@ -56,8 +55,6 @@ class RBF(SurrogateModel):
 
         supports["derivatives"] = True
         supports["output_derivatives"] = True
-
-        self.name = "RBF"
 
     def _setup(self):
         options = self.options

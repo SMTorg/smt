@@ -2,15 +2,15 @@
 Author: Dr. John T. Hwang <hwangjt@umich.edu>
         Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Remi Lafage <remi.lafage@onera.fr>
+        Lucas Alber <lucasd.alber@gmail.com>
 
 This package is distributed under New BSD license.
 """
-
 from setuptools import setup, Extension
-import os
 import sys
-from subprocess import call
 import numpy as np
+from Cython.Build import cythonize
+
 from smt import __version__
 
 CLASSIFIERS = """\
@@ -44,15 +44,6 @@ with respect to the training data. It also includes new surrogate models
 that are not available elsewhere: kriging by partial-least squares reduction 
 and energy-minimizing spline interpolation.
 """
-
-try:
-    import Cython
-except ImportError:
-    import pip
-
-    pip.main(["install", "Cython"])
-
-from Cython.Build import cythonize
 
 extra_compile_args = []
 if not sys.platform.startswith("win"):
@@ -111,17 +102,17 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.utils.neural_net",
-        "smt.extensions",
+        "smt.applications",
     ],
     install_requires=[
         "scikit-learn",
+        "packaging",
         "pyDOE2",
         "matplotlib",
         "numpydoc",
-        "six>=1.10",
         "scipy",
     ],
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*",
+    python_requires=">=3.6",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo

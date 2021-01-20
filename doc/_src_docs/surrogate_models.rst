@@ -17,6 +17,7 @@ SMT contains the surrogate modeling methods listed below.
    surrogate_models/kplsk
    surrogate_models/gekpls
    surrogate_models/genn
+   surrogate_models/mgp
 
 
 Usage
@@ -30,7 +31,7 @@ Usage
   from smt.surrogate_models import RBF
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
   sm = RBF(d0=5)
   sm.set_training_values(xt, yt)
@@ -65,13 +66,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0009999
-        Initializing linear solver - done. Time (sec):  0.0009999
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Initializing linear solver - done. Time (sec):  0.0000000
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0015004
-        Solving linear system (col. 0) - done. Time (sec):  0.0015004
-     Training - done. Time (sec):  0.0045002
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Solving linear system (col. 0) - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -79,9 +80,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0014999
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000150
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: surrogate_models_Test_test_rbf.png
@@ -89,7 +90,7 @@ Usage
   :align: center
 
 SurrogateModel class API
-------------
+------------------------
 
 All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
 

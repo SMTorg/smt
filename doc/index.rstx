@@ -11,7 +11,24 @@ SMT is designed to make it easy for developers to implement new surrogate models
 
 The code is available open-source on `GitHub <https://github.com/SMTorg/SMT>`_.
 
-To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
+Cite us
+-------
+To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins.  
+
+`A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019 <https://hal.archives-ouvertes.fr/hal-02294310/document>`_. 
+
+.. code-block:: none
+
+	@article{SMT2019,
+		Author = {Mohamed Amine Bouhlel and John T. Hwang and Nathalie Bartoli and Rémi Lafage and Joseph Morlier and Joaquim R. R. A. Martins},
+		Journal = {Advances in Engineering Software},
+		Title = {A Python surrogate modeling framework with derivatives},
+		pages = {102662},
+		year = {2019},
+		issn = {0965-9978},
+		doi = {https://doi.org/10.1016/j.advengsoft.2019.03.005},
+		Year = {2019}}
+
 
 Focus on derivatives
 --------------------
@@ -48,7 +65,7 @@ Documentation contents
    _src_docs/problems
    _src_docs/sampling_methods
    _src_docs/examples
-   _src_docs/extensions
+   _src_docs/applications
    _src_docs/dev_docs
 
 

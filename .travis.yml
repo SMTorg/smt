@@ -6,18 +6,13 @@ language: generic
 matrix:
   include:
     - os: linux
-      env: PY=2.7
-    - os: linux
-      env: PY=3.6 COVERAGE=1
+      env: PY=3.6
     - os: linux
       env: PY=3.7
+    - os: linux
+      env: PY=3.8
     - os: osx
-      env: PY=2.7
-    - os: osx
-      env: PY=3.6
-
-osx_image: xcode9.4
-dist: xenial
+      env: PY=3.7
 
 addons:
   apt:
@@ -34,17 +29,9 @@ addons:
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      if [ "$PY" = "2.7" ]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
-      fi
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     else
-      if [ "$PY" = "2.7" ]; then
-        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      fi
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"

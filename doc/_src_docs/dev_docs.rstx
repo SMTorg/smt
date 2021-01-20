@@ -9,7 +9,7 @@ Contributing to SMT consists of the following steps:
 
 - Fork SMT to make a version of the SMT repo separate from the main one.
 - Clone *your* SMT repo and install in development mode: go in your local smt folder and run ``pip install -e .``
-- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in ``smt/surrogate_models/surrogate_model.py``.
+- Write the class following the developer API given in the section below, and add it to the right folder, e.g., in ``smt/surrogate_models/``.
 - Add the import statement in the corresponding ``__init__.py`` file, e.g., ``smt/surrogate_models/__init__.py``.
 - Add tests to the top-level ``tests`` directory following the existing examples and run tests (see `Testing`_ section below) 
 - Add a documentation page in the appropriate directory, e.g., ``doc/_src_docs/surrogate_models/rbf.rstx``, using the existing docs as a reference (see `Building the documentation`_ section below).
@@ -32,7 +32,7 @@ Developer API
 Testing
 -------
 
-Install the test runner: ``pip install testflo`` then run: ``testflo`` 
+Install the test runner: ``pip install pytest`` then run: ``pytest`` 
 
 Building the documentation
 --------------------------

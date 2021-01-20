@@ -8,7 +8,6 @@ This package is distributed under New BSD license.
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.neural_net.model import Model
-import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -112,6 +111,8 @@ def smt_to_genn(training_points):
 
 
 class GENN(SurrogateModel):
+    name = "GENN"
+
     def _initialize(self):
         """API function: set default values for user options"""
         declare = self.options.declare
@@ -153,7 +154,6 @@ class GENN(SurrogateModel):
 
         self.supports["derivatives"] = True
         self.supports["training_derivatives"] = True
-        self.name = "GENN"
 
         self.model = Model()
 
@@ -257,6 +257,7 @@ class GENN(SurrogateModel):
 
 def run_example(is_gradient_enhancement=True):  # pragma: no cover
     """Test and demonstrate GENN using a 1D example"""
+    import matplotlib.pyplot as plt
 
     # Test function
     f = lambda x: x * np.sin(x)

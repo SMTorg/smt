@@ -1,0 +1,53 @@
+name: Tests Coverage
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.6']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Python info
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install numpy scipy cython scikit-learn==0.23.2 pytest
+        pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+        pip list
+        pip install -e .
+
+    - name: Test with pytest and coverage
+      run: |
+        pip install coverage
+        coverage run --source=smt -m pytest
+
+    - name: Coveralls
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel: true
+        flag-name: Test
+
+  coveralls_finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true

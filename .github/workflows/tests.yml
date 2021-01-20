@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.7', '3.8']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Python info
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install numpy scipy cython scikit-learn==0.23.2 pytest
+        pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
+        pip install -e .
+
+    - name: Test with pytest
+      run: pytest
+
+

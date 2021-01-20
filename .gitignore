@@ -20,3 +20,7 @@ smt/src/rmts/rmtsclib.cpp
 /coverage_html_report
 /dist
 .vscode/
+.pytest_cache/
+/env
+/venv
+/pip-wheel-metadata

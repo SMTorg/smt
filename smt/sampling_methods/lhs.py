@@ -5,9 +5,7 @@ This package is distributed under New BSD license.
 
 LHS sampling; uses the pyDOE2 package.
 """
-from __future__ import division
 from pyDOE2 import lhs
-from six.moves import range
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 
@@ -34,6 +32,11 @@ class LHS(SamplingMethod):
             desc="criterion used to construct the LHS design "
             + "c, m, cm and corr are abbreviation of center, maximin, centermaximin and correlation, respectively",
         )
+        self.options.declare(
+            "random_state",
+            types=(type(None), int, np.random.RandomState),
+            desc="Numpy RandomState object or seed number which controls random draws",
+        )
 
     def _compute(self, nt):
         """
@@ -51,8 +54,21 @@ class LHS(SamplingMethod):
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
+
+        if isinstance(self.options["random_state"], np.random.RandomState):
+            self.random_state = self.options["random_state"]
+        elif isinstance(self.options["random_state"], int):
+            self.random_state = np.random.RandomState(self.options["random_state"])
+        else:
+            self.random_state = np.random.RandomState()
+
         if self.options["criterion"] != "ese":
-            return lhs(nx, samples=nt, criterion=self.options["criterion"])
+            return lhs(
+                nx,
+                samples=nt,
+                criterion=self.options["criterion"],
+                random_state=self.random_state,
+            )
         elif self.options["criterion"] == "ese":
             return self._ese(nx, nt)
 
@@ -170,7 +186,7 @@ class LHS(SamplingMethod):
                 PhiP_try = l_PhiP[k]
 
                 # Threshold of acceptance
-                if PhiP_try - PhiP_ <= T * np.random.rand(1)[0]:
+                if PhiP_try - PhiP_ <= T * self.random_state.rand(1)[0]:
                     PhiP_ = PhiP_try
                     n_acpt = n_acpt + 1
                     X_ = l_X[k]
@@ -257,13 +273,13 @@ class LHS(SamplingMethod):
         """
 
         # Choose two (different) random rows to perform the exchange
-        i1 = np.random.randint(X.shape[0])
+        i1 = self.random_state.randint(X.shape[0])
         while i1 in fixed_index:
-            i1 = np.random.randint(X.shape[0])
+            i1 = self.random_state.randint(X.shape[0])
 
-        i2 = np.random.randint(X.shape[0])
+        i2 = self.random_state.randint(X.shape[0])
         while i2 == i1 or i2 in fixed_index:
-            i2 = np.random.randint(X.shape[0])
+            i2 = self.random_state.randint(X.shape[0])
 
         X_ = np.delete(X, [i1, i2], axis=0)
 
@@ -285,7 +301,7 @@ class LHS(SamplingMethod):
 
     def _ese(self, dim, nt):
         # Parameters of maximinESE procedure
-        P0 = lhs(dim, nt, criterion=None)
+        P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
         J = 20
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)

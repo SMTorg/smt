@@ -5,12 +5,10 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function, division
 import numpy as np
 import unittest
 import inspect
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import TensorProduct
@@ -19,9 +17,7 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.extensions import MFK
-from copy import deepcopy
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -74,9 +70,9 @@ class Test(SMTestCase):
         sms["LS"] = LS()
         sms["QP"] = QP()
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
-        sms["MFK"] = MFK(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
+        sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * ncomp, n_comp=ncomp, delta_x=1e-1)
         sms["GENN"] = genn()
         if compiled_available:
@@ -88,12 +84,13 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["KRG"] = 1e0
+        t_errors["KRG"] = 1.2
         t_errors["MFK"] = 1e0
-        t_errors["KPLS"] = 1e0
+        t_errors["KPLS"] = 1.2
         t_errors["KPLSK"] = 1e0
-        t_errors["GEKPLS"] = 1e0
-        t_errors["GENN"] = 1e0
+        t_errors["MGP"] = 1e0
+        t_errors["GEKPLS"] = 1.4
+        t_errors["GENN"] = 1.2
         if compiled_available:
             t_errors["IDW"] = 1e0
             t_errors["RBF"] = 1e-2
@@ -105,9 +102,10 @@ class Test(SMTestCase):
         e_errors["QP"] = 1.5
         e_errors["KRG"] = 1e-2
         e_errors["MFK"] = 1e-2
-        e_errors["KPLS"] = 1e-2
+        e_errors["KPLS"] = 2e-2
         e_errors["KPLSK"] = 1e-2
-        e_errors["GEKPLS"] = 1e-2
+        e_errors["MGP"] = 2e-2
+        e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 1e-2
         if compiled_available:
             e_errors["IDW"] = 1e0
@@ -150,6 +148,10 @@ class Test(SMTestCase):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
 
+        if sname in ["KPLS", "KRG", "KPLSK", "GEKPLS"]:
+            optname = method_name.split("_")[3]
+            sm.options["hyper_opt"] = optname
+
         sm.set_training_values(xt, yt[:, 0])
         if sm.supports["training_derivatives"]:
             for i in range(self.ndim):
@@ -161,49 +163,14 @@ class Test(SMTestCase):
         t_error = compute_rms_error(sm)
         e_error = compute_rms_error(sm, xe, ye)
 
-    def run_MF_test(self):
-        method_name = inspect.stack()[1][3]
-        pname = method_name.split("_")[1]
-        sname = method_name.split("_")[2]
+        if sm.supports["variances"]:
+            sm.predict_variances(xe)
 
-        prob = self.problems[pname]
-        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
-
-        np.random.seed(0)
-        xt = sampling(self.nt)
-        yt = prob(xt)
-        print(prob(xt, kx=0).shape)
-        for i in range(self.ndim):
-            yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
-
-        y_lf = 2 * prob(xt) + 2
-        x_lf = deepcopy(xt)
-        np.random.seed(1)
-        xe = sampling(self.ne)
-        ye = prob(xe)
-
-        sm0 = self.sms[sname]
-
-        sm = sm0.__class__()
-        sm.options = sm0.options.clone()
-        if sm.options.is_declared("xlimits"):
-            sm.options["xlimits"] = prob.xlimits
-        sm.options["print_global"] = False
-
-        sm.set_training_values(xt, yt[:, 0])
-        sm.set_training_values(x_lf, y_lf[:, 0], name=0)
-        if sm.supports["training_derivatives"]:
-            for i in range(self.ndim):
-                sm.set_training_derivatives(xt, yt[:, i + 1], i)
-
-        with Silence():
-            sm.train()
-
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
-
-    # --------------------------------------------------------------------
-    # Function: exp
+        if pname == "cos":
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1.5)
+        else:
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1e-4)
+        self.assertLessEqual(t_error, self.t_errors[sname] + 1e-4)
 
     def test_exp_LS(self):
         self.run_test()
@@ -211,16 +178,31 @@ class Test(SMTestCase):
     def test_exp_QP(self):
         self.run_test()
 
-    def test_exp_KRG(self):
+    def test_exp_KRG_Cobyla(self):
         self.run_test()
 
-    def test_exp_KPLS(self):
+    def test_exp_KRG_TNC(self):
         self.run_test()
 
-    def test_exp_KPLSK(self):
+    def test_exp_KPLS_Cobyla(self):
         self.run_test()
 
-    def test_exp_GEKPLS(self):
+    def test_exp_KPLS_TNC(self):
+        self.run_test()
+
+    def test_exp_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_exp_KPLSK_TNC(self):
+        self.run_test()
+
+    def test_exp_MGP(self):
+        self.run_test()
+
+    def test_exp_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_exp_GEKPLS_TNC(self):
         self.run_test()
 
     def test_exp_GENN(self):
@@ -242,9 +224,6 @@ class Test(SMTestCase):
     def test_exp_RMTB(self):
         self.run_test()
 
-    def test_exp_MFK(self):
-        self.run_MF_test()
-
     # --------------------------------------------------------------------
     # Function: tanh
 
@@ -254,16 +233,31 @@ class Test(SMTestCase):
     def test_tanh_QP(self):
         self.run_test()
 
-    def test_tanh_KRG(self):
+    def test_tanh_KRG_Cobyla(self):
         self.run_test()
 
-    def test_tanh_KPLS(self):
+    def test_tanh_KRG_TNC(self):
         self.run_test()
 
-    def test_tanh_KPLSK(self):
+    def test_tanh_KPLS_Cobyla(self):
         self.run_test()
 
-    def test_tanh_GEKPLS(self):
+    def test_tanh_KPLS_TNC(self):
+        self.run_test()
+
+    def test_tanh_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_tanh_KPLSK_TNC(self):
+        self.run_test()
+
+    def test_tanh_MGP(self):
+        self.run_test()
+
+    def test_tanh_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_tanh_GEKPLS_TNC(self):
         self.run_test()
 
     def test_tanh_GENN(self):
@@ -285,9 +279,6 @@ class Test(SMTestCase):
     def test_tanh_RMTB(self):
         self.run_test()
 
-    def test_tanh_MFK(self):
-        self.run_MF_test()
-
     # --------------------------------------------------------------------
     # Function: cos
 
@@ -297,16 +288,31 @@ class Test(SMTestCase):
     def test_cos_QP(self):
         self.run_test()
 
-    def test_cos_KRG(self):
+    def test_cos_KRG_Cobyla(self):
         self.run_test()
 
-    def test_cos_KPLS(self):
+    def test_cos_KRG_TNC(self):
         self.run_test()
 
-    def test_cos_KPLSK(self):
+    def test_cos_KPLS_Cobyla(self):
         self.run_test()
 
-    def test_cos_GEKPLS(self):
+    def test_cos_KPLS_TNC(self):
+        self.run_test()
+
+    def test_cos_KPLSK_Cobyla(self):
+        self.run_test()
+
+    def test_cos_KPLSK_TNC(self):
+        self.run_test()
+
+    def test_cos_MGP(self):
+        self.run_test()
+
+    def test_cos_GEKPLS_Cobyla(self):
+        self.run_test()
+
+    def test_cos_GEKPLS_TNC(self):
         self.run_test()
 
     def test_cos_GENN(self):
@@ -327,9 +333,6 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_cos_RMTB(self):
         self.run_test()
-
-    def test_cos_MFK(self):
-        self.run_MF_test()
 
 
 if __name__ == "__main__":

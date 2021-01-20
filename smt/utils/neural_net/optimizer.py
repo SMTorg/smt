@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 EPS = np.finfo(float).eps  # small number to avoid division by zero
 
@@ -132,7 +131,7 @@ class Optimizer(object):
         """
         pass
 
-    def grad_check(self, parameters, tol=1e-6):
+    def grad_check(self, parameters, tol=1e-6):  # pragma: no cover
         """
         Check analytical gradient against to finite difference
 
@@ -188,13 +187,9 @@ class Optimizer(object):
         # Stopping criteria (Vanderplaats, ch. 3, p. 121)
         converged = False
         N1 = 0
-        N1_max = (
-            100
-        )  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
+        N1_max = 100  # num consecutive passes over which abs convergence criterion must be satisfied before stopping
         N2 = 0
-        N2_max = (
-            100
-        )  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
+        N2_max = 100  # num of consecutive passes over which rel convergence criterion must be satisfied before stopping
         epsilon_absolute = 1e-7  # absolute error criterion
         epsilon_relative = 1e-7  # relative error criterion
 
@@ -305,6 +300,7 @@ class Adam(Optimizer):
 
 def run_example(use_adam=True):  # pragma: no cover
     """visual example using 2D rosenbrock function"""
+    import matplotlib.pyplot as plt
 
     # Test function
     def rosenbrock(parameters):

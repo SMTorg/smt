@@ -1,0 +1,88 @@
+.. _Mixed-Integer Sampling and Surrogate:
+
+Mixed-Integer Sampling and Surrogate (Continuous Relaxation)
+============================================================
+
+SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with
+categorical (or enumerate) and integer variables using continuous relaxation.
+
+For integer variables, values are rounded to the closer integer.
+For enum variables, as many x features as enumerated levels are created with [0, 1] bounds 
+and the max of these feature float values will correspond to the choice of one the enum value. 
+
+For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"],
+3 continuous float features x0, x1, x2 are created, the max(x0, x1, x2), 
+let say x1, will give "red" as the value for the original categorical feature. 
+
+The user specifies x feature types through a list of types to be either:
+
+- ``FLOAT``: a continuous feature,
+- ``INT``: an integer valued feature,
+- or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
+
+In the case of mixed integer sampling, bounds of each x feature have to be adapted 
+to take into account feature types. While FLOAT and INT feature still have an interval
+[lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list
+of possible values (levels). 
+
+For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
+a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
+
+Mixed integer sampling method
+-----------------------------
+
+To use a sampling method with mixed integer typed features, the user instanciates
+a ``MixedIntegerSamplingMethod`` with a given sampling method.
+The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface 
+and decorates the original sampling method to provide a DOE while conforming to integer 
+and categorical types.
+
+Example of mixed-integer LHS sampling method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_lhs_example , 80
+
+Mixed integer surrogate
+-----------------------
+
+To use a surrogate with mixed integer constraints, the user instanciates
+a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface 
+and decorates the given surrogate while respecting integer and categorical types.
+
+Example of mixed-integer Polynomial (QP) surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_qp_example , 80
+
+Mixed integer context
+---------------------
+
+the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently 
+by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
+
+.. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.__init__
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.fold_with_enum_index
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.unfold_with_enum_mask
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_mixed_integer
+
+  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_enum_value
+
+Example of mixed-integer context usage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_context_example , 80
+
+
+

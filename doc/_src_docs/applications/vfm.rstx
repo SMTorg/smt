@@ -1,0 +1,34 @@
+Variable-fidelity modeling (VFM)
+================================
+
+VFM is a variable-fidelity modeling method which can use additive, multiplicative, or hybride bridge functions.
+SMT proposes only additive and multiplicative options.
+
+In the additive method, high- and low-fidelity models, :math:`y_{\text{high}}({\bf x})` and :math:`y_{\text{low}}({\bf x})`, are calibrated by adding the low-fidelity model to a function :math:`\gamma({\bf x})`, also called bridge function
+
+.. math ::
+        y_\text{high}({\bf x})=y_\text{low}({\bf x}) + \gamma({\bf x})
+ 
+The additive bridge function was developed by Lewis and Nash [1]_.
+
+In the same way, the multiplicative bridge function is defined by
+
+.. math ::
+        \gamma({\bf x})=\frac{y_\text{high}({\bf x})}{y_\text{low}({\bf x})}
+  
+However, the multiplicative bridge function may cause problems when one of the sampled values of the low-fidelity model is close to zero.
+
+After the unknown bridge function :math:`\gamma` and low-fidelity model :math:`y_\text{low}` have been approximated with :math:`\hat{\gamma}` and :math:`\hat{y}_\text{low}`, respectively, the response of the high-fidelity model is obtained
+
+
+.. [1] Lewis, R. M. and Nash, S. G., A multigrid approach to the optimization of systems governed by differential equations. AIAA Paper 2000-4890, 2000.
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.applications.tests.test_vfm , TestVFM , run_vfm_example , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.applications , VFM , options

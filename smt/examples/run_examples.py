@@ -5,7 +5,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 from smt.utils import compute_rms_error
@@ -219,7 +218,7 @@ if plot_status:
 ########### The KPLS model
 
 # The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
-# an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
+# an integer in [1, ndim[ and a list of length n_comp, respectively. Here is an
 # an example using 2 principal components.
 
 t = KPLS(n_comp=2, theta0=[1e-2, 1e-2], print_prediction=False)
@@ -271,9 +270,24 @@ for i in range(ndim):
 if plot_status:
     plt.show()
 
+# KPLS + absolute exponential correlation kernel
+# The variables 'name' must be equal to 'KPLS'. 'n_comp' and 'theta0' must be
+# an integer in [1,ndim[ and a list of length n_comp, respectively. Here is an
+# an example using 2 principal components.
+
+t = KPLS(n_comp=2, theta0=[1e-2, 1e-2], print_prediction=False, corr="abs_exp")
+t.set_training_values(xt, yt[:, 0])
+
+t.train()
+
+# Prediction of the validation points
+y = t.predict_values(xtest)
+print("KPLS + abs exp,  err: " + str(compute_rms_error(t, xtest, ytest)))
+
+
 ########### The KPLSK model
 
-# 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
+# 'n_comp' and 'theta0' must be an integer in [1, ndim[ and a list of length n_comp, respectively.
 
 t = KPLSK(n_comp=2, theta0=[1e-2, 1e-2], print_prediction=False)
 t.set_training_values(xt, yt[:, 0])

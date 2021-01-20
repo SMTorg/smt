@@ -25,7 +25,7 @@ More details of such approach are given in [2]_.
 
 .. [1] Forrester, I. J. and Sobester, A. and Keane, A. J., Engineering Design via Surrogate Modeling: A Practical Guide. Wiley, 2008 (Chapter 7).
 
-.. [2] Bouhlel, M. A. and Martins, J. R. R. A., Gradient-enhanced kriging for high-dimensional problems (under review), Engineering with Computers, 2017.
+.. [2] Bouhlel, M. A., & Martins, J. R. (2019). Gradient-enhanced kriging for high-dimensional problems. Engineering with Computers, 35(1), 157-173.
 
 Usage
 -----
@@ -93,7 +93,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0714998
+     Training - done. Time (sec):  0.0100000
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -140,23 +140,33 @@ Options
   *  -  poly
      -  constant
      -  ['constant', 'linear', 'quadratic']
-     -  None
+     -  ['str']
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp']
-     -  None
-     -  Correlation function type
-  *  -  data_dir
-     -  None
-     -  None
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
+     -  Correlation function type
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'TNC']
+     -  ['str']
+     -  Optimiser for hyperparameters optimisation
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  1e-06
+     -  None
+     -  ['float', 'list']
+     -  Initial noise hyperparameter
   *  -  xlimits
      -  None
      -  None

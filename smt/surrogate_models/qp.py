@@ -7,9 +7,6 @@ This package is distributed under New BSD license.
 TO DO:
 - define outputs['sol'] = self.sol
 """
-
-from __future__ import division
-
 import numpy as np
 import scipy
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -22,6 +19,8 @@ class QP(SurrogateModel):
     Square polynomial approach
     """
 
+    name = "QP"
+
     def _initialize(self):
         super(QP, self)._initialize()
         declare = self.options.declare
@@ -33,8 +32,6 @@ class QP(SurrogateModel):
             types=str,
             desc="Directory for loading / saving cached data; None means do not save or load",
         )
-
-        self.name = "QP"
         supports["derivatives"] = True
 
     ############################################################################
@@ -77,7 +74,7 @@ class QP(SurrogateModel):
         Build the response surface of degree 2
         argument
         -----------
-        x : np.ndarray [nt, dim]
+        x : np.ndarray [nt, nx]
             Training points
         Returns
         -------
@@ -98,7 +95,6 @@ class QP(SurrogateModel):
             for j in range(i + 1, dim):
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (j - (i + 2)))
                 M[k, :] = x[i, :] * x[j, :]
-
         return M.T
 
     def _predict_derivatives(self, x, kx):
@@ -119,20 +115,22 @@ class QP(SurrogateModel):
         """
         dim = self.nx
 
-        linear_coef = self.coef[1 + kx, 0]
-        quad_coef = 2 * self.coef[1 + dim + kx, 0] * x[:, kx]
-        cross_coef = 0
+        linear_coef = self.coef[1 + kx, :]
+        quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
+        neval = np.size(quad_coef, 0)
+        cross_coef = np.zeros(neval)
+
         for i in range(dim):
             if i > kx:
                 k = int(
                     2 * dim + 2 + (kx) * dim - ((kx + 1) * (kx)) / 2 + (i - (kx + 2))
                 )
-                cross_coef += self.coef[k, 0] * x[:, i]
+                cross_coef += self.coef[k, :] * x[:, i]
             elif i < kx:
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (kx - (i + 2)))
-                cross_coef += self.coef[k, 0] * x[:, i]
+                cross_coef += self.coef[k, :] * x[:, i]
 
-        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], 1))
+        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
         return y
 
     def _predict_values(self, x):
@@ -141,16 +139,15 @@ class QP(SurrogateModel):
 
         Arguments
         ---------
-        x : np.ndarray [n_evals, dim]
+        x : np.ndarray [n_evals, nx]
             Evaluation point input variable values
 
         Returns
         -------
-        y : np.ndarray
+        y : np.ndarray [n_evals, ny]
             Evaluation point output variable values
         """
-
         M = self._response_surface(x)
-        y = np.dot(M, self.coef).T
+        y = np.dot(M, self.coef)
 
         return y

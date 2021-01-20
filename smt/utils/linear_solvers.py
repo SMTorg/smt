@@ -4,12 +4,9 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from __future__ import print_function
-
 import numpy as np
 import scipy.sparse.linalg
 import scipy.linalg
-from six.moves import range
 import contextlib
 
 from smt.utils.options_dictionary import OptionsDictionary
@@ -36,7 +33,7 @@ def get_solver(solver):
     elif solver == "dense-chol":
         return DenseCholeskySolver()
     elif solver == "krylov-dense":
-        return KrylovSolver(pc="dense-lu")
+        return KrylovSolver(pc="dense")
     elif solver == "lu" or solver == "ilu":
         return DirectSolver(alg=solver)
     elif solver == "krylov":
@@ -141,13 +138,13 @@ class DenseCholeskySolver(LinearSolver):
     def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options["print_init"]) as printer:
-            self.mtx = mtx
-            assert isinstance(mtx, np.ndarray), "mtx is of type %s" % type(mtx)
+            self.mtx = mtx.A
+            assert isinstance(self.mtx, np.ndarray), "mtx is of type %s" % type(mtx)
 
             with printer._timed_context(
                 "Performing Chol. fact. (%i x %i mtx)" % mtx.shape
             ):
-                self.upper = scipy.linalg.cholesky(mtx)
+                self.upper = scipy.linalg.cholesky(self.mtx)
 
     def _solve(self, rhs, sol=None, ind_y=0):
         with self._active(self.options["print_solve"]) as printer:

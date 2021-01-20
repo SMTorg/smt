@@ -4,8 +4,6 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from six import iteritems
-
 
 def process_options(root, file_name, iline, line):
     file_path = root + "/" + file_name
@@ -41,7 +39,7 @@ def process_options(root, file_name, iline, line):
     options = sm.options
 
     outputs = []
-    for option_name, option_data in iteritems(options._declared_entries):
+    for option_name, option_data in options._declared_entries.items():
         name = option_name
         default = option_data["default"]
         values = option_data["values"]
