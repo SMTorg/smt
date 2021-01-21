@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0029976
+     Training - done. Time (sec):  0.0029933
   ___________________________________________________________________________
      
    Evaluation
@@ -220,9 +220,9 @@ Usage with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009987
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000020
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png

@@ -87,7 +87,7 @@ class Problem(object):
         else:
             return np.real(y)
 
-    def _evaluate(self, x:  np.ndarray, kx: Optional[int] = None) -> np.ndarray:
+    def _evaluate(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
         """
         Implemented by surrogate models to evaluate the function.
 

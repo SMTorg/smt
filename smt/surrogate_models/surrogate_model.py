@@ -127,7 +127,9 @@ class SurrogateModel(object, metaclass=ABCMeta):
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
 
-    def update_training_values(self, yt: np.ndarray, name: Optional[str] = None) -> None:
+    def update_training_values(
+        self, yt: np.ndarray, name: Optional[str] = None
+    ) -> None:
         """
         Update the training data (values) at the previously set input values.
 
@@ -164,8 +166,9 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         self.training_points[name][kx][1] = np.array(yt)
 
-    def set_training_derivatives(self, xt: np.ndarray, dyt_dxt: np.ndarray,
-                                 kx: int, name: Optional[str] = None) -> None:
+    def set_training_derivatives(
+        self, xt: np.ndarray, dyt_dxt: np.ndarray, kx: int, name: Optional[str] = None
+    ) -> None:
         """
         Set training data (derivatives).
 
@@ -196,8 +199,9 @@ class SurrogateModel(object, metaclass=ABCMeta):
 
         self.training_points[name][kx + 1] = [np.array(xt), np.array(dyt_dxt)]
 
-    def update_training_derivatives(self, dyt_dxt: np.ndarray, kx: int,
-                                    name: Optional[str] = None) -> None:
+    def update_training_derivatives(
+        self, dyt_dxt: np.ndarray, kx: int, name: Optional[str] = None
+    ) -> None:
         """
         Update the training data (values) at the previously set input values.
 

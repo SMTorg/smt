@@ -7,10 +7,11 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.surrogate_models import KPLS
 from smt.utils.kriging_utils import ge_compute_pls
-   
+
+
 class GEKPLS(KPLS):
     name = "GEKPLS"
-  
+
     def _initialize(self):
         super(GEKPLS, self)._initialize()
         declare = self.options.declare
