@@ -206,7 +206,7 @@ class Test(unittest.TestCase):
         # derivative according to the first variable
         dydx = sm.predict_derivatives(xt, 0)
         fig, axs = plt.subplots(2)
-        
+
         axs[0].plot(xt, yt, "o")
         axs[0].plot(x, y)
         axs[0].set_xlabel("x")
@@ -225,7 +225,7 @@ class Test(unittest.TestCase):
         axs[1].set_xlabel("x")
         axs[1].set_ylabel("y")
         axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
-        
+
         plt.show()
 
     def test_mixed_int_krg(self):
@@ -257,7 +257,7 @@ class Test(unittest.TestCase):
         s2 = sm.predict_variances(x)
 
         fig, axs = plt.subplots(2)
-        
+
         axs[0].plot(xt, yt, "o")
         axs[0].plot(x, y)
         axs[0].set_xlabel("x")
@@ -276,7 +276,7 @@ class Test(unittest.TestCase):
         axs[1].set_xlabel("x")
         axs[1].set_ylabel("y")
         axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
-        
+
         plt.show()
 
     def test_kpls(self):

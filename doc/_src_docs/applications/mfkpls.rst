@@ -60,7 +60,7 @@ Usage
   
   # choice of number of PLS components
   ncomp = 1
-  sm = MFKPLS(n_comp=ncomp, theta0=np.array(ncomp * [1.0]))
+  sm = MFKPLS(n_comp=ncomp, theta0=ncomp * [1.0])
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0100000
+     Training - done. Time (sec):  0.0069826
   ___________________________________________________________________________
      
    Evaluation
@@ -116,9 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009975
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000099
      
   ___________________________________________________________________________
      
@@ -143,7 +143,8 @@ Options
   :header-rows: 1
   :widths: 15, 10, 20, 20, 30
   :stub-columns: 0
- *  -  Option
+
+  *  -  Option
      -  Default
      -  Acceptable values
      -  Acceptable types
@@ -180,7 +181,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp']
      -  ['str']
      -  Correlation function type
   *  -  nugget
@@ -191,3 +192,50 @@ Options
   *  -  theta0
      -  [0.01]
      -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'TNC']
+     -  ['str']
+     -  Optimiser for hyperparameters optimisation
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  [0.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
+  *  -  rho_regr
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  None
+     -  Regression function type for rho
+  *  -  optim_var
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  If True, the variance at HF samples is forced to zero
+  *  -  n_comp
+     -  1
+     -  None
+     -  ['int']
+     -  Number of principal components
