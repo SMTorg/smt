@@ -12,7 +12,7 @@ import unittest
 import numpy as np
 from sys import argv
 
-from smt.applications import MOE
+from smt.applications import MOE, MOESurrogateModel
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
 from smt.sampling_methods import FullFactorial
@@ -61,6 +61,129 @@ class TestMOE(SMTestCase):
 
         rms_error = compute_rms_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 3e-1)
+
+        self.assertRaises(RuntimeError, lambda: moe.predict_variances(xe))
+
+        if TestMOE.plot:
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+
+            y = moe.predict_values(xe)
+            plt.figure(1)
+            plt.plot(ye, ye, "-.")
+            plt.plot(ye, y, ".")
+            plt.xlabel(r"$y$ actual")
+            plt.ylabel(r"$y$ prediction")
+            plt.figure(2)
+            xv = np.linspace(0, 1, 100)
+            yv = self.function_test_1d(xv)
+            plt.plot(xv, yv, "-.")
+            plt.plot(xe, y, "o")
+            plt.show()
+
+    # @unittest.skip('disabled')
+    def test_1d_50_var(self):
+        self.ndim = 1
+        self.nt = 50
+        self.ne = 50
+
+        np.random.seed(0)
+        xt = np.random.sample(self.nt).reshape((-1, 1))
+        yt = self.function_test_1d(xt)
+        moe = MOE(
+            smooth_recombination=True,
+            heaviside_optimization=True,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
+            variances_support=True,
+        )
+        moe.train()
+
+        # validation data
+        np.random.seed(1)
+        xe = np.random.sample(self.ne)
+        ye = self.function_test_1d(xe)
+
+        rms_error = compute_rms_error(moe, xe, ye)
+        self.assert_error(rms_error, 0.0, 3e-1)
+
+        moe.predict_variances(xe)
+
+        moe_hard = MOE(
+            smooth_recombination=False,
+            heaviside_optimization=True,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
+            variances_support=True,
+        )
+        moe_hard.train()
+        moe_hard.predict_variances(xe)
+
+        if TestMOE.plot:
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+
+            y = moe.predict_values(xe)
+            plt.figure(1)
+            plt.plot(ye, ye, "-.")
+            plt.plot(ye, y, ".")
+            plt.xlabel(r"$y$ actual")
+            plt.ylabel(r"$y$ prediction")
+
+            plt.figure(2)
+            xv = np.linspace(0, 1, 100)
+            yv = self.function_test_1d(xv)
+            y = moe.predict_values(xv)
+            y_std = np.sqrt(moe.predict_variances(xv))
+            plt.plot(xv, yv, "--k", linewidth=1)
+            plt.plot(xv, y, "-b", linewidth=1)
+            plt.plot(xv, y+y_std, "--b", linewidth=1)
+            plt.plot(xv, y-y_std, "--b", linewidth=1)
+            plt.show()
+
+    # @unittest.skip('disabled')
+    def test_1d_50_surrogate_model(self):
+        self.ndim = 1
+        self.nt = 50
+        self.ne = 50
+
+        np.random.seed(0)
+        xt = np.random.sample(self.nt).reshape((-1, 1))
+        yt = self.function_test_1d(xt)
+        moe = MOESurrogateModel(
+            smooth_recombination=True,
+            heaviside_optimization=True,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
+        )
+        self.assertIsInstance(moe.moe, MOE)
+
+        moe.train()
+        self.assertFalse(moe.supports['variances'])
+
+        # validation data
+        np.random.seed(1)
+        xe = np.random.sample(self.ne)
+        ye = self.function_test_1d(xe)
+
+        rms_error = compute_rms_error(moe, xe, ye)
+        self.assert_error(rms_error, 0.0, 3e-1)
+
+        self.assertRaises(RuntimeError, lambda: moe.predict_variances(xe))
+
+        moe_var = MOESurrogateModel(
+            smooth_recombination=True,
+            heaviside_optimization=True,
+            n_clusters=3, xt=xt, yt=yt,
+            variances_support=True,
+        )
+        moe_var.train()
+        self.assertTrue(moe_var.supports['variances'])
+        moe_var.predict_variances(xe)
+
         if TestMOE.plot:
             import matplotlib.pyplot as plt
             from mpl_toolkits.mplot3d import Axes3D
