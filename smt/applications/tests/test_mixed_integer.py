@@ -132,8 +132,6 @@ class TestMixedInteger(unittest.TestCase):
         num = 40
         x = sampling(num)
 
-        print(x.shape)
-
         cmap = colors.ListedColormap(xlimits[1])
         plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
         plt.show()
@@ -198,7 +196,6 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = mixint.build_surrogate_model(KRG())
-        print(xt)
         sm.set_training_values(xt, yt)
         sm.train()
 

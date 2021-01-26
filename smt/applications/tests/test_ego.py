@@ -24,7 +24,13 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.surrogate_models import KRG, QP
-from smt.applications.mixed_integer import FLOAT, INT, ENUM
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+    FLOAT,
+    ENUM,
+    INT,
+)
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
@@ -154,7 +160,6 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        print(x_opt)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.2)
@@ -183,7 +188,6 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
 
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
-        print(x_opt)
         self.assertTrue(
             np.allclose([[-3.14, 12.275]], x_opt, rtol=0.5)
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.5)
@@ -199,8 +203,13 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
-        xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False)
+        xtypes = [INT, FLOAT]
+
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        sampling = mixint.build_sampling_method(FullFactorial)
+        xdoe = sampling(10)
+
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
@@ -210,7 +219,7 @@ class TestEGO(SMTestCase):
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
-            surrogate=s,
+            surrogate=sm,
             random_state=42,
         )
 
@@ -230,15 +239,18 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
 
-        xdoe = FullFactorial(xlimits=xlimits)(10)
-        s = KRG(print_global=False)
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
+        xdoe = sampling(10)
+
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
             xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=s,
+            surrogate=sm,
             random_state=42,
         )
 
@@ -273,7 +285,8 @@ class TestEGO(SMTestCase):
         xdoe = np.array([[5, 0, 0], [4, 0, 0]])
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         xtypes = [INT, (ENUM, 3), (ENUM, 2)]
-        s = KRG(print_global=False)
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
 
         ego = EGO(
             n_iter=n_iter,
@@ -281,7 +294,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=s,
+            surrogate=sm,
             enable_tunneling=False,
             random_state=42,
         )
@@ -353,13 +366,7 @@ class TestEGO(SMTestCase):
     def run_ego_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.sampling_methods import FullFactorial
-
-        import sklearn
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-        from scipy.stats import norm
 
         def function_test_1d(x):
             # function xsinx
@@ -437,19 +444,13 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.sampling_methods import FullFactorial
         from smt.applications.mixed_integer import (
+            MixedIntegerContext,
             FLOAT,
-            INT,
             ENUM,
-            MixedIntegerSamplingMethod,
+            INT,
         )
-
-        import sklearn
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-        from scipy.stats import norm
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
 
@@ -487,11 +488,9 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         qEI = "KB"
         sm = KRG(print_global=False)
-
-        n_doe = 2
-        sampling = MixedIntegerSamplingMethod(
-            xtypes, xlimits, LHS, criterion="ese", random_state=42
-        )
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        n_doe = 3
+        sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
 
