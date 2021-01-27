@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Full-factorial sampling.
 """
+from smt.utils.misc import scale_to_xlimits
 import numpy as np
 
 from smt.sampling_methods.sampling_method import SamplingMethod
@@ -63,4 +64,4 @@ class FullFactorial(SamplingMethod):
         for kx in range(nx):
             x[:, kx] = x_list[kx].reshape(np.prod(num_list))[:nt]
 
-        return x
+        return scale_to_xlimits(x, xlimits)

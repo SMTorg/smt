@@ -50,3 +50,24 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
         num = np.linalg.norm(yt2 - yt)
         den = np.linalg.norm(yt)
         return num / den
+
+
+def scale_to_xlimits(samples: np.ndarray, xlimits: np.ndarray) -> np.ndarray:
+    """ Scales the samples from [0,1] to the specified limits.
+
+    Parameters
+    ----------
+    samples : np.ndarray
+        The samples
+    xlimits : np.ndarray
+        The xlimits
+
+    Returns
+    -------
+    np.ndarray
+        The scaled samples.
+    """
+    nx = xlimits.shape[0]
+    for kx in range(nx):
+        samples[:, kx] = xlimits[kx, 0] + samples[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
+    return samples

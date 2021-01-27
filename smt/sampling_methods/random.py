@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Random sampling.
 """
+from smt.utils.misc import scale_to_xlimits
 import numpy as np
 
 from smt.sampling_methods.sampling_method import SamplingMethod
@@ -27,4 +28,4 @@ class Random(SamplingMethod):
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
-        return np.random.rand(nt, nx)
+        return scale_to_xlimits(np.random.rand(nt, nx), xlimits)

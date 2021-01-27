@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 LHS sampling; uses the pyDOE2 package.
 """
+from smt.utils.misc import scale_to_xlimits
 from pyDOE2 import lhs
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
@@ -63,14 +64,14 @@ class LHS(SamplingMethod):
             self.random_state = np.random.RandomState()
 
         if self.options["criterion"] != "ese":
-            return lhs(
+            return scale_to_xlimits(lhs(
                 nx,
                 samples=nt,
                 criterion=self.options["criterion"],
                 random_state=self.random_state,
-            )
+            ), xlimits)
         elif self.options["criterion"] == "ese":
-            return self._ese(nx, nt)
+            return scale_to_xlimits(self._ese(nx, nt), xlimits)
 
     def _maximinESE(
         self,

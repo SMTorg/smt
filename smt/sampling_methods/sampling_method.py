@@ -64,14 +64,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options["xlimits"]
-        nx = xlimits.shape[0]
-
-        x = self._compute(nt)
-        for kx in range(nx):
-            x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
-
-        return x
+        return self._compute(nt)
 
     @abstractmethod
     def _compute(self, nt: int) -> np.ndarray:
