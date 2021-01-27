@@ -349,6 +349,7 @@ class EGO(SurrogateBasedApplication):
                             options={"maxiter": 200},
                         )
                     )
+
                 except ValueError:  # in case "x0 violates bound constraints" error
                     print("warning: `x0` violates bound constraints")
                     print("x0={}".format(x_start[ii, :]))

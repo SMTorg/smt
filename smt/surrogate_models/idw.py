@@ -21,6 +21,7 @@ class IDW(SurrogateModel):
     We do not need to fit this model because the response of an unknown point x
     is computed with respect to the distance between x and the training points.
     """
+
     name = "IDW"
 
     def _initialize(self):

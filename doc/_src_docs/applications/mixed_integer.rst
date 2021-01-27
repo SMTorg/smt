@@ -61,15 +61,9 @@ Example of mixed-integer LHS sampling method
   num = 40
   x = sampling(num)
   
-  print(x.shape)
-  
   cmap = colors.ListedColormap(xlimits[1])
   plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
   plt.show()
-  
-::
-
-  (40, 2)
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_lhs_example.png
   :scale: 80 %
@@ -193,7 +187,6 @@ Example of mixed-integer context usage
   
   # Surrogate
   sm = mixint.build_surrogate_model(KRG())
-  print(xt)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -213,36 +206,6 @@ Example of mixed-integer context usage
 ::
 
   DOE point nb = 30
-  [[4.         1.70521642 0.        ]
-   [4.         2.33193344 1.        ]
-   [5.         3.94276469 0.        ]
-   [2.         2.18545678 3.        ]
-   [3.         0.55708744 1.        ]
-   [4.         3.47963595 2.        ]
-   [1.         3.1637495  0.        ]
-   [2.         0.68953597 3.        ]
-   [3.         3.84977525 1.        ]
-   [4.         0.09721383 0.        ]
-   [1.         2.13247484 2.        ]
-   [5.         1.28923662 3.        ]
-   [1.         3.61081518 0.        ]
-   [4.         1.93331791 2.        ]
-   [0.         3.27935675 1.        ]
-   [2.         2.47092774 0.        ]
-   [3.         1.81639775 0.        ]
-   [2.         3.40344424 3.        ]
-   [2.         1.34244476 2.        ]
-   [2.         3.023775   2.        ]
-   [5.         2.53788277 3.        ]
-   [0.         0.45198974 2.        ]
-   [1.         1.16536925 1.        ]
-   [1.         0.31822681 1.        ]
-   [0.         0.98230261 0.        ]
-   [1.         1.54645493 1.        ]
-   [4.         0.87159838 2.        ]
-   [3.         2.70215936 2.        ]
-   [3.         2.83393431 1.        ]
-   [3.         0.20180401 3.        ]]
   ___________________________________________________________________________
      
    Evaluation
