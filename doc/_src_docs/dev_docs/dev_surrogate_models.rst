@@ -1,3 +1,5 @@
+.. _surrogate-model-dev-api:
+
 Developer API for surrogate models
 ==================================
 
