@@ -57,11 +57,7 @@ Usage
   yt = np.atleast_2d(fun(xt)).T
   
   # Build the MGP model
-  sm = MGP(
-      theta0=[1e-2],
-      print_prediction=False,
-      n_comp=1,
-  )
+  sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
   sm.set_training_values(xt, yt[:, 0])
   sm.train()
   
@@ -125,7 +121,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1899998
+     Training - done. Time (sec):  0.1600001
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -179,11 +175,21 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  nugget
+     -  2.220446049250313e-14
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
   *  -  theta0
      -  [0.01]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
      -  ['Cobyla', 'TNC']
@@ -195,10 +201,20 @@ Options
      -  ['bool']
      -  noise evaluation flag
   *  -  noise0
-     -  1e-06
+     -  [0.0]
      -  None
-     -  ['float', 'list']
-     -  Initial noise hyperparameter
+     -  ['list', 'ndarray']
+     -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
   *  -  n_comp
      -  1
      -  None

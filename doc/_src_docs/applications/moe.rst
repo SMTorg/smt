@@ -42,8 +42,109 @@ References
 
 .. [4] Rhea P. Liem, Charles A. Mader, and Joaquim R. R. A. Martins. Surrogate models and mixtures of experts in aerodynamic performance prediction for mission analysis. Aerospace Science and Technology, 43 :126–151, 2015.
 
+
+Implementation Notes
+--------------------
+
+Beside the main class `MOE`, one can also use the `MOESurrogateModel` class which adapts MOE as a `SurrogateModel` 
+implementing the Surrogate Model API (see :ref:`Surrogate Model API <surrogate-model-dev-api>`). 
+
 Usage
 -----
+
+Example 1
+^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  from smt.applications import MOE
+  from smt.sampling_methods import FullFactorial
+  import matplotlib.pyplot as plt
+  
+  ndim = 1
+  nt = 35
+  
+  def function_test_1d(x):
+      import numpy as np  # Note: only required by SMT doc testing toolchain
+  
+      x = np.reshape(x, (-1,))
+      y = np.zeros(x.shape)
+      y[x < 0.4] = x[x < 0.4] ** 2
+      y[(x >= 0.4) & (x < 0.8)] = 3 * x[(x >= 0.4) & (x < 0.8)] + 1
+      y[x >= 0.8] = np.sin(10 * x[x >= 0.8])
+      return y.reshape((-1, 1))
+  
+  x = np.linspace(0, 1, 100)
+  ytrue = function_test_1d(x)
+  
+  # Training data
+  sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
+  np.random.seed(0)
+  xt = sampling(nt)
+  yt = function_test_1d(xt)
+  
+  # Mixture of experts
+  print("MOE Experts: ", MOE.AVAILABLE_EXPERTS)
+  
+  # MOE1: Find the best surrogate model on the whole domain
+  moe1 = MOE(n_clusters=1)
+  print("MOE1 enabled experts: ", moe1.enabled_experts)
+  moe1.set_training_values(xt, yt)
+  moe1.train()
+  y_moe1 = moe1.predict_values(x)
+  
+  # MOE2: Set nb of cluster with just KRG, LS and IDW surrogate models
+  moe2 = MOE(smooth_recombination=False, n_clusters=3, allow=["KRG", "LS", "IDW"])
+  print("MOE2 enabled experts: ", moe2.enabled_experts)
+  moe2.set_training_values(xt, yt)
+  moe2.train()
+  y_moe2 = moe2.predict_values(x)
+  
+  fig, axs = plt.subplots(1)
+  axs.plot(x, ytrue, ".", color="black")
+  axs.plot(x, y_moe1)
+  axs.plot(x, y_moe2)
+  axs.set_xlabel("x")
+  axs.set_ylabel("y")
+  axs.legend(["Training data", "MOE 1 Prediction", "MOE 2 Prediction"])
+  
+  plt.show()
+  
+::
+
+  MOE Experts:  ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']
+  MOE1 enabled experts:  ['KRG', 'LS', 'QP', 'KPLS', 'KPLSK', 'RBF', 'RMTC', 'RMTB', 'IDW']
+  Kriging 7.020950581043185
+  LS 6.3661184651960365
+  QP 6.271258707217198
+  KPLS 7.020950581043185
+  KPLSK 7.0108905151353484
+  RBF 6.525795283100557
+  RMTC 6.5274955736753055
+  RMTB 6.601266321769173
+  IDW 5.755443263320035
+  Best expert = IDW
+  MOE2 enabled experts:  ['KRG', 'LS', 'IDW']
+  Kriging 0.003446474575061642
+  LS 0.14196607571546527
+  IDW 0.22651705336130568
+  Best expert = Kriging
+  Kriging 0.9705884312084047
+  LS 0.9705882352941173
+  IDW 0.9909963502468125
+  Best expert = LS
+  Kriging 0.12370332951754266
+  LS 0.1521071464184328
+  IDW 0.12378599723225117
+  Best expert = Kriging
+  
+.. figure:: moe_TestMOE_run_moe_example_1d.png
+  :scale: 80 %
+  :align: center
+
+Example 2
+^^^^^^^^^
 
 .. code-block:: python
 
@@ -71,7 +172,10 @@ Usage
   yt = prob(xt)
   
   # Mixture of experts
-  moe = MOE(smooth_recombination=True, n_clusters=5)
+  print("MOE Experts: ", MOE.AVAILABLE_EXPERTS)
+  
+  moe = MOE(smooth_recombination=True, n_clusters=5, deny=["RMTB", "KPLSK"])
+  print("Enabled Experts: ", moe.enabled_experts)
   moe.set_training_values(xt, yt)
   moe.train()
   
@@ -137,58 +241,50 @@ Usage
   
 ::
 
-  Kriging 1.4939526401173537
-  LS 1.5077303443623018
-  QP 1.4974720846880432
-  KPLS 1.497281595275926
-  KPLSK 1.4982294954777828
-  RBF 1.4947551149539662
-  RMTC 1.4902689705256866
-  RMTB 1.4907700936815724
-  IDW 1.4902351945725305
+  MOE Experts:  ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']
+  Enabled Experts:  ['KRG', 'LS', 'QP', 'KPLS', 'RBF', 'RMTC', 'IDW']
+  Kriging 1.493918889431987
+  LS 1.5077303443623014
+  QP 1.497472084687915
+  KPLS 1.4973020945620643
+  RBF 1.4947551160130281
+  RMTC 1.4902690042419398
+  IDW 1.4902351945725307
   Best expert = IDW
-  Kriging 1.090837533802392
-  LS 1.0982899770653345
-  QP 1.0962913775994076
-  KPLS 1.0911903088598254
-  KPLSK 1.0913626329301334
-  RBF 1.090776908574041
-  RMTC 1.0906577972762475
-  RMTB 1.0906909207839806
+  Kriging 1.0908371872520195
+  LS 1.098289977065335
+  QP 1.0962913775992766
+  KPLS 1.0911562866900417
+  RBF 1.090776908707379
+  RMTC 1.0906560204480358
   IDW 1.13172398181558
   Best expert = RMTC
-  Kriging 1.0172725320297562
+  Kriging 1.0172725317546631
   LS 1.045161267941499
-  QP 1.021870693299516
-  KPLS 1.0209631381521445
-  KPLSK 1.0164927499254057
-  RBF 1.0170431268336242
-  RMTC 1.0309538596868766
-  RMTB 1.0306441658810204
+  QP 1.021870693299392
+  KPLS 1.0209466301318373
+  RBF 1.017043126837439
+  RMTC 1.030672304756457
   IDW 1.0163947834915366
   Best expert = IDW
-  Kriging 1.418566060596039
-  LS 1.4418735729979626
-  QP 1.4542641515658834
-  KPLS 1.4186236511833195
-  KPLSK 1.41842908379877
-  RBF 1.4178300357638867
-  RMTC 1.4350437448979296
-  RMTB 1.4302165562005202
-  IDW 1.418813491280452
+  Kriging 1.4185781931623493
+  LS 1.4418735729979624
+  QP 1.4542641515660801
+  KPLS 1.4186236508382706
+  RBF 1.4178300358901577
+  RMTC 1.4351250866581635
+  IDW 1.4188134912804515
   Best expert = RBF
-  Kriging 1.526976761650065
-  LS 1.5210714809779227
-  QP 1.5434778008314782
-  KPLS 1.5517720032937021
-  KPLSK 1.5598997653341768
-  RBF 1.4938116408632143
-  RMTC 1.5370111046658117
-  RMTB 1.5370751183991895
-  IDW 1.4918365835244007
+  Kriging 1.5266898050928612
+  LS 1.521071480977923
+  QP 1.5434778008314816
+  KPLS 1.5520610825580914
+  RBF 1.4938116417082332
+  RMTC 1.5370353146277413
+  IDW 1.4918365835244014
   Best expert = IDW
   
-.. figure:: moe_TestMOE_run_moe_example.png
+.. figure:: moe_TestMOE_run_moe_example_2d.png
   :scale: 80 %
   :align: center
 
@@ -255,3 +351,13 @@ Options
      -  None
      -  ['bool']
      -  Use only experts that support variance prediction
+  *  -  allow
+     -  []
+     -  None
+     -  None
+     -  Names of allowed experts to be possibly part of the mixture. Empty list corresponds to all surrogates allowed.
+  *  -  deny
+     -  []
+     -  None
+     -  None
+     -  Names of forbidden experts

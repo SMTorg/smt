@@ -68,6 +68,9 @@ Implementation Note: Mixed variables handling is available for all Kriging model
 Usage
 -----
 
+Example 1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. code-block:: python
 
   import numpy as np
@@ -89,26 +92,23 @@ Usage
   s2 = sm.predict_variances(x)
   # derivative according to the first variable
   dydx = sm.predict_derivatives(xt, 0)
-  fig, axs = plt.subplots(2)
-  
-  axs[0].plot(xt, yt, "o")
-  axs[0].plot(x, y)
-  axs[0].set_xlabel("x")
-  axs[0].set_ylabel("y")
-  axs[0].legend(["Training data", "Prediction"])
+  fig, axs = plt.subplots(1)
   
   # add a plot with variance
-  axs[1].plot(xt, yt, "o")
-  axs[1].plot(x, y)
-  axs[1].fill_between(
+  axs.plot(xt, yt, "o")
+  axs.plot(x, y)
+  axs.fill_between(
       np.ravel(x),
       np.ravel(y - 3 * np.sqrt(s2)),
       np.ravel(y + 3 * np.sqrt(s2)),
       color="lightgrey",
   )
-  axs[1].set_xlabel("x")
-  axs[1].set_ylabel("y")
-  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  axs.set_xlabel("x")
+  axs.set_ylabel("y")
+  axs.legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="lower right",
+  )
   
   plt.show()
   
@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0029933
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -156,8 +156,8 @@ Usage
   :scale: 80 %
   :align: center
 
-Usage with mixed variables
---------------------------
+Example 2 with mixed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -188,26 +188,21 @@ Usage with mixed variables
   # estimated variance
   s2 = sm.predict_variances(x)
   
-  fig, axs = plt.subplots(2)
-  
-  axs[0].plot(xt, yt, "o")
-  axs[0].plot(x, y)
-  axs[0].set_xlabel("x")
-  axs[0].set_ylabel("y")
-  axs[0].legend(["Training data", "Prediction"])
-  
-  # add a plot with variance
-  axs[1].plot(xt, yt, "o")
-  axs[1].plot(x, y)
-  axs[1].fill_between(
+  fig, axs = plt.subplots(1)
+  axs.plot(xt, yt, "o")
+  axs.plot(x, y)
+  axs.fill_between(
       np.ravel(x),
       np.ravel(y - 3 * np.sqrt(s2)),
       np.ravel(y + 3 * np.sqrt(s2)),
       color="lightgrey",
   )
-  axs[1].set_xlabel("x")
-  axs[1].set_ylabel("y")
-  axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+  axs.set_xlabel("x")
+  axs.set_ylabel("y")
+  axs.legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="lower right",
+  )
   
   plt.show()
   
@@ -220,9 +215,9 @@ Usage with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009987
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png

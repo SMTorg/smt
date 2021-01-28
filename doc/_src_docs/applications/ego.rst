@@ -198,13 +198,7 @@ Usage
 
   import numpy as np
   from smt.applications import EGO
-  from smt.sampling_methods import FullFactorial
-  
-  import sklearn
   import matplotlib.pyplot as plt
-  from matplotlib import colors
-  from mpl_toolkits.mplot3d import Axes3D
-  from scipy.stats import norm
   
   def function_test_1d(x):
       # function xsinx
@@ -444,19 +438,13 @@ Usage with mixed variable
 
   import numpy as np
   from smt.applications import EGO
-  from smt.sampling_methods import FullFactorial
   from smt.applications.mixed_integer import (
+      MixedIntegerContext,
       FLOAT,
-      INT,
       ENUM,
-      MixedIntegerSamplingMethod,
+      INT,
   )
-  
-  import sklearn
   import matplotlib.pyplot as plt
-  from matplotlib import colors
-  from mpl_toolkits.mplot3d import Axes3D
-  from scipy.stats import norm
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS
   
@@ -494,11 +482,9 @@ Usage with mixed variable
   criterion = "EI"  #'EI' or 'SBO' or 'UCB'
   qEI = "KB"
   sm = KRG(print_global=False)
-  
-  n_doe = 2
-  sampling = MixedIntegerSamplingMethod(
-      xtypes, xlimits, LHS, criterion="ese", random_state=42
-  )
+  mixint = MixedIntegerContext(xtypes, xlimits)
+  n_doe = 3
+  sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
   xdoe = sampling(n_doe)
   ydoe = function_test_mixed_integer(xdoe)
   
@@ -537,8 +523,10 @@ Usage with mixed variable
 ::
 
   Warning: multiple x input features have the same value (at least same row twice).
-  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
-  Minimum in typed x=[-4.999999999999994, 'blue', 'circle', 0]
+  Warning: multiple x input features have the same value (at least same row twice).
+  Warning: multiple x input features have the same value (at least same row twice).
+  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
+  Minimum in typed x=[-5.0, 'blue', 'square', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -594,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000000008AC2AC0>
+     -  <smt.applications.ego.Evaluator object at 0x0000000009ACAEB0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -629,7 +617,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000000008AC2820>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000000009ACAEE0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

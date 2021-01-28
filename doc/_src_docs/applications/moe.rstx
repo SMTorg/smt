@@ -42,10 +42,25 @@ References
 
 .. [4] Rhea P. Liem, Charles A. Mader, and Joaquim R. R. A. Martins. Surrogate models and mixtures of experts in aerodynamic performance prediction for mission analysis. Aerospace Science and Technology, 43 :126–151, 2015.
 
+
+Implementation Notes
+--------------------
+
+Beside the main class `MOE`, one can also use the `MOESurrogateModel` class which adapts MOE as a `SurrogateModel` 
+implementing the Surrogate Model API (see :ref:`Surrogate Model API <surrogate-model-dev-api>`). 
+
 Usage
 -----
 
-.. embed-test-print-plot :: smt.applications.tests.test_moe , TestMOE , run_moe_example , 80
+Example 1
+^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_moe , TestMOE , run_moe_example_1d , 80
+
+Example 2
+^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_moe , TestMOE , run_moe_example_2d , 80
 
 Options
 -------
