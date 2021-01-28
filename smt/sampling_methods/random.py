@@ -7,13 +7,15 @@ Random sampling.
 """
 import numpy as np
 
-from smt.sampling_methods.sampling_method import SamplingMethod
+from smt.sampling_methods.sampling_method import ScaledSamplingMethod
 
 
-class Random(SamplingMethod):
+class Random(ScaledSamplingMethod):
     def _compute(self, nt):
         """
-        Compute the requested number of sampling points.
+        Implemented by sampling methods to compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
         Arguments
         ---------
@@ -23,7 +25,7 @@ class Random(SamplingMethod):
         Returns
         -------
         ndarray[nt, nx]
-            The sampling locations in the input space.
+            The sampling locations in the unit hypercube.
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
