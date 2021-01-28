@@ -5,15 +5,14 @@ This package is distributed under New BSD license.
 
 LHS sampling; uses the pyDOE2 package.
 """
-from smt.utils.misc import scale_to_xlimits
 from pyDOE2 import lhs
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 
-from smt.sampling_methods.sampling_method import SamplingMethod
+from smt.sampling_methods.sampling_method import ScaledSamplingMethod
 
 
-class LHS(SamplingMethod):
+class LHS(ScaledSamplingMethod):
     def _initialize(self):
         self.options.declare(
             "criterion",
@@ -41,7 +40,9 @@ class LHS(SamplingMethod):
 
     def _compute(self, nt):
         """
-        Compute the requested number of sampling points.
+        Implemented by sampling methods to compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
         Arguments
         ---------
@@ -51,7 +52,7 @@ class LHS(SamplingMethod):
         Returns
         -------
         ndarray[nt, nx]
-            The sampling locations in the input space.
+            The sampling locations in the unit hypercube.
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
@@ -64,14 +65,14 @@ class LHS(SamplingMethod):
             self.random_state = np.random.RandomState()
 
         if self.options["criterion"] != "ese":
-            return scale_to_xlimits(lhs(
+            return lhs(
                 nx,
                 samples=nt,
                 criterion=self.options["criterion"],
                 random_state=self.random_state,
-            ), xlimits)
+            )
         elif self.options["criterion"] == "ese":
-            return scale_to_xlimits(self._ese(nx, nt), xlimits)
+            return self._ese(nx, nt)
 
     def _maximinESE(
         self,
