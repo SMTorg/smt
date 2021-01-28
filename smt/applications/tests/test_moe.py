@@ -139,8 +139,8 @@ class TestMOE(SMTestCase):
             y_std = np.sqrt(moe.predict_variances(xv))
             plt.plot(xv, yv, "--k", linewidth=1)
             plt.plot(xv, y, "-b", linewidth=1)
-            plt.plot(xv, y+y_std, "--b", linewidth=1)
-            plt.plot(xv, y-y_std, "--b", linewidth=1)
+            plt.plot(xv, y + y_std, "--b", linewidth=1)
+            plt.plot(xv, y - y_std, "--b", linewidth=1)
             plt.show()
 
     # @unittest.skip('disabled')
@@ -162,7 +162,7 @@ class TestMOE(SMTestCase):
         self.assertIsInstance(moe.moe, MOE)
 
         moe.train()
-        self.assertFalse(moe.supports['variances'])
+        self.assertFalse(moe.supports["variances"])
 
         # validation data
         np.random.seed(1)
@@ -177,11 +177,13 @@ class TestMOE(SMTestCase):
         moe_var = MOESurrogateModel(
             smooth_recombination=True,
             heaviside_optimization=True,
-            n_clusters=3, xt=xt, yt=yt,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
             variances_support=True,
         )
         moe_var.train()
-        self.assertTrue(moe_var.supports['variances'])
+        self.assertTrue(moe_var.supports["variances"])
         moe_var.predict_variances(xe)
 
         if TestMOE.plot:
@@ -290,13 +292,30 @@ class TestMOE(SMTestCase):
             plt.title("Branin function")
             plt.show()
 
-    def test_select_expert_types(self):
+    def test_enabled_expert_types(self):
         moe = MOE(variances_support=True)
         expected = ["KPLS", "KPLSK", "KRG"]
-        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
         moe = MOE(derivatives_support=True)
         expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTB", "RMTC"]
-        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(deny=["KRG", "RMTB"])
+        expected = ["IDW", "KPLS", "KPLSK", "LS", "QP", "RBF", "RMTC"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(allow=["KRG", "RMTB"])
+        expected = ["KRG", "RMTB"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(variances_support=True, allow=["KRG", "RMTB"])
+        expected = ["KRG"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(derivatives_support=True, deny=["RBF", "IDW", "KPLSK"])
+        expected = ["KPLS", "KRG", "LS", "QP", "RMTB", "RMTC"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
 
     def test_fix_moe_rmts_bug(self):
         def myfunc(x):
@@ -348,7 +367,10 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # Mixture of experts
-        moe = MOE(smooth_recombination=True, n_clusters=5)
+        print("MOE Experts: ", MOE.AVAILABLE_EXPERTS)
+
+        moe = MOE(smooth_recombination=True, n_clusters=5, deny=["RMTB", "KPLSK"])
+        print("Enabled Experts: ", moe.enabled_experts)
         moe.set_training_values(xt, yt)
         moe.train()
 
