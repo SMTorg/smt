@@ -313,7 +313,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 x2 = unfold_with_enum_mask(self._xtypes, xp)
             else:
                 x2 = xp
-                castx = cast_to_discrete_values(self._xtypes, x2)
+            castx = cast_to_discrete_values(self._xtypes, x2)
             return self._surrogate.predict_values(castx)
 
     def predict_variances(self, x):
