@@ -270,11 +270,12 @@ class Test(unittest.TestCase):
         )
 
         plt.show()
+        
     def test_mixed_gower_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-        from smt.applications.mixed_integer import MixedIntegerSurrogate
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
         from smt.applications.mixed_integer import (
         ENUM,
         )
@@ -291,7 +292,7 @@ class Test(unittest.TestCase):
 
         xlimits =  [["0.0", "1.0"," 2.0", "3.0", "4.0"]]
 
-        sm = MixedIntegerSurrogate(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
+        sm = MixedIntegerSurrogateModel(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
         sm.set_training_values(x_train, yt)
         sm.train()
 
