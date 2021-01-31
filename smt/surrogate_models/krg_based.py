@@ -687,7 +687,7 @@ class KrgBased(SurrogateModel):
                         cat_features[col]=True   
                 if not isinstance(x, np.ndarray): x = np.asarray(x)
             X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
-            X_cont = (X_cont - self.X_offset) / self.X_std
+            X_cont = (X_cont - self.X_offset) / self.X_scale
             # Compute the regression function
             f = self._regression_types[self.options["poly"]](X_cont)
             # Scaled predictor
