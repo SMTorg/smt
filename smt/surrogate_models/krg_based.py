@@ -162,8 +162,6 @@ class KrgBased(SurrogateModel):
                 self.X_scale,
                 self.y_std,
             ) = standardization(X, y)
-            # Calculate matrix of distances D between samples
-            D, self.ij = cross_distances(self.X_norma)
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         else:
@@ -187,7 +185,9 @@ class KrgBased(SurrogateModel):
                         self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
                 self.optimal_noise = self.optimal_noise / nt_reps
                 self.y_norma = y_norma_unique
-
+        if self.options["corr"] != "gower_corr":
+            # Calculate matrix of distances D between samples
+            D, self.ij = cross_distances(self.X_norma)
 
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
