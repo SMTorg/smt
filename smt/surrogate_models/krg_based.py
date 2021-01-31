@@ -162,7 +162,8 @@ class KrgBased(SurrogateModel):
                 self.X_std,
                 self.y_std,
                 ) = standardization(X, y)
-
+            # Calculate matrix of distances D between samples
+            D, self.ij = cross_distances(self.X_norma)
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         else:
@@ -187,8 +188,7 @@ class KrgBased(SurrogateModel):
                 self.optimal_noise = self.optimal_noise / nt_reps
                 self.y_norma = y_norma_unique
 
-        # Calculate matrix of distances D between samples
-        D, self.ij = cross_distances(self.X_norma)
+
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
