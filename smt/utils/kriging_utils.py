@@ -145,9 +145,7 @@ def gower_distances(X,y=None):
     if not isinstance(X, np.ndarray): 
         if not np.array_equal(X.columns, Y.columns): raise TypeError("X and Y must have same columns!")   
     else: 
-         if not X.shape[1] == Y.shape[1]: raise TypeError("X and Y must have same y-dim!")  
-
-    if issparse(X) or issparse(Y): raise TypeError("Sparse matrices are not supported!")        
+         if not X.shape[1] == Y.shape[1]: raise TypeError("X and Y must have same y-dim!")       
 
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape 
