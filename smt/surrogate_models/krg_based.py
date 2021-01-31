@@ -144,24 +144,24 @@ class KrgBased(SurrogateModel):
                     if not isinstance(Xt, np.ndarray): Xt = np.asarray(Xt)
                     X_cont = Xt[:,np.logical_not(cat_features)].astype(np.float)
                 (
-                    self.X_norma,
-                    self.y_norma,
-                    self.X_mean,
-                    self.y_mean,
-                    self.X_std,
-                    self.y_std,
-                ) = standardization(X_cont, y)
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+                ) = standardization(X, y)
                 D, self.ij = gower_distances(np.asarray(X))
         else:
             # Center and scale X and y
             (
                 self.X_norma,
                 self.y_norma,
-                self.X_mean,
+                self.X_offset,
                 self.y_mean,
-                self.X_std,
+                self.X_scale,
                 self.y_std,
-                ) = standardization(X, y)
+            ) = standardization(X, y)
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
         if not self.options["eval_noise"]:
