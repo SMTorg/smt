@@ -213,7 +213,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
         
     def test_mixed_gower(self):
-        from smt.applications.mixed_integer import MixedIntegerSurrogate
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
         import matplotlib.pyplot as plt
 
         xt = np.linspace(1.0, 5.0, 5)
@@ -223,7 +223,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits =  [["0.0", "1.0"," 2.0", "3.0", "4.0"]]
 
         # Surrogate
-        sm = mixint.build_surrogate_model(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
+        sm = MixedIntegerSurrogateModel.build_surrogate_model(type_surrogate = 'Gower',xtypes=[(ENUM,5)], xlimits=xlimits, surrogate=KRG(theta0=[1e-2]))
         sm.set_training_values(x_train, yt)
         sm.train()
         
