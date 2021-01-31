@@ -19,6 +19,9 @@ from smt.utils.kriging_utils import (
     cross_distances,
     matern52,
     matern32,
+    gower_distances,
+    gower_corr,
+    gower_matrix,
 )
 from scipy.stats import multivariate_normal as m_norm
 
@@ -33,6 +36,7 @@ class KrgBased(SurrogateModel):
         "act_exp": act_exp,
         "matern52": matern52,
         "matern32": matern32,
+        "gower_corr": gower_corr,
     }
 
     name = "KrigingBased"
@@ -51,7 +55,7 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32"),
+            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32","gower_corr"),
             desc="Correlation function type",
             types=(str),
         )
@@ -124,16 +128,40 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
 
-        # Center and scale X and y
-        (
-            self.X_norma,
-            self.y_norma,
-            self.X_offset,
-            self.y_mean,
-            self.X_scale,
-            self.y_std,
-        ) = standardization(X, y)
+        if self.options["corr"] == "gower_corr":
+                self.X_train = X
+                Xt = X
+                x_n_rows, x_n_cols = Xt.shape
+                if not isinstance(Xt, np.ndarray): 
+                    is_number = np.vectorize(lambda x: not np.issubdtype(x,  np.float))
+                    cat_features = is_number(Xt.dtypes)    
+                else:
+                    cat_features = np.zeros(x_n_cols, dtype=bool)
+                    for col in range(x_n_cols):
+                        if not np.issubdtype(type(Xt[0, col]),  np.float):
+                            cat_features[col]=True   
 
+                    if not isinstance(Xt, np.ndarray): Xt = np.asarray(Xt)
+                    X_cont = Xt[:,np.logical_not(cat_features)].astype(np.float)
+                (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+                ) = standardization(X_cont, y)
+                D, self.ij = gower_distances(np.asarray(X))
+        else:
+            # Center and scale X and y
+            (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(X, y)
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         else:
@@ -157,9 +185,10 @@ class KrgBased(SurrogateModel):
                         self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
                 self.optimal_noise = self.optimal_noise / nt_reps
                 self.y_norma = y_norma_unique
+        if self.options["corr"] != "gower_corr":
+            # Calculate matrix of distances D between samples
+            D, self.ij = cross_distances(self.X_norma)
 
-        # Calculate matrix of distances D between samples
-        D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
@@ -645,22 +674,42 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_offset) / self.X_scale
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
-        y = np.zeros(n_eval)
-        # Compute the regression function
-        f = self._regression_types[self.options["poly"]](x)
-        # Scaled predictor
-        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
-        # Predictor
-        y = (self.y_mean + self.y_std * y_).ravel()
-
+        if self.options["corr"] == "gower_corr":
+            # Compute the correlation function
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+            if not isinstance(x, np.ndarray): 
+                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+                cat_features = is_number(x.dtypes)    
+            else:
+                cat_features = np.zeros(n_features_x, dtype=bool)
+                for col in range(n_features_x):
+                    if not np.issubdtype(type(x[0, col]), np.number):
+                        cat_features[col]=True   
+                if not isinstance(x, np.ndarray): x = np.asarray(x)
+            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+            X_cont = (X_cont - self.X_offset) / self.X_scale
+            # Compute the regression function
+            f = self._regression_types[self.options["poly"]](X_cont)
+            # Scaled predictor
+            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+            # Predictor
+            y = (self.y_mean + self.y_std * y_).ravel()
+        else:
+            x = (x - self.X_offset) / self.X_scale
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = differences(x, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            # Compute the correlation function
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
+            y = np.zeros(n_eval)
+            # Compute the regression function
+            f = self._regression_types[self.options["poly"]](x)
+            # Scaled predictor
+            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+            # Predictor
+            y = (self.y_mean + self.y_std * y_).ravel()
         return y
 
     def _predict_derivatives(self, x, kx):
@@ -681,14 +730,17 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_offset) / self.X_scale
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
+        if self.options["corr"] == "gower_corr":
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+        else:
+            x = (x - self.X_offset) / self.X_scale
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = differences(x, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            # Compute the correlation function
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
 
         if self.options["corr"] != "squar_exp":
             raise ValueError(
@@ -735,23 +787,49 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_offset) / self.X_scale
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
+        if self.options["corr"] == "gower_corr":
+            # Compute the correlation function
 
-        C = self.optimal_par["C"]
-        rt = linalg.solve_triangular(C, r.T, lower=True)
+            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
 
-        u = linalg.solve_triangular(
-            self.optimal_par["G"].T,
-            np.dot(self.optimal_par["Ft"].T, rt)
-            - self._regression_types[self.options["poly"]](x).T,
-        )
+            if not isinstance(x, np.ndarray): 
+                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+                cat_features = is_number(x.dtypes)    
+            else:
+                cat_features = np.zeros(n_features_x, dtype=bool)
+                for col in range(n_features_x):
+                    if not np.issubdtype(type(x[0, col]), np.number):
+                        cat_features[col]=True   
+
+                if not isinstance(x, np.ndarray): x = np.asarray(x)
+
+            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+            C = self.optimal_par["C"]
+            rt = linalg.solve_triangular(C, r.T, lower=True)
+
+            u = linalg.solve_triangular(
+                self.optimal_par["G"].T,
+                np.dot(self.optimal_par["Ft"].T, rt)
+                - self._regression_types[self.options["poly"]](X_cont).T,
+                ) 
+        else:
+            x = (x - self.X_offset) / self.X_scale
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = differences(x, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            # Compute the correlation function
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
+
+            C = self.optimal_par["C"]
+            rt = linalg.solve_triangular(C, r.T, lower=True)
+
+            u = linalg.solve_triangular(
+                self.optimal_par["G"].T,
+                np.dot(self.optimal_par["Ft"].T, rt)
+                - self._regression_types[self.options["poly"]](x).T,
+            )
 
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
