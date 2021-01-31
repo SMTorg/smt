@@ -150,7 +150,7 @@ class KrgBased(SurrogateModel):
                 self.y_mean,
                 self.X_scale,
                 self.y_std,
-                ) = standardization(X, y)
+                ) = standardization(X_cont, y)
                 D, self.ij = gower_distances(np.asarray(X))
         else:
             # Center and scale X and y
