@@ -253,7 +253,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     handling integer (INT) or categorical (ENUM) features
     """
 
-    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True):
+    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True,type_surrogate = "relaxation"):
         """
         Parameters
         ----------
