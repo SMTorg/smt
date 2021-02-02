@@ -139,8 +139,8 @@ class TestMOE(SMTestCase):
             y_std = np.sqrt(moe.predict_variances(xv))
             plt.plot(xv, yv, "--k", linewidth=1)
             plt.plot(xv, y, "-b", linewidth=1)
-            plt.plot(xv, y+y_std, "--b", linewidth=1)
-            plt.plot(xv, y-y_std, "--b", linewidth=1)
+            plt.plot(xv, y + y_std, "--b", linewidth=1)
+            plt.plot(xv, y - y_std, "--b", linewidth=1)
             plt.show()
 
     # @unittest.skip('disabled')
@@ -162,7 +162,7 @@ class TestMOE(SMTestCase):
         self.assertIsInstance(moe.moe, MOE)
 
         moe.train()
-        self.assertFalse(moe.supports['variances'])
+        self.assertFalse(moe.supports["variances"])
 
         # validation data
         np.random.seed(1)
@@ -177,11 +177,13 @@ class TestMOE(SMTestCase):
         moe_var = MOESurrogateModel(
             smooth_recombination=True,
             heaviside_optimization=True,
-            n_clusters=3, xt=xt, yt=yt,
+            n_clusters=3,
+            xt=xt,
+            yt=yt,
             variances_support=True,
         )
         moe_var.train()
-        self.assertTrue(moe_var.supports['variances'])
+        self.assertTrue(moe_var.supports["variances"])
         moe_var.predict_variances(xe)
 
         if TestMOE.plot:
@@ -290,13 +292,30 @@ class TestMOE(SMTestCase):
             plt.title("Branin function")
             plt.show()
 
-    def test_select_expert_types(self):
+    def test_enabled_expert_types(self):
         moe = MOE(variances_support=True)
         expected = ["KPLS", "KPLSK", "KRG"]
-        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
         moe = MOE(derivatives_support=True)
         expected = ["IDW", "KPLS", "KPLSK", "KRG", "LS", "QP", "RBF", "RMTB", "RMTC"]
-        self.assertEqual(expected, sorted(moe._select_expert_types().keys()))
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(deny=["KRG", "RMTB"])
+        expected = ["IDW", "KPLS", "KPLSK", "LS", "QP", "RBF", "RMTC"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(allow=["KRG", "RMTB"])
+        expected = ["KRG", "RMTB"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(variances_support=True, allow=["KRG", "RMTB"])
+        expected = ["KRG"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
+
+        moe = MOE(derivatives_support=True, deny=["RBF", "IDW", "KPLSK"])
+        expected = ["KPLS", "KRG", "LS", "QP", "RMTB", "RMTC"]
+        self.assertEqual(expected, sorted(moe.enabled_experts))
 
     def test_fix_moe_rmts_bug(self):
         def myfunc(x):
@@ -323,7 +342,63 @@ class TestMOE(SMTestCase):
         moe.train()
 
     @staticmethod
-    def run_moe_example():
+    def run_moe_example_1d():
+        import numpy as np
+        from smt.applications import MOE
+        from smt.sampling_methods import FullFactorial
+        import matplotlib.pyplot as plt
+
+        ndim = 1
+        nt = 35
+
+        def function_test_1d(x):
+            import numpy as np  # Note: only required by SMT doc testing toolchain
+
+            x = np.reshape(x, (-1,))
+            y = np.zeros(x.shape)
+            y[x < 0.4] = x[x < 0.4] ** 2
+            y[(x >= 0.4) & (x < 0.8)] = 3 * x[(x >= 0.4) & (x < 0.8)] + 1
+            y[x >= 0.8] = np.sin(10 * x[x >= 0.8])
+            return y.reshape((-1, 1))
+
+        x = np.linspace(0, 1, 100)
+        ytrue = function_test_1d(x)
+
+        # Training data
+        sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
+        np.random.seed(0)
+        xt = sampling(nt)
+        yt = function_test_1d(xt)
+
+        # Mixture of experts
+        print("MOE Experts: ", MOE.AVAILABLE_EXPERTS)
+
+        # MOE1: Find the best surrogate model on the whole domain
+        moe1 = MOE(n_clusters=1)
+        print("MOE1 enabled experts: ", moe1.enabled_experts)
+        moe1.set_training_values(xt, yt)
+        moe1.train()
+        y_moe1 = moe1.predict_values(x)
+
+        # MOE2: Set nb of cluster with just KRG, LS and IDW surrogate models
+        moe2 = MOE(smooth_recombination=False, n_clusters=3, allow=["KRG", "LS", "IDW"])
+        print("MOE2 enabled experts: ", moe2.enabled_experts)
+        moe2.set_training_values(xt, yt)
+        moe2.train()
+        y_moe2 = moe2.predict_values(x)
+
+        fig, axs = plt.subplots(1)
+        axs.plot(x, ytrue, ".", color="black")
+        axs.plot(x, y_moe1)
+        axs.plot(x, y_moe2)
+        axs.set_xlabel("x")
+        axs.set_ylabel("y")
+        axs.legend(["Training data", "MOE 1 Prediction", "MOE 2 Prediction"])
+
+        plt.show()
+
+    @staticmethod
+    def run_moe_example_2d():
         import numpy as np
         from smt.applications import MOE
         from smt.problems import LpNorm
@@ -348,7 +423,10 @@ class TestMOE(SMTestCase):
         yt = prob(xt)
 
         # Mixture of experts
-        moe = MOE(smooth_recombination=True, n_clusters=5)
+        print("MOE Experts: ", MOE.AVAILABLE_EXPERTS)
+
+        moe = MOE(smooth_recombination=True, n_clusters=5, deny=["RMTB", "KPLSK"])
+        print("Enabled Experts: ", moe.enabled_experts)
         moe.set_training_values(xt, yt)
         moe.train()
 
@@ -418,6 +496,6 @@ if __name__ == "__main__":
         TestMOE.plot = True
         argv.remove("--plot")
     if "--example" in argv:
-        TestMOE.run_moe_example()
+        TestMOE.run_moe_example_1d()
         exit()
     unittest.main()

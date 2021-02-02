@@ -205,26 +205,23 @@ class Test(unittest.TestCase):
         s2 = sm.predict_variances(x)
         # derivative according to the first variable
         dydx = sm.predict_derivatives(xt, 0)
-        fig, axs = plt.subplots(2)
-
-        axs[0].plot(xt, yt, "o")
-        axs[0].plot(x, y)
-        axs[0].set_xlabel("x")
-        axs[0].set_ylabel("y")
-        axs[0].legend(["Training data", "Prediction"])
+        fig, axs = plt.subplots(1)
 
         # add a plot with variance
-        axs[1].plot(xt, yt, "o")
-        axs[1].plot(x, y)
-        axs[1].fill_between(
+        axs.plot(xt, yt, "o")
+        axs.plot(x, y)
+        axs.fill_between(
             np.ravel(x),
             np.ravel(y - 3 * np.sqrt(s2)),
             np.ravel(y + 3 * np.sqrt(s2)),
             color="lightgrey",
         )
-        axs[1].set_xlabel("x")
-        axs[1].set_ylabel("y")
-        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        axs.set_xlabel("x")
+        axs.set_ylabel("y")
+        axs.legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="lower right",
+        )
 
         plt.show()
 
@@ -256,26 +253,21 @@ class Test(unittest.TestCase):
         # estimated variance
         s2 = sm.predict_variances(x)
 
-        fig, axs = plt.subplots(2)
-
-        axs[0].plot(xt, yt, "o")
-        axs[0].plot(x, y)
-        axs[0].set_xlabel("x")
-        axs[0].set_ylabel("y")
-        axs[0].legend(["Training data", "Prediction"])
-
-        # add a plot with variance
-        axs[1].plot(xt, yt, "o")
-        axs[1].plot(x, y)
-        axs[1].fill_between(
+        fig, axs = plt.subplots(1)
+        axs.plot(xt, yt, "o")
+        axs.plot(x, y)
+        axs.fill_between(
             np.ravel(x),
             np.ravel(y - 3 * np.sqrt(s2)),
             np.ravel(y + 3 * np.sqrt(s2)),
             color="lightgrey",
         )
-        axs[1].set_xlabel("x")
-        axs[1].set_ylabel("y")
-        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        axs.set_xlabel("x")
+        axs.set_ylabel("y")
+        axs.legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="lower right",
+        )
 
         plt.show()
 
@@ -499,11 +491,7 @@ class Test(unittest.TestCase):
         yt = np.atleast_2d(fun(xt)).T
 
         # Build the MGP model
-        sm = MGP(
-            theta0=[1e-2],
-            print_prediction=False,
-            n_comp=1,
-        )
+        sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
         sm.set_training_values(xt, yt[:, 0])
         sm.train()
 

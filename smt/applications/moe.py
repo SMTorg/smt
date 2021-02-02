@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 
 Mixture of Experts
 """
-# TODO : choice of the surrogate model experts to be used
 # TODO : support for best number of clusters
 # TODO : implement verbosity 'print_global'
 # TODO : documentation
@@ -29,11 +28,23 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+MOE_EXPERT_NAMES = [
+    "KRG",
+    "KPLS",
+    "KPLSK",
+    "LS",
+    "QP",
+    "RBF",
+    "IDW",
+    "RMTB",
+    "RMTC",
+]
+
 
 class MOESurrogateModel(SurrogateModel):
     """Wrapper class exposing MOE features as a SurrogateModel subclass."""
 
-    name = 'MOE'
+    name = "MOE"
 
     def _initialize(self):
         super(MOESurrogateModel, self)._initialize()
@@ -53,12 +64,12 @@ class MOESurrogateModel(SurrogateModel):
                 self.moe.options[key] = self.options[key]
 
         # self.supports['derivatives'] = self.options['derivatives_support']  # Interface not yet implemented
-        self.supports['variances'] = self.options['variances_support']
+        self.supports["variances"] = self.options["variances_support"]
 
     def train(self):
         if len(self.training_points) == 0:
-            xt = self.options['xt']
-            yt = self.options['yt']
+            xt = self.options["xt"]
+            yt = self.options["yt"]
             self.set_training_values(xt, yt)
 
         super(MOESurrogateModel, self).train()
@@ -79,6 +90,14 @@ class MOESurrogateModel(SurrogateModel):
 
 
 class MOE(SurrogateBasedApplication):
+
+    # Names of experts available to be part of the mixture
+    AVAILABLE_EXPERTS = [
+        name
+        for name in MOE_EXPERT_NAMES
+        if name in SurrogateBasedApplication._surrogate_type
+    ]
+
     def _initialize(self):
         super(MOE, self)._initialize()
         declare = self.options.declare
@@ -121,11 +140,15 @@ class MOE(SurrogateBasedApplication):
             types=bool,
             desc="Use only experts that support variance prediction",
         )
-
-        # TODO: should we add leaf surrogate models options?
-        # for name, smclass in self._surrogate_type.items():
-        #     sm_options = smclass().options
-        #     declare(name+'_options', sm_options._dict, types=dict, desc=name+' options dictionary')
+        declare(
+            "allow",
+            [],
+            desc="Names of allowed experts to be possibly part of the mixture. "
+            "Empty list corresponds to all surrogates allowed.",
+        )
+        declare(
+            "deny", [], desc="Names of forbidden experts",
+        )
 
         self.x = None
         self.y = None
@@ -136,19 +159,22 @@ class MOE(SurrogateBasedApplication):
         self.heaviside_optimization = None
         self.heaviside_factor = 1.0
 
-        self.experts = [
-            "KRG",
-            "KPLS",
-            "KPLSK",
-            "LS",
-            "QP",
-            "RBF",
-            "IDW",
-            "RMTB",
-            "RMTC",
-        ]
+        # dictionary {name: class} of possible experts wrt to options
+        self._enabled_expert_types = self._get_enabled_expert_types()
+
+        # list of experts after MOE training
+        self._experts = []
+
         self.xt = None
         self.yt = None
+
+    @property
+    def enabled_experts(self):
+        """
+        Returns the names of enabled experts after taking into account MOE options 
+        """
+        self._enabled_expert_types = self._get_enabled_expert_types()
+        return list(self._enabled_expert_types.keys())
 
     def set_training_values(self, xt, yt, name=None):
         """
@@ -193,8 +219,8 @@ class MOE(SurrogateBasedApplication):
 
         self._check_inputs()
 
-        self.expert_types = self._select_expert_types()
-        self.experts = []
+        self._enabled_expert_types = self._get_enabled_expert_types()
+        self._experts = []
 
         # Set test values and trained values
         xtest = self.options["xtest"]
@@ -271,8 +297,10 @@ class MOE(SurrogateBasedApplication):
         """
 
         if not self.options["variances_support"]:
-            raise RuntimeError('Experts not selected taking variance support into account: use variances_support=True '
-                               'when creating MOE')
+            raise RuntimeError(
+                "Experts not selected taking variance support into account: use variances_support=True "
+                "when creating MOE"
+            )
 
         if self.smooth_recombination:
             y = self._predict_smooth_output(x, output_variances=True)
@@ -305,14 +333,14 @@ class MOE(SurrogateBasedApplication):
                 "The number of clusters is too high considering the number of points"
             )
 
-    def _select_expert_types(self):
+    def _get_enabled_expert_types(self):
         """
-        Select relevant surrogate models (experts) regarding MOE options
+        Select relevant surrogate models (experts) regarding MOE feature options
         """
         prototypes = {
             name: smclass()
             for name, smclass in self._surrogate_type.items()
-            if name in self.experts
+            if name in MOE_EXPERT_NAMES
         }
         if self.options["derivatives_support"]:
             prototypes = {
@@ -326,6 +354,22 @@ class MOE(SurrogateBasedApplication):
                 for name, proto in prototypes.items()
                 if proto.supports["variances"]
             }
+        if self.options["allow"]:
+            prototypes = {
+                name: proto
+                for name, proto in prototypes.items()
+                if name in self.options["allow"]
+            }
+        if self.options["deny"]:
+            prototypes = {
+                name: proto
+                for name, proto in prototypes.items()
+                if name not in self.options["deny"]
+            }
+        if not prototypes:
+            ValueError(
+                "List of possible experts is empty: check support, allow and deny options wrt"
+            )
         return {name: self._surrogate_type[name] for name in prototypes}
 
     def _fit(self, x_trained, y_trained, c_trained, new_model=True):
@@ -356,13 +400,13 @@ class MOE(SurrogateBasedApplication):
         for i in range(self.n_clusters):
             if new_model:
                 model = self._find_best_model(clusters[i])
-                self.experts.append(model)
+                self._experts.append(model)
             else:  # retrain the experts with the
                 trained_values = np.array(clusters[i])
                 x_trained = trained_values[:, 0 : self.ndim]
                 y_trained = trained_values[:, self.ndim]
-                self.experts[i].set_training_values(x_trained, y_trained)
-                self.experts[i].train()
+                self._experts[i].set_training_values(x_trained, y_trained)
+                self._experts[i].train()
 
     def _predict_hard_output(self, x, output_variances=False):
         """
@@ -385,7 +429,7 @@ class MOE(SurrogateBasedApplication):
         sort_cluster = np.apply_along_axis(np.argmax, 1, probs)
 
         for i in range(len(sort_cluster)):
-            model = self.experts[sort_cluster[i]]
+            model = self._experts[sort_cluster[i]]
 
             if output_variances:
                 predicted_values.append(model.predict_variances(np.atleast_2d(x[i]))[0])
@@ -420,12 +464,18 @@ class MOE(SurrogateBasedApplication):
 
         for i in range(len(sort_proba)):
             recombined_value = 0
-            for j in range(len(self.experts)):
+            for j in range(len(self._experts)):
 
                 if output_variances:
-                    expert_value = self.experts[j].predict_variances(np.atleast_2d(x[i]))[0] * sort_proba[i][j]**2
+                    expert_value = (
+                        self._experts[j].predict_variances(np.atleast_2d(x[i]))[0]
+                        * sort_proba[i][j] ** 2
+                    )
                 else:
-                    expert_value = self.experts[j].predict_values(np.atleast_2d(x[i]))[0] * sort_proba[i][j]
+                    expert_value = (
+                        self._experts[j].predict_values(np.atleast_2d(x[i]))[0]
+                        * sort_proba[i][j]
+                    )
 
                 recombined_value += expert_value
 
@@ -483,7 +533,7 @@ class MOE(SurrogateBasedApplication):
         # validation with 10% of the training data
         test_values, training_values = self._extract_part(clustered_values, 10)
 
-        for name, sm_class in self.expert_types.items():
+        for name, sm_class in self._enabled_expert_types.items():
             kwargs = {}
             if name in ["RMTB", "RMTC"]:
                 # Note: RMTS checks for xlimits,
