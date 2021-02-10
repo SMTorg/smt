@@ -291,7 +291,7 @@ class Test(unittest.TestCase):
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
 
         sm = MixedIntegerSurrogateModel(
-            type_surrogate="Gower",
+            use_gower_distance=True,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),

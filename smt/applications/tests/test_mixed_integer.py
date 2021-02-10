@@ -226,7 +226,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            type_surrogate="Gower",
+            use_gower_distance=True,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
