@@ -294,7 +294,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xt = ensure_2d_array(xt, "xt")
         if self._type_surrogate == "Gower":
             super().set_training_values(xt, yt)
-            self._surrogate.options["corr"] = "gower_corr"
+            self._surrogate.options["corr"] = "gower"
             self._surrogate.set_training_values(xt, yt, name)
         elif self._type_surrogate != "Gower":
             if self._input_in_folded_space:

@@ -36,7 +36,7 @@ class KrgBased(SurrogateModel):
         "act_exp": act_exp,
         "matern52": matern52,
         "matern32": matern32,
-        "gower_corr": gower_corr,
+        "gower": gower_corr,
     }
 
     name = "KrigingBased"
@@ -61,7 +61,7 @@ class KrgBased(SurrogateModel):
                 "act_exp",
                 "matern52",
                 "matern32",
-                "gower_corr",
+                "gower",
             ),
             desc="Correlation function type",
             types=(str),
@@ -135,7 +135,7 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
 
-        if self.options["corr"] == "gower_corr":
+        if self.options["corr"] == "gower":
             self.X_train = X
             Xt = X
             x_n_rows, x_n_cols = Xt.shape
@@ -193,7 +193,7 @@ class KrgBased(SurrogateModel):
                         self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
                 self.optimal_noise = self.optimal_noise / nt_reps
                 self.y_norma = y_norma_unique
-        if self.options["corr"] != "gower_corr":
+        if self.options["corr"] != "gower":
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -682,7 +682,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower_corr":
+        if self.options["corr"] == "gower":
             # Compute the correlation function
             r = np.exp(
                 -gower_matrix(
@@ -747,7 +747,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower_corr":
+        if self.options["corr"] == "gower":
             r = np.exp(
                 -gower_matrix(
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
@@ -808,7 +808,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower_corr":
+        if self.options["corr"] == "gower":
             # Compute the correlation function
 
             r = np.exp(
@@ -1081,7 +1081,10 @@ class KrgBased(SurrogateModel):
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [theta0_rand, np.log10(np.array([self.noise0]).flatten()),]
+                        [
+                            theta0_rand,
+                            np.log10(np.array([self.noise0]).flatten()),
+                        ]
                     )
 
                     for i in range(len(self.noise0)):
