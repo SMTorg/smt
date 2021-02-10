@@ -253,7 +253,14 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     handling integer (INT) or categorical (ENUM) features
     """
 
-    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True,type_surrogate = "relaxation"):
+    def __init__(
+        self,
+        xtypes,
+        xlimits,
+        surrogate,
+        input_in_folded_space=True,
+        type_surrogate="relaxation",
+    ):
         """
         Parameters
         ----------
@@ -285,11 +292,11 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        if self._type_surrogate == 'Gower':
+        if self._type_surrogate == "Gower":
             super().set_training_values(xt, yt)
-            self._surrogate.options["corr"] ="gower_corr"
+            self._surrogate.options["corr"] = "gower_corr"
             self._surrogate.set_training_values(xt, yt, name)
-        elif self._type_surrogate != 'Gower':
+        elif self._type_surrogate != "Gower":
             if self._input_in_folded_space:
                 xt2 = unfold_with_enum_mask(self._xtypes, xt)
             else:
@@ -306,9 +313,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._type_surrogate == 'Gower':
+        if self._type_surrogate == "Gower":
             return self._surrogate.predict_values(x)
-        elif self._type_surrogate != 'Gower':
+        elif self._type_surrogate != "Gower":
             if self._input_in_folded_space:
                 x2 = unfold_with_enum_mask(self._xtypes, xp)
             else:
@@ -318,16 +325,16 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._type_surrogate == 'Gower':
+        if self._type_surrogate == "Gower":
             return self._surrogate.predict_variances(x)
-        elif self._type_surrogate != 'Gower':
+        elif self._type_surrogate != "Gower":
             if self._input_in_folded_space:
                 x2 = unfold_with_enum_mask(self._xtypes, xp)
             else:
                 x2 = xp
             return self._surrogate.predict_variances(
-            	cast_to_discrete_values(self._xtypes, x2)
-        )
+                cast_to_discrete_values(self._xtypes, x2)
+            )
 
     def _predict_values(self, x):
         pass

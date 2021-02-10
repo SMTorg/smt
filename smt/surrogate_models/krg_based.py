@@ -55,7 +55,14 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32","gower_corr"),
+            values=(
+                "abs_exp",
+                "squar_exp",
+                "act_exp",
+                "matern52",
+                "matern32",
+                "gower_corr",
+            ),
             desc="Correlation function type",
             types=(str),
         )
@@ -129,29 +136,30 @@ class KrgBased(SurrogateModel):
         self._check_param()
 
         if self.options["corr"] == "gower_corr":
-                self.X_train = X
-                Xt = X
-                x_n_rows, x_n_cols = Xt.shape
-                if not isinstance(Xt, np.ndarray): 
-                    is_number = np.vectorize(lambda x: not np.issubdtype(x,  np.float))
-                    cat_features = is_number(Xt.dtypes)    
-                else:
-                    cat_features = np.zeros(x_n_cols, dtype=bool)
-                    for col in range(x_n_cols):
-                        if not np.issubdtype(type(Xt[0, col]),  np.float):
-                            cat_features[col]=True   
+            self.X_train = X
+            Xt = X
+            x_n_rows, x_n_cols = Xt.shape
+            if not isinstance(Xt, np.ndarray):
+                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.float))
+                cat_features = is_number(Xt.dtypes)
+            else:
+                cat_features = np.zeros(x_n_cols, dtype=bool)
+                for col in range(x_n_cols):
+                    if not np.issubdtype(type(Xt[0, col]), np.float):
+                        cat_features[col] = True
 
-                    if not isinstance(Xt, np.ndarray): Xt = np.asarray(Xt)
-                    X_cont = Xt[:,np.logical_not(cat_features)].astype(np.float)
-                (
+                if not isinstance(Xt, np.ndarray):
+                    Xt = np.asarray(Xt)
+                X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
+            (
                 self.X_norma,
                 self.y_norma,
                 self.X_offset,
                 self.y_mean,
                 self.X_scale,
                 self.y_std,
-                ) = standardization(X_cont, y)
-                D, self.ij = gower_distances(np.asarray(X))
+            ) = standardization(X_cont, y)
+            D, self.ij = gower_distances(np.asarray(X))
         else:
             # Center and scale X and y
             (
@@ -676,22 +684,29 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["corr"] == "gower_corr":
             # Compute the correlation function
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
-            if not isinstance(x, np.ndarray): 
+            r = np.exp(
+                -gower_matrix(
+                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
+                )
+            )
+            if not isinstance(x, np.ndarray):
                 is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(x.dtypes)    
+                cat_features = is_number(x.dtypes)
             else:
                 cat_features = np.zeros(n_features_x, dtype=bool)
                 for col in range(n_features_x):
                     if not np.issubdtype(type(x[0, col]), np.number):
-                        cat_features[col]=True   
-                if not isinstance(x, np.ndarray): x = np.asarray(x)
-            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+                        cat_features[col] = True
+                if not isinstance(x, np.ndarray):
+                    x = np.asarray(x)
+            X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
             X_cont = (X_cont - self.X_offset) / self.X_scale
             # Compute the regression function
             f = self._regression_types[self.options["poly"]](X_cont)
             # Scaled predictor
-            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
+                r, self.optimal_par["gamma"]
+            )
             # Predictor
             y = (self.y_mean + self.y_std * y_).ravel()
         else:
@@ -707,7 +722,9 @@ class KrgBased(SurrogateModel):
             # Compute the regression function
             f = self._regression_types[self.options["poly"]](x)
             # Scaled predictor
-            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
+            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
+                r, self.optimal_par["gamma"]
+            )
             # Predictor
             y = (self.y_mean + self.y_std * y_).ravel()
         return y
@@ -731,7 +748,11 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         if self.options["corr"] == "gower_corr":
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+            r = np.exp(
+                -gower_matrix(
+                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
+                )
+            )
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -790,20 +811,25 @@ class KrgBased(SurrogateModel):
         if self.options["corr"] == "gower_corr":
             # Compute the correlation function
 
-            r = np.exp(-gower_matrix(x,data_y=self.X_train,weight = np.asarray(self.optimal_theta)))
+            r = np.exp(
+                -gower_matrix(
+                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
+                )
+            )
 
-            if not isinstance(x, np.ndarray): 
+            if not isinstance(x, np.ndarray):
                 is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(x.dtypes)    
+                cat_features = is_number(x.dtypes)
             else:
                 cat_features = np.zeros(n_features_x, dtype=bool)
                 for col in range(n_features_x):
                     if not np.issubdtype(type(x[0, col]), np.number):
-                        cat_features[col]=True   
+                        cat_features[col] = True
 
-                if not isinstance(x, np.ndarray): x = np.asarray(x)
+                if not isinstance(x, np.ndarray):
+                    x = np.asarray(x)
 
-            X_cont = x[:,np.logical_not(cat_features)].astype(np.float)
+            X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
             C = self.optimal_par["C"]
             rt = linalg.solve_triangular(C, r.T, lower=True)
 
@@ -811,7 +837,7 @@ class KrgBased(SurrogateModel):
                 self.optimal_par["G"].T,
                 np.dot(self.optimal_par["Ft"].T, rt)
                 - self._regression_types[self.options["poly"]](X_cont).T,
-                ) 
+            )
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -1055,10 +1081,7 @@ class KrgBased(SurrogateModel):
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([self.noise0]).flatten()),
-                        ]
+                        [theta0_rand, np.log10(np.array([self.noise0]).flatten()),]
                     )
 
                     for i in range(len(self.noise0)):
