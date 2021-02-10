@@ -138,19 +138,12 @@ class KrgBased(SurrogateModel):
         if self.options["corr"] == "gower":
             self.X_train = X
             Xt = X
-            x_n_rows, x_n_cols = Xt.shape
-            if not isinstance(Xt, np.ndarray):
-                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.float))
-                cat_features = is_number(Xt.dtypes)
-            else:
-                cat_features = np.zeros(x_n_cols, dtype=bool)
-                for col in range(x_n_cols):
-                    if not np.issubdtype(type(Xt[0, col]), np.float):
-                        cat_features[col] = True
-
-                if not isinstance(Xt, np.ndarray):
-                    Xt = np.asarray(Xt)
-                X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
+            _, x_n_cols = Xt.shape
+            cat_features = np.zeros(x_n_cols, dtype=bool)
+            for col in range(x_n_cols):
+                if not np.issubdtype(type(Xt[0, col]), np.float):
+                    cat_features[col] = True
+            X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
             (
                 self.X_norma,
                 self.y_norma,
@@ -159,7 +152,7 @@ class KrgBased(SurrogateModel):
                 self.X_scale,
                 self.y_std,
             ) = standardization(X_cont, y)
-            D, self.ij = gower_distances(np.asarray(X))
+            D, self.ij = gower_distances(X)
         else:
             # Center and scale X and y
             (
@@ -172,27 +165,28 @@ class KrgBased(SurrogateModel):
             ) = standardization(X, y)
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
-        else:
-            if self.options["use_het_noise"]:
-                # hetGP works with unique design variables when noise variance are not given
-                (self.X_norma, index_unique, nt_reps,) = np.unique(
-                    self.X_norma, return_inverse=True, return_counts=True, axis=0
-                )
-                self.nt = self.X_norma.shape[0]
+        elif self.options["use_het_noise"]:
+            # hetGP works with unique design variables when noise variance are not given
+            (
+                self.X_norma,
+                index_unique,
+                nt_reps,
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
+            self.nt = self.X_norma.shape[0]
 
-                # computing the mean of the output per unique design variable (see Binois et al., 2018)
-                y_norma_unique = []
-                for i in range(self.nt):
-                    y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
+            # computing the mean of the output per unique design variable (see Binois et al., 2018)
+            y_norma_unique = []
+            for i in range(self.nt):
+                y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
 
-                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
-                for i in range(self.nt):
-                    diff = self.y_norma[index_unique == i] - y_norma_unique[i]
-                    if np.sum(diff ** 2) != 0.0:
-                        self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
-                self.optimal_noise = self.optimal_noise / nt_reps
-                self.y_norma = y_norma_unique
+            # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+            self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
+            for i in range(self.nt):
+                diff = self.y_norma[index_unique == i] - y_norma_unique[i]
+                if np.sum(diff ** 2) != 0.0:
+                    self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
+            self.optimal_noise = self.optimal_noise / nt_reps
+            self.y_norma = y_norma_unique
         if self.options["corr"] != "gower":
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
