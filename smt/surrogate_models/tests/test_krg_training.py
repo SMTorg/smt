@@ -68,12 +68,12 @@ class Test(SMTestCase):
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
         sm = KRG(hyper_opt="Cobyla", eval_noise=True, noise0=[1e-4])
 
-        sm.set_training_values(xt, yt)
+        sm.set_training_values(xt, yt)  
         sm.train()
         x = np.linspace(0, 4, 100)
         y = sm.predict_values(x)
         self.assert_error(
-            np.array(sm.optimal_theta), np.array([0.11798507]), 1e-5, 1e-5
+            np.array(sm.optimal_theta), np.array([1.67367899]), 1e-5, 1e-5
         )
 
     def test_corr_derivatives(self):

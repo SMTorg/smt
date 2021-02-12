@@ -212,6 +212,7 @@ class KrgBased(SurrogateModel):
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
         
+        
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -1143,7 +1144,6 @@ class KrgBased(SurrogateModel):
                                     optimal_theta_res= optimal_theta_res_loop
                         
                     elif self.options["hyper_opt"] == "TNC":
-
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0,
@@ -1161,10 +1161,9 @@ class KrgBased(SurrogateModel):
                             bounds=bounds_hyp,
                             options={"maxiter": 100},
                         )
-                        
-                        theta0_loop= np.ones(theta0.shape)*-6
+                        theta0_loop= 10**(np.ones(theta0.shape)*-6)
                         for i in range(7):
-                            theta0_loop=theta0_loop+np.ones(theta0.shape)
+                            theta0_loop=10**(np.log10(theta0_loop)+np.ones(theta0.shape))
                             optimal_theta_res_loop = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_loop,
@@ -1176,12 +1175,11 @@ class KrgBased(SurrogateModel):
                             if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
                                 optimal_theta_res= optimal_theta_res_loop
                                 optimal_theta_res_2 = optimal_theta_res_loop
-                                
                         if self.options["eval_noise"] and not self.options["use_het_noise"] : 
-                            theta0_loop= -12*np.ones(theta0.shape)
+                            theta0_loop= 10**(-12*np.ones(theta0.shape))
                             theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
                             for i in range(5):
-                                theta0_loop=theta0_loop+3*np.ones(theta0.shape)
+                                theta0_loop=10**(np.log10(theta0_loop)+3*np.ones(theta0.shape))
                                 theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
 
                                 optimal_theta_res_loop = optimize.minimize(
@@ -1201,7 +1199,6 @@ class KrgBased(SurrogateModel):
                     if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
                         optimal_theta_res = optimal_theta_res_2
                         
-
 
 
                     optimal_theta = optimal_theta_res["x"]
