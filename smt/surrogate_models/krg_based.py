@@ -211,6 +211,7 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
+        
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -357,6 +358,7 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
+            
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -1050,7 +1052,6 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
@@ -1082,18 +1083,19 @@ class KrgBased(SurrogateModel):
                     )
 
                     for i in range(len(self.noise0)):
+                        v= i + len(self.theta0)
+                        v2=deepcopy(v)
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[i + len(self.theta0)]
+                            lambda log10t: log10t[v2]
                             - noise_bounds[0]
                         )
                         constraints.append(
                             lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.theta0)]
+                            - log10t[v2]
                         )
                         bounds_hyp.append(noise_bounds)
                 try:
-
                     if self.options["hyper_opt"] == "Cobyla":
                         optimal_theta_res = optimize.minimize(
                             minus_reduced_likelihood_function,
@@ -1104,9 +1106,42 @@ class KrgBased(SurrogateModel):
                             method="COBYLA",
                             options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-
                         optimal_theta_res_2 = optimal_theta_res
 
+                        theta0_loop= np.ones(theta0.shape)*-6
+                        for i in range(7):
+                            theta0_loop=theta0_loop+np.ones(theta0.shape)
+                            optimal_theta_res_loop = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            theta0_loop,
+                            constraints=[
+                                {"fun": con, "type": "ineq"} for con in constraints
+                            ],
+                            method="COBYLA",
+                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                        )
+                            if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                optimal_theta_res= optimal_theta_res_loop
+                                optimal_theta_res_2 = optimal_theta_res_loop
+                        if self.options["eval_noise"] and not self.options["use_het_noise"] : 
+                            theta0_loop= -12*np.ones(theta0.shape)
+                            theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
+                            for i in range(5):
+                                theta0_loop=theta0_loop+3*np.ones(theta0.shape)
+                                theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
+
+                                optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                constraints=[
+                                    {"fun": con, "type": "ineq"} for con in constraints
+                                ],
+                                method="COBYLA",
+                                options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
+                            )
+                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                    optimal_theta_res= optimal_theta_res_loop
+                        
                     elif self.options["hyper_opt"] == "TNC":
 
                         optimal_theta_res = optimize.minimize(
@@ -1126,9 +1161,48 @@ class KrgBased(SurrogateModel):
                             bounds=bounds_hyp,
                             options={"maxiter": 100},
                         )
+                        
+                        theta0_loop= np.ones(theta0.shape)*-6
+                        for i in range(7):
+                            theta0_loop=theta0_loop+np.ones(theta0.shape)
+                            optimal_theta_res_loop = optimize.minimize(
+                            minus_reduced_likelihood_function,
+                            theta0_loop,
+                            method="TNC",
+                            jac=grad_minus_reduced_likelihood_function,
+                            bounds=bounds_hyp,
+                            options={"maxiter": 100},
+                        )
+                            if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                optimal_theta_res= optimal_theta_res_loop
+                                optimal_theta_res_2 = optimal_theta_res_loop
+                                
+                        if self.options["eval_noise"] and not self.options["use_het_noise"] : 
+                            theta0_loop= -12*np.ones(theta0.shape)
+                            theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
+                            for i in range(5):
+                                theta0_loop=theta0_loop+3*np.ones(theta0.shape)
+                                theta0_loop[:len(theta0_loop)-len(self.noise0)]=optimal_theta_res["x"][:len(theta0_loop)-len(self.noise0)]
 
+                                optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                method="TNC",
+                                jac=grad_minus_reduced_likelihood_function,
+                                bounds=bounds_hyp,
+                                options={"maxiter": 100},
+                            )
+                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                    optimal_theta_res= optimal_theta_res_loop
+                                    optimal_theta_res_2 = optimal_theta_res_loop
+                        
+                        
+                        
                     if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
                         optimal_theta_res = optimal_theta_res_2
+                        
+
+
 
                     optimal_theta = optimal_theta_res["x"]
 
