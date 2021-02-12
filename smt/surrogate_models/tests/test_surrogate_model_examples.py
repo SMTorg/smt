@@ -194,7 +194,7 @@ class Test(unittest.TestCase):
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
-        sm = KRG(theta0=[1e-2])
+        sm = KRG(theta0=[1])
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -242,7 +242,7 @@ class Test(unittest.TestCase):
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
         sm = MixedIntegerSurrogateModel(
-            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1])
         )
         sm.set_training_values(xt, yt)
         sm.train()

@@ -68,6 +68,9 @@ Implementation Note: Mixed variables handling is available for all Kriging model
 Usage
 -----
 
+Example 1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. code-block:: python
 
   import numpy as np
@@ -78,7 +81,7 @@ Usage
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
   
-  sm = KRG(theta0=[1e-2])
+  sm = KRG(theta0=[1])
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -125,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0029924
+     Training - done. Time (sec):  0.0029845
   ___________________________________________________________________________
      
    Evaluation
@@ -153,8 +156,8 @@ Usage
   :scale: 80 %
   :align: center
 
-Usage with mixed variables
---------------------------
+Example 2 with mixed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -174,7 +177,7 @@ Usage with mixed variables
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
   sm = MixedIntegerSurrogateModel(
-      xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+      xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1])
   )
   sm.set_training_values(xt, yt)
   sm.train()
