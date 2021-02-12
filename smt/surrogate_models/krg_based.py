@@ -73,7 +73,7 @@ class KrgBased(SurrogateModel):
             desc="a jitter for numerical stability",
         )
         declare(
-            "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
+            "theta0", [1], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
         # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty), i.e.
         # theta in (0,1e1], is a good choice to avoid overfitting. By standardising

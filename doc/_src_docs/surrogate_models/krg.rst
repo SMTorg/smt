@@ -68,9 +68,6 @@ Implementation Note: Mixed variables handling is available for all Kriging model
 Usage
 -----
 
-Example 1
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 .. code-block:: python
 
   import numpy as np
@@ -128,7 +125,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0029924
   ___________________________________________________________________________
      
    Evaluation
@@ -156,8 +153,8 @@ Example 1
   :scale: 80 %
   :align: center
 
-Example 2 with mixed variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Usage with mixed variables
+--------------------------
 
 .. code-block:: python
 
@@ -269,7 +266,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32', 'gower']
      -  ['str']
      -  Correlation function type
   *  -  nugget
@@ -278,7 +275,7 @@ Options
      -  ['float']
      -  a jitter for numerical stability
   *  -  theta0
-     -  [0.01]
+     -  [1]
      -  None
      -  ['list', 'ndarray']
      -  Initial hyperparameters

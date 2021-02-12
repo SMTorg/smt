@@ -68,13 +68,10 @@ Implementation Note: Mixed variables handling is available for all Kriging model
 Usage
 -----
 
-Example 1
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 .. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_krg , 80
 
-Example 2 with mixed variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Usage with mixed variables
+--------------------------
 
 .. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_mixed_int_krg , 80
 
