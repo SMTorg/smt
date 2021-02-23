@@ -532,7 +532,11 @@ class Test(unittest.TestCase):
         yt = np.atleast_2d(fun(xt)).T
 
         # Build the MGP model
-        sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+        sm = MGP(
+            theta0=[1e-2],
+            print_prediction=False,
+            n_comp=1,
+        )
         sm.set_training_values(xt, yt[:, 0])
         sm.train()
 
