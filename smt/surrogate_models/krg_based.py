@@ -1062,6 +1062,10 @@ class KrgBased(SurrogateModel):
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
+            try:
+                del optimal_theta_res
+            except:
+                pass
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
@@ -1153,7 +1157,6 @@ class KrgBased(SurrogateModel):
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
-
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
