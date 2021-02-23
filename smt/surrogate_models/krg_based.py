@@ -1062,10 +1062,6 @@ class KrgBased(SurrogateModel):
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
-            try:
-                del optimal_theta_res
-            except:
-                pass
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
             while k < stop:
                 # Use specified starting point as first guess
@@ -1094,11 +1090,15 @@ class KrgBased(SurrogateModel):
                     )
 
                     for i in range(len(self.noise0)):
-                        v = i + len(self.theta0)
-                        v2 = deepcopy(v)
                         noise_bounds = np.log10(noise_bounds)
-                        constraints.append(lambda log10t: log10t[v2] - noise_bounds[0])
-                        constraints.append(lambda log10t: noise_bounds[1] - log10t[v2])
+                        constraints.append(
+                            lambda log10t: log10t[i + len(self.theta0)]
+                            - noise_bounds[0]
+                        )
+                        constraints.append(
+                            lambda log10t: noise_bounds[1]
+                            - log10t[i + len(self.theta0)]
+                        )
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
@@ -1108,6 +1108,7 @@ class KrgBased(SurrogateModel):
                 )
                 theta_lhs_loops = sampling(self.options["n_start"])
                 theta_all_loops = np.vstack((theta0, theta0_rand, theta_lhs_loops))
+                optimal_theta_res = {"fun": float("inf")}
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
                         for theta0_loop in theta_all_loops:
@@ -1124,13 +1125,7 @@ class KrgBased(SurrogateModel):
                                     "maxiter": limit,
                                 },
                             )
-                            try:
-                                if (
-                                    optimal_theta_res_loop["fun"]
-                                    < optimal_theta_res["fun"]
-                                ):
-                                    optimal_theta_res = optimal_theta_res_loop
-                            except:
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
@@ -1144,13 +1139,7 @@ class KrgBased(SurrogateModel):
                                 bounds=bounds_hyp,
                                 options={"maxiter": 100},
                             )
-                            try:
-                                if (
-                                    optimal_theta_res_loop["fun"]
-                                    < optimal_theta_res["fun"]
-                                ):
-                                    optimal_theta_res = optimal_theta_res_loop
-                            except:
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
 
                     optimal_theta = optimal_theta_res["x"]
