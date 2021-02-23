@@ -72,4 +72,4 @@ class ArrayOutputTest(SMTestCase):
 if __name__ == "__main__":
 
     xt, yt, sm = setup_sm("QP")
-   # unittest.main()
+# unittest.main()

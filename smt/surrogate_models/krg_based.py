@@ -26,6 +26,7 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
+
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -217,8 +218,7 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
-        
-        
+
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -365,7 +365,7 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
-            
+
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -1090,57 +1090,64 @@ class KrgBased(SurrogateModel):
                     )
 
                     for i in range(len(self.noise0)):
-                        v= i + len(self.theta0)
-                        v2=deepcopy(v)
+                        v = i + len(self.theta0)
+                        v2 = deepcopy(v)
                         noise_bounds = np.log10(noise_bounds)
-                        constraints.append(
-                            lambda log10t: log10t[v2]
-                            - noise_bounds[0]
-                        )
-                        constraints.append(
-                            lambda log10t: noise_bounds[1]
-                            - log10t[v2]
-                        )
+                        constraints.append(lambda log10t: log10t[v2] - noise_bounds[0])
+                        constraints.append(lambda log10t: noise_bounds[1] - log10t[v2])
                         bounds_hyp.append(noise_bounds)
-                theta_limits = np.repeat(np.log10([theta_bounds]),repeats=len(theta0), axis=0)
-                sampling = LHS(xlimits=theta_limits,criterion="maximin",random_state=41)
+                theta_limits = np.repeat(
+                    np.log10([theta_bounds]), repeats=len(theta0), axis=0
+                )
+                sampling = LHS(
+                    xlimits=theta_limits, criterion="maximin", random_state=41
+                )
                 theta_lhs_loops = sampling(self.options["n_start"])
-                theta_all_loops = np.vstack((theta0,theta0_rand,theta_lhs_loops))
+                theta_all_loops = np.vstack((theta0, theta0_rand, theta_lhs_loops))
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
-                        for theta0_loop in  theta_all_loops:
+                        for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_loop,
-                            constraints=[
-                                {"fun": con, "type": "ineq"} for con in constraints
-                            ],
-                            method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        )
-                            try :
-                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
-                                    optimal_theta_res= optimal_theta_res_loop
-                            except :
-                                optimal_theta_res= optimal_theta_res_loop
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                constraints=[
+                                    {"fun": con, "type": "ineq"} for con in constraints
+                                ],
+                                method="COBYLA",
+                                options={
+                                    "rhobeg": _rhobeg,
+                                    "tol": 1e-4,
+                                    "maxiter": limit,
+                                },
+                            )
+                            try:
+                                if (
+                                    optimal_theta_res_loop["fun"]
+                                    < optimal_theta_res["fun"]
+                                ):
+                                    optimal_theta_res = optimal_theta_res_loop
+                            except:
+                                optimal_theta_res = optimal_theta_res_loop
 
-                                    
                     elif self.options["hyper_opt"] == "TNC":
-                        theta_all_loops=10**theta_all_loops
-                        for theta0_loop in  theta_all_loops:
+                        theta_all_loops = 10 ** theta_all_loops
+                        for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_loop,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-                            try :
-                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
-                                    optimal_theta_res= optimal_theta_res_loop
-                            except :
-                                optimal_theta_res= optimal_theta_res_loop
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                method="TNC",
+                                jac=grad_minus_reduced_likelihood_function,
+                                bounds=bounds_hyp,
+                                options={"maxiter": 100},
+                            )
+                            try:
+                                if (
+                                    optimal_theta_res_loop["fun"]
+                                    < optimal_theta_res["fun"]
+                                ):
+                                    optimal_theta_res = optimal_theta_res_loop
+                            except:
+                                optimal_theta_res = optimal_theta_res_loop
 
                     optimal_theta = optimal_theta_res["x"]
 
