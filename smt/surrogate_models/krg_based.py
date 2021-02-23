@@ -119,10 +119,10 @@ class KrgBased(SurrogateModel):
             desc="heteroscedastic noise evaluation flag",
         )
         declare(
-            "n_multistart",
+            "n_start",
             10,
             types=(int),
-            desc="number of multi-starts",
+            desc="number of optimizer runs (multistart method)",
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -1104,23 +1104,11 @@ class KrgBased(SurrogateModel):
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(np.log10([theta_bounds]),repeats=len(theta0), axis=0)
                 sampling = LHS(xlimits=theta_limits,criterion="maximin",random_state=41)
-                theta_all_loops = sampling(self.options["n_multistart"])
-
+                theta_lhs_loops = sampling(self.options["n_start"])
+                theta_all_loops = np.vstack((theta0,theta0_rand,theta_lhs_loops))
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            constraints=[
-                                {"fun": con, "type": "ineq"} for con in constraints
-                            ],
-                            method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        )
-                        optimal_theta_res_2 = optimal_theta_res
-                        
-                        for i in range(self.options["n_multistart"]):
-                            theta0_loop = theta_all_loops[i, :]
+                        for theta0_loop in  theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_loop,
@@ -1130,31 +1118,16 @@ class KrgBased(SurrogateModel):
                             method="COBYLA",
                             options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
                         )
-                            if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                            try :
+                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                    optimal_theta_res= optimal_theta_res_loop
+                            except :
                                 optimal_theta_res= optimal_theta_res_loop
-                                optimal_theta_res_2 = optimal_theta_res_loop
-                                
+
+                                    
                     elif self.options["hyper_opt"] == "TNC":
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-
-                        optimal_theta_res_2 = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_rand,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
                         theta_all_loops=10**theta_all_loops
-                        for i in range(self.options["n_multistart"]):
-                            theta0_loop = theta_all_loops[i, :]
+                        for theta0_loop in  theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                             minus_reduced_likelihood_function,
                             theta0_loop,
@@ -1163,14 +1136,11 @@ class KrgBased(SurrogateModel):
                             bounds=bounds_hyp,
                             options={"maxiter": 100},
                         )
-                            if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                            try :
+                                if optimal_theta_res_loop["fun"]< optimal_theta_res["fun"] : 
+                                    optimal_theta_res= optimal_theta_res_loop
+                            except :
                                 optimal_theta_res= optimal_theta_res_loop
-                                optimal_theta_res_2 = optimal_theta_res_loop
-                        
-                    if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
-                        optimal_theta_res = optimal_theta_res_2
-                        
-
 
                     optimal_theta = optimal_theta_res["x"]
 

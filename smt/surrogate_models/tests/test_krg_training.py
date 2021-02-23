@@ -73,7 +73,7 @@ class Test(SMTestCase):
             x = np.linspace(0, 4, 100)
             y = sm.predict_values(x)
             self.assert_error(
-                np.array(sm.optimal_theta), np.array([1.62795046]), 1e-5, 1e-5
+                np.array(sm.optimal_theta), np.array([1.6]), 1e-1, 1e-1
             )
 
     def test_corr_derivatives(self):

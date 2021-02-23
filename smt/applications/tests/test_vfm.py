@@ -196,8 +196,6 @@ class TestVFM(SMTestCase):
         with Silence():
             yp = M.predict_values(np.atleast_2d(xt[0]))
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
-        print(yp)
-        print(dyp)
         self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=2e-2, rtol=3e-2)
         self.assert_error(
             dyp, np.array([[0.07007729, 3.619421]]), atol=3e-1, rtol=1e-2
