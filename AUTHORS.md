@@ -13,12 +13,13 @@ SMT has been developed thanks to contributions from:
 * Emile Roux <emile.roux@univ-smb.fr>
 * Florent Vergnes <florentv21@gmail.com>
 * Frederick Zahle <frza@dtu.dk>
-* Jasper Bussmaker <jasper.bussemaker@gmail.com>
+* Jasper Bussemaker <jasper.bussemaker@gmail.com>
 * Julien Schueller <schueller@phimeca.com>
 * Lucas Alber <lucasd.alber@gmail.com>
 * Mostafa Meliani <melimostafa@gmail.com>
 * Nina Moëllo <nina.moello@gmail.com>
 * Paul Saves <paul.saves@alumni.enac.fr>
+* Raul Carreira Rufato <raul.rufato@student.isae-supaero.fr>
 * Reino Ruusu <reino.ruusu@semantum.fi>
 * Rémi Vauclin <remi.vauclin@isae-supaero.fr>
 * Rémy Priem <remy.priem@onera.fr>

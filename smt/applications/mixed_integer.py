@@ -253,7 +253,14 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     handling integer (INT) or categorical (ENUM) features
     """
 
-    def __init__(self, xtypes, xlimits, surrogate, input_in_folded_space=True):
+    def __init__(
+        self,
+        xtypes,
+        xlimits,
+        surrogate,
+        input_in_folded_space=True,
+        use_gower_distance=False,
+    ):
         """
         Parameters
         ----------
@@ -265,10 +272,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             instance of a SMT surrogate model
         input_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
+        use_gower_distance: bool
+            whether gower distance is used instead of continuous relaxation (default)
         """
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
+        self._use_gower_distance = use_gower_distance
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -284,12 +294,17 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        if self._input_in_folded_space:
-            xt2 = unfold_with_enum_mask(self._xtypes, xt)
+        if self._use_gower_distance:
+            super().set_training_values(xt, yt)
+            self._surrogate.options["corr"] = "gower"
+            self._surrogate.set_training_values(xt, yt, name)
         else:
-            xt2 = xt
-        super().set_training_values(xt2, yt)
-        self._surrogate.set_training_values(xt2, yt, name)
+            if self._input_in_folded_space:
+                xt2 = unfold_with_enum_mask(self._xtypes, xt)
+            else:
+                xt2 = xt
+            super().set_training_values(xt2, yt)
+            self._surrogate.set_training_values(xt2, yt, name)
 
     def update_training_values(self, yt, name=None):
         super().update_training_values(yt, name)
@@ -300,22 +315,28 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._input_in_folded_space:
-            x2 = unfold_with_enum_mask(self._xtypes, xp)
+        if self._use_gower_distance:
+            return self._surrogate.predict_values(x)
         else:
-            x2 = xp
-        castx = cast_to_discrete_values(self._xtypes, x2)
-        return self._surrogate.predict_values(castx)
+            if self._input_in_folded_space:
+                x2 = unfold_with_enum_mask(self._xtypes, xp)
+            else:
+                x2 = xp
+            castx = cast_to_discrete_values(self._xtypes, x2)
+            return self._surrogate.predict_values(castx)
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._input_in_folded_space:
-            x2 = unfold_with_enum_mask(self._xtypes, xp)
+        if self._use_gower_distance:
+            return self._surrogate.predict_variances(x)
         else:
-            x2 = xp
-        return self._surrogate.predict_variances(
-            cast_to_discrete_values(self._xtypes, x2)
-        )
+            if self._input_in_folded_space:
+                x2 = unfold_with_enum_mask(self._xtypes, xp)
+            else:
+                x2 = xp
+            return self._surrogate.predict_variances(
+                cast_to_discrete_values(self._xtypes, x2)
+            )
 
     def _predict_values(self, x):
         pass

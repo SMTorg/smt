@@ -64,14 +64,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
-        xlimits = self.options["xlimits"]
-        nx = xlimits.shape[0]
-
-        x = self._compute(nt)
-        for kx in range(nx):
-            x[:, kx] = xlimits[kx, 0] + x[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
-
-        return x
+        return self._compute(nt)
 
     @abstractmethod
     def _compute(self, nt: int) -> np.ndarray:
@@ -91,3 +84,70 @@ class SamplingMethod(object, metaclass=ABCMeta):
             The sampling locations in the input space.
         """
         raise Exception("This sampling method has not been implemented correctly")
+
+
+class ScaledSamplingMethod(SamplingMethod):
+    """This class describes an sample method which generates samples in the unit hypercube.
+
+    The __call__ method does scale the generated samples accordingly to the defined xlimits.
+    """
+
+    def __call__(self, nt: int) -> np.ndarray:
+        """
+        Compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
+
+        Arguments
+        ---------
+        nt : int
+            Number of points requested.
+
+        Returns
+        -------
+        ndarray[nt, nx]
+            The sampling locations in the input space.
+        """
+        return _scale_to_xlimits(self._compute(nt), self.options["xlimits"])
+
+    @abstractmethod
+    def _compute(self, nt: int) -> np.ndarray:
+        """
+        Implemented by sampling methods to compute the requested number of sampling points.
+
+        The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
+
+        Arguments
+        ---------
+        nt : int
+            Number of points requested.
+
+        Returns
+        -------
+        ndarray[nt, nx]
+            The sampling locations in the unit hypercube.
+        """
+        raise Exception("This sampling method has not been implemented correctly")
+
+
+def _scale_to_xlimits(samples: np.ndarray, xlimits: np.ndarray) -> np.ndarray:
+    """Scales the samples from the unit hypercube to the specified limits.
+
+    Parameters
+    ----------
+    samples : np.ndarray
+        The samples with coordinates in [0,1]
+    xlimits : np.ndarray
+        The xlimits
+
+    Returns
+    -------
+    np.ndarray
+        The scaled samples.
+    """
+    nx = xlimits.shape[0]
+    for kx in range(nx):
+        samples[:, kx] = xlimits[kx, 0] + samples[:, kx] * (
+            xlimits[kx, 1] - xlimits[kx, 0]
+        )
+    return samples

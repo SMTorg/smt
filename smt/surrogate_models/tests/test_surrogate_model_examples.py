@@ -205,26 +205,23 @@ class Test(unittest.TestCase):
         s2 = sm.predict_variances(x)
         # derivative according to the first variable
         dydx = sm.predict_derivatives(xt, 0)
-        fig, axs = plt.subplots(2)
-
-        axs[0].plot(xt, yt, "o")
-        axs[0].plot(x, y)
-        axs[0].set_xlabel("x")
-        axs[0].set_ylabel("y")
-        axs[0].legend(["Training data", "Prediction"])
+        fig, axs = plt.subplots(1)
 
         # add a plot with variance
-        axs[1].plot(xt, yt, "o")
-        axs[1].plot(x, y)
-        axs[1].fill_between(
+        axs.plot(xt, yt, "o")
+        axs.plot(x, y)
+        axs.fill_between(
             np.ravel(x),
             np.ravel(y - 3 * np.sqrt(s2)),
             np.ravel(y + 3 * np.sqrt(s2)),
             color="lightgrey",
         )
-        axs[1].set_xlabel("x")
-        axs[1].set_ylabel("y")
-        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        axs.set_xlabel("x")
+        axs.set_ylabel("y")
+        axs.legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="lower right",
+        )
 
         plt.show()
 
@@ -256,27 +253,63 @@ class Test(unittest.TestCase):
         # estimated variance
         s2 = sm.predict_variances(x)
 
-        fig, axs = plt.subplots(2)
-
-        axs[0].plot(xt, yt, "o")
-        axs[0].plot(x, y)
-        axs[0].set_xlabel("x")
-        axs[0].set_ylabel("y")
-        axs[0].legend(["Training data", "Prediction"])
-
-        # add a plot with variance
-        axs[1].plot(xt, yt, "o")
-        axs[1].plot(x, y)
-        axs[1].fill_between(
+        fig, axs = plt.subplots(1)
+        axs.plot(xt, yt, "o")
+        axs.plot(x, y)
+        axs.fill_between(
             np.ravel(x),
             np.ravel(y - 3 * np.sqrt(s2)),
             np.ravel(y + 3 * np.sqrt(s2)),
             color="lightgrey",
         )
-        axs[1].set_xlabel("x")
-        axs[1].set_ylabel("y")
-        axs[1].legend(["Training data", "Prediction", "Confidence Interval 99%"])
+        axs.set_xlabel("x")
+        axs.set_ylabel("y")
+        axs.legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="lower right",
+        )
 
+        plt.show()
+
+    def test_mixed_gower_krg(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.surrogate_models import KRG
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import ENUM
+
+        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # FLOAT means x1 continuous
+        # INT means x2 integer
+        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+
+        xt = np.linspace(1.0, 5.0, 5)
+        x_train = np.array(["%.2f" % i for i in xt], dtype=object)
+        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+
+        sm = MixedIntegerSurrogateModel(
+            use_gower_distance=True,
+            xtypes=[(ENUM, 5)],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2]),
+        )
+        sm.set_training_values(x_train, yt)
+        sm.train()
+
+        num = 101
+        x = np.linspace(0, 5, num)
+        x_pred = np.array(["%.2f" % i for i in x], dtype=object)
+
+        y = sm.predict_values(x_pred)
+
+        plt.plot(xt, yt, "o")
+        plt.plot(x, y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(["Training data", "Prediction"])
         plt.show()
 
     def test_kpls(self):
