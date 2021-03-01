@@ -24,6 +24,7 @@ from smt.utils.kriging_utils import (
     gower_matrix,
 )
 from scipy.stats import multivariate_normal as m_norm
+from smt.sampling_methods import LHS
 
 
 class KrgBased(SurrogateModel):
@@ -118,6 +119,12 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
+        declare(
+            "n_start",
+            10,
+            types=(int),
+            desc="number of optimizer runs (multistart method)",
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
@@ -211,6 +218,7 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
+
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -357,6 +365,7 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
+
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -1050,7 +1059,6 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
@@ -1092,49 +1100,52 @@ class KrgBased(SurrogateModel):
                             - log10t[i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
+                theta_limits = np.repeat(
+                    np.log10([theta_bounds]), repeats=len(theta0), axis=0
+                )
+                sampling = LHS(
+                    xlimits=theta_limits, criterion="maximin", random_state=41
+                )
+                theta_lhs_loops = sampling(self.options["n_start"])
+                theta_all_loops = np.vstack((theta0, theta0_rand, theta_lhs_loops))
+                optimal_theta_res = {"fun": float("inf")}
                 try:
-
                     if self.options["hyper_opt"] == "Cobyla":
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            constraints=[
-                                {"fun": con, "type": "ineq"} for con in constraints
-                            ],
-                            method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        )
-
-                        optimal_theta_res_2 = optimal_theta_res
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                constraints=[
+                                    {"fun": con, "type": "ineq"} for con in constraints
+                                ],
+                                method="COBYLA",
+                                options={
+                                    "rhobeg": _rhobeg,
+                                    "tol": 1e-4,
+                                    "maxiter": limit,
+                                },
+                            )
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
-
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-
-                        optimal_theta_res_2 = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_rand,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-
-                    if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
-                        optimal_theta_res = optimal_theta_res_2
+                        theta_all_loops = 10 ** theta_all_loops
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                method="TNC",
+                                jac=grad_minus_reduced_likelihood_function,
+                                bounds=bounds_hyp,
+                                options={"maxiter": 100},
+                            )
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
-
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )

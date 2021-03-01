@@ -41,7 +41,7 @@ class ArrayOutputTest(SMTestCase):
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
 
         self.assert_error(
-            d0, np.array([[0.06874097, 5.26604232]]), atol=0.55, rtol=0.15
+            d0, np.array([[0.06874097, 4.366292277996716]]), atol=0.55, rtol=0.15
         )
 
     def test_RBF(self):
@@ -72,4 +72,4 @@ class ArrayOutputTest(SMTestCase):
 if __name__ == "__main__":
 
     xt, yt, sm = setup_sm("QP")
-    # unittest.main()
+# unittest.main()

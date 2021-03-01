@@ -147,7 +147,9 @@ class MOE(SurrogateBasedApplication):
             "Empty list corresponds to all surrogates allowed.",
         )
         declare(
-            "deny", [], desc="Names of forbidden experts",
+            "deny",
+            [],
+            desc="Names of forbidden experts",
         )
 
         self.x = None
@@ -171,7 +173,7 @@ class MOE(SurrogateBasedApplication):
     @property
     def enabled_experts(self):
         """
-        Returns the names of enabled experts after taking into account MOE options 
+        Returns the names of enabled experts after taking into account MOE options
         """
         self._enabled_expert_types = self._get_enabled_expert_types()
         return list(self._enabled_expert_types.keys())
