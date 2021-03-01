@@ -121,7 +121,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1600001
+     Training - done. Time (sec):  0.2450004
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -172,7 +172,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32', 'gower']
      -  ['str']
      -  Correlation function type
   *  -  nugget

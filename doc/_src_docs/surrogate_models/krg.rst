@@ -57,6 +57,9 @@ For integer, we add a continuous dimension with the same bounds and then we roun
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
 then we round in the prediction to the output dimension giving the greatest continuous prediction.
 
+A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
+See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
+
 More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
 
 Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
@@ -128,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0095000
   ___________________________________________________________________________
      
    Evaluation
@@ -147,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001000
      
   
 .. figure:: krg_Test_test_krg.png
@@ -215,9 +218,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000010
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -269,7 +272,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32', 'gower']
      -  ['str']
      -  Correlation function type
   *  -  nugget
