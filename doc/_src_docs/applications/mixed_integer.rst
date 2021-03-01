@@ -213,9 +213,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005002
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png

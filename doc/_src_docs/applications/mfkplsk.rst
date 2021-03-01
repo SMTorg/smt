@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0240002
+     Training - done. Time (sec):  0.1989996
   ___________________________________________________________________________
      
    Evaluation
@@ -116,7 +116,7 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0005002
      
      Prediction time/pt. (sec) :  0.0000050
      
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009999
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000099
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
@@ -224,6 +224,11 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

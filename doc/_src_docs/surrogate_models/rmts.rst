@@ -145,9 +145,9 @@ Usage (RMTB)
            Computing dof2coeff ...
            Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0005000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0014999
+           Computing energy terms - done. Time (sec):  0.0009999
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0005002
         Pre-computing matrices - done. Time (sec):  0.0020001
@@ -156,15 +156,15 @@ Usage (RMTB)
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.549745600e+00 2.530000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.339039325e-15 4.464522395e-16
-              Solving for output 0 - done. Time (sec):  0.0040002
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0040002
+              Solving for output 0 - done. Time (sec):  0.0034997
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0034997
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.533514592e-15 4.464522395e-16
-              Solving for output 0 - done. Time (sec):  0.0005000
-           Solving nonlinear problem (n=20) - done. Time (sec):  0.0005000
-        Solving for degrees of freedom - done. Time (sec):  0.0045002
-     Training - done. Time (sec):  0.0070002
+              Solving for output 0 - done. Time (sec):  0.0005002
+           Solving nonlinear problem (n=20) - done. Time (sec):  0.0005002
+        Solving for degrees of freedom - done. Time (sec):  0.0039999
+     Training - done. Time (sec):  0.0065000
   ___________________________________________________________________________
      
    Evaluation
@@ -234,11 +234,11 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0005000
+           Computing dof2coeff - done. Time (sec):  0.0009999
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0005002
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0014999
+           Computing energy terms - done. Time (sec):  0.0015001
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0005000
         Pre-computing matrices - done. Time (sec):  0.0030000
@@ -247,15 +247,15 @@ Usage (RMTC)
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.249444376e+00 2.530000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.031017841e-15 4.346868680e-16
-              Solving for output 0 - done. Time (sec):  0.0049999
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0049999
+              Solving for output 0 - done. Time (sec):  0.0045002
+           Solving initial startup problem (n=42) - done. Time (sec):  0.0045002
            Solving nonlinear problem (n=42) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.956393318e-15 4.346868680e-16
-              Solving for output 0 - done. Time (sec):  0.0000000
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0049999
-     Training - done. Time (sec):  0.0084999
+              Solving for output 0 - done. Time (sec):  0.0005000
+           Solving nonlinear problem (n=42) - done. Time (sec):  0.0005000
+        Solving for degrees of freedom - done. Time (sec):  0.0050001
+     Training - done. Time (sec):  0.0085001
   ___________________________________________________________________________
      
    Evaluation
@@ -263,9 +263,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005000
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: rmts_Test_test_rmtc.png

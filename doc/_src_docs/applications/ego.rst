@@ -526,7 +526,7 @@ Usage with mixed variable
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
   Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
-  Minimum in typed x=[-4.9999999999999964, 'blue', 'square', 0]
+  Minimum in typed x=[-4.999999999987487, 'blue', 'square', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -582,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000000128CF250>
+     -  <smt.applications.ego.Evaluator object at 0x0000000012895850>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -617,7 +617,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000000128CF280>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000000012895820>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

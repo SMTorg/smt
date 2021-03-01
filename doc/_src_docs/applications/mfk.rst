@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0089998
+     Training - done. Time (sec):  0.0910001
   ___________________________________________________________________________
      
    Evaluation
@@ -219,6 +219,11 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

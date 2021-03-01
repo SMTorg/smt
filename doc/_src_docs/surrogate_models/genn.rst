@@ -107,27 +107,27 @@ Usage
    Training
      
      Training ...
-  epoch = 0, mini-batch = 0, avg cost = 22.881
-  epoch = 1, mini-batch = 0, avg cost =  7.640
-  epoch = 2, mini-batch = 0, avg cost =  7.474
-  epoch = 3, mini-batch = 0, avg cost =  7.379
-  epoch = 4, mini-batch = 0, avg cost =  4.138
-  epoch = 5, mini-batch = 0, avg cost =  0.679
-  epoch = 6, mini-batch = 0, avg cost =  0.644
-  epoch = 7, mini-batch = 0, avg cost =  0.638
-  epoch = 8, mini-batch = 0, avg cost =  0.635
-  epoch = 9, mini-batch = 0, avg cost =  0.632
-  epoch = 10, mini-batch = 0, avg cost =  0.630
-  epoch = 11, mini-batch = 0, avg cost =  0.629
-  epoch = 12, mini-batch = 0, avg cost =  0.628
-  epoch = 13, mini-batch = 0, avg cost =  0.627
+  epoch = 0, mini-batch = 0, avg cost = 22.980
+  epoch = 1, mini-batch = 0, avg cost =  7.601
+  epoch = 2, mini-batch = 0, avg cost =  7.446
+  epoch = 3, mini-batch = 0, avg cost =  7.386
+  epoch = 4, mini-batch = 0, avg cost =  4.463
+  epoch = 5, mini-batch = 0, avg cost =  0.684
+  epoch = 6, mini-batch = 0, avg cost =  0.645
+  epoch = 7, mini-batch = 0, avg cost =  0.641
+  epoch = 8, mini-batch = 0, avg cost =  0.637
+  epoch = 9, mini-batch = 0, avg cost =  0.634
+  epoch = 10, mini-batch = 0, avg cost =  0.632
+  epoch = 11, mini-batch = 0, avg cost =  0.630
+  epoch = 12, mini-batch = 0, avg cost =  0.629
+  epoch = 13, mini-batch = 0, avg cost =  0.628
   epoch = 14, mini-batch = 0, avg cost =  0.627
-  epoch = 15, mini-batch = 0, avg cost =  0.626
-  epoch = 16, mini-batch = 0, avg cost =  0.626
-  epoch = 17, mini-batch = 0, avg cost =  0.626
+  epoch = 15, mini-batch = 0, avg cost =  0.627
+  epoch = 16, mini-batch = 0, avg cost =  0.627
+  epoch = 17, mini-batch = 0, avg cost =  0.627
   epoch = 18, mini-batch = 0, avg cost =  0.626
   epoch = 19, mini-batch = 0, avg cost =  0.626
-     Training - done. Time (sec):  5.3639998
+     Training - done. Time (sec):  5.1614997
   ___________________________________________________________________________
      
    Evaluation
