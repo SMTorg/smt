@@ -34,7 +34,7 @@ from smt.utils.kriging_utils import (
 
 
 class NestedLHS(object):
-    def __init__(self, nlevel, xlimits):
+    def __init__(self, nlevel, xlimits, random_state=None):
         """
         Constructor where values of options can be passed in.
 
@@ -45,10 +45,13 @@ class NestedLHS(object):
 
         xlimits : ndarray
             The interval of the domain in each dimension with shape (nx, 2)
+            
+        random_state : Numpy RandomState object or seed number which controls random draws
 
         """
         self.nlevel = nlevel
         self.xlimits = xlimits
+        self.random_state = random_state
 
     def __call__(self, nb_samples_hifi):
         """
@@ -79,11 +82,11 @@ class NestedLHS(object):
             raise ValueError("nt must be a list of decreasing integers")
 
         doe = []
-        p0 = LHS(xlimits=self.xlimits, criterion="ese")
+        p0 = LHS(xlimits=self.xlimits, criterion="ese", random_state=self.random_state)
         doe.append(p0(nt[0]))
 
         for i in range(1, self.nlevel):
-            p = LHS(xlimits=self.xlimits, criterion="ese")
+            p = LHS(xlimits=self.xlimits, criterion="ese", random_state=self.random_state)
             doe.append(p(nt[i]))
 
         for i in range(1, self.nlevel)[::-1]:
