@@ -87,7 +87,7 @@ class SamplingMethod(object, metaclass=ABCMeta):
 
 
 class ScaledSamplingMethod(SamplingMethod):
-    """ This class describes an sample method which generates samples in the unit hypercube.
+    """This class describes an sample method which generates samples in the unit hypercube.
 
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
     """
@@ -131,7 +131,7 @@ class ScaledSamplingMethod(SamplingMethod):
 
 
 def _scale_to_xlimits(samples: np.ndarray, xlimits: np.ndarray) -> np.ndarray:
-    """ Scales the samples from the unit hypercube to the specified limits.
+    """Scales the samples from the unit hypercube to the specified limits.
 
     Parameters
     ----------
@@ -147,5 +147,7 @@ def _scale_to_xlimits(samples: np.ndarray, xlimits: np.ndarray) -> np.ndarray:
     """
     nx = xlimits.shape[0]
     for kx in range(nx):
-        samples[:, kx] = xlimits[kx, 0] + samples[:, kx] * (xlimits[kx, 1] - xlimits[kx, 0])
+        samples[:, kx] = xlimits[kx, 0] + samples[:, kx] * (
+            xlimits[kx, 1] - xlimits[kx, 0]
+        )
     return samples
