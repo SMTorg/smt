@@ -164,7 +164,6 @@ def gower_distances(X, y=None):
             if not np.issubdtype(type(X[0, col]), np.number):
                 cat_features[col] = True
 
-    # print(cat_features)
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -195,7 +194,11 @@ def gower_distances(X, y=None):
         num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
 
     # This is to normalize the numeric values between 0 and 1.
-    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+    
+    try :
+        Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+    except: 
+        pass
     Z_cat = Z[:, cat_features]
 
     X_cat = Z_cat[
@@ -223,9 +226,12 @@ def gower_distances(X, y=None):
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
-        D_num[ll_0:ll_1] = np.divide(
+        try : 
+            D_num[ll_0:ll_1] = np.divide(
             abs_delta, num_ranges, out=np.zeros_like(abs_delta), where=num_ranges != 0
         )
+        except: 
+            pass 
 
     n_samples, n_features = X_cat.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
@@ -314,7 +320,6 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
     else:
         cat_features = np.array(cat_features)
 
-    # print(cat_features)
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -351,8 +356,6 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
     if weight is None:
         weight = np.ones(Z.shape[1])
 
-    # print(weight)
-
     weight_cat = weight[cat_features]
     weight_num = weight[np.logical_not(cat_features)]
 
@@ -373,7 +376,6 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
         y_index,
     ]
 
-    # print(X_cat,X_num,Y_cat,Y_num)
 
     for i in range(x_n_rows):
         j_start = i
@@ -392,7 +394,6 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
             num_ranges,
             num_max,
         )
-        # print(res)
         out[i, j_start:] = res
         if x_n_rows == y_n_rows:
             out[i:, j_start] = res

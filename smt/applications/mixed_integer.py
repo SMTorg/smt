@@ -348,7 +348,7 @@ class MixedIntegerContext(object):
     to handle integer and categorical variables consistently.
     """
 
-    def __init__(self, xtypes, xlimits, work_in_folded_space=True):
+    def __init__(self, xtypes, xlimits, work_in_folded_space=True,use_gower_distance=False):
         """
         Parameters
         ----------
@@ -358,6 +358,8 @@ class MixedIntegerContext(object):
             bounds of x features
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
+        use_gower_distance: bool
+            whether gower distance is used instead of continuous relaxation (default)
         """
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -366,7 +368,7 @@ class MixedIntegerContext(object):
             self._xtypes, xlimits
         )
         self._work_in_folded_space = work_in_folded_space
-
+        self._use_gower_distance=use_gower_distance
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
@@ -385,6 +387,7 @@ class MixedIntegerContext(object):
             self._xlimits,
             surrogate,
             input_in_folded_space=self._work_in_folded_space,
+            use_gower_distance=self._use_gower_distance,
         )
 
     def get_unfolded_xlimits(self):

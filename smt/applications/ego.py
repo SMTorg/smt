@@ -104,6 +104,7 @@ class EGO(SurrogateBasedApplication):
             types=bool,
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
+        declare("use_gower_distance",False, types=bool, desc="Whether gower distance is used instead of continuous relaxation (default)")
         declare(
             "surrogate",
             KRG(print_global=False),
@@ -175,7 +176,7 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            if self.mixint:
+            if self.mixint :
                 x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
@@ -185,7 +186,7 @@ class EGO(SurrogateBasedApplication):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        if self.mixint:
+        if self.mixint :
             x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
@@ -258,9 +259,11 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
+            self.use_gower_distance=self.options["use_gower_distance"]
             self.mixint = MixedIntegerContext(
-                xtypes, self.xlimits, work_in_folded_space=False
-            )
+                xtypes, self.xlimits, work_in_folded_space=False, use_gower_distance=self.use_gower_distance
+            )   
+            
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS, criterion="ese", random_state=self.options["random_state"]
@@ -283,7 +286,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            if self.mixint:
+            if self.mixint :
                 x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
