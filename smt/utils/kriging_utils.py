@@ -194,11 +194,8 @@ def gower_distances(X, y=None):
         num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
 
     # This is to normalize the numeric values between 0 and 1.
-    
-    try :
-        Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
-    except: 
-        pass
+    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)   
+
     Z_cat = Z[:, cat_features]
 
     X_cat = Z_cat[
