@@ -32,6 +32,7 @@ from smt.applications.mixed_integer import (
     INT,
 )
 from smt.sampling_methods import LHS
+
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
     def run(self, fun, x):
@@ -266,7 +267,7 @@ class TestEGO(SMTestCase):
     @staticmethod
     def function_test_mixed_integer(X):
         import numpy as np
-    
+
         # float
         x1 = X[:, 0]
         #  enum 1
@@ -280,19 +281,24 @@ class TestEGO(SMTestCase):
         x6 = c2 == 1
         # int
         i = X[:, 3]
-    
+
         y = (
             (x2 + 2 * x3 + 3 * x4) * x5 * x1
             + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
             + i
         )
         return y
+
     def test_ego_mixed_integer(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
-        xlimits = np.array([[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]])
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
         n_doe = 2
-        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese",random_state=42)
+        sampling = MixedIntegerSamplingMethod(
+            xtypes, xlimits, LHS, criterion="ese", random_state=42
+        )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         sm = KRG(print_global=False)
@@ -315,9 +321,13 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
-        xlimits = np.array([[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]])
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
         n_doe = 2
-        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese",random_state=42)
+        sampling = MixedIntegerSamplingMethod(
+            xtypes, xlimits, LHS, criterion="ese", random_state=42
+        )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'UCB'
         sm = KRG(print_global=False)
@@ -332,7 +342,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            use_gower_distance= True,
+            use_gower_distance=True,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 

@@ -348,7 +348,9 @@ class MixedIntegerContext(object):
     to handle integer and categorical variables consistently.
     """
 
-    def __init__(self, xtypes, xlimits, work_in_folded_space=True,use_gower_distance=False):
+    def __init__(
+        self, xtypes, xlimits, work_in_folded_space=True, use_gower_distance=False
+    ):
         """
         Parameters
         ----------
@@ -368,7 +370,8 @@ class MixedIntegerContext(object):
             self._xtypes, xlimits
         )
         self._work_in_folded_space = work_in_folded_space
-        self._use_gower_distance=use_gower_distance
+        self._use_gower_distance = use_gower_distance
+
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.

@@ -45,7 +45,7 @@ class NestedLHS(object):
 
         xlimits : ndarray
             The interval of the domain in each dimension with shape (nx, 2)
-            
+
         random_state : Numpy RandomState object or seed number which controls random draws
 
         """
@@ -86,7 +86,9 @@ class NestedLHS(object):
         doe.append(p0(nt[0]))
 
         for i in range(1, self.nlevel):
-            p = LHS(xlimits=self.xlimits, criterion="ese", random_state=self.random_state)
+            p = LHS(
+                xlimits=self.xlimits, criterion="ese", random_state=self.random_state
+            )
             doe.append(p(nt[i]))
 
         for i in range(1, self.nlevel)[::-1]:
