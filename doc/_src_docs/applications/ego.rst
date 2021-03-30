@@ -582,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000000012895850>
+     -  <smt.applications.ego.Evaluator object at 0x0000029945045190>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,8 +616,13 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
+  *  -  use_gower_distance
+     -  False
+     -  None
+     -  ['bool']
+     -  Whether gower distance is used instead of continuous relaxation (default)
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000000012895820>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000029945023220>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

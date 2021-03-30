@@ -28,6 +28,21 @@ of possible values (levels).
 For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
 a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
 
+
+Mixed-Integer Surrogate with Gower Distance
+===========================================
+
+Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
+When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
+
+For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`
+
+Example of mixed-integer Gower Distance model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_gower, 80	
+
+
 Mixed integer sampling method
 -----------------------------
 
