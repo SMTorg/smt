@@ -4,3 +4,4 @@ from .mfk import MFK, NestedLHS
 from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .ego import EGO, Evaluator
+from .MOO import MOO
