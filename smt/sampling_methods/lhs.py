@@ -121,7 +121,7 @@ class LHS(ScaledSamplingMethod):
         p : integer, optional
         Power used in the calculation of the PhiP criterion. Default to 10
 
-        return_hist : boolean, optional
+        return_hist : subspace_boolean, optional
         If set to True, the function returns information about the behaviour of
         temperature, PhiP criterion and probability of acceptance during the
         process of optimization. Default to False
@@ -323,3 +323,69 @@ class LHS(ScaledSamplingMethod):
             return_hist=True,
         )
         return P
+    
+    def expand_lhs(self, x, xlimits, points, method = "basic"):
+        '''
+        Given a Latin Hypercube Sample (LHS) "x", returns an expanded LHS 
+        by adding "points" new points.
+        
+        Parameters
+        ----------
+        x : array
+            Initial LHS.
+        xlimits : array
+            Limits for each dimension of the initial sample.
+        points : integer
+            Number of points that are to be added to the expanded LHS.
+        method : str, optional
+            Methodoly for the construction of the expanded LHS. 
+            The default is "basic".
+
+        Returns
+        -------
+        x_new : array
+            Expanded LHS.
+
+        '''        
+        
+        if method == "basic":
+            new_num = len(x) + points
+            #Evenly spaced intervals for each dimension
+            intervals = []
+            for i in range(len(xlimits)):
+                intervals.append(np.linspace(xlimits[i][0],xlimits[i][1],new_num+1))
+            
+            subspace_limits = [[]] * len(xlimits)
+            subspace_bool = []
+            for i in range(len(xlimits)):
+                subspace_limits[i] = []
+                
+                subspace_bool.append([[intervals[i][j]<x[kk][i]<intervals[i][j+1] 
+                for kk in range(len(x))] for j in range(len(intervals[i])-1)])
+                
+                [subspace_limits[i].append([intervals[i][ii],intervals[i][ii+1]]) 
+                 for ii in range(len(subspace_bool[i])) if not True in subspace_bool[i][ii]] 
+            
+            sampling_new = LHS(xlimits= np.array([[0.0, 1.0]]*len(xlimits)))
+            x_subspace = sampling_new(points)
+            
+            columnIndex = 0
+            sortedArr = x_subspace[x_subspace[:,columnIndex].argsort()]
+            
+            for j in range(len(xlimits)):           
+                for i in range(len(sortedArr)):              
+                    sortedArr[i, j] = (subspace_limits[j][i][0] +
+                    sortedArr[i, j] * (subspace_limits[j][i][1] -
+                    subspace_limits[j][i][0]))
+             
+            H = np.zeros_like(sortedArr)
+            for j in range(len(xlimits)):
+                order = np.random.permutation(len(sortedArr))
+                H[:, j] = sortedArr[order, j]
+                
+            x_new = np.concatenate((x, H), axis=0)
+        
+            
+        return x_new 
+           
+
