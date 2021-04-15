@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
     def test_expand_lhs(self):
         import numpy as np
         num = 100
-        new_list = np.linspace(1,10,10)*num
+        new_list = np.linspace(1,5,5)*num
         
         for i in range(len(new_list)):
             xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [0.0, 3.0], [1.0, 5.0]])
