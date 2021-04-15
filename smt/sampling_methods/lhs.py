@@ -346,15 +346,24 @@ class LHS(ScaledSamplingMethod):
         x_new : array
             Expanded LHS.
 
-        '''        
+        '''      
         
+        new_num = len(x) + points
+        if new_num % len(x) !=0 :
+           print('WARNING: The added number of points is not a '
+           'multiple of the initial number of points.' 
+            'Thus, it cannot be ensured that the output is an LHS.')
+         
+        #For future functionalities 
         if method == "basic":
-            new_num = len(x) + points
-            #Evenly spaced intervals for each dimension
+            
+            #Evenly spaced intervals with the final dimension of the LHS
             intervals = []
             for i in range(len(xlimits)):
                 intervals.append(np.linspace(xlimits[i][0],xlimits[i][1],new_num+1))
             
+            #Creates a subspace with the rows and columns that have no points 
+            #in the new space
             subspace_limits = [[]] * len(xlimits)
             subspace_bool = []
             for i in range(len(xlimits)):
@@ -366,6 +375,8 @@ class LHS(ScaledSamplingMethod):
                 [subspace_limits[i].append([intervals[i][ii],intervals[i][ii+1]]) 
                  for ii in range(len(subspace_bool[i])) if not True in subspace_bool[i][ii]] 
             
+            
+            #Sampling of the new subspace 
             sampling_new = LHS(xlimits= np.array([[0.0, 1.0]]*len(xlimits)))
             x_subspace = sampling_new(points)
             
