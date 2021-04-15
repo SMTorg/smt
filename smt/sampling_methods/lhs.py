@@ -121,7 +121,7 @@ class LHS(ScaledSamplingMethod):
         p : integer, optional
         Power used in the calculation of the PhiP criterion. Default to 10
 
-        return_hist : subspace_boolean, optional
+        return_hist : boolean, optional
         If set to True, the function returns information about the behaviour of
         temperature, PhiP criterion and probability of acceptance during the
         process of optimization. Default to False
