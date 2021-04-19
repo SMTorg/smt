@@ -109,7 +109,7 @@ def cross_distances(X):
 
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
 
@@ -120,7 +120,7 @@ def cross_distances(X):
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
 
-    return D, ij.astype(np.int)
+    return D, ij.astype(np.int32)
 
 
 def gower_distances(X, y=None):
@@ -686,10 +686,10 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
                     * fact_2
                 )
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    (fact_4 - fact_1 ** 2) / (fact_2) ** 2
-                ) * M52[i * nb_limit : (i + 1) * nb_limit, 0] + r[
-                    i * nb_limit : (i + 1) * nb_limit, 0
-                ]
+                    ((fact_4 - fact_1 ** 2) / (fact_2) ** 2)
+                    * M52[i * nb_limit : (i + 1) * nb_limit, 0]
+                    + r[i * nb_limit : (i + 1) * nb_limit, 0]
+                )
 
             i += 1
     if derivative_params is not None:
@@ -826,13 +826,15 @@ def matern32(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             )
             if grad_ind == hess_ind:
                 fact_3 = (
-                    3.0 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0
-                ) / (
-                    1.0
-                    + np.sqrt(3.0)
-                    * theta_r[0, hess_ind]
-                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
-                ) ** 2.0
+                    (3.0 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind] ** 2.0)
+                    / (
+                        1.0
+                        + np.sqrt(3.0)
+                        * theta_r[0, hess_ind]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                    )
+                    ** 2.0
+                )
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
                     r[i * nb_limit : (i + 1) * nb_limit, 0]
                     - fact_3 * M32[i * nb_limit : (i + 1) * nb_limit, 0]
@@ -1059,8 +1061,14 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
                 - pts[None][2][1][i, 0] * delta_x * (xlimits[1, 1] - xlimits[1, 0])
             )
 
-        _pls.fit(_X.copy(), _y.copy())
-        coeff_pls[i, :, :] = _pls.x_rotations_
+        # As of sklearn 0.24.1 a zeroed _y raises an exception while sklearn 0.23 returns zeroed x_rotations
+        # For now the try/except below is a workaround to restore the 0.23 behaviour
+        try:
+            _pls.fit(_X.copy(), _y.copy())
+            coeff_pls[i, :, :] = _pls.x_rotations_
+        except StopIteration:
+            coeff_pls[i, :, :] = 0
+
         # Add additional points
         if extra_points != 0:
             max_coeff = np.argsort(np.abs(coeff_pls[i, :, 0]))[-extra_points:]
