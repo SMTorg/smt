@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install numpy scipy cython scikit-learn==0.23.2 pytest
+        pip install numpy scipy cython scikit-learn pytest
         pip install git+https://github.com/hwangjt/sphinx_auto_embed.git
         pip install -e .
 
