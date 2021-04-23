@@ -52,7 +52,7 @@ All surrogate modeling methods implement the following API, though some of the f
 How to save and load trained surrogate models
 ---------------------------------------------
 
-As of now, the SurrogateModel API does not contain any save/load interface (hopefully one day it will). 
+The SurrogateModel API does not contain any save/load interface. 
 Therefore the user has to handle these operations by him/herself. Below some tips to implement save and load.
 
 For models written in pure Python
