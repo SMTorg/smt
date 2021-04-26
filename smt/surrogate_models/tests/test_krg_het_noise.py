@@ -23,7 +23,7 @@ class Test(SMTestCase):
         xt_full = np.array(3 * xt.tolist())
         yt_full = np.concatenate((yt, yt + 0.2 * yt_std_rand, yt - 0.2 * yt_std_rand))
 
-        sm = KRG(theta0=[1.0], eval_noise=True, use_het_noise=True)
+        sm = KRG(theta0=[1.0], eval_noise=True, use_het_noise=True, n_start=1)
         sm.set_training_values(xt_full, yt_full)
         sm.train()
 

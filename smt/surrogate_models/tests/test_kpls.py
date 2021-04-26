@@ -39,6 +39,17 @@ class TestKPLS(unittest.TestCase):
         var = kriging.predict_variances(x)
         self.assertEqual(y.shape[0], var.shape[0])
 
+    def test_kpls_training_with_zeroed_outputs(self):
+        # Test scikit-learn 0.24 regression cf. https://github.com/SMTorg/smt/issues/274
+        x = np.random.rand(50, 3)
+        y = np.zeros(50)
+
+        kpls = KPLS()
+        kpls.set_training_values(x, y)
+
+        # KPLS training fails anyway but not due to PLS exception StopIteration
+        self.assertRaises(ValueError, kpls.train)
+
 
 if __name__ == "__main__":
     unittest.main()
