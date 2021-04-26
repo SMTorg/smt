@@ -174,11 +174,9 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
             # hetGP works with unique design variables when noise variance are not given
-            (
-                self.X_norma,
-                index_unique,
-                nt_reps,
-            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
+            (self.X_norma, index_unique, nt_reps,) = np.unique(
+                self.X_norma, return_inverse=True, return_counts=True, axis=0
+            )
             self.nt = self.X_norma.shape[0]
 
             # computing the mean of the output per unique design variable (see Binois et al., 2018)
@@ -1083,10 +1081,7 @@ class KrgBased(SurrogateModel):
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([self.noise0]).flatten()),
-                        ]
+                        [theta0_rand, np.log10(np.array([self.noise0]).flatten()),]
                     )
 
                     for i in range(len(self.noise0)):
@@ -1103,11 +1098,15 @@ class KrgBased(SurrogateModel):
                 theta_limits = np.repeat(
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
-                sampling = LHS(
-                    xlimits=theta_limits, criterion="maximin", random_state=41
-                )
-                theta_lhs_loops = sampling(self.options["n_start"])
-                theta_all_loops = np.vstack((theta0, theta0_rand, theta_lhs_loops))
+                theta_all_loops = np.vstack((theta0, theta0_rand))
+
+                if self.options["n_start"] > 1:
+                    sampling = LHS(
+                        xlimits=theta_limits, criterion="maximin", random_state=41
+                    )
+                    theta_lhs_loops = sampling(self.options["n_start"])
+                    theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+
                 optimal_theta_res = {"fun": float("inf")}
                 try:
                     if self.options["hyper_opt"] == "Cobyla":

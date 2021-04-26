@@ -105,6 +105,12 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
+            "use_gower_distance",
+            False,
+            types=bool,
+            desc="Whether gower distance is used instead of continuous relaxation (default)",
+        )
+        declare(
             "surrogate",
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, MGP),
@@ -258,9 +264,14 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
+            self.use_gower_distance = self.options["use_gower_distance"]
             self.mixint = MixedIntegerContext(
-                xtypes, self.xlimits, work_in_folded_space=False
+                xtypes,
+                self.xlimits,
+                work_in_folded_space=False,
+                use_gower_distance=self.use_gower_distance,
             )
+
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS, criterion="ese", random_state=self.options["random_state"]

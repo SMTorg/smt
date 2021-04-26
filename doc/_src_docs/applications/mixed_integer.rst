@@ -28,6 +28,72 @@ of possible values (levels).
 For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
 a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
 
+
+Mixed-Integer Surrogate with Gower Distance
+===========================================
+
+Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
+When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
+
+For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`
+
+Example of mixed-integer Gower Distance model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM
+  from smt.surrogate_models import KRG
+  import matplotlib.pyplot as plt
+  import numpy as np
+  
+  xt = np.linspace(1.0, 5.0, 5)
+  x_train = np.array(["%.2f" % i for i in xt], dtype=object)
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  
+  # Surrogate
+  sm = MixedIntegerSurrogateModel(
+      use_gower_distance=True,
+      xtypes=[(ENUM, 5)],
+      xlimits=xlimits,
+      surrogate=KRG(theta0=[1e-2]),
+  )
+  sm.set_training_values(x_train, yt)
+  sm.train()
+  
+  # DOE for validation
+  num = 101
+  x = np.linspace(0, 5, num)
+  x_pred = np.array(["%.2f" % i for i in x], dtype=object)
+  y = sm.predict_values(x_pred)
+  
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.xlabel("actual")
+  plt.ylabel("prediction")
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 101
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0039895
+     
+     Prediction time/pt. (sec) :  0.0000395
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
+  :scale: 80	 %
+  :align: center
+
+
 Mixed integer sampling method
 -----------------------------
 

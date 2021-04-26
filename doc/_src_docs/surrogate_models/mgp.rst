@@ -57,7 +57,11 @@ Usage
   yt = np.atleast_2d(fun(xt)).T
   
   # Build the MGP model
-  sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+  sm = MGP(
+      theta0=[1e-2],
+      print_prediction=False,
+      n_comp=1,
+  )
   sm.set_training_values(xt, yt[:, 0])
   sm.train()
   
@@ -121,7 +125,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1600001
+     Training - done. Time (sec):  1.0075002
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -172,7 +176,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32', 'gower']
      -  ['str']
      -  Correlation function type
   *  -  nugget
@@ -215,6 +219,11 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  n_comp
      -  1
      -  None

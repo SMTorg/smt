@@ -20,9 +20,8 @@ Intended Audience :: Developers
 License :: OSI Approved :: BSD License
 Programming Language :: C++
 Programming Language :: Python
-Programming Language :: Python :: 2.7
+Programming Language :: Python :: 3
 Programming Language :: Python :: 3.6
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
