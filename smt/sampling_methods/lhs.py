@@ -324,18 +324,16 @@ class LHS(ScaledSamplingMethod):
         )
         return P
 
-    def expand_lhs(self, x, xlimits, points, method="basic"):
+    def expand_lhs(self, x, n_points, method="basic"):
         """
         Given a Latin Hypercube Sample (LHS) "x", returns an expanded LHS
-        by adding "points" new points.
+        by adding "n_points" new points.
 
         Parameters
         ----------
         x : array
             Initial LHS.
-        xlimits : array
-            Limits for each dimension of the initial sample.
-        points : integer
+        n_points : integer
             Number of points that are to be added to the expanded LHS.
         method : str, optional
             Methodoly for the construction of the expanded LHS.
@@ -348,7 +346,9 @@ class LHS(ScaledSamplingMethod):
 
         """
 
-        new_num = len(x) + points
+        xlimits = self.options["xlimits"]
+
+        new_num = len(x) + n_points
         if new_num % len(x) != 0:
             print(
                 "WARNING: The added number of points is not a "
@@ -389,7 +389,7 @@ class LHS(ScaledSamplingMethod):
 
             # Sampling of the new subspace
             sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
-            x_subspace = sampling_new(points)
+            x_subspace = sampling_new(n_points)
 
             columnIndex = 0
             sortedArr = x_subspace[x_subspace[:, columnIndex].argsort()]
