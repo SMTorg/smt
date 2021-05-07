@@ -90,7 +90,7 @@ class NestedLHS(object):
                 xlimits=self.xlimits, criterion="ese", random_state=self.random_state
             )
             doe.append(p(nt[i]))
-
+               
         for i in range(1, self.nlevel)[::-1]:
             ind = []
             d = cdist(doe[i], doe[i - 1], "euclidean")
