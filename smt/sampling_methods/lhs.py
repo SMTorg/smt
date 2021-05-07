@@ -323,3 +323,88 @@ class LHS(ScaledSamplingMethod):
             return_hist=True,
         )
         return P
+
+    def expand_lhs(self, x, n_points, method="basic"):
+        """
+        Given a Latin Hypercube Sample (LHS) "x", returns an expanded LHS
+        by adding "n_points" new points.
+
+        Parameters
+        ----------
+        x : array
+            Initial LHS.
+        n_points : integer
+            Number of points that are to be added to the expanded LHS.
+        method : str, optional
+            Methodoly for the construction of the expanded LHS.
+            The default is "basic".
+
+        Returns
+        -------
+        x_new : array
+            Expanded LHS.
+
+        """
+
+        xlimits = self.options["xlimits"]
+
+        new_num = len(x) + n_points
+        if new_num % len(x) != 0:
+            print(
+                "WARNING: The added number of points is not a "
+                "multiple of the initial number of points."
+                "Thus, it cannot be ensured that the output is an LHS."
+            )
+
+        # For future functionalities
+        if method == "basic":
+
+            # Evenly spaced intervals with the final dimension of the LHS
+            intervals = []
+            for i in range(len(xlimits)):
+                intervals.append(np.linspace(xlimits[i][0], xlimits[i][1], new_num + 1))
+
+            # Creates a subspace with the rows and columns that have no points
+            # in the new space
+            subspace_limits = [[]] * len(xlimits)
+            subspace_bool = []
+            for i in range(len(xlimits)):
+                subspace_limits[i] = []
+
+                subspace_bool.append(
+                    [
+                        [
+                            intervals[i][j] < x[kk][i] < intervals[i][j + 1]
+                            for kk in range(len(x))
+                        ]
+                        for j in range(len(intervals[i]) - 1)
+                    ]
+                )
+
+                [
+                    subspace_limits[i].append([intervals[i][ii], intervals[i][ii + 1]])
+                    for ii in range(len(subspace_bool[i]))
+                    if not (True in subspace_bool[i][ii])
+                ]
+
+            # Sampling of the new subspace
+            sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
+            x_subspace = sampling_new(n_points)
+
+            columnIndex = 0
+            sortedArr = x_subspace[x_subspace[:, columnIndex].argsort()]
+
+            for j in range(len(xlimits)):
+                for i in range(len(sortedArr)):
+                    sortedArr[i, j] = subspace_limits[j][i][0] + sortedArr[i, j] * (
+                        subspace_limits[j][i][1] - subspace_limits[j][i][0]
+                    )
+
+            H = np.zeros_like(sortedArr)
+            for j in range(len(xlimits)):
+                order = np.random.permutation(len(sortedArr))
+                H[:, j] = sortedArr[order, j]
+
+            x_new = np.concatenate((x, H), axis=0)
+
+        return x_new
