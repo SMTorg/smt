@@ -36,11 +36,11 @@ class TestKRG(unittest.TestCase):
 
         var = kriging.predict_variances(x)
         self.assertEqual(y.shape, var.shape)
-        
+
         kriging = KRG(n_start=1)
         kriging.set_training_values(x, y)
         kriging.train()
-        
+
         val2 = kriging.predict_values(x)
         self.assertEqual(y.shape, val2.shape)
 

@@ -174,9 +174,11 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
             # hetGP works with unique design variables when noise variance are not given
-            (self.X_norma, index_unique, nt_reps,) = np.unique(
-                self.X_norma, return_inverse=True, return_counts=True, axis=0
-            )
+            (
+                self.X_norma,
+                index_unique,
+                nt_reps,
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
             self.nt = self.X_norma.shape[0]
 
             # computing the mean of the output per unique design variable (see Binois et al., 2018)
@@ -1081,7 +1083,10 @@ class KrgBased(SurrogateModel):
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [theta0_rand, np.log10(np.array([self.noise0]).flatten()),]
+                        [
+                            theta0_rand,
+                            np.log10(np.array([self.noise0]).flatten()),
+                        ]
                     )
 
                     for i in range(len(self.noise0)):
