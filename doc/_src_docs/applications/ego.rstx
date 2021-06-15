@@ -138,8 +138,8 @@ The virtual values are set according to the model prediction:
 
 Some variants are proposed to introduce an optimistic or pessimistic part :
 
-    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
-    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+    * the Kriging Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kriging Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
 
 Tips for an efficient use
 ^^^^^^^^^^^^^^^^^^^^^^^^^

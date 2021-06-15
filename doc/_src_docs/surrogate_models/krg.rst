@@ -6,7 +6,7 @@ Kriging is an interpolating model that is a linear combination of a known functi
 .. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
 
-:math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
+:math:`Z({\bf x})` is a realization of a stochastic process with mean zero and spatial covariance function given by
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0369999
+     Training - done. Time (sec):  0.0249333
   ___________________________________________________________________________
      
    Evaluation
@@ -139,9 +139,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000100
      
   ___________________________________________________________________________
      
@@ -218,9 +218,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
