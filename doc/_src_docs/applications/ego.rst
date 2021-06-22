@@ -138,8 +138,8 @@ The virtual values are set according to the model prediction:
 
 Some variants are proposed to introduce an optimistic or pessimistic part :
 
-    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
-    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+    * the Kriging Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kriging Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
 
 Tips for an efficient use
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -525,8 +525,9 @@ Usage with mixed variable
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
-  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
-  Minimum in typed x=[-4.999999999987487, 'blue', 'square', 0]
+  Warning: multiple x input features have the same value (at least same row twice).
+  Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
+  Minimum in typed x=[-5.0, 'blue', 'circle', 1]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -582,7 +583,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000029945045190>
+     -  <smt.applications.ego.Evaluator object at 0x00000272708D09A0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -622,7 +623,7 @@ Options
      -  ['bool']
      -  Whether gower distance is used instead of continuous relaxation (default)
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000029945023220>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000027270801730>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

@@ -6,7 +6,7 @@ Kriging is an interpolating model that is a linear combination of a known functi
 .. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
 
-:math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
+:math:`Z({\bf x})` is a realization of a stochastic process with mean zero and spatial covariance function given by
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)

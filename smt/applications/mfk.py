@@ -202,12 +202,20 @@ class MFK(KrgBased):
     def _new_train_init(self):
         if self.name in ["MFKPLS", "MFKPLSK"]:
             _pls = pls(self.options["n_comp"])
-            # PLS is done on the highest fidelity identified by the key None
-            self.m_pls = _pls.fit(
-                self.training_points[None][0][0].copy(),
-                self.training_points[None][0][1].copy(),
-            )
-            self.coeff_pls = self.m_pls.x_rotations_
+
+            # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception while sklearn 0.23 returns zeroed x_rotations
+            # For now the try/except below is a workaround to restore the 0.23 behaviour
+            try:
+                # PLS is done on the highest fidelity identified by the key None
+                self.m_pls = _pls.fit(
+                    self.training_points[None][0][0].copy(),
+                    self.training_points[None][0][1].copy(),
+                )
+                self.coeff_pls = self.m_pls.x_rotations_
+            except StopIteration:
+                self.coeff_pls = np.zeros(
+                    self.training_points[None][0][0].shape[1], self.options["n_comp"]
+                )
 
         xt = []
         yt = []

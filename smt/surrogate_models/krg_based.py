@@ -1104,14 +1104,22 @@ class KrgBased(SurrogateModel):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> master
                 if self.options["n_start"] > 1:
                     sampling = LHS(
                         xlimits=theta_limits, criterion="maximin", random_state=41
                     )
                     theta_lhs_loops = sampling(self.options["n_start"])
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+<<<<<<< HEAD
                     
+=======
+
+>>>>>>> master
                 optimal_theta_res = {"fun": float("inf")}
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
