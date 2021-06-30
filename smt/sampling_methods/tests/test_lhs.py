@@ -44,7 +44,7 @@ class Test(unittest.TestCase):
             new = int(new_list[i])
             new_num = num + new
 
-            x_new = sampling.expand_lhs(x, new)
+            x_new = sampling.expand_lhs(x, new, method='ese')
 
             intervals = []
             subspace_bool = []
