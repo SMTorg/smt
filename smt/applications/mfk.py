@@ -559,7 +559,7 @@ class MFK(KrgBased):
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
                     # sigma2_rho * MSE[:, i - 1]
-                    + Q_ / (2 * (self.nt_all[i] - p - q))
+                    +Q_ / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
                     * (1 - (r_t ** 2).sum(axis=0))
                     + sigma2 * (u_ ** 2).sum(axis=0)
@@ -570,9 +570,9 @@ class MFK(KrgBased):
                     1
                     - (r_t ** 2).sum(axis=0)
                     + (u_ ** 2).sum(axis=0)
-                ) #+ sigma2_rho * MSE[:, i - 1]
+                )  # + sigma2_rho * MSE[:, i - 1]
             if self.options["propagate_uncertainty"]:
-                MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1] 
+                MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]
 
         # scaled predictor
         MSE *= self.y_std ** 2
