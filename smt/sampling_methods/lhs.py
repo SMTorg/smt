@@ -303,7 +303,7 @@ class LHS(ScaledSamplingMethod):
 
     def _ese(self, dim, nt, fixed_index=[], P0=[]):
         # Parameters of maximinESE procedure
-        if len(fixed_index)==0:
+        if len(fixed_index) == 0:
             P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
         else:
             P0 = P0
@@ -411,10 +411,12 @@ class LHS(ScaledSamplingMethod):
             H[:, j] = sortedArr[order, j]
 
         x_new = np.concatenate((x, H), axis=0)
-            
-        if method == 'ese':
+
+        if method == "ese":
             # Sampling of the new subspace
-            sampling_new = LHS(xlimits=xlimits, criterion='ese')
-            x_new = sampling_new._ese(len(x_new), len(x_new), fixed_index=np.arange(0, len(x), 1), P0=x_new)
+            sampling_new = LHS(xlimits=xlimits, criterion="ese")
+            x_new = sampling_new._ese(
+                len(x_new), len(x_new), fixed_index=np.arange(0, len(x), 1), P0=x_new
+            )
 
         return x_new
