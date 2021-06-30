@@ -105,7 +105,7 @@ class TestEGO(SMTestCase):
         n_iter = 50
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -125,7 +125,7 @@ class TestEGO(SMTestCase):
         n_parallel = 5
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         qEI = "KB"
@@ -149,7 +149,7 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -174,7 +174,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         n_parallel = 5
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -202,7 +202,7 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KB"
         xtypes = [INT, FLOAT]
 
@@ -238,7 +238,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         xtypes = [INT, FLOAT]
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -300,7 +300,7 @@ class TestEGO(SMTestCase):
             xtypes, xlimits, LHS, criterion="ese", random_state=42
         )
         xdoe = sampling(n_doe)
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -329,7 +329,7 @@ class TestEGO(SMTestCase):
             xtypes, xlimits, LHS, criterion="ese", random_state=42
         )
         xdoe = sampling(n_doe)
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -352,7 +352,7 @@ class TestEGO(SMTestCase):
         n_iter = 15
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
@@ -378,7 +378,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             ydoe=ydoe,
             n_iter=1,
-            criterion="UCB",
+            criterion="LCB",
             xlimits=xlimits,
             n_start=30,
             enable_tunneling=False,
@@ -428,7 +428,7 @@ class TestEGO(SMTestCase):
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
 
@@ -531,7 +531,7 @@ class TestEGO(SMTestCase):
         xlimits = np.array(
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
         )
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KB"
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -626,7 +626,7 @@ class TestEGO(SMTestCase):
                         ]
                     )
 
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
         ego = EGO(
             n_iter=n_iter,
