@@ -57,9 +57,9 @@ class EGO(SurrogateBasedApplication):
             "criterion",
             "EI",
             types=str,
-            values=["EI", "SBO", "UCB"],
+            values=["EI", "SBO", "LCB"],
             desc="criterion for next evaluation point determination: Expected Improvement, \
-            Surrogate-Based Optimization or Upper Confidence Bound",
+            Surrogate-Based Optimization or Lower Confidence Bound",
         )
         declare("n_iter", None, types=int, desc="Number of optimizer steps")
         declare(
@@ -233,8 +233,8 @@ class EGO(SurrogateBasedApplication):
         res = self.gpr.predict_values(point)
         return res
 
-    def UCB(self, point):
-        """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
+    def LCB(self, point):
+        """ Lower confidence bound optimization: minimize by using mu - 3*sigma """
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
         res = pred - 3.0 * np.sqrt(var)
@@ -340,8 +340,8 @@ class EGO(SurrogateBasedApplication):
             )
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
-        elif criterion == "UCB":
-            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+        elif criterion == "LCB":
+            self.obj_k = lambda x: self.LCB(np.atleast_2d(x))
 
         success = False
         n_optim = 1  # in order to have some success optimizations with SLSQP

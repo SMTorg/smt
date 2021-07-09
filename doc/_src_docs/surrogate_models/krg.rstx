@@ -27,7 +27,7 @@ Squared Exponential (Gaussian) correlation function:
 Matérn 5/2 correlation function:
 
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
 
 Matérn 3/2 correlation function:
 

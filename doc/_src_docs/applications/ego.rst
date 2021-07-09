@@ -154,7 +154,7 @@ Implementation Notes
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
-* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
+* LCB (Lower Confidence Bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
@@ -214,7 +214,7 @@ Usage
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   
   ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
   
@@ -336,7 +336,7 @@ Usage with parallel options
                   ]
               )
   
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
   ego = EGO(
       n_iter=n_iter,
@@ -479,7 +479,7 @@ Usage with mixed variable
   xlimits = np.array(
       [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
   )
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   qEI = "KB"
   sm = KRG(print_global=False)
   mixint = MixedIntegerContext(xtypes, xlimits)
@@ -554,9 +554,9 @@ Options
      -  Function to minimize
   *  -  criterion
      -  EI
-     -  ['EI', 'SBO', 'UCB']
+     -  ['EI', 'SBO', 'LCB']
      -  ['str']
-     -  criterion for next evaluation point determination: Expected Improvement,             Surrogate-Based Optimization or Upper Confidence Bound
+     -  criterion for next evaluation point determination: Expected Improvement,             Surrogate-Based Optimization or Lower Confidence Bound
   *  -  n_iter
      -  None
      -  None
@@ -583,7 +583,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000272708D09A0>
+     -  <smt.applications.ego.Evaluator object at 0x000001C2744A4A30>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -623,7 +623,7 @@ Options
      -  ['bool']
      -  Whether gower distance is used instead of continuous relaxation (default)
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000027270801730>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001C2744A4A00>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly
