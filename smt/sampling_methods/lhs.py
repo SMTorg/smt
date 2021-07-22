@@ -302,6 +302,15 @@ class LHS(ScaledSamplingMethod):
         return res
 
     def _ese(self, dim, nt, fixed_index=[], P0=[]):
+        """
+        Parameters
+        ----------
+
+        fixed_index : list
+            When running an "ese" optimization, we can fix the indexes of 
+            the points that we do not want to modify
+
+        """
         # Parameters of maximinESE procedure
         if len(fixed_index) == 0:
             P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
@@ -342,7 +351,8 @@ class LHS(ScaledSamplingMethod):
             Number of points that are to be added to the expanded LHS.
         method : str, optional
             Methodoly for the construction of the expanded LHS.
-            The default is "basic".
+            The default is "basic". The other option is "ese" to use the 
+            ese optimization
 
         Returns
         -------
@@ -360,9 +370,6 @@ class LHS(ScaledSamplingMethod):
                 "multiple of the initial number of points."
                 "Thus, it cannot be ensured that the output is an LHS."
             )
-
-        # For future functionalities
-        # if method == "basic":
 
         # Evenly spaced intervals with the final dimension of the LHS
         intervals = []
@@ -396,19 +403,19 @@ class LHS(ScaledSamplingMethod):
         sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
         x_subspace = sampling_new(n_points)
 
-        columnIndex = 0
-        sortedArr = x_subspace[x_subspace[:, columnIndex].argsort()]
+        column_index = 0
+        sorted_arr = x_subspace[x_subspace[:, column_index].argsort()]
 
         for j in range(len(xlimits)):
-            for i in range(len(sortedArr)):
-                sortedArr[i, j] = subspace_limits[j][i][0] + sortedArr[i, j] * (
+            for i in range(len(sorted_arr)):
+                sorted_arr[i, j] = subspace_limits[j][i][0] + sorted_arr[i, j] * (
                     subspace_limits[j][i][1] - subspace_limits[j][i][0]
                 )
 
-        H = np.zeros_like(sortedArr)
+        H = np.zeros_like(sorted_arr)
         for j in range(len(xlimits)):
-            order = np.random.permutation(len(sortedArr))
-            H[:, j] = sortedArr[order, j]
+            order = np.random.permutation(len(sorted_arr))
+            H[:, j] = sorted_arr[order, j]
 
         x_new = np.concatenate((x, H), axis=0)
 
