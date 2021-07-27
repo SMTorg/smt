@@ -201,7 +201,7 @@ class EGO(SurrogateBasedApplication):
             print(msg)
 
     def EI(self, points, y_data, enable_tunneling=False, x_data=None):
-        """ Expected improvement """
+        """Expected improvement"""
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
@@ -229,12 +229,12 @@ class EGO(SurrogateBasedApplication):
         return ei
 
     def SBO(self, point):
-        """ Surrogate based optimization: min the surrogate model by suing the mean mu """
+        """Surrogate based optimization: min the surrogate model by suing the mean mu"""
         res = self.gpr.predict_values(point)
         return res
 
     def LCB(self, point):
-        """ Lower confidence bound optimization: minimize by using mu - 3*sigma """
+        """Lower confidence bound optimization: minimize by using mu - 3*sigma"""
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
         res = pred - 3.0 * np.sqrt(var)

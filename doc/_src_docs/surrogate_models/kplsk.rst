@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0825000
+     Training - done. Time (sec):  0.0866079
   ___________________________________________________________________________
      
    Evaluation
@@ -93,9 +93,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0002439
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000024
      
   ___________________________________________________________________________
      
@@ -104,9 +104,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0002022
      
-     Prediction time/pt. (sec) :  0.0001000
+     Prediction time/pt. (sec) :  0.0000404
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -211,3 +211,13 @@ Options
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion

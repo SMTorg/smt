@@ -305,7 +305,7 @@ class KrylovSolver(LinearSolver):
                     x0=sol,
                     M=self.pc_op,
                     callback=self.callback_func,
-                    **self.solver_kwargs
+                    **self.solver_kwargs,
                 )
 
             sol[:] = tmp

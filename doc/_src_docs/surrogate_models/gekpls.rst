@@ -93,7 +93,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0689998
+     Training - done. Time (sec):  0.1746547
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -197,6 +197,16 @@ Options
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion
   *  -  xlimits
      -  None
      -  None
