@@ -55,3 +55,62 @@ class KPLS(KrgBased):
             return_derivative=return_derivative,
         )
         return d
+    
+    def _train(self):
+        """
+        Train the model
+        """
+        # outputs['sol'] = self.sol
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
+        Kfold=4
+        nbk=int(self.nt/Kfold)
+        PRESSm=0.0
+        PRESSm1=0.0
+        self.options["n_comp"]=0
+        nextcomp=True
+        while nextcomp==True:
+            self.options["n_comp"]+=1       
+            PRESSm=PRESSm1
+            PRESSm1=0
+            for fold in range(Kfold) : 
+                self.nt=len(X)-nbk
+               # Xfold=X - X[fold*nbk: (fold+1)*nbk]
+           #     Xfold = X[np.arange(len(X))> (fold+1)*nbk or np.arange(len(X))< (fold)*nbk ] 
+                todel=np.arange(fold*nbk,(fold+1)*nbk)
+                Xfold =np.copy(X)   
+                Xfold =np.delete(X,todel,axis=0)  
+                yfold =np.copy(y)   
+                yfold =np.delete(y,todel,axis=0)  
+                Xtest= np.copy(X)[fold*nbk:(fold+1)*nbk,:]
+                ytest= np.copy(y)[fold*nbk:(fold+1)*nbk,:]
+                
+                self.training_points[None][0][0]= Xfold
+                self.training_points[None][0][1]= yfold
+                super(KPLS, self)._initialize()
+                try : 
+                    self._new_train()
+                except : 
+                    self.options["n_comp"] -=1
+                    nextcomp=False
+                    break
+                ye= self._predict_values(Xtest)
+                PRESSm1= PRESSm1+np.sum(np.power((1/len(X))*(ye-ytest),2))
+            if   self.options["n_comp"]>1 and PRESSm1/PRESSm > 0.9 :
+                self.options["n_comp"] -=1
+                nextcomp=False
+                
+        self.training_points[None][0][0]= X
+        self.training_points[None][0][1]= y
+        self.nt=len(X)
+        super(KPLS, self)._initialize()
+        self._new_train()
+        pass
+
+                
+
+
+        
+        
+        
+        
