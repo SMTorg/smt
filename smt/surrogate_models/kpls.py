@@ -103,7 +103,14 @@ class KPLS(KrgBased):
 
                     self.training_points[None][0][0] = Xfold
                     self.training_points[None][0][1] = yfold
-                    super(KPLS, self)._initialize()
+                    #We are doing hyperparameters hot_start for the k-fold 
+                    #as the problem is the same and the data are mainly similar                    
+                    if fold==0 : 
+                        super(KPLS, self)._initialize()
+                    else : 
+                        super(KPLS, self)._initialize()
+                        self.options["theta0"]=theta_opt
+
                     try:
                         self._new_train()
                     except:
@@ -112,6 +119,11 @@ class KPLS(KrgBased):
                         break
                     ye = self._predict_values(Xtest)
                     PRESSm1 = PRESSm1 + np.sum(np.power((1 / len(X)) * (ye - ytest), 2))
+
+                    theta_opt=self.options["theta0"]
+                    theta_opt=self.optimal_theta
+                    pass
+                    
                 if self.options["n_comp"] > 1 and PRESSm1 / PRESSm > eval_comp_treshold:
                     self.options["n_comp"] -= 1
                     nextcomp = False
