@@ -24,11 +24,25 @@ def check_xspec_consistency(xtypes, xlimits):
 
     for i, xtyp in enumerate(xtypes):
         if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            raise ValueError(
-                "Bad x limits ({}) for variable type {} (index={})".format(
-                    xlimits[i], xtyp, i
+            if xtyp =="int_type" and (not isinstance(xlimits[i][0], int)) : 
+                listint=list(map(int, xlimits[i]))
+                sortedlistint= sorted(listint)
+                if np.array_equal(sortedlistint,listint)==False:
+                    raise ValueError(
+                        "Unsorted x limits ({}) for variable type {} (index={})".format(
+                            xlimits[i], xtyp, i
+                        )
+                    )
+
+                    
+                    
+                
+            else : 
+                raise ValueError(
+                    "Bad x limits ({}) for variable type {} (index={})".format(
+                        xlimits[i], xtyp, i
+                    )
                 )
-            )
 
         if (
             xtyp != FLOAT
@@ -92,7 +106,13 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
     xlims = []
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == INT:
-            xlims.append(xlimits[i])
+            k=xlimits[i][0]
+            if xtyp == INT and (not isinstance(xlimits[i][0], int)) :
+                listint=list(map(int, xlimits[i]))
+                listint=[listint[0],listint[-1]]
+                xlims.append(listint)
+            else :
+                xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
                 xlims.extend(xtyp[1] * [[0, 1]])

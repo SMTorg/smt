@@ -34,6 +34,17 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]  # Bad enum
         with self.assertRaises(ValueError):
             check_xspec_consistency(xtypes, xlimits)
+            
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4","3"]],
+            dtype="object",
+        )
+        l= unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        with self.assertRaises(ValueError):
+            check_xspec_consistency(xtypes, xlimits)
+            
+        
 
     def test_krg_mixed_3D(self):
         xtypes = [FLOAT, (ENUM, 3), INT]
@@ -107,10 +118,56 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
         )
-        x = np.array([1.5, 0, 2, 1])
+        x = np.array([1.5, 0, 2, 1.1])
         self.assertEqual(
             [1.5, "blue", "long", 1], cast_to_mixed_integer(xtypes, xlimits, x)
         )
+        
+    def test_unfold_xlimits_with_continuous_limits(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
+            dtype="object",
+        )
+        l= unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        self.assertEqual(
+             np.array_equal([[-5,5],[0,1],[0,1],[0,1],[0,1],[0,1],[0,2]], unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        ),True)
+
+        
+    def test_unfold_xlimits_with_continuous_limits2(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3","4"]],
+            dtype="object",
+        )
+        l= unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+
+        self.assertEqual(
+             np.array_equal([[-5,5],[0,1],[0,1],[0,1],[0,1],[0,1],[0,4]], unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        ),True)
+    
+        
+    def test_unfolded_xlimits_type2(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 2), INT]
+        xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], ["0", "3","4"]])
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
+        doe = sampling(10)
+        self.assertEqual((10, 4), doe.shape)
+
+    def test_cast_to_mixed_integer2(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3","4"]],
+            dtype="object",
+        )
+        x = np.array([1.5, 0, 2, 1.1])
+        self.assertEqual(
+            [1.5, "blue", "long", 0], cast_to_mixed_integer(xtypes, xlimits, x)
+        )
+
+
+
 
     def run_mixed_integer_lhs_example(self):
         import numpy as np
@@ -248,4 +305,6 @@ class TestMixedInteger(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestMixedInteger().run_mixed_integer_context_example()
+  #  TestMixedInteger().run_mixed_integer_context_example()
+    TestMixedInteger().test_unfold_xlimits_with_continuous_limits2()
+    TestMixedInteger().test_check_xspec_consistency()
