@@ -138,9 +138,15 @@ def cast_to_discrete_values(xtypes, xlimits, x):
             x_col += 1
             continue
         elif xtyp == INT:
-            if not isinstance(xlimits[i][0], int) and not isinstance(
-                xlimits[i][0], float
+            if (
+                not isinstance(xlimits[i][0], int)
+                and not isinstance(xlimits[i][0], float)
+                and not isinstance(xlimits[i][0], np.int64)
+                and not isinstance(xlimits[i][0], np.int32)
             ):
+                print(xlimits[i][0])
+                print(type(xlimits[i][0]))
+
                 listint = list(map(float, xlimits[i]))
                 ret[:, x_col] = take_closest_in_list(listint, ret[:, x_col])
             else:
