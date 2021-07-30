@@ -17,6 +17,7 @@ from smt.applications.mixed_integer import (
     compute_unfolded_dimension,
     cast_to_enum_value,
     cast_to_mixed_integer,
+    cast_to_discrete_values
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
@@ -146,29 +147,45 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(
              np.array_equal([[-5,5],[0,1],[0,1],[0,1],[0,1],[0,1],[0,4]], unfold_xlimits_with_continuous_limits(xtypes, xlimits)
         ),True)
-    
-        
-    def test_unfolded_xlimits_type2(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 2), INT]
-        xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], ["0", "3","4"]])
-        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
-        doe = sampling(10)
-        self.assertEqual((10, 4), doe.shape)
-
-    def test_cast_to_mixed_integer2(self):
+ 
+       
+    def test_cast_to_discrete_values(self):
         xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3","4"]],
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 4]],
             dtype="object",
         )
-        x = np.array([1.5, 0, 2, 1.1])
+        x = np.array([[2.6,0.3,0.5,0.25,0.45,0.85,3.1]])
+        
         self.assertEqual(
-            [1.5, "blue", "long", 0], cast_to_mixed_integer(xtypes, xlimits, x)
+            np.array_equal(np.array([[2.6, 0,1,0,0,1,3]]), cast_to_discrete_values(xtypes,xlimits, x)),True
+        )   
+
+    def test_cast_to_discrete_values2(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        
+        x = np.array([[2.6,0.3,0.5,0.25,0.45,0.85,3.1]])
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "2","4"]],
+            dtype="object",
         )
-
-
-
-
+        self.assertEqual(
+            np.array_equal(np.array([[2.6, 0,1,0,0,1,4]]), cast_to_discrete_values(xtypes,xlimits, x)),True
+        )   
+        
+    
+    def test_cast_to_discrete_values3(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), INT]
+        
+        x = np.array([[2.6,0.3,0.5,0.25,0.45,0.85,3.1]])
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4"]],
+            dtype="object",
+        )
+        self.assertEqual(
+            np.array_equal(np.array([[2.6, 0,1,0,0,1,4]]), cast_to_discrete_values(xtypes,xlimits, x)),True
+        )   
+        
     def run_mixed_integer_lhs_example(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -305,6 +322,4 @@ class TestMixedInteger(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  #  TestMixedInteger().run_mixed_integer_context_example()
-    TestMixedInteger().test_unfold_xlimits_with_continuous_limits2()
-    TestMixedInteger().test_check_xspec_consistency()
+    TestMixedInteger().run_mixed_integer_context_example()

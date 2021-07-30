@@ -7,6 +7,7 @@ import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
+from smt.utils.misc import take_closest_in_list
 
 FLOAT = "float_type"
 INT = "int_type"
@@ -129,21 +130,23 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
     return np.array(xlims).astype(float)
 
 
-def cast_to_discrete_values(xtypes, x):
+def cast_to_discrete_values(xtypes, xlimits, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
-    for xtyp in xtypes:
+    for i,xtyp in enumerate(xtypes):
         if xtyp == FLOAT:
             x_col += 1
             continue
-
         elif xtyp == INT:
-            ret[:, x_col] = np.round(ret[:, x_col])
+            if (not isinstance(xlimits[i][0], int))  : 
+                listint=list(map(int, xlimits[i]))
+                ret[:, x_col] = take_closest_in_list(listint,ret[:, x_col])
+            else : 
+                ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
-
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             # Categorial : The biggest level is selected.
             xenum = ret[:, x_col : x_col + xtyp[1]]
@@ -249,14 +252,17 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         super()
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
-        self._xlimits = unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        self._xlimits = xlimits
+        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
+            self._xtypes, xlimits
+        )
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
-        self._sampling_method = sampling_method_class(xlimits=self._xlimits, **kwargs)
+        self._sampling_method = sampling_method_class(xlimits= self._unfolded_xlimits, **kwargs)
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xtypes, doe)
+        unfold_xdoe = cast_to_discrete_values(self._xtypes,self._xlimits, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
@@ -342,7 +348,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 x2 = unfold_with_enum_mask(self._xtypes, xp)
             else:
                 x2 = xp
-            castx = cast_to_discrete_values(self._xtypes, x2)
+            castx = cast_to_discrete_values(self._xtypes,self._xlimits, x2)
             return self._surrogate.predict_values(castx)
 
     def predict_variances(self, x):
@@ -355,7 +361,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             else:
                 x2 = xp
             return self._surrogate.predict_variances(
-                cast_to_discrete_values(self._xtypes, x2)
+                cast_to_discrete_values(self._xtypes,self._xlimits, x2)
             )
 
     def _predict_values(self, x):
@@ -446,7 +452,7 @@ class MixedIntegerContext(object):
         np.ndarray
             feasible evaluation point value in categorical space.
         """
-        return cast_to_discrete_values(self._xtypes, x)
+        return cast_to_discrete_values(self._xtypes,self._xlimits, x)
 
     def fold_with_enum_index(self, x):
         """
