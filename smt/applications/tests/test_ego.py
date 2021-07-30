@@ -293,7 +293,7 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2","3"]]
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
         )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(

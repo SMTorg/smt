@@ -25,20 +25,17 @@ def check_xspec_consistency(xtypes, xlimits):
 
     for i, xtyp in enumerate(xtypes):
         if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            if xtyp =="int_type" and (not isinstance(xlimits[i][0], int)) : 
-                listint=list(map(int, xlimits[i]))
-                sortedlistint= sorted(listint)
-                if np.array_equal(sortedlistint,listint)==False:
+            if xtyp == "int_type" and (not isinstance(xlimits[i][0], int)):
+                listint = list(map(float, xlimits[i]))
+                sortedlistint = sorted(listint)
+                if np.array_equal(sortedlistint, listint) == False:
                     raise ValueError(
                         "Unsorted x limits ({}) for variable type {} (index={})".format(
                             xlimits[i], xtyp, i
                         )
                     )
 
-                    
-                    
-                
-            else : 
+            else:
                 raise ValueError(
                     "Bad x limits ({}) for variable type {} (index={})".format(
                         xlimits[i], xtyp, i
@@ -107,12 +104,12 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
     xlims = []
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == INT:
-            k=xlimits[i][0]
-            if xtyp == INT and (not isinstance(xlimits[i][0], int)) :
-                listint=list(map(int, xlimits[i]))
-                listint=[listint[0],listint[-1]]
+            k = xlimits[i][0]
+            if xtyp == INT and (not isinstance(xlimits[i][0], int)):
+                listint = list(map(float, xlimits[i]))
+                listint = [listint[0], listint[-1]]
                 xlims.append(listint)
-            else :
+            else:
                 xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
@@ -136,15 +133,17 @@ def cast_to_discrete_values(xtypes, xlimits, x):
     """
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
-    for i,xtyp in enumerate(xtypes):
+    for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT:
             x_col += 1
             continue
         elif xtyp == INT:
-            if (not isinstance(xlimits[i][0], int))  : 
-                listint=list(map(int, xlimits[i]))
-                ret[:, x_col] = take_closest_in_list(listint,ret[:, x_col])
-            else : 
+            if not isinstance(xlimits[i][0], int) and not isinstance(
+                xlimits[i][0], float
+            ):
+                listint = list(map(float, xlimits[i]))
+                ret[:, x_col] = take_closest_in_list(listint, ret[:, x_col])
+            else:
                 ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
@@ -258,11 +257,13 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         )
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
-        self._sampling_method = sampling_method_class(xlimits= self._unfolded_xlimits, **kwargs)
+        self._sampling_method = sampling_method_class(
+            xlimits=self._unfolded_xlimits, **kwargs
+        )
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xtypes,self._xlimits, doe)
+        unfold_xdoe = cast_to_discrete_values(self._xtypes, self._xlimits, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
@@ -311,6 +312,10 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
 
+        if "poly" in self._surrogate.options:
+            if self._surrogate.options["poly"] != "constant":
+                raise ValueError("constant regression must be used with mixed integer")
+
     @property
     def name(self):
         return "MixedInteger" + self._surrogate.name
@@ -348,7 +353,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 x2 = unfold_with_enum_mask(self._xtypes, xp)
             else:
                 x2 = xp
-            castx = cast_to_discrete_values(self._xtypes,self._xlimits, x2)
+            castx = cast_to_discrete_values(self._xtypes, self._xlimits, x2)
             return self._surrogate.predict_values(castx)
 
     def predict_variances(self, x):
@@ -361,7 +366,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             else:
                 x2 = xp
             return self._surrogate.predict_variances(
-                cast_to_discrete_values(self._xtypes,self._xlimits, x2)
+                cast_to_discrete_values(self._xtypes, self._xlimits, x2)
             )
 
     def _predict_values(self, x):
@@ -452,7 +457,7 @@ class MixedIntegerContext(object):
         np.ndarray
             feasible evaluation point value in categorical space.
         """
-        return cast_to_discrete_values(self._xtypes,self._xlimits, x)
+        return cast_to_discrete_values(self._xtypes, self._xlimits, x)
 
     def fold_with_enum_index(self, x):
         """

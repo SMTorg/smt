@@ -53,7 +53,6 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
         return num / den
 
 
-
 def take_closest_number(myList, myNumber):
     """
     Assumes myList is sorted. Returns closest value to myNumber.
@@ -71,8 +70,8 @@ def take_closest_number(myList, myNumber):
         return after
     else:
         return before
-    
-def take_closest_in_list(myList, x) :
-    vfunc = np.vectorize(take_closest_number, excluded=['myList'])
-    return vfunc(myList=myList,myNumber=x)
-    
+
+
+def take_closest_in_list(myList, x):
+    vfunc = np.vectorize(take_closest_number, excluded=["myList"])
+    return vfunc(myList=myList, myNumber=x)
