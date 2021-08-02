@@ -25,7 +25,7 @@ def check_xspec_consistency(xtypes, xlimits):
 
     for i, xtyp in enumerate(xtypes):
         if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            if xtyp == "int_type" and (not isinstance(xlimits[i][0], int)):
+            if xtyp == "int_type" and isinstance(xlimits[i][0], str):
                 listint = list(map(float, xlimits[i]))
                 sortedlistint = sorted(listint)
                 if np.array_equal(sortedlistint, listint) == False:
@@ -139,10 +139,7 @@ def cast_to_discrete_values(xtypes, xlimits, x):
             continue
         elif xtyp == INT:
             if (
-                not isinstance(xlimits[i][0], int)
-                and not isinstance(xlimits[i][0], float)
-                and not isinstance(xlimits[i][0], np.int64)
-                and not isinstance(xlimits[i][0], np.int32)
+                isinstance(xlimits[i][0], str)
             ):
                 print(xlimits[i][0])
                 print(type(xlimits[i][0]))
