@@ -138,9 +138,7 @@ def cast_to_discrete_values(xtypes, xlimits, x):
             x_col += 1
             continue
         elif xtyp == INT:
-            if (
-                isinstance(xlimits[i][0], str)
-            ):
+            if isinstance(xlimits[i][0], str):
                 print(xlimits[i][0])
                 print(type(xlimits[i][0]))
 
