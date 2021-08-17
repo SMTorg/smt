@@ -273,7 +273,7 @@ Usage
   
 ::
 
-  Minimum in x=18.9 with f(x)=-15.1
+  Minimum in x=18.1 with f(x)=-14.6
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -442,7 +442,7 @@ Usage with mixed variable
       MixedIntegerContext,
       FLOAT,
       ENUM,
-      INT,
+      ORD,
   )
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
@@ -475,7 +475,7 @@ Usage with mixed variable
       return y
   
   n_iter = 15
-  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
   xlimits = np.array(
       [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
   )
@@ -525,9 +525,8 @@ Usage with mixed variable
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
-  Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
-  Minimum in typed x=[-5.0, 'blue', 'circle', 1]
+  Minimum in x=[-4.8656107  2.         0.         0.       ] with f(x)=-14.6
+  Minimum in typed x=[-4.865610698593395, 'blue', 'square', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -583,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001C2744A4A30>
+     -  <smt.applications.ego.Evaluator object at 0x2af592d26280>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -623,7 +622,7 @@ Options
      -  ['bool']
      -  Whether gower distance is used instead of continuous relaxation (default)
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001C2744A4A00>
+     -  <smt.surrogate_models.krg.KRG object at 0x2af592d26040>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

@@ -11,6 +11,7 @@ from smt.utils.misc import take_closest_in_list
 
 FLOAT = "float_type"
 INT = "int_type"
+ORD = "ord_type"
 ENUM = "enum_type"
 
 
@@ -25,10 +26,10 @@ def check_xspec_consistency(xtypes, xlimits):
 
     for i, xtyp in enumerate(xtypes):
         if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            if xtyp == "int_type" and isinstance(xlimits[i][0], str):
+            if xtyp == ORD and isinstance(xlimits[i][0], str):
                 listint = list(map(float, xlimits[i]))
                 sortedlistint = sorted(listint)
-                if np.array_equal(sortedlistint, listint) == False:
+                if not np.array_equal(sortedlistint, listint):
                     raise ValueError(
                         "Unsorted x limits ({}) for variable type {} (index={})".format(
                             xlimits[i], xtyp, i
@@ -41,10 +42,17 @@ def check_xspec_consistency(xtypes, xlimits):
                         xlimits[i], xtyp, i
                     )
                 )
-
+        if xtyp == INT:
+            if not isinstance(xlimits[i][0], str):
+                xtyp = ORD
+                xtypes[i] = ORD
+            else:
+                raise ValueError(
+                    "INT do not work with list of ordered values, use ORD instead"
+                )
         if (
             xtyp != FLOAT
-            and xtyp != INT
+            and xtyp != ORD
             and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
         ):
             raise ValueError("Bad type specification {}".format(xtyp))
@@ -62,7 +70,7 @@ def check_xspec_consistency(xtypes, xlimits):
 def _raise_value_error(xtyp):
     raise ValueError(
         "Bad xtype specification: "
-        "should be FLOAT, INT or (ENUM, n), got {}".format(xtyp)
+        "should be FLOAT, ORD or (ENUM, n), got {}".format(xtyp)
     )
 
 
@@ -72,7 +80,7 @@ def compute_unfolded_dimension(xtypes):
     """
     res = 0
     for xtyp in xtypes:
-        if xtyp == FLOAT or xtyp == INT:
+        if xtyp == FLOAT or xtyp == ORD:
             res += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             res += xtyp[1]
@@ -103,9 +111,9 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT or xtyp == INT:
+        if xtyp == FLOAT or xtyp == ORD:
             k = xlimits[i][0]
-            if xtyp == INT and (not isinstance(xlimits[i][0], int)):
+            if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
                 listint = list(map(float, xlimits[i]))
                 listint = [listint[0], listint[-1]]
                 xlims.append(listint)
@@ -137,11 +145,8 @@ def cast_to_discrete_values(xtypes, xlimits, x):
         if xtyp == FLOAT:
             x_col += 1
             continue
-        elif xtyp == INT:
+        elif xtyp == ORD:
             if isinstance(xlimits[i][0], str):
-                print(xlimits[i][0])
-                print(type(xlimits[i][0]))
-
                 listint = list(map(float, xlimits[i]))
                 ret[:, x_col] = take_closest_in_list(listint, ret[:, x_col])
             else:
@@ -168,7 +173,7 @@ def fold_with_enum_index(xtypes, x):
     xfold = np.zeros((x.shape[0], len(xtypes)))
     unfold_index = 0
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT or xtyp == INT:
+        if xtyp == FLOAT or xtyp == ORD:
             xfold[:, i] = x[:, unfold_index]
             unfold_index += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
@@ -188,7 +193,7 @@ def unfold_with_enum_mask(xtypes, x):
     xunfold = np.zeros((x.shape[0], compute_unfolded_dimension(xtypes)))
     unfold_index = 0
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT or xtyp == INT:
+        if xtyp == FLOAT or xtyp == ORD:
             xunfold[:, unfold_index] = x[:, i]
             unfold_index += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
@@ -217,7 +222,7 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
         xi = x[i]
         if xtyp == FLOAT:
             res.append(xi)
-        elif xtyp == INT:
+        elif xtyp == ORD:
             res.append(int(xi))
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             res.append(xlimits[i][int(xi)])
@@ -230,7 +235,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
     """
     Sampling method decorator that takes an SMT continuous sampling method and
     cast values according x types specification to implement a sampling method
-    handling integer (INT) or categorical (ENUM) features
+    handling integer (ORD) or categorical (ENUM) features
     """
 
     def __init__(self, xtypes, xlimits, sampling_method_class, **kwargs):
@@ -278,7 +283,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     """
     Surrogate model decorator that takes an SMT continuous surrogate model and
     cast values according x types specification to implement a surrogate model
-    handling integer (INT) or categorical (ENUM) features
+    handling integer (ORD) or categorical (ENUM) features
     """
 
     def __init__(
@@ -387,7 +392,7 @@ class MixedIntegerContext(object):
         Parameters
         ----------
         xtypes: x types list
-            x type specification: list of either FLOAT, INT or (ENUM, n) spec.
+            x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
         xlimits: array-like
             bounds of x features
         work_in_folded_space: bool

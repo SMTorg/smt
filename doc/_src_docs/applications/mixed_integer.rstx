@@ -4,9 +4,8 @@ Mixed-Integer Sampling and Surrogate (Continuous Relaxation)
 ============================================================
 
 SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with
-categorical (or enumerate) and integer variables using continuous relaxation.
-
-For integer variables, values are rounded to the closer integer.
+categorical (or enumerate) and ordered variables using continuous relaxation.
+For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, bounds are provided, the list will consist of all integers between those bounds.
 For enum variables, as many x features as enumerated levels are created with [0, 1] bounds 
 and the max of these feature float values will correspond to the choice of one the enum value. 
 
@@ -17,7 +16,7 @@ let say x1, will give "red" as the value for the original categorical feature.
 The user specifies x feature types through a list of types to be either:
 
 - ``FLOAT``: a continuous feature,
-- ``INT``: an integer valued feature,
+- ``ORD``: an ordered valued feature,
 - or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
 
 In the case of mixed integer sampling, bounds of each x feature have to be adapted 
@@ -25,7 +24,7 @@ to take into account feature types. While FLOAT and INT feature still have an in
 [lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list
 of possible values (levels). 
 
-For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
+For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, 
 a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
 
 
