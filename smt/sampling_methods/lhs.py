@@ -301,9 +301,22 @@ class LHS(ScaledSamplingMethod):
 
         return res
 
-    def _ese(self, dim, nt):
+    def _ese(self, dim, nt, fixed_index=[], P0=[]):
+        """
+        Parameters
+        ----------
+
+        fixed_index : list
+            When running an "ese" optimization, we can fix the indexes of 
+            the points that we do not want to modify
+
+        """
         # Parameters of maximinESE procedure
-        P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
+        if len(fixed_index) == 0:
+            P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
+        else:
+            P0 = P0
+            self.random_state = np.random.RandomState()
         J = 20
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)
@@ -321,6 +334,7 @@ class LHS(ScaledSamplingMethod):
             tol=1e-3,
             p=10,
             return_hist=True,
+            fixed_index=fixed_index,
         )
         return P
 
@@ -337,7 +351,8 @@ class LHS(ScaledSamplingMethod):
             Number of points that are to be added to the expanded LHS.
         method : str, optional
             Methodoly for the construction of the expanded LHS.
-            The default is "basic".
+            The default is "basic". The other option is "ese" to use the 
+            ese optimization
 
         Returns
         -------
@@ -356,55 +371,59 @@ class LHS(ScaledSamplingMethod):
                 "Thus, it cannot be ensured that the output is an LHS."
             )
 
-        # For future functionalities
-        if method == "basic":
+        # Evenly spaced intervals with the final dimension of the LHS
+        intervals = []
+        for i in range(len(xlimits)):
+            intervals.append(np.linspace(xlimits[i][0], xlimits[i][1], new_num + 1))
 
-            # Evenly spaced intervals with the final dimension of the LHS
-            intervals = []
-            for i in range(len(xlimits)):
-                intervals.append(np.linspace(xlimits[i][0], xlimits[i][1], new_num + 1))
+        # Creates a subspace with the rows and columns that have no points
+        # in the new space
+        subspace_limits = [[]] * len(xlimits)
+        subspace_bool = []
+        for i in range(len(xlimits)):
+            subspace_limits[i] = []
 
-            # Creates a subspace with the rows and columns that have no points
-            # in the new space
-            subspace_limits = [[]] * len(xlimits)
-            subspace_bool = []
-            for i in range(len(xlimits)):
-                subspace_limits[i] = []
-
-                subspace_bool.append(
+            subspace_bool.append(
+                [
                     [
-                        [
-                            intervals[i][j] < x[kk][i] < intervals[i][j + 1]
-                            for kk in range(len(x))
-                        ]
-                        for j in range(len(intervals[i]) - 1)
+                        intervals[i][j] < x[kk][i] < intervals[i][j + 1]
+                        for kk in range(len(x))
                     ]
+                    for j in range(len(intervals[i]) - 1)
+                ]
+            )
+
+            [
+                subspace_limits[i].append([intervals[i][ii], intervals[i][ii + 1]])
+                for ii in range(len(subspace_bool[i]))
+                if not (True in subspace_bool[i][ii])
+            ]
+
+        # Sampling of the new subspace
+        sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
+        x_subspace = sampling_new(n_points)
+
+        column_index = 0
+        sorted_arr = x_subspace[x_subspace[:, column_index].argsort()]
+
+        for j in range(len(xlimits)):
+            for i in range(len(sorted_arr)):
+                sorted_arr[i, j] = subspace_limits[j][i][0] + sorted_arr[i, j] * (
+                    subspace_limits[j][i][1] - subspace_limits[j][i][0]
                 )
 
-                [
-                    subspace_limits[i].append([intervals[i][ii], intervals[i][ii + 1]])
-                    for ii in range(len(subspace_bool[i]))
-                    if not (True in subspace_bool[i][ii])
-                ]
+        H = np.zeros_like(sorted_arr)
+        for j in range(len(xlimits)):
+            order = np.random.permutation(len(sorted_arr))
+            H[:, j] = sorted_arr[order, j]
 
+        x_new = np.concatenate((x, H), axis=0)
+
+        if method == "ese":
             # Sampling of the new subspace
-            sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
-            x_subspace = sampling_new(n_points)
-
-            columnIndex = 0
-            sortedArr = x_subspace[x_subspace[:, columnIndex].argsort()]
-
-            for j in range(len(xlimits)):
-                for i in range(len(sortedArr)):
-                    sortedArr[i, j] = subspace_limits[j][i][0] + sortedArr[i, j] * (
-                        subspace_limits[j][i][1] - subspace_limits[j][i][0]
-                    )
-
-            H = np.zeros_like(sortedArr)
-            for j in range(len(xlimits)):
-                order = np.random.permutation(len(sortedArr))
-                H[:, j] = sortedArr[order, j]
-
-            x_new = np.concatenate((x, H), axis=0)
+            sampling_new = LHS(xlimits=xlimits, criterion="ese")
+            x_new = sampling_new._ese(
+                len(x_new), len(x_new), fixed_index=np.arange(0, len(x), 1), P0=x_new
+            )
 
         return x_new
