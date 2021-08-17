@@ -12,9 +12,14 @@ This model is suitable for high-dimensional problems due to the kernel construct
 
 Both absolute exponential and squared exponential kernels are available for KPLS model. More details about the KPLS approach could be found in these sources [2]_.
 
+For automatic selection of the optimal number of components, the adjusted Wold's R criterion is implemented [3]_.
+	
 .. [1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
 
 .. [2] Bouhlel, M. A. and Bartoli, N. and  Otsmane, A. and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.
+
+.. [3] B. Li, J. Morris, and E. Martin.  Model selection for partial least squares regression.Chemometrics and Intelligent Laboratory Systems, 64(1):79–89, 2002. ISSN 0169-7439.
+
 
 Usage
 -----
@@ -78,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0436735
+     Training - done. Time (sec):  0.0433614
   ___________________________________________________________________________
      
    Evaluation
@@ -86,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0002537
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000025
      
   ___________________________________________________________________________
      
@@ -97,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0002267
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000453
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -204,3 +209,13 @@ Options
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion
