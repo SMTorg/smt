@@ -23,13 +23,14 @@ from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG, QP
 
+from smt.applications.mixed_integer import INT
+
 
 class TestMixedInteger(unittest.TestCase):
-    
-    
+
     ###INT DEPRECATED####
     def test_qp_mixed_2D_INT(self):
-        xtypes = [FLOAT, ORD]
+        xtypes = [FLOAT, INT]
         xlimits = [[-10, 10], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -47,9 +48,9 @@ class TestMixedInteger(unittest.TestCase):
             if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
                 eq_check = False
         self.assertTrue(eq_check)
-        
+
     def test_krg_mixed_3D_INT(self):
-        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xtypes = [FLOAT, (ENUM, 3), INT]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -69,10 +70,7 @@ class TestMixedInteger(unittest.TestCase):
             if not (xt[i, :][1] == 0 or xt[i, :][1] == 1 or xt[i, :][1] == 2):
                 eq_check = False
         self.assertTrue(eq_check)
-     
-    
-    
-    
+
     def test_check_xspec_consistency(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"]]  # Bad dimension
@@ -143,7 +141,6 @@ class TestMixedInteger(unittest.TestCase):
             if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
                 eq_check = False
         self.assertTrue(eq_check)
-        
 
     def test_compute_unfolded_dimension(self):
         xtypes = [FLOAT, (ENUM, 2)]
