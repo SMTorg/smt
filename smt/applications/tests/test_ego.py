@@ -29,7 +29,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
     FLOAT,
     ENUM,
-    INT,
+    ORD,
 )
 from smt.sampling_methods import LHS
 
@@ -204,7 +204,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KB"
-        xtypes = [INT, FLOAT]
+        xtypes = [ORD, FLOAT]
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -215,7 +215,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            xtypes=[INT, FLOAT],
+            xtypes=[ORD, FLOAT],
             xlimits=xlimits,
             n_parallel=n_parallel,
             qEI=qEI,
@@ -236,7 +236,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [INT, FLOAT]
+        xtypes = [ORD, FLOAT]
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
@@ -291,9 +291,9 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
         )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
@@ -320,7 +320,7 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
         )
@@ -494,7 +494,7 @@ class TestEGO(SMTestCase):
             MixedIntegerContext,
             FLOAT,
             ENUM,
-            INT,
+            ORD,
         )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
@@ -527,7 +527,7 @@ class TestEGO(SMTestCase):
             return y
 
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
         )
