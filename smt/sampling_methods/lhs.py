@@ -307,7 +307,7 @@ class LHS(ScaledSamplingMethod):
         ----------
 
         fixed_index : list
-            When running an "ese" optimization, we can fix the indexes of 
+            When running an "ese" optimization, we can fix the indexes of
             the points that we do not want to modify
 
         """
@@ -351,7 +351,7 @@ class LHS(ScaledSamplingMethod):
             Number of points that are to be added to the expanded LHS.
         method : str, optional
             Methodoly for the construction of the expanded LHS.
-            The default is "basic". The other option is "ese" to use the 
+            The default is "basic". The other option is "ese" to use the
             ese optimization
 
         Returns
