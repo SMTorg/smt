@@ -43,8 +43,8 @@ class Test(unittest.TestCase):
             x = sampling(num)
             new = int(new_list[i])
             new_num = num + new
-            
-            #We check the functionality with the "ese" optimization
+
+            # We check the functionality with the "ese" optimization
             x_new = sampling.expand_lhs(x, new, method="ese")
 
             intervals = []
