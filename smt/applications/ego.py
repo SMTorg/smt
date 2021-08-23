@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import MixedIntegerContext, GOWER
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
@@ -105,10 +105,17 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "use_gower_distance",
+            "use_matrix_kernel",
             False,
             types=bool,
-            desc="Whether gower distance is used instead of continuous relaxation (default)",
+            desc="Whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)",
+        )
+        declare(
+            "matrix",
+            GOWER,
+            types=str,
+            values=[GOWER],
+            desc="The matrix kernel to use if use_matrix_kernel is True.",
         )
         declare(
             "surrogate",
@@ -264,12 +271,14 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.use_gower_distance = self.options["use_gower_distance"]
+            self.use_matrix_kernel = self.options["use_matrix_kernel"]
+            self.matrix = self.options["matrix"]
             self.mixint = MixedIntegerContext(
                 xtypes,
                 self.xlimits,
                 work_in_folded_space=False,
-                use_gower_distance=self.use_gower_distance,
+                use_matrix_kernel=self.use_matrix_kernel,
+                matrix=self.options["matrix"],
             )
 
             self.gpr = self.mixint.build_surrogate_model(self.gpr)

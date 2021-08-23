@@ -10,6 +10,7 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
+    GOWER,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -397,37 +398,37 @@ class TestMixedInteger(unittest.TestCase):
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
-        
-        xt = np.array([1.0,3.0, 5.0])
+
+        xt = np.array([1.0, 3.0, 5.0])
         x_train = np.array(["%.2f" % i for i in xt], dtype=object)
         yt = np.array([0.0, 1.0, 1.5])
-        
+
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
-        
+
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            use_gower_distance=True,
+            use_matrix_kernel=True,
+            matrix=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
         )
         sm.set_training_values(x_train, yt)
         sm.train()
-        
+
         # DOE for validation
         num = 6
         x = np.linspace(0, 5, num)
         x_pred = np.array(["%.2f" % i for i in x], dtype=object)
         y = sm.predict_values(x_pred)
-        
-        plt.plot(xt, yt, "o",label='data')
-        plt.plot(x, y, "d",color="red",markersize=3,label='pred')
+
+        plt.plot(xt, yt, "o", label="data")
+        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend()
         plt.show()
-        
-        
+
 
 if __name__ == "__main__":
     TestMixedInteger().run_mixed_integer_context_example()

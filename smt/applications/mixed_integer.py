@@ -14,6 +14,8 @@ INT = "int_type"
 ORD = "ord_type"
 ENUM = "enum_type"
 
+GOWER = "Gower"
+
 
 def check_xspec_consistency(xtypes, xlimits):
     if len(xlimits) != len(xtypes):
@@ -292,7 +294,8 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xlimits,
         surrogate,
         input_in_folded_space=True,
-        use_gower_distance=False,
+        use_matrix_kernel=False,
+        matrix=GOWER,
     ):
         """
         Parameters
@@ -305,13 +308,17 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             instance of a SMT surrogate model
         input_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        use_gower_distance: bool
-            whether gower distance is used instead of continuous relaxation (default)
+        use_matrix_kernel: bool
+            whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)
+        matrix: string
+            the matrix kernel to use if use_matrix_kernel is True.
         """
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._use_gower_distance = use_gower_distance
+        self._use_gower_distance = False
+        if use_matrix_kernel and matrix == GOWER:
+            self._use_gower_distance = True
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -386,7 +393,12 @@ class MixedIntegerContext(object):
     """
 
     def __init__(
-        self, xtypes, xlimits, work_in_folded_space=True, use_gower_distance=False
+        self,
+        xtypes,
+        xlimits,
+        work_in_folded_space=True,
+        use_matrix_kernel=False,
+        matrix=GOWER,
     ):
         """
         Parameters
@@ -397,8 +409,10 @@ class MixedIntegerContext(object):
             bounds of x features
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        use_gower_distance: bool
-            whether gower distance is used instead of continuous relaxation (default)
+        use_matrix_kernel: bool
+            whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)
+        matrix: string
+            The matrix kernel to use if use_matrix_kernel is True.
         """
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -407,7 +421,11 @@ class MixedIntegerContext(object):
             self._xtypes, xlimits
         )
         self._work_in_folded_space = work_in_folded_space
-        self._use_gower_distance = use_gower_distance
+        self._matrix = matrix
+        self._use_matrix_kernel = use_matrix_kernel
+        self._use_gower_distance = False
+        if use_matrix_kernel and matrix == GOWER:
+            self._use_gower_distance = True
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
@@ -427,7 +445,8 @@ class MixedIntegerContext(object):
             self._xlimits,
             surrogate,
             input_in_folded_space=self._work_in_folded_space,
-            use_gower_distance=self._use_gower_distance,
+            use_matrix_kernel=self._use_matrix_kernel,
+            matrix=self._matrix,
         )
 
     def get_unfolded_xlimits(self):
