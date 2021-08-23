@@ -251,43 +251,6 @@ def gower_distances(X, y=None):
     return D, ij.astype(np.int)
 
 
-def gower_corr(theta, d):
-
-    """
-    Gower autocorrelation model.
-    Parameters
-    ----------
-    theta : list[ncomp]
-        the autocorrelation parameter(s).
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
-    Returns
-    -------
-    r : np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
-    """
-
-    r = np.zeros((d.shape[0], 1))
-    n_components = d.shape[1]
-
-    # Construct/split the correlation matrix
-    i, nb_limit = 0, int(1e4)
-    while i * nb_limit <= d.shape[0]:
-
-        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-            np.divide(
-                -np.sum(
-                    theta.reshape(1, n_components)
-                    * d[i * nb_limit : (i + 1) * nb_limit, :],
-                    axis=1,
-                ),
-                theta.sum(),
-            )
-        )
-        i += 1
-    return r
-
-
 def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
     "this function was copied from gower 0.0.5 code"
     # function checks

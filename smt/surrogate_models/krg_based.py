@@ -20,7 +20,6 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
     gower_distances,
-    gower_corr,
     gower_matrix,
 )
 from scipy.stats import multivariate_normal as m_norm
