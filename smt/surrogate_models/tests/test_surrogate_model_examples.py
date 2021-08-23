@@ -276,7 +276,7 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
-        from smt.applications.mixed_integer import ENUM
+        from smt.applications.mixed_integer import ENUM,GOWER
 
         # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
         # FLOAT means x1 continuous
@@ -291,7 +291,8 @@ class Test(unittest.TestCase):
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
 
         sm = MixedIntegerSurrogateModel(
-            use_gower_distance=True,
+            use_matrix_kernel=True,
+            matrix=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
