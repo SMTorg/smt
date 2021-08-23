@@ -393,8 +393,50 @@ class TestMixedInteger(unittest.TestCase):
 
         plt.show()
 
+    def test_mixed_gower_2D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[1.0, 5], [3.0, -1], [5.0, 0.4]])
+        print(xt.shape)
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            use_matrix_kernel=True,
+            matrix=GOWER,
+            xtypes=[(ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 5, 6)
+        x2 = np.linspace(0, 5, 15)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(element)
+        x_pred = np.array(x1)
+        y = sm.predict_values(x_pred)
+        self.assertEqual(np.shape(y), (90, 1))
+
     def test_mixed_gower(self):
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM, GOWER
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            GOWER,
+        )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np

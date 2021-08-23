@@ -25,6 +25,7 @@ from smt.utils.kriging_utils import (
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
+from smt.applications.mixed_integer import GOWER
 
 
 class KrgBased(SurrogateModel):
@@ -37,7 +38,6 @@ class KrgBased(SurrogateModel):
         "act_exp": act_exp,
         "matern52": matern52,
         "matern32": matern32,
-        "gower": gower_corr,
     }
 
     name = "KrigingBased"
@@ -62,10 +62,22 @@ class KrgBased(SurrogateModel):
                 "act_exp",
                 "matern52",
                 "matern32",
-                "gower",
             ),
             desc="Correlation function type",
             types=(str),
+        )
+        declare(
+            "use_matrix_kernel",
+            False,
+            types=bool,
+            desc="Whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)",
+        )
+        declare(
+            "matrix",
+            GOWER,
+            types=str,
+            values=[GOWER],
+            desc="The matrix kernel to use if use_matrix_kernel is True.",
         )
         declare(
             "nugget",
@@ -142,7 +154,7 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
 
-        if self.options["corr"] == "gower":
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             self.X_train = X
             Xt = X
             _, x_n_cols = Xt.shape
@@ -194,7 +206,7 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if self.options["corr"] != "gower":
+        if not (self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER):
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -289,6 +301,8 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+            theta = theta / np.sum(theta)
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
         R = np.eye(self.nt) * (1.0 + nugget + noise)
@@ -426,6 +440,8 @@ class KrgBased(SurrogateModel):
         arg_all = []
         dsigma_all = []
         dbeta_all = []
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+            theta = theta / np.sum(theta)
 
         for i_der in range(nb_theta):
             # Compute R derivatives
@@ -550,6 +566,8 @@ class KrgBased(SurrogateModel):
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+            theta = theta / np.sum(theta)
 
         if self.name in ["MGP"]:
             log_prior = self._reduced_log_prior(theta, hessian=True)
@@ -685,7 +703,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower":
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
             r = np.exp(
                 -gower_matrix(
@@ -750,7 +768,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower":
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             r = np.exp(
                 -gower_matrix(
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
@@ -811,9 +829,8 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["corr"] == "gower":
+        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
-
             r = np.exp(
                 -gower_matrix(
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)

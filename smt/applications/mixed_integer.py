@@ -316,9 +316,8 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._use_gower_distance = False
-        if use_matrix_kernel and matrix == GOWER:
-            self._use_gower_distance = True
+        self._matrix = matrix
+        self._use_matrix_kernel = use_matrix_kernel
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -329,6 +328,12 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
+        if self._use_matrix_kernel:
+            if self._surrogate.name not in ["Kriging"]:
+                raise ValueError("matrix kernel not implemented for this model")
+            if self._surrogate.options["corr"] in ["matern32", "matern52"]:
+                raise ValueError("matrix kernel not compatible with matern kernel")
+
     @property
     def name(self):
         return "MixedInteger" + self._surrogate.name
@@ -338,9 +343,10 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        if self._use_gower_distance:
+        if self._use_matrix_kernel and self._matrix == GOWER:
             super().set_training_values(xt, yt)
-            self._surrogate.options["corr"] = "gower"
+            self._surrogate.options["use_matrix_kernel"] = self._use_matrix_kernel
+            self._surrogate.options["matrix"] = self._matrix
             self._surrogate.set_training_values(xt, yt, name)
         else:
             if self._input_in_folded_space:
@@ -359,7 +365,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._use_gower_distance:
+        if self._use_matrix_kernel and self._matrix == GOWER:
             return self._surrogate.predict_values(x)
         else:
             if self._input_in_folded_space:
@@ -371,7 +377,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._use_gower_distance:
+        if self._use_matrix_kernel and self._matrix == GOWER:
             return self._surrogate.predict_variances(x)
         else:
             if self._input_in_folded_space:
@@ -423,9 +429,6 @@ class MixedIntegerContext(object):
         self._work_in_folded_space = work_in_folded_space
         self._matrix = matrix
         self._use_matrix_kernel = use_matrix_kernel
-        self._use_gower_distance = False
-        if use_matrix_kernel and matrix == GOWER:
-            self._use_gower_distance = True
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """

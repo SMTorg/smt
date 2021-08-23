@@ -272,7 +272,11 @@ class Test(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower_krg(self):
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM, GOWER
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            GOWER,
+        )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
@@ -306,8 +310,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.legend()
         plt.show()
-        
-        
+
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt

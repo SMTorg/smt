@@ -272,21 +272,20 @@ def gower_corr(theta, d):
 
     # Construct/split the correlation matrix
     i, nb_limit = 0, int(1e4)
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                np.divide(
-                    -np.sum(
-                        theta.reshape(1, n_components)
-                        * d[i * nb_limit : (i + 1) * nb_limit, :],
-                        axis=1,
-                    ),
-                    theta.sum(),
-                )
+    while i * nb_limit <= d.shape[0]:
+
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            np.divide(
+                -np.sum(
+                    theta.reshape(1, n_components)
+                    * d[i * nb_limit : (i + 1) * nb_limit, :],
+                    axis=1,
+                ),
+                theta.sum(),
             )
-            i += 1
+        )
+        i += 1
+    return r
 
 
 def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
