@@ -3,6 +3,7 @@ Author: Remi Lafage <remi.lafage@onera.fr>
 
 This package is distributed under New BSD license.
 """
+
 import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
