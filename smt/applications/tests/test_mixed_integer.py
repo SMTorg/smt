@@ -394,7 +394,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower(self):
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM, GOWER
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
