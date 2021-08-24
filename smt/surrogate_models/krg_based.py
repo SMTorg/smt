@@ -285,8 +285,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            theta = theta / np.sum(theta)
+
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
         R = np.eye(self.nt) * (1.0 + nugget + noise)
@@ -424,9 +423,6 @@ class KrgBased(SurrogateModel):
         arg_all = []
         dsigma_all = []
         dbeta_all = []
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            theta = theta / np.sum(theta)
-
         for i_der in range(nb_theta):
             # Compute R derivatives
             dr = self._correlation_types[self.options["corr"]](
@@ -550,9 +546,6 @@ class KrgBased(SurrogateModel):
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            theta = theta / np.sum(theta)
-
         if self.name in ["MGP"]:
             log_prior = self._reduced_log_prior(theta, hessian=True)
 
@@ -689,6 +682,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
+
             r = np.exp(
                 -gower_matrix(
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
@@ -697,6 +691,18 @@ class KrgBased(SurrogateModel):
             X_cont=compute_X_cont(x)
             X_cont = (X_cont - self.X_offset) / self.X_scale
             
+# =============================================================================
+#             d = gower_matrix(x,self.X_train).reshape(n_eval, n_features_x)
+# 
+#             # Compute the correlation function
+#             r = self._correlation_types[self.options["corr"]](
+#                 self.optimal_theta, d
+#             ).reshape(n_eval, self.nt)
+#             
+# =============================================================================
+            
+            X_cont=compute_X_cont(x)
+            X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set

@@ -430,9 +430,7 @@ def gower_get(
 
     sum_num = np.multiply(feature_weight_num, sij_num).sum(axis=1)
     sums = np.add(sum_cat, sum_num)
-    sum_sij = np.divide(sums, feature_weight_sum)
-
-    return sum_sij
+    return sums
 
 
 def differences(X, Y):
