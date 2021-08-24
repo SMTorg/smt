@@ -21,6 +21,7 @@ from smt.utils.kriging_utils import (
     matern32,
     gower_distances,
     gower_matrix,
+    gower_corr,
     compute_X_cont,
 )
 from scipy.stats import multivariate_normal as m_norm
@@ -155,7 +156,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            D, self.ij,X = gower_distances(X)
+            D, self.ij, X = gower_distances(X)
 
         # Center and scale X and y
         (
@@ -683,25 +684,15 @@ class KrgBased(SurrogateModel):
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
 
-            r = np.exp(
-                -gower_matrix(
-                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
-                )
+            r = gower_corr(
+                x,
+                corr=self.options["corr"],
+                data_y=self.X_train,
+                weight=np.asarray(self.optimal_theta),
+                cat_features=None,
             )
-            X_cont=compute_X_cont(x)
-            X_cont = (X_cont - self.X_offset) / self.X_scale
-            
-# =============================================================================
-#             d = gower_matrix(x,self.X_train).reshape(n_eval, n_features_x)
-# 
-#             # Compute the correlation function
-#             r = self._correlation_types[self.options["corr"]](
-#                 self.optimal_theta, d
-#             ).reshape(n_eval, self.nt)
-#             
-# =============================================================================
-            
-            X_cont=compute_X_cont(x)
+
+            X_cont = compute_X_cont(x)
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
@@ -716,9 +707,7 @@ class KrgBased(SurrogateModel):
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
-        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
-            r, self.optimal_par["gamma"]
-        )
+        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
         return y
@@ -742,11 +731,14 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            r = np.exp(
-                -gower_matrix(
-                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
-                )
+            r = gower_corr(
+                x,
+                corr=self.options["corr"],
+                data_y=self.X_train,
+                weight=np.asarray(self.optimal_theta),
+                cat_features=None,
             )
+
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -802,14 +794,17 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        X_cont=x
+        X_cont = x
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
-            r = np.exp(
-                -gower_matrix(
-                    x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
-                )
+            r = gower_corr(
+                x,
+                corr=self.options["corr"],
+                data_y=self.X_train,
+                weight=np.asarray(self.optimal_theta),
+                cat_features=None,
             )
+
             X_cont = compute_X_cont(x)
         else:
             x = (x - self.X_offset) / self.X_scale

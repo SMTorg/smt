@@ -123,7 +123,7 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
-def compute_X_cont(x): 
+def compute_X_cont(x):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the X_cont part of a vector x for mixed integer
@@ -136,7 +136,7 @@ def compute_X_cont(x):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-    
+
     n_eval, n_features_x = x.shape
     if not isinstance(x, np.ndarray):
         is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
@@ -150,6 +150,7 @@ def compute_X_cont(x):
             x = np.asarray(x)
     X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
     return X_cont
+
 
 def gower_distances(X, y=None):
     """
@@ -170,18 +171,18 @@ def gower_distances(X, y=None):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-               
+
     Xt = X
-# =============================================================================
-#     _, x_n_cols = Xt.shape
-#     cat_features = np.zeros(x_n_cols, dtype=bool)
-#     for col in range(x_n_cols):
-#         if not np.issubdtype(type(Xt[0, col]), np.float):
-#             cat_features[col] = True
-#     X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
-# =============================================================================
-    X_cont=compute_X_cont(Xt)
-    
+    # =============================================================================
+    #     _, x_n_cols = Xt.shape
+    #     cat_features = np.zeros(x_n_cols, dtype=bool)
+    #     for col in range(x_n_cols):
+    #         if not np.issubdtype(type(Xt[0, col]), np.float):
+    #             cat_features[col] = True
+    #     X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
+    # =============================================================================
+    X_cont = compute_X_cont(Xt)
+
     # function checks
     if y is None:
         Y = X
@@ -290,10 +291,28 @@ def gower_distances(X, y=None):
 
     D = np.concatenate((D_cat, D_num), axis=1)
 
-    return D, ij.astype(np.int),X_cont
+    return D, ij.astype(np.int), X_cont
 
 
-def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
+def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None):
+
+    if corr == "squar_exp":
+        return np.exp(
+            -gower_matrix(
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=2
+            )
+        )
+    elif corr == "abs_exp":
+        return np.exp(
+            -gower_matrix(
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=1
+            )
+        )
+    else:
+        raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
+
+
+def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
@@ -394,6 +413,7 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
             cat_features,
             num_ranges,
             num_max,
+            power,
         )
         out[i, j_start:] = res
         if x_n_rows == y_n_rows:
@@ -413,11 +433,12 @@ def gower_get(
     categorical_features,
     ranges_of_numeric,
     max_of_numeric,
+    power,
 ):
     "this function was copied from gower 0.0.5 code"
     # categorical columns
     sij_cat = np.where(xi_cat == xj_cat, np.zeros_like(xi_cat), np.ones_like(xi_cat))
-    sum_cat = np.multiply(feature_weight_cat, sij_cat).sum(axis=1)
+    sum_cat = np.multiply(feature_weight_cat, np.power(sij_cat, power)).sum(axis=1)
 
     # numerical columns
     abs_delta = np.absolute(xi_num - xj_num)
@@ -428,7 +449,7 @@ def gower_get(
         where=ranges_of_numeric != 0,
     )
 
-    sum_num = np.multiply(feature_weight_num, sij_num).sum(axis=1)
+    sum_num = np.multiply(feature_weight_num, np.power(sij_num, power)).sum(axis=1)
     sums = np.add(sum_cat, sum_num)
     return sums
 
