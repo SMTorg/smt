@@ -20,7 +20,6 @@ from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
 from smt.sampling_methods import LHS
 
-
 class Evaluator(object):
     """
     An interface for evaluation of a function at x points (nsamples of dimension nx).
