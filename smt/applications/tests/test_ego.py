@@ -343,7 +343,6 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            use_matrix_kernel=True,
             matrix=GOWER,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)

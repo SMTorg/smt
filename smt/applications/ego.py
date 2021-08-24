@@ -105,14 +105,8 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "use_matrix_kernel",
-            False,
-            types=bool,
-            desc="Whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)",
-        )
-        declare(
             "matrix",
-            GOWER,
+            None,
             types=str,
             values=[GOWER],
             desc="The matrix kernel to use if use_matrix_kernel is True.",
@@ -271,13 +265,11 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.use_matrix_kernel = self.options["use_matrix_kernel"]
             self.matrix = self.options["matrix"]
             self.mixint = MixedIntegerContext(
                 xtypes,
                 self.xlimits,
                 work_in_folded_space=False,
-                use_matrix_kernel=self.use_matrix_kernel,
                 matrix=self.options["matrix"],
             )
 

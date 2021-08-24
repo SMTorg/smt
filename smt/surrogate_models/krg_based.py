@@ -68,14 +68,8 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
-            "use_matrix_kernel",
-            False,
-            types=bool,
-            desc="Whether matrix form is used for mixed integer kernel instead of continuous relaxation (default)",
-        )
-        declare(
             "matrix",
-            GOWER,
+            None,
             types=str,
             values=[GOWER],
             desc="The matrix kernel to use if use_matrix_kernel is True.",
@@ -155,7 +149,7 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+        if self.options["matrix"] == GOWER:
             D, self.ij, X = gower_distances(X)
 
         # Center and scale X and y
@@ -191,7 +185,7 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if not (self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER):
+        if self.options["matrix"] is None:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -681,7 +675,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+        if self.options["matrix"] == GOWER:
             # Compute the correlation function
 
             r = gower_corr(
@@ -730,7 +724,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+        if self.options["matrix"] == GOWER:
             r = gower_corr(
                 x,
                 corr=self.options["corr"],
@@ -795,7 +789,7 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         X_cont = x
-        if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
+        if self.options["matrix"] == GOWER:
             # Compute the correlation function
             r = gower_corr(
                 x,

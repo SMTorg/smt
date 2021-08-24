@@ -412,7 +412,6 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            use_matrix_kernel=True,
             matrix=GOWER,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
@@ -449,7 +448,6 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            use_matrix_kernel=True,
             matrix=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
