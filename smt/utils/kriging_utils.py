@@ -123,6 +123,34 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
+def compute_X_cont(x): 
+    """
+    Some parts were extracted from gower 0.0.5 library
+    Computes the X_cont part of a vector x for mixed integer
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    Returns
+    -------
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    """
+    
+    n_eval, n_features_x = x.shape
+    if not isinstance(x, np.ndarray):
+        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+        cat_features = is_number(x.dtypes)
+    else:
+        cat_features = np.zeros(n_features_x, dtype=bool)
+        for col in range(n_features_x):
+            if not np.issubdtype(type(x[0, col]), np.number):
+                cat_features[col] = True
+        if not isinstance(x, np.ndarray):
+            x = np.asarray(x)
+    X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
+    return X_cont
+
 def gower_distances(X, y=None):
     """
     Some parts were extracted from gower 0.0.5 library
@@ -139,16 +167,20 @@ def gower_distances(X, y=None):
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
     """
                
     Xt = X
-    _, x_n_cols = Xt.shape
-    cat_features = np.zeros(x_n_cols, dtype=bool)
-    for col in range(x_n_cols):
-        if not np.issubdtype(type(Xt[0, col]), np.float):
-            cat_features[col] = True
-    X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
-   
+# =============================================================================
+#     _, x_n_cols = Xt.shape
+#     cat_features = np.zeros(x_n_cols, dtype=bool)
+#     for col in range(x_n_cols):
+#         if not np.issubdtype(type(Xt[0, col]), np.float):
+#             cat_features[col] = True
+#     X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
+# =============================================================================
+    X_cont=compute_X_cont(Xt)
     
     # function checks
     if y is None:

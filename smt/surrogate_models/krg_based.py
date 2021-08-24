@@ -21,6 +21,7 @@ from smt.utils.kriging_utils import (
     matern32,
     gower_distances,
     gower_matrix,
+    compute_X_cont,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
@@ -693,44 +694,27 @@ class KrgBased(SurrogateModel):
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
                 )
             )
-            if not isinstance(x, np.ndarray):
-                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(x.dtypes)
-            else:
-                cat_features = np.zeros(n_features_x, dtype=bool)
-                for col in range(n_features_x):
-                    if not np.issubdtype(type(x[0, col]), np.number):
-                        cat_features[col] = True
-                if not isinstance(x, np.ndarray):
-                    x = np.asarray(x)
-            X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
+            X_cont=compute_X_cont(x)
             X_cont = (X_cont - self.X_offset) / self.X_scale
-            # Compute the regression function
-            f = self._regression_types[self.options["poly"]](X_cont)
-            # Scaled predictor
-            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
-                r, self.optimal_par["gamma"]
-            )
-            # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            
         else:
-            x = (x - self.X_offset) / self.X_scale
+            X_cont = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(x, Y=self.X_norma.copy())
+            dx = differences(X_cont, Y=self.X_norma.copy())
             d = self._componentwise_distance(dx)
             # Compute the correlation function
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
-            # Compute the regression function
-            f = self._regression_types[self.options["poly"]](x)
-            # Scaled predictor
-            y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
-                r, self.optimal_par["gamma"]
-            )
-            # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+        # Compute the regression function
+        f = self._regression_types[self.options["poly"]](X_cont)
+        # Scaled predictor
+        y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(
+            r, self.optimal_par["gamma"]
+        )
+        # Predictor
+        y = (self.y_mean + self.y_std * y_).ravel()
         return y
 
     def _predict_derivatives(self, x, kx):
@@ -812,6 +796,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
+        X_cont=x
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
             # Compute the correlation function
             r = np.exp(
@@ -819,28 +804,7 @@ class KrgBased(SurrogateModel):
                     x, data_y=self.X_train, weight=np.asarray(self.optimal_theta)
                 )
             )
-
-            if not isinstance(x, np.ndarray):
-                is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-                cat_features = is_number(x.dtypes)
-            else:
-                cat_features = np.zeros(n_features_x, dtype=bool)
-                for col in range(n_features_x):
-                    if not np.issubdtype(type(x[0, col]), np.number):
-                        cat_features[col] = True
-
-                if not isinstance(x, np.ndarray):
-                    x = np.asarray(x)
-
-            X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
-            C = self.optimal_par["C"]
-            rt = linalg.solve_triangular(C, r.T, lower=True)
-
-            u = linalg.solve_triangular(
-                self.optimal_par["G"].T,
-                np.dot(self.optimal_par["Ft"].T, rt)
-                - self._regression_types[self.options["poly"]](X_cont).T,
-            )
+            X_cont = compute_X_cont(x)
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -851,15 +815,14 @@ class KrgBased(SurrogateModel):
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
 
-            C = self.optimal_par["C"]
-            rt = linalg.solve_triangular(C, r.T, lower=True)
+        C = self.optimal_par["C"]
+        rt = linalg.solve_triangular(C, r.T, lower=True)
 
-            u = linalg.solve_triangular(
-                self.optimal_par["G"].T,
-                np.dot(self.optimal_par["Ft"].T, rt)
-                - self._regression_types[self.options["poly"]](x).T,
-            )
-
+        u = linalg.solve_triangular(
+            self.optimal_par["G"].T,
+            np.dot(self.optimal_par["Ft"].T, rt)
+            - self._regression_types[self.options["poly"]](x).T,
+        )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
