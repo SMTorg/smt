@@ -152,35 +152,19 @@ class KrgBased(SurrogateModel):
             X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
-
+        self.X_train = X
         if self.options["use_matrix_kernel"] and self.options["matrix"] == GOWER:
-            self.X_train = X
-            Xt = X
-            _, x_n_cols = Xt.shape
-            cat_features = np.zeros(x_n_cols, dtype=bool)
-            for col in range(x_n_cols):
-                if not np.issubdtype(type(Xt[0, col]), np.float):
-                    cat_features[col] = True
-            X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
-            (
-                self.X_norma,
-                self.y_norma,
-                self.X_offset,
-                self.y_mean,
-                self.X_scale,
-                self.y_std,
-            ) = standardization(X_cont, y)
-            D, self.ij = gower_distances(X)
-        else:
-            # Center and scale X and y
-            (
-                self.X_norma,
-                self.y_norma,
-                self.X_offset,
-                self.y_mean,
-                self.X_scale,
-                self.y_std,
-            ) = standardization(X, y)
+            D, self.ij,X = gower_distances(X)
+
+        # Center and scale X and y
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = standardization(X, y)
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:

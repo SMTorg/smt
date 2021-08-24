@@ -140,6 +140,16 @@ def gower_distances(X, y=None):
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
     """
+               
+    Xt = X
+    _, x_n_cols = Xt.shape
+    cat_features = np.zeros(x_n_cols, dtype=bool)
+    for col in range(x_n_cols):
+        if not np.issubdtype(type(Xt[0, col]), np.float):
+            cat_features[col] = True
+    X_cont = Xt[:, np.logical_not(cat_features)].astype(np.float)
+   
+    
     # function checks
     if y is None:
         Y = X
@@ -248,7 +258,7 @@ def gower_distances(X, y=None):
 
     D = np.concatenate((D_cat, D_num), axis=1)
 
-    return D, ij.astype(np.int)
+    return D, ij.astype(np.int),X_cont
 
 
 def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
