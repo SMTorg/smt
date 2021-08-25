@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0432553
+     Training - done. Time (sec):  0.0403142
   ___________________________________________________________________________
      
    Evaluation
@@ -139,7 +139,7 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002546
+     Predicting - done. Time (sec):  0.0002482
      
      Prediction time/pt. (sec) :  0.0000025
      
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002050
+     Predicting - done. Time (sec):  0.0002022
      
-     Prediction time/pt. (sec) :  0.0000410
+     Prediction time/pt. (sec) :  0.0000404
      
   
 .. figure:: krg_Test_test_krg.png
@@ -218,7 +218,7 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002825
+     Predicting - done. Time (sec):  0.0002961
      
      Prediction time/pt. (sec) :  0.0000006
      
@@ -272,9 +272,14 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32', 'gower']
+     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  matrix
+     -  None
+     -  ['Gower']
+     -  ['str']
+     -  The matrix kernel to use if use_matrix_kernel is True.
   *  -  nugget
      -  2.220446049250313e-14
      -  None

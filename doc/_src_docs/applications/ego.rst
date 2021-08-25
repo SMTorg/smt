@@ -273,7 +273,7 @@ Usage
   
 ::
 
-  Minimum in x=18.1 with f(x)=-14.6
+  Minimum in x=18.9 with f(x)=-15.1
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -582,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x2af592d26280>
+     -  <smt.applications.ego.Evaluator object at 0x2b2d4f37f280>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,13 +616,13 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
-  *  -  use_gower_distance
-     -  False
+  *  -  matrix
      -  None
-     -  ['bool']
-     -  Whether gower distance is used instead of continuous relaxation (default)
+     -  ['Gower']
+     -  ['str']
+     -  The matrix kernel to use if use_matrix_kernel is True.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x2af592d26040>
+     -  <smt.surrogate_models.krg.KRG object at 0x2b2d4f37f0d0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly
