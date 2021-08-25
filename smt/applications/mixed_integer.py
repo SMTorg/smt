@@ -295,7 +295,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xlimits,
         surrogate,
         input_in_folded_space=True,
-        matrix=None,
+        categorical_kernel=None,
     ):
         """
         Parameters
@@ -308,13 +308,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             instance of a SMT surrogate model
         input_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        matrix: string
-            the matrix kernel to use if use_matrix_kernel is True.
+        categorical_kernel: string
+            the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._matrix = matrix
+        self._categorical_kernel = categorical_kernel
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -325,7 +325,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
-        if not (self._matrix is None):
+        if not (self._categorical_kernel is None):
             if self._surrogate.name not in ["Kriging"]:
                 raise ValueError("matrix kernel not implemented for this model")
             if self._surrogate.options["corr"] in ["matern32", "matern52"]:
@@ -340,9 +340,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        if self._matrix == GOWER:
+        if self._categorical_kernel == GOWER:
             super().set_training_values(xt, yt)
-            self._surrogate.options["matrix"] = self._matrix
+            self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             self._surrogate.set_training_values(xt, yt, name)
         else:
             if self._input_in_folded_space:
@@ -361,7 +361,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._matrix == GOWER:
+        if self._categorical_kernel == GOWER:
             return self._surrogate.predict_values(x)
         else:
             if self._input_in_folded_space:
@@ -373,7 +373,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._matrix == GOWER:
+        if self._categorical_kernel == GOWER:
             return self._surrogate.predict_variances(x)
         else:
             if self._input_in_folded_space:
@@ -399,7 +399,7 @@ class MixedIntegerContext(object):
         xtypes,
         xlimits,
         work_in_folded_space=True,
-        matrix=None,
+        categorical_kernel=None,
     ):
         """
         Parameters
@@ -410,8 +410,8 @@ class MixedIntegerContext(object):
             bounds of x features
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        matrix: string
-            The matrix kernel to use if use_matrix_kernel is True.
+        categorical_kernel: string
+            the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -420,7 +420,7 @@ class MixedIntegerContext(object):
             self._xtypes, xlimits
         )
         self._work_in_folded_space = work_in_folded_space
-        self._matrix = matrix
+        self._categorical_kernel = categorical_kernel
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
@@ -440,7 +440,7 @@ class MixedIntegerContext(object):
             self._xlimits,
             surrogate,
             input_in_folded_space=self._work_in_folded_space,
-            matrix=self._matrix,
+            categorical_kernel=self._categorical_kernel,
         )
 
     def get_unfolded_xlimits(self):

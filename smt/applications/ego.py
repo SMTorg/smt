@@ -105,11 +105,11 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "matrix",
+            "categorical_kernel",
             None,
             types=str,
             values=[GOWER],
-            desc="The matrix kernel to use if use_matrix_kernel is True.",
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(
             "surrogate",
@@ -265,12 +265,12 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.matrix = self.options["matrix"]
+            self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
                 xtypes,
                 self.xlimits,
                 work_in_folded_space=False,
-                matrix=self.options["matrix"],
+                categorical_kernel=self.options["categorical_kernel"],
             )
 
             self.gpr = self.mixint.build_surrogate_model(self.gpr)

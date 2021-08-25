@@ -289,7 +289,7 @@ class Test(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            matrix=GOWER,
+            categorical_kernel=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),

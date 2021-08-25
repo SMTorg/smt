@@ -412,7 +412,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            matrix=GOWER,
+            categorical_kernel=GOWER,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -448,7 +448,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            matrix=GOWER,
+            categorical_kernel=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),

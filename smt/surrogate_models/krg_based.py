@@ -68,11 +68,11 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
-            "matrix",
+            "categorical_kernel",
             None,
             types=str,
             values=[GOWER],
-            desc="The matrix kernel to use if use_matrix_kernel is True.",
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(
             "nugget",
@@ -149,7 +149,7 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
-        if self.options["matrix"] == GOWER:
+        if self.options["categorical_kernel"] == GOWER:
             D, self.ij, X = gower_distances(X)
 
         # Center and scale X and y
@@ -185,7 +185,7 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if self.options["matrix"] is None:
+        if self.options["categorical_kernel"] is None:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -675,7 +675,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["matrix"] == GOWER:
+        if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
 
             r = gower_corr(
@@ -724,7 +724,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["matrix"] == GOWER:
+        if self.options["categorical_kernel"] == GOWER:
             r = gower_corr(
                 x,
                 corr=self.options["corr"],
@@ -789,7 +789,7 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         X_cont = x
-        if self.options["matrix"] == GOWER:
+        if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
             r = gower_corr(
                 x,
