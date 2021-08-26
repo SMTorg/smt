@@ -123,7 +123,7 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
-def compute_X_cont(x):
+def compute_X_cont(x,xtypes):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the X_cont part of a vector x for mixed integer
@@ -136,23 +136,17 @@ def compute_X_cont(x):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-
-    n_eval, n_features_x = x.shape
-    if not isinstance(x, np.ndarray):
-        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-        cat_features = is_number(x.dtypes)
-    else:
-        cat_features = np.zeros(n_features_x, dtype=bool)
-        for col in range(n_features_x):
-            if not np.issubdtype(type(x[0, col]), np.number):
-                cat_features[col] = True
-        if not isinstance(x, np.ndarray):
-            x = np.asarray(x)
-    X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
+    if xtypes is None : 
+        return x 
+    ind =[]
+    for i,xtype in enumerate(xtypes) : 
+        if (xtype=='float_type' or xtype=='ord_type') :
+            ind.append(i)
+    X_cont=x[:,ind]
     return X_cont
 
 
-def gower_distances(X, y=None):
+def gower_distances(X, y=None,xtypes=None):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the nonzero Gower-distances between the vectors
@@ -173,7 +167,7 @@ def gower_distances(X, y=None):
     """
 
     Xt = X
-    X_cont = compute_X_cont(Xt)
+    X_cont = compute_X_cont(Xt,xtypes)
 
     # function checks
     if y is None:
@@ -286,25 +280,25 @@ def gower_distances(X, y=None):
     return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None):
+def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None, xtypes=None):
 
     if corr == "squar_exp":
         return np.exp(
             -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=2
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, xtypes=xtypes, power=2
             )
         )
     elif corr == "abs_exp":
         return np.exp(
             -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=1
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, xtypes=xtypes, power=1
             )
         )
     else:
         raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
-def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
+def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, xtypes=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x

@@ -157,7 +157,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["categorical_kernel"] == GOWER:
-            D, self.ij, X = gower_distances(X)
+            D, self.ij, X = gower_distances(X=X,xtypes=self.options["xtypes"])
 
         # Center and scale X and y
         (
@@ -183,7 +183,6 @@ class KrgBased(SurrogateModel):
             y_norma_unique = []
             for i in range(self.nt):
                 y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
-
             # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
             self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
@@ -691,9 +690,10 @@ class KrgBased(SurrogateModel):
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
                 cat_features=None,
+                xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x)
+            X_cont = compute_X_cont(x,self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
@@ -738,6 +738,7 @@ class KrgBased(SurrogateModel):
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
                 cat_features=None,
+                xtypes=self.options["xtypes"],
             )
 
         else:
@@ -804,9 +805,10 @@ class KrgBased(SurrogateModel):
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
                 cat_features=None,
+                xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x)
+            X_cont = compute_X_cont(x,self.options["xtypes"])
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
