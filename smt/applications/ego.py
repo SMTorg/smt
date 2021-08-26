@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import MixedIntegerContext, GOWER
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
@@ -105,10 +105,11 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "use_gower_distance",
-            False,
-            types=bool,
-            desc="Whether gower distance is used instead of continuous relaxation (default)",
+            "categorical_kernel",
+            None,
+            types=str,
+            values=[GOWER],
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(
             "surrogate",
@@ -264,12 +265,12 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
         if xtypes:
-            self.use_gower_distance = self.options["use_gower_distance"]
+            self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
                 xtypes,
                 self.xlimits,
                 work_in_folded_space=False,
-                use_gower_distance=self.use_gower_distance,
+                categorical_kernel=self.options["categorical_kernel"],
             )
 
             self.gpr = self.mixint.build_surrogate_model(self.gpr)

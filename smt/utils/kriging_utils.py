@@ -123,6 +123,35 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
+def compute_X_cont(x):
+    """
+    Some parts were extracted from gower 0.0.5 library
+    Computes the X_cont part of a vector x for mixed integer
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    Returns
+    -------
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    """
+
+    n_eval, n_features_x = x.shape
+    if not isinstance(x, np.ndarray):
+        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
+        cat_features = is_number(x.dtypes)
+    else:
+        cat_features = np.zeros(n_features_x, dtype=bool)
+        for col in range(n_features_x):
+            if not np.issubdtype(type(x[0, col]), np.number):
+                cat_features[col] = True
+        if not isinstance(x, np.ndarray):
+            x = np.asarray(x)
+    X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
+    return X_cont
+
+
 def gower_distances(X, y=None):
     """
     Some parts were extracted from gower 0.0.5 library
@@ -139,7 +168,13 @@ def gower_distances(X, y=None):
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
     """
+
+    Xt = X
+    X_cont = compute_X_cont(Xt)
+
     # function checks
     if y is None:
         Y = X
@@ -248,48 +283,28 @@ def gower_distances(X, y=None):
 
     D = np.concatenate((D_cat, D_num), axis=1)
 
-    return D, ij.astype(np.int)
+    return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(theta, d):
+def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None):
 
-    """
-    Gower autocorrelation model.
-    Parameters
-    ----------
-    theta : list[ncomp]
-        the autocorrelation parameter(s).
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
-    Returns
-    -------
-    r : np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
-    """
-
-    r = np.zeros((d.shape[0], 1))
-    n_components = d.shape[1]
-
-    # Construct/split the correlation matrix
-    i, nb_limit = 0, int(1e4)
-    while True:
-        if i * nb_limit > d.shape[0]:
-            return r
-        else:
-            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
-                np.divide(
-                    -np.sum(
-                        theta.reshape(1, n_components)
-                        * d[i * nb_limit : (i + 1) * nb_limit, :],
-                        axis=1,
-                    ),
-                    theta.sum(),
-                )
+    if corr == "squar_exp":
+        return np.exp(
+            -gower_matrix(
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=2
             )
-            i += 1
+        )
+    elif corr == "abs_exp":
+        return np.exp(
+            -gower_matrix(
+                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=1
+            )
+        )
+    else:
+        raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
-def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
+def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
@@ -390,6 +405,7 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None):
             cat_features,
             num_ranges,
             num_max,
+            power,
         )
         out[i, j_start:] = res
         if x_n_rows == y_n_rows:
@@ -409,11 +425,12 @@ def gower_get(
     categorical_features,
     ranges_of_numeric,
     max_of_numeric,
+    power,
 ):
     "this function was copied from gower 0.0.5 code"
     # categorical columns
     sij_cat = np.where(xi_cat == xj_cat, np.zeros_like(xi_cat), np.ones_like(xi_cat))
-    sum_cat = np.multiply(feature_weight_cat, sij_cat).sum(axis=1)
+    sum_cat = np.multiply(feature_weight_cat, np.power(sij_cat, power)).sum(axis=1)
 
     # numerical columns
     abs_delta = np.absolute(xi_num - xj_num)
@@ -424,11 +441,9 @@ def gower_get(
         where=ranges_of_numeric != 0,
     )
 
-    sum_num = np.multiply(feature_weight_num, sij_num).sum(axis=1)
+    sum_num = np.multiply(feature_weight_num, np.power(sij_num, power)).sum(axis=1)
     sums = np.add(sum_cat, sum_num)
-    sum_sij = np.divide(sums, feature_weight_sum)
-
-    return sum_sij
+    return sums
 
 
 def differences(X, Y):

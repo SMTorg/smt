@@ -3,6 +3,7 @@ Author: Remi Lafage <remi.lafage@onera.fr>
 
 This package is distributed under New BSD license.
 """
+
 import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
@@ -13,6 +14,8 @@ FLOAT = "float_type"
 INT = "int_type"
 ORD = "ord_type"
 ENUM = "enum_type"
+
+GOWER = "Gower"
 
 
 def check_xspec_consistency(xtypes, xlimits):
@@ -292,7 +295,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xlimits,
         surrogate,
         input_in_folded_space=True,
-        use_gower_distance=False,
+        categorical_kernel=None,
     ):
         """
         Parameters
@@ -305,13 +308,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             instance of a SMT surrogate model
         input_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        use_gower_distance: bool
-            whether gower distance is used instead of continuous relaxation (default)
+        categorical_kernel: string
+            the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._use_gower_distance = use_gower_distance
+        self._categorical_kernel = categorical_kernel
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -322,6 +325,12 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
+        if not (self._categorical_kernel is None):
+            if self._surrogate.name not in ["Kriging"]:
+                raise ValueError("matrix kernel not implemented for this model")
+            if self._surrogate.options["corr"] in ["matern32", "matern52"]:
+                raise ValueError("matrix kernel not compatible with matern kernel")
+
     @property
     def name(self):
         return "MixedInteger" + self._surrogate.name
@@ -331,9 +340,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        if self._use_gower_distance:
+        if self._categorical_kernel == GOWER:
             super().set_training_values(xt, yt)
-            self._surrogate.options["corr"] = "gower"
+            self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             self._surrogate.set_training_values(xt, yt, name)
         else:
             if self._input_in_folded_space:
@@ -352,7 +361,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._use_gower_distance:
+        if self._categorical_kernel == GOWER:
             return self._surrogate.predict_values(x)
         else:
             if self._input_in_folded_space:
@@ -364,7 +373,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._use_gower_distance:
+        if self._categorical_kernel == GOWER:
             return self._surrogate.predict_variances(x)
         else:
             if self._input_in_folded_space:
@@ -386,7 +395,11 @@ class MixedIntegerContext(object):
     """
 
     def __init__(
-        self, xtypes, xlimits, work_in_folded_space=True, use_gower_distance=False
+        self,
+        xtypes,
+        xlimits,
+        work_in_folded_space=True,
+        categorical_kernel=None,
     ):
         """
         Parameters
@@ -397,8 +410,8 @@ class MixedIntegerContext(object):
             bounds of x features
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        use_gower_distance: bool
-            whether gower distance is used instead of continuous relaxation (default)
+        categorical_kernel: string
+            the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
@@ -407,7 +420,7 @@ class MixedIntegerContext(object):
             self._xtypes, xlimits
         )
         self._work_in_folded_space = work_in_folded_space
-        self._use_gower_distance = use_gower_distance
+        self._categorical_kernel = categorical_kernel
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
@@ -427,7 +440,7 @@ class MixedIntegerContext(object):
             self._xlimits,
             surrogate,
             input_in_folded_space=self._work_in_folded_space,
-            use_gower_distance=self._use_gower_distance,
+            categorical_kernel=self._categorical_kernel,
         )
 
     def get_unfolded_xlimits(self):

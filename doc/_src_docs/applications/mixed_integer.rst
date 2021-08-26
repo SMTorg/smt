@@ -41,20 +41,24 @@ Example of mixed-integer Gower Distance model
 
 .. code-block:: python
 
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM
+  from smt.applications.mixed_integer import (
+      MixedIntegerSurrogateModel,
+      ENUM,
+      GOWER,
+  )
   from smt.surrogate_models import KRG
   import matplotlib.pyplot as plt
   import numpy as np
   
-  xt = np.linspace(1.0, 5.0, 5)
+  xt = np.array([1.0, 3.0, 5.0])
   x_train = np.array(["%.2f" % i for i in xt], dtype=object)
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  yt = np.array([0.0, 1.0, 1.5])
   
   xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
   
   # Surrogate
   sm = MixedIntegerSurrogateModel(
-      use_gower_distance=True,
+      matrix=GOWER,
       xtypes=[(ENUM, 5)],
       xlimits=xlimits,
       surrogate=KRG(theta0=[1e-2]),
@@ -63,15 +67,16 @@ Example of mixed-integer Gower Distance model
   sm.train()
   
   # DOE for validation
-  num = 101
+  num = 6
   x = np.linspace(0, 5, num)
   x_pred = np.array(["%.2f" % i for i in x], dtype=object)
   y = sm.predict_values(x_pred)
   
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.xlabel("actual")
-  plt.ylabel("prediction")
+  plt.plot(xt, yt, "o", label="data")
+  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend()
   plt.show()
   
 ::
@@ -80,12 +85,12 @@ Example of mixed-integer Gower Distance model
      
    Evaluation
      
-        # eval points. : 101
+        # eval points. : 6
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0078111
+     Predicting - done. Time (sec):  0.0007067
      
-     Prediction time/pt. (sec) :  0.0000773
+     Prediction time/pt. (sec) :  0.0001178
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
@@ -186,7 +191,7 @@ Example of mixed-integer Polynomial (QP) surrogate
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000362
+     Predicting - done. Time (sec):  0.0000358
      
      Prediction time/pt. (sec) :  0.0000004
      
@@ -278,9 +283,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006082
+     Predicting - done. Time (sec):  0.0006166
      
-     Prediction time/pt. (sec) :  0.0000122
+     Prediction time/pt. (sec) :  0.0000123
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png

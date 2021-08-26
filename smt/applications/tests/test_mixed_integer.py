@@ -10,6 +10,7 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
+    GOWER,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -392,21 +393,62 @@ class TestMixedInteger(unittest.TestCase):
 
         plt.show()
 
+    def test_mixed_gower_2D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[1.0, 5], [3.0, -1], [5.0, 0.4]])
+        print(xt.shape)
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=GOWER,
+            xtypes=[(ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 5, 6)
+        x2 = np.linspace(0, 5, 15)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(element)
+        x_pred = np.array(x1)
+        y = sm.predict_values(x_pred)
+        self.assertEqual(np.shape(y), (90, 1))
+
     def test_mixed_gower(self):
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ENUM
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            GOWER,
+        )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
 
-        xt = np.linspace(1.0, 5.0, 5)
+        xt = np.array([1.0, 3.0, 5.0])
         x_train = np.array(["%.2f" % i for i in xt], dtype=object)
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+        yt = np.array([0.0, 1.0, 1.5])
 
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            use_gower_distance=True,
+            categorical_kernel=GOWER,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
@@ -415,15 +457,16 @@ class TestMixedInteger(unittest.TestCase):
         sm.train()
 
         # DOE for validation
-        num = 101
+        num = 6
         x = np.linspace(0, 5, num)
         x_pred = np.array(["%.2f" % i for i in x], dtype=object)
         y = sm.predict_values(x_pred)
 
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
-        plt.xlabel("actual")
-        plt.ylabel("prediction")
+        plt.plot(xt, yt, "o", label="data")
+        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend()
         plt.show()
 
 
