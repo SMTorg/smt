@@ -92,7 +92,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits,categorical_kernel=None):
+def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=None):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -111,7 +111,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits,categorical_kernel=Non
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
-    if categorical_kernel is None : 
+    if categorical_kernel is None:
         # Continuous optimization : do nothing
         xlims = []
         for i, xtyp in enumerate(xtypes):
@@ -136,7 +136,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits,categorical_kernel=Non
             else:
                 _raise_value_error(xtyp)
         # avoid possible weird typing of initial xlimits ndarray
-    else : 
+    else:
         # Continuous optimization : do nothing
         xlims = []
         for i, xtyp in enumerate(xtypes):
@@ -150,9 +150,9 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits,categorical_kernel=Non
                     xlims.append(xlimits[i])
             elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
                 if xtyp[1] == len(xlimits[i]):
-                    listint = list(map(float, [0,len(xlimits[i])]))
+                    listint = list(map(float, [0, len(xlimits[i])]))
                     listint = [listint[0], listint[-1]]
-                    xlims.append(listint)                  
+                    xlims.append(listint)
                 else:
                     raise ValueError(
                         "Bad xlimits for categorical var[{}] "
@@ -450,7 +450,7 @@ class MixedIntegerContext(object):
         self._xlimits = xlimits
         self._categorical_kernel = categorical_kernel
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xtypes, xlimits,categorical_kernel
+            self._xtypes, xlimits, categorical_kernel
         )
         self._work_in_folded_space = work_in_folded_space
 
