@@ -689,7 +689,6 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
                 xtypes=self.options["xtypes"],
             )
 
@@ -737,7 +736,6 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
                 xtypes=self.options["xtypes"],
             )
 
@@ -804,7 +802,6 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
                 xtypes=self.options["xtypes"],
             )
 

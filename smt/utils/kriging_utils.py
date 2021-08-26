@@ -273,25 +273,25 @@ def gower_distances(X, y=None,xtypes=None):
     return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None, xtypes=None):
+def gower_corr(data_x, corr, data_y=None, weight=None, xtypes=None):
 
     if corr == "squar_exp":
         return np.exp(
             -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, xtypes=xtypes, power=2
+                data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=2
             )
         )
     elif corr == "abs_exp":
         return np.exp(
             -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, xtypes=xtypes, power=1
+                data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=1
             )
         )
     else:
         raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
-def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, xtypes=None, power=1):
+def gower_matrix(data_x, data_y=None, weight=None, xtypes=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
@@ -309,10 +309,8 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, xtypes=Non
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
 
-    if cat_features is None:
-        cat_features= [not(xtype=='float_type' or xtype=='ord_type')  for i,xtype in enumerate(xtypes)]
-    else:
-        cat_features = np.array(cat_features)
+    cat_features= [not(xtype=='float_type' or xtype=='ord_type')  for i,xtype in enumerate(xtypes)]
+   
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
