@@ -184,14 +184,7 @@ def gower_distances(X, y=None,xtypes=None):
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
 
-    if not isinstance(X, np.ndarray):
-        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-        cat_features = is_number(X.dtypes)
-    else:
-        cat_features = np.zeros(x_n_cols, dtype=bool)
-        for col in range(x_n_cols):
-            if not np.issubdtype(type(X[0, col]), np.number):
-                cat_features[col] = True
+    cat_features= [not(xtype=='float_type' or xtype=='ord_type')  for i,xtype in enumerate(xtypes)]
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -317,14 +310,7 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, xtypes=Non
     y_n_rows, y_n_cols = Y.shape
 
     if cat_features is None:
-        if not isinstance(X, np.ndarray):
-            is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-            cat_features = is_number(X.dtypes)
-        else:
-            cat_features = np.zeros(x_n_cols, dtype=bool)
-            for col in range(x_n_cols):
-                if not np.issubdtype(type(X[0, col]), np.number):
-                    cat_features[col] = True
+        cat_features= [not(xtype=='float_type' or xtype=='ord_type')  for i,xtype in enumerate(xtypes)]
     else:
         cat_features = np.array(cat_features)
 

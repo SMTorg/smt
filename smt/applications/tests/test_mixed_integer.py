@@ -421,13 +421,13 @@ class TestMixedInteger(unittest.TestCase):
 
         # DOE for validation
         x = np.linspace(0, 4, 5)
-        x2 = np.linspace(0, 5, 15)
+        x2 = np.linspace(-5, 5, 20)
         x1 = []
         for element in itertools.product(x, x2):
             x1.append(element)
         x_pred = np.array(x1)
         y = sm.predict_values(x_pred)
-        self.assertEqual(np.shape(y), (75, 1))
+        self.assertEqual(np.shape(y), (100, 1))
 
     def test_mixed_gower(self):
         from smt.applications.mixed_integer import (
