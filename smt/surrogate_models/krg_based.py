@@ -75,6 +75,13 @@ class KrgBased(SurrogateModel):
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(
+            "xtypes",
+            None,
+            types=list,
+            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            "or (ENUM n) for categorical doimension with n levels",
+        )
+        declare(
             "nugget",
             100.0 * np.finfo(np.double).eps,
             types=(float),

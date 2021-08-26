@@ -333,6 +333,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._xtypes is None :
                 raise ValueError("xtypes mandatory for categorical kernel.")
             self._input_in_folded_space=False
+        if self._surrogate.name in ["Kriging"] and self._surrogate.options["categorical_kernel"] is not None:
+            self._surrogate.options["categorical_kernel"] = self._categorical_kernel
+            self._surrogate.options["xtypes"] = self._xtypes 
             
     @property
     def name(self):
@@ -343,7 +346,6 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def set_training_values(self, xt, yt, name=None):
         xt = ensure_2d_array(xt, "xt")
-        self._surrogate.options["categorical_kernel"] = self._categorical_kernel
         if self._input_in_folded_space:
             xt2 = unfold_with_enum_mask(self._xtypes, xt)
         else:
