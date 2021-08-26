@@ -111,58 +111,34 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=No
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
-    if categorical_kernel is None:
         # Continuous optimization : do nothing
-        xlims = []
-        for i, xtyp in enumerate(xtypes):
-            if xtyp == FLOAT or xtyp == ORD:
-                k = xlimits[i][0]
-                if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
-                    listint = list(map(float, xlimits[i]))
-                    listint = [listint[0], listint[-1]]
-                    xlims.append(listint)
-                else:
-                    xlims.append(xlimits[i])
-            elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-                if xtyp[1] == len(xlimits[i]):
-                    xlims.extend(xtyp[1] * [[0, 1]])
-                else:
-                    raise ValueError(
-                        "Bad xlimits for categorical var[{}] "
-                        "should have {} categories, got only {} in {}".format(
-                            i, xtyp[1], len(xlimits[i]), xlimits[i]
-                        )
-                    )
+    xlims = []
+    for i, xtyp in enumerate(xtypes):
+        if xtyp == FLOAT or xtyp == ORD:
+            k = xlimits[i][0]
+            if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
+                listint = list(map(float, xlimits[i]))
+                listint = [listint[0], listint[-1]]
+                xlims.append(listint)
             else:
-                _raise_value_error(xtyp)
-        # avoid possible weird typing of initial xlimits ndarray
-    else:
-        # Continuous optimization : do nothing
-        xlims = []
-        for i, xtyp in enumerate(xtypes):
-            if xtyp == FLOAT or xtyp == ORD:
-                k = xlimits[i][0]
-                if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
-                    listint = list(map(float, xlimits[i]))
-                    listint = [listint[0], listint[-1]]
-                    xlims.append(listint)
-                else:
-                    xlims.append(xlimits[i])
-            elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-                if xtyp[1] == len(xlimits[i]):
+                xlims.append(xlimits[i])
+        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
+            if xtyp[1] == len(xlimits[i]):
+                if categorical_kernel is None:
+                    xlims.extend(xtyp[1] * [[0, 1]])
+                else : 
                     listint = list(map(float, [0, len(xlimits[i])]))
                     listint = [listint[0], listint[-1]]
                     xlims.append(listint)
-                else:
-                    raise ValueError(
-                        "Bad xlimits for categorical var[{}] "
-                        "should have {} categories, got only {} in {}".format(
-                            i, xtyp[1], len(xlimits[i]), xlimits[i]
-                        )
-                    )
             else:
-                _raise_value_error(xtyp)
-        # avoid possible weird typing of initial xlimits ndarray
+                raise ValueError(
+                    "Bad xlimits for categorical var[{}] "
+                    "should have {} categories, got only {} in {}".format(
+                        i, xtyp[1], len(xlimits[i]), xlimits[i]
+                    )
+                )
+        else:
+            _raise_value_error(xtyp)
     return np.array(xlims).astype(float)
 
 
