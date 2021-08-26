@@ -281,7 +281,7 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        xt = np.array([0,3,4])
+        xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
 
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]

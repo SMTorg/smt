@@ -157,7 +157,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["categorical_kernel"] == GOWER:
-            D, self.ij, X = gower_distances(X=X,xtypes=self.options["xtypes"])
+            D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
 
         # Center and scale X and y
         (
@@ -692,7 +692,7 @@ class KrgBased(SurrogateModel):
                 xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x,self.options["xtypes"])
+            X_cont = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
@@ -805,7 +805,7 @@ class KrgBased(SurrogateModel):
                 xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x,self.options["xtypes"])
+            X_cont = compute_X_cont(x, self.options["xtypes"])
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
