@@ -92,7 +92,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
+def unfold_xlimits_with_continuous_limits(xtypes, xlimits,categorical_kernel=None):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -111,30 +111,58 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
-    # Continuous optimization : do nothing
-    xlims = []
-    for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT or xtyp == ORD:
-            k = xlimits[i][0]
-            if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
-                listint = list(map(float, xlimits[i]))
-                listint = [listint[0], listint[-1]]
-                xlims.append(listint)
-            else:
-                xlims.append(xlimits[i])
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-            if xtyp[1] == len(xlimits[i]):
-                xlims.extend(xtyp[1] * [[0, 1]])
-            else:
-                raise ValueError(
-                    "Bad xlimits for categorical var[{}] "
-                    "should have {} categories, got only {} in {}".format(
-                        i, xtyp[1], len(xlimits[i]), xlimits[i]
+    if categorical_kernel is None : 
+        # Continuous optimization : do nothing
+        xlims = []
+        for i, xtyp in enumerate(xtypes):
+            if xtyp == FLOAT or xtyp == ORD:
+                k = xlimits[i][0]
+                if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
+                    listint = list(map(float, xlimits[i]))
+                    listint = [listint[0], listint[-1]]
+                    xlims.append(listint)
+                else:
+                    xlims.append(xlimits[i])
+            elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
+                if xtyp[1] == len(xlimits[i]):
+                    xlims.extend(xtyp[1] * [[0, 1]])
+                else:
+                    raise ValueError(
+                        "Bad xlimits for categorical var[{}] "
+                        "should have {} categories, got only {} in {}".format(
+                            i, xtyp[1], len(xlimits[i]), xlimits[i]
+                        )
                     )
-                )
-        else:
-            _raise_value_error(xtyp)
-    # avoid possible weird typing of initial xlimits ndarray
+            else:
+                _raise_value_error(xtyp)
+        # avoid possible weird typing of initial xlimits ndarray
+    else : 
+        # Continuous optimization : do nothing
+        xlims = []
+        for i, xtyp in enumerate(xtypes):
+            if xtyp == FLOAT or xtyp == ORD:
+                k = xlimits[i][0]
+                if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
+                    listint = list(map(float, xlimits[i]))
+                    listint = [listint[0], listint[-1]]
+                    xlims.append(listint)
+                else:
+                    xlims.append(xlimits[i])
+            elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
+                if xtyp[1] == len(xlimits[i]):
+                    listint = list(map(float, [0,len(xlimits[i])]))
+                    listint = [listint[0], listint[-1]]
+                    xlims.append(listint)                  
+                else:
+                    raise ValueError(
+                        "Bad xlimits for categorical var[{}] "
+                        "should have {} categories, got only {} in {}".format(
+                            i, xtyp[1], len(xlimits[i]), xlimits[i]
+                        )
+                    )
+            else:
+                _raise_value_error(xtyp)
+        # avoid possible weird typing of initial xlimits ndarray
     return np.array(xlims).astype(float)
 
 
@@ -168,7 +196,7 @@ def cast_to_discrete_values(xtypes, xlimits, x):
     return ret
 
 
-def fold_with_enum_index(xtypes, x):
+def fold_with_enum_index(xtypes, x, categorical_kernel=None):
     """
     see MixedIntegerContext.fold_with_enum_index
     """
@@ -420,11 +448,11 @@ class MixedIntegerContext(object):
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = xlimits
+        self._categorical_kernel = categorical_kernel
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xtypes, xlimits
+            self._xtypes, xlimits,categorical_kernel
         )
         self._work_in_folded_space = work_in_folded_space
-        self._categorical_kernel = categorical_kernel
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """

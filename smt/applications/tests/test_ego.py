@@ -327,7 +327,7 @@ class TestEGO(SMTestCase):
         )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
-            xtypes, xlimits, LHS, criterion="ese", random_state=42
+            xtypes, xlimits, LHS, criterion="ese", random_state=42,output_in_folded_space=True
         )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
