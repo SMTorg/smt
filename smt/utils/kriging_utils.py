@@ -165,7 +165,7 @@ def gower_distances(X, y=None,xtypes=None):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-
+    X=X.astype(np.float)
     Xt = X
     X_cont = compute_X_cont(Xt,xtypes)
 

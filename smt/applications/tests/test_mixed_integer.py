@@ -455,7 +455,7 @@ class TestMixedInteger(unittest.TestCase):
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 5, 5)
+        x = np.linspace(0, 4, 5)
         y = sm.predict_values(x)
 
         plt.plot(xt, yt, "o", label="data")
