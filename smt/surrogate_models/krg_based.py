@@ -703,8 +703,6 @@ class KrgBased(SurrogateModel):
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
-        ymean= self.y_mean
-        ystd= self.y_std 
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
