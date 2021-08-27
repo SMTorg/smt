@@ -276,7 +276,7 @@ def gower_distances(X, y=None, xtypes=None):
     return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(data_x, corr, data_y=None, weight=None, xtypes=None):
+def gower_corr(data_x, corr, data_y, weight=None, xtypes=None):
 
     if corr == "squar_exp":
         return np.exp(

@@ -376,9 +376,6 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             x2 = unfold_with_enum_mask(self._xtypes, xp)
         else:
             x2 = xp
-        test_to_del = cast_to_discrete_values(
-            self._xtypes, self._xlimits, self._categorical_kernel, x2
-        )
         return self._surrogate.predict_values(
             cast_to_discrete_values(
                 self._xtypes, self._xlimits, self._categorical_kernel, x2

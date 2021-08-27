@@ -286,9 +286,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
-
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
@@ -691,7 +689,8 @@ class KrgBased(SurrogateModel):
                 weight=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
-
+            
+            
             X_cont = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
@@ -704,6 +703,8 @@ class KrgBased(SurrogateModel):
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
+        ymean= self.y_mean
+        ystd= self.y_std 
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
