@@ -352,7 +352,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertTrue(y_opt<-5)
+        self.assertTrue(y_opt < -5)
 
     def test_ydoe_option(self):
         n_iter = 15
