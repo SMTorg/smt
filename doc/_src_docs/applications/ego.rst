@@ -582,7 +582,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x2b2d4f37f280>
+     -  <smt.applications.ego.Evaluator object at 0x2b6164e2a130>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,13 +616,13 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
-  *  -  matrix
+  *  -  categorical_kernel
      -  None
      -  ['Gower']
      -  ['str']
-     -  The matrix kernel to use if use_matrix_kernel is True.
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x2b2d4f37f0d0>
+     -  <smt.surrogate_models.krg.KRG object at 0x2b61427582e0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly
