@@ -290,14 +290,11 @@ def gower_corr(data_x, corr, data_y=None, weight=None, xtypes=None):
         raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
-def gower_matrix(data_x, data_y=None, weight=None, xtypes=None, power=1):
+def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
-    if data_y is None:
-        Y = data_x
-    else:
-        Y = data_y
+    Y = data_y
     if not isinstance(X, np.ndarray):
         if not np.array_equal(X.columns, Y.columns):
             raise TypeError("X and Y must have same columns!")
@@ -324,13 +321,13 @@ def gower_matrix(data_x, data_y=None, weight=None, xtypes=None, power=1):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-
-    num_cols = Z_num.shape[1]
+    Y_num=  Y[:, np.logical_not(cat_features)]
+    num_cols = Y_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)
 
     for col in range(num_cols):
-        col_array = Z_num[:, col].astype(np.float32)
+        col_array = Y_num[:, col].astype(np.float32)
         max = np.nanmax(col_array)
         min = np.nanmin(col_array)
 
