@@ -321,7 +321,7 @@ def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-    Y_num=  Y[:, np.logical_not(cat_features)]
+    Y_num = Y[:, np.logical_not(cat_features)]
     num_cols = Y_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)
