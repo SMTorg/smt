@@ -405,10 +405,10 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[0, 5], [2, -1], [4, 0.4]])
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-
+        
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=GOWER,
@@ -418,16 +418,24 @@ class TestMixedInteger(unittest.TestCase):
         )
         sm.set_training_values(xt, yt)
         sm.train()
-
+        
         # DOE for validation
         x = np.linspace(0, 4, 5)
-        x2 = np.linspace(-5, 5, 20)
+        x2 = np.linspace(-5, 5, 21)
         x1 = []
         for element in itertools.product(x, x2):
-            x1.append(element)
+            x1.append(np.array(element))
         x_pred = np.array(x1)
+        
+        i=0
+        for x in x_pred : 
+            print(i,x)
+            i+=1
         y = sm.predict_values(x_pred)
-        self.assertEqual(np.shape(y), (100, 1))
+        
+        #prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20],y[50],y[95]])-yt))<1e-6)
+        self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_gower(self):
         from smt.applications.mixed_integer import (
