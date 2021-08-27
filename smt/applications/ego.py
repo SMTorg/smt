@@ -147,8 +147,6 @@ class EGO(SurrogateBasedApplication):
         int: index of optimum in data arrays
         [ndoe + n_iter, nx]: coord-x data
         [ndoe + n_iter, 1]: coord-y data
-        [ndoe, nx]: coord-x initial doe
-        [ndoe, 1]: coord-y initial doe
         """
         x_data, y_data = self._setup_optimizer(fun)
         n_iter = self.options["n_iter"]
