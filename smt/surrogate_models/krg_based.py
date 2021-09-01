@@ -26,8 +26,10 @@ from smt.utils.kriging_utils import (
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from smt.applications.mixed_integer import GOWER
-
+try : 
+    from smt.applications.mixed_integer import GOWER
+except ImportError:
+    GOWER = "Gower"
 
 class KrgBased(SurrogateModel):
 
