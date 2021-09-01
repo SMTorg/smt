@@ -9,7 +9,7 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
-
+from smt.surrogate_models.krg_based import GOWER
 FLOAT = "float_type"
 INT = "int_type"
 ORD = "ord_type"
