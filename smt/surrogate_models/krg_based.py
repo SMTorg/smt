@@ -3,7 +3,6 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
-
 import numpy as np
 from scipy import linalg, optimize
 from copy import deepcopy
@@ -26,8 +25,7 @@ from smt.utils.kriging_utils import (
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from smt.applications.mixed_integer import GOWER
-
+GOWER = "Gower"
 
 class KrgBased(SurrogateModel):
 
