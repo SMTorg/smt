@@ -443,9 +443,9 @@ class MixedIntegerContext(object):
         Build MixedIntegerSurrogateModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
-            self._xtypes,
-            self._xlimits,
-            surrogate,
+            xtypes=self._xtypes,
+            xlimits=self._xlimits,
+            surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
         )

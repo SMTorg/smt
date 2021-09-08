@@ -432,9 +432,12 @@ class TestMixedInteger(unittest.TestCase):
             print(i, x)
             i += 1
         y = sm.predict_values(x_pred)
+        yvar = sm.predict_variance(x_pred)
 
         # prediction are correct on known points
         self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
         self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_gower(self):
