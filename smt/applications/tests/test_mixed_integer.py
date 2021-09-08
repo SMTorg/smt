@@ -432,7 +432,7 @@ class TestMixedInteger(unittest.TestCase):
             print(i, x)
             i += 1
         y = sm.predict_values(x_pred)
-        yvar = sm.predict_variance(x_pred)
+        yvar = sm.predict_variances(x_pred)
 
         # prediction are correct on known points
         self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
