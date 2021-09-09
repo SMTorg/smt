@@ -15,6 +15,7 @@ INT = "int_type"
 ORD = "ord_type"
 ENUM = "enum_type"
 
+
 def check_xspec_consistency(xtypes, xlimits):
     if len(xlimits) != len(xtypes):
         raise ValueError(

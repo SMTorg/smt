@@ -142,7 +142,7 @@ def compute_X_cont(x, xtypes):
     for i, xtype in enumerate(xtypes):
         if xtype == "float_type" or xtype == "ord_type":
             ind.append(i)
-    X_cont = x[:, ind]
+    X_cont = x[:, ind].astype(np.float)
     return X_cont
 
 
@@ -200,13 +200,14 @@ def gower_distances(X, y=None, xtypes=None):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
+    Y_num = Y[:, np.logical_not(cat_features)]
 
     num_cols = Z_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)
 
     for col in range(num_cols):
-        col_array = Z_num[:, col].astype(np.float32)
+        col_array = Y_num[:, col].astype(np.float32)
         max = np.nanmax(col_array)
         min = np.nanmin(col_array)
 

@@ -800,8 +800,8 @@ class KrgBased(SurrogateModel):
                 weight=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
-
             X_cont = compute_X_cont(x, self.options["xtypes"])
+            X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -818,12 +818,12 @@ class KrgBased(SurrogateModel):
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
             np.dot(self.optimal_par["Ft"].T, rt)
-            - self._regression_types[self.options["poly"]](x).T,
+            - self._regression_types[self.options["poly"]](X_cont).T,
         )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
-
+        print(MSE)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
