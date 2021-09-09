@@ -1208,7 +1208,9 @@ class KrgBased(SurrogateModel):
             d = self.options["n_comp"]
         else:
             d = self.nx
-
+        if self.name in [ "GEKPLS"] and self.options["n_comp"]<2 :
+            raise ValueError("GEKPLS need at least 2 components")
+            
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 

@@ -337,14 +337,14 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["corr"] in ["matern32", "matern52"]:
                 raise ValueError("matrix kernel not compatible with matern kernel")
             if self._xtypes is None:
-                raise ValueError("xtypes mandatory for categorical kernel.")
+                raise ValueError("xtypes mandatory for categorical kernel")
             bool_raise=False
             for xtype in self._xtypes :
                 if xtype == FLOAT or xtype == ORD : 
                     bool_raise=True
                 else : 
                     if bool_raise : 
-                        raise ValueError("please write ENUM before FLOAT/ORD with categorical kernel.")
+                        raise ValueError("please write ENUM before FLOAT/ORD with categorical kernel")
 
             
             self._input_in_folded_space = False            
