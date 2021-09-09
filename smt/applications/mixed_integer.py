@@ -10,6 +10,7 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 from smt.surrogate_models.krg_based import GOWER
+
 FLOAT = "float_type"
 INT = "int_type"
 ORD = "ord_type"
@@ -338,16 +339,17 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 raise ValueError("matrix kernel not compatible with matern kernel")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
-            bool_raise=False
-            for xtype in self._xtypes :
-                if xtype == FLOAT or xtype == ORD : 
-                    bool_raise=True
-                else : 
-                    if bool_raise : 
-                        raise ValueError("please write ENUM before FLOAT/ORD with categorical kernel")
+            bool_raise = False
+            for xtype in self._xtypes:
+                if xtype == FLOAT or xtype == ORD:
+                    bool_raise = True
+                else:
+                    if bool_raise:
+                        raise ValueError(
+                            "please write ENUM before FLOAT/ORD with categorical kernel"
+                        )
 
-            
-            self._input_in_folded_space = False            
+            self._input_in_folded_space = False
         if self._surrogate.name in ["Kriging"] and self._categorical_kernel is not None:
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             self._surrogate.options["xtypes"] = self._xtypes

@@ -292,9 +292,9 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [ (ENUM, 3), (ENUM, 2), ORD,FLOAT]
+        xtypes = [(ENUM, 3), (ENUM, 2), ORD, FLOAT]
         xlimits = np.array(
-            [ ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"],[-5, 5]]
+            [["blue", "red", "green"], ["large", "small"], ["0", "2", "3"], [-5, 5]]
         )
         n_doe = 3
         sampling = MixedIntegerSamplingMethod(
@@ -321,9 +321,9 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [(ENUM, 3), (ENUM, 2), ORD,FLOAT]
+        xtypes = [(ENUM, 3), (ENUM, 2), ORD, FLOAT]
         xlimits = np.array(
-            [["blue", "red", "green"], ["large", "small"], [0, 2],[-5, 5]]
+            [["blue", "red", "green"], ["large", "small"], [0, 2], [-5, 5]]
         )
         n_doe = 3
         sampling = MixedIntegerSamplingMethod(
