@@ -281,8 +281,7 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        xt = np.array([1.0, 3.0, 5.0])
-        x_train = np.array(["%.2f" % i for i in xt], dtype=object)
+        xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
 
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
@@ -294,14 +293,12 @@ class Test(unittest.TestCase):
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
         )
-        sm.set_training_values(x_train, yt)
+        sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        num = 6
-        x = np.linspace(0, 5, num)
-        x_pred = np.array(["%.2f" % i for i in x], dtype=object)
-        y = sm.predict_values(x_pred)
+        x = np.linspace(0, 5, 5)
+        y = sm.predict_values(x)
 
         plt.plot(xt, yt, "o", label="data")
         plt.plot(x, y, "d", color="red", markersize=3, label="pred")

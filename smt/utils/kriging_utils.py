@@ -123,7 +123,7 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
-def compute_X_cont(x):
+def compute_X_cont(x, xtypes):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the X_cont part of a vector x for mixed integer
@@ -136,23 +136,17 @@ def compute_X_cont(x):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-
-    n_eval, n_features_x = x.shape
-    if not isinstance(x, np.ndarray):
-        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-        cat_features = is_number(x.dtypes)
-    else:
-        cat_features = np.zeros(n_features_x, dtype=bool)
-        for col in range(n_features_x):
-            if not np.issubdtype(type(x[0, col]), np.number):
-                cat_features[col] = True
-        if not isinstance(x, np.ndarray):
-            x = np.asarray(x)
-    X_cont = x[:, np.logical_not(cat_features)].astype(np.float)
+    if xtypes is None:
+        return x
+    ind = []
+    for i, xtype in enumerate(xtypes):
+        if xtype == "float_type" or xtype == "ord_type":
+            ind.append(i)
+    X_cont = x[:, ind].astype(np.float)
     return X_cont
 
 
-def gower_distances(X, y=None):
+def gower_distances(X, y=None, xtypes=None):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the nonzero Gower-distances between the vectors
@@ -171,9 +165,9 @@ def gower_distances(X, y=None):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-
+    X = X.astype(np.float)
     Xt = X
-    X_cont = compute_X_cont(Xt)
+    X_cont = compute_X_cont(Xt, xtypes)
 
     # function checks
     if y is None:
@@ -190,14 +184,10 @@ def gower_distances(X, y=None):
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
 
-    if not isinstance(X, np.ndarray):
-        is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-        cat_features = is_number(X.dtypes)
-    else:
-        cat_features = np.zeros(x_n_cols, dtype=bool)
-        for col in range(x_n_cols):
-            if not np.issubdtype(type(X[0, col]), np.number):
-                cat_features[col] = True
+    cat_features = [
+        not (xtype == "float_type" or xtype == "ord_type")
+        for i, xtype in enumerate(xtypes)
+    ]
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -210,13 +200,14 @@ def gower_distances(X, y=None):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
+    Y_num = Y[:, np.logical_not(cat_features)]
 
     num_cols = Z_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)
 
     for col in range(num_cols):
-        col_array = Z_num[:, col].astype(np.float32)
+        col_array = Y_num[:, col].astype(np.float32)
         max = np.nanmax(col_array)
         min = np.nanmin(col_array)
 
@@ -286,32 +277,25 @@ def gower_distances(X, y=None):
     return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(data_x, corr, data_y=None, weight=None, cat_features=None):
+def gower_corr(data_x, corr, data_y, weight=None, xtypes=None):
 
     if corr == "squar_exp":
         return np.exp(
-            -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=2
-            )
+            -gower_matrix(data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=2)
         )
     elif corr == "abs_exp":
         return np.exp(
-            -gower_matrix(
-                data_x, data_y=data_y, weight=weight, cat_features=cat_features, power=1
-            )
+            -gower_matrix(data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=1)
         )
     else:
         raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
-def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
+def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
     "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
-    if data_y is None:
-        Y = data_x
-    else:
-        Y = data_y
+    Y = data_y
     if not isinstance(X, np.ndarray):
         if not np.array_equal(X.columns, Y.columns):
             raise TypeError("X and Y must have same columns!")
@@ -322,17 +306,10 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
 
-    if cat_features is None:
-        if not isinstance(X, np.ndarray):
-            is_number = np.vectorize(lambda x: not np.issubdtype(x, np.number))
-            cat_features = is_number(X.dtypes)
-        else:
-            cat_features = np.zeros(x_n_cols, dtype=bool)
-            for col in range(x_n_cols):
-                if not np.issubdtype(type(X[0, col]), np.number):
-                    cat_features[col] = True
-    else:
-        cat_features = np.array(cat_features)
+    cat_features = [
+        not (xtype == "float_type" or xtype == "ord_type")
+        for i, xtype in enumerate(xtypes)
+    ]
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -345,13 +322,13 @@ def gower_matrix(data_x, data_y=None, weight=None, cat_features=None, power=1):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-
-    num_cols = Z_num.shape[1]
+    Y_num = Y[:, np.logical_not(cat_features)]
+    num_cols = Y_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)
 
     for col in range(num_cols):
-        col_array = Z_num[:, col].astype(np.float32)
+        col_array = Y_num[:, col].astype(np.float32)
         max = np.nanmax(col_array)
         min = np.nanmin(col_array)
 

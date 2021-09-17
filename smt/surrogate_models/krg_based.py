@@ -25,7 +25,9 @@ from smt.utils.kriging_utils import (
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
+
 GOWER = "Gower"
+
 
 class KrgBased(SurrogateModel):
 
@@ -71,6 +73,13 @@ class KrgBased(SurrogateModel):
             types=str,
             values=[GOWER],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
+        )
+        declare(
+            "xtypes",
+            None,
+            types=list,
+            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            "or (ENUM n) for categorical dimension with n levels",
         )
         declare(
             "nugget",
@@ -148,7 +157,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["categorical_kernel"] == GOWER:
-            D, self.ij, X = gower_distances(X)
+            D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
 
         # Center and scale X and y
         (
@@ -174,7 +183,6 @@ class KrgBased(SurrogateModel):
             y_norma_unique = []
             for i in range(self.nt):
                 y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
-
             # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
             self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
@@ -278,9 +286,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
-
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
@@ -681,10 +687,10 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
+                xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x)
+            X_cont = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
@@ -728,7 +734,7 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
+                xtypes=self.options["xtypes"],
             )
 
         else:
@@ -794,10 +800,10 @@ class KrgBased(SurrogateModel):
                 corr=self.options["corr"],
                 data_y=self.X_train,
                 weight=np.asarray(self.optimal_theta),
-                cat_features=None,
+                xtypes=self.options["xtypes"],
             )
-
-            X_cont = compute_X_cont(x)
+            X_cont = compute_X_cont(x, self.options["xtypes"])
+            X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -814,12 +820,11 @@ class KrgBased(SurrogateModel):
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
             np.dot(self.optimal_par["Ft"].T, rt)
-            - self._regression_types[self.options["poly"]](x).T,
+            - self._regression_types[self.options["poly"]](X_cont).T,
         )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
-
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
@@ -1205,6 +1210,8 @@ class KrgBased(SurrogateModel):
             d = self.options["n_comp"]
         else:
             d = self.nx
+        if self.name in ["GEKPLS"] and self.options["n_comp"] < 2:
+            raise ValueError("GEKPLS need at least 2 components")
 
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")

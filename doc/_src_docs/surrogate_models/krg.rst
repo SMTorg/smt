@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0403142
+     Training - done. Time (sec):  0.0389383
   ___________________________________________________________________________
      
    Evaluation
@@ -139,9 +139,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002482
+     Predicting - done. Time (sec):  0.0002422
      
-     Prediction time/pt. (sec) :  0.0000025
+     Prediction time/pt. (sec) :  0.0000024
      
   ___________________________________________________________________________
      
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002022
+     Predicting - done. Time (sec):  0.0001924
      
-     Prediction time/pt. (sec) :  0.0000404
+     Prediction time/pt. (sec) :  0.0000385
      
   
 .. figure:: krg_Test_test_krg.png
@@ -218,9 +218,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002961
+     Predicting - done. Time (sec):  0.0002537
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000005
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -275,11 +275,16 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
-  *  -  matrix
+  *  -  categorical_kernel
      -  None
      -  ['Gower']
      -  ['str']
-     -  The matrix kernel to use if use_matrix_kernel is True.
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None

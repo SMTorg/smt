@@ -240,7 +240,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(
             np.array_equal(
                 np.array([[2.6, 0, 1, 0, 0, 1, 3]]),
-                cast_to_discrete_values(xtypes, xlimits, x),
+                cast_to_discrete_values(xtypes, xlimits, None, x),
             ),
             True,
         )
@@ -256,7 +256,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(
             np.array_equal(
                 np.array([[2.6, 0, 1, 0, 0, 1, 4]]),
-                cast_to_discrete_values(xtypes, xlimits, x),
+                cast_to_discrete_values(xtypes, xlimits, None, x),
             ),
             True,
         )
@@ -272,7 +272,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(
             np.array_equal(
                 np.array([[2.6, 0, 1, 0, 0, 1, 4]]),
-                cast_to_discrete_values(xtypes, xlimits, x),
+                cast_to_discrete_values(xtypes, xlimits, None, x),
             ),
             True,
         )
@@ -288,7 +288,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(
             np.array_equal(
                 np.array([[2.6, 0, 1, 0, 0, 1, 3.5]]),
-                cast_to_discrete_values(xtypes, xlimits, x),
+                cast_to_discrete_values(xtypes, xlimits, None, x),
             ),
             True,
         )
@@ -405,8 +405,7 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[1.0, 5], [3.0, -1], [5.0, 0.4]])
-        print(xt.shape)
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
 
@@ -421,14 +420,25 @@ class TestMixedInteger(unittest.TestCase):
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 5, 6)
-        x2 = np.linspace(0, 5, 15)
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
         x1 = []
         for element in itertools.product(x, x2):
-            x1.append(element)
+            x1.append(np.array(element))
         x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
         y = sm.predict_values(x_pred)
-        self.assertEqual(np.shape(y), (90, 1))
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_gower(self):
         from smt.applications.mixed_integer import (
@@ -440,8 +450,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        xt = np.array([1.0, 3.0, 5.0])
-        x_train = np.array(["%.2f" % i for i in xt], dtype=object)
+        xt = np.array([0, 2, 4])
         yt = np.array([0.0, 1.0, 1.5])
 
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
@@ -453,14 +462,12 @@ class TestMixedInteger(unittest.TestCase):
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
         )
-        sm.set_training_values(x_train, yt)
+        sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        num = 6
-        x = np.linspace(0, 5, num)
-        x_pred = np.array(["%.2f" % i for i in x], dtype=object)
-        y = sm.predict_values(x_pred)
+        x = np.linspace(0, 4, 5)
+        y = sm.predict_values(x)
 
         plt.plot(xt, yt, "o", label="data")
         plt.plot(x, y, "d", color="red", markersize=3, label="pred")

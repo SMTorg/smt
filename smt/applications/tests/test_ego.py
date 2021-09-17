@@ -270,18 +270,18 @@ class TestEGO(SMTestCase):
         import numpy as np
 
         # float
-        x1 = X[:, 0]
+        x1 = X[:, 3]
         #  enum 1
-        c1 = X[:, 1]
+        c1 = X[:, 0]
         x2 = c1 == 0
         x3 = c1 == 1
         x4 = c1 == 2
         #  enum 2
-        c2 = X[:, 2]
+        c2 = X[:, 1]
         x5 = c2 == 0
         x6 = c2 == 1
         # int
-        i = X[:, 3]
+        i = X[:, 2]
 
         y = (
             (x2 + 2 * x3 + 3 * x4) * x5 * x1
@@ -292,11 +292,11 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [(ENUM, 3), (ENUM, 2), ORD, FLOAT]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
+            [["blue", "red", "green"], ["large", "small"], ["0", "2", "3"], [-5, 5]]
         )
-        n_doe = 2
+        n_doe = 3
         sampling = MixedIntegerSamplingMethod(
             xtypes, xlimits, LHS, criterion="ese", random_state=42
         )
@@ -321,13 +321,18 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [(ENUM, 3), (ENUM, 2), ORD, FLOAT]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+            [["blue", "red", "green"], ["large", "small"], [0, 2], [-5, 5]]
         )
-        n_doe = 2
+        n_doe = 3
         sampling = MixedIntegerSamplingMethod(
-            xtypes, xlimits, LHS, criterion="ese", random_state=42
+            xtypes,
+            xlimits,
+            LHS,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
         )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
