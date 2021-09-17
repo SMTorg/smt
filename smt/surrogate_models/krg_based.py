@@ -79,7 +79,7 @@ class KrgBased(SurrogateModel):
             None,
             types=list,
             desc="x type specifications: either FLOAT for continuous, INT for integer "
-            "or (ENUM n) for categorical doimension with n levels",
+            "or (ENUM n) for categorical dimension with n levels",
         )
         declare(
             "nugget",

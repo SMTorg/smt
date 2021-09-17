@@ -262,7 +262,7 @@ class EGO(SurrogateBasedApplication):
 
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
-        if self.options["categorical_kernel"]:
+        if self.options["categorical_kernel"] is not None:
             work_in_folded_space = True
         else:
             work_in_folded_space = False
