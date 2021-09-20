@@ -29,6 +29,7 @@ from smt.sampling_methods import LHS
 GOWER = "gower"
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
 
+
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -71,7 +72,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER,HOMO_GAUSSIAN],
+            values=[GOWER, HOMO_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(

@@ -108,7 +108,7 @@ class EGO(SurrogateBasedApplication):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER,HOMO_GAUSSIAN],
+            values=[GOWER, HOMO_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(

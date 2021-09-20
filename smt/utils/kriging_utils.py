@@ -272,7 +272,9 @@ def gower_distances(X, y=None, xtypes=None):
             np.ones_like(X_cat[k]),
         )
 
-    D = np.concatenate((D_cat, D_num), axis=1)
+    D = np.concatenate((D_cat, D_num), axis=1) * 0
+    D[:, np.logical_not(cat_features)] = D_num
+    D[:, cat_features] = D_cat
 
     return D, ij.astype(np.int), X_cont
 
