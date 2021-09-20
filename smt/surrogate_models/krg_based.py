@@ -27,7 +27,7 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
 GOWER = "gower"
-HOMO_GAUSSIAN = "homoscedastic_gaussian_kernel"
+HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
 
 class KrgBased(SurrogateModel):
 
