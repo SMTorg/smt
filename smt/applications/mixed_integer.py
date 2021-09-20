@@ -332,15 +332,15 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
-        if not (self._categorical_kernel is None):
+        if self._categorical_kernel is not None:
             if self._surrogate.name not in ["Kriging"]:
                 raise ValueError("matrix kernel not implemented for this model")
             if self._surrogate.options["corr"] in ["matern32", "matern52"]:
                 raise ValueError("matrix kernel not compatible with matern kernel")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
-
             self._input_in_folded_space = False
+
         if self._surrogate.name in ["Kriging"] and self._categorical_kernel is not None:
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             self._surrogate.options["xtypes"] = self._xtypes
@@ -359,6 +359,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             xt2 = unfold_with_enum_mask(self._xtypes, xt)
         else:
             xt2 = xt
+        xt2 = cast_to_discrete_values(
+            self._xtypes, self._xlimits, self._categorical_kernel, xt2
+        )
         super().set_training_values(xt2, yt)
         self._surrogate.set_training_values(xt2, yt, name)
 
