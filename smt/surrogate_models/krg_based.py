@@ -72,7 +72,7 @@ class KrgBased(SurrogateModel):
             None,
             types=str,
             values=[GOWER,HOMO_GAUSSIAN],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
             "xtypes",
