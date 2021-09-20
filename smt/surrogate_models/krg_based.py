@@ -26,8 +26,8 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-GOWER = "Gower"
-
+GOWER = "gower"
+HOMO_GAUSSIAN = "homoscedastic_gaussian_kernel"
 
 class KrgBased(SurrogateModel):
 
@@ -71,7 +71,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER],
+            values=[GOWER,HOMO_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(
