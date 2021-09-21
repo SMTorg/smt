@@ -123,6 +123,50 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
+def cross_levels(X, ij,xtypes):
+
+    """
+    Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    Returns
+    -------
+
+     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The levels corresponding to the indices i and j of the vectors in X.
+     n_levels: np.ndarray
+            - The number of levels.
+    """
+    Lij=np.copy(ij)
+    n_nonzero_cross_dist, _ = ij.shape
+    cat_features = [
+        not (xtype == "float_type" or xtype == "ord_type")
+        for i, xtype in enumerate(xtypes)
+    ]
+    
+    X_cat = X[:, cat_features]
+    for l in range(n_nonzero_cross_dist): 
+        i,j=ij[l]
+        Lij[l][0]=X_cat[i]
+        Lij[l][1]=X_cat[j]
+        
+    n_levels=[]
+    for i, xtyp in enumerate(xtypes):
+            if isinstance(xtyp, tuple) :
+                n_levels.append(xtyp[1])
+    n_levels=np.array(n_levels)
+    print(Lij,n_levels)
+    return Lij,n_levels
+
+
 def compute_X_cont(x, xtypes):
     """
     Some parts were extracted from gower 0.0.5 library
@@ -279,22 +323,38 @@ def gower_distances(X, y=None, xtypes=None):
     return D, ij.astype(np.int), X_cont
 
 
-def gower_corr(data_x, corr, data_y, weight=None, xtypes=None):
-
+def gower_corr(data_x, corr, data_y, theta, xtypes=None):
+    """
+    Computes the correlation of corr with Gower-distances between the vectors
+    in X.
+    Parameters
+    ----------
+    data_x: np.ndarray [n_obs, dim]
+            - The input variables.
+    data_y: np.ndarray [n_obs, dim]
+            - The input variables.
+    corr: correlation_types
+            - The autocorrelation model (absolute or square exponential)
+    theta: list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
     if corr == "squar_exp":
         return np.exp(
-            -gower_matrix(data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=2)
+            -gower_matrix(data_x, data_y=data_y, weight=theta, xtypes=xtypes, power=2)
         )
     elif corr == "abs_exp":
         return np.exp(
-            -gower_matrix(data_x, data_y=data_y, weight=weight, xtypes=xtypes, power=1)
+            -gower_matrix(data_x, data_y=data_y, weight=theta, xtypes=xtypes, power=1)
         )
     else:
         raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
 
 
 def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
-    "this function was copied from gower 0.0.5 code"
     # function checks
     X = data_x
     Y = data_y
@@ -406,7 +466,6 @@ def gower_get(
     max_of_numeric,
     power,
 ):
-    "this function was copied from gower 0.0.5 code"
     # categorical columns
     sij_cat = np.where(xi_cat == xj_cat, np.zeros_like(xi_cat), np.ones_like(xi_cat))
     sum_cat = np.multiply(feature_weight_cat, np.power(sij_cat, power)).sum(axis=1)

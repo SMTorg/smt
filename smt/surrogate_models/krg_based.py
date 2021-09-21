@@ -22,6 +22,7 @@ from smt.utils.kriging_utils import (
     gower_matrix,
     gower_corr,
     compute_X_cont,
+    cross_levels,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
@@ -159,7 +160,10 @@ class KrgBased(SurrogateModel):
         self.X_train = X
         if self.options["categorical_kernel"] == GOWER:
             D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
-
+        elif self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+            D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
+            self.Lij,self.n_levels= cross_levels(X= self.X_train, ij=self.ij,xtypes=self.options["xtypes"])
+            
         # Center and scale X and y
         (
             self.X_norma,
@@ -195,7 +199,7 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is None:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
-
+            
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
@@ -687,7 +691,7 @@ class KrgBased(SurrogateModel):
                 x,
                 corr=self.options["corr"],
                 data_y=self.X_train,
-                weight=np.asarray(self.optimal_theta),
+                theta=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
 
@@ -734,7 +738,7 @@ class KrgBased(SurrogateModel):
                 x,
                 corr=self.options["corr"],
                 data_y=self.X_train,
-                weight=np.asarray(self.optimal_theta),
+                theta=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
 
@@ -800,7 +804,7 @@ class KrgBased(SurrogateModel):
                 x,
                 corr=self.options["corr"],
                 data_y=self.X_train,
-                weight=np.asarray(self.optimal_theta),
+                theta=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
             X_cont = compute_X_cont(x, self.options["xtypes"])
