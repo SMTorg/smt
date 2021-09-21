@@ -23,6 +23,7 @@ from smt.utils.kriging_utils import (
     gower_corr,
     compute_X_cont,
     cross_levels,
+    matrix_data_corr,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
@@ -158,11 +159,13 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
-        if self.options["categorical_kernel"] is not None :
+        if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
-            if self.options["categorical_kernel"] ==HOMO_GAUSSIAN : 
-                self.Lij,self.n_levels= cross_levels(X= self.X_train, ij=self.ij,xtypes=self.options["xtypes"])
-            
+            if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+                self.Lij, self.n_levels = cross_levels(
+                    X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+                )
+
         # Center and scale X and y
         (
             self.X_norma,
@@ -198,7 +201,7 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is None:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
-            
+
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
@@ -291,11 +294,14 @@ class KrgBased(SurrogateModel):
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
         if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
-            pass
-        else : 
-            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
+            r = matrix_data_corr(
+                corr=self.options["corr"], theta=theta, d=self.D
+            ).reshape(-1, 1)
+        else:
+            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
+                -1, 1
+            )
 
-        
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]

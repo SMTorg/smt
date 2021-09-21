@@ -123,7 +123,7 @@ def cross_distances(X):
     return D, ij.astype(np.int32)
 
 
-def cross_levels(X, ij,xtypes):
+def cross_levels(X, ij, xtypes):
 
     """
     Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
@@ -145,26 +145,26 @@ def cross_levels(X, ij,xtypes):
      n_levels: np.ndarray
             - The number of levels.
     """
-    Lij=np.copy(ij)
+    Lij = np.copy(ij)
     n_nonzero_cross_dist, _ = ij.shape
     cat_features = [
         not (xtype == "float_type" or xtype == "ord_type")
         for i, xtype in enumerate(xtypes)
     ]
-    
+
     X_cat = X[:, cat_features]
-    for l in range(n_nonzero_cross_dist): 
-        i,j=ij[l]
-        Lij[l][0]=X_cat[i]
-        Lij[l][1]=X_cat[j]
-        
-    n_levels=[]
+    for l in range(n_nonzero_cross_dist):
+        i, j = ij[l]
+        Lij[l][0] = X_cat[i]
+        Lij[l][1] = X_cat[j]
+
+    n_levels = []
     for i, xtyp in enumerate(xtypes):
-            if isinstance(xtyp, tuple) :
-                n_levels.append(xtyp[1])
-    n_levels=np.array(n_levels)
-    print(Lij,n_levels)
-    return Lij,n_levels
+        if isinstance(xtyp, tuple):
+            n_levels.append(xtyp[1])
+    n_levels = np.array(n_levels)
+    print(Lij, n_levels)
+    return Lij, n_levels
 
 
 def compute_X_cont(x, xtypes):
@@ -490,6 +490,32 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
+def matrix_data_corr(corr, theta, d):
+    """
+    matrix kernel correlation model.
+
+    Parameters
+    ----------
+
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i
+    corr: correlation_types
+        - The autocorrelation model (absolute or square exponential)
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    return r
+
+
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
     Absolute exponential autocorrelation model.
@@ -497,8 +523,7 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     Parameters
     ----------
-      Parameters
-    ----------
+
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
