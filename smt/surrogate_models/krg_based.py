@@ -158,11 +158,10 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
-        if self.options["categorical_kernel"] == GOWER:
+        if self.options["categorical_kernel"] is not None :
             D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
-        elif self.options["categorical_kernel"] == HOMO_GAUSSIAN:
-            D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
-            self.Lij,self.n_levels= cross_levels(X= self.X_train, ij=self.ij,xtypes=self.options["xtypes"])
+            if self.options["categorical_kernel"] ==HOMO_GAUSSIAN : 
+                self.Lij,self.n_levels= cross_levels(X= self.X_train, ij=self.ij,xtypes=self.options["xtypes"])
             
         # Center and scale X and y
         (
@@ -291,7 +290,12 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
+        if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+            pass
+        else : 
+            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
+
+        
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
