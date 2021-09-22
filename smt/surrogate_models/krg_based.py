@@ -24,6 +24,7 @@ from smt.utils.kriging_utils import (
     compute_X_cont,
     cross_levels,
     matrix_data_corr,
+    compute_n_param,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
@@ -165,6 +166,7 @@ class KrgBased(SurrogateModel):
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
                 )
+                _,self.cat_features=compute_X_cont(self.X_train, self.options["xtypes"])
 
         # Center and scale X and y
         (
@@ -295,7 +297,7 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[self.D.shape[1] :]
         if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
             r = matrix_data_corr(
-                corr=self.options["corr"], theta=theta, d=self.D
+                corr=self.options["corr"], theta=theta, d=self.D,ij=self.ij,Lij=self.Lij,nlevels= self.n_levels,cat_features=self.cat_features
             ).reshape(-1, 1)
         else:
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
@@ -1244,7 +1246,13 @@ class KrgBased(SurrogateModel):
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+                if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+                    n_param=compute_n_param(self.options["xtypes"])
+                    self.options["theta0"] *= np.ones(n_param)
+                else : 
+                    self.options["theta0"] *= np.ones(d)
+
+
             else:
                 raise ValueError(
                     "the length of theta0 (%s) should be equal to the number of dim (%s)."

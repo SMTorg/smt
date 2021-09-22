@@ -163,6 +163,14 @@ def cross_levels(X, ij, xtypes):
     print(Lij, n_levels)
     return Lij, n_levels
 
+def compute_n_param(xtypes) : 
+    n_param=0
+    for i, xtyp in enumerate(xtypes):
+        if isinstance(xtyp, tuple):
+            n_param+=int(xtyp[1]*(xtyp[1]-1)/2)
+        else : 
+            n_param+=1
+    return n_param
 
 def compute_X_cont(x, xtypes):
     """
@@ -177,7 +185,7 @@ def compute_X_cont(x, xtypes):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     cat_features: np.ndarray [dim_cat]
-        -  Indices of the categorical input dimension.
+        -  Indices of the categorical input dimensions.
 
     """
     if xtypes is None:
@@ -480,7 +488,7 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d):
+def matrix_data_corr(corr, theta, d,ij,Lij,nlevels,cat_features):
     """
     matrix kernel correlation model.
 
@@ -493,16 +501,22 @@ def matrix_data_corr(corr, theta, d):
         d_i
     corr: correlation_types
         - The autocorrelation model (absolute or square exponential)
-
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The levels corresponding to the indices i and j of the vectors in X.
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
         An array containing the values of the autocorrelation model.
     """
-
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-    #  print( corr,theta,d)
+    print( corr,theta,d,ij,Lij,nlevels,cat_features)
+    
+    
+
     return r
 
 
