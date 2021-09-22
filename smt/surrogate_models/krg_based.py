@@ -705,7 +705,7 @@ class KrgBased(SurrogateModel):
                 xtypes=self.options["xtypes"],
             )
 
-            X_cont = compute_X_cont(x, self.options["xtypes"])
+            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             X_cont = (x - self.X_offset) / self.X_scale
@@ -817,7 +817,7 @@ class KrgBased(SurrogateModel):
                 theta=np.asarray(self.optimal_theta),
                 xtypes=self.options["xtypes"],
             )
-            X_cont = compute_X_cont(x, self.options["xtypes"])
+            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale

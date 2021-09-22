@@ -147,11 +147,8 @@ def cross_levels(X, ij, xtypes):
     """
     Lij = np.copy(ij)
     n_nonzero_cross_dist, _ = ij.shape
-    cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
-    ]
 
+    X_cont, cat_features = compute_X_cont(X, xtypes)
     X_cat = X[:, cat_features]
     for l in range(n_nonzero_cross_dist):
         i, j = ij[l]
@@ -179,15 +176,18 @@ def compute_X_cont(x, xtypes):
     -------
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
+    cat_features: np.ndarray [dim_cat]
+        -  Indices of the categorical input dimension.
+
     """
     if xtypes is None:
-        return x
+        return x, None
     ind = []
-    for i, xtype in enumerate(xtypes):
-        if xtype == "float_type" or xtype == "ord_type":
-            ind.append(i)
-    X_cont = x[:, ind].astype(np.float)
-    return X_cont
+    cat_features = [
+        not (xtype == "float_type" or xtype == "ord_type")
+        for i, xtype in enumerate(xtypes)
+    ]
+    return x[:, np.logical_not(cat_features)], cat_features
 
 
 def gower_distances(X, y=None, xtypes=None):
@@ -211,7 +211,7 @@ def gower_distances(X, y=None, xtypes=None):
     """
     X = X.astype(np.float)
     Xt = X
-    X_cont = compute_X_cont(Xt, xtypes)
+    X_cont, cat_features = compute_X_cont(Xt, xtypes)
 
     # function checks
     if y is None:
@@ -227,11 +227,6 @@ def gower_distances(X, y=None, xtypes=None):
 
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
-
-    cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
-    ]
 
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
@@ -368,11 +363,6 @@ def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
 
-    cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
-    ]
-
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
     if not isinstance(Y, np.ndarray):
@@ -383,7 +373,7 @@ def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
-    Z_num = Z[:, np.logical_not(cat_features)]
+    Z_num, cat_features = compute_X_cont(Z, xtypes)
     Y_num = Y[:, np.logical_not(cat_features)]
     num_cols = Y_num.shape[1]
     num_ranges = np.zeros(num_cols)
@@ -512,7 +502,7 @@ def matrix_data_corr(corr, theta, d):
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-
+    #  print( corr,theta,d)
     return r
 
 
