@@ -163,14 +163,16 @@ def cross_levels(X, ij, xtypes):
     print(Lij, n_levels)
     return Lij, n_levels
 
-def compute_n_param(xtypes) : 
-    n_param=0
+
+def compute_n_param(xtypes):
+    n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            n_param+=int(xtyp[1]*(xtyp[1]-1)/2)
-        else : 
-            n_param+=1
+            n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+        else:
+            n_param += 1
     return n_param
+
 
 def compute_X_cont(x, xtypes):
     """
@@ -488,7 +490,7 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d,ij,Lij,nlevels,cat_features):
+def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
     """
     matrix kernel correlation model.
 
@@ -511,11 +513,37 @@ def matrix_data_corr(corr, theta, d,ij,Lij,nlevels,cat_features):
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
         An array containing the values of the autocorrelation model.
     """
+    _correlation_types = {
+        "abs_exp": abs_exp,
+        "squar_exp": squar_exp,
+        "act_exp": act_exp,
+        "matern52": matern52,
+        "matern32": matern32,
+    }
+
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-    print( corr,theta,d,ij,Lij,nlevels,cat_features)
-    
-    
+    print(corr, theta, d, ij, Lij, nlevels, cat_features)
+
+    theta_cont_features = []
+    i = 0
+    for feat in cat_features:
+        if feat:
+            theta_cont_features = theta_cont_features + (
+                [False] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+            )
+            ##Theta_cat_i
+            i += 1
+        else:
+            theta_cont_features = theta_cont_features + [True]
+    theta_cont_features = np.array(theta_cont_features)
+    theta_cont = theta[theta_cont_features]
+    d_cont = d[:, np.logical_not(cat_features)]
+    r_cont = r = _correlation_types[corr](theta_cont, d_cont)
+
+    print("theta_cont", theta_cont)
+    print("d_cont", d_cont)
+    print("r_cont", r_cont)
 
     return r
 
