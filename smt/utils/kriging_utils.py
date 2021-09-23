@@ -204,8 +204,7 @@ def compute_X_cont(x, xtypes):
 
 def gower_componentwise_distances(X, corr, y=None, xtypes=None):
     """
-    Some parts were extracted from gower 0.0.5 library
-    Computes the nonzero Gower-distances between the vectors
+    Computes the nonzero Gower-distances componentwise between the vectors
     in X.
     Parameters
     ----------
@@ -340,7 +339,7 @@ def gower_componentwise_distances(X, corr, y=None, xtypes=None):
     D[:, np.logical_not(cat_features)] = D_num
     D[:, cat_features] = D_cat
 
-    return D, ij.astype(np.int)
+    return D, ij.astype(np.int), X_cont
 
 
 def gower_corr(data_x, corr, data_y, theta, xtypes=None):

@@ -161,7 +161,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["categorical_kernel"] is not None:
-            D, self.ij = gower_componentwise_distances(
+            D, self.ij, X = gower_componentwise_distances(
                 X=X, corr=self.options["corr"], xtypes=self.options["xtypes"]
             )
 
