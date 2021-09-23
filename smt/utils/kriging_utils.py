@@ -202,7 +202,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, corr, y=None, xtypes=None):
+def gower_componentwise_distances(X, y=None, xtypes=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -223,13 +223,6 @@ def gower_componentwise_distances(X, corr, y=None, xtypes=None):
     X = X.astype(np.float)
     Xt = X
     X_cont, cat_features = compute_X_cont(Xt, xtypes)
-
-    if corr == "squar_exp":
-        power = 2
-    elif corr == "abs_exp":
-        power = 1
-    else:
-        raise ValueError("Bad correlation kernel for Gower distance.")
 
     # function checks
     if y is None:
@@ -306,14 +299,11 @@ def gower_componentwise_distances(X, corr, y=None, xtypes=None):
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
         try:
-            D_num[ll_0:ll_1] = np.power(
-                np.divide(
-                    abs_delta,
-                    num_ranges,
-                    out=np.zeros_like(abs_delta),
-                    where=num_ranges != 0,
-                ),
-                power,
+            D_num[ll_0:ll_1] = np.divide(
+                abs_delta,
+                num_ranges,
+                out=np.zeros_like(abs_delta),
+                where=num_ranges != 0,
             )
         except:
             pass
@@ -326,13 +316,10 @@ def gower_componentwise_distances(X, corr, y=None, xtypes=None):
     for k in range(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
-        D_cat[ll_0:ll_1] = np.power(
-            np.where(
-                X_cat[k] == Y_cat[(k + 1) : n_samples],
-                np.zeros_like(X_cat[k]),
-                np.ones_like(X_cat[k]),
-            ),
-            power,
+        D_cat[ll_0:ll_1] = np.where(
+            X_cat[k] == Y_cat[(k + 1) : n_samples],
+            np.zeros_like(X_cat[k]),
+            np.ones_like(X_cat[k]),
         )
 
     D = np.concatenate((D_cat, D_num), axis=1) * 0

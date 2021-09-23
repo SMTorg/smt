@@ -162,7 +162,7 @@ class KrgBased(SurrogateModel):
         self.X_train = X
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
-                X=X, corr=self.options["corr"], xtypes=self.options["xtypes"]
+                X=X, xtypes=self.options["xtypes"]
             )
 
             if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
@@ -1048,6 +1048,7 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
+            ##from abs distance to kernel distance
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
