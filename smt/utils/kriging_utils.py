@@ -145,21 +145,23 @@ def cross_levels(X, ij, xtypes):
      n_levels: np.ndarray
             - The number of levels.
     """
-    Lij = np.copy(ij)
-    n_nonzero_cross_dist, _ = ij.shape
-
-    X_cont, cat_features = compute_X_cont(X, xtypes)
-    X_cat = X[:, cat_features]
-    for l in range(n_nonzero_cross_dist):
-        i, j = ij[l]
-        Lij[l][0] = X_cat[i]
-        Lij[l][1] = X_cat[j]
-
     n_levels = []
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
             n_levels.append(xtyp[1])
     n_levels = np.array(n_levels)
+    n_var = n_levels.shape[0]
+    n, _ = ij.shape
+    X_cont, cat_features = compute_X_cont(X, xtypes)
+    X_cat = X[:, cat_features]
+
+    Lij = np.zeros((n_var, n, 2))
+    for k in range(n_var):
+        for l in range(n):
+            i, j = ij[l]
+            Lij[k][l][0] = X_cat[i, k]
+            Lij[k][l][1] = X_cat[j, k]
+
     print(Lij, n_levels)
     return Lij, n_levels
 
