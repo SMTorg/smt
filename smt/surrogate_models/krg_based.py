@@ -18,7 +18,7 @@ from smt.utils.kriging_utils import (
     cross_distances,
     matern52,
     matern32,
-    gower_distances,
+    gower_componentwise_distances,
     gower_matrix,
     gower_corr,
     compute_X_cont,
@@ -161,7 +161,10 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         if self.options["categorical_kernel"] is not None:
-            D, self.ij, X = gower_distances(X=X, xtypes=self.options["xtypes"])
+            D, self.ij = gower_componentwise_distances(
+                X=X, corr=self.options["corr"], xtypes=self.options["xtypes"]
+            )
+
             if self.options["categorical_kernel"] == HOMO_GAUSSIAN:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]

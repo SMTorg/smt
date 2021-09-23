@@ -202,7 +202,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_distances(X, y=None, xtypes=None):
+def gower_componentwise_distances(X, corr, y=None, xtypes=None):
     """
     Some parts were extracted from gower 0.0.5 library
     Computes the nonzero Gower-distances between the vectors
@@ -224,6 +224,13 @@ def gower_distances(X, y=None, xtypes=None):
     X = X.astype(np.float)
     Xt = X
     X_cont, cat_features = compute_X_cont(Xt, xtypes)
+
+    if corr == "squar_exp":
+        power = 2
+    elif corr == "abs_exp":
+        power = 1
+    else:
+        raise ValueError("Bad correlation kernel for Gower distance.")
 
     # function checks
     if y is None:
@@ -300,11 +307,14 @@ def gower_distances(X, y=None, xtypes=None):
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
         try:
-            D_num[ll_0:ll_1] = np.divide(
-                abs_delta,
-                num_ranges,
-                out=np.zeros_like(abs_delta),
-                where=num_ranges != 0,
+            D_num[ll_0:ll_1] = np.power(
+                np.divide(
+                    abs_delta,
+                    num_ranges,
+                    out=np.zeros_like(abs_delta),
+                    where=num_ranges != 0,
+                ),
+                power,
             )
         except:
             pass
@@ -317,17 +327,20 @@ def gower_distances(X, y=None, xtypes=None):
     for k in range(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
-        D_cat[ll_0:ll_1] = np.where(
-            X_cat[k] == Y_cat[(k + 1) : n_samples],
-            np.zeros_like(X_cat[k]),
-            np.ones_like(X_cat[k]),
+        D_cat[ll_0:ll_1] = np.power(
+            np.where(
+                X_cat[k] == Y_cat[(k + 1) : n_samples],
+                np.zeros_like(X_cat[k]),
+                np.ones_like(X_cat[k]),
+            ),
+            power,
         )
 
     D = np.concatenate((D_cat, D_num), axis=1) * 0
     D[:, np.logical_not(cat_features)] = D_num
     D[:, cat_features] = D_cat
 
-    return D, ij.astype(np.int), X_cont
+    return D, ij.astype(np.int)
 
 
 def gower_corr(data_x, corr, data_y, theta, xtypes=None):
@@ -541,13 +554,13 @@ def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
     theta_cont_features = np.array(theta_cont_features)
     theta_cont = theta[theta_cont_features]
     d_cont = d[:, np.logical_not(cat_features)]
-    r_cont = r = _correlation_types[corr](theta_cont, d_cont)
+    r_cont = _correlation_types[corr](theta_cont, d_cont)
 
     print("theta_cont", theta_cont)
     print("d_cont", d_cont)
     print("r_cont", r_cont)
 
-    return r
+    return r_cont
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
