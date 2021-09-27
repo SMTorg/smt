@@ -709,7 +709,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
-
+            d=gower_componentwise_distances(x,self.X_train,self.options["xtypes"])
             r = gower_corr(
                 x,
                 corr=self.options["corr"],
