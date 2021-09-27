@@ -169,7 +169,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.2)
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
-2
+
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
