@@ -710,6 +710,10 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
             d=gower_componentwise_distances(x,self.X_train,self.options["xtypes"])
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
+            
             r = gower_corr(
                 x,
                 corr=self.options["corr"],

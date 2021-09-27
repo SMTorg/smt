@@ -330,16 +330,14 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     
         return D, ij.astype(np.int), X_cont
     else : 
-        out = np.zeros((x_n_rows, y_n_rows), dtype=np.float32)
-        def differences(X, Y):
-            X, Y = check_pairwise_arrays(X, Y)
-            D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-            return D.reshape((-1, X.shape[1]))
-
+        out = np.zeros((x_n_rows*y_n_rows, x_n_cols), dtype=np.float32)
+        D = X[:, np.newaxis, :] - y[np.newaxis, :, :]
+        D= D.reshape((-1, X.shape[1]))
+        D = np.abs(D)
+        D[:,cat_features]=D[:,cat_features]>0.5
         
         
-        
-        return D, ij.astype(np.int), X_cont
+        return D
 
 
 
