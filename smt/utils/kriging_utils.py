@@ -285,8 +285,12 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     Y_num = Z_num[
         y_index,
     ]
+    
+    X_norma= X
+    Y_norma= Y
+    X_norma[:, np.logical_not(cat_features)]=X_num
+    Y_norma[:, np.logical_not(cat_features)]=Y_num
 
-        
     n_samples, n_features = X_num.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
@@ -331,170 +335,20 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         return D, ij.astype(np.int), X_cont
     else : 
         out = np.zeros((x_n_rows*y_n_rows, x_n_cols), dtype=np.float32)
-        D = X[:, np.newaxis, :] - y[np.newaxis, :, :]
+        D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
         D= D.reshape((-1, X.shape[1]))
         D = np.abs(D)
         D[:,cat_features]=D[:,cat_features]>0.5
-        
+        D[:,np.logical_not(cat_features)]=np.divide(
+                    D[:,np.logical_not(cat_features)],
+                    num_ranges,
+                    out=np.zeros_like( D[:,np.logical_not(cat_features)]),
+                    where=num_ranges != 0,
+                )
+
         
         return D
 
-
-
-def gower_corr(data_x, corr, data_y, theta, xtypes=None):
-    """
-    Computes the correlation of corr with Gower-distances between the vectors
-    in X.
-    Parameters
-    ----------
-    data_x: np.ndarray [n_obs, dim]
-            - The input variables.
-    data_y: np.ndarray [n_obs, dim]
-            - The input variables.
-    corr: correlation_types
-            - The autocorrelation model (absolute or square exponential)
-    theta: list[small_d * n_comp]
-        Hyperparameters of the correlation model
-    Returns
-    -------
-    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
-    """
-    if corr == "squar_exp":
-        return np.exp(
-            -gower_matrix(data_x, data_y=data_y, weight=theta, xtypes=xtypes, power=2)
-        )
-    elif corr == "abs_exp":
-        return np.exp(
-            -gower_matrix(data_x, data_y=data_y, weight=theta, xtypes=xtypes, power=1)
-        )
-    else:
-        raise ValueError("gower distance compatible with squar_exp and abs_exp kernels")
-
-
-def gower_matrix(data_x, data_y, weight=None, xtypes=None, power=1):
-    # function checks
-    X = data_x
-    Y = data_y
-    if not isinstance(X, np.ndarray):
-        if not np.array_equal(X.columns, Y.columns):
-            raise TypeError("X and Y must have same columns!")
-    else:
-        if not X.shape[1] == Y.shape[1]:
-            raise TypeError("X and Y must have same y-dim!")
-
-    x_n_rows, x_n_cols = X.shape
-    y_n_rows, y_n_cols = Y.shape
-
-    if not isinstance(X, np.ndarray):
-        X = np.asarray(X)
-    if not isinstance(Y, np.ndarray):
-        Y = np.asarray(Y)
-
-    Z = np.concatenate((X, Y))
-
-    x_index = range(0, x_n_rows)
-    y_index = range(x_n_rows, x_n_rows + y_n_rows)
-
-    Z_num, cat_features = compute_X_cont(Z, xtypes)
-    Y_num = Y[:, np.logical_not(cat_features)]
-    num_cols = Y_num.shape[1]
-    num_ranges = np.zeros(num_cols)
-    num_max = np.zeros(num_cols)
-
-    for col in range(num_cols):
-        col_array = Y_num[:, col].astype(np.float32)
-        max = np.nanmax(col_array)
-        min = np.nanmin(col_array)
-
-        if np.isnan(max):
-            max = 0.0
-        if np.isnan(min):
-            min = 0.0
-        num_max[col] = max
-        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
-
-    # This is to normalize the numeric values between 0 and 1.
-    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
-    Z_cat = Z[:, cat_features]
-
-    if weight is None:
-        weight = np.ones(Z.shape[1])
-
-    weight_cat = weight[cat_features]
-    weight_num = weight[np.logical_not(cat_features)]
-
-    out = np.zeros((x_n_rows, y_n_rows), dtype=np.float32)
-
-    weight_sum = weight.sum()
-
-    X_cat = Z_cat[
-        x_index,
-    ]
-    X_num = Z_num[
-        x_index,
-    ]
-    Y_cat = Z_cat[
-        y_index,
-    ]
-    Y_num = Z_num[
-        y_index,
-    ]
-
-    for i in range(x_n_rows):
-        j_start = i
-        if x_n_rows != y_n_rows:
-            j_start = 0
-        # call the main function
-        res = gower_get(
-            X_cat[i, :],
-            X_num[i, :],
-            Y_cat[j_start:y_n_rows, :],
-            Y_num[j_start:y_n_rows, :],
-            weight_cat,
-            weight_num,
-            weight_sum,
-            cat_features,
-            num_ranges,
-            num_max,
-            power,
-        )
-        out[i, j_start:] = res
-        if x_n_rows == y_n_rows:
-            out[i:, j_start] = res
-
-    return out
-
-
-def gower_get(
-    xi_cat,
-    xi_num,
-    xj_cat,
-    xj_num,
-    feature_weight_cat,
-    feature_weight_num,
-    feature_weight_sum,
-    categorical_features,
-    ranges_of_numeric,
-    max_of_numeric,
-    power,
-):
-    # categorical columns
-    sij_cat = np.where(xi_cat == xj_cat, np.zeros_like(xi_cat), np.ones_like(xi_cat))
-    sum_cat = np.multiply(feature_weight_cat, np.power(sij_cat, power)).sum(axis=1)
-
-    # numerical columns
-    abs_delta = np.absolute(xi_num - xj_num)
-    sij_num = np.divide(
-        abs_delta,
-        ranges_of_numeric,
-        out=np.zeros_like(abs_delta),
-        where=ranges_of_numeric != 0,
-    )
-
-    sum_num = np.multiply(feature_weight_num, np.power(sij_num, power)).sum(axis=1)
-    sums = np.add(sum_cat, sum_num)
-    return sums
 
 
 def differences(X, Y):

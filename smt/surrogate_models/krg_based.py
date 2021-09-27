@@ -19,8 +19,6 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
     gower_componentwise_distances,
-    gower_matrix,
-    gower_corr,
     compute_X_cont,
     cross_levels,
     matrix_data_corr,
@@ -709,19 +707,10 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
-            d=gower_componentwise_distances(x,self.X_train,self.options["xtypes"])
+            d=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
-            
-            r = gower_corr(
-                x,
-                corr=self.options["corr"],
-                data_y=self.X_train,
-                theta=np.asarray(self.optimal_theta),
-                xtypes=self.options["xtypes"],
-            )
-
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
@@ -827,13 +816,10 @@ class KrgBased(SurrogateModel):
         X_cont = x
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
-            r = gower_corr(
-                x,
-                corr=self.options["corr"],
-                data_y=self.X_train,
-                theta=np.asarray(self.optimal_theta),
-                xtypes=self.options["xtypes"],
-            )
+            d=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
