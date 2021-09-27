@@ -291,7 +291,7 @@ class TestEGO(SMTestCase):
         return y
 
     def test_ego_mixed_integer(self):
-        n_iter = 15
+        n_iter = 10
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
@@ -317,10 +317,10 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=6)
+        self.assertAlmostEqual(-15, float(y_opt), delta=8)
 
     def test_ego_mixed_integer_gower_distance(self):
-        n_iter = 15
+        n_iter = 10
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
@@ -352,7 +352,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=6)
+        self.assertAlmostEqual(-15, float(y_opt), delta=8)
 
     def test_ydoe_option(self):
         n_iter = 15
