@@ -285,18 +285,18 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     Y_num = Z_num[
         y_index,
     ]
-    
-    X_norma= X
-    Y_norma= Y
-    X_norma[:, np.logical_not(cat_features)]=X_num
-    Y_norma[:, np.logical_not(cat_features)]=Y_num
+
+    X_norma = X
+    Y_norma = Y
+    X_norma[:, np.logical_not(cat_features)] = X_num
+    Y_norma[:, np.logical_not(cat_features)] = Y_num
 
     n_samples, n_features = X_num.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D_num = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
-    if y is None : 
+    if y is None:
 
         for k in range(n_samples - 1):
             ll_0 = ll_1
@@ -313,12 +313,12 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
                 )
             except:
                 pass
-    
+
         n_samples, n_features = X_cat.shape
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
         D_cat = np.zeros((n_nonzero_cross_dist, n_features))
         ll_1 = 0
-    
+
         for k in range(n_samples - 1):
             ll_0 = ll_1
             ll_1 = ll_0 + n_samples - k - 1
@@ -327,28 +327,26 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
                 np.zeros_like(X_cat[k]),
                 np.ones_like(X_cat[k]),
             )
-    
+
         D = np.concatenate((D_cat, D_num), axis=1) * 0
         D[:, np.logical_not(cat_features)] = D_num
         D[:, cat_features] = D_cat
-    
+
         return D, ij.astype(np.int), X_cont
-    else : 
-        out = np.zeros((x_n_rows*y_n_rows, x_n_cols), dtype=np.float32)
+    else:
+        out = np.zeros((x_n_rows * y_n_rows, x_n_cols), dtype=np.float32)
         D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
-        D= D.reshape((-1, X.shape[1]))
+        D = D.reshape((-1, X.shape[1]))
         D = np.abs(D)
-        D[:,cat_features]=D[:,cat_features]>0.5
-        D[:,np.logical_not(cat_features)]=np.divide(
-                    D[:,np.logical_not(cat_features)],
-                    num_ranges,
-                    out=np.zeros_like( D[:,np.logical_not(cat_features)]),
-                    where=num_ranges != 0,
-                )
+        D[:, cat_features] = D[:, cat_features] > 0.5
+        D[:, np.logical_not(cat_features)] = np.divide(
+            D[:, np.logical_not(cat_features)],
+            num_ranges,
+            out=np.zeros_like(D[:, np.logical_not(cat_features)]),
+            where=num_ranges != 0,
+        )
 
-        
         return D
-
 
 
 def differences(X, Y):

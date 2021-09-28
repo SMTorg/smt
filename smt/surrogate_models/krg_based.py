@@ -705,16 +705,30 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["categorical_kernel"] == GOWER:
+        if self.options["categorical_kernel"] is not None:
             # Compute the correlation function
-            dx=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            dx = gower_componentwise_distances(
+                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+            )
             d = self._componentwise_distance(dx)
 
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+            if self.options["categorical_kernel"] == GOWER:
+                r = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta, d
+                ).reshape(n_eval, self.nt)
+            elif self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+                r = matrix_data_corr(
+                    corr=self.options["corr"],
+                    theta=self.optimal_theta,
+                    d=d,
+                    ij=self.ij,
+                    Lij=self.Lij,
+                    nlevels=self.n_levels,
+                    cat_features=self.cat_features,
+                ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
+
         else:
             X_cont = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
@@ -751,7 +765,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-     
+
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
@@ -807,14 +821,27 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         X_cont = x
-        if self.options["categorical_kernel"] == GOWER:
+        if self.options["categorical_kernel"] is not None:
             # Compute the correlation function
-            dx=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            dx = gower_componentwise_distances(
+                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+            )
             d = self._componentwise_distance(dx)
 
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+            if self.options["categorical_kernel"] == GOWER:
+                r = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta, d
+                ).reshape(n_eval, self.nt)
+            elif self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+                r = matrix_data_corr(
+                    corr=self.options["corr"],
+                    theta=self.optimal_theta,
+                    d=d,
+                    ij=self.ij,
+                    Lij=self.Lij,
+                    nlevels=self.n_levels,
+                    cat_features=self.cat_features,
+                ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
