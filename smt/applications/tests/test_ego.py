@@ -322,9 +322,9 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer_gower_distance(self):
        
         n_iter = 15
-        xtypes = [(ENUM, 3), (ENUM, 2), ORD, FLOAT]
+        xtypes = [FLOAT,(ENUM, 3), (ENUM, 2), ORD ]
         xlimits = np.array(
-            [["blue", "red", "green"], ["large", "small"], ["0", "2", "3"], [-5, 5]]
+            [[-5, 5],["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
         )
                
         n_doe = 2
