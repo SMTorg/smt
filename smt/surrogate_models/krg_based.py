@@ -707,7 +707,9 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
-            d=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            dx=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            d = self._componentwise_distance(dx)
+
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
@@ -749,24 +751,15 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        if self.options["categorical_kernel"] == GOWER:
-            r = gower_corr(
-                x,
-                corr=self.options["corr"],
-                data_y=self.X_train,
-                theta=np.asarray(self.optimal_theta),
-                xtypes=self.options["xtypes"],
-            )
-
-        else:
-            x = (x - self.X_offset) / self.X_scale
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(x, Y=self.X_norma.copy())
-            d = self._componentwise_distance(dx)
-            # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+     
+        x = (x - self.X_offset) / self.X_scale
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = differences(x, Y=self.X_norma.copy())
+        d = self._componentwise_distance(dx)
+        # Compute the correlation function
+        r = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d
+        ).reshape(n_eval, self.nt)
 
         if self.options["corr"] != "squar_exp":
             raise ValueError(
@@ -816,7 +809,9 @@ class KrgBased(SurrogateModel):
         X_cont = x
         if self.options["categorical_kernel"] == GOWER:
             # Compute the correlation function
-            d=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            dx=gower_componentwise_distances(x,y=np.copy(self.X_train),xtypes=self.options["xtypes"])
+            d = self._componentwise_distance(dx)
+
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)

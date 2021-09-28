@@ -320,13 +320,11 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ego_mixed_integer_gower_distance(self):
-       
         n_iter = 15
-        xtypes = [FLOAT,(ENUM, 3), (ENUM, 2), ORD ]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5],["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
         )
-               
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
             xtypes,
@@ -338,9 +336,9 @@ class TestEGO(SMTestCase):
         )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        sm = KRG(print_global=False, theta0=[1e-2], corr="abs_exp")
+        sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
-        
+
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,

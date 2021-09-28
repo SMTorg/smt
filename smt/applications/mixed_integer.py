@@ -335,8 +335,8 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         if self._categorical_kernel is not None:
             if self._surrogate.name not in ["Kriging"]:
                 raise ValueError("matrix kernel not implemented for this model")
-            if self._surrogate.options["corr"] in ["matern32", "matern52"]:
-                raise ValueError("matrix kernel not compatible with matern kernel")
+       #     if self._surrogate.options["corr"] in ["matern32", "matern52"]:
+        #        raise ValueError("matrix kernel not compatible with matern kernel")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
             self._input_in_folded_space = False
