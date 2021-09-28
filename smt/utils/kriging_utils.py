@@ -167,6 +167,7 @@ def cross_levels(X, ij, xtypes):
 
 
 def compute_n_param(xtypes):
+    "Compute the number of parameters needed for an homoscedastic group kernel"
     n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
@@ -350,6 +351,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
 
 
 def differences(X, Y):
+    "compute the componentwise difference between X and Y"
     X, Y = check_pairwise_arrays(X, Y)
     D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     return D.reshape((-1, X.shape[1]))
