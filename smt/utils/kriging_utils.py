@@ -84,7 +84,7 @@ def standardization(X, y, scale_X_to_unit=False):
     return X, y, X_offset, y_mean, X_scale, y_std
 
 
-def cross_distances(X,y=None):
+def cross_distances(X, y=None):
 
     """
     Computes the nonzero componentwise cross-distances between the vectors
@@ -108,35 +108,35 @@ def cross_distances(X,y=None):
               distances in D.
     """
     n_samples, n_features = X.shape
-    if y is None : 
+    if y is None:
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
         ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
         D = np.zeros((n_nonzero_cross_dist, n_features))
         ll_1 = 0
-    
+
         for k in range(n_samples - 1):
             ll_0 = ll_1
             ll_1 = ll_0 + n_samples - k - 1
             ij[ll_0:ll_1, 0] = k
             ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
             D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
-    else : 
+    else:
         n_y, n_features = y.shape
         X, y = check_pairwise_arrays(X, y)
-        n_nonzero_cross_dist = n_samples * n_y 
+        n_nonzero_cross_dist = n_samples * n_y
         ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
-        D = np.zeros((n_nonzero_cross_dist, n_features))    
+        D = np.zeros((n_nonzero_cross_dist, n_features))
         for k in range(n_nonzero_cross_dist):
-            xk= k // n_y 
-            yk= k % n_y 
+            xk = k // n_y
+            yk = k % n_y
             D[k] = X[xk] - y[yk]
-            ij[k,0] = xk
+            ij[k, 0] = xk
             ij[k, 1] = yk
-            
+
     return D, ij.astype(np.int32)
 
 
-def cross_levels(X, ij, xtypes,y=None):
+def cross_levels(X, ij, xtypes, y=None):
 
     """
     Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
@@ -174,13 +174,13 @@ def cross_levels(X, ij, xtypes,y=None):
     for k in range(n_var):
         for l in range(n):
             i, j = ij[l]
-            if y is None : 
+            if y is None:
                 Lij[k][l][0] = X_cat[i, k]
                 Lij[k][l][1] = X_cat[j, k]
-            else : 
+            else:
                 y_cat = y[:, cat_features]
                 Lij[k][l][0] = X_cat[i, k]
-                Lij[k][l][1] = y_cat[j, k]              
+                Lij[k][l][1] = y_cat[j, k]
 
     return Lij, n_levels
 
@@ -376,7 +376,7 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d,  Lij, nlevels, cat_features):
+def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     """
     matrix kernel correlation model.
 
@@ -422,8 +422,7 @@ def matrix_data_corr(corr, theta, d,  Lij, nlevels, cat_features):
     theta_cont = theta[theta_cont_features]
     d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
-    r_cat =np.copy(r_cont)*0
-
+    r_cat = np.copy(r_cont) * 0
 
     ##Theta_cat_i loop
     i = 0
@@ -434,23 +433,22 @@ def matrix_data_corr(corr, theta, d,  Lij, nlevels, cat_features):
     ##r_cat = _correlation_types[corr](theta_cont, d_cont)
 
     _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
-    cat2=np.copy(cat_i_ij_full)
-    cat2[:,0] = cat_i_ij_full[:,1]
-    cat2[:,1] = cat_i_ij_full[:,0]
+    cat2 = np.copy(cat_i_ij_full)
+    cat2[:, 0] = cat_i_ij_full[:, 1]
+    cat2[:, 1] = cat_i_ij_full[:, 0]
 
-    for k in range(np.shape(Lij[i])[0]) : 
-        try :
-           ind= cat_i_ij_full.tolist().index(Lij[i][k].tolist())
-           r_cat[k,0]=np.exp(-theta_cat[ind])
-        except ValueError : 
-            try :
-                 ind= cat2.tolist().index(Lij[i][k].tolist())
-                 r_cat[k,0]=np.exp(-theta_cat[ind])
-            except ValueError : 
-                 r_cat[k,0]=1
-                
-    
-    r= np.multiply(r_cont,r_cat)
+    for k in range(np.shape(Lij[i])[0]):
+        try:
+            ind = cat_i_ij_full.tolist().index(Lij[i][k].tolist())
+            r_cat[k, 0] = np.exp(-theta_cat[ind])
+        except ValueError:
+            try:
+                ind = cat2.tolist().index(Lij[i][k].tolist())
+                r_cat[k, 0] = np.exp(-theta_cat[ind])
+            except ValueError:
+                r_cat[k, 0] = 1
+
+    r = np.multiply(r_cont, r_cat)
 
     return r
 
