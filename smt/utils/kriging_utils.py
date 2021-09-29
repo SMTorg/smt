@@ -377,7 +377,7 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
+def matrix_data_corr(corr, theta, d,  Lij, nlevels, cat_features):
     """
     matrix kernel correlation model.
 
@@ -390,9 +390,6 @@ def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
         d_i
     corr: correlation_types
         - The autocorrelation model (absolute or square exponential)
-    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
-            - The indices i and j of the vectors in X associated to the cross-
-              distances in D.
     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The levels corresponding to the indices i and j of the vectors in X.
     Returns
@@ -446,21 +443,20 @@ def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
     cat2[:,1] = cat_i_ij_full[:,0]
 
     print(Lij[i])
-    ###### Not thet good Lij for prediction
-    list_ind_theta = []
     for k in range(np.shape(Lij[i])[0]) : 
         try :
-            list_ind_theta.append(cat_i_ij_full.tolist().index(Lij[i][k].tolist()))
+           ind= cat_i_ij_full.tolist().index(Lij[i][k].tolist())
+           r_cat[k,0]=np.exp(-theta_cat[ind])
         except ValueError : 
             try :
-                list_ind_theta.append(cat2.tolist().index(Lij[i][k].tolist()))
+                 ind= cat2.tolist().index(Lij[i][k].tolist())
+                 r_cat[k,0]=np.exp(-theta_cat[ind])
             except ValueError : 
-                list_ind_theta.append (-1)
-    list_ind_theta=np.atleast_2d(np.array(list_ind_theta)).T   
+                 r_cat[k,0]=1
+                
     
-    # print("r_cat", r_cat)
+    print("r_cat", r_cat)
 
-    print(list_ind_theta)
 
     return r_cont
 
