@@ -84,18 +84,19 @@ def standardization(X, y, scale_X_to_unit=False):
     return X, y, X_offset, y_mean, X_scale, y_std
 
 
-def cross_distances(X):
+def cross_distances(X,y=None):
 
     """
     Computes the nonzero componentwise cross-distances between the vectors
-    in X.
+    in X or between the vectors in X and the vectors in y.
 
     Parameters
     ----------
 
     X: np.ndarray [n_obs, dim]
             - The input variables.
-
+    y: np.ndarray [n_y, dim]
+            - The training data.
     Returns
     -------
 
@@ -106,24 +107,36 @@ def cross_distances(X):
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
     """
-
     n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
-    ll_1 = 0
-
-    for k in range(n_samples - 1):
-        ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k - 1
-        ij[ll_0:ll_1, 0] = k
-        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
-
+    if y is None : 
+        n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
+        ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+        D = np.zeros((n_nonzero_cross_dist, n_features))
+        ll_1 = 0
+    
+        for k in range(n_samples - 1):
+            ll_0 = ll_1
+            ll_1 = ll_0 + n_samples - k - 1
+            ij[ll_0:ll_1, 0] = k
+            ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+            D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
+    else : 
+        n_y, n_features = y.shape
+        X, y = check_pairwise_arrays(X, y)
+        n_nonzero_cross_dist = n_samples * n_y 
+        ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+        D = np.zeros((n_nonzero_cross_dist, n_features))    
+        for k in range(n_nonzero_cross_dist):
+            xk= k // n_y 
+            yk= k % n_y 
+            D[k] = X[xk] - y[yk]
+            ij[k,0] = xk
+            ij[k, 1] = yk
+            
     return D, ij.astype(np.int32)
 
 
-def cross_levels(X, ij, xtypes):
+def cross_levels(X, ij, xtypes,y=None):
 
     """
     Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
@@ -132,6 +145,8 @@ def cross_levels(X, ij, xtypes):
 
     X: np.ndarray [n_obs, dim]
             - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
@@ -159,10 +174,15 @@ def cross_levels(X, ij, xtypes):
     for k in range(n_var):
         for l in range(n):
             i, j = ij[l]
-            Lij[k][l][0] = X_cat[i, k]
-            Lij[k][l][1] = X_cat[j, k]
+            if y is None : 
+                Lij[k][l][0] = X_cat[i, k]
+                Lij[k][l][1] = X_cat[j, k]
+            else : 
+                y_cat = y[:, cat_features]
+                Lij[k][l][0] = X_cat[i, k]
+                Lij[k][l][1] = y_cat[j, k]              
 
-    print(Lij, n_levels)
+    print("LIJ",Lij, n_levels)
     return Lij, n_levels
 
 
@@ -407,7 +427,7 @@ def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
     theta_cont = theta[theta_cont_features]
     d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
-
+    r_cat =np.copy(r_cont)*0
     #    print("theta_cont", theta_cont)
     #   print("d_cont", d_cont)
     #  print("r_cont", r_cont)
@@ -421,16 +441,26 @@ def matrix_data_corr(corr, theta, d, ij, Lij, nlevels, cat_features):
     ##r_cat = _correlation_types[corr](theta_cont, d_cont)
 
     _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
+    cat2=np.copy(cat_i_ij_full)
+    cat2[:,0] = cat_i_ij_full[:,1]
+    cat2[:,1] = cat_i_ij_full[:,0]
+
     print(Lij[i])
     ###### Not thet good Lij for prediction
-    a = [
-        cat_i_ij_full.tolist().index(Lij[i][k].tolist())
-        for k, elem in enumerate(Lij[i])
-    ]
-
+    list_ind_theta = []
+    for k in range(np.shape(Lij[i])[0]) : 
+        try :
+            list_ind_theta.append(cat_i_ij_full.tolist().index(Lij[i][k].tolist()))
+        except ValueError : 
+            try :
+                list_ind_theta.append(cat2.tolist().index(Lij[i][k].tolist()))
+            except ValueError : 
+                list_ind_theta.append (-1)
+    list_ind_theta=np.atleast_2d(np.array(list_ind_theta)).T   
+    
     # print("r_cat", r_cat)
 
-    print(a)
+    print(list_ind_theta)
 
     return r_cont
 

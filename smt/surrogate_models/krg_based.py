@@ -717,12 +717,16 @@ class KrgBased(SurrogateModel):
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
             elif self.options["categorical_kernel"] == HOMO_GAUSSIAN:
+                _, ij = cross_distances(x,self.X_train)
+                Lij, _ = cross_levels(
+                    X=x,ij=ij, xtypes=self.options["xtypes"], y=self.X_train
+                )
                 r = matrix_data_corr(
                     corr=self.options["corr"],
                     theta=self.optimal_theta,
                     d=d,
-                    ij=self.ij,
-                    Lij=self.Lij,
+                    ij=ij,
+                    Lij=Lij,
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
                 ).reshape(n_eval, self.nt)
