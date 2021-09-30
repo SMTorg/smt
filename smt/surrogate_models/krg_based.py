@@ -1282,10 +1282,18 @@ class KrgBased(SurrogateModel):
                     self.options["theta0"] *= np.ones(d)
 
             else:
-                raise ValueError(
-                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                    % (len(self.options["theta0"]), d)
-                )
+                if self.options["categorical_kernel"] != HOMO_GAUSSIAN:
+                    raise ValueError(
+                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                        % (len(self.options["theta0"]), d)
+                    )
+                else:
+                    n_param = compute_n_param(self.options["xtypes"])
+                    if len(self.options["theta0"]) != n_param:
+                        raise ValueError(
+                            "the length of theta0 (%s) should be equal to %s."
+                            % (len(self.options["theta0"]), n_param)
+                        )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:
