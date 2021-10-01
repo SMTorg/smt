@@ -429,11 +429,6 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
         
     theta_cont = theta[theta_cont_features]
     
-    
-
-    
-    
-    
     d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
@@ -453,17 +448,17 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     for k in range(np.shape(Lij[i])[0]):
         try:
             ind = cat_i_ij_full.tolist().index(Lij[i][k].tolist())
-            r_cat[k, 0] = np.exp(-theta_cat[ind])
+            r_cat[k, 0] = np.exp(-abs(2-2*theta_cat[ind]))
         except ValueError:
             try:
                 ind = cat2.tolist().index(Lij[i][k].tolist())
-                r_cat[k, 0] = np.exp(-theta_cat[ind])
+                r_cat[k, 0] = np.exp(-abs(2-2*theta_cat[ind]))
             except ValueError:
-                r_cat[k, 0] = 1
+                r_cat[k, 0] = 1.0
 
     r = np.multiply(r_cont, r_cat)
-
-    return r
+        
+    return r_cat
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
