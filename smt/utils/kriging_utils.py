@@ -407,19 +407,33 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
 
-    theta_cont_features = []
+    theta_cont_features = np.zeros((len(theta)), dtype=bool)
+
+    #theta_cat_features = np.zeros((2, 2), dtype=bool)
+    
     i = 0
+    j=0
     for feat in cat_features:
         if feat:
-            theta_cont_features = theta_cont_features + (
-                [False] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-            )
+            theta_cont_features[j:j+int(nlevels[i] * (nlevels[i] - 1) / 2)] =False 
+            j+=int(nlevels[i] * (nlevels[i] - 1) / 2)
+                                
+         #   theta_cat_features = theta_cat_features + (
+         #       [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+          #   )
             ##Theta_cat_i loop
-            i += 1
         else:
-            theta_cont_features = theta_cont_features + [True]
-    theta_cont_features = np.array(theta_cont_features)
+            theta_cont_features[j] = True
+            j+=1
+        i += 1
+        
     theta_cont = theta[theta_cont_features]
+    
+    
+
+    
+    
+    
     d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
@@ -430,7 +444,6 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     theta_cat = theta[np.logical_not(theta_cont_features)]
     d_cat = d[:, cat_features]
 
-    ##r_cat = _correlation_types[corr](theta_cont, d_cont)
 
     _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
     cat2 = np.copy(cat_i_ij_full)
