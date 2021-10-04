@@ -316,10 +316,10 @@ class KrgBased(SurrogateModel):
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
         # Cholesky decomposition of R
-        w, v = linalg.eig(R)
-        print(w.real)
+     ####   w, v = linalg.eig(R)
+     ####   print(w.real)
         try:
-            C = linalg.cholesky(R)
+            C = linalg.cholesky(R,lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
             # raise e
