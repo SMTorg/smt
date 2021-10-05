@@ -190,7 +190,7 @@ def compute_n_param(xtypes):
     n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+            n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
         else:
             n_param += 1
     return n_param
@@ -409,26 +409,26 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
 
     theta_cont_features = np.zeros((len(theta)), dtype=bool)
 
-    #theta_cat_features = np.zeros((2, 2), dtype=bool)
-    
+    # theta_cat_features = np.zeros((2, 2), dtype=bool)
+
     i = 0
-    j=0
+    j = 0
     for feat in cat_features:
         if feat:
-            theta_cont_features[j:j+int(nlevels[i] * (nlevels[i] - 1) / 2)] =False 
-            j+=int(nlevels[i] * (nlevels[i] - 1) / 2)
-                                
-         #   theta_cat_features = theta_cat_features + (
-         #       [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-          #   )
-            ##Theta_cat_i loop
+            theta_cont_features[j : j + int(nlevels[i] * (nlevels[i]) / 2)] = False
+            j += int(nlevels[i] * (nlevels[i]) / 2)
+
+        #   theta_cat_features = theta_cat_features + (
+        #       [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+        #   )
+        ##Theta_cat_i loop
         else:
             theta_cont_features[j] = True
-            j+=1
+            j += 1
         i += 1
-        
+
     theta_cont = theta[theta_cont_features]
-    
+
     d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
@@ -439,26 +439,55 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     theta_cat = theta[np.logical_not(theta_cont_features)]
     d_cat = d[:, cat_features]
 
-
     _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
     cat2 = np.copy(cat_i_ij_full)
     cat2[:, 0] = cat_i_ij_full[:, 1]
     cat2[:, 1] = cat_i_ij_full[:, 0]
 
+    Theta_mat = np.zeros((nlevels[i], nlevels[i]))
+    v = 0
+    for j in range(nlevels[i]):
+        for k in range(nlevels[i] - j):
+            if j == k + j:
+                Theta_mat[j, k + j] = (
+                    0 * theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + j)] + 1
+                )
+            else:
+                Theta_mat[j, k + j] = 0
+                Theta_mat[k + j, j] = theta_cat[v]
+                v = v + 1
+    #   T2=np.exp(-Theta_mat)
+    # T2=
+
+    T2 = np.dot(Theta_mat, Theta_mat.T)
+    T2 = T2 / np.max(T2)
+    T2 = np.exp(T2)
+    T2 = T2 / np.max(T2)
+
+    C = np.linalg.cholesky(T2)
+
+    # for k in range(np.shape(Lij[i])[0]):
+    #     indi= int( int(nlevels[i]*(nlevels[i]-1)/2)+Lij[i][k][0])
+    #     indj= int(int(nlevels[i]*(nlevels[i]-1)/2)+ Lij[i][k][1])
+    #     try:
+    #         indij = cat_i_ij_full.tolist().index(Lij[i][k].tolist())
+    #         r_cat[k, 0] = np.exp(-(theta_cat[indi]+theta_cat[indj] +2*theta_cat[indij] ) )
+    #     except ValueError:
+    #         try:
+    #             indij = cat2.tolist().index(Lij[i][k].tolist())
+    #             r_cat[k, 0] = np.exp(-(theta_cat[indi]+theta_cat[indj] +2*theta_cat[indij] ) )
+    #         except ValueError:
+    #             r_cat[k, 0] = 1.0
     for k in range(np.shape(Lij[i])[0]):
-        try:
-            ind = cat_i_ij_full.tolist().index(Lij[i][k].tolist())
-            r_cat[k, 0] = np.exp(-abs(2-2*theta_cat[ind]))
-        except ValueError:
-            try:
-                ind = cat2.tolist().index(Lij[i][k].tolist())
-                r_cat[k, 0] = np.exp(-abs(2-2*theta_cat[ind]))
-            except ValueError:
-                r_cat[k, 0] = 1.0
+        indi = int(Lij[i][k][0])
+        indj = int(Lij[i][k][1])
+        if indi == indj:
+            r_cat[k, 0] = 1.0
+        else:
+            r_cat[k, 0] = T2[indi, indj]
 
     r = np.multiply(r_cont, r_cat)
-        
-    return r_cat
+    return r
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
