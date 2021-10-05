@@ -436,7 +436,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     ##Theta_cat_i loop
     i = 0
     ###
-    theta_cat = theta[np.logical_not(theta_cont_features)]
+    theta_cat = theta[np.logical_not(theta_cont_features)] * (np.pi / 20)
     d_cat = d[:, cat_features]
 
     _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
@@ -445,6 +445,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     cat2[:, 1] = cat_i_ij_full[:, 0]
 
     Theta_mat = np.zeros((nlevels[i], nlevels[i]))
+    L = np.zeros((nlevels[i], nlevels[i]))
     v = 0
     for j in range(nlevels[i]):
         for k in range(nlevels[i] - j):
@@ -453,31 +454,38 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
                     0 * theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + j)] + 1
                 )
             else:
-                Theta_mat[j, k + j] = 0
+                Theta_mat[j, k + j] = theta_cat[v]
                 Theta_mat[k + j, j] = theta_cat[v]
                 v = v + 1
+
+    for j in range(nlevels[i]):
+        for k in range(nlevels[i] - j):
+            if j == k + j:
+                if j == 0:
+                    L[j, k + j] = 1
+
+                else:
+                    L[j, k + j] = 1
+                    for l in range(j):
+                        L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
+
+            else:
+                if j == 0:
+                    L[k + j, j] = np.cos(Theta_mat[k, 0])
+                else:
+                    L[k + j, j] = np.cos(Theta_mat[k + j, j])
+                    for l in range(j):
+                        L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+
     #   T2=np.exp(-Theta_mat)
     # T2=
-
-    T2 = np.dot(Theta_mat, Theta_mat.T)
-    T2 = T2 / np.max(T2)
+    T2 = np.dot(L, L.T) + np.eye(nlevels[i]) * (1.0 + 1e-10)
+    C = np.linalg.cholesky(T2)
     T2 = np.exp(T2)
     T2 = T2 / np.max(T2)
 
     C = np.linalg.cholesky(T2)
 
-    # for k in range(np.shape(Lij[i])[0]):
-    #     indi= int( int(nlevels[i]*(nlevels[i]-1)/2)+Lij[i][k][0])
-    #     indj= int(int(nlevels[i]*(nlevels[i]-1)/2)+ Lij[i][k][1])
-    #     try:
-    #         indij = cat_i_ij_full.tolist().index(Lij[i][k].tolist())
-    #         r_cat[k, 0] = np.exp(-(theta_cat[indi]+theta_cat[indj] +2*theta_cat[indij] ) )
-    #     except ValueError:
-    #         try:
-    #             indij = cat2.tolist().index(Lij[i][k].tolist())
-    #             r_cat[k, 0] = np.exp(-(theta_cat[indi]+theta_cat[indj] +2*theta_cat[indij] ) )
-    #         except ValueError:
-    #             r_cat[k, 0] = 1.0
     for k in range(np.shape(Lij[i])[0]):
         indi = int(Lij[i][k][0])
         indj = int(Lij[i][k][1])
