@@ -484,7 +484,6 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
 
     T2 = np.exp(-2)*np.exp(2*T2)
 
-    T2 = T2 / np.max(T2)
     C = np.linalg.cholesky(T2)
     
     
