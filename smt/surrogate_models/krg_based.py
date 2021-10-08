@@ -315,13 +315,12 @@ class KrgBased(SurrogateModel):
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-
         # Cholesky decomposition of R
+
         try:
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            # raise e
             return reduced_likelihood_function_value, par
 
         # Get generalized least squared solution
