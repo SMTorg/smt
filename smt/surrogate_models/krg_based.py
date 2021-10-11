@@ -29,6 +29,7 @@ from smt.sampling_methods import LHS
 
 from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN
 
+
 class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -71,7 +72,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER, HOMO_GAUSSIAN,HETERO_GAUSSIAN],
+            values=[GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
@@ -161,7 +162,7 @@ class KrgBased(SurrogateModel):
                 X=X, xtypes=self.options["xtypes"]
             )
 
-            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN]:
+            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
                 )
@@ -296,7 +297,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN]:
+        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
             r = matrix_data_corr(
                 corr=self.options["corr"],
                 theta=theta,
@@ -304,7 +305,7 @@ class KrgBased(SurrogateModel):
                 Lij=self.Lij,
                 nlevels=self.n_levels,
                 cat_features=self.cat_features,
-                cat_kernel= self.options["categorical_kernel"],
+                cat_kernel=self.options["categorical_kernel"],
             ).reshape(-1, 1)
         else:
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
@@ -713,7 +714,7 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -725,7 +726,7 @@ class KrgBased(SurrogateModel):
                     Lij=Lij,
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
-                     cat_kernel= self.options["categorical_kernel"],
+                    cat_kernel=self.options["categorical_kernel"],
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -833,7 +834,7 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -845,8 +846,7 @@ class KrgBased(SurrogateModel):
                     Lij=Lij,
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
-                    cat_kernel= self.options["categorical_kernel"],
-
+                    cat_kernel=self.options["categorical_kernel"],
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1276,20 +1276,30 @@ class KrgBased(SurrogateModel):
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
-                if self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN] :
-                    n_param = compute_n_param(self.options["xtypes"],self.options["categorical_kernel"])
+                if self.options["categorical_kernel"] in [
+                    HOMO_GAUSSIAN,
+                    HETERO_GAUSSIAN,
+                ]:
+                    n_param = compute_n_param(
+                        self.options["xtypes"], self.options["categorical_kernel"]
+                    )
                     self.options["theta0"] *= np.ones(n_param)
                 else:
                     self.options["theta0"] *= np.ones(d)
 
             else:
-                if not(self.options["categorical_kernel"] in [HOMO_GAUSSIAN,HETERO_GAUSSIAN]) : 
+                if not (
+                    self.options["categorical_kernel"]
+                    in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]
+                ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
                         % (len(self.options["theta0"]), d)
                     )
                 else:
-                    n_param = compute_n_param(self.options["xtypes"],self.options["categorical_kernel"])
+                    n_param = compute_n_param(
+                        self.options["xtypes"], self.options["categorical_kernel"]
+                    )
                     if len(self.options["theta0"]) != n_param:
                         raise ValueError(
                             "the length of theta0 (%s) should be equal to %s."

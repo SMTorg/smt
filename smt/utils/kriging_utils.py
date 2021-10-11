@@ -21,6 +21,7 @@ GOWER = "gower"
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
 HETERO_GAUSSIAN = "heteroscedastic_gaussian_matrix_kernel"
 
+
 def standardization(X, y, scale_X_to_unit=False):
 
     """
@@ -160,7 +161,7 @@ def cross_levels(X, ij, xtypes, y=None):
      Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The levels corresponding to the indices i and j of the vectors in X.
      n_levels: np.ndarray
-            - The number of levels.
+            - The number of levels for every categorical variable.
     """
     n_levels = []
     for i, xtyp in enumerate(xtypes):
@@ -187,14 +188,27 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes,cat_kernel):
-    "Compute the number of parameters needed for an homoscedastic group kernel"
+def compute_n_param(xtypes, cat_kernel):
+    """
+    Returns the he number of parameters needed for an homoscedastic or heteroscedastic group kernel.
+    Parameters
+     ----------
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    cat_kernel : string
+            -The kernel to use for categorical inputs. Only for non continuous Kriging",
+    Returns
+    -------
+     n_param: int
+            - The number of parameters.
+    """
+
     n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if cat_kernel == HETERO_GAUSSIAN : 
+            if cat_kernel == HETERO_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN : 
+            if cat_kernel == HOMO_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
 
         else:
@@ -208,13 +222,15 @@ def compute_X_cont(x, xtypes):
     Computes the X_cont part of a vector x for mixed integer
     Parameters
     ----------
-    X: np.ndarray [n_obs, dim]
+    x: np.ndarray [n_obs, dim]
             - The input variables.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
     Returns
     -------
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
-    cat_features: np.ndarray [dim_cat]
+    cat_features: np.ndarray [dim]
         -  Indices of the categorical input dimensions.
 
     """
@@ -236,6 +252,10 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     ----------
     X: np.ndarray [n_obs, dim]
             - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
     Returns
     -------
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
@@ -382,21 +402,26 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
+def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
     """
     matrix kernel correlation model.
 
     Parameters
     ----------
-
+    corr: correlation_types
+        - The autocorrelation model
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
         d_i
-    corr: correlation_types
-        - The autocorrelation model (absolute or square exponential)
     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The levels corresponding to the indices i and j of the vectors in X.
+    n_levels: np.ndarray
+            - The number of levels for every categorical variable.
+    cat_features: np.ndarray [dim]
+        -  Indices of the categorical input dimensions.
+     cat_kernel : string
+         - The kernel to use for categorical inputs. Only for non continuous Kriging",
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
@@ -421,18 +446,22 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
     j = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == HETERO_GAUSSIAN : 
-                theta_cont_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)] = False
-                theta_cat_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i] = [
-                    True
-                    ] * int(nlevels[i] * (nlevels[i] + 1) / 2)
+            if cat_kernel == HETERO_GAUSSIAN:
+                theta_cont_features[
+                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
+                ] = False
+                theta_cat_features[
+                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i
+                ] = [True] * int(nlevels[i] * (nlevels[i] + 1) / 2)
                 j += int(nlevels[i] * (nlevels[i] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN : 
-                theta_cont_features[j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)] = False
-                theta_cat_features[j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i] = [
-                    True
-                    ] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-                j += int(nlevels[i] * (nlevels[i]-1) / 2)                
+            if cat_kernel == HOMO_GAUSSIAN:
+                theta_cont_features[
+                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
+                ] = False
+                theta_cat_features[
+                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
+                ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+                j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
             theta_cont_features[j] = True
@@ -446,9 +475,9 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
     ##Theta_cat_i loop
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel ==  HETERO_GAUSSIAN : 
+        if cat_kernel == HETERO_GAUSSIAN:
             theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (np.pi / 20)
-        if cat_kernel == HOMO_GAUSSIAN : 
+        if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (np.pi / 20)
         d_cat = d[:, cat_features]
 
@@ -465,8 +494,8 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
                 if j == k + j:
                     Theta_mat[j, k + j] = 1
                 else:
-                    Theta_mat[j, k + j] =  theta_cat[v]
-                    Theta_mat[k + j, j] =  theta_cat[v]
+                    Theta_mat[j, k + j] = theta_cat[v]
+                    Theta_mat[k + j, j] = theta_cat[v]
                     v = v + 1
 
         for j in range(nlevels[i]):
@@ -489,19 +518,19 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
         T2 = np.dot(L, L.T)
         T2 = (T2 - 1) * 20
-        T2 = np.exp(2*T2) + np.eye(nlevels[i]) * (1e-11)
+        T2 = np.exp(2 * T2) + np.eye(nlevels[i]) * (1e-11)
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])
             if indi == indj:
                 r_cat[k, 0] = 1.0
             else:
-                if cat_kernel ==  HETERO_GAUSSIAN : 
+                if cat_kernel == HETERO_GAUSSIAN:
                     r_cat[k, 0] = np.exp(
                         -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
                         - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
                     ) * (T2[indi, indj])
-                if cat_kernel ==  HOMO_GAUSSIAN : 
+                if cat_kernel == HOMO_GAUSSIAN:
                     r_cat[k, 0] = T2[indi, indj]
         r = np.multiply(r, r_cat)
     return r
