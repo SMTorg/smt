@@ -9,7 +9,7 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
-from smt.surrogate_models.krg_based import GOWER, HOMO_GAUSSIAN
+from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN
 
 FLOAT = "float_type"
 INT = "int_type"
@@ -335,8 +335,6 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         if self._categorical_kernel is not None:
             if self._surrogate.name not in ["Kriging"]:
                 raise ValueError("matrix kernel not implemented for this model")
-            #     if self._surrogate.options["corr"] in ["matern32", "matern52"]:
-            #        raise ValueError("matrix kernel not compatible with matern kernel")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
             self._input_in_folded_space = False

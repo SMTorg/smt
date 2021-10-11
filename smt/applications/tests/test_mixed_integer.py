@@ -440,6 +440,153 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertEqual(np.shape(y), (105, 1))
 
+    def test_mixed_homo_gaussian_2D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HOMO_GAUSSIAN,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_GAUSSIAN,
+            xtypes=[(ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
+
+    def test_mixed_hetero_gaussian_2D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HETERO_GAUSSIAN,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HETERO_GAUSSIAN,
+            xtypes=[(ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
+
+    def test_mixed_hetero_gaussian_3D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            ORD,
+            HETERO_GAUSSIAN,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0, 5, 0], [2, -1, 2], [4, 0.5, 1]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [
+            ["0.0", "1.0", " 2.0", "3.0", "4.0"],
+            [-5, 5],
+            ["0.0", "1.0", " 2.0", "3.0"],
+        ]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HETERO_GAUSSIAN,
+            xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2]),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x3 = np.linspace(0, 3, 4)
+        x1 = []
+        for element in itertools.product(x, x2, x3):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[80], y[202], y[381]]) - yt)) < 1e-6)
+        self.assertTrue(
+            np.abs(np.sum(np.array([yvar[80], yvar[202], yvar[381]]))) < 1e-6
+        )
+
     def test_mixed_gower(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
@@ -475,53 +622,6 @@ class TestMixedInteger(unittest.TestCase):
         plt.ylabel("y")
         plt.legend()
         plt.show()
-
-    def test_mixed_homoscedastic_gaussian_matrix_2D(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            HOMO_GAUSSIAN,
-        )
-        from smt.surrogate_models import KRG
-        import matplotlib.pyplot as plt
-        import numpy as np
-        import itertools
-
-        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
-        yt = np.array([[0.0], [1.0], [1.5]])
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-
-        # Surrogate
-        sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
-            xtypes=[(ENUM, 5), FLOAT],
-            xlimits=xlimits,
-            surrogate=KRG(theta0=[1e-2]),
-        )
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        # DOE for validation
-        x = np.linspace(0, 4, 5)
-        x2 = np.linspace(-5, 5, 21)
-        x1 = []
-        for element in itertools.product(x, x2):
-            x1.append(np.array(element))
-        x_pred = np.array(x1)
-
-        i = 0
-        for x in x_pred:
-            print(i, x)
-            i += 1
-        y = sm.predict_values(x_pred)
-        yvar = sm.predict_variances(x_pred)
-
-        # prediction are correct on known points
-        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
-        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
-
-        self.assertEqual(np.shape(y), (105, 1))
 
 
 if __name__ == "__main__":

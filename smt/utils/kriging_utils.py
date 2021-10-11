@@ -17,7 +17,9 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
-
+GOWER = "gower"
+HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
+HETERO_GAUSSIAN = "heteroscedastic_gaussian_matrix_kernel"
 
 def standardization(X, y, scale_X_to_unit=False):
 
@@ -185,12 +187,16 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes):
+def compute_n_param(xtypes,cat_kernel):
     "Compute the number of parameters needed for an homoscedastic group kernel"
     n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
+            if cat_kernel == HETERO_GAUSSIAN : 
+                n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
+            if cat_kernel == HOMO_GAUSSIAN : 
+                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+
         else:
             n_param += 1
     return n_param
@@ -376,7 +382,7 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
+def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features,cat_kernel):
     """
     matrix kernel correlation model.
 
@@ -415,11 +421,18 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     j = 0
     for feat in cat_features:
         if feat:
-            theta_cont_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)] = False
-            theta_cat_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i] = [
-                True
-            ] * int(nlevels[i] * (nlevels[i] + 1) / 2)
-            j += int(nlevels[i] * (nlevels[i] + 1) / 2)
+            if cat_kernel == HETERO_GAUSSIAN : 
+                theta_cont_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)] = False
+                theta_cat_features[j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i] = [
+                    True
+                    ] * int(nlevels[i] * (nlevels[i] + 1) / 2)
+                j += int(nlevels[i] * (nlevels[i] + 1) / 2)
+            if cat_kernel == HOMO_GAUSSIAN : 
+                theta_cont_features[j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)] = False
+                theta_cat_features[j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i] = [
+                    True
+                    ] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+                j += int(nlevels[i] * (nlevels[i]-1) / 2)                
             i += 1
         else:
             theta_cont_features[j] = True
@@ -433,8 +446,10 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
     ##Theta_cat_i loop
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-
-        theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (np.pi / 20)
+        if cat_kernel ==  HETERO_GAUSSIAN : 
+            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (np.pi / 20)
+        if cat_kernel == HOMO_GAUSSIAN : 
+            theta_cat = theta_cat * (np.pi / 20)
         d_cat = d[:, cat_features]
 
         _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
@@ -450,8 +465,8 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
                 if j == k + j:
                     Theta_mat[j, k + j] = 1
                 else:
-                    Theta_mat[j, k + j] = 1 - theta_cat[v]
-                    Theta_mat[k + j, j] = 1 - theta_cat[v]
+                    Theta_mat[j, k + j] =  theta_cat[v]
+                    Theta_mat[k + j, j] =  theta_cat[v]
                     v = v + 1
 
         for j in range(nlevels[i]):
@@ -474,19 +489,20 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features):
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
         T2 = np.dot(L, L.T)
         T2 = (T2 - 1) * 20
-        T2 = np.exp(T2) + np.eye(nlevels[i]) * (1e-11)
+        T2 = np.exp(2*T2) + np.eye(nlevels[i]) * (1e-11)
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])
             if indi == indj:
                 r_cat[k, 0] = 1.0
             else:
-
-                r_cat[k, 0] = np.exp(
-                    -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
-                    - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
-                ) * (T2[indi, indj])
-
+                if cat_kernel ==  HETERO_GAUSSIAN : 
+                    r_cat[k, 0] = np.exp(
+                        -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
+                        - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
+                    ) * (T2[indi, indj])
+                if cat_kernel ==  HOMO_GAUSSIAN : 
+                    r_cat[k, 0] = T2[indi, indj]
         r = np.multiply(r, r_cat)
     return r
 
