@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0389383
+     Training - done. Time (sec):  0.0445051
   ___________________________________________________________________________
      
    Evaluation
@@ -139,9 +139,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002422
+     Predicting - done. Time (sec):  0.0002863
      
-     Prediction time/pt. (sec) :  0.0000024
+     Prediction time/pt. (sec) :  0.0000029
      
   ___________________________________________________________________________
      
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001924
+     Predicting - done. Time (sec):  0.0002196
      
-     Prediction time/pt. (sec) :  0.0000385
+     Prediction time/pt. (sec) :  0.0000439
      
   
 .. figure:: krg_Test_test_krg.png
@@ -218,9 +218,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002537
+     Predicting - done. Time (sec):  0.0002959
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -277,14 +277,14 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['Gower']
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'heteroscedastic_gaussian_matrix_kernel']
      -  ['str']
-     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None
      -  None
      -  ['list']
-     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
