@@ -487,12 +487,12 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertEqual(np.shape(y), (105, 1))
 
-    def test_mixed_hetero_gaussian_2D(self):
+    def test_mixed_full_gaussian_2D(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HETERO_GAUSSIAN,
+            FULL_GAUSSIAN,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -505,7 +505,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HETERO_GAUSSIAN,
+            categorical_kernel=FULL_GAUSSIAN,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -534,13 +534,13 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertEqual(np.shape(y), (105, 1))
 
-    def test_mixed_hetero_gaussian_3D(self):
+    def test_mixed_full_gaussian_3D(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
             ORD,
-            HETERO_GAUSSIAN,
+            FULL_GAUSSIAN,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -557,7 +557,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HETERO_GAUSSIAN,
+            categorical_kernel=FULL_GAUSSIAN,
             xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),

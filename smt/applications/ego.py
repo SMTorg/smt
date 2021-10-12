@@ -14,7 +14,12 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext, GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    GOWER,
+    HOMO_GAUSSIAN,
+    FULL_GAUSSIAN,
+)
 from smt.utils.misc import compute_rms_error
 
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
@@ -108,7 +113,7 @@ class EGO(SurrogateBasedApplication):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER, HOMO_GAUSSIAN,HETERO_GAUSSIAN],
+            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(

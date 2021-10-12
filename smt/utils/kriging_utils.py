@@ -19,7 +19,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 # TODO: Create hyperclass Kernels and a class for each kernel
 GOWER = "gower"
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-HETERO_GAUSSIAN = "heteroscedastic_gaussian_matrix_kernel"
+FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
 
 
 def standardization(X, y, scale_X_to_unit=False):
@@ -190,7 +190,7 @@ def cross_levels(X, ij, xtypes, y=None):
 
 def compute_n_param(xtypes, cat_kernel):
     """
-    Returns the he number of parameters needed for an homoscedastic or heteroscedastic group kernel.
+    Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
     xtypes: np.ndarray [dim]
@@ -206,7 +206,7 @@ def compute_n_param(xtypes, cat_kernel):
     n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if cat_kernel == HETERO_GAUSSIAN:
+            if cat_kernel == FULL_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
@@ -446,7 +446,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
     j = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == HETERO_GAUSSIAN:
+            if cat_kernel == FULL_GAUSSIAN:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
                 ] = False
@@ -475,7 +475,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
     ##Theta_cat_i loop
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel == HETERO_GAUSSIAN:
+        if cat_kernel == FULL_GAUSSIAN:
             theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (np.pi / 20)
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (np.pi / 20)
@@ -525,7 +525,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
             if indi == indj:
                 r_cat[k, 0] = 1.0
             else:
-                if cat_kernel == HETERO_GAUSSIAN:
+                if cat_kernel == FULL_GAUSSIAN:
                     r_cat[k, 0] = np.exp(
                         -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
                         - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]

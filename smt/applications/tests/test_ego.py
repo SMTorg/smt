@@ -32,7 +32,7 @@ from smt.applications.mixed_integer import (
     ORD,
     GOWER,
     HOMO_GAUSSIAN,
-    HETERO_GAUSSIAN,
+    FULL_GAUSSIAN,
 )
 from smt.sampling_methods import LHS
 
@@ -391,7 +391,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
-    def test_ego_mixed_integer_hetero_gaussian(self):
+    def test_ego_mixed_integer_full_gaussian(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
@@ -420,7 +420,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=HETERO_GAUSSIAN,
+            categorical_kernel=FULL_GAUSSIAN,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 

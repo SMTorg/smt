@@ -27,7 +27,7 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN
+from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
 
 
 class KrgBased(SurrogateModel):
@@ -72,7 +72,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER, HOMO_GAUSSIAN, HETERO_GAUSSIAN],
+            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
@@ -162,7 +162,7 @@ class KrgBased(SurrogateModel):
                 X=X, xtypes=self.options["xtypes"]
             )
 
-            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
+            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
                 )
@@ -297,7 +297,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
+        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
             r = matrix_data_corr(
                 corr=self.options["corr"],
                 theta=theta,
@@ -714,7 +714,7 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -834,7 +834,7 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -1002,7 +1002,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 1000 * len(self.options["theta0"]), 0.1
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1244,7 +1244,7 @@ class KrgBased(SurrogateModel):
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
                 exit_function = True
-
+        print(best_optimal_rlf_value)
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
@@ -1278,7 +1278,7 @@ class KrgBased(SurrogateModel):
             if len(self.options["theta0"]) == 1:
                 if self.options["categorical_kernel"] in [
                     HOMO_GAUSSIAN,
-                    HETERO_GAUSSIAN,
+                    FULL_GAUSSIAN,
                 ]:
                     n_param = compute_n_param(
                         self.options["xtypes"], self.options["categorical_kernel"]
@@ -1290,7 +1290,7 @@ class KrgBased(SurrogateModel):
             else:
                 if not (
                     self.options["categorical_kernel"]
-                    in [HOMO_GAUSSIAN, HETERO_GAUSSIAN]
+                    in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
                 ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
