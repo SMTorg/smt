@@ -1002,7 +1002,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 1000 * len(self.options["theta0"]), 0.1
+        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1244,7 +1244,6 @@ class KrgBased(SurrogateModel):
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
                 exit_function = True
-        print(best_optimal_rlf_value)
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
