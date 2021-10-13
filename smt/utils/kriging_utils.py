@@ -435,8 +435,8 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
 
+    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
 
     i = 0
@@ -478,11 +478,6 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
             theta_cat = theta_cat * (np.pi / 20)
         d_cat = d[:, cat_features]
 
-        _, cat_i_ij_full = cross_distances(np.zeros((nlevels[i], nlevels[i])))
-        cat2 = np.copy(cat_i_ij_full)
-        cat2[:, 0] = cat_i_ij_full[:, 1]
-        cat2[:, 1] = cat_i_ij_full[:, 0]
-
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -514,7 +509,7 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
                         for l in range(j):
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
         T2 = np.dot(L, L.T)
-        T2 = (T2 - 1) * 20
+        T2 = (T2 - 1) * 10
         T2 = np.exp(2 * T2) + np.eye(nlevels[i]) * (1e-11)
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
