@@ -236,7 +236,6 @@ def compute_X_cont(x, xtypes):
     """
     if xtypes is None:
         return x, None
-    ind = []
     cat_features = [
         not (xtype == "float_type" or xtype == "ord_type")
         for i, xtype in enumerate(xtypes)
@@ -380,7 +379,6 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
 
         return D, ij.astype(np.int), X_cont
     else:
-        out = np.zeros((x_n_rows * y_n_rows, x_n_cols), dtype=np.float32)
         D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
         D = D.reshape((-1, X.shape[1]))
         D = np.abs(D)
