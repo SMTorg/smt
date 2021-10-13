@@ -75,8 +75,8 @@ def standardization(X, y, scale_X_to_unit=False):
     else:
         X_offset = np.mean(X, axis=0)
         X_scale = X.std(axis=0, ddof=1)
-        X_scale[X_scale == 0.0] = 1.0
 
+    X_scale[X_scale == 0.0] = 1.0
     y_mean = np.mean(y, axis=0)
     y_std = y.std(axis=0, ddof=1)
     y_std[y_std == 0.0] = 1.0
@@ -437,7 +437,6 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
 
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
