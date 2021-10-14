@@ -474,7 +474,7 @@ def matrix_data_corr(
         theta_cat = theta[theta_cat_features[:, i]]
         if cat_kernel == FULL_GAUSSIAN:
             theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
-                np.pi / theta_bounds[1]
+                0.5 * np.pi / theta_bounds[1]
             )
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
@@ -510,11 +510,11 @@ def matrix_data_corr(
                         for l in range(j):
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
-        T2 = np.dot(L, L.T)
-        T2 = (T2 - 1) * theta_bounds[1] / 2
-        T2 = np.exp(2 * T2)
-        k = (1 +  np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-        T2 = (T2 +  np.exp(-theta_bounds[1])) / (k)
+        T = np.dot(L, L.T)
+        T = (T - 1) * theta_bounds[1] / 2
+        T = np.exp(2 * T)
+        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+        T = (T + np.exp(-theta_bounds[1])) / (k)
 
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
@@ -526,9 +526,9 @@ def matrix_data_corr(
                     r_cat[k, 0] = np.exp(
                         -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
                         - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
-                    ) * (T2[indi, indj])
+                    ) * (T[indi, indj])
                 if cat_kernel == HOMO_GAUSSIAN:
-                    r_cat[k, 0] = T2[indi, indj]
+                    r_cat[k, 0] = T[indi, indj]
         r = np.multiply(r, r_cat)
     return r
 
