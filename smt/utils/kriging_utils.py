@@ -513,8 +513,8 @@ def matrix_data_corr(
         T2 = np.dot(L, L.T)
         T2 = (T2 - 1) * theta_bounds[1] / 2
         T2 = np.exp(2 * T2)
-        k = (1 + theta_bounds[1]) / np.exp(-theta_bounds[0])
-        T2 = (T2 + theta_bounds[1]) / (k)
+        k = (1 +  np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+        T2 = (T2 +  np.exp(-theta_bounds[1])) / (k)
 
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
