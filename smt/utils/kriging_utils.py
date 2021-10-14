@@ -400,7 +400,9 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
+def matrix_data_corr(
+    corr, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel
+):
     """
     matrix kernel correlation model.
 
@@ -435,10 +437,8 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
-
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
-
     i = 0
     j = 0
     for feat in cat_features:
@@ -473,11 +473,12 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
         if cat_kernel == FULL_GAUSSIAN:
-            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (np.pi / 20)
+            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
+                np.pi / theta_bounds[1]
+            )
         if cat_kernel == HOMO_GAUSSIAN:
-            theta_cat = theta_cat * (np.pi / 20)
+            theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
         d_cat = d[:, cat_features]
-
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -508,9 +509,13 @@ def matrix_data_corr(corr, theta, d, Lij, nlevels, cat_features, cat_kernel):
                         L[k + j, j] = np.cos(Theta_mat[k + j, j])
                         for l in range(j):
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+
         T2 = np.dot(L, L.T)
-        T2 = (T2 - 1) * 10
-        T2 = np.exp(2 * T2) + np.eye(nlevels[i]) * (1e-11)
+        T2 = (T2 - 1) * theta_bounds[1] / 2
+        T2 = np.exp(2 * T2)
+        k = (1 + theta_bounds[1]) / np.exp(-theta_bounds[0])
+        T2 = (T2 + theta_bounds[1]) / (k)
+
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])

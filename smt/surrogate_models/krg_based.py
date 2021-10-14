@@ -301,6 +301,7 @@ class KrgBased(SurrogateModel):
             r = matrix_data_corr(
                 corr=self.options["corr"],
                 theta=theta,
+                theta_bounds=self.options["theta_bounds"],
                 d=self.D,
                 Lij=self.Lij,
                 nlevels=self.n_levels,
@@ -722,6 +723,7 @@ class KrgBased(SurrogateModel):
                 r = matrix_data_corr(
                     corr=self.options["corr"],
                     theta=self.optimal_theta,
+                    theta_bounds=self.options["theta_bounds"],
                     d=d,
                     Lij=Lij,
                     nlevels=self.n_levels,
@@ -842,6 +844,7 @@ class KrgBased(SurrogateModel):
                 r = matrix_data_corr(
                     corr=self.options["corr"],
                     theta=self.optimal_theta,
+                    theta_bounds=self.options["theta_bounds"],
                     d=d,
                     Lij=Lij,
                     nlevels=self.n_levels,
@@ -1288,8 +1291,7 @@ class KrgBased(SurrogateModel):
 
             else:
                 if not (
-                    self.options["categorical_kernel"]
-                    in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
+                    self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
                 ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
