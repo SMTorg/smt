@@ -24,3 +24,4 @@ smt/src/rmts/rmtsclib.cpp
 /env
 /venv
 /pip-wheel-metadata
+**/.ipynb_checkpoints
