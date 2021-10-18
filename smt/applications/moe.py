@@ -634,7 +634,7 @@ class MOE(SurrogateBasedApplication):
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]
-            mvn = multivariate_normal(meansk, covk)
+            mvn = multivariate_normal(meansk, covk, allow_singular=True)
             distribs.append(mvn)
         return distribs
 
