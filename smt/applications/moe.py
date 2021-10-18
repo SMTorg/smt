@@ -553,7 +553,7 @@ class MOE(SurrogateBasedApplication):
             sm.train()
 
             expected = test_values[:, dim]
-            actual = sm.predict_values(test_values[:, 0:dim])
+            actual = sm.predict_values(test_values[:, 0:dim]).reshape(-1)
             l_two = np.linalg.norm(expected - actual, 2)
             # l_two_rel = l_two / np.linalg.norm(expected, 2)
             # mse = (l_two**2) / len(expected)
