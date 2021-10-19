@@ -553,7 +553,7 @@ class MOE(SurrogateBasedApplication):
             sm.train()
 
             expected = test_values[:, dim]
-            actual = sm.predict_values(test_values[:, 0:dim])
+            actual = sm.predict_values(test_values[:, 0:dim]).reshape(-1)
             l_two = np.linalg.norm(expected - actual, 2)
             # l_two_rel = l_two / np.linalg.norm(expected, 2)
             # mse = (l_two**2) / len(expected)
@@ -634,7 +634,7 @@ class MOE(SurrogateBasedApplication):
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]
-            mvn = multivariate_normal(meansk, covk)
+            mvn = multivariate_normal(meansk, covk, allow_singular=True)
             distribs.append(mvn)
         return distribs
 
