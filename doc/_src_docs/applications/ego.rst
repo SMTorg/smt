@@ -273,7 +273,19 @@ Usage
   
 ::
 
+  1.052132722586334
+  1.0919447438475844
+  0.6061855746849575
+  0.7273731249538761
+  2.6304473982393293
+  7.69717761422107
   Minimum in x=18.9 with f(x)=-15.1
+  1.052132722586334
+  1.0919447438475844
+  0.6061855746849575
+  0.7273731242433592
+  2.6304473982393293
+  7.69717761422107
   
 .. figure:: ego_TestEGO_run_ego_example.png
   :scale: 80 %
@@ -425,7 +437,25 @@ Usage with parallel options
   
 ::
 
+  1.052132722586334
+  1.6787259521499427
+  1.0601210996649075
+  3.1093707649001145
+  2.8419424424764017
+  5.3449774225833835
+  14.444412048326077
+  19.138763483951696
+  24.796284315881028
   Minimum in x=19.0 with f(x)=-15.1
+  1.052132722586334
+  1.6787259521499427
+  1.0601210996649075
+  3.1093707649001145
+  2.8419424424764017
+  5.344977562898791
+  14.444412048326077
+  19.13876389039654
+  24.79693232893584
   
 .. figure:: ego_TestEGO_run_ego_parallel_example.png
   :scale: 80 %
@@ -522,11 +552,31 @@ Usage with mixed variable
   
 ::
 
+  1.7171327573567874
+  5.17913617118403
+  2.3377272641873126
+  3.7719547871155403
+  5.970313119124848
+  7.913338531586103
+  10.501012346037392
   Warning: multiple x input features have the same value (at least same row twice).
+  23.667170925998867
   Warning: multiple x input features have the same value (at least same row twice).
+  36.85698002499019
   Warning: multiple x input features have the same value (at least same row twice).
-  Minimum in x=[-4.8656107  2.         0.         0.       ] with f(x)=-14.6
-  Minimum in typed x=[-4.865610698593395, 'blue', 'square', 0]
+  49.92759075130636
+  Warning: multiple x input features have the same value (at least same row twice).
+  51.45439480815928
+  Warning: multiple x input features have the same value (at least same row twice).
+  53.03524903226676
+  Warning: multiple x input features have the same value (at least same row twice).
+  55.42698307830959
+  Warning: multiple x input features have the same value (at least same row twice).
+  57.84149935073869
+  Warning: multiple x input features have the same value (at least same row twice).
+  71.27594591461593
+  Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
+  Minimum in typed x=[-5.0, 'blue', 'circle', 1]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -582,7 +632,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x2b2d4f37f280>
+     -  <smt.applications.ego.Evaluator object at 0x2b679996c220>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,13 +666,13 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
-  *  -  matrix
+  *  -  categorical_kernel
      -  None
-     -  ['Gower']
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
      -  ['str']
-     -  The matrix kernel to use if use_matrix_kernel is True.
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x2b2d4f37f0d0>
+     -  <smt.surrogate_models.krg.KRG object at 0x2b679a1303d0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
      -  SMT kriging-based surrogate model used internaly

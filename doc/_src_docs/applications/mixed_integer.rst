@@ -50,27 +50,24 @@ Example of mixed-integer Gower Distance model
   import matplotlib.pyplot as plt
   import numpy as np
   
-  xt = np.array([1.0, 3.0, 5.0])
-  x_train = np.array(["%.2f" % i for i in xt], dtype=object)
+  xt = np.array([0, 2, 4])
   yt = np.array([0.0, 1.0, 1.5])
   
   xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
   
   # Surrogate
   sm = MixedIntegerSurrogateModel(
-      matrix=GOWER,
+      categorical_kernel=GOWER,
       xtypes=[(ENUM, 5)],
       xlimits=xlimits,
       surrogate=KRG(theta0=[1e-2]),
   )
-  sm.set_training_values(x_train, yt)
+  sm.set_training_values(xt, yt)
   sm.train()
   
   # DOE for validation
-  num = 6
-  x = np.linspace(0, 5, num)
-  x_pred = np.array(["%.2f" % i for i in x], dtype=object)
-  y = sm.predict_values(x_pred)
+  x = np.linspace(0, 4, 5)
+  y = sm.predict_values(x)
   
   plt.plot(xt, yt, "o", label="data")
   plt.plot(x, y, "d", color="red", markersize=3, label="pred")
@@ -85,12 +82,12 @@ Example of mixed-integer Gower Distance model
      
    Evaluation
      
-        # eval points. : 6
+        # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007067
+     Predicting - done. Time (sec):  0.0003836
      
-     Prediction time/pt. (sec) :  0.0001178
+     Prediction time/pt. (sec) :  0.0000767
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
@@ -191,7 +188,7 @@ Example of mixed-integer Polynomial (QP) surrogate
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000358
+     Predicting - done. Time (sec):  0.0000389
      
      Prediction time/pt. (sec) :  0.0000004
      
@@ -283,9 +280,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006166
+     Predicting - done. Time (sec):  0.0006735
      
-     Prediction time/pt. (sec) :  0.0000123
+     Prediction time/pt. (sec) :  0.0000135
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png

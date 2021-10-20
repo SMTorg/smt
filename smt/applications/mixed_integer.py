@@ -9,11 +9,13 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
-from smt.surrogate_models.krg_based import GOWER
+from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
+
 FLOAT = "float_type"
 INT = "int_type"
 ORD = "ord_type"
 ENUM = "enum_type"
+
 
 def check_xspec_consistency(xtypes, xlimits):
     if len(xlimits) != len(xtypes):
@@ -89,7 +91,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
+def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=None):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -121,7 +123,12 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
                 xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
-                xlims.extend(xtyp[1] * [[0, 1]])
+                if categorical_kernel is None:
+                    xlims.extend(xtyp[1] * [[0, 1]])
+                else:
+                    listint = list(map(float, [0, len(xlimits[i])]))
+                    listint = [listint[0], listint[-1]]
+                    xlims.append(listint)
             else:
                 raise ValueError(
                     "Bad xlimits for categorical var[{}] "
@@ -131,11 +138,10 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits):
                 )
         else:
             _raise_value_error(xtyp)
-    # avoid possible weird typing of initial xlimits ndarray
     return np.array(xlims).astype(float)
 
 
-def cast_to_discrete_values(xtypes, xlimits, x):
+def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
@@ -153,19 +159,23 @@ def cast_to_discrete_values(xtypes, xlimits, x):
                 ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-            # Categorial : The biggest level is selected.
-            xenum = ret[:, x_col : x_col + xtyp[1]]
-            maxx = np.max(xenum, axis=1).reshape((-1, 1))
-            mask = xenum < maxx
-            xenum[mask] = 0
-            xenum[~mask] = 1
-            x_col = x_col + xtyp[1]
+            if categorical_kernel is None:
+                # Categorial : The biggest level is selected.
+                xenum = ret[:, x_col : x_col + xtyp[1]]
+                maxx = np.max(xenum, axis=1).reshape((-1, 1))
+                mask = xenum < maxx
+                xenum[mask] = 0
+                xenum[~mask] = 1
+                x_col = x_col + xtyp[1]
+            else:
+                ret[:, x_col] = np.round(ret[:, x_col])
+                x_col += 1
         else:
             _raise_value_error(xtyp)
     return ret
 
 
-def fold_with_enum_index(xtypes, x):
+def fold_with_enum_index(xtypes, x, categorical_kernel=None):
     """
     see MixedIntegerContext.fold_with_enum_index
     """
@@ -269,7 +279,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xtypes, self._xlimits, doe)
+        unfold_xdoe = cast_to_discrete_values(self._xtypes, self._xlimits, None, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
@@ -322,11 +332,16 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
-        if not (self._categorical_kernel is None):
+        if self._categorical_kernel is not None:
             if self._surrogate.name not in ["Kriging"]:
                 raise ValueError("matrix kernel not implemented for this model")
-            if self._surrogate.options["corr"] in ["matern32", "matern52"]:
-                raise ValueError("matrix kernel not compatible with matern kernel")
+            if self._xtypes is None:
+                raise ValueError("xtypes mandatory for categorical kernel")
+            self._input_in_folded_space = False
+
+        if self._surrogate.name in ["Kriging"] and self._categorical_kernel is not None:
+            self._surrogate.options["categorical_kernel"] = self._categorical_kernel
+            self._surrogate.options["xtypes"] = self._xtypes
 
     @property
     def name(self):
@@ -336,18 +351,17 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):
+
         xt = ensure_2d_array(xt, "xt")
-        if self._categorical_kernel == GOWER:
-            super().set_training_values(xt, yt)
-            self._surrogate.options["categorical_kernel"] = self._categorical_kernel
-            self._surrogate.set_training_values(xt, yt, name)
+        if self._input_in_folded_space:
+            xt2 = unfold_with_enum_mask(self._xtypes, xt)
         else:
-            if self._input_in_folded_space:
-                xt2 = unfold_with_enum_mask(self._xtypes, xt)
-            else:
-                xt2 = xt
-            super().set_training_values(xt2, yt)
-            self._surrogate.set_training_values(xt2, yt, name)
+            xt2 = xt
+        xt2 = cast_to_discrete_values(
+            self._xtypes, self._xlimits, self._categorical_kernel, xt2
+        )
+        super().set_training_values(xt2, yt)
+        self._surrogate.set_training_values(xt2, yt, name)
 
     def update_training_values(self, yt, name=None):
         super().update_training_values(yt, name)
@@ -358,28 +372,27 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def predict_values(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._categorical_kernel == GOWER:
-            return self._surrogate.predict_values(x)
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xtypes, xp)
         else:
-            if self._input_in_folded_space:
-                x2 = unfold_with_enum_mask(self._xtypes, xp)
-            else:
-                x2 = xp
-            castx = cast_to_discrete_values(self._xtypes, self._xlimits, x2)
-            return self._surrogate.predict_values(castx)
+            x2 = xp
+        return self._surrogate.predict_values(
+            cast_to_discrete_values(
+                self._xtypes, self._xlimits, self._categorical_kernel, x2
+            )
+        )
 
     def predict_variances(self, x):
         xp = ensure_2d_array(x, "xp")
-        if self._categorical_kernel == GOWER:
-            return self._surrogate.predict_variances(x)
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xtypes, xp)
         else:
-            if self._input_in_folded_space:
-                x2 = unfold_with_enum_mask(self._xtypes, xp)
-            else:
-                x2 = xp
-            return self._surrogate.predict_variances(
-                cast_to_discrete_values(self._xtypes, self._xlimits, x2)
+            x2 = xp
+        return self._surrogate.predict_variances(
+            cast_to_discrete_values(
+                self._xtypes, self._xlimits, self._categorical_kernel, x2
             )
+        )
 
     def _predict_values(self, x):
         pass
@@ -413,11 +426,11 @@ class MixedIntegerContext(object):
         check_xspec_consistency(xtypes, xlimits)
         self._xtypes = xtypes
         self._xlimits = xlimits
+        self._categorical_kernel = categorical_kernel
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xtypes, xlimits
+            self._xtypes, xlimits, categorical_kernel
         )
         self._work_in_folded_space = work_in_folded_space
-        self._categorical_kernel = categorical_kernel
 
     def build_sampling_method(self, sampling_method_class, **kwargs):
         """
@@ -433,9 +446,9 @@ class MixedIntegerContext(object):
         Build MixedIntegerSurrogateModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
-            self._xtypes,
-            self._xlimits,
-            surrogate,
+            xtypes=self._xtypes,
+            xlimits=self._xlimits,
+            surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
         )
@@ -473,7 +486,9 @@ class MixedIntegerContext(object):
         np.ndarray
             feasible evaluation point value in categorical space.
         """
-        return cast_to_discrete_values(self._xtypes, self._xlimits, x)
+        return cast_to_discrete_values(
+            self._xtypes, self._xlimits, self._categorical_kernel, x
+        )
 
     def fold_with_enum_index(self, x):
         """
