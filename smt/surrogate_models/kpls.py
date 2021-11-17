@@ -130,7 +130,7 @@ class KPLS(KrgBased):
         super(KPLS, self)._initialize()
         self.options["corr"] = corr
         self.options["n_comp"] = ncomp
-        print("\n The new number of PLS component is", ncomp, ".\n")
+        print("\n The new number of PLS component is", ncomp)
 
     def _train(self):
         """
