@@ -36,7 +36,7 @@ class Test(SMTestCase):
         problems["tanh"] = TensorProduct(ndim=ndim, func="tanh")
         problems["cos"] = TensorProduct(ndim=ndim, func="cos")
         sms = OrderedDict()
-        sms["KPLS"] = KPLS(eval_n_comp=True)
+        sms["KPLS"] = KPLS(eval_n_comp=True, eval_comp_treshold=1.0)
 
         t_errors = {}
         e_errors = {}
