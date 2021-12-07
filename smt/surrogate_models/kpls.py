@@ -107,8 +107,6 @@ class KPLS(KrgBased):
                     break
                 ye = self._predict_values(Xtest)
                 press_m1 = press_m1 + np.sum(np.power((1 / len(X)) * (ye - ytest), 2))
-
-            print("ratio is", press_m1 / press_m)
             if self.options["n_comp"] > 1 and press_m1 / press_m > eval_comp_treshold:
                 self.options["n_comp"] -= 1
                 nextcomp = False
