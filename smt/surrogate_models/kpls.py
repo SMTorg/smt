@@ -87,7 +87,6 @@ class KPLS(KrgBased):
             self.options["n_comp"] += 1
             press_m = press_m1
             press_m1 = 0
-            self.options["theta0"] = [0.1]
             for fold in range(k_fold):
                 self.nt = len(X) - nbk
                 todel = np.arange(fold * nbk, (fold + 1) * nbk)
@@ -117,7 +116,6 @@ class KPLS(KrgBased):
         self.training_points[None][0][0] = X
         self.training_points[None][0][1] = y
         self.nt = len(X)
-        self.options["theta0"] = [0.1]
 
     def _train(self):
         """
