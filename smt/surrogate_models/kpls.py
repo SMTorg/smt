@@ -73,7 +73,6 @@ class KPLS(KrgBased):
         """
         self.options[n_comp] value from user is ignored and replaced by an estimated one wrt Wold's R criterion.
         """
-        corr = self.options["corr"]
         eval_comp_treshold = self.options["eval_comp_treshold"]
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -111,7 +110,6 @@ class KPLS(KrgBased):
             if self.options["n_comp"] > 1 and press_m1 / press_m > eval_comp_treshold:
                 self.options["n_comp"] -= 1
                 nextcomp = False
-        ncomp = self.options["n_comp"]
         self.training_points[None][0][0] = X
         self.training_points[None][0][1] = y
         self.nt = len(X)
