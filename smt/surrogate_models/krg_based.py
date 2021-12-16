@@ -386,7 +386,8 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
-
+        if reduced_likelihood_function_value > 1e15:
+            reduced_likelihood_function_value = 1e15
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
