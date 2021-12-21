@@ -86,6 +86,7 @@ class KPLS(KrgBased):
             self.options["n_comp"] += 1
             press_m = press_m1
             press_m1 = 0
+            self.options["theta0"] = [0.1]
             for fold in range(k_fold):
                 self.nt = len(X) - nbk
                 todel = np.arange(fold * nbk, (fold + 1) * nbk)
@@ -98,35 +99,21 @@ class KPLS(KrgBased):
 
                 self.training_points[None][0][0] = Xfold
                 self.training_points[None][0][1] = yfold
-                # We are doing hyperparameters hot_start for the k-fold
-                # as the problem is the same and the data are mainly similar
-                if fold == 0:
-                    super(KPLS, self)._initialize()
-                else:
-                    super(KPLS, self)._initialize()
-                    self.options["theta0"] = theta_opt
-
                 try:
                     self._new_train()
                 except ValueError:
                     self.options["n_comp"] -= 1
                     nextcomp = False
                     break
-
                 ye = self._predict_values(Xtest)
                 press_m1 = press_m1 + np.sum(np.power((1 / len(X)) * (ye - ytest), 2))
-
-                theta_opt = self.options["theta0"]
-                theta_opt = self.optimal_theta
-
             if self.options["n_comp"] > 1 and press_m1 / press_m > eval_comp_treshold:
                 self.options["n_comp"] -= 1
                 nextcomp = False
-
         self.training_points[None][0][0] = X
         self.training_points[None][0][1] = y
         self.nt = len(X)
-        super(KPLS, self)._initialize()
+        self.options["theta0"] = [0.1]
 
     def _train(self):
         """
