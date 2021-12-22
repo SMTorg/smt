@@ -22,7 +22,7 @@ from smt.applications.mixed_integer import (
 )
 from smt.utils.misc import compute_rms_error
 
-from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS
 from smt.sampling_methods import LHS
 
 
@@ -119,7 +119,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, MGP),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
             desc="SMT kriging-based surrogate model used internaly",
         )
         declare(
@@ -180,7 +180,9 @@ class EGO(SurrogateBasedApplication):
                 y_et_k = self._get_virtual_point(np.atleast_2d(x_et_k), y_data)
 
                 # Update y_data with predicted value
-                y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
+                y_data = np.atleast_2d(
+                    np.vstack((y_data.reshape(y_data.shape[0], self.gpr.ny), y_et_k))
+                )
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
 
             # Compute the real values of y_data
@@ -191,7 +193,7 @@ class EGO(SurrogateBasedApplication):
             y_data[-n_parallel:] = y
 
         # Find the optimal point
-        ind_best = np.argmin(y_data)
+        ind_best = np.argmin(y_data if y_data.ndim == 1 else y_data[:, 0])
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
@@ -335,6 +337,13 @@ class EGO(SurrogateBasedApplication):
 
         """
         self.gpr.set_training_values(x_data, y_data)
+        if self.gpr.supports["training_derivatives"]:
+            for kx in range(self.gpr.nx):
+                self.gpr.set_training_derivatives(
+                    x_data,
+                    y_data[:, 1 + kx].reshape((y_data.shape[0], 1)),
+                    kx
+                )
         self.gpr.train()
 
         criterion = self.options["criterion"]
@@ -364,7 +373,7 @@ class EGO(SurrogateBasedApplication):
                 try:
                     opt_all.append(
                         minimize(
-                            lambda x: float(self.obj_k(x)),
+                            lambda x: float(np.array(self.obj_k(x)).flat[0]),
                             x_start[ii, :],
                             method="SLSQP",
                             bounds=bounds,

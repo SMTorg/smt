@@ -1048,7 +1048,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     X: np.ndarray [n_obs,dim]
             - - The input variables.
 
-    y: np.ndarray [n_obs,1]
+    y: np.ndarray [n_obs,ny]
             - The output variable
 
     n_comp: int
@@ -1081,7 +1081,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     """
     nt, dim = X.shape
     XX = np.empty(shape=(0, dim))
-    yy = np.empty(shape=(0, 1))
+    yy = np.empty(shape=(0, y.shape[1]))
     _pls = pls(n_comp)
 
     coeff_pls = np.zeros((nt, dim, n_comp))
@@ -1168,9 +1168,9 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
             for ii in max_coeff:
                 XX = np.vstack((XX, X[i, :]))
                 XX[-1, ii] += delta_x * (xlimits[ii, 1] - xlimits[ii, 0])
-                yy = np.vstack((yy, y[i, 0]))
-                yy[-1, 0] += (
-                    pts[None][1 + ii][1][i, 0]
+                yy = np.vstack((yy, y[i]))
+                yy[-1] += (
+                    pts[None][1 + ii][1][i]
                     * delta_x
                     * (xlimits[ii, 1] - xlimits[ii, 0])
                 )
