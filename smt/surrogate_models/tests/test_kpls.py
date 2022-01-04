@@ -46,9 +46,11 @@ class TestKPLS(unittest.TestCase):
 
         kpls = KPLS()
         kpls.set_training_values(x, y)
-
+        kpls.train()
+        x_test = np.asarray([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
+        y_test = kpls.predict_values(x_test)
         # KPLS training fails anyway but not due to PLS exception StopIteration
-        self.assertRaises(ValueError, kpls.train)
+        self.assertEqual(np.linalg.norm(y_test - np.asarray([[0, 0, 0]])), 0)
 
 
 if __name__ == "__main__":
