@@ -500,8 +500,8 @@ class TestEGO(SMTestCase):
         )
         x_opt, _, _, _, _ = ego.optimize(fun=fun)
 
-        self.assertAlmostEqual(1.0, float(x_opt[0]), delta=0.01)
-        self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=0.01)
+        self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=0.01)
+        self.assertAlmostEqual(1.0, float(x_opt[1]), delta=0.01)
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
