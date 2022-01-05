@@ -742,7 +742,7 @@ class MFK(KrgBased):
                                 % (i, len(self.options["noise0"][i]), self.nt_all[i])
                             )
             else:
-                if len(self.options["noise0"][i]) != 1:
+                if np.size(self.options["noise0"][i]) != 1: 
                     raise ValueError(
                         "for the level of fidelity %s, the length of noise0 (%s) should be equal to one."
                         % (i, len(self.options["noise0"][i]))
