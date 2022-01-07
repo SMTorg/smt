@@ -73,7 +73,7 @@ class Test(SMTestCase):
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
         sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
-        sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * ncomp, n_comp=ncomp, delta_x=1e-1)
+        sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = genn()
         if compiled_available:
             sms["IDW"] = IDW()

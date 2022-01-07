@@ -486,12 +486,13 @@ class TestEGO(SMTestCase):
         ydoe = fun(xdoe)
 
         # Build the GEKPLS surrogate model
+        n_comp = 2
         sm = GEKPLS(
-            theta0=[1e-2],
+            theta0=[1e-2] * n_comp,
             xlimits=fun.xlimits,
             extra_points=1,
             print_prediction=False,
-            n_comp=2,
+            n_comp=n_comp,
         )
 
         # Build the EGO optimizer and optimize
