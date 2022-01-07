@@ -468,11 +468,14 @@ class TestEGO(SMTestCase):
         from smt.problems import TensorProduct
 
         class TensorProductIndirect(TensorProduct):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.super = super()
+
             def _evaluate(self, x, kx):
                 assert kx is None
-                _self = super(TensorProductIndirect, self)
-                response = _self._evaluate(x, kx)
-                sens = np.hstack(_self._evaluate(x, ki) for ki in range(x.shape[1]))
+                response = self.super._evaluate(x, kx)
+                sens = np.hstack(self.super._evaluate(x, ki) for ki in range(x.shape[1]))
                 return np.hstack((response, sens))
 
         fun = TensorProductIndirect(ndim=2, func="tanh")
