@@ -180,9 +180,8 @@ class EGO(SurrogateBasedApplication):
                 y_et_k = self._get_virtual_point(np.atleast_2d(x_et_k), y_data)
 
                 # Update y_data with predicted value
-                y_data = np.atleast_2d(
-                    np.vstack((y_data.reshape(y_data.shape[0], self.gpr.ny), y_et_k))
-                )
+                y_data = y_data.reshape(y_data.shape[0], self.gpr.ny)
+                y_data = np.vstack((y_data, y_et_k))
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
 
             # Compute the real values of y_data
