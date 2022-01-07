@@ -478,33 +478,37 @@ class TestEGO(SMTestCase):
                 sens = np.hstack(self.super._evaluate(x, ki) for ki in range(x.shape[1]))
                 return np.hstack((response, sens))
 
-        fun = TensorProductIndirect(ndim=2, func="tanh")
+        fun = TensorProductIndirect(ndim=2, func="exp")
 
         # Construction of the DOE
         sampling = LHS(xlimits=fun.xlimits, criterion="m")
         xdoe = sampling(20)
         ydoe = fun(xdoe)
 
-        # Build the GEKPLS model
+        # Build the GEKPLS surrogate model
         sm = GEKPLS(
-            theta0=[1e-2], xlimits=fun.xlimits, extra_points=1, print_prediction=False
+            theta0=[1e-2],
+            xlimits=fun.xlimits,
+            extra_points=1,
+            print_prediction=False,
+            n_comp=2,
         )
 
+        # Build the EGO optimizer and optimize
         ego = EGO(
             xdoe=xdoe,
             ydoe=ydoe,
-            n_iter=10,
+            n_iter=5,
             criterion="LCB",
             xlimits=fun.xlimits,
             surrogate=sm,
             n_start=30,
             enable_tunneling=False,
-            random_state=42,
         )
         x_opt, _, _, _, _ = ego.optimize(fun=fun)
 
-        self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=0.01)
-        self.assertAlmostEqual(1.0, float(x_opt[1]), delta=0.01)
+        self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=1e-4)
+        self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
