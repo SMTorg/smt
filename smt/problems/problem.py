@@ -12,7 +12,7 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import ensure_2d_array
 
 
-class Problem(object):
+class Problem:
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.

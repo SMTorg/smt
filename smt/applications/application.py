@@ -15,7 +15,7 @@ except:
     compiled_available = False
 
 
-class SurrogateBasedApplication(object):
+class SurrogateBasedApplication:
 
     if compiled_available:
         _surrogate_type = {
