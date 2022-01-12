@@ -12,7 +12,7 @@ class KPLSK(KPLS):
     name = "KPLSK"
 
     def _initialize(self):
-        super(KPLSK, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         # KPLSK used only with "squar_exp" correlations
         declare(
@@ -22,7 +22,6 @@ class KPLSK(KPLS):
             desc="Correlation function type",
             types=(str),
         )
-        self.name = "KPLSK"
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         if opt == 0:

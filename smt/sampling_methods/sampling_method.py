@@ -11,7 +11,7 @@ import numpy as np
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-class SamplingMethod(object, metaclass=ABCMeta):
+class SamplingMethod(metaclass=ABCMeta):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.

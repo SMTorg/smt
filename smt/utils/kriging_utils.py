@@ -6,12 +6,8 @@ This package is distributed under New BSD license.
 
 import numpy as np
 from packaging import version
-from sklearn import __version__ as sklversion
 
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
@@ -338,7 +334,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
 
     n_samples, n_features = X_num.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
     D_num = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
     if y is None:
@@ -377,7 +373,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         D[:, np.logical_not(cat_features)] = D_num
         D[:, cat_features] = D_cat
 
-        return D, ij.astype(np.int), X_cont
+        return D, ij.astype(np.int32), X_cont
     else:
         D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
         D = D.reshape((-1, X.shape[1]))

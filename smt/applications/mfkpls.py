@@ -12,12 +12,8 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 import numpy as np
 
 from packaging import version
-from sklearn import __version__ as sklversion
 
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.applications import MFK
@@ -30,7 +26,7 @@ class MFKPLS(MFK):
     """
 
     def _initialize(self):
-        super(MFKPLS, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         # Like KPLS, MFKPLS used only with "abs_exp" and "squar_exp" correlations
         declare(
