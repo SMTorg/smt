@@ -475,13 +475,15 @@ class TestEGO(SMTestCase):
             def _evaluate(self, x, kx):
                 assert kx is None
                 response = self.super._evaluate(x, kx)
-                sens = np.hstack(self.super._evaluate(x, ki) for ki in range(x.shape[1]))
+                sens = np.hstack(
+                    self.super._evaluate(x, ki) for ki in range(x.shape[1])
+                )
                 return np.hstack((response, sens))
 
         fun = TensorProductIndirect(ndim=2, func="exp")
 
         # Construction of the DOE
-        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        sampling = LHS(xlimits=fun.xlimits, criterion="m", random_state=42)
         xdoe = sampling(20)
         ydoe = fun(xdoe)
 
@@ -505,6 +507,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             n_start=30,
             enable_tunneling=False,
+            random_state=42,
         )
         x_opt, _, _, _, _ = ego.optimize(fun=fun)
 
