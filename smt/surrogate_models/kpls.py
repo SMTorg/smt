@@ -46,7 +46,6 @@ class KPLS(KrgBased):
             types=(float),
             desc="n_comp evaluation treshold for Wold's R criterion",
         )
-        self.name = "KPLS"
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])

@@ -22,7 +22,6 @@ class KPLSK(KPLS):
             desc="Correlation function type",
             types=(str),
         )
-        self.name = "KPLSK"
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         if opt == 0:
