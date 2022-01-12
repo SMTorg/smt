@@ -107,7 +107,7 @@ class NestedLHS(object):
 
 class MFK(KrgBased):
     def _initialize(self):
-        super(MFK, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         declare(
             "rho_regr",

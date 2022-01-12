@@ -12,7 +12,7 @@ class KPLSK(KPLS):
     name = "KPLSK"
 
     def _initialize(self):
-        super(KPLSK, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         # KPLSK used only with "squar_exp" correlations
         declare(

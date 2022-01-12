@@ -26,7 +26,7 @@ class MFKPLS(MFK):
     """
 
     def _initialize(self):
-        super(MFKPLS, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         # Like KPLS, MFKPLS used only with "abs_exp" and "squar_exp" correlations
         declare(

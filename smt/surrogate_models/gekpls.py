@@ -37,6 +37,12 @@ class GEKPLS(KPLS):
         )
         self.supports["training_derivatives"] = True
 
+    def _check_param(self):
+        super()._check_param()
+
+        if self.options["n_comp"] < 2:
+            raise ValueError("GEKPLS need at least 2 components")
+
     def _compute_pls(self, X, y):
         if 0 in self.training_points[None]:
             self.coeff_pls, XX, yy = ge_compute_pls(

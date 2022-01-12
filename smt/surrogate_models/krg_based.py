@@ -1252,30 +1252,10 @@ class KrgBased(SurrogateModel):
 
     def _check_param(self):
         """
-        This function checks some parameters of the model.
+        This function checks some parameters of the model
+        and amend theta0 if possible (see _amend_theta0_option).
         """
-
-        # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
-            d = self.options["n_comp"]
-        else:
-            d = self.nx
-        if self.name in ["GEKPLS"] and self.options["n_comp"] < 2:
-            raise ValueError("GEKPLS need at least 2 components")
-
-        if self.options["corr"] == "act_exp":
-            raise ValueError("act_exp correlation function must be used with MGP")
-
-        if self.name in ["KPLS", "GEKPLS"]:
-            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential or an absolute exponential kernel"
-                )
-        elif self.name in ["KPLSK"]:
-            if self.options["corr"] not in ["squar_exp"]:
-                raise ValueError(
-                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
-                )
+        d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
@@ -1326,9 +1306,7 @@ class KrgBased(SurrogateModel):
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
-                raise Exception(
-                    "Derivative values are needed for using the GEKPLS model."
-                )
+                raise Exception("Derivative values are needed for using the GEK model.")
 
     def _check_F(self, n_samples_F, p):
         """
