@@ -568,7 +568,7 @@ class KrgBased(SurrogateModel):
         Rinv_dmudomega_all = []
 
         n_val_hess = nb_theta * (nb_theta + 1) // 2
-        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
+        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int32)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
         if self.name in ["MGP"]:
