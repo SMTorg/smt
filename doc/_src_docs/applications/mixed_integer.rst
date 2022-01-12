@@ -85,9 +85,9 @@ Example of mixed-integer Gower Distance model
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003836
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000767
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
@@ -188,9 +188,9 @@ Example of mixed-integer Polynomial (QP) surrogate
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000389
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000004
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
@@ -280,9 +280,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0006735
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000135
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png

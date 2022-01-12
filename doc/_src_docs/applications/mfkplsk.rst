@@ -51,7 +51,7 @@ Usage
   
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
-  xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
+  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
   xt_c, xt_e = xdoes(7)
   
   # Evaluate the HF and LF functions
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1989996
+     Training - done. Time (sec):  0.1054325
   ___________________________________________________________________________
      
    Evaluation
@@ -116,9 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005002
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005000
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000050
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
@@ -184,6 +184,16 @@ Options
      -  ['squar_exp']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -239,6 +249,11 @@ Options
      -  [True, False]
      -  ['bool']
      -  If True, the variance at HF samples is forced to zero
+  *  -  propagate_uncertainty
+     -  True
+     -  [True, False]
+     -  ['bool']
+     -  If True, the variance cotribution of lower fidelity levels are considered
   *  -  n_comp
      -  1
      -  None

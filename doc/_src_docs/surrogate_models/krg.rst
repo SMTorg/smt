@@ -131,8 +131,7 @@ Example 1
    Training
      
      Training ...
-  0.5781740659950538
-     Training - done. Time (sec):  0.1038468
+     Training - done. Time (sec):  0.0247462
   ___________________________________________________________________________
      
    Evaluation
@@ -140,9 +139,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002553
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000026
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -151,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001929
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000386
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg.png
@@ -212,7 +211,6 @@ Example 2 with mixed variables
   
 ::
 
-  0.5702116444263171
   ___________________________________________________________________________
      
    Evaluation
@@ -220,9 +218,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002575
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -274,7 +272,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
   *  -  categorical_kernel
