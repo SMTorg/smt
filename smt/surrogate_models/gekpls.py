@@ -41,7 +41,9 @@ class GEKPLS(KPLS):
         super()._check_param()
 
         if self.options["n_comp"] < 2:
-            raise ValueError("GEKPLS need at least 2 components")
+            raise ValueError(
+                f"GEKPLS needs at least 2 components, got {self.options['n_comp']}"
+            )
 
     def _compute_pls(self, X, y):
         if 0 in self.training_points[None]:
