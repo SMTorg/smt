@@ -6,12 +6,8 @@ This package is distributed under New BSD license.
 
 import numpy as np
 from packaging import version
-from sklearn import __version__ as sklversion
 
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays

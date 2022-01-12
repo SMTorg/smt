@@ -16,12 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from packaging import version
-from sklearn import __version__ as sklversion
-
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
@@ -742,7 +737,7 @@ class MFK(KrgBased):
                                 % (i, len(self.options["noise0"][i]), self.nt_all[i])
                             )
             else:
-                if np.size(self.options["noise0"][i]) != 1: 
+                if np.size(self.options["noise0"][i]) != 1:
                     raise ValueError(
                         "for the level of fidelity %s, the length of noise0 (%s) should be equal to one."
                         % (i, len(self.options["noise0"][i]))
