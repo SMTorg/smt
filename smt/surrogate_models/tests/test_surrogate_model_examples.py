@@ -411,8 +411,13 @@ class Test(unittest.TestCase):
             yt = np.concatenate((yt, yd), axis=1)
 
         # Build the GEKPLS model
+        n_comp = 2
         sm = GEKPLS(
-            theta0=[1e-2], xlimits=fun.xlimits, extra_points=1, print_prediction=False
+            theta0=[1e-2] * n_comp,
+            xlimits=fun.xlimits,
+            extra_points=1,
+            print_prediction=False,
+            n_comp=n_comp,
         )
         sm.set_training_values(xt, yt[:, 0])
         for i in range(2):

@@ -23,7 +23,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG, QP
+from smt.surrogate_models import KRG, QP, GEKPLS
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
@@ -463,6 +463,53 @@ class TestEGO(SMTestCase):
         _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
         self.assertAlmostEqual(6.5, float(x), delta=1)
+
+    def test_ego_gek(self):
+        from smt.problems import TensorProduct
+
+        class TensorProductIndirect(TensorProduct):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.super = super()
+
+            def _evaluate(self, x, kx):
+                assert kx is None
+                response = self.super._evaluate(x, kx)
+                sens = np.hstack(self.super._evaluate(x, ki) for ki in range(x.shape[1]))
+                return np.hstack((response, sens))
+
+        fun = TensorProductIndirect(ndim=2, func="exp")
+
+        # Construction of the DOE
+        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        xdoe = sampling(20)
+        ydoe = fun(xdoe)
+
+        # Build the GEKPLS surrogate model
+        n_comp = 2
+        sm = GEKPLS(
+            theta0=[1e-2] * n_comp,
+            xlimits=fun.xlimits,
+            extra_points=1,
+            print_prediction=False,
+            n_comp=n_comp,
+        )
+
+        # Build the EGO optimizer and optimize
+        ego = EGO(
+            xdoe=xdoe,
+            ydoe=ydoe,
+            n_iter=5,
+            criterion="LCB",
+            xlimits=fun.xlimits,
+            surrogate=sm,
+            n_start=30,
+            enable_tunneling=False,
+        )
+        x_opt, _, _, _, _ = ego.optimize(fun=fun)
+
+        self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=1e-4)
+        self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
