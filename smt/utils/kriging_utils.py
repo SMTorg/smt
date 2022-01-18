@@ -184,7 +184,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel):
+def compute_n_param(xtypes, cat_kernel,d_cont,nx):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -193,22 +193,26 @@ def compute_n_param(xtypes, cat_kernel):
             -the types (FLOAT,ORD,ENUM) of the input variables
     cat_kernel : string
             -The kernel to use for categorical inputs. Only for non continuous Kriging",
+    d_cont: int
+            -The number of variables or the value of continuous pls dim,
+    nx: int
+            -The number of variables,
+
     Returns
     -------
      n_param: int
             - The number of parameters.
     """
 
-    n_param = 0
+    n_param = d_cont
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
+            if d_cont==nx:
+                n_param-=1
             if cat_kernel == FULL_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-
-        else:
-            n_param += 1
     return n_param
 
 
@@ -434,7 +438,6 @@ def matrix_data_corr(
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
     
-    print("PLS")
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0

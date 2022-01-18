@@ -1261,7 +1261,7 @@ class KrgBased(SurrogateModel):
                     FULL_GAUSSIAN,
                 ]:
             n_param = compute_n_param(
-                self.options["xtypes"], self.options["categorical_kernel"]
+                self.options["xtypes"], self.options["categorical_kernel"],d,self.nx
             )
             self.options["theta0"] *= np.ones(n_param)
     
