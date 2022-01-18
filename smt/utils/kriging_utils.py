@@ -184,7 +184,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel,d_cont,nx):
+def compute_n_param(xtypes, cat_kernel,nx):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -193,8 +193,7 @@ def compute_n_param(xtypes, cat_kernel,d_cont,nx):
             -the types (FLOAT,ORD,ENUM) of the input variables
     cat_kernel : string
             -The kernel to use for categorical inputs. Only for non continuous Kriging",
-    d_cont: int
-            -The number of variables or the value of continuous pls dim,
+   =
     nx: int
             -The number of variables,
 
@@ -204,11 +203,10 @@ def compute_n_param(xtypes, cat_kernel,d_cont,nx):
             - The number of parameters.
     """
 
-    n_param = d_cont
+    n_param = nx
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if d_cont==nx:
-                n_param-=1
+            n_param-=1
             if cat_kernel == FULL_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
@@ -400,8 +398,8 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(
-    corr, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel
+def matrix_data_corr(self,
+    corr,cpls, xtypes, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel, cat_kernel_comps
 ):
     """
     matrix kernel correlation model.
@@ -438,7 +436,7 @@ def matrix_data_corr(
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
     
-    theta_cont_features = np.ones((len(theta), 1), dtype=bool)
+    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
     j = 0
@@ -461,13 +459,29 @@ def matrix_data_corr(
                 ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
-      #  else:
-           # theta_cont_features[j] = True
-            #j += 1
+        else:
+            theta_cont_features[j] = True
+            j += 1
 
     theta_cont = theta[theta_cont_features[:, 0]]
     d_cont = d[:, np.logical_not(cat_features)]
-    r_cont = _correlation_types[corr](theta_cont, d_cont)
+    if cat_kernel_comps is not None :
+        # Sampling points X and y
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
+        X_cont, _= compute_X_cont(
+                    X, xtypes
+                )
+        X, y = self._compute_pls(X_cont.copy(), y.copy())
+        d_cont= componentwise_distance_PLS(
+            d_cont,
+            _correlation_types[corr],
+            cat_kernel_comps[0],
+            cpls,
+            theta=None,
+            return_derivative=False,
+            )
+    r_cont = _correlation_types[corr](theta_cont[0:cat_kernel_comps[0]], d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
     ##Theta_cat_i loop

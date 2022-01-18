@@ -76,6 +76,12 @@ class KrgBased(SurrogateModel):
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
+            "cat_kernel_comps",
+            None,
+            types=list,
+            desc="Number of components for PLS categorical kernel",
+        )
+        declare(
             "xtypes",
             None,
             types=list,
@@ -299,7 +305,10 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[self.D.shape[1] :]
         if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
             r = matrix_data_corr(
+                self,
                 corr=self.options["corr"],
+                cpls=self.coeff_pls,
+                xtypes=self.options["xtypes"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
                 d=self.D,
@@ -307,6 +316,8 @@ class KrgBased(SurrogateModel):
                 nlevels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
+                cat_kernel_comps=self.options["cat_kernel_comps"],
+                
             ).reshape(-1, 1)
         else:
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
@@ -730,6 +741,7 @@ class KrgBased(SurrogateModel):
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    cat_kernel_comps=self.options["cat_kernel_comps"],
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -851,6 +863,7 @@ class KrgBased(SurrogateModel):
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    cat_kernel_comps=self.options["cat_kernel_comps"],
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1072,6 +1085,18 @@ class KrgBased(SurrogateModel):
                 theta0 = np.log10(self.theta0)
             ##from abs distance to kernel distance
             self.D = self._componentwise_distance(D, opt=ii)
+     
+            if self.options["cat_kernel_comps"] is not None:
+                from smt.utils.kriging_utils import componentwise_distance
+     
+                self.D= componentwise_distance(
+                D,
+                self.options["corr"],
+                self.nx,
+                theta=None,
+                return_derivative=False,
+            )
+
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1261,7 +1286,7 @@ class KrgBased(SurrogateModel):
                     FULL_GAUSSIAN,
                 ]:
             n_param = compute_n_param(
-                self.options["xtypes"], self.options["categorical_kernel"],d,self.nx
+                self.options["xtypes"], self.options["categorical_kernel"],self.nx
             )
             self.options["theta0"] *= np.ones(n_param)
     

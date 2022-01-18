@@ -303,6 +303,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         surrogate,
         input_in_folded_space=True,
         categorical_kernel=None,
+        cat_kernel_comps=None,
     ):
         """
         Parameters
@@ -321,7 +322,8 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._categorical_kernel = categorical_kernel
+        self._categorical_kernel = categorical_kernel 
+        self._cat_kernel_comps = cat_kernel_comps
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -341,6 +343,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
         if self._surrogate.name in ["Kriging","KPLS"] and self._categorical_kernel is not None:
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
+            self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
             self._surrogate.options["xtypes"] = self._xtypes
 
     @property
@@ -410,6 +413,7 @@ class MixedIntegerContext(object):
         xlimits,
         work_in_folded_space=True,
         categorical_kernel=None,
+        cat_kernel_comps=None,
     ):
         """
         Parameters
@@ -427,6 +431,7 @@ class MixedIntegerContext(object):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._categorical_kernel = categorical_kernel
+        self._cat_kernel_comps=cat_kernel_comps
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
             self._xtypes, xlimits, categorical_kernel
         )
@@ -451,6 +456,7 @@ class MixedIntegerContext(object):
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
+            cat_kernel_comps=self._cat_kernel_comps,
         )
 
     def get_unfolded_xlimits(self):
