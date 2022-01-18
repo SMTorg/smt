@@ -438,7 +438,7 @@ def matrix_data_corr(
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
     
-    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
+    theta_cont_features = np.ones((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
     j = 0
@@ -461,9 +461,9 @@ def matrix_data_corr(
                 ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
-        else:
-            theta_cont_features[j] = True
-            j += 1
+      #  else:
+           # theta_cont_features[j] = True
+            #j += 1
 
     theta_cont = theta[theta_cont_features[:, 0]]
     d_cont = d[:, np.logical_not(cat_features)]
