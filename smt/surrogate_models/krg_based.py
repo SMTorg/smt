@@ -1256,37 +1256,24 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
-
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                if self.options["categorical_kernel"] in [
+        if self.options["categorical_kernel"] in [
                     HOMO_GAUSSIAN,
                     FULL_GAUSSIAN,
                 ]:
-                    n_param = compute_n_param(
-                        self.options["xtypes"], self.options["categorical_kernel"]
-                    )
-                    self.options["theta0"] *= np.ones(n_param)
-                else:
+            n_param = compute_n_param(
+                self.options["xtypes"], self.options["categorical_kernel"]
+            )
+            self.options["theta0"] *= np.ones(n_param)
+    
+        if len(self.options["theta0"]) != d and self.options["categorical_kernel"] is None:
+            if len(self.options["theta0"]) == 1:               
                     self.options["theta0"] *= np.ones(d)
-
-            else:
-                if not (
-                    self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
-                ):
-                    raise ValueError(
-                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                        % (len(self.options["theta0"]), d)
-                    )
-                else:
-                    n_param = compute_n_param(
-                        self.options["xtypes"], self.options["categorical_kernel"]
-                    )
-                    if len(self.options["theta0"]) != n_param:
-                        raise ValueError(
-                            "the length of theta0 (%s) should be equal to %s."
-                            % (len(self.options["theta0"]), n_param)
-                        )
+            else:          
+                raise ValueError(
+                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                    % (len(self.options["theta0"]), d)
+                )
+                
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:

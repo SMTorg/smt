@@ -433,6 +433,8 @@ def matrix_data_corr(
 
     r = np.zeros((d.shape[0], 1))
     n_components = d.shape[1]
+    
+    print("PLS")
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0

@@ -333,13 +333,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 raise ValueError("constant regression must be used with mixed integer")
 
         if self._categorical_kernel is not None:
-            if self._surrogate.name not in ["Kriging"]:
+            if self._surrogate.name not in ["Kriging","KPLS"]:
                 raise ValueError("matrix kernel not implemented for this model")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
             self._input_in_folded_space = False
 
-        if self._surrogate.name in ["Kriging"] and self._categorical_kernel is not None:
+        if self._surrogate.name in ["Kriging","KPLS"] and self._categorical_kernel is not None:
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             self._surrogate.options["xtypes"] = self._xtypes
 
