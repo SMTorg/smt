@@ -1265,7 +1265,10 @@ class KrgBased(SurrogateModel):
             )
             self.options["theta0"] *= np.ones(n_param)
     
-        if len(self.options["theta0"]) != d and self.options["categorical_kernel"] is None:
+        if len(self.options["theta0"]) != d and self.options["categorical_kernel"] not in [
+                    HOMO_GAUSSIAN,
+                    FULL_GAUSSIAN,
+                ]:
             if len(self.options["theta0"]) == 1:               
                     self.options["theta0"] *= np.ones(d)
             else:          
