@@ -343,7 +343,8 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
         if self._surrogate.name in ["Kriging","KPLS"] and self._categorical_kernel is not None:
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
-            self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
+            if self._cat_kernel_comps is not None :
+                self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
             self._surrogate.options["xtypes"] = self._xtypes
 
     @property

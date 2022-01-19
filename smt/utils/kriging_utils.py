@@ -399,7 +399,7 @@ def differences(X, Y):
 
 
 def matrix_data_corr(self,
-    corr,cpls, xtypes, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel, cat_kernel_comps
+    corr, xtypes, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel, cat_kernel_comps
 ):
     """
     matrix kernel correlation model.
@@ -465,6 +465,7 @@ def matrix_data_corr(self,
 
     theta_cont = theta[theta_cont_features[:, 0]]
     d_cont = d[:, np.logical_not(cat_features)]
+    r_cont = _correlation_types[corr](theta_cont, d_cont)
     if cat_kernel_comps is not None :
         # Sampling points X and y
         X = self.training_points[None][0][0]
@@ -477,11 +478,11 @@ def matrix_data_corr(self,
             d_cont,
             _correlation_types[corr],
             cat_kernel_comps[0],
-            cpls,
+            self.coeff_pls,
             theta=None,
             return_derivative=False,
             )
-    r_cont = _correlation_types[corr](theta_cont[0:cat_kernel_comps[0]], d_cont)
+        r_cont = _correlation_types[corr](theta_cont[0:cat_kernel_comps[0]], d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
     ##Theta_cat_i loop
