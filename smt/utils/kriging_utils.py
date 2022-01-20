@@ -184,7 +184,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel,nx):
+def compute_n_param(xtypes, cat_kernel,nx,d):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -193,20 +193,23 @@ def compute_n_param(xtypes, cat_kernel,nx):
             -the types (FLOAT,ORD,ENUM) of the input variables
     cat_kernel : string
             -The kernel to use for categorical inputs. Only for non continuous Kriging",
-   =
     nx: int
             -The number of variables,
+    d: int 
+            - n_comp or nx
 
     Returns
     -------
      n_param: int
             - The number of parameters.
     """
-
     n_param = nx
+    if d != nx: 
+        n_param= d
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            n_param-=1
+            if nx==d :
+                n_param-=1
             if cat_kernel == FULL_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
