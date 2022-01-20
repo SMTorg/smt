@@ -19,6 +19,7 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
     gower_componentwise_distances,
+    componentwise_distance,
     compute_X_cont,
     cross_levels,
     matrix_data_corr,
@@ -75,12 +76,7 @@ class KrgBased(SurrogateModel):
             values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
-        declare(
-            "cat_kernel_comps",
-            None,
-            types=list,
-            desc="Number of components for PLS categorical kernel",
-        )
+    
         declare(
             "xtypes",
             None,
@@ -310,12 +306,11 @@ class KrgBased(SurrogateModel):
                 xtypes=self.options["xtypes"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
-                d=self.D,
+                dx=self.D,
                 Lij=self.Lij,
                 nlevels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
-                cat_kernel_comps=self.options["cat_kernel_comps"],
                 
             ).reshape(-1, 1)
         else:
@@ -716,27 +711,17 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] is not None:
-            # Compute the correlation function
-            X = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
-
-            # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-            if self.name not in ["Kriging", "MGP"]:
-                X, y = self._compute_pls(X.copy(), y.copy())
             dx = gower_componentwise_distances(
                 x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
                 )
-            d = self._componentwise_distance(dx)
-            if self.options["cat_kernel_comps"] is not None:
-                from smt.utils.kriging_utils import componentwise_distance
-                d= componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                theta=None,
-                return_derivative=False,
-                )
-
+           
+            d= componentwise_distance(
+            dx,
+            self.options["corr"],
+            self.nx,
+            theta=None,
+            return_derivative=False,
+            )
             if self.options["categorical_kernel"] == GOWER:
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
@@ -752,12 +737,11 @@ class KrgBased(SurrogateModel):
                     xtypes=self.options["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
-                    d=d,
+                    dx=dx,
                     Lij=Lij,
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
-                    cat_kernel_comps=self.options["cat_kernel_comps"],
                 ).reshape(n_eval, self.nt)
                
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
@@ -856,27 +840,17 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         X_cont = x
         if self.options["categorical_kernel"] is not None:
-            # Compute the correlation function
-            X = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
-
-            # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-            if self.name not in ["Kriging", "MGP"]:
-                X, y = self._compute_pls(X.copy(), y.copy())
-            # Compute the correlation function
+           
             dx = gower_componentwise_distances(
                 x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
             )
-            d = self._componentwise_distance(dx)
-            if self.options["cat_kernel_comps"] is not None:
-                from smt.utils.kriging_utils import componentwise_distance
-                d= componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                theta=None,
-                return_derivative=False,
-                )
+            d= componentwise_distance(
+            dx,
+            self.options["corr"],
+            self.nx,
+            theta=None,
+            return_derivative=False,
+            )
             if self.options["categorical_kernel"] == GOWER:
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
@@ -892,12 +866,11 @@ class KrgBased(SurrogateModel):
                     xtypes=self.options["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
-                    d=d,
+                    dx=dx,
                     Lij=Lij,
                     nlevels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
-                    cat_kernel_comps=self.options["cat_kernel_comps"],
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1120,17 +1093,8 @@ class KrgBased(SurrogateModel):
             ##from abs distance to kernel distance
             self.D = self._componentwise_distance(D, opt=ii)
      
-            if self.options["cat_kernel_comps"] is not None:
-                from smt.utils.kriging_utils import componentwise_distance
-     
-                self.D= componentwise_distance(
-                D,
-                self.options["corr"],
-                self.nx,
-                theta=None,
-                return_derivative=False,
-            )
-
+            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+                self.D= D
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
