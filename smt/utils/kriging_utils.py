@@ -434,7 +434,11 @@ def matrix_data_corr(self,
 
     r = np.zeros((dx.shape[0], 1))
     n_components = dx.shape[1]
-    cat_kernel_comps=self.options["cat_kernel_comps"]
+    try : 
+        cat_kernel_comps=self.options["cat_kernel_comps"]
+    except KeyError :
+        cat_kernel_comps=None
+
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
@@ -483,13 +487,15 @@ def matrix_data_corr(self,
             )
         r_cont = _correlation_types[corr](theta_cont[0:self.options["n_comp"]], d_cont)
     else :
-        d_cont= componentwise_distance(
-                d_cont,
+        d= componentwise_distance(
+                dx,
                 self.options["corr"],
                 self.nx,
                 theta=None,
                 return_derivative=False,
                 )
+        d_cont = d[:, np.logical_not(cat_features)]
+
         r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
