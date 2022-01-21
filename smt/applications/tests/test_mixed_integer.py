@@ -534,6 +534,96 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertEqual(np.shape(y), (105, 1))
 
+    def test_mixed_full_gaussian_3D_PLS(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            FULL_GAUSSIAN,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG, KPLS
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=FULL_GAUSSIAN,
+            xtypes=[FLOAT, (ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KPLS(
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[5], corr="squar_exp"
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x2, x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
+
+    def test_mixed_full_gaussian_3D_PLS(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HOMO_GAUSSIAN,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG, KPLS
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_GAUSSIAN,
+            xtypes=[FLOAT, (ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KPLS(
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[5], corr="squar_exp"
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x2, x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
+
     def test_mixed_full_gaussian_3D(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
