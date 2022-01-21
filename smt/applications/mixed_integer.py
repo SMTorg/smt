@@ -322,7 +322,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         super().__init__()
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
-        self._categorical_kernel = categorical_kernel 
+        self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
         self._xtypes = xtypes
         self._xlimits = xlimits
@@ -335,15 +335,18 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 raise ValueError("constant regression must be used with mixed integer")
 
         if self._categorical_kernel is not None:
-            if self._surrogate.name not in ["Kriging","KPLS"]:
+            if self._surrogate.name not in ["Kriging", "KPLS"]:
                 raise ValueError("matrix kernel not implemented for this model")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
             self._input_in_folded_space = False
 
-        if self._surrogate.name in ["Kriging","KPLS"] and self._categorical_kernel is not None:
+        if (
+            self._surrogate.name in ["Kriging", "KPLS"]
+            and self._categorical_kernel is not None
+        ):
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
-            if self._cat_kernel_comps is not None :
+            if self._cat_kernel_comps is not None:
                 self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
             self._surrogate.options["xtypes"] = self._xtypes
 
@@ -432,7 +435,7 @@ class MixedIntegerContext(object):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._categorical_kernel = categorical_kernel
-        self._cat_kernel_comps=cat_kernel_comps
+        self._cat_kernel_comps = cat_kernel_comps
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
             self._xtypes, xlimits, categorical_kernel
         )

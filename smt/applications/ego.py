@@ -339,9 +339,7 @@ class EGO(SurrogateBasedApplication):
         if self.gpr.supports["training_derivatives"]:
             for kx in range(self.gpr.nx):
                 self.gpr.set_training_derivatives(
-                    x_data,
-                    y_data[:, 1 + kx].reshape((y_data.shape[0], 1)),
-                    kx
+                    x_data, y_data[:, 1 + kx].reshape((y_data.shape[0], 1)), kx
                 )
         self.gpr.train()
 

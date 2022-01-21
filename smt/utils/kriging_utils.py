@@ -184,7 +184,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel,nx,d):
+def compute_n_param(xtypes, cat_kernel, nx, d):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -195,7 +195,7 @@ def compute_n_param(xtypes, cat_kernel,nx,d):
             -The kernel to use for categorical inputs. Only for non continuous Kriging",
     nx: int
             -The number of variables,
-    d: int 
+    d: int
             - n_comp or nx
 
     Returns
@@ -204,12 +204,12 @@ def compute_n_param(xtypes, cat_kernel,nx,d):
             - The number of parameters.
     """
     n_param = nx
-    if d != nx: 
-        n_param= d
+    if d != nx:
+        n_param = d
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if nx==d :
-                n_param-=1
+            if nx == d:
+                n_param -= 1
             if cat_kernel == FULL_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
@@ -401,8 +401,9 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(self,
-    corr, xtypes, theta, theta_bounds, dx, Lij, nlevels, cat_features, cat_kernel):
+def matrix_data_corr(
+    self, corr, xtypes, theta, theta_bounds, dx, Lij, nlevels, cat_features, cat_kernel
+):
     """
     matrix kernel correlation model.
 
@@ -430,24 +431,24 @@ def matrix_data_corr(self,
     _correlation_types = {
         "abs_exp": abs_exp,
         "squar_exp": squar_exp,
-        "act_exp":  act_exp,
+        "act_exp": act_exp,
         "matern52": matern52,
         "matern32": matern32,
     }
 
     r = np.zeros((dx.shape[0], 1))
     n_components = dx.shape[1]
-    try : 
-        cat_kernel_comps=self.options["cat_kernel_comps"]
-        ncomp=self.options["n_comp"]
-    except KeyError :
-        cat_kernel_comps=None
-        ncomp=1e5
+    try:
+        cat_kernel_comps = self.options["cat_kernel_comps"]
+        ncomp = self.options["n_comp"]
+    except KeyError:
+        cat_kernel_comps = None
+        ncomp = 1e5
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
     j = 0
-    n_theta_cont=0
+    n_theta_cont = 0
     for feat in cat_features:
         if feat:
             if cat_kernel == FULL_GAUSSIAN:
@@ -468,38 +469,36 @@ def matrix_data_corr(self,
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if n_theta_cont < ncomp :
+            if n_theta_cont < ncomp:
                 theta_cont_features[j] = True
                 j += 1
                 n_theta_cont += 1
-    
+
     theta_cont = theta[theta_cont_features[:, 0]]
     d_cont = dx[:, np.logical_not(cat_features)]
-    if cat_kernel_comps is not None :
+    if cat_kernel_comps is not None:
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
-        X_cont, _= compute_X_cont(
-                    X, xtypes
-                )
-        if np.shape(self.coeff_pls)[0] != np.shape(X_cont)[1] :
+        X_cont, _ = compute_X_cont(X, xtypes)
+        if np.shape(self.coeff_pls)[0] != np.shape(X_cont)[1]:
             X, y = self._compute_pls(X_cont.copy(), y.copy())
-        d_cont= componentwise_distance_PLS(
+        d_cont = componentwise_distance_PLS(
             d_cont,
             _correlation_types[corr],
             self.options["n_comp"],
             self.coeff_pls,
             theta=None,
             return_derivative=False,
-            )
-    else :
-        d= componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                theta=None,
-                return_derivative=False,
-                )
+        )
+    else:
+        d = componentwise_distance(
+            dx,
+            self.options["corr"],
+            self.nx,
+            theta=None,
+            return_derivative=False,
+        )
         d_cont = d[:, np.logical_not(cat_features)]
 
     r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -514,7 +513,7 @@ def matrix_data_corr(self,
             )
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-     #   d_cat = d[:, cat_features]
+        #   d_cat = d[:, cat_features]
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
