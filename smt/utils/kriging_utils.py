@@ -430,7 +430,7 @@ def matrix_data_corr(self,
     _correlation_types = {
         "abs_exp": abs_exp,
         "squar_exp": squar_exp,
-        "act_exp": act_exp,
+        "act_exp":  act_exp,
         "matern52": matern52,
         "matern32": matern32,
     }
@@ -439,13 +439,15 @@ def matrix_data_corr(self,
     n_components = dx.shape[1]
     try : 
         cat_kernel_comps=self.options["cat_kernel_comps"]
+        ncomp=self.options["n_comp"]
     except KeyError :
         cat_kernel_comps=None
-
+        ncomp=1e5
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
     j = 0
+    n_theta_cont=0
     for feat in cat_features:
         if feat:
             if cat_kernel == FULL_GAUSSIAN:
@@ -466,9 +468,11 @@ def matrix_data_corr(self,
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            theta_cont_features[j] = True
-            j += 1
-
+            if n_theta_cont < ncomp :
+                theta_cont_features[j] = True
+                j += 1
+                n_theta_cont += 1
+    
     theta_cont = theta[theta_cont_features[:, 0]]
     d_cont = dx[:, np.logical_not(cat_features)]
     if cat_kernel_comps is not None :
@@ -488,7 +492,6 @@ def matrix_data_corr(self,
             theta=None,
             return_derivative=False,
             )
-        r_cont = _correlation_types[corr](theta_cont[0:self.options["n_comp"]], d_cont)
     else :
         d= componentwise_distance(
                 dx,
@@ -499,7 +502,7 @@ def matrix_data_corr(self,
                 )
         d_cont = d[:, np.logical_not(cat_features)]
 
-        r_cont = _correlation_types[corr](theta_cont, d_cont)
+    r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
     ##Theta_cat_i loop

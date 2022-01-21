@@ -1286,7 +1286,6 @@ class KrgBased(SurrogateModel):
             n_param = compute_n_param(
                 self.options["xtypes"], self.options["categorical_kernel"],self.nx,d
             )
-            print(n_param)
             self.options["theta0"] *= np.ones(n_param)
     
         if len(self.options["theta0"]) != d and self.options["categorical_kernel"] not in [
