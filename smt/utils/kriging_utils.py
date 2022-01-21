@@ -411,6 +411,8 @@ def matrix_data_corr(
     ----------
     corr: correlation_types
         - The autocorrelation model
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
     dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
@@ -513,7 +515,6 @@ def matrix_data_corr(
             )
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-        #   d_cat = d[:, cat_features]
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
