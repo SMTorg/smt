@@ -207,7 +207,7 @@ class EGO(SurrogateBasedApplication):
 
     def EI(self, points, y_data, enable_tunneling=False, x_data=None):
         """Expected improvement"""
-        f_min = np.min(y_data)
+        f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
         args0 = (f_min - pred) / sig
@@ -355,7 +355,7 @@ class EGO(SurrogateBasedApplication):
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(
-                np.atleast_2d(x), y_data, enable_tunneling, x_data
+                np.atleast_2d(x), np.atleast_2d(y_data), enable_tunneling, x_data
             )
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
