@@ -440,8 +440,8 @@ def matrix_data_corr(
 
     r = np.zeros((dx.shape[0], 1))
     n_components = dx.shape[1]
+    cat_kernel_comps = self.options["cat_kernel_comps"]
     try:
-        cat_kernel_comps = self.options["cat_kernel_comps"]
         ncomp = self.options["n_comp"]
     except KeyError:
         cat_kernel_comps = None
