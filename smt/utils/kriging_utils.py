@@ -492,6 +492,7 @@ def matrix_data_corr(
     # Sampling points X and y
     X = self.training_points[None][0][0]
     y = self.training_points[None][0][1]
+
     if cat_kernel == CONT_RELAX:
         from smt.applications.mixed_integer import unfold_with_enum_mask
 
@@ -499,6 +500,8 @@ def matrix_data_corr(
         nx = len(theta)
     else:
         X2, _ = compute_X_cont(X, xtypes)
+        d_cont = dx[:, np.logical_not(cat_features)]
+
     if cat_kernel_comps is not None or ncomp < 1e5:
 
         if np.shape(self.coeff_pls)[0] != np.shape(X2)[1]:
@@ -516,7 +519,6 @@ def matrix_data_corr(
             return r
 
         else:
-            d_cont = d[:, np.logical_not(cat_features)]
             d_cont = componentwise_distance_PLS(
                 d_cont,
                 _correlation_types[corr],
@@ -533,12 +535,13 @@ def matrix_data_corr(
             theta=None,
             return_derivative=False,
         )
+        d_cont = d[:, np.logical_not(cat_features)]
+
     if cat_kernel == CONT_RELAX:
         r = _correlation_types[corr](theta, d)
         return r
 
     theta_cont = theta[theta_cont_features[:, 0]]
-    d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
