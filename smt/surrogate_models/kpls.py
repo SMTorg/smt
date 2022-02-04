@@ -110,6 +110,7 @@ class KPLS(KrgBased):
             if self.options["n_comp"] > 1 and press_m1 / press_m > eval_comp_treshold:
                 self.options["n_comp"] -= 1
                 nextcomp = False
+        print(self.options["n_comp"])
         self.training_points[None][0][0] = X
         self.training_points[None][0][1] = y
         self.nt = len(X)
