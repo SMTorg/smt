@@ -205,8 +205,9 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    def EI(self, points, y_data, enable_tunneling=False, x_data=None):
+    def EI(self, points, enable_tunneling=False, x_data=None):
         """Expected improvement"""
+        y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
@@ -220,13 +221,13 @@ class EGO(SurrogateBasedApplication):
         if enable_tunneling:
             for i in range(len(points)):
                 p = np.atleast_2d(points[i])
-                EIp = self.EI(p, y_data, enable_tunneling=False)
+                EIp = self.EI(p, enable_tunneling=False)
                 for x in x_data:
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
                     pena = (
-                        EIp - self.EI(x, y_data, enable_tunneling=False)
+                        EIp - self.EI(x, enable_tunneling=False)
                     ) / np.power(np.linalg.norm(p - x), 4)
                     if pena > 0:
                         ei[i] = ei[i] - pena
@@ -317,6 +318,17 @@ class EGO(SurrogateBasedApplication):
 
         return x_doe, y_doe
 
+    def _train_gpr(self, x_data, y_data):
+        self.gpr.set_training_values(x_data, y_data)
+        if self.gpr.supports["training_derivatives"]:
+            for kx in range(self.gpr.nx):
+                self.gpr.set_training_derivatives(
+                    x_data,
+                    y_data[:, 1 + kx].reshape((y_data.shape[0], 1)),
+                    kx
+                )
+        self.gpr.train()
+
     def _find_best_point(self, x_data=None, y_data=None, enable_tunneling=False):
         """
         Function that analyse a set of x_data and y_data and give back the
@@ -335,15 +347,7 @@ class EGO(SurrogateBasedApplication):
         boolean: success flag
 
         """
-        self.gpr.set_training_values(x_data, y_data)
-        if self.gpr.supports["training_derivatives"]:
-            for kx in range(self.gpr.nx):
-                self.gpr.set_training_derivatives(
-                    x_data,
-                    y_data[:, 1 + kx].reshape((y_data.shape[0], 1)),
-                    kx
-                )
-        self.gpr.train()
+        self._train_gpr(x_data, y_data)
 
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
@@ -354,9 +358,7 @@ class EGO(SurrogateBasedApplication):
             bounds = self.xlimits
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(
-                np.atleast_2d(x), np.atleast_2d(y_data), enable_tunneling, x_data
-            )
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
         elif criterion == "LCB":
