@@ -464,7 +464,8 @@ class TestEGO(SMTestCase):
         x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
-    def test_ego_gek(self):
+    @staticmethod
+    def initialize_ego_gek(func="exp", criterion='LCB'):
         from smt.problems import TensorProduct
 
         class TensorProductIndirect(TensorProduct):
@@ -480,7 +481,7 @@ class TestEGO(SMTestCase):
                 )
                 return np.hstack((response, sens))
 
-        fun = TensorProductIndirect(ndim=2, func="exp")
+        fun = TensorProductIndirect(ndim=2, func=func)
 
         # Construction of the DOE
         sampling = LHS(xlimits=fun.xlimits, criterion="m", random_state=42)
@@ -502,17 +503,32 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             ydoe=ydoe,
             n_iter=5,
-            criterion="LCB",
+            criterion=criterion,
             xlimits=fun.xlimits,
             surrogate=sm,
             n_start=30,
             enable_tunneling=False,
             random_state=42,
         )
+
+        return ego, fun
+
+    def test_ego_gek(self):
+        ego, fun = self.initialize_ego_gek()
         x_opt, _, _, _, _ = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=1e-4)
         self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
+
+    def test_ei_gek(self):
+        ego, fun = self.initialize_ego_gek(func='cos', criterion='EI')
+        x_data, y_data = ego._setup_optimizer(fun)
+        ego._train_gpr(x_data, y_data)
+
+        # Test the EI value at the following point
+        ei = ego.EI(np.array([[0.8398599985874058, -0.3240337426231973]]))
+
+        self.assertTrue(np.allclose(ei, [6.87642e-12, 1.47804e-10, 2.76223], atol=1e-1))
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
