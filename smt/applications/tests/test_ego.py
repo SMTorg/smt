@@ -465,7 +465,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     @staticmethod
-    def initialize_EGO_GEK(func="exp", criterion='LCB'):
+    def initialize_ego_gek(func="exp", criterion='LCB'):
         from smt.problems import TensorProduct
 
         class TensorProductIndirect(TensorProduct):
@@ -514,24 +514,21 @@ class TestEGO(SMTestCase):
         return ego, fun
 
     def test_ego_gek(self):
-        ego, fun = self.initialize_EGO_GEK()
+        ego, fun = self.initialize_ego_gek()
         x_opt, _, _, _, _ = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=1e-4)
         self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
 
-    def test_EI_GEK(self):
-        ego, fun = self.initialize_EGO_GEK(func='cos', criterion='EI')
+    def test_ei_gek(self):
+        ego, fun = self.initialize_ego_gek(func='cos', criterion='EI')
         x_data, y_data = ego._setup_optimizer(fun)
         ego._train_gpr(x_data, y_data)
 
         # Test the EI value at the following point
         ei = ego.EI(np.array([[0.8398599985874058, -0.3240337426231973]]))
 
-        self.assertListEqual(
-            ei.tolist(),
-            [[6.8764211903636255e-12, 1.4780384733929935e-10, 2.762229481453051]]
-        )
+        self.assertTrue(np.allclose(ei, [6.87642e-12, 1.47804e-10, 2.76223], atol=1e-3))
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
