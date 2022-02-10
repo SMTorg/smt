@@ -527,7 +527,7 @@ def matrix_data_corr(
                 theta=None,
                 return_derivative=False,
             )
-    else:   
+    else:
         d = componentwise_distance(
             dx,
             corr,
