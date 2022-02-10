@@ -509,7 +509,7 @@ def matrix_data_corr(
         if cat_kernel == CONT_RELAX:
             d = componentwise_distance_PLS(
                 dx,
-                _correlation_types[corr],
+                corr,
                 self.options["n_comp"],
                 self.coeff_pls,
                 theta=None,
@@ -521,7 +521,7 @@ def matrix_data_corr(
         else:
             d_cont = componentwise_distance_PLS(
                 d_cont,
-                _correlation_types[corr],
+                corr,
                 self.options["n_comp"],
                 self.coeff_pls,
                 theta=None,
