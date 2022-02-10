@@ -527,7 +527,7 @@ def matrix_data_corr(
                 theta=None,
                 return_derivative=False,
             )
-    else:
+    else:   
         d = componentwise_distance(
             dx,
             self.options["corr"],
@@ -535,7 +535,8 @@ def matrix_data_corr(
             theta=None,
             return_derivative=False,
         )
-        d_cont = d[:, np.logical_not(cat_features)]
+        if cat_kernel != CONT_RELAX:
+            d_cont = d[:, np.logical_not(cat_features)]
 
     if cat_kernel == CONT_RELAX:
         r = _correlation_types[corr](theta, d)
