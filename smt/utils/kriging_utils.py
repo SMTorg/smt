@@ -185,7 +185,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel, nx, d):
+def compute_n_param(xtypes, cat_kernel, nx, d,n_comp):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -205,7 +205,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d):
             - The number of parameters.
     """
     n_param = nx
-    if d != nx:
+    if n_comp is not None:
         n_param = d
         if cat_kernel == CONT_RELAX:
             return n_param
@@ -539,6 +539,8 @@ def matrix_data_corr(
             d_cont = d[:, np.logical_not(cat_features)]
 
     if cat_kernel == CONT_RELAX:
+       # theta[2:5]=theta[2]/2
+       # theta[5:]=theta[5]/2
         r = _correlation_types[corr](theta, d)
         return r
 
@@ -591,7 +593,6 @@ def matrix_data_corr(
         T = np.exp(2 * T)
         k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
         T = (T + np.exp(-theta_bounds[1])) / (k)
-
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])
@@ -636,7 +637,7 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
+         An array containing the values of the autocorrelation model.
     """
 
     r = np.zeros((d.shape[0], 1))

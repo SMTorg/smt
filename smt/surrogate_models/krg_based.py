@@ -1151,8 +1151,6 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-            ##from abs distance to kernel distance
-            self.D = self._componentwise_distance(D, opt=ii)
 
             if self.options["categorical_kernel"] in [
                 HOMO_GAUSSIAN,
@@ -1160,6 +1158,10 @@ class KrgBased(SurrogateModel):
                 CONT_RELAX,
             ]:
                 self.D = D
+            else : 
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D, opt=ii)
+
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1250,10 +1252,11 @@ class KrgBased(SurrogateModel):
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
-                    optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
+                    
+                        optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-
+            #        print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -1349,9 +1352,11 @@ class KrgBased(SurrogateModel):
             FULL_GAUSSIAN,
             CONT_RELAX,
         ]:
+            n_comp= self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xtypes"], self.options["categorical_kernel"], self.nx, d
+                self.options["xtypes"], self.options["categorical_kernel"], self.nx, d, n_comp
             )
+        
             self.options["theta0"] *= np.ones(n_param)
 
         if len(self.options["theta0"]) != d and self.options[
