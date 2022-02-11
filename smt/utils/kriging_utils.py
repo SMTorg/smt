@@ -19,7 +19,7 @@ FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 
 
-def standardization(X, y, scale_X_to_unit=True):
+def standardization(X, y, scale_X_to_unit=False):
 
     """
 
