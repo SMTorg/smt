@@ -410,7 +410,7 @@ class MOE(SurrogateBasedApplication):
         cluster_classifier = self.cluster.predict(np.c_[xt, ct])
         clustered_values = self._cluster_values(np.c_[xt, yt], cluster_classifier)
 
-        # sort trained_values for each cluster
+        # sort test_values for each cluster only used in case of new model
         if new_model:
             test_cluster_classifier = self.cluster.predict(np.c_[xtest, ctest])
             clustered_test_values = self._cluster_values(
@@ -427,10 +427,10 @@ class MOE(SurrogateBasedApplication):
             else:
                 # retrain the experts
                 # used when self._training_values changed with expert best models already found
-                trained_values = np.array(clustered_values[i])
-                x_trained = trained_values[:, 0 : self.ndim]
-                y_trained = trained_values[:, self.ndim]
-                self._experts[i].set_training_values(x_trained, y_trained)
+                training_values = np.array(clustered_values[i])
+                xtrain = training_values[:, 0 : self.ndim]
+                ytrain = training_values[:, self.ndim]
+                self._experts[i].set_training_values(xtrain, ytrain)
                 self._experts[i].train()
 
     def _predict_hard_output(self, x, output_variances=False):
