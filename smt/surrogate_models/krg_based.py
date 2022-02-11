@@ -380,7 +380,6 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-
         # Compute/Organize output
         p = 0
         q = 0
@@ -1253,10 +1252,10 @@ class KrgBased(SurrogateModel):
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
                     
-                        optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                        theta=optimal_theta
+                    optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
+                    theta=optimal_theta
                     )
-            #        print(optimal_rlf_value)
+                    print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
