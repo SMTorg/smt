@@ -226,9 +226,9 @@ class EGO(SurrogateBasedApplication):
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena = (
-                        EIp - self.EI(x, enable_tunneling=False)
-                    ) / np.power(np.linalg.norm(p - x), 4)
+                    pena = (EIp - self.EI(x, enable_tunneling=False)) / np.power(
+                        np.linalg.norm(p - x), 4
+                    )
                     if pena > 0:
                         ei[i] = ei[i] - pena
                     ei[i] = max(ei[i], 0)
@@ -323,9 +323,7 @@ class EGO(SurrogateBasedApplication):
         if self.gpr.supports["training_derivatives"]:
             for kx in range(self.gpr.nx):
                 self.gpr.set_training_derivatives(
-                    x_data,
-                    y_data[:, 1 + kx].reshape((y_data.shape[0], 1)),
-                    kx
+                    x_data, y_data[:, 1 + kx].reshape((y_data.shape[0], 1)), kx
                 )
         self.gpr.train()
 

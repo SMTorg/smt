@@ -465,7 +465,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     @staticmethod
-    def initialize_ego_gek(func="exp", criterion='LCB'):
+    def initialize_ego_gek(func="exp", criterion="LCB"):
         from smt.problems import TensorProduct
 
         class TensorProductIndirect(TensorProduct):
@@ -521,7 +521,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
 
     def test_ei_gek(self):
-        ego, fun = self.initialize_ego_gek(func='cos', criterion='EI')
+        ego, fun = self.initialize_ego_gek(func="cos", criterion="EI")
         x_data, y_data = ego._setup_optimizer(fun)
         ego._train_gpr(x_data, y_data)
 
@@ -590,7 +590,7 @@ class TestEGO(SMTestCase):
 
             y_gp_plot = ego.gpr.predict_values(x_plot)
             y_gp_plot_var = ego.gpr.predict_variances(x_plot)
-            y_ei_plot = -ego.EI(x_plot, y_data_k)
+            y_ei_plot = -ego.EI(x_plot)
 
             ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
             ax1 = ax.twinx()
@@ -799,7 +799,7 @@ class TestEGO(SMTestCase):
                 ego.gpr.set_training_values(x_data_sub, y_data_sub)
                 ego.gpr.train()
 
-                y_ei_plot = -ego.EI(x_plot, y_data_sub)
+                y_ei_plot = -ego.EI(x_plot)
                 y_gp_plot = ego.gpr.predict_values(x_plot)
                 y_gp_plot_var = ego.gpr.predict_variances(x_plot)
 
