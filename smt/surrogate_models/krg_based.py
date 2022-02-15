@@ -1086,7 +1086,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 200 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 15 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1255,7 +1255,7 @@ class KrgBased(SurrogateModel):
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta
                     )
-                    print(optimal_rlf_value)
+                    #print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
