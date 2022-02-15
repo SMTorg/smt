@@ -19,7 +19,7 @@ FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 
 
-def standardization(X, y, scale_X_to_unit=False):
+def standardization(X, y, scale_X_to_unit=True):
 
     """
 
@@ -539,8 +539,6 @@ def matrix_data_corr(
             d_cont = d[:, np.logical_not(cat_features)]
 
     if cat_kernel == CONT_RELAX:
-       # theta[2:5]=theta[2]/2
-       # theta[5:]=theta[5]/2
         r = _correlation_types[corr](theta, d)
         return r
 
