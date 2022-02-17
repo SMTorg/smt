@@ -1263,7 +1263,7 @@ class KrgBased(SurrogateModel):
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-                    #     print(optimal_rlf_value)
+                    print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -1354,6 +1354,11 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
+        mat_dim = (
+            self.options["cat_kernel_comps"]
+            if "cat_kernel_comps" in self.options
+            else None
+        )
         if self.options["categorical_kernel"] in [
             HOMO_GAUSSIAN,
             FULL_GAUSSIAN,
@@ -1366,6 +1371,7 @@ class KrgBased(SurrogateModel):
                 self.nx,
                 d,
                 n_comp,
+                mat_dim,
             )
 
             self.options["theta0"] *= np.ones(n_param)

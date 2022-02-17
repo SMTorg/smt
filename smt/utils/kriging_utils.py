@@ -186,20 +186,23 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel, nx, d, n_comp):
+def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
     xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables
+            -the types (FLOAT,ORD,ENUM) of the input variables,
     cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging",
+            -The kernel to use for categorical inputs. Only for non continuous Kriging,
     nx: int
             -The number of variables,
     d: int
             - n_comp or nx
-
+    n_comp : int
+            - if PLS, then it is the number of components else None,
+    mat_dim : int
+            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
     Returns
     -------
      n_param: int
@@ -210,7 +213,13 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp):
         n_param = d
         if cat_kernel == CONT_RELAX:
             return n_param
-
+        if mat_dim is not None:
+            if cat_kernel == FULL_GAUSSIAN:
+                return int(np.sum([l * (l + 1) / 2 for l in mat_dim]) + n_param)
+            if cat_kernel == HOMO_GAUSSIAN:
+                return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
+            else:
+                raise ValueError("mat_dim is for homoscedastic mixed integer models")
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
             if nx == d:
@@ -452,13 +461,11 @@ def matrix_data_corr(
         cat_kernel_comps = self.options["cat_kernel_comps"]
     except KeyError:
         cat_kernel_comps = None
-
     try:
         ncomp = self.options["n_comp"]
     except KeyError:
         cat_kernel_comps = None
         ncomp = 1e5
-
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
@@ -489,7 +496,6 @@ def matrix_data_corr(
                     theta_cont_features[j] = True
                     j += 1
                     n_theta_cont += 1
-
     # Sampling points X and y
     X = self.training_points[None][0][0]
     y = self.training_points[None][0][1]
@@ -499,6 +505,7 @@ def matrix_data_corr(
 
         X2 = unfold_with_enum_mask(xtypes, X)
         nx = len(theta)
+
     elif cat_kernel == GOWER_MAT:
         X2 = np.copy(X)
     else:
@@ -506,7 +513,6 @@ def matrix_data_corr(
         d_cont = dx[:, np.logical_not(cat_features)]
 
     if cat_kernel_comps is not None or ncomp < 1e5:
-
         if np.shape(self.coeff_pls)[0] != np.shape(X2)[1]:
             X, y = self._compute_pls(X2.copy(), y.copy())
         if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
@@ -520,7 +526,6 @@ def matrix_data_corr(
             )
             r = _correlation_types[corr](theta, d)
             return r
-
         else:
             d_cont = componentwise_distance_PLS(
                 d_cont,
