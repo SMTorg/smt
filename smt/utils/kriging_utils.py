@@ -20,7 +20,7 @@ CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
 
-def standardization(X, y, scale_X_to_unit=True):
+def standardization(X, y, scale_X_to_unit=False):
 
     """
 
@@ -186,7 +186,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel, nx, d,n_comp):
+def compute_n_param(xtypes, cat_kernel, nx, d, n_comp):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
@@ -484,7 +484,7 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if cat_kernel == FULL_GAUSSIAN or cat_kernel == HOMO_GAUSSIAN :
+            if cat_kernel == FULL_GAUSSIAN or cat_kernel == HOMO_GAUSSIAN:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
                     j += 1
@@ -499,8 +499,8 @@ def matrix_data_corr(
 
         X2 = unfold_with_enum_mask(xtypes, X)
         nx = len(theta)
-    elif cat_kernel==GOWER_MAT :
-        X2=np.copy(X)
+    elif cat_kernel == GOWER_MAT:
+        X2 = np.copy(X)
     else:
         X2, _ = compute_X_cont(X, xtypes)
         d_cont = dx[:, np.logical_not(cat_features)]
@@ -509,7 +509,7 @@ def matrix_data_corr(
 
         if np.shape(self.coeff_pls)[0] != np.shape(X2)[1]:
             X, y = self._compute_pls(X2.copy(), y.copy())
-        if cat_kernel == CONT_RELAX or cat_kernel ==GOWER_MAT:
+        if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
             d = componentwise_distance_PLS(
                 dx,
                 corr,
@@ -541,7 +541,7 @@ def matrix_data_corr(
         if cat_kernel != CONT_RELAX:
             d_cont = d[:, np.logical_not(cat_features)]
 
-    if cat_kernel == CONT_RELAX or cat_kernel ==GOWER_MAT:
+    if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
         r = _correlation_types[corr](theta, d)
         return r
 

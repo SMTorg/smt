@@ -28,7 +28,13 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN, CONT_RELAX,GOWER_MAT
+from smt.utils.kriging_utils import (
+    GOWER,
+    HOMO_GAUSSIAN,
+    FULL_GAUSSIAN,
+    CONT_RELAX,
+    GOWER_MAT,
+)
 
 
 class KrgBased(SurrogateModel):
@@ -1088,7 +1094,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 150 * len(self.options["theta0"]), 0.4
+        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1157,13 +1163,12 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 FULL_GAUSSIAN,
                 CONT_RELAX,
-                GOWER_MAT
+                GOWER_MAT,
             ]:
                 self.D = D
-            else : 
+            else:
                 ##from abs distance to kernel distance
                 self.D = self._componentwise_distance(D, opt=ii)
-
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1254,11 +1259,11 @@ class KrgBased(SurrogateModel):
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
-                    
+
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                    theta=optimal_theta
+                        theta=optimal_theta
                     )
-                    print(optimal_rlf_value)
+                    #     print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -1354,11 +1359,15 @@ class KrgBased(SurrogateModel):
             FULL_GAUSSIAN,
             CONT_RELAX,
         ]:
-            n_comp= self.options["n_comp"] if "n_comp" in self.options else None
+            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xtypes"], self.options["categorical_kernel"], self.nx, d, n_comp
+                self.options["xtypes"],
+                self.options["categorical_kernel"],
+                self.nx,
+                d,
+                n_comp,
             )
-        
+
             self.options["theta0"] *= np.ones(n_param)
 
         if len(self.options["theta0"]) != d and self.options[
