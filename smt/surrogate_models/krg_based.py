@@ -28,7 +28,7 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN, CONT_RELAX
+from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN, CONT_RELAX,GOWER_MAT
 
 
 class KrgBased(SurrogateModel):
@@ -168,6 +168,7 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 FULL_GAUSSIAN,
                 CONT_RELAX,
+                GOWER_MAT,
             ]:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
@@ -307,6 +308,7 @@ class KrgBased(SurrogateModel):
             HOMO_GAUSSIAN,
             FULL_GAUSSIAN,
             CONT_RELAX,
+            GOWER_MAT,
         ]:
             dx = self.D
             if self.options["categorical_kernel"] == CONT_RELAX:
@@ -1086,7 +1088,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 15 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 150 * len(self.options["theta0"]), 0.4
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1155,6 +1157,7 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 FULL_GAUSSIAN,
                 CONT_RELAX,
+                GOWER_MAT
             ]:
                 self.D = D
             else : 
@@ -1255,7 +1258,7 @@ class KrgBased(SurrogateModel):
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta
                     )
-                    #print(optimal_rlf_value)
+                    print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
