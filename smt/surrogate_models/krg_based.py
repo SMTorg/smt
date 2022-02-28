@@ -943,7 +943,6 @@ class KrgBased(SurrogateModel):
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
                     x=x,
-
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1268,7 +1267,6 @@ class KrgBased(SurrogateModel):
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-                    print(optimal_rlf_value)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):

@@ -661,12 +661,7 @@ def matrix_data_corr(
                 x_icat = x[:, cat_features]
                 x_icat = x_icat[:, i]
                 x_full_space = compute_X_cross(x_icat, n_levels[i])
-                try:
-                    dx_cat_i = cross_levels_homo_space(
-                        x_full_space, self.ij, n_levels[i]
-                    )
-                except:
-                    print("e")
+                dx_cat_i = cross_levels_homo_space(x_full_space, self.ij, n_levels[i])
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij, n_levels[i])
 
