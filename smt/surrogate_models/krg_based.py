@@ -28,7 +28,13 @@ from smt.utils.kriging_utils import (
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
+from smt.utils.kriging_utils import (
+    GOWER,
+    HOMO_GAUSSIAN,
+    FULL_GAUSSIAN,
+    CONT_RELAX,
+    GOWER_MAT,
+)
 
 
 class KrgBased(SurrogateModel):
@@ -164,7 +170,12 @@ class KrgBased(SurrogateModel):
                 X=X, xtypes=self.options["xtypes"]
             )
 
-            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            if self.options["categorical_kernel"] in [
+                HOMO_GAUSSIAN,
+                FULL_GAUSSIAN,
+                CONT_RELAX,
+                GOWER_MAT,
+            ]:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
                 )
@@ -299,16 +310,39 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+        if self.options["categorical_kernel"] in [
+            HOMO_GAUSSIAN,
+            FULL_GAUSSIAN,
+            CONT_RELAX,
+            GOWER_MAT,
+        ]:
+            dx = self.D
+            if self.options["categorical_kernel"] == CONT_RELAX:
+                from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                X2 = unfold_with_enum_mask(
+                    self.options["xtypes"], self.training_points[None][0][0]
+                )
+                (
+                    X2_norma,
+                    _,
+                    _,
+                    _,
+                    _,
+                    _,
+                ) = standardization(X2, self.training_points[None][0][1])
+                self.X_norma = X2_norma
+                dx, _ = cross_distances(X2_norma)
+
             r = matrix_data_corr(
                 self,
                 corr=self.options["corr"],
                 xtypes=self.options["xtypes"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
-                dx=self.D,
+                dx=dx,
                 Lij=self.Lij,
-                nlevels=self.n_levels,
+                n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
             ).reshape(-1, 1)
@@ -354,7 +388,6 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-
         # Compute/Organize output
         p = 0
         q = 0
@@ -725,11 +758,30 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [
+                HOMO_GAUSSIAN,
+                FULL_GAUSSIAN,
+                CONT_RELAX,
+            ]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
+                self.ij = ij
+                if self.options["categorical_kernel"] == CONT_RELAX:
+                    from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                    X2 = unfold_with_enum_mask(self.options["xtypes"], x)
+                    (
+                        X2_norma,
+                        _,
+                        _,
+                        _,
+                        _,
+                        _,
+                    ) = standardization(X2, self.training_points[None][0][1])
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(X2_norma, Y=self.X_norma.copy())
                 r = matrix_data_corr(
                     self,
                     corr=self.options["corr"],
@@ -738,9 +790,10 @@ class KrgBased(SurrogateModel):
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    x=x,
                 ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
@@ -854,11 +907,30 @@ class KrgBased(SurrogateModel):
                 r = self._correlation_types[self.options["corr"]](
                     self.optimal_theta, d
                 ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            elif self.options["categorical_kernel"] in [
+                HOMO_GAUSSIAN,
+                FULL_GAUSSIAN,
+                CONT_RELAX,
+            ]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
+                self.ij = ij
+                if self.options["categorical_kernel"] == CONT_RELAX:
+                    from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                    X2 = unfold_with_enum_mask(self.options["xtypes"], x)
+                    (
+                        X2_norma,
+                        _,
+                        _,
+                        _,
+                        _,
+                        _,
+                    ) = standardization(X2, self.training_points[None][0][1])
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(X2_norma, Y=self.X_norma.copy())
                 r = matrix_data_corr(
                     self,
                     corr=self.options["corr"],
@@ -867,9 +939,10 @@ class KrgBased(SurrogateModel):
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    x=x,
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1025,7 +1098,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 15 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1089,11 +1162,17 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-            ##from abs distance to kernel distance
-            self.D = self._componentwise_distance(D, opt=ii)
 
-            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            if self.options["categorical_kernel"] in [
+                HOMO_GAUSSIAN,
+                FULL_GAUSSIAN,
+                CONT_RELAX,
+                GOWER_MAT,
+            ]:
                 self.D = D
+            else:
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1184,10 +1263,10 @@ class KrgBased(SurrogateModel):
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
+
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -1278,13 +1357,26 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
+        mat_dim = (
+            self.options["cat_kernel_comps"]
+            if "cat_kernel_comps" in self.options
+            else None
+        )
         if self.options["categorical_kernel"] in [
             HOMO_GAUSSIAN,
             FULL_GAUSSIAN,
+            CONT_RELAX,
         ]:
+            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xtypes"], self.options["categorical_kernel"], self.nx, d
+                self.options["xtypes"],
+                self.options["categorical_kernel"],
+                self.nx,
+                d,
+                n_comp,
+                mat_dim,
             )
+
             self.options["theta0"] *= np.ones(n_param)
 
         if len(self.options["theta0"]) != d and self.options[
@@ -1292,6 +1384,7 @@ class KrgBased(SurrogateModel):
         ] not in [
             HOMO_GAUSSIAN,
             FULL_GAUSSIAN,
+            CONT_RELAX,
         ]:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)

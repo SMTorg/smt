@@ -579,7 +579,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
-    def test_mixed_full_gaussian_3D_PLS(self):
+    def test_mixed_homo_gaussian_3D_PLS(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
@@ -624,7 +624,52 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
-    def test_mixed_full_gaussian_3D(self):
+    def test_mixed_homo_gaussian_3D_PLS_cate(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HOMO_GAUSSIAN,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG, KPLS
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_GAUSSIAN,
+            xtypes=[FLOAT, (ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KPLS(
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x2, x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
+
+    def test_mixed_full_gaussian_3D_ord(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
@@ -676,6 +721,59 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(
             np.abs(np.sum(np.array([yvar[80], yvar[202], yvar[381]]))) < 1e-6
         )
+
+    def test_mixed_homo_gaussian_3D_ord_cate(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            ORD,
+            HOMO_GAUSSIAN,
+        )
+        from smt.surrogate_models import KRG, KPLS
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0, 5, 0], [2, -1, 2], [4, 0.5, 1]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [
+            ["0.0", "1.0", " 2.0", "3.0", "4.0"],
+            [-5, 5],
+            ["0.0", "1.0", " 2.0", "3.0"],
+        ]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_GAUSSIAN,
+            xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
+            xlimits=xlimits,
+            surrogate=KPLS(
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3, 3], corr="squar_exp"
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x3 = np.linspace(0, 3, 4)
+        x1 = []
+        for element in itertools.product(x, x2, x3):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
     def test_mixed_gower(self):
         from smt.applications.mixed_integer import (
