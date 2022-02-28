@@ -445,9 +445,24 @@ def differences(X, Y):
 
 
 def compute_X_cross(X, n_levels):
+    """
+    Computes the full space cross-relaxation of the input X for
+    the homoscedastic hypersphere kernel.
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, 1]
+            - The input variables.
+    n_levels: np.ndarray
+            - The number of levels for the categorical variable.
+    Returns
+    -------
+    Zeta: np.ndarray [n_obs, n_levels * (n_levels - 1) / 2]
+         - The non categorical values of the input variables.
+    """
+
     dim = int(n_levels * (n_levels - 1) / 2)
     nt = len(X)
-    Xs = np.zeros((nt, dim))
+    Zeta = np.zeros((nt, dim))
     k = 0
     for i in range(n_levels):
         for j in range(n_levels):
@@ -455,11 +470,11 @@ def compute_X_cross(X, n_levels):
                 s = 0
                 for x in X:
                     if int(x) == i or int(x) == j:
-                        Xs[s, k] = 1
+                        Zeta[s, k] = 1
                     s += 1
                 k += 1
 
-    return Xs
+    return Zeta
 
 
 def matrix_data_corr(
@@ -723,7 +738,6 @@ def matrix_data_corr(
                 self.options._dict.pop("n_comp", None)
             else:
                 self.options["n_comp"] = old_n_comp
-
     return r
 
 
@@ -814,7 +828,7 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
-    derivative_paramas : dict, optional
+    derivative_params : dict, optional
         List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
@@ -886,6 +900,8 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_params : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
     ------
