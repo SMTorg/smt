@@ -342,7 +342,7 @@ class KrgBased(SurrogateModel):
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
                 Lij=self.Lij,
-                nlevels=self.n_levels,
+                n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
             ).reshape(-1, 1)
@@ -767,6 +767,7 @@ class KrgBased(SurrogateModel):
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
+                self.ij = ij
                 if self.options["categorical_kernel"] == CONT_RELAX:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
@@ -789,9 +790,10 @@ class KrgBased(SurrogateModel):
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    x=x,
                 ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
@@ -914,6 +916,7 @@ class KrgBased(SurrogateModel):
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
+                self.ij = ij
                 if self.options["categorical_kernel"] == CONT_RELAX:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
@@ -936,7 +939,7 @@ class KrgBased(SurrogateModel):
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
                 ).reshape(n_eval, self.nt)

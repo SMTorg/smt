@@ -161,6 +161,7 @@ def cross_levels(X, ij, xtypes, y=None):
      n_levels: np.ndarray
             - The number of levels for every categorical variable.
     """
+
     n_levels = []
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
@@ -184,6 +185,18 @@ def cross_levels(X, ij, xtypes, y=None):
                 Lij[k][l][1] = y_cat[j, k]
 
     return Lij, n_levels
+
+
+def cross_levels_homo_space(X, ij, n_levels):
+
+    dim = np.shape(X)[1]
+    n, _ = ij.shape
+    Lij = np.zeros((n, dim))
+    for l in range(n):
+        i, j = ij[l]
+        Lij[l] = X[i] * X[j]
+
+    return Lij
 
 
 def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
@@ -417,8 +430,36 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
+def compute_X_cross(X, n_levels):
+    dim = int(n_levels * (n_levels - 1) / 2)
+    nt = len(X)
+    Xs = np.zeros((nt, dim))
+    k = 0
+    for i in range(n_levels):
+        for j in range(n_levels):
+            if j > i:
+                s = 0
+                for x in X:
+                    if int(x) == i or int(x) == j:
+                        Xs[s, k] = 1
+                    s += 1
+                k += 1
+
+    return Xs
+
+
 def matrix_data_corr(
-    self, corr, xtypes, theta, theta_bounds, dx, Lij, nlevels, cat_features, cat_kernel
+    self,
+    corr,
+    xtypes,
+    theta,
+    theta_bounds,
+    dx,
+    Lij,
+    n_levels,
+    cat_features,
+    cat_kernel,
+    x=None,
 ):
     """
     matrix kernel correlation model.
@@ -441,6 +482,8 @@ def matrix_data_corr(
         -  Indices of the categorical input dimensions.
      cat_kernel : string
          - The kernel to use for categorical inputs. Only for non continuous Kriging",
+    x : np.ndarray[n_obs , n_comp]
+        - The input instead of dx for homo_hs prediction
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
@@ -457,8 +500,11 @@ def matrix_data_corr(
     r = np.zeros((dx.shape[0], 1))
     n_components = dx.shape[1]
     nx = self.nx
+    nlevels = n_levels
     try:
         cat_kernel_comps = self.options["cat_kernel_comps"]
+        if cat_kernel_comps is not None:
+            nlevels = np.array(cat_kernel_comps)
     except KeyError:
         cat_kernel_comps = None
     try:
@@ -503,18 +549,19 @@ def matrix_data_corr(
     if cat_kernel == CONT_RELAX:
         from smt.applications.mixed_integer import unfold_with_enum_mask
 
-        X2 = unfold_with_enum_mask(xtypes, X)
+        X_pls_space = unfold_with_enum_mask(xtypes, X)
         nx = len(theta)
 
     elif cat_kernel == GOWER_MAT:
-        X2 = np.copy(X)
+        X_pls_space = np.copy(X)
     else:
-        X2, _ = compute_X_cont(X, xtypes)
+        X_pls_space, _ = compute_X_cont(X, xtypes)
         d_cont = dx[:, np.logical_not(cat_features)]
 
     if cat_kernel_comps is not None or ncomp < 1e5:
-        if np.shape(self.coeff_pls)[0] != np.shape(X2)[1]:
-            X, y = self._compute_pls(X2.copy(), y.copy())
+        ###Modifier la condition : if PLS cont
+        if np.shape(self.coeff_pls)[0] != np.shape(X_pls_space)[1]:
+            X, y = self._compute_pls(X_pls_space.copy(), y.copy())
         if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
             d = componentwise_distance_PLS(
                 dx,
@@ -599,20 +646,75 @@ def matrix_data_corr(
         T = np.exp(2 * T)
         k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
         T = (T + np.exp(-theta_bounds[1])) / (k)
+
+        if cat_kernel_comps is not None:
+            # Sampling points X and y
+            X = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
+            X_icat = X[:, cat_features]
+            X_icat = X_icat[:, i]
+            old_n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+            self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
+            X_full_space = compute_X_cross(X_icat, n_levels[i])
+            _, _ = self._compute_pls(X_full_space.copy(), y.copy())
+            if x is not None:
+                x_icat = x[:, cat_features]
+                x_icat = x_icat[:, i]
+                x_full_space = compute_X_cross(x_icat, n_levels[i])
+                try:
+                    dx_cat_i = cross_levels_homo_space(
+                        x_full_space, self.ij, n_levels[i]
+                    )
+                except:
+                    print("e")
+            else:
+                dx_cat_i = cross_levels_homo_space(X_full_space, self.ij, n_levels[i])
+
+            d_cat_i = componentwise_distance_PLS(
+                dx_cat_i,
+                corr,
+                self.options["n_comp"],
+                self.coeff_pls,
+                theta=None,
+                return_derivative=False,
+            )
+
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])
+
             if indi == indj:
-                r_cat[k, 0] = 1.0
+                r_cat[k] = 1.0
             else:
                 if cat_kernel == FULL_GAUSSIAN:
-                    r_cat[k, 0] = np.exp(
+                    r_cat[k] = np.exp(
                         -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
                         - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
                     ) * (T[indi, indj])
                 if cat_kernel == HOMO_GAUSSIAN:
-                    r_cat[k, 0] = T[indi, indj]
+                    if cat_kernel_comps is not None:
+                        Theta_i_red = np.zeros(int((nlevels - 1) * nlevels / 2))
+                        indmatvec = 0
+                        for j in range(nlevels[i]):
+                            for l in range(nlevels[i]):
+                                if l > j:
+                                    Theta_i_red[indmatvec] = T[j, l]
+                                    indmatvec += 1
+                        try:
+                            r_cat[k] = _correlation_types[corr](
+                                Theta_i_red, d_cat_i[k : k + 1]
+                            )
+                        except:
+                            print("e")
+                    else:
+                        r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)
+        if cat_kernel_comps is not None:
+            if old_n_comp == None:
+                self.options._dict.pop("n_comp", None)
+            else:
+                self.options["n_comp"] = old_n_comp
+
     return r
 
 
