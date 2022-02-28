@@ -717,7 +717,7 @@ def matrix_data_corr(
                     ) * (T[indi, indj])
                 if cat_kernel == HOMO_GAUSSIAN:
                     if cat_kernel_comps is not None:
-                        Theta_i_red = np.zeros(int((nlevels - 1) * nlevels / 2))
+                        Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
                         indmatvec = 0
                         for j in range(nlevels[i]):
                             for l in range(nlevels[i]):
