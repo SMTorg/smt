@@ -15,7 +15,7 @@ from sys import argv
 from smt.applications import MOE, MOESurrogateModel
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
-from smt.sampling_methods import FullFactorial
+from smt.sampling_methods import FullFactorial, LHS
 from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import RMTB, RMTC
 
@@ -340,6 +340,37 @@ class TestMOE(SMTestCase):
         moe._surrogate_type = {"RMTB": RMTB, "RMTC": RMTC}
         moe.set_training_values(xt, yt)
         moe.train()
+
+    def test_fix_test_data_bug(self):
+        # MOE does not interpolate the first training point
+        def myfunc(x):
+            return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
+
+        # limits of teh design space
+        xlimits = np.array([[0.0, 1.0]])
+        # LHS DOE with ndoe points
+        ndoe = 6
+
+        # Construction of the DOE
+        sampling = LHS(xlimits=xlimits, criterion="m", random_state=0)
+        x1D = sampling(ndoe)
+        x1D = np.sort(x1D, axis=0)
+        # Compute the output
+        y1D = myfunc(x1D)
+
+        # test data
+        num = 50
+        xv1D = sampling(num)
+        xv1D = np.sort(xv1D, axis=0)
+        yv1D = myfunc(xv1D)
+
+        moe1D = MOE(n_clusters=1, xtest=xv1D, ytest=yv1D, allow=["KRG"])
+        moe1D.set_training_values(x1D, y1D)
+        moe1D.train()
+
+        # Check that moe1D is interpolating all training values
+        ypred = moe1D.predict_values(x1D)
+        self.assertTrue(np.allclose(y1D, ypred))
 
     @staticmethod
     def run_moe_example_1d():
