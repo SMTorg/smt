@@ -13,9 +13,7 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
-GOWER = "gower"
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
@@ -241,18 +239,12 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if cat_kernel == CONT_RELAX:
             return n_param
         if mat_dim is not None:
-            if cat_kernel == FULL_GAUSSIAN:
-                return int(np.sum([l * (l + 1) / 2 for l in mat_dim]) + n_param)
-            if cat_kernel == HOMO_GAUSSIAN:
-                return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-            else:
-                raise ValueError("mat_dim is for homoscedastic mixed integer models")
+            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
+        
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
             if nx == d:
                 n_param -= 1
-            if cat_kernel == FULL_GAUSSIAN:
-                n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
             if cat_kernel == CONT_RELAX:
@@ -548,14 +540,6 @@ def matrix_data_corr(
     n_theta_cont = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == FULL_GAUSSIAN:
-                theta_cont_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
-                ] = False
-                theta_cat_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i
-                ] = [True] * int(nlevels[i] * (nlevels[i] + 1) / 2)
-                j += int(nlevels[i] * (nlevels[i] + 1) / 2)
             if cat_kernel == HOMO_GAUSSIAN:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
@@ -566,7 +550,7 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if cat_kernel == FULL_GAUSSIAN or cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel == HOMO_GAUSSIAN:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
                     j += 1
@@ -633,10 +617,7 @@ def matrix_data_corr(
     ##Theta_cat_i loop
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel == FULL_GAUSSIAN:
-            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
-                0.5 * np.pi / theta_bounds[1]
-            )
+    
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
@@ -710,11 +691,6 @@ def matrix_data_corr(
             if indi == indj:
                 r_cat[k] = 1.0
             else:
-                if cat_kernel == FULL_GAUSSIAN:
-                    r_cat[k] = np.exp(
-                        -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
-                        - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
-                    ) * (T[indi, indj])
                 if cat_kernel == HOMO_GAUSSIAN:
                     if cat_kernel_comps is not None:
                         Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
@@ -724,12 +700,9 @@ def matrix_data_corr(
                                 if l > j:
                                     Theta_i_red[indmatvec] = T[j, l]
                                     indmatvec += 1
-                        try:
-                            r_cat[k] = _correlation_types[corr](
-                                Theta_i_red, d_cat_i[k : k + 1]
-                            )
-                        except:
-                            print("e")
+                        r_cat[k] = _correlation_types[corr](
+                            Theta_i_red, d_cat_i[k : k + 1]
+                        )
                     else:
                         r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)
