@@ -23,7 +23,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG, QP, GEKPLS
+from smt.surrogate_models import KRG, QP, GEKPLS, KPLS
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
@@ -373,6 +373,41 @@ class TestEGO(SMTestCase):
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=sm,
+            enable_tunneling=False,
+            random_state=42,
+            categorical_kernel=HOMO_GAUSSIAN,
+        )
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+
+    def test_ego_mixed_integer_homo_gaussian_pls(self):
+        n_iter = 15
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(
+            xtypes,
+            xlimits,
+            LHS,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        sm = KPLS(print_global=False, n_comp=1, cat_kernel_comps=[2, 2])
         mixint = MixedIntegerContext(xtypes, xlimits)
 
         ego = EGO(

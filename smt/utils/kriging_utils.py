@@ -185,7 +185,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def cross_levels_homo_space(X, ij):
+def cross_levels_homo_space(X, ij,y=None):
     """
     Computes the nonzero componentwise (or Hadamard) product between the vectors in X
     Parameters
@@ -193,6 +193,8 @@ def cross_levels_homo_space(X, ij):
 
     X: np.ndarray [n_obs, dim]
             - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
@@ -207,7 +209,12 @@ def cross_levels_homo_space(X, ij):
     dx = np.zeros((n, dim))
     for l in range(n):
         i, j = ij[l]
-        dx[l] = X[i] * X[j]
+        if y is None:
+            dx[l] = X[i] * X[j]
+        else :  
+            dx[l] = X[i] * y[j]
+
+        
     return dx
 
 
@@ -671,7 +678,7 @@ def matrix_data_corr(
                 x_icat = x[:, cat_features]
                 x_icat = x_icat[:, i]
                 x_full_space = compute_X_cross(x_icat, n_levels[i])
-                dx_cat_i = cross_levels_homo_space(x_full_space, self.ij)
+                dx_cat_i = cross_levels_homo_space(x_full_space, self.ij,y=X_full_space)
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
