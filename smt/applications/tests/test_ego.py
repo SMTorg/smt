@@ -30,9 +30,8 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
-    GOWER,
+    GOWER_MAT,
     HOMO_GAUSSIAN,
-    FULL_GAUSSIAN,
 )
 from smt.sampling_methods import LHS
 
@@ -350,7 +349,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=GOWER,
+            categorical_kernel=GOWER_MAT,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -390,39 +389,6 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
-
-    def test_ego_mixed_integer_full_gaussian(self):
-        n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
-        )
-        n_doe = 2
-        sampling = MixedIntegerSamplingMethod(
-            xtypes,
-            xlimits,
-            LHS,
-            criterion="ese",
-            random_state=42,
-            output_in_folded_space=True,
-        )
-        xdoe = sampling(n_doe)
-        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        sm = KRG(print_global=False)
-        mixint = MixedIntegerContext(xtypes, xlimits)
-
-        ego = EGO(
-            n_iter=n_iter,
-            criterion=criterion,
-            xdoe=xdoe,
-            xtypes=xtypes,
-            xlimits=xlimits,
-            surrogate=sm,
-            enable_tunneling=False,
-            random_state=42,
-            categorical_kernel=FULL_GAUSSIAN,
-        )
-        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
     def test_ydoe_option(self):
         n_iter = 15
