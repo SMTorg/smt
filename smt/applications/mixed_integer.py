@@ -10,9 +10,7 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 from smt.utils.kriging_utils import (
-    GOWER,
     HOMO_GAUSSIAN,
-    FULL_GAUSSIAN,
     CONT_RELAX,
     GOWER_MAT,
 )

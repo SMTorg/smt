@@ -23,16 +23,15 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG, QP, GEKPLS
+from smt.surrogate_models import KRG, QP, GEKPLS, KPLS
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
     FLOAT,
     ENUM,
     ORD,
-    GOWER,
+    GOWER_MAT,
     HOMO_GAUSSIAN,
-    FULL_GAUSSIAN,
 )
 from smt.sampling_methods import LHS
 
@@ -350,7 +349,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=GOWER,
+            categorical_kernel=GOWER_MAT,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -391,13 +390,13 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
-    def test_ego_mixed_integer_full_gaussian(self):
+    def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
         )
-        n_doe = 2
+        n_doe = 6
         sampling = MixedIntegerSamplingMethod(
             xtypes,
             xlimits,
@@ -408,7 +407,7 @@ class TestEGO(SMTestCase):
         )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        sm = KRG(print_global=False)
+        sm = KPLS(print_global=False, n_comp=1, cat_kernel_comps=[2, 2])
         mixint = MixedIntegerContext(xtypes, xlimits)
 
         ego = EGO(
@@ -420,9 +419,11 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=FULL_GAUSSIAN,
+            categorical_kernel=HOMO_GAUSSIAN,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ydoe_option(self):
         n_iter = 15

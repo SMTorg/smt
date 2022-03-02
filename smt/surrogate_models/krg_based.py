@@ -29,9 +29,7 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
 from smt.utils.kriging_utils import (
-    GOWER,
     HOMO_GAUSSIAN,
-    FULL_GAUSSIAN,
     CONT_RELAX,
     GOWER_MAT,
 )
@@ -79,7 +77,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
+            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
 
@@ -172,7 +170,6 @@ class KrgBased(SurrogateModel):
 
             if self.options["categorical_kernel"] in [
                 HOMO_GAUSSIAN,
-                FULL_GAUSSIAN,
                 CONT_RELAX,
                 GOWER_MAT,
             ]:
@@ -310,12 +307,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] in [
-            HOMO_GAUSSIAN,
-            FULL_GAUSSIAN,
-            CONT_RELAX,
-            GOWER_MAT,
-        ]:
+        if self.options["categorical_kernel"] is not None:
             dx = self.D
             if self.options["categorical_kernel"] == CONT_RELAX:
                 from smt.applications.mixed_integer import unfold_with_enum_mask
@@ -754,15 +746,7 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if self.options["categorical_kernel"] == GOWER:
-                r = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta, d
-                ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                FULL_GAUSSIAN,
-                CONT_RELAX,
-            ]:
+            if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -903,15 +887,8 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if self.options["categorical_kernel"] == GOWER:
-                r = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta, d
-                ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                FULL_GAUSSIAN,
-                CONT_RELAX,
-            ]:
+            if self.options["categorical_kernel"] is not None:
+
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
@@ -1165,7 +1142,6 @@ class KrgBased(SurrogateModel):
 
             if self.options["categorical_kernel"] in [
                 HOMO_GAUSSIAN,
-                FULL_GAUSSIAN,
                 CONT_RELAX,
                 GOWER_MAT,
             ]:
@@ -1357,6 +1333,23 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
+
+        if self.options["categorical_kernel"] is not None:
+            if self.options["categorical_kernel"] not in [
+                HOMO_GAUSSIAN,
+                GOWER_MAT,
+                CONT_RELAX,
+            ]:
+                raise ValueError("invalid categorical_kernel.")
+            if (
+                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN]
+                and self.name == "KPLS"
+            ):
+                if self.options["cat_kernel_comps"] is not None:
+                    raise ValueError(
+                        "cat_kernel_comps option is for homoscedastic gaussian kernel."
+                    )
+
         mat_dim = (
             self.options["cat_kernel_comps"]
             if "cat_kernel_comps" in self.options
@@ -1364,7 +1357,6 @@ class KrgBased(SurrogateModel):
         )
         if self.options["categorical_kernel"] in [
             HOMO_GAUSSIAN,
-            FULL_GAUSSIAN,
             CONT_RELAX,
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
@@ -1383,7 +1375,6 @@ class KrgBased(SurrogateModel):
             "categorical_kernel"
         ] not in [
             HOMO_GAUSSIAN,
-            FULL_GAUSSIAN,
             CONT_RELAX,
         ]:
             if len(self.options["theta0"]) == 1:
