@@ -407,7 +407,7 @@ class TestEGO(SMTestCase):
         )
         xdoe = sampling(n_doe)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        sm = KPLS(print_global=False, n_comp=1, cat_kernel_comps=[2, 2])
+        sm = KPLS(print_global=False, n_comp=1, cat_kernel_comps=[2, 2],corr='abs_exp')
         mixint = MixedIntegerContext(xtypes, xlimits)
 
         ego = EGO(
