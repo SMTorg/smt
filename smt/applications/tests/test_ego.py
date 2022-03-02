@@ -391,7 +391,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     def test_ego_mixed_integer_homo_gaussian_pls(self):
-        n_iter = 15
+        n_iter = 2
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
