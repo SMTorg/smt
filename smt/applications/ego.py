@@ -18,7 +18,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerContext,
     GOWER_MAT,
     HOMO_GAUSSIAN,
-    CONT_RELAX
+    CONT_RELAX,
 )
 from smt.utils.misc import compute_rms_error
 

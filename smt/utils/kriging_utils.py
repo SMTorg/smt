@@ -185,7 +185,7 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def cross_levels_homo_space(X, ij,y=None):
+def cross_levels_homo_space(X, ij, y=None):
     """
     Computes the nonzero componentwise (or Hadamard) product between the vectors in X
     Parameters
@@ -211,10 +211,9 @@ def cross_levels_homo_space(X, ij,y=None):
         i, j = ij[l]
         if y is None:
             dx[l] = X[i] * X[j]
-        else :  
+        else:
             dx[l] = X[i] * y[j]
 
-        
     return dx
 
 
@@ -247,7 +246,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-        
+
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
             if nx == d:
@@ -536,6 +535,10 @@ def matrix_data_corr(
         cat_kernel_comps = None
     try:
         ncomp = self.options["n_comp"]
+        try:
+            self.pls_coeff_cont
+        except AttributeError:
+            self.pls_coeff_cont = self.coeff_pls
     except KeyError:
         cat_kernel_comps = None
         ncomp = 1e5
@@ -579,14 +582,15 @@ def matrix_data_corr(
 
     if cat_kernel_comps is not None or ncomp < 1e5:
         ###Modifier la condition : if PLS cont
-        if np.shape(self.coeff_pls)[0] != np.shape(X_pls_space)[1]:
+        if np.shape(self.pls_coeff_cont)[0] != np.shape(X_pls_space)[1]:
             X, y = self._compute_pls(X_pls_space.copy(), y.copy())
+            self.pls_coeff_cont = self.coeff_pls
         if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
             d = componentwise_distance_PLS(
                 dx,
                 corr,
                 self.options["n_comp"],
-                self.coeff_pls,
+                self.pls_coeff_cont,
                 theta=None,
                 return_derivative=False,
             )
@@ -595,9 +599,9 @@ def matrix_data_corr(
         else:
             d_cont = componentwise_distance_PLS(
                 d_cont,
-                abs_exp,
+                corr,
                 self.options["n_comp"],
-                self.coeff_pls,
+                self.pls_coeff_cont,
                 theta=None,
                 return_derivative=False,
             )
@@ -621,9 +625,13 @@ def matrix_data_corr(
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
     ##Theta_cat_i loop
+    try:
+        self.coeff_pls_cat
+    except AttributeError:
+        self.coeff_pls_cat = []
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-    
+
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
@@ -672,19 +680,25 @@ def matrix_data_corr(
             old_n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
             X_full_space = compute_X_cross(X_icat, n_levels[i])
-            _, _ = self._compute_pls(X_full_space.copy(), y.copy())
-            # print(self.coeff_pls)
+            try:
+                self.coeff_pls = self.coeff_pls_cat[i]
+            except IndexError:
+                _, _ = self._compute_pls(X_full_space.copy(), y.copy())
+                self.coeff_pls_cat.append(self.coeff_pls)
+
             if x is not None:
                 x_icat = x[:, cat_features]
                 x_icat = x_icat[:, i]
                 x_full_space = compute_X_cross(x_icat, n_levels[i])
-                dx_cat_i = cross_levels_homo_space(x_full_space, self.ij,y=X_full_space)
+                dx_cat_i = cross_levels_homo_space(
+                    x_full_space, self.ij, y=X_full_space
+                )
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
-                abs_exp,
+                corr,
                 self.options["n_comp"],
                 self.coeff_pls,
                 theta=None,
@@ -707,7 +721,7 @@ def matrix_data_corr(
                                 if l > j:
                                     Theta_i_red[indmatvec] = T[j, l]
                                     indmatvec += 1
-                        r_cat[k] = abs_exp(
+                        r_cat[k] = _correlation_types[corr](
                             Theta_i_red, d_cat_i[k : k + 1]
                         )
                     else:
