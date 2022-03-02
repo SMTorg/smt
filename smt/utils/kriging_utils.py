@@ -674,6 +674,7 @@ def matrix_data_corr(
             self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
             X_full_space = compute_X_cross(X_icat, n_levels[i])
             _, _ = self._compute_pls(X_full_space.copy(), y.copy())
+            # print(self.coeff_pls)
             if x is not None:
                 x_icat = x[:, cat_features]
                 x_icat = x_icat[:, i]
