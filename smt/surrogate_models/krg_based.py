@@ -316,15 +316,14 @@ class KrgBased(SurrogateModel):
                     self.options["xtypes"], self.training_points[None][0][0]
                 )
                 (
-                    X2_norma,
+                    self.X2_norma,
                     _,
+                    self.X2_offset,
                     _,
-                    _,
-                    _,
+                    self.X2_scale,
                     _,
                 ) = standardization(X2, self.training_points[None][0][1])
-                self.X_norma = X2_norma
-                dx, _ = cross_distances(X2_norma)
+                dx, _ = cross_distances(self.X2_norma)
 
             r = matrix_data_corr(
                 self,
@@ -755,17 +754,10 @@ class KrgBased(SurrogateModel):
                 if self.options["categorical_kernel"] == CONT_RELAX:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
-                    X2 = unfold_with_enum_mask(self.options["xtypes"], x)
-                    (
-                        X2_norma,
-                        _,
-                        _,
-                        _,
-                        _,
-                        _,
-                    ) = standardization(X2, self.training_points[None][0][1])
+                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(X2_norma, Y=self.X_norma.copy())
+                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
                 r = matrix_data_corr(
                     self,
                     corr=self.options["corr"],
@@ -897,17 +889,11 @@ class KrgBased(SurrogateModel):
                 if self.options["categorical_kernel"] == CONT_RELAX:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
-                    X2 = unfold_with_enum_mask(self.options["xtypes"], x)
-                    (
-                        X2_norma,
-                        _,
-                        _,
-                        _,
-                        _,
-                        _,
-                    ) = standardization(X2, self.training_points[None][0][1])
+                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+
                     # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(X2_norma, Y=self.X_norma.copy())
+                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
                 r = matrix_data_corr(
                     self,
                     corr=self.options["corr"],
