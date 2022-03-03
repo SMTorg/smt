@@ -538,7 +538,7 @@ def matrix_data_corr(
         try:
             self.pls_coeff_cont
         except AttributeError:
-            self.pls_coeff_cont = self.coeff_pls
+            self.pls_coeff_cont = []
     except KeyError:
         cat_kernel_comps = None
         ncomp = 1e5
@@ -582,7 +582,7 @@ def matrix_data_corr(
 
     if cat_kernel_comps is not None or ncomp < 1e5:
         ###Modifier la condition : if PLS cont
-        if np.shape(self.pls_coeff_cont)[0] != np.shape(X_pls_space)[1]:
+        if self.pls_coeff_cont == []:
             X, y = self._compute_pls(X_pls_space.copy(), y.copy())
             self.pls_coeff_cont = self.coeff_pls
         if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
