@@ -159,10 +159,12 @@ class KrgBased(SurrogateModel):
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
-            X, y = self._compute_pls(X.copy(), y.copy())
+            if self.options["categorical_kernel"] is None:
+                X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
         self.X_train = X
+
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
                 X=X, xtypes=self.options["xtypes"]
@@ -179,7 +181,6 @@ class KrgBased(SurrogateModel):
                 _, self.cat_features = compute_X_cont(
                     self.X_train, self.options["xtypes"]
                 )
-
         # Center and scale X and y
         (
             self.X_norma,
@@ -189,6 +190,7 @@ class KrgBased(SurrogateModel):
             self.X_scale,
             self.y_std,
         ) = standardization(X, y)
+
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:

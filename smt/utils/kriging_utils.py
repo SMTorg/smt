@@ -353,7 +353,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         if np.isnan(min):
             min = 0.0
         num_max[col] = max
-        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
+        num_ranges[col] = ((1 - min) / max) if (max != 0) else 0.0
 
     # This is to normalize the numeric values between 0 and 1.
     Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
@@ -579,7 +579,6 @@ def matrix_data_corr(
     else:
         X_pls_space, _ = compute_X_cont(X, xtypes)
         d_cont = dx[:, np.logical_not(cat_features)]
-
     if cat_kernel_comps is not None or ncomp < 1e5:
         ###Modifier la condition : if PLS cont
         if self.pls_coeff_cont == []:
