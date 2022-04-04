@@ -665,10 +665,10 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        T = (T - 1) * theta_bounds[1] / 2
-        T = np.exp(2 * T)
-        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-        T = (T + np.exp(-theta_bounds[1])) / (k)
+   ##     T = (T - 1) * theta_bounds[1] / 2
+     #   T = np.exp(2 * T)
+      #  k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+      #  T = (T + np.exp(-theta_bounds[1])) / (k)
 
         if cat_kernel_comps is not None:
             # Sampling points X and y
@@ -721,8 +721,12 @@ def matrix_data_corr(
                                     Theta_i_red[indmatvec] = T[j, l]
                                     indmatvec += 1
                         r_cat[k] = _correlation_types[corr](
-                            Theta_i_red, d_cat_i[k : k + 1]
+                           Theta_i_red, d_cat_i[k : k + 1]
                         )
+                        kval_cat=0
+                        for indijk in range(len(Theta_i_red)) : 
+                            kval_cat += np.multiply(Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk])
+                        r_cat[k] = kval_cat
                     else:
                         r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)
