@@ -695,7 +695,8 @@ def matrix_data_corr(
                 )
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
-
+            
+            ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
             self.coeff_pls = (1-1e-4) * self.coeff_pls + 1e-4 * np.eye(
                 np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1]
             )
