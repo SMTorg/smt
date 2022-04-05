@@ -632,7 +632,7 @@ def matrix_data_corr(
         theta_cat = theta[theta_cat_features[:, i]]
 
         if cat_kernel == HOMO_GAUSSIAN:
-            theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+            theta_cat = theta_cat * (2 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -665,10 +665,10 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-   ##     T = (T - 1) * theta_bounds[1] / 2
-     #   T = np.exp(2 * T)
-      #  k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-      #  T = (T + np.exp(-theta_bounds[1])) / (k)
+        ##     T = (T - 1) * theta_bounds[1] / 2
+        #   T = np.exp(2 * T)
+        #  k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+        #  T = (T + np.exp(-theta_bounds[1])) / (k)
 
         if cat_kernel_comps is not None:
             # Sampling points X and y
@@ -694,6 +694,10 @@ def matrix_data_corr(
                 )
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
+
+            self.coeff_pls = 0.9 * self.coeff_pls + 0.1 * np.eye(
+                np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1]
+            )
 
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
@@ -721,12 +725,22 @@ def matrix_data_corr(
                                     Theta_i_red[indmatvec] = T[j, l]
                                     indmatvec += 1
                         r_cat[k] = _correlation_types[corr](
-                           Theta_i_red, d_cat_i[k : k + 1]
+                            Theta_i_red, d_cat_i[k : k + 1]
                         )
-                        kval_cat=0
-                        for indijk in range(len(Theta_i_red)) : 
-                            kval_cat += np.multiply(Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk])
+                        kval_cat = 0
+                        for indijk in range(len(Theta_i_red)):
+                            kval_cat += np.multiply(
+                                Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                            )
                         r_cat[k] = kval_cat
+                        r_cat[k] = (
+                            (
+                                np.exp(2 * (r_cat[k] - 1) * theta_bounds[1] / 2)
+                                + np.exp(-theta_bounds[1])
+                            )
+                            / (1 + np.exp(-theta_bounds[1]))
+                            / np.exp(-theta_bounds[0])
+                        )
                     else:
                         r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)
