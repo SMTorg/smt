@@ -665,10 +665,11 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        ##     T = (T - 1) * theta_bounds[1] / 2
-        #   T = np.exp(2 * T)
-        #  k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-        #  T = (T + np.exp(-theta_bounds[1])) / (k)
+        if cat_kernel_comps is None :
+            T = (T - 1) * theta_bounds[1] / 2
+            T = np.exp(2 * T)
+            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+            T = (T + np.exp(-theta_bounds[1])) / (k)
 
         if cat_kernel_comps is not None:
             # Sampling points X and y
