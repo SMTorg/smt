@@ -696,7 +696,7 @@ def matrix_data_corr(
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
-            self.coeff_pls = 0.9 * self.coeff_pls + 0.1 * np.eye(
+            self.coeff_pls = (1-1e-4) * self.coeff_pls + 1e-4 * np.eye(
                 np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1]
             )
 
