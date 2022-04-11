@@ -321,12 +321,7 @@ class LHS(ScaledSamplingMethod):
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)
 
-        D0 = pdist(P0)
-        R0 = np.corrcoef(P0)
-        corr0 = np.max(np.abs(R0[R0 != 1]))
-        phip0 = self._PhiP(P0)
-
-        P, historic = self._maximinESE(
+        P, _ = self._maximinESE(
             P0,
             outer_loop=outer_loop,
             inner_loop=inner_loop,
