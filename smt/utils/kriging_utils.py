@@ -667,8 +667,8 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        if cat_kernel_comps is None :
-            T = (T - 1) * thetagibounds[1] / 2
+        if cat_kernel_comps is None:
+            T = (T - 1) * theta_bounds[1] / 2
             T = np.exp(2 * T)
             k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
             T = (T + np.exp(-theta_bounds[1])) / (k)
@@ -697,11 +697,14 @@ def matrix_data_corr(
                 )
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
-            
+
             ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
-            self.coeff_pls = (1-1e-9) * self.coeff_pls + 1e-9 * np.eye(
-                np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1]
-            )+1e-12 
+            self.coeff_pls = (
+                (1 - 1e-9) * self.coeff_pls
+                + 1e-9
+                * np.eye(np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1])
+                + 1e-12
+            )
 
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
@@ -737,16 +740,19 @@ def matrix_data_corr(
                                 Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                             )
                         r_cat[k] = kval_cat
-# =============================================================================
-#                         r_cat[k] = (
-#                             (
-#                                 np.exp(2 * (r_cat[k] - 1) * theta_bounds[1] / 2)
-#                                 + np.exp(-theta_bounds[1])
-#                             )
-#                             / (1 + np.exp(-theta_bounds[1]))
-#                             / np.exp(-theta_bounds[0])
-#                         )
-# =============================================================================
+
+                        ###TBM // with or without : use kernel properly
+                        ### Value were not in [0,1]
+                    # =============================================================================
+                    #                         r_cat[k] = (
+                    #                             (
+                    #                                 np.exp(2 * (r_cat[k] - 1) * theta_bounds[1] / 2)
+                    #                                 + np.exp(-theta_bounds[1])
+                    #                             )
+                    #                             / (1 + np.exp(-theta_bounds[1]))
+                    #                             / np.exp(-theta_bounds[0])
+                    #                         )
+                    # =============================================================================
                     else:
                         r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)
