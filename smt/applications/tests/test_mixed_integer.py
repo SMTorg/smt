@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
-    FLOAT,cd 
+    FLOAT,
     ENUM,
     ORD,
     GOWER_MAT,
