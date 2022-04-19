@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-#HOMO_HYP = "homoscedastic_matrix_kernel"
+HOMO_HYP = "homoscedastic_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
@@ -631,11 +631,10 @@ def matrix_data_corr(
         self.coeff_pls_cat = []
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-
         if cat_kernel == HOMO_GAUSSIAN:
-            theta_cat = theta_cat * (2 * np.pi / theta_bounds[1])
-            ### 0.5  pi if kernel/positive
-            ##### 1 pi if raw/ -1,1
+            theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+        elif cat_kernel == HOMO_HYP:
+            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])      
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -668,14 +667,12 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-# =============================================================================
-#         if cat_kernel_comps is None:
-#             T = (T - 1) * theta_bounds[1] / 2
-#             T = np.exp(2 * T)
-#             k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-#             T = (T + np.exp(-theta_bounds[1])) / (k)
-# 
-# =============================================================================
+        if cat_kernel == HOMO_GAUSSIAN:
+            T = (T - 1) * theta_bounds[1] / 2
+            T = np.exp(2 * T)
+            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+            T = (T + np.exp(-theta_bounds[1])) / (k)
+            
         if cat_kernel_comps is not None:
             # Sampling points X and y
             X = self.training_points[None][0][0]
@@ -744,7 +741,7 @@ def matrix_data_corr(
                             )
                         r_cat[k] = kval_cat
 
-                        ###TBM // with or without : use kernel properly
+                        ### with or without : use kernel properly
                         ### Value were not in [0,1]
                     # =============================================================================
                     #                         r_cat[k] = (
