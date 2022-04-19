@@ -14,6 +14,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
+#HOMO_HYP = "homoscedastic_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
@@ -667,12 +668,14 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        if cat_kernel_comps is None:
-            T = (T - 1) * theta_bounds[1] / 2
-            T = np.exp(2 * T)
-            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-            T = (T + np.exp(-theta_bounds[1])) / (k)
-
+# =============================================================================
+#         if cat_kernel_comps is None:
+#             T = (T - 1) * theta_bounds[1] / 2
+#             T = np.exp(2 * T)
+#             k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+#             T = (T + np.exp(-theta_bounds[1])) / (k)
+# 
+# =============================================================================
         if cat_kernel_comps is not None:
             # Sampling points X and y
             X = self.training_points[None][0][0]

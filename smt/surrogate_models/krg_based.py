@@ -1053,7 +1053,7 @@ class KrgBased(SurrogateModel):
 
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
-
+                
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
@@ -1231,6 +1231,7 @@ class KrgBased(SurrogateModel):
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
+                    print(optimal_rlf_value, optimal_theta)
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
