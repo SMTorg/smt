@@ -11,6 +11,8 @@ from smt.applications.mixed_integer import (
     ENUM,
     ORD,
     GOWER_MAT,
+    HOMO_GAUSSIAN,
+    CONT_RELAX,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
