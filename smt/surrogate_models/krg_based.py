@@ -30,6 +30,7 @@ from smt.sampling_methods import LHS
 
 from smt.utils.kriging_utils import (
     HOMO_GAUSSIAN,
+    HOMO_HYP,
     CONT_RELAX,
     GOWER_MAT,
 )
@@ -77,7 +78,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN],
+            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN,HOMO_HYP],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
 
@@ -159,10 +160,12 @@ class KrgBased(SurrogateModel):
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
-            X, y = self._compute_pls(X.copy(), y.copy())
+            if self.options["categorical_kernel"] is None:
+                X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
         self.X_train = X
+
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
                 X=X, xtypes=self.options["xtypes"]
@@ -172,6 +175,7 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 CONT_RELAX,
                 GOWER_MAT,
+                HOMO_HYP,
             ]:
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
@@ -179,7 +183,6 @@ class KrgBased(SurrogateModel):
                 _, self.cat_features = compute_X_cont(
                     self.X_train, self.options["xtypes"]
                 )
-
         # Center and scale X and y
         (
             self.X_norma,
@@ -189,6 +192,7 @@ class KrgBased(SurrogateModel):
             self.X_scale,
             self.y_std,
         ) = standardization(X, y)
+
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
@@ -1051,7 +1055,7 @@ class KrgBased(SurrogateModel):
 
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
-
+                
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
@@ -1130,6 +1134,7 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 CONT_RELAX,
                 GOWER_MAT,
+                HOMO_HYP,
             ]:
                 self.D = D
             else:
@@ -1325,10 +1330,11 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 GOWER_MAT,
                 CONT_RELAX,
+                HOMO_HYP
             ]:
                 raise ValueError("invalid categorical_kernel.")
             if (
-                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN]
+                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN,HOMO_HYP]
                 and self.name == "KPLS"
             ):
                 if self.options["cat_kernel_comps"] is not None:
@@ -1343,6 +1349,7 @@ class KrgBased(SurrogateModel):
         )
         if self.options["categorical_kernel"] in [
             HOMO_GAUSSIAN,
+            HOMO_HYP,
             CONT_RELAX,
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
@@ -1362,6 +1369,7 @@ class KrgBased(SurrogateModel):
         ] not in [
             HOMO_GAUSSIAN,
             CONT_RELAX,
+            HOMO_HYP,
         ]:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)

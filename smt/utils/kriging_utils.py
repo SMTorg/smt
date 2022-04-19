@@ -14,6 +14,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
+HOMO_HYP = "homoscedastic_matrix_kernel"
 CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
@@ -251,7 +252,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if isinstance(xtyp, tuple):
             if nx == d:
                 n_param -= 1
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
             if cat_kernel == CONT_RELAX:
                 n_param += int(xtyp[1])
@@ -549,7 +550,7 @@ def matrix_data_corr(
     n_theta_cont = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
                 ] = False
@@ -559,7 +560,7 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
                     j += 1
@@ -579,7 +580,6 @@ def matrix_data_corr(
     else:
         X_pls_space, _ = compute_X_cont(X, xtypes)
         d_cont = dx[:, np.logical_not(cat_features)]
-
     if cat_kernel_comps is not None or ncomp < 1e5:
         ###Modifier la condition : if PLS cont
         if self.pls_coeff_cont == []:
@@ -631,9 +631,10 @@ def matrix_data_corr(
         self.coeff_pls_cat = []
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+        elif cat_kernel == HOMO_HYP:
+            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])      
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -666,11 +667,12 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        T = (T - 1) * theta_bounds[1] / 2
-        T = np.exp(2 * T)
-        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-        T = (T + np.exp(-theta_bounds[1])) / (k)
-
+        if cat_kernel == HOMO_GAUSSIAN:
+            T = (T - 1) * theta_bounds[1] / 2
+            T = np.exp(2 * T)
+            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+            T = (T + np.exp(-theta_bounds[1])) / (k)
+            
         if cat_kernel_comps is not None:
             # Sampling points X and y
             X = self.training_points[None][0][0]
@@ -696,6 +698,14 @@ def matrix_data_corr(
             else:
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
+            ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
+            self.coeff_pls = (
+                (1 - 1e-9) * self.coeff_pls
+                + 1e-9
+                * np.eye(np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1])
+                + 1e-12
+            )
+
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
                 corr,
@@ -712,7 +722,7 @@ def matrix_data_corr(
             if indi == indj:
                 r_cat[k] = 1.0
             else:
-                if cat_kernel == HOMO_GAUSSIAN:
+                if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                     if cat_kernel_comps is not None:
                         Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
                         indmatvec = 0
@@ -724,6 +734,25 @@ def matrix_data_corr(
                         r_cat[k] = _correlation_types[corr](
                             Theta_i_red, d_cat_i[k : k + 1]
                         )
+                        kval_cat = 0
+                        for indijk in range(len(Theta_i_red)):
+                            kval_cat += np.multiply(
+                                Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                            )
+                        r_cat[k] = kval_cat
+
+                        ### with or without : use kernel properly
+                        ### Value were not in [0,1]
+                    # =============================================================================
+                    #                         r_cat[k] = (
+                    #                             (
+                    #                                 np.exp(2 * (r_cat[k] - 1) * theta_bounds[1] / 2)
+                    #                                 + np.exp(-theta_bounds[1])
+                    #                             )
+                    #                             / (1 + np.exp(-theta_bounds[1]))
+                    #                             / np.exp(-theta_bounds[0])
+                    #                         )
+                    # =============================================================================
                     else:
                         r_cat[k] = T[indi, indj]
         r = np.multiply(r, r_cat)

@@ -11,6 +11,7 @@ from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 from smt.utils.kriging_utils import (
     HOMO_GAUSSIAN,
+    HOMO_HYP,
     CONT_RELAX,
     GOWER_MAT,
 )

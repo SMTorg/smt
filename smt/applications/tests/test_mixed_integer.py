@@ -11,6 +11,9 @@ from smt.applications.mixed_integer import (
     ENUM,
     ORD,
     GOWER_MAT,
+    HOMO_GAUSSIAN,
+    HOMO_HYP,
+    CONT_RELAX,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -487,6 +490,54 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertEqual(np.shape(y), (105, 1))
 
+    def test_mixed_homo_hyp_2D(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HOMO_GAUSSIAN,
+            HOMO_HYP,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_HYP,
+            xtypes=[(ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        for x in x_pred:
+            print(i, x)
+            i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
+
     def test_mixed_homo_gaussian_3D_PLS(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
@@ -576,6 +627,53 @@ class TestMixedInteger(unittest.TestCase):
 
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
+
+    def test_mixed_homo_hyp_3D_PLS_cate(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            FLOAT,
+            HOMO_GAUSSIAN,
+            HOMO_HYP,
+            GOWER_MAT,
+        )
+        from smt.surrogate_models import KRG, KPLS
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import itertools
+
+        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_HYP,
+            xtypes=[FLOAT, (ENUM, 5), FLOAT],
+            xlimits=xlimits,
+            surrogate=KPLS(
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[4], corr="squar_exp"
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x2, x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        i = 0
+        i += 1
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
+        self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
+
 
     def test_mixed_homo_gaussian_3D_ord_cate(self):
         from smt.applications.mixed_integer import (
