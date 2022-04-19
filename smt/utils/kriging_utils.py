@@ -252,7 +252,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if isinstance(xtyp, tuple):
             if nx == d:
                 n_param -= 1
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
             if cat_kernel == CONT_RELAX:
                 n_param += int(xtyp[1])
@@ -550,7 +550,7 @@ def matrix_data_corr(
     n_theta_cont = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
                 ] = False
@@ -560,7 +560,7 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
                     j += 1
@@ -722,7 +722,7 @@ def matrix_data_corr(
             if indi == indj:
                 r_cat[k] = 1.0
             else:
-                if cat_kernel == HOMO_GAUSSIAN:
+                if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                     if cat_kernel_comps is not None:
                         Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
                         indmatvec = 0
