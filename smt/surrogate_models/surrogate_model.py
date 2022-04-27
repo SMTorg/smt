@@ -15,7 +15,7 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 
-class SurrogateModel(object, metaclass=ABCMeta):
+class SurrogateModel(metaclass=ABCMeta):
     """
     Base class for all surrogate models.
 

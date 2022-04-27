@@ -3,7 +3,6 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
-
 import numpy as np
 from scipy import linalg, optimize
 from copy import deepcopy
@@ -19,8 +18,16 @@ from smt.utils.kriging_utils import (
     cross_distances,
     matern52,
     matern32,
+    gower_componentwise_distances,
+    compute_X_cont,
+    cross_levels,
+    matrix_data_corr,
+    compute_n_param,
 )
 from scipy.stats import multivariate_normal as m_norm
+from smt.sampling_methods import LHS
+
+from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
 
 
 class KrgBased(SurrogateModel):
@@ -51,9 +58,29 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp", "act_exp", "matern52", "matern32"),
+            values=(
+                "abs_exp",
+                "squar_exp",
+                "act_exp",
+                "matern52",
+                "matern32",
+            ),
             desc="Correlation function type",
             types=(str),
+        )
+        declare(
+            "categorical_kernel",
+            None,
+            types=str,
+            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
+        )
+        declare(
+            "xtypes",
+            None,
+            types=list,
+            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            "or (ENUM n) for categorical dimension with n levels",
         )
         declare(
             "nugget",
@@ -107,6 +134,12 @@ class KrgBased(SurrogateModel):
             values=(True, False),
             desc="heteroscedastic noise evaluation flag",
         )
+        declare(
+            "n_start",
+            10,
+            types=(int),
+            desc="number of optimizer runs (multistart method)",
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
@@ -123,6 +156,19 @@ class KrgBased(SurrogateModel):
             X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
+        self.X_train = X
+        if self.options["categorical_kernel"] is not None:
+            D, self.ij, X = gower_componentwise_distances(
+                X=X, xtypes=self.options["xtypes"]
+            )
+
+            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+                self.Lij, self.n_levels = cross_levels(
+                    X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+                )
+                _, self.cat_features = compute_X_cont(
+                    self.X_train, self.options["xtypes"]
+                )
 
         # Center and scale X and y
         (
@@ -133,33 +179,33 @@ class KrgBased(SurrogateModel):
             self.X_scale,
             self.y_std,
         ) = standardization(X, y)
-
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
-        else:
-            if self.options["use_het_noise"]:
-                # hetGP works with unique design variables when noise variance are not given
-                (self.X_norma, index_unique, nt_reps,) = np.unique(
-                    self.X_norma, return_inverse=True, return_counts=True, axis=0
-                )
-                self.nt = self.X_norma.shape[0]
+        elif self.options["use_het_noise"]:
+            # hetGP works with unique design variables when noise variance are not given
+            (
+                self.X_norma,
+                index_unique,
+                nt_reps,
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
+            self.nt = self.X_norma.shape[0]
 
-                # computing the mean of the output per unique design variable (see Binois et al., 2018)
-                y_norma_unique = []
-                for i in range(self.nt):
-                    y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
+            # computing the mean of the output per unique design variable (see Binois et al., 2018)
+            y_norma_unique = []
+            for i in range(self.nt):
+                y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
+            # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
+            self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
+            for i in range(self.nt):
+                diff = self.y_norma[index_unique == i] - y_norma_unique[i]
+                if np.sum(diff ** 2) != 0.0:
+                    self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
+            self.optimal_noise = self.optimal_noise / nt_reps
+            self.y_norma = y_norma_unique
+        if self.options["categorical_kernel"] is None:
+            # Calculate matrix of distances D between samples
+            D, self.ij = cross_distances(self.X_norma)
 
-                # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
-                for i in range(self.nt):
-                    diff = self.y_norma[index_unique == i] - y_norma_unique[i]
-                    if np.sum(diff ** 2) != 0.0:
-                        self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
-                self.optimal_noise = self.optimal_noise / nt_reps
-                self.y_norma = y_norma_unique
-
-        # Calculate matrix of distances D between samples
-        D, self.ij = cross_distances(self.X_norma)
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
             print(
                 "Warning: multiple x input features have the same value (at least same row twice)."
@@ -180,6 +226,7 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
+
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -250,18 +297,31 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
+        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            r = matrix_data_corr(
+                corr=self.options["corr"],
+                theta=theta,
+                theta_bounds=self.options["theta_bounds"],
+                d=self.D,
+                Lij=self.Lij,
+                nlevels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+            ).reshape(-1, 1)
+        else:
+            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
+                -1, 1
+            )
 
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-
         # Cholesky decomposition of R
+
         try:
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            # raise e
             return reduced_likelihood_function_value, par
 
         # Get generalized least squared solution
@@ -326,6 +386,8 @@ class KrgBased(SurrogateModel):
         ):
             self.best_iteration_fail = reduced_likelihood_function_value
             self._thetaMemory = np.array(tmp_var)
+        if reduced_likelihood_function_value > 1e15:
+            reduced_likelihood_function_value = 1e15
         return reduced_likelihood_function_value, par
 
     def _reduced_likelihood_gradient(self, theta):
@@ -386,7 +448,6 @@ class KrgBased(SurrogateModel):
         arg_all = []
         dsigma_all = []
         dbeta_all = []
-
         for i_der in range(nb_theta):
             # Compute R derivatives
             dr = self._correlation_types[self.options["corr"]](
@@ -507,10 +568,9 @@ class KrgBased(SurrogateModel):
         Rinv_dmudomega_all = []
 
         n_val_hess = nb_theta * (nb_theta + 1) // 2
-        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int)
+        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int32)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
-
         if self.name in ["MGP"]:
             log_prior = self._reduced_log_prior(theta, hessian=True)
 
@@ -645,22 +705,51 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_offset) / self.X_scale
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
-        y = np.zeros(n_eval)
+        if self.options["categorical_kernel"] is not None:
+            # Compute the correlation function
+            dx = gower_componentwise_distances(
+                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+            )
+            d = self._componentwise_distance(dx)
+
+            if self.options["categorical_kernel"] == GOWER:
+                r = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta, d
+                ).reshape(n_eval, self.nt)
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+                _, ij = cross_distances(x, self.X_train)
+                Lij, _ = cross_levels(
+                    X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
+                )
+                r = matrix_data_corr(
+                    corr=self.options["corr"],
+                    theta=self.optimal_theta,
+                    theta_bounds=self.options["theta_bounds"],
+                    d=d,
+                    Lij=Lij,
+                    nlevels=self.n_levels,
+                    cat_features=self.cat_features,
+                    cat_kernel=self.options["categorical_kernel"],
+                ).reshape(n_eval, self.nt)
+            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
+            X_cont = (X_cont - self.X_offset) / self.X_scale
+
+        else:
+            X_cont = (x - self.X_offset) / self.X_scale
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = differences(X_cont, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            # Compute the correlation function
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
+            y = np.zeros(n_eval)
         # Compute the regression function
-        f = self._regression_types[self.options["poly"]](x)
+        f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
         y_ = np.dot(f, self.optimal_par["beta"]) + np.dot(r, self.optimal_par["gamma"])
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
-
         return y
 
     def _predict_derivatives(self, x, kx):
@@ -681,6 +770,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
+
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
@@ -735,14 +825,44 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        x = (x - self.X_offset) / self.X_scale
-        # Get pairwise componentwise L1-distances to the input training set
-        dx = differences(x, Y=self.X_norma.copy())
-        d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
+        X_cont = x
+        if self.options["categorical_kernel"] is not None:
+            # Compute the correlation function
+            dx = gower_componentwise_distances(
+                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+            )
+            d = self._componentwise_distance(dx)
+
+            if self.options["categorical_kernel"] == GOWER:
+                r = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta, d
+                ).reshape(n_eval, self.nt)
+            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+                _, ij = cross_distances(x, self.X_train)
+                Lij, _ = cross_levels(
+                    X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
+                )
+                r = matrix_data_corr(
+                    corr=self.options["corr"],
+                    theta=self.optimal_theta,
+                    theta_bounds=self.options["theta_bounds"],
+                    d=d,
+                    Lij=Lij,
+                    nlevels=self.n_levels,
+                    cat_features=self.cat_features,
+                    cat_kernel=self.options["categorical_kernel"],
+                ).reshape(n_eval, self.nt)
+            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
+            X_cont = (X_cont - self.X_offset) / self.X_scale
+        else:
+            x = (x - self.X_offset) / self.X_scale
+            # Get pairwise componentwise L1-distances to the input training set
+            dx = differences(x, Y=self.X_norma.copy())
+            d = self._componentwise_distance(dx)
+            # Compute the correlation function
+            r = self._correlation_types[self.options["corr"]](
+                self.optimal_theta, d
+            ).reshape(n_eval, self.nt)
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
@@ -750,13 +870,11 @@ class KrgBased(SurrogateModel):
         u = linalg.solve_triangular(
             self.optimal_par["G"].T,
             np.dot(self.optimal_par["Ft"].T, rt)
-            - self._regression_types[self.options["poly"]](x).T,
+            - self._regression_types[self.options["poly"]](X_cont).T,
         )
-
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
-
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
@@ -952,7 +1070,7 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-
+            ##from abs distance to kernel distance
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
@@ -994,49 +1112,56 @@ class KrgBased(SurrogateModel):
                             - log10t[i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
+                theta_limits = np.repeat(
+                    np.log10([theta_bounds]), repeats=len(theta0), axis=0
+                )
+                theta_all_loops = np.vstack((theta0, theta0_rand))
+
+                if self.options["n_start"] > 1:
+                    sampling = LHS(
+                        xlimits=theta_limits, criterion="maximin", random_state=41
+                    )
+                    theta_lhs_loops = sampling(self.options["n_start"])
+                    theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+
+                optimal_theta_res = {"fun": float("inf")}
                 try:
-
                     if self.options["hyper_opt"] == "Cobyla":
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            constraints=[
-                                {"fun": con, "type": "ineq"} for con in constraints
-                            ],
-                            method="COBYLA",
-                            options={"rhobeg": _rhobeg, "tol": 1e-4, "maxiter": limit},
-                        )
-
-                        optimal_theta_res_2 = optimal_theta_res
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                constraints=[
+                                    {"fun": con, "type": "ineq"} for con in constraints
+                                ],
+                                method="COBYLA",
+                                options={
+                                    "rhobeg": _rhobeg,
+                                    "tol": 1e-4,
+                                    "maxiter": limit,
+                                },
+                            )
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
-
-                        optimal_theta_res = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-
-                        optimal_theta_res_2 = optimize.minimize(
-                            minus_reduced_likelihood_function,
-                            theta0_rand,
-                            method="TNC",
-                            jac=grad_minus_reduced_likelihood_function,
-                            bounds=bounds_hyp,
-                            options={"maxiter": 100},
-                        )
-
-                    if optimal_theta_res["fun"] > optimal_theta_res_2["fun"]:
-                        optimal_theta_res = optimal_theta_res_2
+                        theta_all_loops = 10 ** theta_all_loops
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                method="TNC",
+                                jac=grad_minus_reduced_likelihood_function,
+                                bounds=bounds_hyp,
+                                options={"maxiter": 100},
+                            )
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
                         optimal_theta = 10 ** optimal_theta
-
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
@@ -1123,42 +1248,45 @@ class KrgBased(SurrogateModel):
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
                 exit_function = True
-
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
         """
-        This function checks some parameters of the model.
+        This function checks some parameters of the model
+        and amend theta0 if possible (see _amend_theta0_option).
         """
-
-        # FIXME: _check_param should be overriden in corresponding subclasses
-        if self.name in ["KPLS", "KPLSK", "GEKPLS"]:
-            d = self.options["n_comp"]
-        else:
-            d = self.nx
-
-        if self.options["corr"] == "act_exp":
-            raise ValueError("act_exp correlation function must be used with MGP")
-
-        if self.name in ["KPLS", "GEKPLS"]:
-            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential or an absolute exponential kernel"
-                )
-        elif self.name in ["KPLSK"]:
-            if self.options["corr"] not in ["squar_exp"]:
-                raise ValueError(
-                    "KPLSK only works with a squared exponential kernel (until we prove the contrary)"
-                )
+        d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+                if self.options["categorical_kernel"] in [
+                    HOMO_GAUSSIAN,
+                    FULL_GAUSSIAN,
+                ]:
+                    n_param = compute_n_param(
+                        self.options["xtypes"], self.options["categorical_kernel"]
+                    )
+                    self.options["theta0"] *= np.ones(n_param)
+                else:
+                    self.options["theta0"] *= np.ones(d)
+
             else:
-                raise ValueError(
-                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                    % (len(self.options["theta0"]), d)
-                )
+                if not (
+                    self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
+                ):
+                    raise ValueError(
+                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                        % (len(self.options["theta0"]), d)
+                    )
+                else:
+                    n_param = compute_n_param(
+                        self.options["xtypes"], self.options["categorical_kernel"]
+                    )
+                    if len(self.options["theta0"]) != n_param:
+                        raise ValueError(
+                            "the length of theta0 (%s) should be equal to %s."
+                            % (len(self.options["theta0"]), n_param)
+                        )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:
@@ -1172,15 +1300,13 @@ class KrgBased(SurrogateModel):
         if not self.options["use_het_noise"]:
             if len(self.options["noise0"]) != 1:
                 raise ValueError(
-                    "for the homoscedastic case, the length of noise0 (%s) should be equal to one."
+                    "for the homoscedastic noise case, the length of noise0 (%s) should be equal to one."
                     % (len(self.options["noise0"]))
                 )
 
         if self.supports["training_derivatives"]:
             if not (1 in self.training_points[None]):
-                raise Exception(
-                    "Derivative values are needed for using the GEKPLS model."
-                )
+                raise Exception("Derivative values are needed for using the GEK model.")
 
     def _check_F(self, n_samples_F, p):
         """

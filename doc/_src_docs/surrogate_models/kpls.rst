@@ -7,14 +7,19 @@ KPLS is a kriging model that uses the partial least squares (PLS) method. KPLS i
 This model is suitable for high-dimensional problems due to the kernel constructed through the PLS method. The PLS method [1]_ is a well known tool for high-dimensional problems that searches the direction that maximizes the variance between the input and output variables. This is done by a projection in a smaller space spanned by the so-called principal components. The PLS information are integrated into the kriging correlation matrix to scale the number of inputs by reducing the number of hyperparameters. The number of principal components  :math:`h` , which corresponds to the number of hyperparameters for KPLS and much lower than :math:`nx` (number of dimension of the problem), usually does not exceed 4 components:
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^2\right),\qquad \qquad \qquad\prod\limits_{l=1}^{nx} \prod\limits_{k=1}^h\exp\left(-\theta_k\left(w_l^{(k)}x_l^{(i)}-w_l^{(k)}x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l,\theta_h\in\mathbb{R}^+\\
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^2\right),\qquad \qquad \qquad \prod\limits_{k=1}^h \prod\limits_{l=1}^{nx} \exp\left(-\theta_k\left(w_{*l}^{(k)}x_l^{(i)}-w_{*l}^{(k)}x_l^{(j)}\right)^{2}\right) \quad \forall\ \theta_l,\theta_k\in\mathbb{R}^+\\
   \text{Standard Gaussian correlation function} \quad \qquad\text{PLS-Gaussian correlation function}\qquad \qquad\qquad\quad
 
 Both absolute exponential and squared exponential kernels are available for KPLS model. More details about the KPLS approach could be found in these sources [2]_.
 
+For automatic selection of the optimal number of components, the adjusted Wold's R criterion is implemented [3]_.
+	
 .. [1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
 
 .. [2] Bouhlel, M. A. and Bartoli, N. and  Otsmane, A. and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.
+
+.. [3] B. Li, J. Morris, and E. Martin.  Model selection for partial least squares regression.Chemometrics and Intelligent Laboratory Systems, 64(1):79–89, 2002. ISSN 0169-7439.
+
 
 Usage
 -----
@@ -78,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0250795
   ___________________________________________________________________________
      
    Evaluation
@@ -154,6 +159,16 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -194,8 +209,23 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  n_comp
      -  1
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion

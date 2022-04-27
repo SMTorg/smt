@@ -6,17 +6,16 @@ This package is distributed under New BSD license.
 
 import numpy as np
 from packaging import version
-from sklearn import __version__ as sklversion
 
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
+GOWER = "gower"
+HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
+FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
 
 
 def standardization(X, y, scale_X_to_unit=False):
@@ -72,8 +71,8 @@ def standardization(X, y, scale_X_to_unit=False):
     else:
         X_offset = np.mean(X, axis=0)
         X_scale = X.std(axis=0, ddof=1)
-        X_scale[X_scale == 0.0] = 1.0
 
+    X_scale[X_scale == 0.0] = 1.0
     y_mean = np.mean(y, axis=0)
     y_std = y.std(axis=0, ddof=1)
     y_std[y_std == 0.0] = 1.0
@@ -84,18 +83,19 @@ def standardization(X, y, scale_X_to_unit=False):
     return X, y, X_offset, y_mean, X_scale, y_std
 
 
-def cross_distances(X):
+def cross_distances(X, y=None):
 
     """
     Computes the nonzero componentwise cross-distances between the vectors
-    in X.
+    in X or between the vectors in X and the vectors in y.
 
     Parameters
     ----------
 
     X: np.ndarray [n_obs, dim]
             - The input variables.
-
+    y: np.ndarray [n_y, dim]
+            - The training data.
     Returns
     -------
 
@@ -106,27 +106,427 @@ def cross_distances(X):
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
     """
-
     n_samples, n_features = X.shape
+    if y is None:
+        n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
+        ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+        D = np.zeros((n_nonzero_cross_dist, n_features))
+        ll_1 = 0
+
+        for k in range(n_samples - 1):
+            ll_0 = ll_1
+            ll_1 = ll_0 + n_samples - k - 1
+            ij[ll_0:ll_1, 0] = k
+            ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+            D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
+    else:
+        n_y, n_features = y.shape
+        X, y = check_pairwise_arrays(X, y)
+        n_nonzero_cross_dist = n_samples * n_y
+        ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+        D = np.zeros((n_nonzero_cross_dist, n_features))
+        for k in range(n_nonzero_cross_dist):
+            xk = k // n_y
+            yk = k % n_y
+            D[k] = X[xk] - y[yk]
+            ij[k, 0] = xk
+            ij[k, 1] = yk
+
+    return D, ij.astype(np.int32)
+
+
+def cross_levels(X, ij, xtypes, y=None):
+
+    """
+    Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    Returns
+    -------
+
+     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The levels corresponding to the indices i and j of the vectors in X.
+     n_levels: np.ndarray
+            - The number of levels for every categorical variable.
+    """
+    n_levels = []
+    for i, xtyp in enumerate(xtypes):
+        if isinstance(xtyp, tuple):
+            n_levels.append(xtyp[1])
+    n_levels = np.array(n_levels)
+    n_var = n_levels.shape[0]
+    n, _ = ij.shape
+    X_cont, cat_features = compute_X_cont(X, xtypes)
+    X_cat = X[:, cat_features]
+
+    Lij = np.zeros((n_var, n, 2))
+    for k in range(n_var):
+        for l in range(n):
+            i, j = ij[l]
+            if y is None:
+                Lij[k][l][0] = X_cat[i, k]
+                Lij[k][l][1] = X_cat[j, k]
+            else:
+                y_cat = y[:, cat_features]
+                Lij[k][l][0] = X_cat[i, k]
+                Lij[k][l][1] = y_cat[j, k]
+
+    return Lij, n_levels
+
+
+def compute_n_param(xtypes, cat_kernel):
+    """
+    Returns the he number of parameters needed for an homoscedastic or full group kernel.
+    Parameters
+     ----------
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    cat_kernel : string
+            -The kernel to use for categorical inputs. Only for non continuous Kriging",
+    Returns
+    -------
+     n_param: int
+            - The number of parameters.
+    """
+
+    n_param = 0
+    for i, xtyp in enumerate(xtypes):
+        if isinstance(xtyp, tuple):
+            if cat_kernel == FULL_GAUSSIAN:
+                n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
+            if cat_kernel == HOMO_GAUSSIAN:
+                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+
+        else:
+            n_param += 1
+    return n_param
+
+
+def compute_X_cont(x, xtypes):
+    """
+    Some parts were extracted from gower 0.0.5 library
+    Computes the X_cont part of a vector x for mixed integer
+    Parameters
+    ----------
+    x: np.ndarray [n_obs, dim]
+            - The input variables.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    Returns
+    -------
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    cat_features: np.ndarray [dim]
+        -  Indices of the categorical input dimensions.
+
+    """
+    if xtypes is None:
+        return x, None
+    cat_features = [
+        not (xtype == "float_type" or xtype == "ord_type")
+        for i, xtype in enumerate(xtypes)
+    ]
+    return x[:, np.logical_not(cat_features)], cat_features
+
+
+def gower_componentwise_distances(X, y=None, xtypes=None):
+    """
+    Computes the nonzero Gower-distances componentwise between the vectors
+    in X.
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
+    Returns
+    -------
+    D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
+            - The gower distances between the vectors in X.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    """
+    X = X.astype(np.float)
+    Xt = X
+    X_cont, cat_features = compute_X_cont(Xt, xtypes)
+
+    # function checks
+    if y is None:
+        Y = X
+    else:
+        Y = y
+    if not isinstance(X, np.ndarray):
+        if not np.array_equal(X.columns, Y.columns):
+            raise TypeError("X and Y must have same columns!")
+    else:
+        if not X.shape[1] == Y.shape[1]:
+            raise TypeError("X and Y must have same y-dim!")
+
+    x_n_rows, x_n_cols = X.shape
+    y_n_rows, y_n_cols = Y.shape
+
+    if not isinstance(X, np.ndarray):
+        X = np.asarray(X)
+    if not isinstance(Y, np.ndarray):
+        Y = np.asarray(Y)
+
+    Z = np.concatenate((X, Y))
+
+    x_index = range(0, x_n_rows)
+    y_index = range(x_n_rows, x_n_rows + y_n_rows)
+
+    Z_num = Z[:, np.logical_not(cat_features)]
+    Y_num = Y[:, np.logical_not(cat_features)]
+
+    num_cols = Z_num.shape[1]
+    num_ranges = np.zeros(num_cols)
+    num_max = np.zeros(num_cols)
+
+    for col in range(num_cols):
+        col_array = Y_num[:, col].astype(np.float32)
+        max = np.nanmax(col_array)
+        min = np.nanmin(col_array)
+
+        if np.isnan(max):
+            max = 0.0
+        if np.isnan(min):
+            min = 0.0
+        num_max[col] = max
+        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
+
+    # This is to normalize the numeric values between 0 and 1.
+    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+
+    Z_cat = Z[:, cat_features]
+
+    X_cat = Z_cat[
+        x_index,
+    ]
+    X_num = Z_num[
+        x_index,
+    ]
+    Y_cat = Z_cat[
+        y_index,
+    ]
+    Y_num = Z_num[
+        y_index,
+    ]
+
+    X_norma = X
+    Y_norma = Y
+    X_norma[:, np.logical_not(cat_features)] = X_num
+    Y_norma[:, np.logical_not(cat_features)] = Y_num
+
+    n_samples, n_features = X_num.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+    D_num = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
+    if y is None:
 
-    for k in range(n_samples - 1):
-        ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k - 1
-        ij[ll_0:ll_1, 0] = k
-        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
+        for k in range(n_samples - 1):
+            ll_0 = ll_1
+            ll_1 = ll_0 + n_samples - k - 1
+            ij[ll_0:ll_1, 0] = k
+            ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+            abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
+            try:
+                D_num[ll_0:ll_1] = np.divide(
+                    abs_delta,
+                    num_ranges,
+                    out=np.zeros_like(abs_delta),
+                    where=num_ranges != 0,
+                )
+            except:
+                pass
 
-    return D, ij.astype(np.int)
+        n_samples, n_features = X_cat.shape
+        n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
+        D_cat = np.zeros((n_nonzero_cross_dist, n_features))
+        ll_1 = 0
+
+        for k in range(n_samples - 1):
+            ll_0 = ll_1
+            ll_1 = ll_0 + n_samples - k - 1
+            D_cat[ll_0:ll_1] = np.where(
+                X_cat[k] == Y_cat[(k + 1) : n_samples],
+                np.zeros_like(X_cat[k]),
+                np.ones_like(X_cat[k]),
+            )
+
+        D = np.concatenate((D_cat, D_num), axis=1) * 0
+        D[:, np.logical_not(cat_features)] = D_num
+        D[:, cat_features] = D_cat
+
+        return D, ij.astype(np.int32), X_cont
+    else:
+        D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
+        D = D.reshape((-1, X.shape[1]))
+        D = np.abs(D)
+        D[:, cat_features] = D[:, cat_features] > 0.5
+        D[:, np.logical_not(cat_features)] = np.divide(
+            D[:, np.logical_not(cat_features)],
+            num_ranges,
+            out=np.zeros_like(D[:, np.logical_not(cat_features)]),
+            where=num_ranges != 0,
+        )
+
+        return D
 
 
 def differences(X, Y):
+    "compute the componentwise difference between X and Y"
     X, Y = check_pairwise_arrays(X, Y)
     D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     return D.reshape((-1, X.shape[1]))
+
+
+def matrix_data_corr(
+    corr, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel
+):
+    """
+    matrix kernel correlation model.
+
+    Parameters
+    ----------
+    corr: correlation_types
+        - The autocorrelation model
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i
+    Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The levels corresponding to the indices i and j of the vectors in X.
+    n_levels: np.ndarray
+            - The number of levels for every categorical variable.
+    cat_features: np.ndarray [dim]
+        -  Indices of the categorical input dimensions.
+     cat_kernel : string
+         - The kernel to use for categorical inputs. Only for non continuous Kriging",
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+    _correlation_types = {
+        "abs_exp": abs_exp,
+        "squar_exp": squar_exp,
+        "act_exp": act_exp,
+        "matern52": matern52,
+        "matern32": matern32,
+    }
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
+    theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
+    i = 0
+    j = 0
+    for feat in cat_features:
+        if feat:
+            if cat_kernel == FULL_GAUSSIAN:
+                theta_cont_features[
+                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
+                ] = False
+                theta_cat_features[
+                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i
+                ] = [True] * int(nlevels[i] * (nlevels[i] + 1) / 2)
+                j += int(nlevels[i] * (nlevels[i] + 1) / 2)
+            if cat_kernel == HOMO_GAUSSIAN:
+                theta_cont_features[
+                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
+                ] = False
+                theta_cat_features[
+                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
+                ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+                j += int(nlevels[i] * (nlevels[i] - 1) / 2)
+            i += 1
+        else:
+            theta_cont_features[j] = True
+            j += 1
+
+    theta_cont = theta[theta_cont_features[:, 0]]
+    d_cont = d[:, np.logical_not(cat_features)]
+    r_cont = _correlation_types[corr](theta_cont, d_cont)
+    r_cat = np.copy(r_cont) * 0
+    r = np.copy(r_cont)
+    ##Theta_cat_i loop
+    for i in range(len(nlevels)):
+        theta_cat = theta[theta_cat_features[:, i]]
+        if cat_kernel == FULL_GAUSSIAN:
+            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
+                0.5 * np.pi / theta_bounds[1]
+            )
+        if cat_kernel == HOMO_GAUSSIAN:
+            theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+        d_cat = d[:, cat_features]
+        Theta_mat = np.zeros((nlevels[i], nlevels[i]))
+        L = np.zeros((nlevels[i], nlevels[i]))
+        v = 0
+        for j in range(nlevels[i]):
+            for k in range(nlevels[i] - j):
+                if j == k + j:
+                    Theta_mat[j, k + j] = 1
+                else:
+                    Theta_mat[j, k + j] = theta_cat[v]
+                    Theta_mat[k + j, j] = theta_cat[v]
+                    v = v + 1
+
+        for j in range(nlevels[i]):
+            for k in range(nlevels[i] - j):
+                if j == k + j:
+                    if j == 0:
+                        L[j, k + j] = 1
+
+                    else:
+                        L[j, k + j] = 1
+                        for l in range(j):
+                            L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
+
+                else:
+                    if j == 0:
+                        L[k + j, j] = np.cos(Theta_mat[k, 0])
+                    else:
+                        L[k + j, j] = np.cos(Theta_mat[k + j, j])
+                        for l in range(j):
+                            L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+
+        T = np.dot(L, L.T)
+        T = (T - 1) * theta_bounds[1] / 2
+        T = np.exp(2 * T)
+        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+        T = (T + np.exp(-theta_bounds[1])) / (k)
+
+        for k in range(np.shape(Lij[i])[0]):
+            indi = int(Lij[i][k][0])
+            indj = int(Lij[i][k][1])
+            if indi == indj:
+                r_cat[k, 0] = 1.0
+            else:
+                if cat_kernel == FULL_GAUSSIAN:
+                    r_cat[k, 0] = np.exp(
+                        -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
+                        - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
+                    ) * (T[indi, indj])
+                if cat_kernel == HOMO_GAUSSIAN:
+                    r_cat[k, 0] = T[indi, indj]
+        r = np.multiply(r, r_cat)
+    return r
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
@@ -136,8 +536,7 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     Parameters
     ----------
-      Parameters
-    ----------
+
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
     d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
@@ -645,7 +1044,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     X: np.ndarray [n_obs,dim]
             - - The input variables.
 
-    y: np.ndarray [n_obs,1]
+    y: np.ndarray [n_obs,ny]
             - The output variable
 
     n_comp: int
@@ -678,7 +1077,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     """
     nt, dim = X.shape
     XX = np.empty(shape=(0, dim))
-    yy = np.empty(shape=(0, 1))
+    yy = np.empty(shape=(0, y.shape[1]))
     _pls = pls(n_comp)
 
     coeff_pls = np.zeros((nt, dim, n_comp))
@@ -751,17 +1150,23 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
                 - pts[None][2][1][i, 0] * delta_x * (xlimits[1, 1] - xlimits[1, 0])
             )
 
-        _pls.fit(_X.copy(), _y.copy())
-        coeff_pls[i, :, :] = _pls.x_rotations_
+        # As of sklearn 0.24.1 a zeroed _y raises an exception while sklearn 0.23 returns zeroed x_rotations
+        # For now the try/except below is a workaround to restore the 0.23 behaviour
+        try:
+            _pls.fit(_X.copy(), _y.copy())
+            coeff_pls[i, :, :] = _pls.x_rotations_
+        except StopIteration:
+            coeff_pls[i, :, :] = 0
+
         # Add additional points
         if extra_points != 0:
             max_coeff = np.argsort(np.abs(coeff_pls[i, :, 0]))[-extra_points:]
             for ii in max_coeff:
                 XX = np.vstack((XX, X[i, :]))
                 XX[-1, ii] += delta_x * (xlimits[ii, 1] - xlimits[ii, 0])
-                yy = np.vstack((yy, y[i, 0]))
-                yy[-1, 0] += (
-                    pts[None][1 + ii][1][i, 0]
+                yy = np.vstack((yy, y[i]))
+                yy[-1] += (
+                    pts[None][1 + ii][1][i]
                     * delta_x
                     * (xlimits[ii, 1] - xlimits[ii, 0])
                 )

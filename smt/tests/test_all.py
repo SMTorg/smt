@@ -73,7 +73,7 @@ class Test(SMTestCase):
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
         sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
-        sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * ncomp, n_comp=ncomp, delta_x=1e-1)
+        sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = genn()
         if compiled_available:
             sms["IDW"] = IDW()
@@ -106,7 +106,7 @@ class Test(SMTestCase):
         e_errors["KPLSK"] = 1e-2
         e_errors["MGP"] = 2e-2
         e_errors["GEKPLS"] = 2e-2
-        e_errors["GENN"] = 1e-2
+        e_errors["GENN"] = 2e-2
         if compiled_available:
             e_errors["IDW"] = 1e0
             e_errors["RBF"] = 1e0
@@ -127,7 +127,7 @@ class Test(SMTestCase):
         sname = method_name.split("_")[2]
 
         prob = self.problems[pname]
-        sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
+        sampling = LHS(xlimits=prob.xlimits, random_state=42)
 
         np.random.seed(0)
         xt = sampling(self.nt)

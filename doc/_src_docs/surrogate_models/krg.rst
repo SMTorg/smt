@@ -6,7 +6,7 @@ Kriging is an interpolating model that is a linear combination of a known functi
 .. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
 
-:math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
+:math:`Z({\bf x})` is a realization of a stochastic process with mean zero and spatial covariance function given by
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
@@ -27,7 +27,7 @@ Squared Exponential (Gaussian) correlation function:
 Matérn 5/2 correlation function:
 
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
 
 Matérn 3/2 correlation function:
 
@@ -56,6 +56,9 @@ To incorporate integer (with order relation) and categorical variables (with no 
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
 then we round in the prediction to the output dimension giving the greatest continuous prediction.
+
+A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
+See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
 
 More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
 
@@ -128,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0247462
   ___________________________________________________________________________
      
    Evaluation
@@ -269,9 +272,19 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -312,3 +325,8 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)

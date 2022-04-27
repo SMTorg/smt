@@ -57,7 +57,11 @@ Usage
   yt = np.atleast_2d(fun(xt)).T
   
   # Build the MGP model
-  sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+  sm = MGP(
+      theta0=[1e-2],
+      print_prediction=False,
+      n_comp=1,
+  )
   sm.set_training_values(xt, yt[:, 0])
   sm.train()
   
@@ -121,7 +125,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1600001
+     Training - done. Time (sec):  0.6101887
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -175,6 +179,16 @@ Options
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -215,6 +229,11 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  n_comp
      -  1
      -  None

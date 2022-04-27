@@ -23,14 +23,18 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG, QP
+from smt.surrogate_models import KRG, QP, GEKPLS
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
     FLOAT,
     ENUM,
-    INT,
+    ORD,
+    GOWER,
+    HOMO_GAUSSIAN,
+    FULL_GAUSSIAN,
 )
+from smt.sampling_methods import LHS
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
@@ -104,7 +108,7 @@ class TestEGO(SMTestCase):
         n_iter = 50
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -124,7 +128,7 @@ class TestEGO(SMTestCase):
         n_parallel = 5
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         qEI = "KB"
@@ -148,7 +152,7 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -173,7 +177,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         n_parallel = 5
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
@@ -201,9 +205,9 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KB"
-        xtypes = [INT, FLOAT]
+        xtypes = [ORD, FLOAT]
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -214,7 +218,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            xtypes=[INT, FLOAT],
+            xtypes=[ORD, FLOAT],
             xlimits=xlimits,
             n_parallel=n_parallel,
             qEI=qEI,
@@ -235,9 +239,9 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [INT, FLOAT]
+        xtypes = [ORD, FLOAT]
         xlimits = fun.xlimits
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -265,6 +269,9 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def function_test_mixed_integer(X):
+        import numpy as np
+
+        # float
         x1 = X[:, 0]
         #  enum 1
         c1 = X[:, 1]
@@ -275,16 +282,28 @@ class TestEGO(SMTestCase):
         c2 = X[:, 2]
         x5 = c2 == 0
         x6 = c2 == 1
+        # int
+        i = X[:, 3]
 
-        y = (x2 + 2 * x3 + 3 * x4) * x5 * x1 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
+        y = (
+            (x2 + 2 * x3 + 3 * x4) * x5 * x1
+            + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
+            + i
+        )
         return y
 
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xlimits = np.array([[-5, 5], ["1", "2", "3"], ["4", "5"]], dtype="object")
-        xdoe = np.array([[5, 0, 0], [4, 0, 0]])
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
-        xtypes = [INT, (ENUM, 3), (ENUM, 2)]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
+        )
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(
+            xtypes, xlimits, LHS, criterion="ese", random_state=42
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -302,11 +321,114 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
+    def test_ego_mixed_integer_gower_distance(self):
+        n_iter = 15
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(
+            xtypes,
+            xlimits,
+            LHS,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=sm,
+            enable_tunneling=False,
+            random_state=42,
+            categorical_kernel=GOWER,
+        )
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+
+    def test_ego_mixed_integer_homo_gaussian(self):
+        n_iter = 15
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(
+            xtypes,
+            xlimits,
+            LHS,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=sm,
+            enable_tunneling=False,
+            random_state=42,
+            categorical_kernel=HOMO_GAUSSIAN,
+        )
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+
+    def test_ego_mixed_integer_full_gaussian(self):
+        n_iter = 15
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
+        )
+        n_doe = 2
+        sampling = MixedIntegerSamplingMethod(
+            xtypes,
+            xlimits,
+            LHS,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=sm,
+            enable_tunneling=False,
+            random_state=42,
+            categorical_kernel=FULL_GAUSSIAN,
+        )
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
     def test_ydoe_option(self):
         n_iter = 15
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+        criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
@@ -332,7 +454,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             ydoe=ydoe,
             n_iter=1,
-            criterion="UCB",
+            criterion="LCB",
             xlimits=xlimits,
             n_start=30,
             enable_tunneling=False,
@@ -341,6 +463,72 @@ class TestEGO(SMTestCase):
         _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
         self.assertAlmostEqual(6.5, float(x), delta=1)
+
+    @staticmethod
+    def initialize_ego_gek(func="exp", criterion="LCB"):
+        from smt.problems import TensorProduct
+
+        class TensorProductIndirect(TensorProduct):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.super = super()
+
+            def _evaluate(self, x, kx):
+                assert kx is None
+                response = self.super._evaluate(x, kx)
+                sens = np.hstack(
+                    self.super._evaluate(x, ki) for ki in range(x.shape[1])
+                )
+                return np.hstack((response, sens))
+
+        fun = TensorProductIndirect(ndim=2, func=func)
+
+        # Construction of the DOE
+        sampling = LHS(xlimits=fun.xlimits, criterion="m", random_state=42)
+        xdoe = sampling(20)
+        ydoe = fun(xdoe)
+
+        # Build the GEKPLS surrogate model
+        n_comp = 2
+        sm = GEKPLS(
+            theta0=[1e-2] * n_comp,
+            xlimits=fun.xlimits,
+            extra_points=1,
+            print_prediction=False,
+            n_comp=n_comp,
+        )
+
+        # Build the EGO optimizer and optimize
+        ego = EGO(
+            xdoe=xdoe,
+            ydoe=ydoe,
+            n_iter=5,
+            criterion=criterion,
+            xlimits=fun.xlimits,
+            surrogate=sm,
+            n_start=30,
+            enable_tunneling=False,
+            random_state=42,
+        )
+
+        return ego, fun
+
+    def test_ego_gek(self):
+        ego, fun = self.initialize_ego_gek()
+        x_opt, _, _, _, _ = ego.optimize(fun=fun)
+
+        self.assertAlmostEqual(-1.0, float(x_opt[0]), delta=1e-4)
+        self.assertAlmostEqual(-1.0, float(x_opt[1]), delta=1e-4)
+
+    def test_ei_gek(self):
+        ego, fun = self.initialize_ego_gek(func="cos", criterion="EI")
+        x_data, y_data = ego._setup_optimizer(fun)
+        ego._train_gpr(x_data, y_data)
+
+        # Test the EI value at the following point
+        ei = ego.EI(np.array([[0.8398599985874058, -0.3240337426231973]]))
+
+        self.assertTrue(np.allclose(ei, [6.87642e-12, 1.47804e-10, 2.76223], atol=1e-1))
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
@@ -382,7 +570,7 @@ class TestEGO(SMTestCase):
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
 
@@ -402,7 +590,7 @@ class TestEGO(SMTestCase):
 
             y_gp_plot = ego.gpr.predict_values(x_plot)
             y_gp_plot_var = ego.gpr.predict_variances(x_plot)
-            y_ei_plot = -ego.EI(x_plot, y_data_k)
+            y_ei_plot = -ego.EI(x_plot)
 
             ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
             ax1 = ax.twinx()
@@ -448,7 +636,7 @@ class TestEGO(SMTestCase):
             MixedIntegerContext,
             FLOAT,
             ENUM,
-            INT,
+            ORD,
         )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
@@ -481,11 +669,11 @@ class TestEGO(SMTestCase):
             return y
 
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
         )
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KB"
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
@@ -580,7 +768,7 @@ class TestEGO(SMTestCase):
                         ]
                     )
 
-        criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
         ego = EGO(
             n_iter=n_iter,
@@ -611,7 +799,7 @@ class TestEGO(SMTestCase):
                 ego.gpr.set_training_values(x_data_sub, y_data_sub)
                 ego.gpr.train()
 
-                y_ei_plot = -ego.EI(x_plot, y_data_sub)
+                y_ei_plot = -ego.EI(x_plot)
                 y_gp_plot = ego.gpr.predict_values(x_plot)
                 y_gp_plot_var = ego.gpr.predict_variances(x_plot)
 

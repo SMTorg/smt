@@ -271,6 +271,42 @@ class Test(unittest.TestCase):
 
         plt.show()
 
+    def test_mixed_gower_krg(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            GOWER,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        xt = np.array([0, 3, 4])
+        yt = np.array([0.0, 1.0, 1.5])
+
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=GOWER,
+            xtypes=[(ENUM, 5)],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2]),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 5, 5)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o", label="data")
+        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend()
+        plt.show()
+
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -375,8 +411,13 @@ class Test(unittest.TestCase):
             yt = np.concatenate((yt, yd), axis=1)
 
         # Build the GEKPLS model
+        n_comp = 2
         sm = GEKPLS(
-            theta0=[1e-2], xlimits=fun.xlimits, extra_points=1, print_prediction=False
+            theta0=[1e-2] * n_comp,
+            xlimits=fun.xlimits,
+            extra_points=1,
+            print_prediction=False,
+            n_comp=n_comp,
         )
         sm.set_training_values(xt, yt[:, 0])
         for i in range(2):
@@ -491,7 +532,11 @@ class Test(unittest.TestCase):
         yt = np.atleast_2d(fun(xt)).T
 
         # Build the MGP model
-        sm = MGP(theta0=[1e-2], print_prediction=False, n_comp=1,)
+        sm = MGP(
+            theta0=[1e-2],
+            print_prediction=False,
+            n_comp=1,
+        )
         sm.set_training_values(xt, yt[:, 0])
         sm.train()
 

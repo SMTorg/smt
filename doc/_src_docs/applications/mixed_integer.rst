@@ -4,9 +4,8 @@ Mixed-Integer Sampling and Surrogate (Continuous Relaxation)
 ============================================================
 
 SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with
-categorical (or enumerate) and integer variables using continuous relaxation.
-
-For integer variables, values are rounded to the closer integer.
+categorical (or enumerate) and ordered variables using continuous relaxation.
+For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, bounds are provided, the list will consist of all integers between those bounds.
 For enum variables, as many x features as enumerated levels are created with [0, 1] bounds 
 and the max of these feature float values will correspond to the choice of one the enum value. 
 
@@ -17,7 +16,7 @@ let say x1, will give "red" as the value for the original categorical feature.
 The user specifies x feature types through a list of types to be either:
 
 - ``FLOAT``: a continuous feature,
-- ``INT``: an integer valued feature,
+- ``ORD``: an ordered valued feature,
 - or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
 
 In the case of mixed integer sampling, bounds of each x feature have to be adapted 
@@ -25,8 +24,76 @@ to take into account feature types. While FLOAT and INT feature still have an in
 [lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list
 of possible values (levels). 
 
-For instance, if we have the following ``xtypes``: ``[FLOAT, INT, (ENUM, 2), (ENUM, 3)]``, 
+For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, 
 a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
+
+
+Mixed-Integer Surrogate with Gower Distance
+===========================================
+
+Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
+When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
+
+For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`
+
+Example of mixed-integer Gower Distance model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  from smt.applications.mixed_integer import (
+      MixedIntegerSurrogateModel,
+      ENUM,
+      GOWER,
+  )
+  from smt.surrogate_models import KRG
+  import matplotlib.pyplot as plt
+  import numpy as np
+  
+  xt = np.array([0, 2, 4])
+  yt = np.array([0.0, 1.0, 1.5])
+  
+  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  
+  # Surrogate
+  sm = MixedIntegerSurrogateModel(
+      categorical_kernel=GOWER,
+      xtypes=[(ENUM, 5)],
+      xlimits=xlimits,
+      surrogate=KRG(theta0=[1e-2]),
+  )
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  # DOE for validation
+  x = np.linspace(0, 4, 5)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o", label="data")
+  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend()
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 5
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
+  :scale: 80	 %
+  :align: center
+
 
 Mixed integer sampling method
 -----------------------------
@@ -49,7 +116,7 @@ Example of mixed-integer LHS sampling method
   from smt.sampling_methods import LHS
   from smt.applications.mixed_integer import (
       FLOAT,
-      INT,
+      ORD,
       ENUM,
       MixedIntegerSamplingMethod,
   )
@@ -86,18 +153,18 @@ Example of mixed-integer Polynomial (QP) surrogate
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import QP
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
-  # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
   # FLOAT means x1 continuous
-  # INT means x2 integer
+  # ORD means x2 ordered
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
-  sm = MixedIntegerSurrogateModel(xtypes=[INT], xlimits=[[0, 4]], surrogate=QP())
+  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -166,9 +233,9 @@ Example of mixed-integer context usage
   
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS, Random
-  from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, INT, ENUM
+  from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, ORD, ENUM
   
-  xtypes = [INT, FLOAT, (ENUM, 4)]
+  xtypes = [ORD, FLOAT, (ENUM, 4)]
   xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
   
   def ftest(x):

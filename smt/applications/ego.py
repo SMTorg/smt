@@ -14,10 +14,15 @@ from scipy.optimize import minimize
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    GOWER,
+    HOMO_GAUSSIAN,
+    FULL_GAUSSIAN,
+)
 from smt.utils.misc import compute_rms_error
 
-from smt.surrogate_models import KPLS, KRG, KPLSK, MGP
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS
 from smt.sampling_methods import LHS
 
 
@@ -57,9 +62,9 @@ class EGO(SurrogateBasedApplication):
             "criterion",
             "EI",
             types=str,
-            values=["EI", "SBO", "UCB"],
+            values=["EI", "SBO", "LCB"],
             desc="criterion for next evaluation point determination: Expected Improvement, \
-            Surrogate-Based Optimization or Upper Confidence Bound",
+            Surrogate-Based Optimization or Lower Confidence Bound",
         )
         declare("n_iter", None, types=int, desc="Number of optimizer steps")
         declare(
@@ -105,9 +110,16 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
+            "categorical_kernel",
+            None,
+            types=str,
+            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
+        )
+        declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, MGP),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
             desc="SMT kriging-based surrogate model used internaly",
         )
         declare(
@@ -140,8 +152,6 @@ class EGO(SurrogateBasedApplication):
         int: index of optimum in data arrays
         [ndoe + n_iter, nx]: coord-x data
         [ndoe + n_iter, 1]: coord-y data
-        [ndoe, nx]: coord-x initial doe
-        [ndoe, 1]: coord-y initial doe
         """
         x_data, y_data = self._setup_optimizer(fun)
         n_iter = self.options["n_iter"]
@@ -170,22 +180,23 @@ class EGO(SurrogateBasedApplication):
                 y_et_k = self._get_virtual_point(np.atleast_2d(x_et_k), y_data)
 
                 # Update y_data with predicted value
-                y_data = np.atleast_2d(np.append(y_data, y_et_k)).T
+                y_data = y_data.reshape(y_data.shape[0], self.gpr.ny)
+                y_data = np.vstack((y_data, y_et_k))
                 x_data = np.atleast_2d(np.append(x_data, x_et_k, axis=0))
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            if self.mixint:
+            if self.mixint and self.options["categorical_kernel"] is None:
                 x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
         # Find the optimal point
-        ind_best = np.argmin(y_data)
+        ind_best = np.argmin(y_data if y_data.ndim == 1 else y_data[:, 0])
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        if self.mixint:
+        if self.mixint and self.options["categorical_kernel"] is None:
             x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
@@ -194,9 +205,10 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    def EI(self, points, y_data, enable_tunneling=False, x_data=None):
-        """ Expected improvement """
-        f_min = np.min(y_data)
+    def EI(self, points, enable_tunneling=False, x_data=None):
+        """Expected improvement"""
+        y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
+        f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
         args0 = (f_min - pred) / sig
@@ -209,26 +221,26 @@ class EGO(SurrogateBasedApplication):
         if enable_tunneling:
             for i in range(len(points)):
                 p = np.atleast_2d(points[i])
-                EIp = self.EI(p, y_data, enable_tunneling=False)
+                EIp = self.EI(p, enable_tunneling=False)
                 for x in x_data:
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena = (
-                        EIp - self.EI(x, y_data, enable_tunneling=False)
-                    ) / np.power(np.linalg.norm(p - x), 4)
+                    pena = (EIp - self.EI(x, enable_tunneling=False)) / np.power(
+                        np.linalg.norm(p - x), 4
+                    )
                     if pena > 0:
                         ei[i] = ei[i] - pena
                     ei[i] = max(ei[i], 0)
         return ei
 
     def SBO(self, point):
-        """ Surrogate based optimization: min the surrogate model by suing the mean mu """
+        """Surrogate based optimization: min the surrogate model by suing the mean mu"""
         res = self.gpr.predict_values(point)
         return res
 
-    def UCB(self, point):
-        """ Upper confidence bound optimization: minimize by using mu - 3*sigma """
+    def LCB(self, point):
+        """Lower confidence bound optimization: minimize by using mu - 3*sigma"""
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
         res = pred - 3.0 * np.sqrt(var)
@@ -257,13 +269,25 @@ class EGO(SurrogateBasedApplication):
 
         # Handle mixed integer optimization
         xtypes = self.options["xtypes"]
+        if self.options["categorical_kernel"] is not None:
+            work_in_folded_space = True
+        else:
+            work_in_folded_space = False
         if xtypes:
+            self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                xtypes, self.xlimits, work_in_folded_space=False
+                xtypes,
+                self.xlimits,
+                work_in_folded_space=work_in_folded_space,
+                categorical_kernel=self.options["categorical_kernel"],
             )
+
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
-                LHS, criterion="ese", random_state=self.options["random_state"]
+                LHS,
+                criterion="ese",
+                random_state=self.options["random_state"],
+                output_in_folded_space=work_in_folded_space,
             )
         else:
             self.mixint = None
@@ -283,7 +307,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            if self.mixint:
+            if self.mixint and self.options["categorical_kernel"] is None:
                 x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
@@ -293,6 +317,15 @@ class EGO(SurrogateBasedApplication):
             y_doe = ydoe
 
         return x_doe, y_doe
+
+    def _train_gpr(self, x_data, y_data):
+        self.gpr.set_training_values(x_data, y_data)
+        if self.gpr.supports["training_derivatives"]:
+            for kx in range(self.gpr.nx):
+                self.gpr.set_training_derivatives(
+                    x_data, y_data[:, 1 + kx].reshape((y_data.shape[0], 1)), kx
+                )
+        self.gpr.train()
 
     def _find_best_point(self, x_data=None, y_data=None, enable_tunneling=False):
         """
@@ -312,8 +345,7 @@ class EGO(SurrogateBasedApplication):
         boolean: success flag
 
         """
-        self.gpr.set_training_values(x_data, y_data)
-        self.gpr.train()
+        self._train_gpr(x_data, y_data)
 
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
@@ -324,13 +356,11 @@ class EGO(SurrogateBasedApplication):
             bounds = self.xlimits
 
         if criterion == "EI":
-            self.obj_k = lambda x: -self.EI(
-                np.atleast_2d(x), y_data, enable_tunneling, x_data
-            )
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
         elif criterion == "SBO":
             self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
-        elif criterion == "UCB":
-            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+        elif criterion == "LCB":
+            self.obj_k = lambda x: self.LCB(np.atleast_2d(x))
 
         success = False
         n_optim = 1  # in order to have some success optimizations with SLSQP
@@ -342,7 +372,7 @@ class EGO(SurrogateBasedApplication):
                 try:
                     opt_all.append(
                         minimize(
-                            lambda x: float(self.obj_k(x)),
+                            lambda x: float(np.array(self.obj_k(x)).flat[0]),
                             x_start[ii, :],
                             method="SLSQP",
                             bounds=bounds,

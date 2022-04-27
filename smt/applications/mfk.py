@@ -16,12 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from packaging import version
-from sklearn import __version__ as sklversion
-
-if version.parse(sklversion) < version.parse("0.22"):
-    from sklearn.cross_decomposition.pls_ import PLSRegression as pls
-else:
-    from sklearn.cross_decomposition import PLSRegression as pls
+from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
@@ -34,7 +29,7 @@ from smt.utils.kriging_utils import (
 
 
 class NestedLHS(object):
-    def __init__(self, nlevel, xlimits):
+    def __init__(self, nlevel, xlimits, random_state=None):
         """
         Constructor where values of options can be passed in.
 
@@ -46,9 +41,12 @@ class NestedLHS(object):
         xlimits : ndarray
             The interval of the domain in each dimension with shape (nx, 2)
 
+        random_state : Numpy RandomState object or seed number which controls random draws
+
         """
         self.nlevel = nlevel
         self.xlimits = xlimits
+        self.random_state = random_state
 
     def __call__(self, nb_samples_hifi):
         """
@@ -79,11 +77,13 @@ class NestedLHS(object):
             raise ValueError("nt must be a list of decreasing integers")
 
         doe = []
-        p0 = LHS(xlimits=self.xlimits, criterion="ese")
+        p0 = LHS(xlimits=self.xlimits, criterion="ese", random_state=self.random_state)
         doe.append(p0(nt[0]))
 
         for i in range(1, self.nlevel):
-            p = LHS(xlimits=self.xlimits, criterion="ese")
+            p = LHS(
+                xlimits=self.xlimits, criterion="ese", random_state=self.random_state
+            )
             doe.append(p(nt[i]))
 
         for i in range(1, self.nlevel)[::-1]:
@@ -107,7 +107,7 @@ class NestedLHS(object):
 
 class MFK(KrgBased):
     def _initialize(self):
-        super(MFK, self)._initialize()
+        super()._initialize()
         declare = self.options.declare
         declare(
             "rho_regr",
@@ -121,6 +121,13 @@ class MFK(KrgBased):
             types=bool,
             values=(True, False),
             desc="If True, the variance at HF samples is forced to zero",
+        )
+        declare(
+            "propagate_uncertainty",
+            True,
+            types=bool,
+            values=(True, False),
+            desc="If True, the variance cotribution of lower fidelity levels are considered",
         )
         self.name = "MFK"
 
@@ -190,12 +197,20 @@ class MFK(KrgBased):
     def _new_train_init(self):
         if self.name in ["MFKPLS", "MFKPLSK"]:
             _pls = pls(self.options["n_comp"])
-            # PLS is done on the highest fidelity identified by the key None
-            self.m_pls = _pls.fit(
-                self.training_points[None][0][0].copy(),
-                self.training_points[None][0][1].copy(),
-            )
-            self.coeff_pls = self.m_pls.x_rotations_
+
+            # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception while sklearn 0.23 returns zeroed x_rotations
+            # For now the try/except below is a workaround to restore the 0.23 behaviour
+            try:
+                # PLS is done on the highest fidelity identified by the key None
+                self.m_pls = _pls.fit(
+                    self.training_points[None][0][0].copy(),
+                    self.training_points[None][0][1].copy(),
+                )
+                self.coeff_pls = self.m_pls.x_rotations_
+            except StopIteration:
+                self.coeff_pls = np.zeros(
+                    self.training_points[None][0][0].shape[1], self.options["n_comp"]
+                )
 
         xt = []
         yt = []
@@ -269,7 +284,7 @@ class MFK(KrgBased):
                 self.X_norma_all[lvl] = self.X_norma
                 self.y_norma_all[lvl] = self.y_norma
         else:
-            self.optimal_noise = self.options["noise0"]
+            self.optimal_noise = self.options["noise0"] / self.y_std ** 2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
         # Calculate matrix of distances D between samples
@@ -538,19 +553,21 @@ class MFK(KrgBased):
                 p = self.p_all[i]
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
-                    sigma2_rho * MSE[:, i - 1]
-                    + Q_ / (2 * (self.nt_all[i] - p - q))
+                    # sigma2_rho * MSE[:, i - 1]
+                    +Q_ / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
                     * (1 - (r_t ** 2).sum(axis=0))
                     + sigma2 * (u_ ** 2).sum(axis=0)
                 )
             else:
-                MSE[:, i] = sigma2_rho * MSE[:, i - 1] + sigma2 * (
+                MSE[:, i] = sigma2 * (
                     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
                     1
                     - (r_t ** 2).sum(axis=0)
                     + (u_ ** 2).sum(axis=0)
-                )
+                )  # + sigma2_rho * MSE[:, i - 1]
+            if self.options["propagate_uncertainty"]:
+                MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]
 
         # scaled predictor
         MSE *= self.y_std ** 2
@@ -720,7 +737,7 @@ class MFK(KrgBased):
                                 % (i, len(self.options["noise0"][i]), self.nt_all[i])
                             )
             else:
-                if len(self.options["noise0"][i]) != 1:
+                if np.size(self.options["noise0"][i]) != 1:
                     raise ValueError(
                         "for the level of fidelity %s, the length of noise0 (%s) should be equal to one."
                         % (i, len(self.options["noise0"][i]))

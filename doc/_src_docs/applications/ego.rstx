@@ -138,8 +138,8 @@ The virtual values are set according to the model prediction:
 
 Some variants are proposed to introduce an optimistic or pessimistic part :
 
-    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
-    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+    * the Kriging Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kriging Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
 
 Tips for an efficient use
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -154,7 +154,7 @@ Implementation Notes
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
-* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
+* LCB (Lower Confidence Bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.

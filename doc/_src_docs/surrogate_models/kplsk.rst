@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0099998
+     Training - done. Time (sec):  0.0498002
   ___________________________________________________________________________
      
    Evaluation
@@ -161,6 +161,16 @@ Options
      -  ['squar_exp']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -201,8 +211,23 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  n_comp
      -  1
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion

@@ -6,7 +6,7 @@ Kriging is an interpolating model that is a linear combination of a known functi
 .. math ::
   \hat{y} = \sum\limits_{i=1}^k\beta_if_i({\bf x})+Z({\bf x}).
 
-:math:`Z({\bf x})` is a realization of a stochastique process with mean zero and spatial covariance function given by
+:math:`Z({\bf x})` is a realization of a stochastic process with mean zero and spatial covariance function given by
 
 .. math ::
   cov\left[Z\left({\bf x}^{(i)}\right),Z\left({\bf x}^{(j)}\right)\right] =\sigma^2R\left({\bf x}^{(i)},{\bf x}^{(j)}\right)
@@ -27,7 +27,7 @@ Squared Exponential (Gaussian) correlation function:
 Matérn 5/2 correlation function:
 
 .. math ::
-  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  \prod\limits_{l=1}^{nx} \left(1 + \sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right| + \frac{5}{3}\theta_{l}^{2}\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right) \exp\left(-\sqrt{5}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
 
 Matérn 3/2 correlation function:
 
@@ -56,6 +56,9 @@ To incorporate integer (with order relation) and categorical variables (with no 
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
 For categorical, we add as many continuous dimensions with bounds [0,1] as possible output values for the variable and 
 then we round in the prediction to the output dimension giving the greatest continuous prediction.
+
+A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
+See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
 
 More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
 

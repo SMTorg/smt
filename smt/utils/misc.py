@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from bisect import bisect_left
 
 
 def compute_rms_error(sm, xe=None, ye=None, kx=None):
@@ -50,3 +51,27 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
         num = np.linalg.norm(yt2 - yt)
         den = np.linalg.norm(yt)
         return num / den
+
+
+def take_closest_number(myList, myNumber):
+    """
+    Assumes myList is sorted. Returns closest value to myNumber.
+
+    If two numbers are equally close, return the smallest number.
+    """
+    pos = bisect_left(myList, myNumber)
+    if pos == 0:
+        return myList[0]
+    if pos == len(myList):
+        return myList[-1]
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+        return after
+    else:
+        return before
+
+
+def take_closest_in_list(myList, x):
+    vfunc = np.vectorize(take_closest_number, excluded=["myList"])
+    return vfunc(myList=myList, myNumber=x)

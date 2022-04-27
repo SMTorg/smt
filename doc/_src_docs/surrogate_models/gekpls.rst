@@ -51,8 +51,13 @@ Usage
       yt = np.concatenate((yt, yd), axis=1)
   
   # Build the GEKPLS model
+  n_comp = 2
   sm = GEKPLS(
-      theta0=[1e-2], xlimits=fun.xlimits, extra_points=1, print_prediction=False
+      theta0=[1e-2] * n_comp,
+      xlimits=fun.xlimits,
+      extra_points=1,
+      print_prediction=False,
+      n_comp=n_comp,
   )
   sm.set_training_values(xt, yt[:, 0])
   for i in range(2):
@@ -81,7 +86,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                     KPLS
+                                    GEKPLS
   ___________________________________________________________________________
      
    Problem size
@@ -93,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0200000
+     Training - done. Time (sec):  0.0761352
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -147,6 +152,16 @@ Options
      -  ['abs_exp', 'squar_exp']
      -  ['str']
      -  Correlation function type
+  *  -  categorical_kernel
+     -  None
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  xtypes
+     -  None
+     -  None
+     -  ['list']
+     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -187,11 +202,26 @@ Options
      -  [True, False]
      -  ['bool']
      -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
   *  -  n_comp
      -  1
      -  None
      -  ['int']
      -  Number of principal components
+  *  -  eval_n_comp
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  n_comp evaluation flag
+  *  -  eval_comp_treshold
+     -  1.0
+     -  None
+     -  ['float']
+     -  n_comp evaluation treshold for Wold's R criterion
   *  -  xlimits
      -  None
      -  None

@@ -138,8 +138,8 @@ The virtual values are set according to the model prediction:
 
 Some variants are proposed to introduce an optimistic or pessimistic part :
 
-    * the Kringin Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
-    * the Kringin Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
+    * the Kriging Believer Upper Bound (KBUB) : :math:`\hat y_q = \mu (x_q) + 3 \sigma` 
+    * the Kriging Believer Lower Bound (KBLB) : :math:`\hat y_q = \mu (x_q) - 3 \sigma`
 
 Tips for an efficient use
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -154,7 +154,7 @@ Implementation Notes
 Beside the Expected Improvement, the implementation here offers two other infill criteria:
 
 * SBO (Surrogate Based Optimization): directly using the prediction of the surrogate model (:math:`\mu`)
-* UCB (Upper Confidence bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
+* LCB (Lower Confidence Bound): using the 99% confidence interval :math:`\mu -3 \times \sigma`
 
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
@@ -214,7 +214,7 @@ Usage
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   
   ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
   
@@ -336,7 +336,7 @@ Usage with parallel options
                   ]
               )
   
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
   ego = EGO(
       n_iter=n_iter,
@@ -442,7 +442,7 @@ Usage with mixed variable
       MixedIntegerContext,
       FLOAT,
       ENUM,
-      INT,
+      ORD,
   )
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
@@ -475,11 +475,11 @@ Usage with mixed variable
       return y
   
   n_iter = 15
-  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), INT]
+  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
   xlimits = np.array(
       [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
   )
-  criterion = "EI"  #'EI' or 'SBO' or 'UCB'
+  criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   qEI = "KB"
   sm = KRG(print_global=False)
   mixint = MixedIntegerContext(xtypes, xlimits)
@@ -525,8 +525,9 @@ Usage with mixed variable
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
   Warning: multiple x input features have the same value (at least same row twice).
-  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
-  Minimum in typed x=[-5.0, 'blue', 'square', 0]
+  Warning: multiple x input features have the same value (at least same row twice).
+  Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
+  Minimum in typed x=[-5.0, 'blue', 'circle', 1]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -553,9 +554,9 @@ Options
      -  Function to minimize
   *  -  criterion
      -  EI
-     -  ['EI', 'SBO', 'UCB']
+     -  ['EI', 'SBO', 'LCB']
      -  ['str']
-     -  criterion for next evaluation point determination: Expected Improvement,             Surrogate-Based Optimization or Upper Confidence Bound
+     -  criterion for next evaluation point determination: Expected Improvement,             Surrogate-Based Optimization or Lower Confidence Bound
   *  -  n_iter
      -  None
      -  None
@@ -582,7 +583,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000000009ACAEB0>
+     -  <smt.applications.ego.Evaluator object at 0x000001CEECE33700>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,10 +617,15 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
-  *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000000009ACAEE0>
+  *  -  categorical_kernel
      -  None
-     -  ['KRG', 'KPLS', 'KPLSK', 'MGP']
+     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['str']
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
+  *  -  surrogate
+     -  <smt.surrogate_models.krg.KRG object at 0x000001CEECE337F0>
+     -  None
+     -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly
   *  -  xtypes
      -  None
