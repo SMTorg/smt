@@ -674,7 +674,6 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
-
     def test_mixed_homo_gaussian_3D_ord_cate(self):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,

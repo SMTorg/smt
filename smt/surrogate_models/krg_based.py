@@ -78,7 +78,7 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             types=str,
-            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN,HOMO_HYP],
+            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN, HOMO_HYP],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
 
@@ -1055,7 +1055,7 @@ class KrgBased(SurrogateModel):
 
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
-                
+
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
@@ -1065,7 +1065,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 15* len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 15 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1330,11 +1330,11 @@ class KrgBased(SurrogateModel):
                 HOMO_GAUSSIAN,
                 GOWER_MAT,
                 CONT_RELAX,
-                HOMO_HYP
+                HOMO_HYP,
             ]:
                 raise ValueError("invalid categorical_kernel.")
             if (
-                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN,HOMO_HYP]
+                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN, HOMO_HYP]
                 and self.name == "KPLS"
             ):
                 if self.options["cat_kernel_comps"] is not None:

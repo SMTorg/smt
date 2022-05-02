@@ -19,7 +19,7 @@ CONT_RELAX = "continuous_relaxation_matrix_kernel"
 GOWER_MAT = "gower_matrix_kernel"
 
 
-def standardization(X, y, scale_X_to_unit=True):
+def standardization(X, y, scale_X_to_unit=False):
 
     """
 
@@ -634,7 +634,7 @@ def matrix_data_corr(
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
         elif cat_kernel == HOMO_HYP:
-            theta_cat = theta_cat * (2 * np.pi / theta_bounds[1])      
+            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -667,38 +667,13 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-                    
-        if cat_kernel == HOMO_GAUSSIAN :
+
+        if cat_kernel == HOMO_GAUSSIAN:
             T = (T - 1) * theta_bounds[1] / 2
             T = np.exp(2 * T)
         k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
         T = (T + np.exp(-theta_bounds[1])) / (k)
-        T = np.array([[ 1.  ,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  1.  ,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  1.  ,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  1.  ,  0.97,  0.97,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  0.97,  1.  ,  0.97,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  0.97,  0.97,  1.  ,  0.97,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  1.  ,  0.97,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  1.  ,  0.97,
-        -0.97, -0.97, -0.97, -0.97],
-       [ 0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  0.97,  1.  ,
-        -0.97, -0.97, -0.97, -0.97],
-       [-0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97,
-         1.  ,  0.97,  0.97,  0.97],
-       [-0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97,
-         0.97,  1.  ,  0.97,  0.97],
-       [-0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97,
-         0.97,  0.97,  1.  ,  0.97],
-       [-0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97, -0.97,
-         0.97,  0.97,  0.97,  1.  ]])
+
         if cat_kernel_comps is not None:
             # Sampling points X and y
             X = self.training_points[None][0][0]
@@ -765,14 +740,10 @@ def matrix_data_corr(
                             kval_cat += np.multiply(
                                 Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                             )
-                        r_cat[k] = kval_cat                    
+                        r_cat[k] = kval_cat
                     else:
-                       # hyp_cur = (T[indi, indj]*theta_bounds[1])+theta_bounds[0]
-                       # r_cat[k] = ((1+ np.sqrt(3)*hyp_cur)*np.exp(- np.sqrt(3)* hyp_cur ))
                         r_cat[k] = T[indi, indj]
-                     #   if r_cat[k]>0.8 : 
-                      #      print(r_cat[k])
-     #   print(r_cat.T)
+
         r = np.multiply(r, r_cat)
         if cat_kernel_comps is not None:
             if old_n_comp == None:
