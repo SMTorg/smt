@@ -634,7 +634,7 @@ def matrix_data_corr(
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
         elif cat_kernel == HOMO_HYP:
-            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])      
+            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -667,12 +667,13 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
+
         if cat_kernel == HOMO_GAUSSIAN:
             T = (T - 1) * theta_bounds[1] / 2
             T = np.exp(2 * T)
-            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-            T = (T + np.exp(-theta_bounds[1])) / (k)
-            
+        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+        T = (T + np.exp(-theta_bounds[1])) / (k)
+
         if cat_kernel_comps is not None:
             # Sampling points X and y
             X = self.training_points[None][0][0]
@@ -740,21 +741,9 @@ def matrix_data_corr(
                                 Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                             )
                         r_cat[k] = kval_cat
-
-                        ### with or without : use kernel properly
-                        ### Value were not in [0,1]
-                    # =============================================================================
-                    #                         r_cat[k] = (
-                    #                             (
-                    #                                 np.exp(2 * (r_cat[k] - 1) * theta_bounds[1] / 2)
-                    #                                 + np.exp(-theta_bounds[1])
-                    #                             )
-                    #                             / (1 + np.exp(-theta_bounds[1]))
-                    #                             / np.exp(-theta_bounds[0])
-                    #                         )
-                    # =============================================================================
                     else:
                         r_cat[k] = T[indi, indj]
+
         r = np.multiply(r, r_cat)
         if cat_kernel_comps is not None:
             if old_n_comp == None:
