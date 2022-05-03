@@ -709,7 +709,7 @@ def matrix_data_corr(
 
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
-                corr,
+                "squar_exp",
                 self.options["n_comp"],
                 self.coeff_pls,
                 theta=None,
@@ -732,9 +732,6 @@ def matrix_data_corr(
                                 if l > j:
                                     Theta_i_red[indmatvec] = T[j, l]
                                     indmatvec += 1
-                        r_cat[k] = _correlation_types[corr](
-                            Theta_i_red, d_cat_i[k : k + 1]
-                        )
                         kval_cat = 0
                         for indijk in range(len(Theta_i_red)):
                             kval_cat += np.multiply(

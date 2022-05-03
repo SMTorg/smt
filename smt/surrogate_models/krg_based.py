@@ -1325,6 +1325,12 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
+        if self.name in ["KPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+
         if self.options["categorical_kernel"] is not None:
             if self.options["categorical_kernel"] not in [
                 HOMO_GAUSSIAN,
