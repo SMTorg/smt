@@ -213,11 +213,10 @@ def unfold_with_enum_mask(xtypes, x):
             unfold_index += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             enum_slice = xunfold[:, unfold_index : unfold_index + xtyp[1]]
-            unfold_index += xtyp[1]
             for row in range(x.shape[0]):
-                try :
+                try:
                     enum_slice[row, x[row, i].astype(int)] = 1
-                except AttributeError :
+                except AttributeError:
                     enum_slice[row, int(x[row, i])] = 1
             unfold_index += xtyp[1]
         else:
