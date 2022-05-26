@@ -345,7 +345,6 @@ class EGO(SurrogateBasedApplication):
         boolean: success flag
 
         """
-
         self._train_gpr(x_data, y_data)
         
         criterion = self.options["criterion"]
