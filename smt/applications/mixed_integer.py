@@ -9,7 +9,12 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
+from smt.utils.kriging_utils import (
+    HOMO_GAUSSIAN,
+    HOMO_HYP,
+    CONT_RELAX,
+    GOWER_MAT,
+)
 
 FLOAT = "float_type"
 INT = "int_type"
@@ -209,7 +214,10 @@ def unfold_with_enum_mask(xtypes, x):
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             enum_slice = xunfold[:, unfold_index : unfold_index + xtyp[1]]
             for row in range(x.shape[0]):
-                enum_slice[row, x[row, i].astype(int)] = 1
+                try:
+                    enum_slice[row, x[row, i].astype(int)] = 1
+                except AttributeError:
+                    enum_slice[row, int(x[row, i])] = 1
             unfold_index += xtyp[1]
         else:
             _raise_value_error(xtyp)
@@ -303,6 +311,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         surrogate,
         input_in_folded_space=True,
         categorical_kernel=None,
+        cat_kernel_comps=None,
     ):
         """
         Parameters
@@ -322,6 +331,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         check_xspec_consistency(xtypes, xlimits)
         self._surrogate = surrogate
         self._categorical_kernel = categorical_kernel
+        self._cat_kernel_comps = cat_kernel_comps
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._input_in_folded_space = input_in_folded_space
@@ -333,14 +343,19 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 raise ValueError("constant regression must be used with mixed integer")
 
         if self._categorical_kernel is not None:
-            if self._surrogate.name not in ["Kriging"]:
+            if self._surrogate.name not in ["Kriging", "KPLS"]:
                 raise ValueError("matrix kernel not implemented for this model")
             if self._xtypes is None:
                 raise ValueError("xtypes mandatory for categorical kernel")
             self._input_in_folded_space = False
 
-        if self._surrogate.name in ["Kriging"] and self._categorical_kernel is not None:
+        if (
+            self._surrogate.name in ["Kriging", "KPLS"]
+            and self._categorical_kernel is not None
+        ):
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
+            if self._cat_kernel_comps is not None:
+                self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
             self._surrogate.options["xtypes"] = self._xtypes
 
     @property
@@ -410,6 +425,7 @@ class MixedIntegerContext(object):
         xlimits,
         work_in_folded_space=True,
         categorical_kernel=None,
+        cat_kernel_comps=None,
     ):
         """
         Parameters
@@ -427,6 +443,7 @@ class MixedIntegerContext(object):
         self._xtypes = xtypes
         self._xlimits = xlimits
         self._categorical_kernel = categorical_kernel
+        self._cat_kernel_comps = cat_kernel_comps
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
             self._xtypes, xlimits, categorical_kernel
         )
@@ -451,6 +468,7 @@ class MixedIntegerContext(object):
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
+            cat_kernel_comps=self._cat_kernel_comps,
         )
 
     def get_unfolded_xlimits(self):

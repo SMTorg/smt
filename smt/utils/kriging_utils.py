@@ -13,9 +13,10 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
-GOWER = "gower"
 HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
+HOMO_HYP = "homoscedastic_matrix_kernel"
+CONT_RELAX = "continuous_relaxation_matrix_kernel"
+GOWER_MAT = "gower_matrix_kernel"
 
 
 def standardization(X, y, scale_X_to_unit=False):
@@ -159,6 +160,7 @@ def cross_levels(X, ij, xtypes, y=None):
      n_levels: np.ndarray
             - The number of levels for every categorical variable.
     """
+
     n_levels = []
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
@@ -184,31 +186,76 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel):
+def cross_levels_homo_space(X, ij, y=None):
+    """
+    Computes the nonzero componentwise (or Hadamard) product between the vectors in X
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+
+    Returns
+    -------
+     dx: np.ndarray [n_obs * (n_obs - 1) / 2,dim]
+            - The Hadamard product between the vectors in X.
+    """
+    dim = np.shape(X)[1]
+    n, _ = ij.shape
+    dx = np.zeros((n, dim))
+    for l in range(n):
+        i, j = ij[l]
+        if y is None:
+            dx[l] = X[i] * X[j]
+        else:
+            dx[l] = X[i] * y[j]
+
+    return dx
+
+
+def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
     xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables
+            -the types (FLOAT,ORD,ENUM) of the input variables,
     cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging",
+            -The kernel to use for categorical inputs. Only for non continuous Kriging,
+    nx: int
+            -The number of variables,
+    d: int
+            - n_comp or nx
+    n_comp : int
+            - if PLS, then it is the number of components else None,
+    mat_dim : int
+            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
     Returns
     -------
      n_param: int
             - The number of parameters.
     """
+    n_param = nx
+    if n_comp is not None:
+        n_param = d
+        if cat_kernel == CONT_RELAX:
+            return n_param
+        if mat_dim is not None:
+            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
 
-    n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if cat_kernel == FULL_GAUSSIAN:
-                n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN:
+            if nx == d:
+                n_param -= 1
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-
-        else:
-            n_param += 1
+            if cat_kernel == CONT_RELAX:
+                n_param += int(xtyp[1])
     return n_param
 
 
@@ -396,8 +443,51 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
+def compute_X_cross(X, n_levels):
+    """
+    Computes the full space cross-relaxation of the input X for
+    the homoscedastic hypersphere kernel.
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, 1]
+            - The input variables.
+    n_levels: np.ndarray
+            - The number of levels for the categorical variable.
+    Returns
+    -------
+    Zeta: np.ndarray [n_obs, n_levels * (n_levels - 1) / 2]
+         - The non categorical values of the input variables.
+    """
+
+    dim = int(n_levels * (n_levels - 1) / 2)
+    nt = len(X)
+    Zeta = np.zeros((nt, dim))
+    k = 0
+    for i in range(n_levels):
+        for j in range(n_levels):
+            if j > i:
+                s = 0
+                for x in X:
+                    if int(x) == i or int(x) == j:
+                        Zeta[s, k] = 1
+                    s += 1
+                k += 1
+
+    return Zeta
+
+
 def matrix_data_corr(
-    corr, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel
+    self,
+    corr,
+    xtypes,
+    theta,
+    theta_bounds,
+    dx,
+    Lij,
+    n_levels,
+    cat_features,
+    cat_kernel,
+    x=None,
 ):
     """
     matrix kernel correlation model.
@@ -406,10 +496,12 @@ def matrix_data_corr(
     ----------
     corr: correlation_types
         - The autocorrelation model
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables
     theta : list[small_d * n_comp]
         Hyperparameters of the correlation model
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        d_i
+    dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        - The gower_componentwise_distances between the samples.
     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The levels corresponding to the indices i and j of the vectors in X.
     n_levels: np.ndarray
@@ -418,6 +510,8 @@ def matrix_data_corr(
         -  Indices of the categorical input dimensions.
      cat_kernel : string
          - The kernel to use for categorical inputs. Only for non continuous Kriging",
+    x : np.ndarray[n_obs , n_comp]
+        - The input instead of dx for homo_hs prediction
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
@@ -430,24 +524,33 @@ def matrix_data_corr(
         "matern52": matern52,
         "matern32": matern32,
     }
-
-    r = np.zeros((d.shape[0], 1))
-    n_components = d.shape[1]
+    r = np.zeros((dx.shape[0], 1))
+    n_components = dx.shape[1]
+    nx = self.nx
+    nlevels = n_levels
+    try:
+        cat_kernel_comps = self.options["cat_kernel_comps"]
+        if cat_kernel_comps is not None:
+            nlevels = np.array(cat_kernel_comps)
+    except KeyError:
+        cat_kernel_comps = None
+    try:
+        ncomp = self.options["n_comp"]
+        try:
+            self.pls_coeff_cont
+        except AttributeError:
+            self.pls_coeff_cont = []
+    except KeyError:
+        cat_kernel_comps = None
+        ncomp = 1e5
     theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
     theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
     i = 0
     j = 0
+    n_theta_cont = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel == FULL_GAUSSIAN:
-                theta_cont_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
-                ] = False
-                theta_cat_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i
-                ] = [True] * int(nlevels[i] * (nlevels[i] + 1) / 2)
-                j += int(nlevels[i] * (nlevels[i] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN:
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
                 ] = False
@@ -457,24 +560,81 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            theta_cont_features[j] = True
-            j += 1
+            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+                if n_theta_cont < ncomp:
+                    theta_cont_features[j] = True
+                    j += 1
+                    n_theta_cont += 1
+    # Sampling points X and y
+    X = self.training_points[None][0][0]
+    y = self.training_points[None][0][1]
+
+    if cat_kernel == CONT_RELAX:
+        from smt.applications.mixed_integer import unfold_with_enum_mask
+
+        X_pls_space = unfold_with_enum_mask(xtypes, X)
+        nx = len(theta)
+
+    elif cat_kernel == GOWER_MAT:
+        X_pls_space = np.copy(X)
+    else:
+        X_pls_space, _ = compute_X_cont(X, xtypes)
+        d_cont = dx[:, np.logical_not(cat_features)]
+    if cat_kernel_comps is not None or ncomp < 1e5:
+        ###Modifier la condition : if PLS cont
+        if self.pls_coeff_cont == []:
+            X, y = self._compute_pls(X_pls_space.copy(), y.copy())
+            self.pls_coeff_cont = self.coeff_pls
+        if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
+            d = componentwise_distance_PLS(
+                dx,
+                corr,
+                self.options["n_comp"],
+                self.pls_coeff_cont,
+                theta=None,
+                return_derivative=False,
+            )
+            r = _correlation_types[corr](theta, d)
+            return r
+        else:
+            d_cont = componentwise_distance_PLS(
+                d_cont,
+                corr,
+                self.options["n_comp"],
+                self.pls_coeff_cont,
+                theta=None,
+                return_derivative=False,
+            )
+    else:
+        d = componentwise_distance(
+            dx,
+            corr,
+            nx,
+            theta=None,
+            return_derivative=False,
+        )
+        if cat_kernel != CONT_RELAX:
+            d_cont = d[:, np.logical_not(cat_features)]
+
+    if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
+        r = _correlation_types[corr](theta, d)
+        return r
 
     theta_cont = theta[theta_cont_features[:, 0]]
-    d_cont = d[:, np.logical_not(cat_features)]
     r_cont = _correlation_types[corr](theta_cont, d_cont)
     r_cat = np.copy(r_cont) * 0
     r = np.copy(r_cont)
     ##Theta_cat_i loop
+    try:
+        self.coeff_pls_cat
+    except AttributeError:
+        self.coeff_pls_cat = []
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel == FULL_GAUSSIAN:
-            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
-                0.5 * np.pi / theta_bounds[1]
-            )
         if cat_kernel == HOMO_GAUSSIAN:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-        d_cat = d[:, cat_features]
+        elif cat_kernel == HOMO_HYP:
+            theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
         v = 0
@@ -507,25 +667,86 @@ def matrix_data_corr(
                             L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
 
         T = np.dot(L, L.T)
-        T = (T - 1) * theta_bounds[1] / 2
-        T = np.exp(2 * T)
+
+        if cat_kernel == HOMO_GAUSSIAN:
+            T = (T - 1) * theta_bounds[1] / 2
+            T = np.exp(2 * T)
         k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
         T = (T + np.exp(-theta_bounds[1])) / (k)
+
+        if cat_kernel_comps is not None:
+            # Sampling points X and y
+            X = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
+            X_icat = X[:, cat_features]
+            X_icat = X_icat[:, i]
+            old_n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+            self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
+            X_full_space = compute_X_cross(X_icat, n_levels[i])
+            try:
+                self.coeff_pls = self.coeff_pls_cat[i]
+            except IndexError:
+                _, _ = self._compute_pls(X_full_space.copy(), y.copy())
+                self.coeff_pls_cat.append(self.coeff_pls)
+
+            if x is not None:
+                x_icat = x[:, cat_features]
+                x_icat = x_icat[:, i]
+                x_full_space = compute_X_cross(x_icat, n_levels[i])
+                dx_cat_i = cross_levels_homo_space(
+                    x_full_space, self.ij, y=X_full_space
+                )
+            else:
+                dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
+
+            ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
+            self.coeff_pls = (
+                (1 - 1e-9) * self.coeff_pls
+                + 1e-9
+                * np.eye(np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1])
+                + 1e-12
+            )
+
+            d_cat_i = componentwise_distance_PLS(
+                dx_cat_i,
+                "squar_exp",
+                self.options["n_comp"],
+                self.coeff_pls,
+                theta=None,
+                return_derivative=False,
+            )
 
         for k in range(np.shape(Lij[i])[0]):
             indi = int(Lij[i][k][0])
             indj = int(Lij[i][k][1])
+
             if indi == indj:
-                r_cat[k, 0] = 1.0
+                r_cat[k] = 1.0
             else:
-                if cat_kernel == FULL_GAUSSIAN:
-                    r_cat[k, 0] = np.exp(
-                        -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
-                        - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
-                    ) * (T[indi, indj])
-                if cat_kernel == HOMO_GAUSSIAN:
-                    r_cat[k, 0] = T[indi, indj]
+                if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+                    if cat_kernel_comps is not None:
+                        Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
+                        indmatvec = 0
+                        for j in range(nlevels[i]):
+                            for l in range(nlevels[i]):
+                                if l > j:
+                                    Theta_i_red[indmatvec] = T[j, l]
+                                    indmatvec += 1
+                        kval_cat = 0
+                        for indijk in range(len(Theta_i_red)):
+                            kval_cat += np.multiply(
+                                Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                            )
+                        r_cat[k] = kval_cat
+                    else:
+                        r_cat[k] = T[indi, indj]
+
         r = np.multiply(r, r_cat)
+        if cat_kernel_comps is not None:
+            if old_n_comp == None:
+                self.options._dict.pop("n_comp", None)
+            else:
+                self.options["n_comp"] = old_n_comp
     return r
 
 
@@ -556,7 +777,7 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
+         An array containing the values of the autocorrelation model.
     """
 
     r = np.zeros((d.shape[0], 1))
@@ -616,7 +837,7 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
-    derivative_paramas : dict, optional
+    derivative_params : dict, optional
         List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
@@ -688,6 +909,8 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_params : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
     ------

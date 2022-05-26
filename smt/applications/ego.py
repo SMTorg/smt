@@ -16,9 +16,9 @@ from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
-    GOWER,
+    GOWER_MAT,
     HOMO_GAUSSIAN,
-    FULL_GAUSSIAN,
+    CONT_RELAX,
 )
 from smt.utils.misc import compute_rms_error
 
@@ -113,7 +113,7 @@ class EGO(SurrogateBasedApplication):
             "categorical_kernel",
             None,
             types=str,
-            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
+            values=[GOWER_MAT, HOMO_GAUSSIAN, CONT_RELAX],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
         )
         declare(

@@ -41,6 +41,12 @@ class KPLS(KrgBased):
             types=(float),
             desc="n_comp evaluation treshold for Wold's R criterion",
         )
+        declare(
+            "cat_kernel_comps",
+            None,
+            types=list,
+            desc="Number of components for PLS categorical kernel",
+        )
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
@@ -48,7 +54,7 @@ class KPLS(KrgBased):
         # For now the try/except below is a workaround to restore the 0.23 behaviour
         try:
             self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-        except StopIteration:
+        except:
             self.coeff_pls = np.zeros((X.shape[1], self.options["n_comp"]))
         return X, y
 

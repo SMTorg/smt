@@ -275,7 +275,7 @@ class Test(unittest.TestCase):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            GOWER,
+            GOWER_MAT,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -288,7 +288,7 @@ class Test(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER,
+            categorical_kernel=GOWER_MAT,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
