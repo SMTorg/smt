@@ -346,7 +346,7 @@ class EGO(SurrogateBasedApplication):
 
         """
         self._train_gpr(x_data, y_data)
-
+        
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
