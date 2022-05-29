@@ -234,7 +234,7 @@ Usage
   
       y_gp_plot = ego.gpr.predict_values(x_plot)
       y_gp_plot_var = ego.gpr.predict_variances(x_plot)
-      y_ei_plot = -ego.EI(x_plot, y_data_k)
+      y_ei_plot = -ego.EI(x_plot)
   
       ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
       ax1 = ax.twinx()
@@ -367,7 +367,7 @@ Usage with parallel options
           ego.gpr.set_training_values(x_data_sub, y_data_sub)
           ego.gpr.train()
   
-          y_ei_plot = -ego.EI(x_plot, y_data_sub)
+          y_ei_plot = -ego.EI(x_plot)
           y_gp_plot = ego.gpr.predict_values(x_plot)
           y_gp_plot_var = ego.gpr.predict_variances(x_plot)
   
@@ -583,7 +583,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001CEECE33700>
+     -  <smt.applications.ego.Evaluator object at 0x000001F2D493BD90>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -623,7 +623,7 @@ Options
      -  ['str']
      -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001CEECE337F0>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001F2D7D03970>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly
