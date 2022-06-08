@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from scipy import linalg, optimize
 from copy import deepcopy
+import warnings
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.kriging_utils import differences
@@ -207,9 +208,10 @@ class KrgBased(SurrogateModel):
             D, self.ij = cross_distances(self.X_norma)
 
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
-            print(
-                "Warning: multiple x input features have the same value (at least same row twice)."
-            )
+            default_warn = warnings.formatwarning
+            warnings.formatwarning  = lambda msg, *args, **kwargs: str(msg)
+            warnings.warn("Warning: multiple x input features have the same value (at least same row twice).\n")
+            warnings.formatwarning = default_warn
         ####
         # Regression matrix and parameters
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
@@ -1042,9 +1044,10 @@ class KrgBased(SurrogateModel):
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
                     )
-                    print(
-                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
-                    )
+                    default_warn = warnings.formatwarning
+                    warnings.formatwarning  = lambda msg, *args, **kwargs: str(msg)
+                    warnings.warn("Warning: theta0 is out the feasible bounds. A random initialisation is used instead.\n")
+                    warnings.formatwarning = default_warn
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
@@ -1087,9 +1090,10 @@ class KrgBased(SurrogateModel):
                             or self.noise0[i] > noise_bounds[1]
                         ):
                             self.noise0[i] = noise_bounds[0]
-                            print(
-                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
-                            )
+                            default_warn = warnings.formatwarning
+                            warnings.formatwarning  = lambda msg, *args, **kwargs: str(msg)
+                            arnings.warn("Warning: noise0 is out the feasible bounds. The lowest possible value is used instead.\n")
+                            warnings.formatwarning = default_warn
 
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
