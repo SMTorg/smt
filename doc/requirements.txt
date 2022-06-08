@@ -1,5 +1,8 @@
 Cython
+numpy
+scipy
+scikit-learn
+pyDOE2
 numpydoc
 matplotlib
-scikit-learn
-pyDOE
+git+https://github.com/hwangjt/sphinx_auto_embed.git  # for doc generation 
