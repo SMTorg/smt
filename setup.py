@@ -105,7 +105,6 @@ metadata = dict(
     ],
     install_requires=[
         "scikit-learn",
-        "packaging",
         "pyDOE2",
         "matplotlib",
         "numpydoc",
