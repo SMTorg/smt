@@ -1,4 +1,5 @@
 Cython
 numpydoc
+matplotlib
 scikit-learn
 pyDOE
