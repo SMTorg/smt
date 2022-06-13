@@ -3,43 +3,29 @@ import matplotlib.pyplot as plt
 from smt.surrogate_models.genn import GENN, load_smt_data
 import csv
 from sklearn.model_selection import train_test_split 
-import pickle
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import pandas as pd
 
 """
-Predicting Airfoil Aerodynamics through data
-by Raul Carreira Rufato and Prof. Joseph Morlier
-
-This notebook is a tutorial to determine the aerodynamic coefficients of a given airfoil using SMT. The obtained surrogate model can be used to give predictions for certain Mach numbers, angles of attack and the aerodynamic coefficients. These calculations can be really usefull in case of an airfoil shape optimization. The input parameters uses the airfoil Camber and Thickness mode shapes.
-
+Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. Joseph Morlier
+This is a tutorial to determine the aerodynamic coefficients of a given airfoil using GENN in SMT (Other models could be used as well) 
+The obtained surrogate model can be used to give predictions for certain Mach numbers, angles of attack and the aerodynamic coefficients. 
+These calculations can be really usefull in case of an airfoil shape optimization. The input parameters uses the airfoil Camber and Thickness mode shapes.
 Inputs: Airfoil Camber and Thickness mode shapes, Mach, alpha
-
 Outputs (options): cd, cl, cm
-
-In this test case, we will be predicting only the Cd coefficient. However, the other databases for the prediction of the other terms are available in the same repository.
-
-Bouhlels mSANN in a nutshell:
-
+In this test case, we will be predicting only the Cd coefficient. However, the other databases for the prediction of the other terms 
+are available in the same repository. Bouhlels mSANN were used to determine the airfoil's mode shapes, mSANN in a nutshell:
 a. Using inverse distance weighting (IDW) to interpolate the surface function of each airfoil.
-
-b. Then applying singular value decomposition (SVD) to reduce the number of variables that define the airfoil geometry. It includes a total of 14 airfoil modes (seven for camber and seven for thickness).
-
+b. Then applying singular value decomposition (SVD) to reduce the number of variables that define the airfoil geometry. It includes a total of 
+14 airfoil modes (seven for camber and seven for thickness).
 c. Totally 16 input variables, two flow conditions of Mach number (0.3 to 0.6) and the angle of attack (2 degrees to 6 degrees) plus 14 shape coefficients.
-
-d. The output airfoil aerodynamic force coefficients and their respective gradients are computed using ADflow, which solves the RANS equations with a Spalart-Allmaras turbulence model.
-
+d. The output airfoil aerodynamic force coefficients and their respective gradients are computed using ADflow, which solves the RANS equations with a 
+Spalart-Allmaras turbulence model.
 [1] Bouhlel, M. A., He, S., and Martins, J. R. R. A., mSANN Model Benchmarks, Mendeley Data, 2019. https://doi.org/10. 17632/ngpd634smf.1.
-
 [2] Li, J., Bouhlel,M., and Martins,J.R.R.A., Data-Based Approach for Fast Airfoil Analysis. and Optimization,AIAA Journal, 2019.
-
 [3] Bouhlel, M.A., and Martins,J.R.R.A.,Gradient-EnhancedKrigingforHigh-DimensionalProblems,Springer-Verlag,2018.
-
-[4] Bouhlel,M., He,S., and Martins,J.R.R.A.,Scalable Gradient-Enhanced Artificial Neural Networks for Airfoil Shape Design in the Subsonic and Transonic Regimes, ResearchGate, 2020.
-
+[4] Bouhlel,M., He,S., and Martins,J.R.R.A.,Scalable Gradient-Enhanced Artificial Neural Networks for Airfoil Shape Design in the Subsonic and Transonic 
+Regimes, ResearchGate, 2020.
 [5] Du,X.,He,P.,and Martins,J.,Rapid airfoil design optimization via neuralnetworks-basedp arameterization and surrogate modeling, Elsevier, 2021.
-
 [6] University of Michigan, Webfoil, 2021. URL http://webfoil.engin.umich.edu/, online accessed on 16 of June 2021.
 """
 
@@ -59,7 +45,6 @@ def getData():
 def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
     #loading of the models   
     modelcd = genn
-
     #input arrays are created -> alpha is linearily distributed over the range of -2 to 6 degrees while Ma is kept constant
     input_array = np.zeros(shape = (1,15))
     input_array[0,:14] = airfoil_modeshapes
@@ -73,10 +58,8 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
     for i in range(0,50):
         alpha[i,0]= -2 + 0.16* i
     input_array = np.concatenate((new_input_array, alpha), axis = 1)
-
     # predictions are made
     cd_pred = modelcd.predict_values(input_array)
-
     # graphs for the single aerodynamic coefficients are computed -> through bool: plot it is to decide if graphs are computed or not
     if plot == True:
         x, y_comp = reconstruct_airfoil(airfoil_modeshapes)
@@ -88,7 +71,6 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
         plt.ylabel("y")
         plt.savefig(f"Airfoil_{airfoil_name}")
         plt.close()
-
         plt.plot(alpha, cd_pred)
         plt.grid(True)
         plt.title("Drag coefficient SMT")
@@ -98,6 +80,7 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
         plt.close() 
     # array for the aerodynamic coeffs and alpha and the airfoil name
     return cd_pred, alpha, airfoil_name
+
 # to get predictions first the models must be trained and saved
 # all links must be changed to your file path
 # airfoil_modeshapes: computed mode_shapes of random airfol geometry with parameterise_airfoil
@@ -107,16 +90,13 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
 def scalarPredictionsSMT(airfoil_modeshapes, Ma, alpha,genn):
     #loading of the models (not yet a direct function in SMT, that is why the way over pickle)
     modelcd = genn
-
     # input array in neural network is created out of airfoil mode shapes, Mach number and alpha
     input_array = np.zeros(shape=(1,16))
     input_array[0,:14] = airfoil_modeshapes
     input_array[0,14] = Ma
     input_array[0,-1] = alpha
-
     # predictions are made
     cd_pred = modelcd.predict_values(input_array)
-
     return cd_pred
 
 # gives an array of predicted aerodynamic coefficients
@@ -126,7 +106,6 @@ def scalarPredictionsSMT(airfoil_modeshapes, Ma, alpha,genn):
 def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
     #loading of the models   
     modelcd = genn
-
     #input arrays are created -> alpha is linearily distributed over the range of -1 to 7 degrees while Ma is kept constant
     input_array = np.zeros(shape = (1,15))
     input_array[0,:14] = airfoil_modeshapes
@@ -140,13 +119,15 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
     for i in range(0,50):
         alpha[i,0]= -1 + 0.16* i
     input_array = np.concatenate((new_input_array, alpha), axis = 1)
-
     # predictions are made
     cd_pred = modelcd.predict_values(input_array)
-    cd_adflow = pd.read_csv(open("NACA4412-ADflow-alpha-cd.csv"),sep=" ")  
-    cd_xfoil = pd.read_csv(open("NACA4412-XFOIL-alpha-cd.csv"),sep=" ")
+    with open ('NACA4412-ADflow-alpha-cd.csv') as file:
+        reader = csv.reader(file, delimiter=" ")
+        cd_adflow = np.array(list(reader), dtype = np.float32)  
+    with open ('NACA4412-XFOIL-alpha-cd.csv') as file:
+        reader = csv.reader(file, delimiter=" ")
+        cd_xfoil = np.array(list(reader), dtype = np.float32)  
     # cd from ADflow and Xfoil
-
     # graphs for the single aerodynamic coefficients are computed -> through bool: plot it is to decide if graphs are computed or not
     if plot == True:
         x, y_comp = reconstruct_airfoil(airfoil_modeshapes)
@@ -157,8 +138,6 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
         plt.title(airfoil_name)
         plt.xlabel("x")
         plt.ylabel("y")
-
-
         plt.figure()
         plt.plot(alpha, cd_pred)
         plt.plot(cd_adflow.alpha.values[0:9],cd_adflow.cd.values[0:9])
@@ -167,37 +146,23 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool,genn):
         plt.title("Drag coefficient")
         plt.xlabel("Alpha")
         plt.ylabel("Cd")
-
- 
     # array for the aerodynamic coeffs and alpha and the airfoil name
     return cd_pred, alpha, airfoil_name
 
 def reconstruct_airfoil(airfoil_modes):
     modes = np.loadtxt(open("modes.txt"))  
-
-    
     # modes from the Database:
     # Bouhlel, M. A., He, S., and Martins, J. R. R. A., “mSANN Model Benchmarks,” Mendeley Data, 2019. https://doi.org/10.17632/ngpd634smf.1
-    
     # the x-vector for the distribution of the points of the airfoil geometry is saved in the first line of the mode_matrix
     x = modes[0,:].copy()
     mode_matrix = modes[1:,:].copy()
-
     # computing the y-values of the airfoil using the mode shapes and the mode_matrix
     y_comp = np.dot(airfoil_modes, mode_matrix).flatten()
     return x, y_comp
 
-
-
-
-
-
-
-
 x, y, dy = getData()
 # splitting the dataset
 x_train, x_test, y_train, y_test, dy_train, dy_test = train_test_split(x, y, dy, train_size= 0.8)
-
 # building and training the GENN
 genn = GENN()
 genn.options["alpha"] = 0.001  # learning rate that controls optimizer step size
@@ -221,7 +186,6 @@ load_smt_data(
     genn, x_train, y_train, dy_train
 )  # convenience function to read in data that is in SMT format
 genn.train()
-
 genn.plot_training_history()  # non-API function to plot training history (to check convergence)
 genn.goodness_of_fit(
     x_test, y_test, dy_test
@@ -233,9 +197,8 @@ y_pred = genn.predict_values(
 # Now we will use the trained model to make a prediction with an unlearned form.
 # Example Prediction for NACA4412.
 # Airfoil mode shapes should be determined according to Bouhlel, M.A., He, S., and Martins, 
-# J.R.R.A., “mSANN Model Benchmarks,” Mendeley Data, 2019. https://doi.org/10.17632/ngpd634smf.1
+# J.R.R.A., mSANN Model Benchmarks, Mendeley Data, 2019. https://doi.org/10.17632/ngpd634smf.1
 # Comparison of results with Adflow software for an alpha range from -1 to 7 degrees. Re = 3000000
-
 NACA4412 = np.loadtxt(open("NACA4412.txt"))
 airfoil_modeshapes = np.loadtxt(open("modes_NACA4412_ct.txt"))
 Ma = 0.3
@@ -243,7 +206,3 @@ alpha = 0
 cd_pred = scalarPredictionsSMT(airfoil_modeshapes, Ma, alpha,genn)
 print("Drag coeffitient prediction (cd): ", cd_pred[0,0])
 cd_pred, alpha, airfoil_name = graphPredictionsSMT(airfoil_modeshapes,"NACA4412", Ma, True,genn)
-
-
-
-      
