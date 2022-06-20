@@ -6,13 +6,16 @@ from sklearn.model_selection import train_test_split
 
 """
 Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. Joseph Morlier
-This is a tutorial to determine the aerodynamic coefficients of a given airfoil using GENN in SMT (Other models could be used as well) 
+This is a tutorial to determine the aerodynamic coefficients of a given airfoil using GENN in SMT (other models could be used as well) 
 The obtained surrogate model can be used to give predictions for certain Mach numbers, angles of attack and the aerodynamic coefficients. 
-These calculations can be really usefull in case of an airfoil shape optimization. The input parameters uses the airfoil Camber and Thickness mode shapes.
+These calculations can be really useful in case of an airfoil shape optimization. The input parameters uses the airfoil Camber and Thickness mode shapes.
 Inputs: Airfoil Camber and Thickness mode shapes, Mach, alpha
 Outputs (options): cd, cl, cm
-In this test case, we will be predicting only the Cd coefficient. However, the other databases for the prediction of the other terms 
-are available in the same repository. Bouhlels mSANN were used to determine the airfoil's mode shapes, mSANN in a nutshell:
+In this test case, we will be predicting only the Cd coefficient. However, the other databases for the prediction of the 
+other terms are available in the same repository. Bouhlels mSANN uses the information contained in the paper [4] to determine 
+the airfoil's mode shapes. Moreover, in mSANN a deep neural network is used to predict the Cd parameter of a given parametrized
+airfoil. Therefore, in this tutorial, we reproduce the paper [1] using the Gradient-Enhanced Neural Networks (GENN)  from SMT. 
+Briefly explaining how mSANN generates the mode shapes of a given airfoil:
 a. Using inverse distance weighting (IDW) to interpolate the surface function of each airfoil.
 b. Then applying singular value decomposition (SVD) to reduce the number of variables that define the airfoil geometry. It includes a total of 
 14 airfoil modes (seven for camber and seven for thickness).
