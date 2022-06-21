@@ -44,47 +44,6 @@ def getData():
         dy = np.array(list(reader), dtype=np.float32)
     return x, y, dy
 
-
-def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool, genn):
-    # loading of the models
-    modelcd = genn
-    # input arrays are created -> alpha is linearily distributed over the range of -2 to 6 degrees while Ma is kept constant
-    input_array = np.zeros(shape=(1, 15))
-    input_array[0, :14] = airfoil_modeshapes
-    input_array[0, -1] = Ma
-    new_input_array = np.zeros(shape=(1, 15))
-    new_input_array[0, :14] = airfoil_modeshapes
-    new_input_array[0, -1] = Ma
-    for i in range(0, 49):
-        new_input_array = np.concatenate((new_input_array, input_array), axis=0)
-    alpha = np.zeros(shape=(50, 1))
-    for i in range(0, 50):
-        alpha[i, 0] = -2 + 0.16 * i
-    input_array = np.concatenate((new_input_array, alpha), axis=1)
-    # predictions are made
-    cd_pred = modelcd.predict_values(input_array)
-    # graphs for the single aerodynamic coefficients are computed -> through bool: plot it is to decide if graphs are computed or not
-    if plot == True:
-        x, y_comp = reconstruct_airfoil(airfoil_modeshapes)
-        plt.plot(x, y_comp)
-        plt.axis([-0.1, 1.2, -0.6, 0.6])
-        plt.grid(True)
-        plt.title(airfoil_name)
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.savefig(f"Airfoil_{airfoil_name}")
-        plt.close()
-        plt.plot(alpha, cd_pred)
-        plt.grid(True)
-        plt.title("Drag coefficient SMT")
-        plt.xlabel("Alpha")
-        plt.ylabel("Cd")
-        plt.savefig(f"SMT_Cd_{airfoil_name}")
-        plt.close()
-    # array for the aerodynamic coeffs and alpha and the airfoil name
-    return cd_pred, alpha, airfoil_name
-
-
 # to get predictions first the models must be trained and saved
 # all links must be changed to your file path
 # airfoil_modeshapes: computed mode_shapes of random airfol geometry with parameterise_airfoil
@@ -131,7 +90,7 @@ def graphPredictionsSMT(airfoil_modeshapes, airfoil_name, Ma, plot: bool, genn):
         cd_adflow = np.array(list(reader)[1:], dtype=np.float32)
     # cd from ADflow and Xfoil
     # graphs for the single aerodynamic coefficients are computed -> through bool: plot it is to decide if graphs are computed or not
-    if plot == True:
+    if plot:
         x, y_comp = reconstruct_airfoil(airfoil_modeshapes)
         plt.figure()
         plt.plot(x, y_comp)
