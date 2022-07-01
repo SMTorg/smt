@@ -23,11 +23,11 @@ Briefly explaining how mSANN generates the mode shapes of a given airfoil:
 References
 ----------
 
-.. [1] Bouhlel,M., He,S., and Martins,J.R.R.A., Scalable Gradient-Enhanced Artificial Neural Networks for Airfoil Shape Design in the Subsonic and Transonic Regimes, ResearchGate, 2020.
+.. [1] Bouhlel, M. A., He, S., & Martins, J. R. (2020). Scalable gradient–enhanced artificial neural networks for airfoil shape design in the subsonic and transonic regimes. Structural and Multidisciplinary Optimization, 61(4), 1363-1376.
 .. [2] Bouhlel, M. A., He, S., and Martins, J. R. R. A., mSANN Model Benchmarks, Mendeley Data, 2019. https://doi.org/10. 17632/ngpd634smf.1.
-.. [3] Li, J., Bouhlel,M., and Martins,J.R.R.A., Data-Based Approach for Fast Airfoil Analysis. and Optimization,AIAA Journal, 2019.
-.. [4] Bouhlel, M.A., and Martins,J.R.R.A., Gradient-Enhanced Kriging for High-Dimensional Problems, Springer-Verlag, 2018.
-.. [5] Du,X.,He,P.,and Martins,J., Rapid airfoil design optimization via neural networks-based parameterization and surrogate modeling, Elsevier, 2021.
+.. [3] Li, J., Bouhlel, M. A., & Martins, J. R. (2019). Data-based approach for fast airfoil analysis and optimization. AIAA Journal, 57(2), 581-596.
+.. [4] Bouhlel, M. A., & Martins, J. R. (2019). Gradient-enhanced kriging for high-dimensional problems. Engineering with Computers, 35(1), 157-173.
+.. [5] Du, X., He, P., & Martins, J. R. (2021). Rapid airfoil design optimization via neural networks-based parameterization and surrogate modeling. Aerospace Science and Technology, 113, 106701.
 .. [6] University of Michigan, Webfoil, 2021. URL http://webfoil.engin.umich.edu/, online accessed on 16 of June 2021.
 
 Implementation
@@ -183,7 +183,7 @@ Main
   
 ::
 
-  Drag coefficient prediction (cd):  0.010027687089776846
+  Drag coefficient prediction (cd):  0.01019668488197359
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %
