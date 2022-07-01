@@ -1,0 +1,45 @@
+Learning Airfoil Parameters
+===========================
+
+This is a tutorial to determine the aerodynamic coefficients of a given airfoil using GENN in SMT (other models could be used as well). 
+The obtained surrogate model can be used to give predictions for certain Mach numbers, angles of attack and the aerodynamic coefficients. 
+These calculations can be really useful in case of an airfoil shape optimization. The input parameters uses the airfoil Camber and Thickness mode shapes.
+
+* Inputs: Airfoil Camber and Thickness mode shapes, Mach, alpha
+* Outputs (options): cd, cl, cm
+
+In this test case, we will be predicting only the Cd coefficient. However, the other databases for the prediction of the 
+other terms are available in the same repository. Bouhlels mSANN uses the information contained in the paper [1]_ to determine 
+the airfoil's mode shapes. Moreover, in mSANN a deep neural network is used to predict the Cd parameter of a given parametrized
+airfoil. Therefore, in this tutorial, we reproduce the paper [2]_ using the Gradient-Enhanced Neural Networks (GENN) from SMT. 
+
+Briefly explaining how mSANN generates the mode shapes of a given airfoil:
+
+#. Using inverse distance weighting (IDW) to interpolate the surface function of each airfoil.
+#. Then applying singular value decomposition (SVD) to reduce the number of variables that define the airfoil geometry. It includes a total of 14 airfoil modes (seven for camber and seven for thickness).
+#. Totally 16 input variables, two flow conditions of Mach number (0.3 to 0.6) and the angle of attack (2 degrees to 6 degrees) plus 14 shape coefficients.
+#. The output airfoil aerodynamic force coefficients and their respective gradients are computed using ADflow, which solves the RANS equations with a Spalart-Allmaras turbulence model.
+
+References
+----------
+
+.. [1] Bouhlel, M. A., He, S., & Martins, J. R. (2020). Scalable gradient–enhanced artificial neural networks for airfoil shape design in the subsonic and transonic regimes. Structural and Multidisciplinary Optimization, 61(4), 1363-1376.
+.. [2] Bouhlel, M. A., He, S., & Martins, J. R. (2019). mSANN Model Benchmarks, Mendeley Data, https://doi.org/10.17632/ngpd634smf.1.
+.. [3] Li, J., Bouhlel, M. A., & Martins, J. R. (2019). Data-based approach for fast airfoil analysis and optimization. AIAA Journal, 57(2), 581-596.
+.. [4] Bouhlel, M. A., & Martins, J. R. (2019). Gradient-enhanced kriging for high-dimensional problems. Engineering with Computers, 35(1), 157-173.
+.. [5] Du, X., He, P., & Martins, J. R. (2021). Rapid airfoil design optimization via neural networks-based parameterization and surrogate modeling. Aerospace Science and Technology, 113, 106701.
+.. [6] University of Michigan, Webfoil, 2021. URL http://webfoil.engin.umich.edu/, online accessed on 16 of June 2021.
+
+Implementation
+--------------
+
+Utilities
+^^^^^^^^^
+
+.. embed-module :: smt.examples.airfoil_parameters.learning_airfoil_parameters
+
+Main
+^^^^
+
+.. embed-module-print-plot :: smt.examples.airfoil_parameters.run_genn , 100
+
