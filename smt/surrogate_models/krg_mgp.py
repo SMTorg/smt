@@ -11,6 +11,7 @@ from scipy import linalg
 from smt.utils.kriging_utils import differences
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance
+from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 """
 The Active kriging class.
@@ -64,69 +65,7 @@ class MGP(KrgBased):
             d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def predict_variances(self, x, both=False):
-        """
-        Predict the variance of a specific point
-
-        Parameters
-        ----------
-        x : numpy.ndarray
-            Point to compute.
-        both : bool, optional
-            True if MSE and MGP-MSE wanted. The default is False.
-
-        Raises
-        ------
-        ValueError
-            The number fo dimension is not good.
-
-        Returns
-        -------
-        numpy.nd array
-            MSE or (MSE, MGP-MSE).
-
-        """
-        n_eval, n_features = x.shape
-
-        if n_features < self.nx:
-            if n_features != self.options["n_comp"]:
-                raise ValueError(
-                    "dim(u) should be equal to %i" % self.options["n_comp"]
-                )
-            u = x
-            x = self.get_x_from_u(u)
-
-            u = u * self.embedding["norm"] - self.U_mean
-            x = (x - self.X_offset) / self.X_scale
-        else:
-            if n_features != self.nx:
-                raise ValueError("dim(x) should be equal to %i" % self.X_scale.shape[0])
-            u = None
-            x = (x - self.X_offset) / self.X_scale
-
-        dy = self._predict_value_derivatives_hyper(x, u)
-        dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
-
-        arg_1 = np.einsum("ij,ij->i", dy.T, linalg.solve(self.inv_sigma_R, dy).T)
-
-        arg_2 = np.einsum("ij,ij->i", dMSE.T, linalg.solve(self.inv_sigma_R, dMSE).T)
-
-        MGPMSE = np.zeros(x.shape[0])
-
-        MGPMSE[MSE != 0] = (
-            (4.0 / 3.0) * MSE[MSE != 0]
-            + arg_1[MSE != 0]
-            + (1.0 / (3.0 * MSE[MSE != 0])) * arg_2[MSE != 0]
-        )
-
-        MGPMSE[MGPMSE < 0.0] = 0.0
-
-        if both:
-            return MGPMSE, MSE
-        else:
-            return MGPMSE
-
-    def predict_values(self, x):
+    def _predict_values(self, x):
         """
         Predict the value of the MGP for a given point
 
@@ -144,7 +83,6 @@ class MGP(KrgBased):
         -------
         y : numpy.ndarray
             Value of the MGP at the given point x.
-
         """
         n_eval, n_features = x.shape
         if n_features < self.nx:
@@ -189,6 +127,81 @@ class MGP(KrgBased):
         # Predictor
         y = (self.y_mean + self.y_std * y_).ravel()
         return y
+
+    def _predict_mgp_variances_base(self, x):
+        """Base computation of MGP MSE used by predict_variances and predict_variances_no_uq"""
+        _, n_features = x.shape
+
+        if n_features < self.nx:
+            if n_features != self.options["n_comp"]:
+                raise ValueError(
+                    "dim(u) should be equal to %i" % self.options["n_comp"]
+                )
+            u = x
+            x = self.get_x_from_u(u)
+
+            u = u * self.embedding["norm"] - self.U_mean
+            x = (x - self.X_offset) / self.X_scale
+        else:
+            if n_features != self.nx:
+                raise ValueError("dim(x) should be equal to %i" % self.X_scale.shape[0])
+            u = None
+            x = (x - self.X_offset) / self.X_scale
+
+        dy = self._predict_value_derivatives_hyper(x, u)
+        dMSE, MSE = self._predict_variance_derivatives_hyper(x, u)
+
+        return MSE, dy, dMSE
+
+    def _predict_variances(self, x):
+        """
+        Predict the variance of a specific point
+
+        Parameters
+        ----------
+        x : numpy.ndarray
+            Point to compute.
+
+        Raises
+        ------
+        ValueError
+            The number fo dimension is not good.
+
+        Returns
+        -------
+        numpy.nd array
+            MSE.
+        """
+        MSE, dy, dMSE = self._predict_mgp_variances_base(x)
+        arg_1 = np.einsum("ij,ij->i", dy.T, linalg.solve(self.inv_sigma_R, dy).T)
+        arg_2 = np.einsum("ij,ij->i", dMSE.T, linalg.solve(self.inv_sigma_R, dMSE).T)
+
+        MGPMSE = np.zeros(x.shape[0])
+        MGPMSE[MSE != 0] = (
+            (4.0 / 3.0) * MSE[MSE != 0]
+            + arg_1[MSE != 0]
+            + (1.0 / (3.0 * MSE[MSE != 0])) * arg_2[MSE != 0]
+        )
+        MGPMSE[MGPMSE < 0.0] = 0.0
+        return MGPMSE
+
+    def predict_variances_no_uq(self, x):
+        """Like predict_variances but without taking account hyperparameters uncertainty"""
+        check_support(self, "variances")
+        x = ensure_2d_array(x, "x")
+        self._check_xdim(x)
+        n = x.shape[0]
+        x2 = np.copy(x)
+        s2, _, _ = self._predict_mgp_variances_base(x)
+        s2[s2 < 0.0] = 0.0
+        return s2.reshape((n, self.ny))
+
+    def _check_xdim(self, x):
+        _, n_features = x.shape
+        nx = self.nx
+        if n_features < self.nx:
+            nx = self.options["n_comp"]
+        check_nx(nx, x)
 
     def _reduced_log_prior(self, theta, grad=False, hessian=False):
         """
