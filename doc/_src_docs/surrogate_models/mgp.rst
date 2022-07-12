@@ -77,7 +77,8 @@ Usage
   x_plot = sm.get_x_from_u(u_plot)  # Get corresponding points in Omega
   y_plot_true = fun(x_plot)
   y_plot_pred = sm.predict_values(u_plot)
-  sigma_MGP, sigma_KRG = sm.predict_variances(u_plot, True)
+  sigma_MGP = sm.predict_variances(u_plot)
+  sigma_KRG = sm.predict_variances_no_uq(u_plot)
   
   u_train = sm.get_u_from_x(xt)  # Get corresponding points in A
   
@@ -88,16 +89,16 @@ Usage
   ax.plot(u_train, yt, "k+", mew=3, ms=10, label="Train")
   ax.fill_between(
       u_plot[:, 0],
-      y_plot_pred - 3 * sigma_MGP,
-      y_plot_pred + 3 * sigma_MGP,
+      y_plot_pred[:, 0] - 3 * sigma_MGP[:, 0],
+      y_plot_pred[:, 0] + 3 * sigma_MGP[:, 0],
       color="r",
       alpha=0.5,
       label="Variance with hyperparameters uncertainty",
   )
   ax.fill_between(
       u_plot[:, 0],
-      y_plot_pred - 3 * sigma_KRG,
-      y_plot_pred + 3 * sigma_KRG,
+      y_plot_pred[:, 0] - 3 * sigma_KRG[:, 0],
+      y_plot_pred[:, 0] + 3 * sigma_KRG[:, 0],
       color="b",
       alpha=0.5,
       label="Variance without hyperparameters uncertainty",
@@ -125,7 +126,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.6101887
+     Training - done. Time (sec):  1.2810287
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
