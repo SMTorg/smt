@@ -285,7 +285,7 @@ class SurrogateModel(metaclass=ABCMeta):
             Output values at the prediction points.
         """
         x = ensure_2d_array(x, "x")
-        check_nx(self.nx, x)
+        self._check_xdim(x)
         n = x.shape[0]
         x2 = np.copy(x)
         self.printer.active = (
@@ -327,7 +327,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         check_support(self, "derivatives")
         x = ensure_2d_array(x, "x")
-        check_nx(self.nx, x)
+        self._check_xdim(x)
         n = x.shape[0]
         self.printer.active = (
             self.options["print_global"] and self.options["print_prediction"]
@@ -369,7 +369,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         check_support(self, "output_derivatives")
         x = ensure_2d_array(x, "x")
-        check_nx(self.nx, x)
+        self._check_xdim(x)
 
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
@@ -390,7 +390,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         check_support(self, "variances")
         x = ensure_2d_array(x, "x")
-        check_nx(self.nx, x)
+        self._check_xdim(x)
         n = x.shape[0]
         x2 = np.copy(x)
         s2 = self._predict_variances(x2)
@@ -412,7 +412,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         x = ensure_2d_array(x, "x")
         check_support(self, "variance_derivatives")
-        check_nx(self.nx, x)
+        self._check_xdim(x)
         n = x.shape[0]
         self.printer.active = (
             self.options["print_global"] and self.options["print_prediction"]
@@ -559,3 +559,8 @@ class SurrogateModel(metaclass=ABCMeta):
             The jacobian of the variance
         """
         check_support(self, "variance_derivatives", fail=True)
+
+    def _check_xdim(self, x):
+        """Raise a ValueError if x dimension is not consistent with surrogate model training data dimension.
+        This method is used as a guard in preamble of predict methods"""
+        check_nx(self.nx, x)

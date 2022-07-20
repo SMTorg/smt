@@ -98,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0761352
+     Training - done. Time (sec):  0.0846102
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -208,7 +208,7 @@ Options
      -  ['int']
      -  number of optimizer runs (multistart method)
   *  -  n_comp
-     -  1
+     -  2
      -  None
      -  ['int']
      -  Number of principal components

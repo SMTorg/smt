@@ -15,7 +15,6 @@ from scipy.linalg import solve_triangular
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
-from packaging import version
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased

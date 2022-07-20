@@ -15,6 +15,8 @@ class GEKPLS(KPLS):
     def _initialize(self):
         super(GEKPLS, self)._initialize()
         declare = self.options.declare
+        # Re-declare n_comp as default value should be at least 2
+        declare("n_comp", 2, types=int, desc="Number of principal components")
         # Like KPLS, GEKPLS used only with "abs_exp" and "squar_exp" correlations
         declare(
             "corr",
