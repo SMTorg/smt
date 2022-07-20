@@ -12,3 +12,4 @@ The intent is to provide examples to help guide the choice of options for the va
    examples/one_D_step/ex_1d_step
    examples/rans_crm_wing/rans_crm_wing
    examples/b777_engine/b777_engine
+   examples/airfoil_parameters/learning_airfoil_parameters
