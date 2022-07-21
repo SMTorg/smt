@@ -13,7 +13,7 @@ from smt.sampling_methods import FullFactorial, LHS
 
 class TestKPLS(unittest.TestCase):
     def test_predict_output(self):
-        d, n = (3, 10)
+        d, n = ( 10,3)
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
             criterion="m",
@@ -27,7 +27,7 @@ class TestKPLS(unittest.TestCase):
         )
         y = sy(n)
 
-        kriging = KPLS(n_comp=2)
+        kriging = KPLS(n_comp=4)
         kriging.set_training_values(x, y)
         kriging.train()
 

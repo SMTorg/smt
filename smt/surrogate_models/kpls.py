@@ -57,6 +57,7 @@ class KPLS(KrgBased):
             self.coeff_pls = np.zeros((X.shape[1], self.options["n_comp"]))
         return X, y
 
+
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(
             dx,

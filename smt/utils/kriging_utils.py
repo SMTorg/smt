@@ -699,13 +699,7 @@ def matrix_data_corr(
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
             ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
-            self.coeff_pls = (
-                (1 - 1e-9) * self.coeff_pls
-                + 1e-9
-                * np.eye(np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1])
-                + 1e-12
-            )
-
+                       
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
                 "squar_exp",
@@ -740,6 +734,7 @@ def matrix_data_corr(
                     else:
                         r_cat[k] = T[indi, indj]
 
+            
         r = np.multiply(r, r_cat)
         if cat_kernel_comps is not None:
             if old_n_comp == None:
