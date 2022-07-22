@@ -10,8 +10,8 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
-
-
+import warnings
+import sys
 class KPLS(KrgBased):
     name = "KPLS"
 
@@ -49,12 +49,13 @@ class KPLS(KrgBased):
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
-        # As of sklearn 0.24.1 zeroed outputs raises an exception while sklearn 0.23 returns zeroed x_rotations
-        # For now the try/except below is a workaround to restore the 0.23 behaviour
-        try:
+        
+        if np.shape(X)[0] < self.options["n_comp"] +1 : 
+            sys.exit( "ValueError: The database should be at least "+str(self.options["n_comp"] +1)+" points (currently "+str(np.shape(X)[0])+").")
+
+        else : 
             self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-        except:
-            self.coeff_pls = np.zeros((X.shape[1], self.options["n_comp"]))
+       
         return X, y
 
 
