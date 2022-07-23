@@ -40,7 +40,7 @@ class TestKPLS(unittest.TestCase):
         self.assertEqual(y.shape[0], var.shape[0])
         kriging = KPLS(n_comp=3)
         kriging.set_training_values(x, y)
-        self.assertRaises(SystemExit, lambda: kriging.train())
+        self.assertRaises(ValueError, lambda: kriging.train())
 
     def test_kpls_training_with_zeroed_outputs(self):
         # Test scikit-learn 0.24 regression cf. https://github.com/SMTorg/smt/issues/274
