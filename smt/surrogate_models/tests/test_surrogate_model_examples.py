@@ -307,47 +307,72 @@ class Test(unittest.TestCase):
         plt.legend()
         plt.show()
 
-    def test_kpls(self):
+    def test_kpls_auto(self):
         import numpy as np
         import matplotlib.pyplot as plt
-
         from smt.surrogate_models import KPLS
-
-        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
-
-        sm = KPLS(theta0=[1e-2])
+        from smt.problems import TensorProduct
+        from smt.sampling_methods import LHS
+        # The problem is the exponential problem with dimension 10
+        ndim = 10
+        prob = TensorProduct(ndim=ndim, func="exp")
+        
+        sm = KPLS(eval_n_comp=True) 
+        samp = LHS(xlimits=prob.xlimits)
+        xt = samp(50)
+        yt = prob(xt)
         sm.set_training_values(xt, yt)
         sm.train()
+        
+        ## The model automatically choose a dimension of 3
+        l = sm.options["n_comp"]
+        print("\n The model automatically choose "+str(l)+" components.")
+        
+        ## You can predict a 10-dimension point from the 3-dimensional model
+        print(sm.predict_values(np.array([[1,2,3,4,5,6,7,8,9,10]])))
+        print(sm.predict_variances(np.array([[1,2,3,4,5,6,7,8,9,10]])))        
+    def test_kpls(self):
+      import numpy as np
+      import matplotlib.pyplot as plt
 
-        num = 100
-        x = np.linspace(0.0, 4.0, num)
-        y = sm.predict_values(x)
-        # estimated variance
-        s2 = sm.predict_variances(x)
-        # to compute the derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0)
+      from smt.surrogate_models import KPLS
 
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend(["Training data", "Prediction"])
-        plt.show()
+      xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+      yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
 
-        # add a plot with variance
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
-        plt.fill_between(
-            np.ravel(x),
-            np.ravel(y - 3 * np.sqrt(s2)),
-            np.ravel(y + 3 * np.sqrt(s2)),
-            color="lightgrey",
-        )
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
-        plt.show()
+      sm = KPLS(theta0=[1e-2])
+      sm.set_training_values(xt, yt)
+      sm.train()
+
+      num = 100
+      x = np.linspace(0.0, 4.0, num)
+      y = sm.predict_values(x)
+      # estimated variance
+      s2 = sm.predict_variances(x)
+      # to compute the derivative according to the first variable
+      dydx = sm.predict_derivatives(xt, 0)
+
+      plt.plot(xt, yt, "o")
+      plt.plot(x, y)
+      plt.xlabel("x")
+      plt.ylabel("y")
+      plt.legend(["Training data", "Prediction"])
+      plt.show()
+
+      # add a plot with variance
+      plt.plot(xt, yt, "o")
+      plt.plot(x, y)
+      plt.fill_between(
+          np.ravel(x),
+          np.ravel(y - 3 * np.sqrt(s2)),
+          np.ravel(y + 3 * np.sqrt(s2)),
+          color="lightgrey",
+      )
+      plt.xlabel("x")
+      plt.ylabel("y")
+      plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
+      plt.show()
+
 
     def test_kplsk(self):
         import numpy as np

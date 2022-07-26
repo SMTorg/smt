@@ -522,10 +522,6 @@ Usage with mixed variable
   
 ::
 
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
   Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
   Minimum in typed x=[-5.0, 'blue', 'circle', 1]
   
@@ -583,7 +579,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001F2D493BD90>
+     -  <smt.applications.ego.Evaluator object at 0x000002BABD2E2B50>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -623,7 +619,7 @@ Options
      -  ['str']
      -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001F2D7D03970>
+     -  <smt.surrogate_models.krg.KRG object at 0x000002BABD2919D0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly
