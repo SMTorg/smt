@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0249331
+     Training - done. Time (sec):  0.0269263
   ___________________________________________________________________________
      
    Evaluation
@@ -112,7 +112,7 @@ Usage
   :align: center
 
 Usage with an automatic number of components
------
+--------------------------------------------
 
 .. code-block:: python
 
@@ -126,9 +126,11 @@ Usage with an automatic number of components
   prob = TensorProduct(ndim=ndim, func="exp")
   
   sm = KPLS(eval_n_comp=True) 
-  samp = LHS(xlimits=prob.xlimits)
+  samp = LHS(xlimits=prob.xlimits,random_state=42)
+  np.random.seed(0)
   xt = samp(50)
   yt = prob(xt)
+  np.random.seed(1)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -156,9 +158,9 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4349275
+     Training - done. Time (sec):  0.4997704
   
-   The model automatically choose 1 components.
+   The model automatically choose 3 components.
   ___________________________________________________________________________
      
    Evaluation
@@ -166,12 +168,12 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0009973
      
-  [[4.16964341]]
-  [[73.45467841]]
+  [[15.78311061]]
+  [[991.86511159]]
   
 
 Options

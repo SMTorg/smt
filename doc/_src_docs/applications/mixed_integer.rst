@@ -1,17 +1,10 @@
-.. _Mixed-Integer Sampling and Surrogate:
+.. _Mixed-Integer Sampling and and Variables Types Specifications: 
 
-Mixed-Integer Sampling and Surrogate (Continuous Relaxation)
-============================================================
+Mixed-Integer usage (Variables, Sampling and Context)
+=====================================================
 
-SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with
-categorical (or enumerate) and ordered variables using continuous relaxation.
+SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with categorical (or enumerate) and ordered variables using continuous relaxation.
 For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, bounds are provided, the list will consist of all integers between those bounds.
-For enum variables, as many x features as enumerated levels are created with [0, 1] bounds 
-and the max of these feature float values will correspond to the choice of one the enum value. 
-
-For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"],
-3 continuous float features x0, x1, x2 are created, the max(x0, x1, x2), 
-let say x1, will give "red" as the value for the original categorical feature. 
 
 The user specifies x feature types through a list of types to be either:
 
@@ -19,90 +12,16 @@ The user specifies x feature types through a list of types to be either:
 - ``ORD``: an ordered valued feature,
 - or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
 
-In the case of mixed integer sampling, bounds of each x feature have to be adapted 
-to take into account feature types. While FLOAT and INT feature still have an interval
-[lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list
-of possible values (levels). 
+In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While FLOAT and INT feature still have an interval [lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list of possible values (levels). 
 
-For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, 
-a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium", "long"]]``
-
-
-Mixed-Integer Surrogate with Gower Distance
-===========================================
-
-Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
-When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
-
-For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`
-
-Example of mixed-integer Gower Distance model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  from smt.applications.mixed_integer import (
-      MixedIntegerSurrogateModel,
-      ENUM,
-      GOWER,
-  )
-  from smt.surrogate_models import KRG
-  import matplotlib.pyplot as plt
-  import numpy as np
-  
-  xt = np.array([0, 2, 4])
-  yt = np.array([0.0, 1.0, 1.5])
-  
-  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
-  
-  # Surrogate
-  sm = MixedIntegerSurrogateModel(
-      categorical_kernel=GOWER,
-      xtypes=[(ENUM, 5)],
-      xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-2]),
-  )
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  # DOE for validation
-  x = np.linspace(0, 4, 5)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, "o", label="data")
-  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend()
-  plt.show()
-  
-::
-
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 5
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
-  :scale: 80	 %
-  :align: center
+For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
 
 
 Mixed integer sampling method
 -----------------------------
 
-To use a sampling method with mixed integer typed features, the user instanciates
-a ``MixedIntegerSamplingMethod`` with a given sampling method.
-The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface 
-and decorates the original sampling method to provide a DOE while conforming to integer 
-and categorical types.
+To use a sampling method with mixed integer typed features, the user instanciates a ``MixedIntegerSamplingMethod`` with a given sampling method.
+The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface and decorates the original sampling method to provide a DOE while conforming to integer and categorical types.
 
 Example of mixed-integer LHS sampling method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -136,74 +55,12 @@ Example of mixed-integer LHS sampling method
   :scale: 80 %
   :align: center
 
-Mixed integer surrogate
------------------------
-
-To use a surrogate with mixed integer constraints, the user instanciates
-a ``MixedIntegerSurrogateModel`` with the given surrogate.
-The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface 
-and decorates the given surrogate while respecting integer and categorical types.
-
-Example of mixed-integer Polynomial (QP) surrogate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.surrogate_models import QP
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
-  
-  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
-  
-  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-  # FLOAT means x1 continuous
-  # ORD means x2 ordered
-  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
-  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-  
-  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  num = 100
-  x = np.linspace(0.0, 4.0, num)
-  y = sm.predict_values(x)
-  
-  plt.plot(xt, yt, "o")
-  plt.plot(x, y)
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend(["Training data", "Prediction"])
-  plt.show()
-  
-::
-
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  
-.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
-  :scale: 80 %
-  :align: center
-
 Mixed integer context
 ---------------------
 
-the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently 
-by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
+the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
 
-.. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
+  .. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.__init__
 
@@ -280,9 +137,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009990
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000200
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
@@ -290,4 +147,278 @@ Example of mixed-integer context usage
   :align: center
 
 
+.. _Mixed-Integer Surrogates:
 
+Mixed integer surrogate
+=======================
+
+To use a surrogate with mixed integer constraints, the user instanciates a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
+They are various surrogate models implemented that are described below.
+
+Mixed-Integer Surrogate with Continuous Relaxation
+--------------------------------------------------
+
+For enum variables, as many x features are added as there is enumerated levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
+For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"], 3 continuous float features x0, x1, x2 are created. Thereafter, the value max(x0, x1, x2), for instance, x1, will give "red" as the value for the original categorical feature. Details can be found in [1]_ .
+
+
+Example of mixed-integer Polynomial (QP) surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import QP
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+  
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
+  # FLOAT means x1 continuous
+  # ORD means x2 ordered
+  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+  
+  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
+  :scale: 80 %
+  :align: center
+
+
+
+
+Mixed-Integer Surrogate with Gower Distance
+-------------------------------------------
+
+Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
+When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
+
+For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
+With this distance, a mixed integer kernel can be build. Details can be found in [2]_ .
+
+Example of mixed-integer Gower Distance model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  from smt.applications.mixed_integer import (
+      MixedIntegerSurrogateModel,
+      ENUM,
+      GOWER,
+  )
+  from smt.surrogate_models import KRG
+  import matplotlib.pyplot as plt
+  import numpy as np
+  
+  xt = np.array([0, 2, 4])
+  yt = np.array([0.0, 1.0, 1.5])
+  
+  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  
+  # Surrogate
+  sm = MixedIntegerSurrogateModel(
+      categorical_kernel=GOWER,
+      xtypes=[(ENUM, 5)],
+      xlimits=xlimits,
+      surrogate=KRG(theta0=[1e-2]),
+  )
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  # DOE for validation
+  x = np.linspace(0, 4, 5)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o", label="data")
+  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend()
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 5
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0009964
+     
+     Prediction time/pt. (sec) :  0.0001993
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
+  :scale: 80	 %
+  :align: center
+
+
+
+Mixed-Integer Surrogate with Group Kernel (Homoscedastic Hypersphere)
+---------------------------------------------------------------------
+
+Lorem ipsum sin doloret amet.
+Details can be found in [3]_ and [4]_ .
+
+Example of mixed-integer Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import QP
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+  
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
+  # FLOAT means x1 continuous
+  # ORD means x2 ordered
+  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+  
+  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
+  :scale: 80	 %
+  :align: center
+
+
+Mixed-Integer Surrogate with Exponential Homoscedastic Hypersphere
+---------------------------------------------------------------------
+
+Lorem ipsum sin doloret amet.
+Details can be found in [5]_ .
+
+Example of mixed-integer Exponential Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import QP
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+  
+  xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+  yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
+  
+  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
+  # FLOAT means x1 continuous
+  # ORD means x2 ordered
+  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
+  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+  
+  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num)
+  y = sm.predict_values(x)
+  
+  plt.plot(xt, yt, "o")
+  plt.plot(x, y)
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.legend(["Training data", "Prediction"])
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  
+.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
+  :scale: 80	 %
+  :align: center
+
+
+
+
+References
+----------
+
+.. [1] E.C. Garrido-Merchan and D. Hernandez-Lobato (2020). Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. Neurocomputing 380, pp. 20-35. 
+
+.. [2] Halstrup, M. (2016). Black-Box Optimization of Mixed Discrete-Continuous Optimization Problems, Ph.D. thesis, TU Dortmund.
+
+.. [3] Roustant, O., Padonou, E., Deville, Y., Clement, A., Perrin, G., Giorla, J., and Wynn, H. (2020). Group kernels for gaussian process metamodels with categorical inputs. SIAM Journal on Uncertainty Quantification.
+
+.. [4] Pelamatti, J., Brevault, L., Balesdent, M., Talbi, E.-G., and Guerin, Y. (2019). Efficient global optimization of constrained mixed variable problems. Journal of Global Optimization.
+
+.. [5] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 

@@ -27,7 +27,7 @@ Usage
 .. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_kpls , 80
 
 Usage with an automatic number of components
------
+--------------------------------------------
 
 .. embed-test-print :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_kpls_auto
 

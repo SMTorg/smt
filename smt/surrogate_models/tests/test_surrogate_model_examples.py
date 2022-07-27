@@ -318,9 +318,11 @@ class Test(unittest.TestCase):
         prob = TensorProduct(ndim=ndim, func="exp")
         
         sm = KPLS(eval_n_comp=True) 
-        samp = LHS(xlimits=prob.xlimits)
+        samp = LHS(xlimits=prob.xlimits,random_state=42)
+        np.random.seed(0)
         xt = samp(50)
         yt = prob(xt)
+        np.random.seed(1)
         sm.set_training_values(xt, yt)
         sm.train()
         
@@ -348,6 +350,7 @@ class Test(unittest.TestCase):
       x = np.linspace(0.0, 4.0, num)
       y = sm.predict_values(x)
       # estimated variance
+      # add a plot with variance
       s2 = sm.predict_variances(x)
       # to compute the derivative according to the first variable
       dydx = sm.predict_derivatives(xt, 0)
@@ -359,7 +362,6 @@ class Test(unittest.TestCase):
       plt.legend(["Training data", "Prediction"])
       plt.show()
 
-      # add a plot with variance
       plt.plot(xt, yt, "o")
       plt.plot(x, y)
       plt.fill_between(
@@ -552,7 +554,7 @@ class Test(unittest.TestCase):
             )
             return res
 
-        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
+        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m",random_state=42)
         xt = sampling(8)
         yt = np.atleast_2d(fun(xt)).T
 
