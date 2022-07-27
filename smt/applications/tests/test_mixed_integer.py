@@ -27,14 +27,11 @@ from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG, QP
 
-from smt.applications.mixed_integer import INT
-
 
 class TestMixedInteger(unittest.TestCase):
 
-    ###INT DEPRECATED####
     def test_qp_mixed_2D_INT(self):
-        xtypes = [FLOAT, INT]
+        xtypes = [FLOAT, ORD]
         xlimits = [[-10, 10], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -54,7 +51,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D_INT(self):
-        xtypes = [FLOAT, (ENUM, 3), INT]
+        xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
 
@@ -762,6 +759,81 @@ class TestMixedInteger(unittest.TestCase):
         plt.ylabel("y")
         plt.legend()
         plt.show()
+
+    def test_mixed_homo_gaussian(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            HOMO_GAUSSIAN,
+        )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        xt = np.array([0, 2, 4])
+        yt = np.array([0.0, 1.0, 1.5])
+
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_GAUSSIAN,
+            xtypes=[(ENUM, 5)],
+            xlimits=xlimits,
+            surrogate=KRG(theta0=[1e-2]),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o", label="data")
+        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend()
+        plt.show()
+
+    def test_mixed_homo_hyp(self):
+        from smt.applications.mixed_integer import (
+            MixedIntegerSurrogateModel,
+            ENUM,
+            HOMO_HYP,
+            )
+        from smt.surrogate_models import KRG
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        xt = np.array([0, 2, 4])
+        yt = np.array([0.0, 1.0, 1.5])
+
+        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+
+        # Surrogate
+        sm = MixedIntegerSurrogateModel(
+            categorical_kernel=HOMO_HYP,
+            xtypes=[(ENUM, 5)],
+                xlimits=xlimits,
+                surrogate=KRG(theta0=[1e-2]),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        y = sm.predict_values(x)
+
+        plt.plot(xt, yt, "o", label="data")
+        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend()
+        plt.show()
+
+
+
 
 
 if __name__ == "__main__":
