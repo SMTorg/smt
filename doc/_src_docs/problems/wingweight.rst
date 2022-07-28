@@ -2,7 +2,7 @@ Wing weight function
 ====================
 
 .. math ::
-  0.036S_w^{0.758}W_{fw}^{0.0035}\left(\frac{A}{\cos^2\Lambda}\right)q^{0.006}\lambda^{0.04}\left(\frac{100tc}{\cos\Lambda}\right)^{-0.3}\left(N_zW_{dg}\right)^{0.49}+S_wW_p,
+  0.036S_w^{0.758}W_{fw}^{0.0035}\left(\frac{A}{\cos^2\Lambda}\right)^{0.6}q^{0.006}\lambda^{0.04}\left(\frac{100tc}{\cos\Lambda}\right)^{-0.3}\left(N_zW_{dg}\right)^{0.49}+S_wW_p,
 
 :math:`150\leq S_w\leq 200,\quad 220\leq W_{fw}\leq 300,\quad 6 \leq A \leq 10,\quad -10 \leq \Lambda \leq 10,\quad 16\leq q\leq 45,\quad 0.5\leq \lambda\leq 1,\quad 0.08 \leq t_c\leq 0.18,\quad 2.5\leq N_z\leq 6,\quad 1700\leq W_{dg}\leq 25000,\quad \text{and} \quad 0.025\leq W_p\leq 0.08.`
 
