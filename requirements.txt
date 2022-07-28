@@ -1,6 +1,6 @@
 Cython
-numpy==1.22.3
-scipy>=1.8.1
+numpy
+scipy
 scikit-learn
 pyDOE2
 matplotlib   # used in examples and tests

@@ -52,9 +52,11 @@ class KPLS(KrgBased):
         self.coeff_pls=0
         if np.shape(X)[0] < self.options["n_comp"] +1 : 
             raise ValueError( "ValueError: The database should be at least "+str(self.options["n_comp"] +1)+" points (currently "+str(np.shape(X)[0])+").")
-
         else : 
-            self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
+            if np.shape(X)[1]==1: 
+                self.coeff_pls =1
+            else : 
+                self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
        
         return X, y
 
