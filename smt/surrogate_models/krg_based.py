@@ -240,7 +240,6 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
-        print(self.optimal_rlf_value)
         if self.name in ["MGP"]:
             self._specific_train()
         else:

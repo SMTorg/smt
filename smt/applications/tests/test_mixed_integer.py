@@ -548,8 +548,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
-        yt = np.array([[0.0], [1.0], [1.5]])
+        xt = np.array([[0.5, 0, 5], [2,3,4],  [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [3],[1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
 
         # Surrogate
@@ -558,7 +558,7 @@ class TestMixedInteger(unittest.TestCase):
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[5], corr="squar_exp"
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
             ),
         )
         sm.set_training_values(xt, yt)
@@ -593,8 +593,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
-        yt = np.array([[0.0], [1.0], [1.5]])
+        xt = np.array([[0.5, 0, 5], [2,3,4],  [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [3],[1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
 
         # Surrogate
@@ -603,7 +603,7 @@ class TestMixedInteger(unittest.TestCase):
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
+                theta0=[1e-2], n_comp=2, cat_kernel_comps=[3], corr="abs_exp"
             ),
         )
         sm.set_training_values(xt, yt)
@@ -639,8 +639,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[0.5, 0, 5], [5, 2, -1], [-2, 4, 0.5]])
-        yt = np.array([[0.0], [1.0], [1.5]])
+        xt = np.array([[0.5, 0, 5], [2,3,4],  [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [3],[1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
 
         # Surrogate
@@ -649,7 +649,7 @@ class TestMixedInteger(unittest.TestCase):
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[4], corr="squar_exp"
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
             ),
         )
         sm.set_training_values(xt, yt)
@@ -684,8 +684,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import itertools
 
-        xt = np.array([[0, 5, 0], [2, -1, 2], [4, 0.5, 1]])
-        yt = np.array([[0.0], [1.0], [1.5]])
+        xt = np.array([[0.5, 0, 5], [2,3,4],  [5, 2, -1], [-2, 4, 0.5]])
+        yt = np.array([[0.0], [3],[1.0], [1.5]])
         xlimits = [
             ["0.0", "1.0", " 2.0", "3.0", "4.0"],
             [-5, 5],
@@ -698,7 +698,7 @@ class TestMixedInteger(unittest.TestCase):
             xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
             xlimits=xlimits,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3, 3], corr="squar_exp"
+                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3, 2], corr="squar_exp"
             ),
         )
         sm.set_training_values(xt, yt)
