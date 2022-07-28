@@ -1,5 +1,5 @@
 Cython
-numpy==1.22.4
+numpy==1.22.3
 scipy>=1.8.1
 scikit-learn
 pyDOE2
