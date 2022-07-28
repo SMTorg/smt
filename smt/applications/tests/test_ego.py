@@ -21,7 +21,7 @@ from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
-    from smt.sampling_methods import FullFactorial
+from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.surrogate_models import KRG, QP, GEKPLS, KPLS
 from smt.applications.mixed_integer import (
