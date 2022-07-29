@@ -137,9 +137,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009968
+     Predicting - done. Time (sec):  0.0009975
      
-     Prediction time/pt. (sec) :  0.0000199
+     Prediction time/pt. (sec) :  0.0000200
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
@@ -340,9 +340,9 @@ Example of mixed-integer Homoscedastic Hypersphere model
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001995
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_hyp.png
@@ -404,9 +404,9 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009985
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001997
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_gaussian.png

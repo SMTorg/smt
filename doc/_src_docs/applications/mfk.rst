@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0638294
+     Training - done. Time (sec):  0.0996981
   ___________________________________________________________________________
      
    Evaluation
@@ -181,7 +181,7 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'homoscedastic_gaussian_matrix_kernel', 'homoscedastic_matrix_kernel']
      -  ['str']
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes

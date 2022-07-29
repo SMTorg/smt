@@ -126,7 +126,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.8004155
+     Training - done. Time (sec):  0.9155107
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -182,7 +182,7 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'homoscedastic_gaussian_matrix_kernel', 'homoscedastic_matrix_kernel']
      -  ['str']
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes

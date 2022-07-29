@@ -22,6 +22,7 @@ from smt.applications.mixed_integer import (
     cast_to_enum_value,
     cast_to_mixed_integer,
     cast_to_discrete_values,
+    encode_with_enum_index,
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
@@ -196,6 +197,17 @@ class TestMixedInteger(unittest.TestCase):
         x = np.array([1.5, 0, 2, 1.1])
         self.assertEqual(
             [1.5, "blue", "long", 1], cast_to_mixed_integer(xtypes, xlimits, x)
+        )
+
+    def test_encode_with_enum_index(self):
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
+            dtype="object",
+        )
+        x =[1.5, "blue", "long", 1] 
+        self.assertEqual( np.array_equal(
+            np.array([1.5, 0, 2, 1]), encode_with_enum_index(xtypes, xlimits, x),),True
         )
 
     def test_unfold_xlimits_with_continuous_limits(self):
