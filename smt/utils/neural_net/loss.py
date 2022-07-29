@@ -85,7 +85,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     # Check that LSE computes correctly
     w = [np.array(1.0), np.array(2.0)]
-    f = lambda x: w[0] * x + w[1] * x ** 2
+    f = lambda x: w[0] * x + w[1] * x**2
     dfdx = lambda x: w[0] + 2 * w[1] * x
     m = 100
     lb = -5.0

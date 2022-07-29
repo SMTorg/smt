@@ -288,14 +288,14 @@ class LHS(ScaledSamplingMethod):
         dist1 = cdist([X[i1, :]], X_)
         dist2 = cdist([X[i2, :]], X_)
         d1 = np.sqrt(
-            dist1 ** 2 + (X[i2, k] - X_[:, k]) ** 2 - (X[i1, k] - X_[:, k]) ** 2
+            dist1**2 + (X[i2, k] - X_[:, k]) ** 2 - (X[i1, k] - X_[:, k]) ** 2
         )
         d2 = np.sqrt(
-            dist2 ** 2 - (X[i2, k] - X_[:, k]) ** 2 + (X[i1, k] - X_[:, k]) ** 2
+            dist2**2 - (X[i2, k] - X_[:, k]) ** 2 + (X[i1, k] - X_[:, k]) ** 2
         )
 
         res = (
-            PhiP_ ** p + (d1 ** (-p) - dist1 ** (-p) + d2 ** (-p) - dist2 ** (-p)).sum()
+            PhiP_**p + (d1 ** (-p) - dist1 ** (-p) + d2 ** (-p) - dist2 ** (-p)).sum()
         ) ** (1.0 / p)
         X[i1, k], X[i2, k] = X[i2, k], X[i1, k]
 

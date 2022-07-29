@@ -97,7 +97,7 @@ class TorsionVibration(Problem):
             a = 1
             b = -((K1 + K2) / J1 + (K2 + K3) / J2)
             c = (K1 * K2 + K2 * K3 + K3 * K1) / (J1 * J2)
-            return np.sqrt((-b - np.sqrt(b ** 2 - 4 * a * c)) / (2 * a)) / (2 * np.pi)
+            return np.sqrt((-b - np.sqrt(b**2 - 4 * a * c)) / (2 * a)) / (2 * np.pi)
 
         for i in range(ne):
             x0 = x[i, 0]

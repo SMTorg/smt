@@ -12,6 +12,8 @@ from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
 import warnings
 import sys
+
+
 class KPLS(KrgBased):
     name = "KPLS"
 
@@ -49,17 +51,22 @@ class KPLS(KrgBased):
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
-        self.coeff_pls=0
-        if np.shape(X)[0] < self.options["n_comp"] +1 : 
-            raise ValueError( "ValueError: The database should be at least "+str(self.options["n_comp"] +1)+" points (currently "+str(np.shape(X)[0])+").")
-        else : 
-            if np.shape(X)[1]==1: 
-                self.coeff_pls =np.atleast_2d(np.array([1]))
-            else : 
+        self.coeff_pls = 0
+        if np.shape(X)[0] < self.options["n_comp"] + 1:
+            raise ValueError(
+                "ValueError: The database should be at least "
+                + str(self.options["n_comp"] + 1)
+                + " points (currently "
+                + str(np.shape(X)[0])
+                + ")."
+            )
+        else:
+            if np.shape(X)[1] == 1:
+                self.coeff_pls = np.atleast_2d(np.array([1]))
+            else:
                 self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-       
-        return X, y
 
+        return X, y
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(

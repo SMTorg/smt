@@ -62,7 +62,7 @@ class WaterFlow(Problem):
                 * (x3 - x5)
                 / (
                     np.log(x1 / x0)
-                    * (1 + 2 * x6 * x2 / (np.log(x1 / x0) * x0 ** 2 * x7) + x2 / x4)
+                    * (1 + 2 * x6 * x2 / (np.log(x1 / x0) * x0**2 * x7) + x2 / x4)
                 )
             )
 

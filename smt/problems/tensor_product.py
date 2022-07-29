@@ -31,8 +31,8 @@ class TensorProduct(Problem):
             self.func = lambda v: np.tanh(a * v)
             self.dfunc = lambda v: a / np.cosh(a * v) ** 2
         elif self.options["func"] == "gaussian":
-            self.func = lambda v: np.exp(-2.0 * a * v ** 2)
-            self.dfunc = lambda v: -4.0 * a * v * np.exp(-2.0 * a * v ** 2)
+            self.func = lambda v: np.exp(-2.0 * a * v**2)
+            self.dfunc = lambda v: -4.0 * a * v * np.exp(-2.0 * a * v**2)
 
     def _evaluate(self, x, kx):
         """

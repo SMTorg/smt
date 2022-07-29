@@ -46,7 +46,7 @@ class Branin(Problem):
         u = x[:, 1] - b * x[:, 0] ** 2 + c * x[:, 0] - 6
         if kx is None:
             r = 10.0 * (1.0 - t) * np.cos(x[:, 0]) + 10
-            y[:, 0] = u ** 2 + r
+            y[:, 0] = u**2 + r
         else:
             assert kx in [0, 1], "kx must be None, 0 or 1"
             if kx == 0:

@@ -62,4 +62,4 @@ class MFKPLS(MFK):
         return X, y
 
     def _get_theta(self, i):
-        return np.sum(self.optimal_theta[i] * self.coeff_pls ** 2, axis=1)
+        return np.sum(self.optimal_theta[i] * self.coeff_pls**2, axis=1)

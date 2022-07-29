@@ -32,7 +32,7 @@ def HF(point):
     res = (
         (
             point[:, 1]
-            - (5.1 / (4 * np.pi ** 2)) * point[:, 0] ** 2
+            - (5.1 / (4 * np.pi**2)) * point[:, 0] ** 2
             + (5 / np.pi) * point[:, 0]
             - 6
         )
@@ -49,10 +49,10 @@ def LF(point):
     # Cheap Forretal function
     res = (
         HF(point)
-        - (0.5 * A_corr ** 2 + A_corr + 0.2)
+        - (0.5 * A_corr**2 + A_corr + 0.2)
         * (
             point[:, 1]
-            - 5.1 / 4 / np.pi ** 2 * point[:, 0] ** 2
+            - 5.1 / 4 / np.pi**2 * point[:, 0] ** 2
             + 5.0 / np.pi * point[:, 0]
             - 6
         )
@@ -117,7 +117,7 @@ class TestMFK_variance(SMTestCase):
             @ np.linalg.solve(R, y_t_hf - H @ rho_beta)
             / (n_HF - 2)
         )[0, 0]
-        sigma2_rho_LG = rho_LG ** 2 + sigma2_LG_2 * M_inv[0, 0]
+        sigma2_rho_LG = rho_LG**2 + sigma2_LG_2 * M_inv[0, 0]
 
         return beta_LG_1, sigma2_LG_1, beta_LG_2, sigma2_LG_2, rho_LG, sigma2_rho_LG
 

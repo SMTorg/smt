@@ -58,14 +58,14 @@ class RobotArm(Problem):
         d_pos_x = np.zeros(ne, complex)
         d_pos_y = np.zeros(ne, complex)
         if kx is None:
-            y[:, 0] = (pos_x ** 2 + pos_y ** 2) ** 0.5
+            y[:, 0] = (pos_x**2 + pos_y**2) ** 0.5
         else:
             kseg = int(np.floor(kx / 2))
             if kx % 2 == 0:
                 d_pos_x[:] += np.cos(np.sum(x[:, 1 : 2 * kseg + 2 : 2], axis=1))
                 d_pos_y[:] += np.sin(np.sum(x[:, 1 : 2 * kseg + 2 : 2], axis=1))
-                y[:, 0] += pos_x / (pos_x ** 2 + pos_y ** 2) ** 0.5 * d_pos_x
-                y[:, 0] += pos_y / (pos_x ** 2 + pos_y ** 2) ** 0.5 * d_pos_y
+                y[:, 0] += pos_x / (pos_x**2 + pos_y**2) ** 0.5 * d_pos_x
+                y[:, 0] += pos_y / (pos_x**2 + pos_y**2) ** 0.5 * d_pos_y
             elif kx % 2 == 1:
                 for iseg in range(nseg):
                     L = x[:, 2 * iseg + 0]
@@ -76,7 +76,7 @@ class RobotArm(Problem):
                         d_pos_y[:] += L * np.cos(
                             np.sum(x[:, 1 : 2 * iseg + 2 : 2], axis=1)
                         )
-                y[:, 0] += pos_x / (pos_x ** 2 + pos_y ** 2) ** 0.5 * d_pos_x
-                y[:, 0] += pos_y / (pos_x ** 2 + pos_y ** 2) ** 0.5 * d_pos_y
+                y[:, 0] += pos_x / (pos_x**2 + pos_y**2) ** 0.5 * d_pos_x
+                y[:, 0] += pos_y / (pos_x**2 + pos_y**2) ** 0.5 * d_pos_y
 
         return y

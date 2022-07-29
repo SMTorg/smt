@@ -248,18 +248,19 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
             _raise_value_error(xtyp)
     return res
 
-def encode_with_enum_index(xtypes,xlimits,x): 
+
+def encode_with_enum_index(xtypes, xlimits, x):
     """
     see MixedIntegerContext.encode_with_enum_index
     """
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
-        if isinstance(xtyp, tuple) and xtyp[0] == ENUM: 
+        if isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             res.append(xlimits[i].index(xi))
-        elif xtyp==ORD or xtyp == FLOAT :
+        elif xtyp == ORD or xtyp == FLOAT:
             res.append(xi)
-        else : 
+        else:
             _raise_value_error(xtyp)
     return np.array(res)
 
@@ -604,7 +605,7 @@ class MixedIntegerContext(object):
         Parameters
         ----------
         x as a list with enum levels if any
-            point to convert 
+            point to convert
         Returns
         -------
         np.ndarray [n_evals, dim]
