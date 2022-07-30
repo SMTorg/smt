@@ -291,8 +291,8 @@ class Adam(Optimizer):
             self.s[key] = self.beta_2 * self.s[key] + (1.0 - beta_2) * np.square(
                 self._search_direction[key]
             )
-            v_corrected = self.v[key] / (1.0 - self.beta_1 ** t)
-            s_corrected = self.s[key] / (1.0 - self.beta_2 ** t)
+            v_corrected = self.v[key] / (1.0 - self.beta_1**t)
+            s_corrected = self.s[key] / (1.0 - self.beta_2**t)
             self._current_design[key] = self._previous_design[
                 key
             ] - learning_rate * v_corrected / (np.sqrt(s_corrected) + EPS)
@@ -307,12 +307,12 @@ def run_example(use_adam=True):  # pragma: no cover
         x1 = parameters["x1"]
         x2 = parameters["x2"]
 
-        y = (1 - x1) ** 2 + 100 * (x2 - x1 ** 2) ** 2
+        y = (1 - x1) ** 2 + 100 * (x2 - x1**2) ** 2
         y = y.reshape(1, 1)
 
         dydx = dict()
-        dydx["x1"] = -2 * (1 - x1) - 400 * x1 * (x2 - x1 ** 2)
-        dydx["x2"] = 200 * (x2 - x1 ** 2)
+        dydx["x1"] = -2 * (1 - x1) - 400 * x1 * (x2 - x1**2)
+        dydx["x2"] = 200 * (x2 - x1**2)
 
         return y, dydx
 

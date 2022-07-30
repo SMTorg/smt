@@ -56,13 +56,13 @@ class WeldedBeam(Problem):
             tau2 = (
                 6000
                 * (14 + 0.5 * x2)
-                * np.sqrt(0.25 * (x2 ** 2 + (x1 + x0) ** 2))
+                * np.sqrt(0.25 * (x2**2 + (x1 + x0) ** 2))
                 / (2 * (0.707 * x1 * x2 * (x2 / 12.0 + 0.25 * (x1 + x0) ** 2)))
             )
             return np.sqrt(
-                tau1 ** 2
-                + tau2 ** 2
-                + x2 * tau1 * tau2 / np.sqrt(0.25 * (x2 ** 2 + (x1 + x0) ** 2))
+                tau1**2
+                + tau2**2
+                + x2 * tau1 * tau2 / np.sqrt(0.25 * (x2**2 + (x1 + x0) ** 2))
             )
 
         for i in range(ne):

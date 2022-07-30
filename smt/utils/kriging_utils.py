@@ -699,12 +699,6 @@ def matrix_data_corr(
                 dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
 
             ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
-            self.coeff_pls = (
-                (1 - 1e-9) * self.coeff_pls
-                + 1e-9
-                * np.eye(np.shape(self.coeff_pls)[0], np.shape(self.coeff_pls)[1])
-                + 1e-12
-            )
 
             d_cat_i = componentwise_distance_PLS(
                 dx_cat_i,
@@ -931,7 +925,7 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     while i * nb_limit <= d.shape[0]:
         ll = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
         r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-            1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll ** 2.0
+            1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll**2.0
         ).prod(axis=1) * np.exp(-np.sqrt(5.0) * (ll.sum(axis=1)))
         i += 1
     i = 0
@@ -999,7 +993,7 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
                     * fact_2
                 )
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    (fact_4 - fact_1 ** 2) / (fact_2) ** 2
+                    (fact_4 - fact_1**2) / (fact_2) ** 2
                 ) * M52[i * nb_limit : (i + 1) * nb_limit, 0] + r[
                     i * nb_limit : (i + 1) * nb_limit, 0
                 ]
@@ -1232,7 +1226,7 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=
         d = d_x
         n_components = d.shape[1]
 
-    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A ** 2.0, axis=1))
+    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A**2.0, axis=1))
 
     if grad_ind is not None:
         d_grad_ind = grad_ind % n_components
@@ -1525,7 +1519,7 @@ def componentwise_distance_PLS(
             else:
                 if corr == "squar_exp":
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls**2
                     )
                 else:
                     # abs_exp

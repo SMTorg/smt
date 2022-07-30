@@ -213,7 +213,7 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[index_unique == i] - y_norma_unique[i]
-                if np.sum(diff ** 2) != 0.0:
+                if np.sum(diff**2) != 0.0:
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
@@ -222,7 +222,9 @@ class KrgBased(SurrogateModel):
             D, self.ij = cross_distances(self.X_norma)
 
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
-            warnings.warn("Warning: multiple x input features have the same value (at least same row twice).")
+            warnings.warn(
+                "Warning: multiple x input features have the same value (at least same row twice)."
+            )
 
         ####
         # Regression matrix and parameters
@@ -240,7 +242,6 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
-
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -355,6 +356,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
+            print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
         # Get generalized least squared solution
@@ -389,11 +391,11 @@ class KrgBased(SurrogateModel):
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             p = self.p
             q = self.q
-        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
+        sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        par["sigma2"] = sigma2 * self.y_std ** 2.0
+        par["sigma2"] = sigma2 * self.y_std**2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
         par["C"] = C
@@ -516,7 +518,7 @@ class KrgBased(SurrogateModel):
                     - gamma.T.dot(dmu)
                     - np.dot(gamma.T, dR.dot(gamma))
                 )
-                * self.y_std ** 2.0
+                * self.y_std**2.0
             )
             dsigma_all.append(dsigma_2)
 
@@ -693,7 +695,7 @@ class KrgBased(SurrogateModel):
                 dsigma2detadomega = (
                     (1 / self.nt)
                     * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
-                    * self.y_std ** 2.0
+                    * self.y_std**2.0
                 )
 
                 # Compute Hessian
@@ -846,7 +848,7 @@ class KrgBased(SurrogateModel):
         df_dx = np.dot(df.T, beta)
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
         if self.name != "Kriging" and "KPLSK" not in self.name:
-            theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
+            theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
         y = (
@@ -932,7 +934,7 @@ class KrgBased(SurrogateModel):
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
         A = self.optimal_par["sigma2"]
-        B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+        B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
@@ -1054,14 +1056,14 @@ class KrgBased(SurrogateModel):
         else:
 
             def minus_reduced_likelihood_function(log10t):
-                return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+                return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
 
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
                     -np.log(10.0)
-                    * (10.0 ** log10t_2d)
-                    * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+                    * (10.0**log10t_2d)
+                    * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
                 )
                 return res
 
@@ -1101,7 +1103,9 @@ class KrgBased(SurrogateModel):
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
                     )
-                    warnings.warn("Warning: theta0 is out the feasible bounds. A random initialisation is used instead.")
+                    warnings.warn(
+                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
+                    )
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
@@ -1153,7 +1157,9 @@ class KrgBased(SurrogateModel):
                             or self.noise0[i] > noise_bounds[1]
                         ):
                             self.noise0[i] = noise_bounds[0]
-                            warnings.warn("Warning: noise0 is out the feasible bounds. The lowest possible value is used instead.")
+                            warnings.warn(
+                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                            )
 
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
@@ -1209,7 +1215,7 @@ class KrgBased(SurrogateModel):
                                 optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
-                        theta_all_loops = 10 ** theta_all_loops
+                        theta_all_loops = 10**theta_all_loops
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                                 minus_reduced_likelihood_function,
@@ -1225,7 +1231,7 @@ class KrgBased(SurrogateModel):
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
-                        optimal_theta = 10 ** optimal_theta
+                        optimal_theta = 10**optimal_theta
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -1304,7 +1310,7 @@ class KrgBased(SurrogateModel):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
 

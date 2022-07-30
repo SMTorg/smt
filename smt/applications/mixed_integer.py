@@ -249,6 +249,22 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
     return res
 
 
+def encode_with_enum_index(xtypes, xlimits, x):
+    """
+    see MixedIntegerContext.encode_with_enum_index
+    """
+    res = []
+    for i, xtyp in enumerate(xtypes):
+        xi = x[i]
+        if isinstance(xtyp, tuple) and xtyp[0] == ENUM:
+            res.append(xlimits[i].index(xi))
+        elif xtyp == ORD or xtyp == FLOAT:
+            res.append(xi)
+        else:
+            _raise_value_error(xtyp)
+    return np.array(res)
+
+
 class MixedIntegerSamplingMethod(SamplingMethod):
     """
     Sampling method decorator that takes an SMT continuous sampling method and
@@ -581,3 +597,19 @@ class MixedIntegerContext(object):
             x as a list with enum levels if any
         """
         return cast_to_mixed_integer(self._xtypes, self._xlimits, x)
+
+    def encode_with_enum_index(self, x):
+        """
+        Convert an x point with enum levels to x point with enum indexes
+
+        Parameters
+        ----------
+        x as a list with enum levels if any
+            point to convert
+        Returns
+        -------
+        np.ndarray [n_evals, dim]
+            evaluation point input variable values with enumerate index for categorical variables
+        """
+
+        return encode_with_enum_index(self._xtypes, self._xlimits, x)

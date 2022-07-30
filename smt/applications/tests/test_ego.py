@@ -396,7 +396,7 @@ class TestEGO(SMTestCase):
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]]
         )
-        n_doe = 6
+        n_doe = 7
         sampling = MixedIntegerSamplingMethod(
             xtypes,
             xlimits,

@@ -159,7 +159,7 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
-Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_.
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_ .
 The expected improvement is continuously computed and optimized so that can lead to an infill point that will be projected, in the mixed case, to an already evaluated point.
 To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
 However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
@@ -189,7 +189,8 @@ References
 
 .. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
 
-.. [8] E.C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
+.. [8] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J., A general square exponential kernel to handle mixed-categorical variables for Gaussian process, AIAA Aviation 2022 Forum, pp. 3870. 
+
 
 Usage
 -----

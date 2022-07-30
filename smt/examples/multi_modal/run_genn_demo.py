@@ -27,7 +27,7 @@ def get_practice_data(random=False):
     :return: (X, Y, J) -- np arrays of shapes (n_x, m), (n_y, m), (n_y, n_x, m) where n_x = 2 and n_y = 1 and m = 15^2
     """
     # Response (N-dimensional Rastrigin)
-    f = lambda x: np.sum(x ** 2 - 10 * np.cos(2 * np.pi * x) + 10, axis=1)
+    f = lambda x: np.sum(x**2 - 10 * np.cos(2 * np.pi * x) + 10, axis=1)
     df = lambda x, j: 2 * x[:, j] + 20 * np.pi * np.sin(2 * np.pi * x[:, j])
 
     # Domain
@@ -38,7 +38,7 @@ def get_practice_data(random=False):
     n_x = 2  # number of dimensions
     n_y = 1  # number of responses
     L = 12  # number of levels per dimension
-    m = L ** n_x  # number of training examples that will be generated
+    m = L**n_x  # number of training examples that will be generated
 
     if random:
         doe = np.random.rand(m, n_x)

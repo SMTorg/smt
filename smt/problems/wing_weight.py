@@ -62,11 +62,11 @@ class WingWeight(Problem):
         def func(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
             return (
                 0.036
-                * x0 ** 0.758
-                * x1 ** 0.0035
-                * (x2 / np.cos(deg2rad(x3)) ** 2)
-                * x4 ** 0.006
-                * x5 ** 0.04
+                * x0**0.758
+                * x1**0.0035
+                * (x2 / np.cos(deg2rad(x3)) ** 2) ** (0.6)
+                * x4**0.006
+                * x5**0.04
                 * (100 * x6 / np.cos(deg2rad(x3))) ** (-0.3)
                 * (x7 * x8) ** 0.49
                 + x0 * x9
