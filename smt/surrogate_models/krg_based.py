@@ -73,12 +73,10 @@ class KrgBased(SurrogateModel):
                 "matern32",
             ),
             desc="Correlation function type",
-            types=(str),
         )
         declare(
             "categorical_kernel",
             None,
-            types=str,
             values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN, HOMO_HYP],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
@@ -171,19 +169,12 @@ class KrgBased(SurrogateModel):
             D, self.ij, X = gower_componentwise_distances(
                 X=X, xtypes=self.options["xtypes"]
             )
-
-            if self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                CONT_RELAX,
-                GOWER_MAT,
-                HOMO_HYP,
-            ]:
-                self.Lij, self.n_levels = cross_levels(
-                    X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
-                )
-                _, self.cat_features = compute_X_cont(
-                    self.X_train, self.options["xtypes"]
-                )
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+            )
+            _, self.cat_features = compute_X_cont(
+                self.X_train, self.options["xtypes"]
+            )
         # Center and scale X and y
         (
             self.X_norma,
@@ -1132,12 +1123,7 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = np.log10(self.theta0)
 
-            if self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                CONT_RELAX,
-                GOWER_MAT,
-                HOMO_HYP,
-            ]:
+            if self.options["categorical_kernel"] :
                 self.D = D
             else:
                 ##from abs distance to kernel distance
@@ -1332,22 +1318,13 @@ class KrgBased(SurrogateModel):
                 raise ValueError(
                     "KPLS only works with a squared exponential or an absolute exponential kernel"
                 )
-
-        if self.options["categorical_kernel"] is not None:
-            if self.options["categorical_kernel"] not in [
-                HOMO_GAUSSIAN,
-                GOWER_MAT,
-                CONT_RELAX,
-                HOMO_HYP,
-            ]:
-                raise ValueError("invalid categorical_kernel.")
             if (
                 self.options["categorical_kernel"] not in [HOMO_GAUSSIAN, HOMO_HYP]
                 and self.name == "KPLS"
             ):
                 if self.options["cat_kernel_comps"] is not None:
                     raise ValueError(
-                        "cat_kernel_comps option is for homoscedastic gaussian kernel."
+                        "cat_kernel_comps option is for homoscedastic kernel."
                     )
 
         mat_dim = (
