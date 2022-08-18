@@ -1125,12 +1125,7 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = np.log10(self.theta0)
 
-            if self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                CONT_RELAX,
-                GOWER_MAT,
-                HOMO_HYP,
-            ]:
+            if self.options["categorical_kernel"] :
                 self.D = D
             else:
                 ##from abs distance to kernel distance
