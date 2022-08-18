@@ -171,19 +171,12 @@ class KrgBased(SurrogateModel):
             D, self.ij, X = gower_componentwise_distances(
                 X=X, xtypes=self.options["xtypes"]
             )
-
-            if self.options["categorical_kernel"] in [
-                HOMO_GAUSSIAN,
-                CONT_RELAX,
-                GOWER_MAT,
-                HOMO_HYP,
-            ]:
-                self.Lij, self.n_levels = cross_levels(
-                    X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
-                )
-                _, self.cat_features = compute_X_cont(
-                    self.X_train, self.options["xtypes"]
-                )
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+            )
+            _, self.cat_features = compute_X_cont(
+                self.X_train, self.options["xtypes"]
+            )
         # Center and scale X and y
         (
             self.X_norma,
