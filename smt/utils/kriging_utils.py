@@ -12,10 +12,10 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
-HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-HOMO_HYP = "homoscedastic_matrix_kernel"
-CONT_RELAX = "continuous_relaxation_matrix_kernel"
-GOWER_MAT = "gower_matrix_kernel"
+EXP_HOMO_HSPHERE_KERNEL = "exponential_homoscedastic_matrix_kernel"
+HOMO_HSPHERE_KERNEL = "homoscedastic_matrix_kernel"
+CONT_RELAX_KERNEL = "continuous_relaxation_matrix_kernel"
+GOWER_KERNEL = "gower_matrix_kernel"
 
 
 def standardization(X, y, scale_X_to_unit=False):
@@ -242,7 +242,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
     n_param = nx
     if n_comp is not None:
         n_param = d
-        if cat_kernel == CONT_RELAX:
+        if cat_kernel == CONT_RELAX_KERNEL:
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
@@ -251,9 +251,9 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if isinstance(xtyp, tuple):
             if nx == d:
                 n_param -= 1
-            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-            if cat_kernel == CONT_RELAX:
+            if cat_kernel == CONT_RELAX_KERNEL:
                 n_param += int(xtyp[1])
     return n_param
 
@@ -549,7 +549,7 @@ def matrix_data_corr(
     n_theta_cont = 0
     for feat in cat_features:
         if feat:
-            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                 theta_cont_features[
                     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
                 ] = False
@@ -559,7 +559,7 @@ def matrix_data_corr(
                 j += int(nlevels[i] * (nlevels[i] - 1) / 2)
             i += 1
         else:
-            if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
                     j += 1
@@ -568,13 +568,13 @@ def matrix_data_corr(
     X = self.training_points[None][0][0]
     y = self.training_points[None][0][1]
 
-    if cat_kernel == CONT_RELAX:
+    if cat_kernel == CONT_RELAX_KERNEL:
         from smt.applications.mixed_integer import unfold_with_enum_mask
 
         X_pls_space = unfold_with_enum_mask(xtypes, X)
         nx = len(theta)
 
-    elif cat_kernel == GOWER_MAT:
+    elif cat_kernel == GOWER_KERNEL:
         X_pls_space = np.copy(X)
     else:
         X_pls_space, _ = compute_X_cont(X, xtypes)
@@ -584,7 +584,7 @@ def matrix_data_corr(
         if self.pls_coeff_cont == []:
             X, y = self._compute_pls(X_pls_space.copy(), y.copy())
             self.pls_coeff_cont = self.coeff_pls
-        if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
+        if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
             d = componentwise_distance_PLS(
                 dx,
                 corr,
@@ -612,10 +612,10 @@ def matrix_data_corr(
             theta=None,
             return_derivative=False,
         )
-        if cat_kernel != CONT_RELAX:
+        if cat_kernel != CONT_RELAX_KERNEL:
             d_cont = d[:, np.logical_not(cat_features)]
 
-    if cat_kernel == CONT_RELAX or cat_kernel == GOWER_MAT:
+    if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
         r = _correlation_types[corr](theta, d)
         return r
 
@@ -630,9 +630,9 @@ def matrix_data_corr(
         self.coeff_pls_cat = []
     for i in range(len(nlevels)):
         theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel == HOMO_GAUSSIAN:
+        if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
             theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-        elif cat_kernel == HOMO_HYP:
+        elif cat_kernel == HOMO_HSPHERE_KERNEL:
             theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
         Theta_mat = np.zeros((nlevels[i], nlevels[i]))
         L = np.zeros((nlevels[i], nlevels[i]))
@@ -667,7 +667,7 @@ def matrix_data_corr(
 
         T = np.dot(L, L.T)
 
-        if cat_kernel == HOMO_GAUSSIAN:
+        if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
             T = (T - 1) * theta_bounds[1] / 2
             T = np.exp(2 * T)
         k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
@@ -716,7 +716,7 @@ def matrix_data_corr(
             if indi == indj:
                 r_cat[k] = 1.0
             else:
-                if cat_kernel in [HOMO_GAUSSIAN, HOMO_HYP]:
+                if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                     if cat_kernel_comps is not None:
                         Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
                         indmatvec = 0

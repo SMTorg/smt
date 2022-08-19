@@ -10,10 +10,10 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
-    GOWER_MAT,
-    HOMO_GAUSSIAN,
-    HOMO_HYP,
-    CONT_RELAX,
+    GOWER_KERNEL,
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -413,7 +413,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            GOWER_MAT,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -426,7 +426,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER_MAT,
+            categorical_kernel=GOWER_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -460,7 +460,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -473,7 +473,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -507,8 +507,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            HOMO_HYP,
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -521,7 +521,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -555,8 +555,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -569,7 +569,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -600,8 +600,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -614,7 +614,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -645,9 +645,9 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            HOMO_HYP,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -660,7 +660,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -692,7 +692,7 @@ class TestMixedInteger(unittest.TestCase):
             ENUM,
             FLOAT,
             ORD,
-            HOMO_GAUSSIAN,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -709,7 +709,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -743,7 +743,7 @@ class TestMixedInteger(unittest.TestCase):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            GOWER_MAT,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -756,7 +756,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER_MAT,
+            categorical_kernel=GOWER_KERNEL,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
@@ -779,7 +779,7 @@ class TestMixedInteger(unittest.TestCase):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            HOMO_GAUSSIAN,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -792,7 +792,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
@@ -815,7 +815,7 @@ class TestMixedInteger(unittest.TestCase):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            HOMO_HYP,
+            HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -828,7 +828,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),

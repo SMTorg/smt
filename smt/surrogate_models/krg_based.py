@@ -30,10 +30,10 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
 from smt.utils.kriging_utils import (
-    HOMO_GAUSSIAN,
-    HOMO_HYP,
-    CONT_RELAX,
-    GOWER_MAT,
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+    GOWER_KERNEL,
 )
 
 
@@ -77,7 +77,7 @@ class KrgBased(SurrogateModel):
         declare(
             "categorical_kernel",
             None,
-            values=[CONT_RELAX, GOWER_MAT, HOMO_GAUSSIAN, HOMO_HYP],
+            values=[CONT_RELAX_KERNEL, GOWER_KERNEL, EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
 
@@ -305,7 +305,7 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[self.D.shape[1] :]
         if self.options["categorical_kernel"] is not None:
             dx = self.D
-            if self.options["categorical_kernel"] == CONT_RELAX:
+            if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
                 from smt.applications.mixed_integer import unfold_with_enum_mask
 
                 X2 = unfold_with_enum_mask(
@@ -748,7 +748,7 @@ class KrgBased(SurrogateModel):
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
                 self.ij = ij
-                if self.options["categorical_kernel"] == CONT_RELAX:
+                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
                     Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
@@ -883,7 +883,7 @@ class KrgBased(SurrogateModel):
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
                 self.ij = ij
-                if self.options["categorical_kernel"] == CONT_RELAX:
+                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
                     Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
@@ -1319,7 +1319,7 @@ class KrgBased(SurrogateModel):
                     "KPLS only works with a squared exponential or an absolute exponential kernel"
                 )
             if (
-                self.options["categorical_kernel"] not in [HOMO_GAUSSIAN, HOMO_HYP]
+                self.options["categorical_kernel"] not in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]
                 and self.name == "KPLS"
             ):
                 if self.options["cat_kernel_comps"] is not None:
@@ -1333,9 +1333,9 @@ class KrgBased(SurrogateModel):
             else None
         )
         if self.options["categorical_kernel"] in [
-            HOMO_GAUSSIAN,
-            HOMO_HYP,
-            CONT_RELAX,
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
+            CONT_RELAX_KERNEL,
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
@@ -1352,9 +1352,9 @@ class KrgBased(SurrogateModel):
         if len(self.options["theta0"]) != d and self.options[
             "categorical_kernel"
         ] not in [
-            HOMO_GAUSSIAN,
-            CONT_RELAX,
-            HOMO_HYP,
+            EXP_HOMO_HSPHERE_KERNEL,
+            CONT_RELAX_KERNEL,
+            HOMO_HSPHERE_KERNEL,
         ]:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)

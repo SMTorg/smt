@@ -10,10 +10,10 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 from smt.utils.kriging_utils import (
-    HOMO_GAUSSIAN,
-    HOMO_HYP,
-    CONT_RELAX,
-    GOWER_MAT,
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+    GOWER_KERNEL,
 )
 
 FLOAT = "float_type"
