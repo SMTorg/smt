@@ -10,10 +10,10 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 from smt.utils.kriging_utils import (
-    HOMO_GAUSSIAN,
-    HOMO_HYP,
-    CONT_RELAX,
-    GOWER_MAT,
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+    GOWER_KERNEL,
 )
 
 FLOAT = "float_type"
@@ -214,7 +214,7 @@ def unfold_with_enum_mask(xtypes, x):
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             enum_slice = xunfold[:, unfold_index : unfold_index + xtyp[1]]
             for row in range(x.shape[0]):
-                if isinstance( x[row, i],np.ndarray) :
+                if isinstance(x[row, i], np.ndarray):
                     enum_slice[row, x[row, i].astype(int)] = 1
                 else:
                     enum_slice[row, int(x[row, i])] = 1

@@ -137,9 +137,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009975
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000200
+     Prediction time/pt. (sec) :  0.0000199
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
@@ -231,39 +231,124 @@ Example of mixed-integer Gower Distance model
 
 .. code-block:: python
 
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG, KPLS
   from smt.applications.mixed_integer import (
       MixedIntegerSurrogateModel,
       ENUM,
-      GOWER_MAT,
+      ORD,
+      FLOAT,
+      GOWER_KERNEL,
   )
-  from smt.surrogate_models import KRG
-  import matplotlib.pyplot as plt
-  import numpy as np
   
-  xt = np.array([0, 2, 4])
-  yt = np.array([0.0, 1.0, 1.5])
+  xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+  xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+  xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
   
-  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  xt = np.concatenate((xt1, xt2, xt3), axis=0)
+  xt[:, 1] = xt[:, 1].astype(np.float)
+  yt1 = np.array([0.0, 9.0, 16.0])
+  yt2 = np.array([0.0, -4, -13.0])
+  yt3 = np.array([-10, 3, 11.0])
   
+  yt = np.concatenate((yt1, yt2, yt3), axis=0)
+  xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+  xtypes = [(ENUM, 3), FLOAT]
   # Surrogate
   sm = MixedIntegerSurrogateModel(
-      categorical_kernel=GOWER_MAT,
-      xtypes=[(ENUM, 5)],
+      categorical_kernel=GOWER_KERNEL,
+      xtypes=xtypes,
       xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-2]),
+      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
   )
   sm.set_training_values(xt, yt)
   sm.train()
   
   # DOE for validation
-  x = np.linspace(0, 4, 5)
-  y = sm.predict_values(x)
+  n = 100
+  x_cat1 = []
+  x_cat2 = []
+  x_cat3 = []
   
-  plt.plot(xt, yt, "o", label="data")
-  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend()
+  for i in range(n):
+      x_cat1.append(0)
+      x_cat2.append(1)
+      x_cat3.append(2)
+  
+  x_cont = np.linspace(0.0, 4.0, n)
+  x1 = np.concatenate(
+      (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x2 = np.concatenate(
+      (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x3 = np.concatenate(
+      (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  
+  y1 = sm.predict_values(x1)
+  y2 = sm.predict_values(x2)
+  y3 = sm.predict_values(x3)
+  
+  # estimated variance
+  s2_1 = sm.predict_variances(x1)
+  s2_2 = sm.predict_variances(x2)
+  s2_3 = sm.predict_variances(x3)
+  
+  fig, axs = plt.subplots(3, figsize=(8, 6))
+  
+  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+  axs[0].plot(x_cont, y1, color="Blue")
+  axs[0].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y1 - 3 * np.sqrt(s2_1)),
+      np.ravel(y1 + 3 * np.sqrt(s2_1)),
+      color="lightgrey",
+  )
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[1].plot(
+      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+  )
+  axs[1].plot(x_cont, y2, color="Red")
+  axs[1].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y2 - 3 * np.sqrt(s2_2)),
+      np.ravel(y2 + 3 * np.sqrt(s2_2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[2].plot(
+      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+  )
+  axs[2].plot(x_cont, y3, color="Green")
+  axs[2].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y3 - 3 * np.sqrt(s2_3)),
+      np.ravel(y3 + 3 * np.sqrt(s2_3)),
+      color="lightgrey",
+  )
+  axs[2].set_xlabel("x")
+  axs[2].set_ylabel("y")
+  axs[2].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  plt.tight_layout()
   plt.show()
   
 ::
@@ -272,12 +357,34 @@ Example of mixed-integer Gower Distance model
      
    Evaluation
      
-        # eval points. : 5
+        # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0059843
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000598
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0069802
+     
+     Prediction time/pt. (sec) :  0.0000698
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0069826
+     
+     Prediction time/pt. (sec) :  0.0000698
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
@@ -296,39 +403,124 @@ Example of mixed-integer Homoscedastic Hypersphere model
 
 .. code-block:: python
 
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG, KPLS
   from smt.applications.mixed_integer import (
       MixedIntegerSurrogateModel,
       ENUM,
-      HOMO_HYP,
-      )
-  from smt.surrogate_models import KRG
-  import matplotlib.pyplot as plt
-  import numpy as np
+      ORD,
+      FLOAT,
+      HOMO_HSPHERE_KERNEL,
+  )
   
-  xt = np.array([0, 2, 4])
-  yt = np.array([0.0, 1.0, 1.5])
+  xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+  xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+  xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
   
-  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  xt = np.concatenate((xt1, xt2, xt3), axis=0)
+  xt[:, 1] = xt[:, 1].astype(np.float)
+  yt1 = np.array([0.0, 9.0, 16.0])
+  yt2 = np.array([0.0, -4, -13.0])
+  yt3 = np.array([-10, 3, 11.0])
   
+  yt = np.concatenate((yt1, yt2, yt3), axis=0)
+  xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+  xtypes = [(ENUM, 3), FLOAT]
   # Surrogate
   sm = MixedIntegerSurrogateModel(
-      categorical_kernel=HOMO_HYP,
-      xtypes=[(ENUM, 5)],
-          xlimits=xlimits,
-          surrogate=KRG(theta0=[1e-2]),
+      categorical_kernel=HOMO_HSPHERE_KERNEL,
+      xtypes=xtypes,
+      xlimits=xlimits,
+      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
   )
   sm.set_training_values(xt, yt)
   sm.train()
   
   # DOE for validation
-  x = np.linspace(0, 4, 5)
-  y = sm.predict_values(x)
+  n = 100
+  x_cat1 = []
+  x_cat2 = []
+  x_cat3 = []
   
-  plt.plot(xt, yt, "o", label="data")
-  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend()
+  for i in range(n):
+      x_cat1.append(0)
+      x_cat2.append(1)
+      x_cat3.append(2)
+  
+  x_cont = np.linspace(0.0, 4.0, n)
+  x1 = np.concatenate(
+      (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x2 = np.concatenate(
+      (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x3 = np.concatenate(
+      (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  
+  y1 = sm.predict_values(x1)
+  y2 = sm.predict_values(x2)
+  y3 = sm.predict_values(x3)
+  
+  # estimated variance
+  s2_1 = sm.predict_variances(x1)
+  s2_2 = sm.predict_variances(x2)
+  s2_3 = sm.predict_variances(x3)
+  
+  fig, axs = plt.subplots(3, figsize=(8, 6))
+  
+  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+  axs[0].plot(x_cont, y1, color="Blue")
+  axs[0].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y1 - 3 * np.sqrt(s2_1)),
+      np.ravel(y1 + 3 * np.sqrt(s2_1)),
+      color="lightgrey",
+  )
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[1].plot(
+      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+  )
+  axs[1].plot(x_cont, y2, color="Red")
+  axs[1].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y2 - 3 * np.sqrt(s2_2)),
+      np.ravel(y2 + 3 * np.sqrt(s2_2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[2].plot(
+      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+  )
+  axs[2].plot(x_cont, y3, color="Green")
+  axs[2].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y3 - 3 * np.sqrt(s2_3)),
+      np.ravel(y3 + 3 * np.sqrt(s2_3)),
+      color="lightgrey",
+  )
+  axs[2].set_xlabel("x")
+  axs[2].set_ylabel("y")
+  axs[2].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  plt.tight_layout()
   plt.show()
   
 ::
@@ -337,12 +529,34 @@ Example of mixed-integer Homoscedastic Hypersphere model
      
    Evaluation
      
-        # eval points. : 5
+        # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0069804
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000698
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0079780
+     
+     Prediction time/pt. (sec) :  0.0000798
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0079789
+     
+     Prediction time/pt. (sec) :  0.0000798
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_hyp.png
@@ -360,39 +574,124 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
 
 .. code-block:: python
 
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG, KPLS
   from smt.applications.mixed_integer import (
       MixedIntegerSurrogateModel,
       ENUM,
-      HOMO_GAUSSIAN,
+      ORD,
+      FLOAT,
+      EXP_HOMO_HSPHERE_KERNEL,
   )
-  from smt.surrogate_models import KRG
-  import matplotlib.pyplot as plt
-  import numpy as np
   
-  xt = np.array([0, 2, 4])
-  yt = np.array([0.0, 1.0, 1.5])
+  xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+  xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+  xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
   
-  xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+  xt = np.concatenate((xt1, xt2, xt3), axis=0)
+  xt[:, 1] = xt[:, 1].astype(np.float)
+  yt1 = np.array([0.0, 9.0, 16.0])
+  yt2 = np.array([0.0, -4, -13.0])
+  yt3 = np.array([-10, 3, 11.0])
   
+  yt = np.concatenate((yt1, yt2, yt3), axis=0)
+  xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+  xtypes = [(ENUM, 3), FLOAT]
   # Surrogate
   sm = MixedIntegerSurrogateModel(
-      categorical_kernel=HOMO_GAUSSIAN,
-      xtypes=[(ENUM, 5)],
+      categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+      xtypes=xtypes,
       xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-2]),
+      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
   )
   sm.set_training_values(xt, yt)
   sm.train()
   
   # DOE for validation
-  x = np.linspace(0, 4, 5)
-  y = sm.predict_values(x)
+  n = 100
+  x_cat1 = []
+  x_cat2 = []
+  x_cat3 = []
   
-  plt.plot(xt, yt, "o", label="data")
-  plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-  plt.xlabel("x")
-  plt.ylabel("y")
-  plt.legend()
+  for i in range(n):
+      x_cat1.append(0)
+      x_cat2.append(1)
+      x_cat3.append(2)
+  
+  x_cont = np.linspace(0.0, 4.0, n)
+  x1 = np.concatenate(
+      (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x2 = np.concatenate(
+      (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x3 = np.concatenate(
+      (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  
+  y1 = sm.predict_values(x1)
+  y2 = sm.predict_values(x2)
+  y3 = sm.predict_values(x3)
+  
+  # estimated variance
+  s2_1 = sm.predict_variances(x1)
+  s2_2 = sm.predict_variances(x2)
+  s2_3 = sm.predict_variances(x3)
+  
+  fig, axs = plt.subplots(3, figsize=(8, 6))
+  
+  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+  axs[0].plot(x_cont, y1, color="Blue")
+  axs[0].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y1 - 3 * np.sqrt(s2_1)),
+      np.ravel(y1 + 3 * np.sqrt(s2_1)),
+      color="lightgrey",
+  )
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[1].plot(
+      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+  )
+  axs[1].plot(x_cont, y2, color="Red")
+  axs[1].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y2 - 3 * np.sqrt(s2_2)),
+      np.ravel(y2 + 3 * np.sqrt(s2_2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[2].plot(
+      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+  )
+  axs[2].plot(x_cont, y3, color="Green")
+  axs[2].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y3 - 3 * np.sqrt(s2_3)),
+      np.ravel(y3 + 3 * np.sqrt(s2_3)),
+      color="lightgrey",
+  )
+  axs[2].set_xlabel("x")
+  axs[2].set_ylabel("y")
+  axs[2].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  plt.tight_layout()
   plt.show()
   
 ::
@@ -401,12 +700,34 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
      
    Evaluation
      
-        # eval points. : 5
+        # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009985
+     Predicting - done. Time (sec):  0.0069826
      
-     Prediction time/pt. (sec) :  0.0001997
+     Prediction time/pt. (sec) :  0.0000698
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0079772
+     
+     Prediction time/pt. (sec) :  0.0000798
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0069823
+     
+     Prediction time/pt. (sec) :  0.0000698
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_gaussian.png

@@ -42,6 +42,7 @@ Usage
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   # estimated variance
+  # add a plot with variance
   s2 = sm.predict_variances(x)
   # to compute the derivative according to the first variable
   dydx = sm.predict_derivatives(xt, 0)
@@ -53,7 +54,6 @@ Usage
   plt.legend(["Training data", "Prediction"])
   plt.show()
   
-  # add a plot with variance
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
   plt.fill_between(
@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0269263
+     Training - done. Time (sec):  0.0449092
   ___________________________________________________________________________
      
    Evaluation
@@ -121,12 +121,13 @@ Usage with an automatic number of components
   from smt.surrogate_models import KPLS
   from smt.problems import TensorProduct
   from smt.sampling_methods import LHS
+  
   # The problem is the exponential problem with dimension 10
   ndim = 10
   prob = TensorProduct(ndim=ndim, func="exp")
   
-  sm = KPLS(eval_n_comp=True) 
-  samp = LHS(xlimits=prob.xlimits,random_state=42)
+  sm = KPLS(eval_n_comp=True)
+  samp = LHS(xlimits=prob.xlimits, random_state=42)
   np.random.seed(0)
   xt = samp(50)
   yt = prob(xt)
@@ -136,11 +137,11 @@ Usage with an automatic number of components
   
   ## The model automatically choose a dimension of 3
   l = sm.options["n_comp"]
-  print("\n The model automatically choose "+str(l)+" components.")
+  print("\n The model automatically choose " + str(l) + " components.")
   
   ## You can predict a 10-dimension point from the 3-dimensional model
-  print(sm.predict_values(np.array([[1,2,3,4,5,6,7,8,9,10]])))
-  print(sm.predict_variances(np.array([[1,2,3,4,5,6,7,8,9,10]])))        
+  print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+  print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
   
 ::
 
@@ -158,7 +159,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4997704
+     Training - done. Time (sec):  3.3513072
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,12 +169,12 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0009973
+     Prediction time/pt. (sec) :  0.0000000
      
-  [[15.78311061]]
-  [[991.86511159]]
+  [[20.57448753]]
+  [[1073.87724138]]
   
 
 Options
@@ -226,8 +227,8 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None
@@ -294,3 +295,8 @@ Options
      -  None
      -  ['float']
      -  n_comp evaluation treshold for Wold's R criterion
+  *  -  cat_kernel_comps
+     -  None
+     -  None
+     -  ['list']
+     -  Number of components for PLS categorical kernel

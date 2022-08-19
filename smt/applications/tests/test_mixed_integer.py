@@ -10,10 +10,10 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
-    GOWER_MAT,
-    HOMO_GAUSSIAN,
-    HOMO_HYP,
-    CONT_RELAX,
+    GOWER_KERNEL,
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -413,7 +413,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            GOWER_MAT,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -426,7 +426,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER_MAT,
+            categorical_kernel=GOWER_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -460,7 +460,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -473,7 +473,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -507,8 +507,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            HOMO_HYP,
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -521,7 +521,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
@@ -555,8 +555,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -569,7 +569,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -600,8 +600,8 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -614,7 +614,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -645,9 +645,9 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerSurrogateModel,
             ENUM,
             FLOAT,
-            HOMO_GAUSSIAN,
-            HOMO_HYP,
-            GOWER_MAT,
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -660,7 +660,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
             xtypes=[FLOAT, (ENUM, 5), FLOAT],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -692,7 +692,7 @@ class TestMixedInteger(unittest.TestCase):
             ENUM,
             FLOAT,
             ORD,
-            HOMO_GAUSSIAN,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
         from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
@@ -709,7 +709,7 @@ class TestMixedInteger(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             xtypes=[(ENUM, 5), ORD, (ENUM, 4)],
             xlimits=xlimits,
             surrogate=KPLS(
@@ -740,111 +740,367 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
     def test_mixed_gower(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG, KPLS
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            GOWER_MAT,
+            ORD,
+            FLOAT,
+            GOWER_KERNEL,
         )
-        from smt.surrogate_models import KRG
-        import matplotlib.pyplot as plt
-        import numpy as np
 
-        xt = np.array([0, 2, 4])
-        yt = np.array([0.0, 1.0, 1.5])
+        xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+        xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+        xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
-
+        xt = np.concatenate((xt1, xt2, xt3), axis=0)
+        xt[:, 1] = xt[:, 1].astype(np.float)
+        yt1 = np.array([0.0, 9.0, 16.0])
+        yt2 = np.array([0.0, -4, -13.0])
+        yt3 = np.array([-10, 3, 11.0])
+        
+        yt = np.concatenate((yt1, yt2, yt3), axis=0)
+        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+        xtypes = [(ENUM, 3), FLOAT]
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER_MAT,
-            xtypes=[(ENUM, 5)],
+            categorical_kernel=GOWER_KERNEL,
+            xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=KRG(theta0=[1e-2]),
+            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 4, 5)
-        y = sm.predict_values(x)
+        n = 100
+        x_cat1 = []
+        x_cat2 = []
+        x_cat3 = []
 
-        plt.plot(xt, yt, "o", label="data")
-        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend()
+        for i in range(n):
+            x_cat1.append(0)
+            x_cat2.append(1)
+            x_cat3.append(2)
+
+        x_cont = np.linspace(0.0, 4.0, n)
+        x1 = np.concatenate(
+            (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x2 = np.concatenate(
+            (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x3 = np.concatenate(
+            (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+
+        y1 = sm.predict_values(x1)
+        y2 = sm.predict_values(x2)
+        y3 = sm.predict_values(x3)
+
+        # estimated variance
+        s2_1 = sm.predict_variances(x1)
+        s2_2 = sm.predict_variances(x2)
+        s2_3 = sm.predict_variances(x3)
+
+        fig, axs = plt.subplots(3, figsize=(8, 6))
+
+        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(x_cont, y1, color="Blue")
+        axs[0].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y1 - 3 * np.sqrt(s2_1)),
+            np.ravel(y1 + 3 * np.sqrt(s2_1)),
+            color="lightgrey",
+        )
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[1].plot(
+            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+        )
+        axs[1].plot(x_cont, y2, color="Red")
+        axs[1].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y2 - 3 * np.sqrt(s2_2)),
+            np.ravel(y2 + 3 * np.sqrt(s2_2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[2].plot(
+            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+        )
+        axs[2].plot(x_cont, y3, color="Green")
+        axs[2].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y3 - 3 * np.sqrt(s2_3)),
+            np.ravel(y3 + 3 * np.sqrt(s2_3)),
+            color="lightgrey",
+        )
+        axs[2].set_xlabel("x")
+        axs[2].set_ylabel("y")
+        axs[2].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        plt.tight_layout()
         plt.show()
 
+
     def test_mixed_homo_gaussian(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG, KPLS
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            HOMO_GAUSSIAN,
+            ORD,
+            FLOAT,
+            EXP_HOMO_HSPHERE_KERNEL,
         )
-        from smt.surrogate_models import KRG
-        import matplotlib.pyplot as plt
-        import numpy as np
 
-        xt = np.array([0, 2, 4])
-        yt = np.array([0.0, 1.0, 1.5])
+        xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+        xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+        xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+        xt = np.concatenate((xt1, xt2, xt3), axis=0)
+        xt[:, 1] = xt[:, 1].astype(np.float)
+        yt1 = np.array([0.0, 9.0, 16.0])
+        yt2 = np.array([0.0, -4, -13.0])
+        yt3 = np.array([-10, 3, 11.0])
 
+        yt = np.concatenate((yt1, yt2, yt3), axis=0)
+        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+        xtypes = [(ENUM, 3), FLOAT]
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_GAUSSIAN,
-            xtypes=[(ENUM, 5)],
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=KRG(theta0=[1e-2]),
+            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 4, 5)
-        y = sm.predict_values(x)
+        n = 100
+        x_cat1 = []
+        x_cat2 = []
+        x_cat3 = []
 
-        plt.plot(xt, yt, "o", label="data")
-        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend()
+        for i in range(n):
+            x_cat1.append(0)
+            x_cat2.append(1)
+            x_cat3.append(2)
+
+        x_cont = np.linspace(0.0, 4.0, n)
+        x1 = np.concatenate(
+            (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x2 = np.concatenate(
+            (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x3 = np.concatenate(
+            (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+
+        y1 = sm.predict_values(x1)
+        y2 = sm.predict_values(x2)
+        y3 = sm.predict_values(x3)
+
+        # estimated variance
+        s2_1 = sm.predict_variances(x1)
+        s2_2 = sm.predict_variances(x2)
+        s2_3 = sm.predict_variances(x3)
+
+        fig, axs = plt.subplots(3, figsize=(8, 6))
+
+        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(x_cont, y1, color="Blue")
+        axs[0].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y1 - 3 * np.sqrt(s2_1)),
+            np.ravel(y1 + 3 * np.sqrt(s2_1)),
+            color="lightgrey",
+        )
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[1].plot(
+            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+        )
+        axs[1].plot(x_cont, y2, color="Red")
+        axs[1].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y2 - 3 * np.sqrt(s2_2)),
+            np.ravel(y2 + 3 * np.sqrt(s2_2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[2].plot(
+            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+        )
+        axs[2].plot(x_cont, y3, color="Green")
+        axs[2].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y3 - 3 * np.sqrt(s2_3)),
+            np.ravel(y3 + 3 * np.sqrt(s2_3)),
+            color="lightgrey",
+        )
+        axs[2].set_xlabel("x")
+        axs[2].set_ylabel("y")
+        axs[2].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        plt.tight_layout()
         plt.show()
 
     def test_mixed_homo_hyp(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG, KPLS
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            HOMO_HYP,
+            ORD,
+            FLOAT,
+            HOMO_HSPHERE_KERNEL,
         )
-        from smt.surrogate_models import KRG
-        import matplotlib.pyplot as plt
-        import numpy as np
 
-        xt = np.array([0, 2, 4])
-        yt = np.array([0.0, 1.0, 1.5])
+        xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+        xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+        xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+        xt = np.concatenate((xt1, xt2, xt3), axis=0)
+        xt[:, 1] = xt[:, 1].astype(np.float)
+        yt1 = np.array([0.0, 9.0, 16.0])
+        yt2 = np.array([0.0, -4, -13.0])
+        yt3 = np.array([-10, 3, 11.0])
 
+        yt = np.concatenate((yt1, yt2, yt3), axis=0)
+        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+        xtypes = [(ENUM, 3), FLOAT]
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=HOMO_HYP,
-            xtypes=[(ENUM, 5)],
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
+            xtypes=xtypes,
             xlimits=xlimits,
-            surrogate=KRG(theta0=[1e-2]),
+            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 4, 5)
-        y = sm.predict_values(x)
+        n = 100
+        x_cat1 = []
+        x_cat2 = []
+        x_cat3 = []
 
-        plt.plot(xt, yt, "o", label="data")
-        plt.plot(x, y, "d", color="red", markersize=3, label="pred")
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend()
+        for i in range(n):
+            x_cat1.append(0)
+            x_cat2.append(1)
+            x_cat3.append(2)
+
+        x_cont = np.linspace(0.0, 4.0, n)
+        x1 = np.concatenate(
+            (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x2 = np.concatenate(
+            (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x3 = np.concatenate(
+            (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+
+        y1 = sm.predict_values(x1)
+        y2 = sm.predict_values(x2)
+        y3 = sm.predict_values(x3)
+
+        # estimated variance
+        s2_1 = sm.predict_variances(x1)
+        s2_2 = sm.predict_variances(x2)
+        s2_3 = sm.predict_variances(x3)
+
+        fig, axs = plt.subplots(3, figsize=(8, 6))
+
+        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(x_cont, y1, color="Blue")
+        axs[0].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y1 - 3 * np.sqrt(s2_1)),
+            np.ravel(y1 + 3 * np.sqrt(s2_1)),
+            color="lightgrey",
+        )
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[1].plot(
+            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+        )
+        axs[1].plot(x_cont, y2, color="Red")
+        axs[1].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y2 - 3 * np.sqrt(s2_2)),
+            np.ravel(y2 + 3 * np.sqrt(s2_2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[2].plot(
+            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+        )
+        axs[2].plot(x_cont, y3, color="Green")
+        axs[2].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y3 - 3 * np.sqrt(s2_3)),
+            np.ravel(y3 + 3 * np.sqrt(s2_3)),
+            color="lightgrey",
+        )
+        axs[2].set_xlabel("x")
+        axs[2].set_ylabel("y")
+        axs[2].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        plt.tight_layout()
         plt.show()
 
 

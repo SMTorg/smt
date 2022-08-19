@@ -30,8 +30,8 @@ from smt.applications.mixed_integer import (
     FLOAT,
     ENUM,
     ORD,
-    GOWER_MAT,
-    HOMO_GAUSSIAN,
+    GOWER_KERNEL,
+    EXP_HOMO_HSPHERE_KERNEL,
 )
 from smt.sampling_methods import LHS
 
@@ -349,7 +349,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=GOWER_MAT,
+            categorical_kernel=GOWER_KERNEL,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -384,7 +384,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -419,7 +419,7 @@ class TestEGO(SMTestCase):
             surrogate=sm,
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=HOMO_GAUSSIAN,
+            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 

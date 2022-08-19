@@ -52,7 +52,9 @@ Usage
       )
       return res
   
-  sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
+  sampling = LHS(
+      xlimits=np.asarray([(-1, 1)] * dim), criterion="m", random_state=42
+  )
   xt = sampling(8)
   yt = np.atleast_2d(fun(xt)).T
   
@@ -126,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7141259
+     Training - done. Time (sec):  1.0243082
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -178,12 +180,12 @@ Options
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
-     -  ['str']
+     -  None
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None
