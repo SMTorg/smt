@@ -751,7 +751,7 @@ class TestMixedInteger(unittest.TestCase):
             FLOAT,
             GOWER_KERNEL,
         )
-
+        
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
@@ -761,7 +761,7 @@ class TestMixedInteger(unittest.TestCase):
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
-        
+
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
         xtypes = [(ENUM, 3), FLOAT]

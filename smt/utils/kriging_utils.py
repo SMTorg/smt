@@ -473,8 +473,7 @@ def compute_X_cross(X, n_levels):
                 k += 1
 
     return Zeta
-
-
+    
 def matrix_data_corr(
     self,
     corr,
@@ -741,7 +740,6 @@ def matrix_data_corr(
             else:
                 self.options["n_comp"] = old_n_comp
     return r
-
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
