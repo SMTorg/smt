@@ -254,7 +254,7 @@ class KrgBased(SurrogateModel):
         # outputs['sol'] = self.sol
 
         self._new_train()
-        
+
     def _matrix_data_corr(
         self,
         corr,
@@ -270,7 +270,7 @@ class KrgBased(SurrogateModel):
     ):
         """
         matrix kernel correlation model.
-    
+
         Parameters
         ----------
         corr: correlation_types
@@ -347,13 +347,13 @@ class KrgBased(SurrogateModel):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
-    
+
         if cat_kernel == CONT_RELAX_KERNEL:
             from smt.applications.mixed_integer import unfold_with_enum_mask
-    
+
             X_pls_space = unfold_with_enum_mask(xtypes, X)
             nx = len(theta)
-    
+
         elif cat_kernel == GOWER_KERNEL:
             X_pls_space = np.copy(X)
         else:
@@ -394,11 +394,11 @@ class KrgBased(SurrogateModel):
             )
             if cat_kernel != CONT_RELAX_KERNEL:
                 d_cont = d[:, np.logical_not(cat_features)]
-    
+
         if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
             r = _correlation_types[corr](theta, d)
             return r
-    
+
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
         r_cat = np.copy(r_cont) * 0
@@ -425,18 +425,18 @@ class KrgBased(SurrogateModel):
                         Theta_mat[j, k + j] = theta_cat[v]
                         Theta_mat[k + j, j] = theta_cat[v]
                         v = v + 1
-    
+
             for j in range(nlevels[i]):
                 for k in range(nlevels[i] - j):
                     if j == k + j:
                         if j == 0:
                             L[j, k + j] = 1
-    
+
                         else:
                             L[j, k + j] = 1
                             for l in range(j):
                                 L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
-    
+
                     else:
                         if j == 0:
                             L[k + j, j] = np.cos(Theta_mat[k, 0])
@@ -444,22 +444,24 @@ class KrgBased(SurrogateModel):
                             L[k + j, j] = np.cos(Theta_mat[k + j, j])
                             for l in range(j):
                                 L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
-    
+
             T = np.dot(L, L.T)
-    
+
             if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
                 T = (T - 1) * theta_bounds[1] / 2
                 T = np.exp(2 * T)
             k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
             T = (T + np.exp(-theta_bounds[1])) / (k)
-    
+
             if cat_kernel_comps is not None:
                 # Sampling points X and y
                 X = self.training_points[None][0][0]
                 y = self.training_points[None][0][1]
                 X_icat = X[:, cat_features]
                 X_icat = X_icat[:, i]
-                old_n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+                old_n_comp = (
+                    self.options["n_comp"] if "n_comp" in self.options else None
+                )
                 self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
                 X_full_space = compute_X_cross(X_icat, n_levels[i])
                 try:
@@ -467,7 +469,7 @@ class KrgBased(SurrogateModel):
                 except IndexError:
                     _, _ = self._compute_pls(X_full_space.copy(), y.copy())
                     self.coeff_pls_cat.append(self.coeff_pls)
-    
+
                 if x is not None:
                     x_icat = x[:, cat_features]
                     x_icat = x_icat[:, i]
@@ -477,9 +479,7 @@ class KrgBased(SurrogateModel):
                     )
                 else:
                     dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
-    
-                ###for numerical instabilities with scikit-learn 1.0 and pls (matrix full of zeros lines)
-    
+
                 d_cat_i = componentwise_distance_PLS(
                     dx_cat_i,
                     "squar_exp",
@@ -488,17 +488,19 @@ class KrgBased(SurrogateModel):
                     theta=None,
                     return_derivative=False,
                 )
-    
+
             for k in range(np.shape(Lij[i])[0]):
                 indi = int(Lij[i][k][0])
                 indj = int(Lij[i][k][1])
-    
+
                 if indi == indj:
                     r_cat[k] = 1.0
                 else:
                     if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                         if cat_kernel_comps is not None:
-                            Theta_i_red = np.zeros(int((nlevels[i] - 1) * nlevels[i] / 2))
+                            Theta_i_red = np.zeros(
+                                int((nlevels[i] - 1) * nlevels[i] / 2)
+                            )
                             indmatvec = 0
                             for j in range(nlevels[i]):
                                 for l in range(nlevels[i]):
@@ -513,7 +515,7 @@ class KrgBased(SurrogateModel):
                             r_cat[k] = kval_cat
                         else:
                             r_cat[k] = T[indi, indj]
-    
+
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
                 if old_n_comp == None:
@@ -521,7 +523,7 @@ class KrgBased(SurrogateModel):
                 else:
                     self.options["n_comp"] = old_n_comp
         return r
-    
+
     def _reduced_likelihood_function(self, theta):
         """
         This function determines the BLUP parameters and evaluates the reduced
@@ -984,8 +986,7 @@ class KrgBased(SurrogateModel):
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
-    
-    
+
     def _predict_values(self, x):
         """
         Evaluates the model at a set of points.

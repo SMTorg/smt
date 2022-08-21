@@ -860,7 +860,6 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
-
     def test_mixed_homo_gaussian(self):
         import numpy as np
         import matplotlib.pyplot as plt
