@@ -751,7 +751,7 @@ class TestMixedInteger(unittest.TestCase):
             FLOAT,
             GOWER_KERNEL,
         )
-        
+
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
