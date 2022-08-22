@@ -10,6 +10,8 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging_utils import componentwise_distance_PLS
+import warnings
+import sys
 
 
 class KPLS(KrgBased):
@@ -40,15 +42,30 @@ class KPLS(KrgBased):
             types=(float),
             desc="n_comp evaluation treshold for Wold's R criterion",
         )
+        declare(
+            "cat_kernel_comps",
+            None,
+            types=list,
+            desc="Number of components for PLS categorical kernel",
+        )
 
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
-        # As of sklearn 0.24.1 zeroed outputs raises an exception while sklearn 0.23 returns zeroed x_rotations
-        # For now the try/except below is a workaround to restore the 0.23 behaviour
-        try:
-            self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
-        except StopIteration:
-            self.coeff_pls = np.zeros((X.shape[1], self.options["n_comp"]))
+        self.coeff_pls = 0
+        if np.shape(X)[0] < self.options["n_comp"] + 1:
+            raise ValueError(
+                "ValueError: The database should be at least "
+                + str(self.options["n_comp"] + 1)
+                + " points (currently "
+                + str(np.shape(X)[0])
+                + ")."
+            )
+        else:
+            if np.shape(X)[1] == 1:
+                self.coeff_pls = np.atleast_2d(np.array([1]))
+            else:
+                self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
+
         return X, y
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):

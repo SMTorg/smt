@@ -365,7 +365,7 @@ class MGP(KrgBased):
         u_ = linalg.solve_triangular(G.T, f - F_Rinv_r)
 
         MSE = self.optimal_par["sigma2"] * (
-            1.0 - (rt ** 2.0).sum(axis=0) + (u_ ** 2.0).sum(axis=0)
+            1.0 - (rt**2.0).sum(axis=0) + (u_**2.0).sum(axis=0)
         )
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!

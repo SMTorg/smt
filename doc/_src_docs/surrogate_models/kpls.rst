@@ -12,13 +12,13 @@ This model is suitable for high-dimensional problems due to the kernel construct
 
 Both absolute exponential and squared exponential kernels are available for KPLS model. More details about the KPLS approach could be found in these sources [2]_.
 
-For automatic selection of the optimal number of components, the adjusted Wold's R criterion is implemented [3]_.
+For an automatic selection of the number of components :math:`h`, the adjusted Wold's R criterion is implemented  as detailed in [3]_.
 	
 .. [1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
 
 .. [2] Bouhlel, M. A. and Bartoli, N. and  Otsmane, A. and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.
 
-.. [3] B. Li, J. Morris, and E. Martin.  Model selection for partial least squares regression.Chemometrics and Intelligent Laboratory Systems, 64(1):79–89, 2002. ISSN 0169-7439.
+.. [3] Saves, P. and Bartoli, N. and Diouane, Y. and Lefebvre, T. and Morlier, J. and David, C. and Nguyen Van, E. and Defoort, S., Bayesian optimization for mixed variables using an adaptive dimension reduction process: applications to aircraft design, AIAA SCITECH 2022 Forum, pp. 0082. 
 
 
 Usage
@@ -42,6 +42,7 @@ Usage
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   # estimated variance
+  # add a plot with variance
   s2 = sm.predict_variances(x)
   # to compute the derivative according to the first variable
   dydx = sm.predict_derivatives(xt, 0)
@@ -53,7 +54,6 @@ Usage
   plt.legend(["Training data", "Prediction"])
   plt.show()
   
-  # add a plot with variance
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
   plt.fill_between(
@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0250795
+     Training - done. Time (sec):  0.0449092
   ___________________________________________________________________________
      
    Evaluation
@@ -110,6 +110,72 @@ Usage
 .. figure:: kpls_Test_test_kpls.png
   :scale: 80 %
   :align: center
+
+Usage with an automatic number of components
+--------------------------------------------
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from smt.surrogate_models import KPLS
+  from smt.problems import TensorProduct
+  from smt.sampling_methods import LHS
+  
+  # The problem is the exponential problem with dimension 10
+  ndim = 10
+  prob = TensorProduct(ndim=ndim, func="exp")
+  
+  sm = KPLS(eval_n_comp=True)
+  samp = LHS(xlimits=prob.xlimits, random_state=42)
+  np.random.seed(0)
+  xt = samp(50)
+  yt = prob(xt)
+  np.random.seed(1)
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  ## The model automatically choose a dimension of 3
+  l = sm.options["n_comp"]
+  print("\n The model automatically choose " + str(l) + " components.")
+  
+  ## You can predict a 10-dimension point from the 3-dimensional model
+  print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+  print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+  
+::
+
+  ___________________________________________________________________________
+     
+                                     KPLS
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 50
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  3.3513072
+  
+   The model automatically choose 3 components.
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 1
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  [[20.57448753]]
+  [[1073.87724138]]
+  
 
 Options
 -------
@@ -161,8 +227,8 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None
@@ -229,3 +295,8 @@ Options
      -  None
      -  ['float']
      -  n_comp evaluation treshold for Wold's R criterion
+  *  -  cat_kernel_comps
+     -  None
+     -  None
+     -  ['list']
+     -  Number of components for PLS categorical kernel

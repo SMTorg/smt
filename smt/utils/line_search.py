@@ -210,8 +210,8 @@ class QuadraticLineSearch(BracketedLineSearch):
 
     def _compute_minimum(self, a1, p1, dp1, a2, p2, dp2):
         quadratic_mtx = np.zeros((3, 3))
-        quadratic_mtx[0, :] = [1.0, a1, a1 ** 2]
-        quadratic_mtx[1, :] = [1.0, a2, a2 ** 2]
+        quadratic_mtx[0, :] = [1.0, a1, a1**2]
+        quadratic_mtx[1, :] = [1.0, a2, a2**2]
         quadratic_mtx[2, :] = [0.0, 1.0, 2 * a1]
         c0, c1, c2 = np.linalg.solve(quadratic_mtx, [p1, p2, dp1])
 
@@ -231,10 +231,10 @@ class CubicLineSearch(BracketedLineSearch):
 
     def _compute_minimum(self, a1, p1, dp1, a2, p2, dp2):
         cubic_mtx = np.zeros((4, 4))
-        cubic_mtx[0, :] = [1.0, a1, a1 ** 2, a1 ** 3]
-        cubic_mtx[1, :] = [1.0, a2, a2 ** 2, a2 ** 3]
-        cubic_mtx[2, :] = [0.0, 1.0, 2 * a1, 3 * a1 ** 2]
-        cubic_mtx[3, :] = [0.0, 1.0, 2 * a2, 3 * a2 ** 2]
+        cubic_mtx[0, :] = [1.0, a1, a1**2, a1**3]
+        cubic_mtx[1, :] = [1.0, a2, a2**2, a2**3]
+        cubic_mtx[2, :] = [0.0, 1.0, 2 * a1, 3 * a1**2]
+        cubic_mtx[3, :] = [0.0, 1.0, 2 * a2, 3 * a2**2]
         c0, c1, c2, c3 = np.linalg.solve(cubic_mtx, [p1, p2, dp1, dp2])
 
         d0 = c1

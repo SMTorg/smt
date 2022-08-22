@@ -159,7 +159,7 @@ Beside the Expected Improvement, the implementation here offers two other infill
 Regarding the parallel execution, one can implement specific multiprocessing by deriving the _Evaluator_ interface
 and overriding the default implementation of the _run(fun, x)_ method. The default implementation simply runs _fun(x)_.
 
-Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_.
+Regardless the others parameters, you can specify a mixed surrogate model to make mixed optimization. See [8]_ .
 The expected improvement is continuously computed and optimized so that can lead to an infill point that will be projected, in the mixed case, to an already evaluated point.
 To avoid the re-evaluation of a point, you can penalize the Expected Improvement via tunneling which decrease the EI in the neighbourhood of the known DOE points.
 However, this is not recommanded for high dimensional problems because the re-evaluation is uncommon. Tunneling evaluation can be slow with a lot of point.
@@ -189,7 +189,8 @@ References
 
 .. [7] Roux, E. (2011). Assemblage mécanique: stratégies d'optimisation des procédés et d'identification des comportements mécaniques des matériaux (Doctoral dissertation).
 
-.. [8] E.C. Garrido-Merchan and D. Hernandez-Lobato. Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. In:Neurocomputing 380 (2020), pages 20–35. 
+.. [8] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J., A general square exponential kernel to handle mixed-categorical variables for Gaussian process, AIAA Aviation 2022 Forum, pp. 3870. 
+
 
 Usage
 -----
@@ -522,10 +523,6 @@ Usage with mixed variable
   
 ::
 
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
-  Warning: multiple x input features have the same value (at least same row twice).
   Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
   Minimum in typed x=[-5.0, 'blue', 'circle', 1]
   
@@ -583,7 +580,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001F2D493BD90>
+     -  <smt.applications.ego.Evaluator object at 0x000001638A08E430>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -619,11 +616,11 @@ Options
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel', 'continuous_relaxation_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001F2D7D03970>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001638A0A1490>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly

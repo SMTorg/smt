@@ -274,7 +274,7 @@ class MFK(KrgBased):
                 self.optimal_noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
                 for i in range(self.nt_all[lvl]):
                     diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                    if np.sum(diff ** 2) != 0.0:
+                    if np.sum(diff**2) != 0.0:
                         self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
                 self.optimal_noise = self.optimal_noise / self.nt_reps
                 self.optimal_noise_all[lvl] = self.optimal_noise
@@ -283,7 +283,7 @@ class MFK(KrgBased):
                 self.X_norma_all[lvl] = self.X_norma
                 self.y_norma_all[lvl] = self.y_norma
         else:
-            self.optimal_noise = self.options["noise0"] / self.y_std ** 2
+            self.optimal_noise = self.options["noise0"] / self.y_std**2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
         # Calculate matrix of distances D between samples
@@ -510,12 +510,12 @@ class MFK(KrgBased):
         G = self.optimal_par[0]["G"]
 
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
-        sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
+        sigma2 = self.optimal_par[0]["sigma2"] / self.y_std**2
         MSE[:, 0] = sigma2 * (
             # 1 + self.optimal_noise_all[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
             1
-            - (r_t ** 2).sum(axis=0)
-            + (u_ ** 2).sum(axis=0)
+            - (r_t**2).sum(axis=0)
+            + (u_**2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -537,7 +537,7 @@ class MFK(KrgBased):
             beta = self.optimal_par[i]["beta"]
 
             # scaled predictor
-            sigma2 = self.optimal_par[i]["sigma2"] / self.y_std ** 2
+            sigma2 = self.optimal_par[i]["sigma2"] / self.y_std**2
             q = self.q_all[i]
             u_ = solve_triangular(G.T, f - np.dot(Ft.T, r_t), lower=True)
             sigma2_rho = np.dot(
@@ -555,21 +555,21 @@ class MFK(KrgBased):
                     # sigma2_rho * MSE[:, i - 1]
                     +Q_ / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
-                    * (1 - (r_t ** 2).sum(axis=0))
-                    + sigma2 * (u_ ** 2).sum(axis=0)
+                    * (1 - (r_t**2).sum(axis=0))
+                    + sigma2 * (u_**2).sum(axis=0)
                 )
             else:
                 MSE[:, i] = sigma2 * (
                     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
                     1
-                    - (r_t ** 2).sum(axis=0)
-                    + (u_ ** 2).sum(axis=0)
+                    - (r_t**2).sum(axis=0)
+                    + (u_**2).sum(axis=0)
                 )  # + sigma2_rho * MSE[:, i - 1]
             if self.options["propagate_uncertainty"]:
                 MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]
 
         # scaled predictor
-        MSE *= self.y_std ** 2
+        MSE *= self.y_std**2
 
         return MSE, sigma2_rhos
 

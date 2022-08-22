@@ -20,15 +20,23 @@ from smt.utils.kriging_utils import (
     matern52,
     matern32,
     gower_componentwise_distances,
+    componentwise_distance,
+    componentwise_distance_PLS,
     compute_X_cont,
     cross_levels,
-    matrix_data_corr,
     compute_n_param,
+    compute_X_cross,
+    cross_levels_homo_space,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 
-from smt.utils.kriging_utils import GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN
+from smt.utils.kriging_utils import (
+    EXP_HOMO_HSPHERE_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+    GOWER_KERNEL,
+)
 
 
 class KrgBased(SurrogateModel):
@@ -67,15 +75,19 @@ class KrgBased(SurrogateModel):
                 "matern32",
             ),
             desc="Correlation function type",
-            types=(str),
         )
         declare(
             "categorical_kernel",
             None,
-            types=str,
-            values=[GOWER, HOMO_GAUSSIAN, FULL_GAUSSIAN],
+            values=[
+                CONT_RELAX_KERNEL,
+                GOWER_KERNEL,
+                EXP_HOMO_HSPHERE_KERNEL,
+                HOMO_HSPHERE_KERNEL,
+            ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
+
         declare(
             "xtypes",
             None,
@@ -154,23 +166,20 @@ class KrgBased(SurrogateModel):
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
-            X, y = self._compute_pls(X.copy(), y.copy())
+            if self.options["categorical_kernel"] is None:
+                X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
         self.X_train = X
+
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
                 X=X, xtypes=self.options["xtypes"]
             )
-
-            if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
-                self.Lij, self.n_levels = cross_levels(
-                    X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
-                )
-                _, self.cat_features = compute_X_cont(
-                    self.X_train, self.options["xtypes"]
-                )
-
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+            )
+            _, self.cat_features = compute_X_cont(self.X_train, self.options["xtypes"])
         # Center and scale X and y
         (
             self.X_norma,
@@ -180,6 +189,7 @@ class KrgBased(SurrogateModel):
             self.X_scale,
             self.y_std,
         ) = standardization(X, y)
+
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
@@ -199,7 +209,7 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[index_unique == i] - y_norma_unique[i]
-                if np.sum(diff ** 2) != 0.0:
+                if np.sum(diff**2) != 0.0:
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
@@ -208,7 +218,9 @@ class KrgBased(SurrogateModel):
             D, self.ij = cross_distances(self.X_norma)
 
         if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
-            warnings.warn("Warning: multiple x input features have the same value (at least same row twice).")
+            warnings.warn(
+                "Warning: multiple x input features have the same value (at least same row twice)."
+            )
 
         ####
         # Regression matrix and parameters
@@ -226,7 +238,6 @@ class KrgBased(SurrogateModel):
             self.optimal_par,
             self.optimal_theta,
         ) = self._optimize_hyperparam(D)
-
         if self.name in ["MGP"]:
             self._specific_train()
         else:
@@ -243,6 +254,275 @@ class KrgBased(SurrogateModel):
         # outputs['sol'] = self.sol
 
         self._new_train()
+
+    def _matrix_data_corr(
+        self,
+        corr,
+        xtypes,
+        theta,
+        theta_bounds,
+        dx,
+        Lij,
+        n_levels,
+        cat_features,
+        cat_kernel,
+        x=None,
+    ):
+        """
+        matrix kernel correlation model.
+
+        Parameters
+        ----------
+        corr: correlation_types
+            - The autocorrelation model
+        xtypes: np.ndarray [dim]
+                -the types (FLOAT,ORD,ENUM) of the input variables
+        theta : list[small_d * n_comp]
+            Hyperparameters of the correlation model
+        dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+            - The gower_componentwise_distances between the samples.
+        Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+                - The levels corresponding to the indices i and j of the vectors in X.
+        n_levels: np.ndarray
+                - The number of levels for every categorical variable.
+        cat_features: np.ndarray [dim]
+            -  Indices of the categorical input dimensions.
+         cat_kernel : string
+             - The kernel to use for categorical inputs. Only for non continuous Kriging",
+        x : np.ndarray[n_obs , n_comp]
+            - The input instead of dx for homo_hs prediction
+        Returns
+        -------
+        r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+            An array containing the values of the autocorrelation model.
+        """
+        _correlation_types = {
+            "abs_exp": abs_exp,
+            "squar_exp": squar_exp,
+            "act_exp": act_exp,
+            "matern52": matern52,
+            "matern32": matern32,
+        }
+        r = np.zeros((dx.shape[0], 1))
+        n_components = dx.shape[1]
+        nx = self.nx
+        nlevels = n_levels
+        try:
+            cat_kernel_comps = self.options["cat_kernel_comps"]
+            if cat_kernel_comps is not None:
+                nlevels = np.array(cat_kernel_comps)
+        except KeyError:
+            cat_kernel_comps = None
+        try:
+            ncomp = self.options["n_comp"]
+            try:
+                self.pls_coeff_cont
+            except AttributeError:
+                self.pls_coeff_cont = []
+        except KeyError:
+            cat_kernel_comps = None
+            ncomp = 1e5
+        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
+        theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
+        i = 0
+        j = 0
+        n_theta_cont = 0
+        for feat in cat_features:
+            if feat:
+                if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                    theta_cont_features[
+                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
+                    ] = False
+                    theta_cat_features[
+                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
+                    ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
+                    j += int(nlevels[i] * (nlevels[i] - 1) / 2)
+                i += 1
+            else:
+                if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                    if n_theta_cont < ncomp:
+                        theta_cont_features[j] = True
+                        j += 1
+                        n_theta_cont += 1
+        # Sampling points X and y
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
+
+        if cat_kernel == CONT_RELAX_KERNEL:
+            from smt.applications.mixed_integer import unfold_with_enum_mask
+
+            X_pls_space = unfold_with_enum_mask(xtypes, X)
+            nx = len(theta)
+
+        elif cat_kernel == GOWER_KERNEL:
+            X_pls_space = np.copy(X)
+        else:
+            X_pls_space, _ = compute_X_cont(X, xtypes)
+            d_cont = dx[:, np.logical_not(cat_features)]
+        if cat_kernel_comps is not None or ncomp < 1e5:
+            ###Modifier la condition : if PLS cont
+            if self.pls_coeff_cont == []:
+                X, y = self._compute_pls(X_pls_space.copy(), y.copy())
+                self.pls_coeff_cont = self.coeff_pls
+            if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
+                d = componentwise_distance_PLS(
+                    dx,
+                    corr,
+                    self.options["n_comp"],
+                    self.pls_coeff_cont,
+                    theta=None,
+                    return_derivative=False,
+                )
+                r = _correlation_types[corr](theta, d)
+                return r
+            else:
+                d_cont = componentwise_distance_PLS(
+                    d_cont,
+                    corr,
+                    self.options["n_comp"],
+                    self.pls_coeff_cont,
+                    theta=None,
+                    return_derivative=False,
+                )
+        else:
+            d = componentwise_distance(
+                dx,
+                corr,
+                nx,
+                theta=None,
+                return_derivative=False,
+            )
+            if cat_kernel != CONT_RELAX_KERNEL:
+                d_cont = d[:, np.logical_not(cat_features)]
+
+        if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
+            r = _correlation_types[corr](theta, d)
+            return r
+
+        theta_cont = theta[theta_cont_features[:, 0]]
+        r_cont = _correlation_types[corr](theta_cont, d_cont)
+        r_cat = np.copy(r_cont) * 0
+        r = np.copy(r_cont)
+        ##Theta_cat_i loop
+        try:
+            self.coeff_pls_cat
+        except AttributeError:
+            self.coeff_pls_cat = []
+        for i in range(len(nlevels)):
+            theta_cat = theta[theta_cat_features[:, i]]
+            if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
+                theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+            elif cat_kernel == HOMO_HSPHERE_KERNEL:
+                theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
+            Theta_mat = np.zeros((nlevels[i], nlevels[i]))
+            L = np.zeros((nlevels[i], nlevels[i]))
+            v = 0
+            for j in range(nlevels[i]):
+                for k in range(nlevels[i] - j):
+                    if j == k + j:
+                        Theta_mat[j, k + j] = 1
+                    else:
+                        Theta_mat[j, k + j] = theta_cat[v]
+                        Theta_mat[k + j, j] = theta_cat[v]
+                        v = v + 1
+
+            for j in range(nlevels[i]):
+                for k in range(nlevels[i] - j):
+                    if j == k + j:
+                        if j == 0:
+                            L[j, k + j] = 1
+
+                        else:
+                            L[j, k + j] = 1
+                            for l in range(j):
+                                L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
+
+                    else:
+                        if j == 0:
+                            L[k + j, j] = np.cos(Theta_mat[k, 0])
+                        else:
+                            L[k + j, j] = np.cos(Theta_mat[k + j, j])
+                            for l in range(j):
+                                L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+
+            T = np.dot(L, L.T)
+
+            if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
+                T = (T - 1) * theta_bounds[1] / 2
+                T = np.exp(2 * T)
+            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+            T = (T + np.exp(-theta_bounds[1])) / (k)
+
+            if cat_kernel_comps is not None:
+                # Sampling points X and y
+                X = self.training_points[None][0][0]
+                y = self.training_points[None][0][1]
+                X_icat = X[:, cat_features]
+                X_icat = X_icat[:, i]
+                old_n_comp = (
+                    self.options["n_comp"] if "n_comp" in self.options else None
+                )
+                self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
+                X_full_space = compute_X_cross(X_icat, n_levels[i])
+                try:
+                    self.coeff_pls = self.coeff_pls_cat[i]
+                except IndexError:
+                    _, _ = self._compute_pls(X_full_space.copy(), y.copy())
+                    self.coeff_pls_cat.append(self.coeff_pls)
+
+                if x is not None:
+                    x_icat = x[:, cat_features]
+                    x_icat = x_icat[:, i]
+                    x_full_space = compute_X_cross(x_icat, n_levels[i])
+                    dx_cat_i = cross_levels_homo_space(
+                        x_full_space, self.ij, y=X_full_space
+                    )
+                else:
+                    dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
+
+                d_cat_i = componentwise_distance_PLS(
+                    dx_cat_i,
+                    "squar_exp",
+                    self.options["n_comp"],
+                    self.coeff_pls,
+                    theta=None,
+                    return_derivative=False,
+                )
+
+            for k in range(np.shape(Lij[i])[0]):
+                indi = int(Lij[i][k][0])
+                indj = int(Lij[i][k][1])
+
+                if indi == indj:
+                    r_cat[k] = 1.0
+                else:
+                    if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                        if cat_kernel_comps is not None:
+                            Theta_i_red = np.zeros(
+                                int((nlevels[i] - 1) * nlevels[i] / 2)
+                            )
+                            indmatvec = 0
+                            for j in range(nlevels[i]):
+                                for l in range(nlevels[i]):
+                                    if l > j:
+                                        Theta_i_red[indmatvec] = T[j, l]
+                                        indmatvec += 1
+                            kval_cat = 0
+                            for indijk in range(len(Theta_i_red)):
+                                kval_cat += np.multiply(
+                                    Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                                )
+                            r_cat[k] = kval_cat
+                        else:
+                            r_cat[k] = T[indi, indj]
+
+            r = np.multiply(r, r_cat)
+            if cat_kernel_comps is not None:
+                if old_n_comp == None:
+                    self.options._dict.pop("n_comp", None)
+                else:
+                    self.options["n_comp"] = old_n_comp
+        return r
 
     def _reduced_likelihood_function(self, theta):
         """
@@ -297,14 +577,32 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
-            r = matrix_data_corr(
+        if self.options["categorical_kernel"] is not None:
+            dx = self.D
+            if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+                from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                X2 = unfold_with_enum_mask(
+                    self.options["xtypes"], self.training_points[None][0][0]
+                )
+                (
+                    self.X2_norma,
+                    _,
+                    self.X2_offset,
+                    _,
+                    self.X2_scale,
+                    _,
+                ) = standardization(X2, self.training_points[None][0][1])
+                dx, _ = cross_distances(self.X2_norma)
+
+            r = self._matrix_data_corr(
                 corr=self.options["corr"],
+                xtypes=self.options["xtypes"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
-                d=self.D,
+                dx=dx,
                 Lij=self.Lij,
-                nlevels=self.n_levels,
+                n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
             ).reshape(-1, 1)
@@ -322,6 +620,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
+            print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
         # Get generalized least squared solution
@@ -350,18 +649,17 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-
         # Compute/Organize output
         p = 0
         q = 0
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             p = self.p
             q = self.q
-        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
+        sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        par["sigma2"] = sigma2 * self.y_std ** 2.0
+        par["sigma2"] = sigma2 * self.y_std**2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
         par["C"] = C
@@ -484,7 +782,7 @@ class KrgBased(SurrogateModel):
                     - gamma.T.dot(dmu)
                     - np.dot(gamma.T, dR.dot(gamma))
                 )
-                * self.y_std ** 2.0
+                * self.y_std**2.0
             )
             dsigma_all.append(dsigma_2)
 
@@ -661,7 +959,7 @@ class KrgBased(SurrogateModel):
                 dsigma2detadomega = (
                     (1 / self.nt)
                     * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
-                    * self.y_std ** 2.0
+                    * self.y_std**2.0
                 )
 
                 # Compute Hessian
@@ -706,31 +1004,43 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] is not None:
-            # Compute the correlation function
             dx = gower_componentwise_distances(
                 x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
             )
-            d = self._componentwise_distance(dx)
 
-            if self.options["categorical_kernel"] == GOWER:
-                r = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta, d
-                ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                theta=None,
+                return_derivative=False,
+            )
+            if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
-                r = matrix_data_corr(
+                self.ij = ij
+                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+                    from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                r = self._matrix_data_corr(
                     corr=self.options["corr"],
+                    xtypes=self.options["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
-                    d=d,
+                    dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    x=x,
                 ).reshape(n_eval, self.nt)
+
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
@@ -801,7 +1111,7 @@ class KrgBased(SurrogateModel):
         df_dx = np.dot(df.T, beta)
         d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
         if self.name != "Kriging" and "KPLSK" not in self.name:
-            theta = np.sum(self.optimal_theta * self.coeff_pls ** 2, axis=1)
+            theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
         y = (
@@ -827,30 +1137,43 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         X_cont = x
         if self.options["categorical_kernel"] is not None:
-            # Compute the correlation function
+
             dx = gower_componentwise_distances(
                 x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
             )
-            d = self._componentwise_distance(dx)
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                theta=None,
+                return_derivative=False,
+            )
+            if self.options["categorical_kernel"] is not None:
 
-            if self.options["categorical_kernel"] == GOWER:
-                r = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta, d
-                ).reshape(n_eval, self.nt)
-            elif self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
                 )
-                r = matrix_data_corr(
+                self.ij = ij
+                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+                    from smt.applications.mixed_integer import unfold_with_enum_mask
+
+                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                r = self._matrix_data_corr(
                     corr=self.options["corr"],
+                    xtypes=self.options["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
-                    d=d,
+                    dx=dx,
                     Lij=Lij,
-                    nlevels=self.n_levels,
+                    n_levels=self.n_levels,
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
+                    x=x,
                 ).reshape(n_eval, self.nt)
             X_cont, _ = compute_X_cont(x, self.options["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -873,7 +1196,7 @@ class KrgBased(SurrogateModel):
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
         A = self.optimal_par["sigma2"]
-        B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+        B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
@@ -995,18 +1318,18 @@ class KrgBased(SurrogateModel):
         else:
 
             def minus_reduced_likelihood_function(log10t):
-                return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+                return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
 
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
                     -np.log(10.0)
-                    * (10.0 ** log10t_2d)
-                    * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+                    * (10.0**log10t_2d)
+                    * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 15 * len(self.options["theta0"]), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -1042,7 +1365,9 @@ class KrgBased(SurrogateModel):
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
                     )
-                    warnings.warn("Warning: theta0 is out the feasible bounds. A random initialisation is used instead.")
+                    warnings.warn(
+                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
+                    )
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
@@ -1068,8 +1393,12 @@ class KrgBased(SurrogateModel):
                     + log10t_bounds[0]
                 )
                 theta0 = np.log10(self.theta0)
-            ##from abs distance to kernel distance
-            self.D = self._componentwise_distance(D, opt=ii)
+
+            if self.options["categorical_kernel"]:
+                self.D = D
+            else:
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1085,7 +1414,9 @@ class KrgBased(SurrogateModel):
                             or self.noise0[i] > noise_bounds[1]
                         ):
                             self.noise0[i] = noise_bounds[0]
-                            warnings.warn("Warning: noise0 is out the feasible bounds. The lowest possible value is used instead.")
+                            warnings.warn(
+                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
+                            )
 
                     theta0 = np.concatenate(
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
@@ -1141,7 +1472,7 @@ class KrgBased(SurrogateModel):
                                 optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
-                        theta_all_loops = 10 ** theta_all_loops
+                        theta_all_loops = 10**theta_all_loops
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                                 minus_reduced_likelihood_function,
@@ -1157,11 +1488,11 @@ class KrgBased(SurrogateModel):
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
-                        optimal_theta = 10 ** optimal_theta
+                        optimal_theta = 10**optimal_theta
+
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
@@ -1236,7 +1567,7 @@ class KrgBased(SurrogateModel):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
 
@@ -1253,36 +1584,57 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                if self.options["categorical_kernel"] in [
-                    HOMO_GAUSSIAN,
-                    FULL_GAUSSIAN,
-                ]:
-                    n_param = compute_n_param(
-                        self.options["xtypes"], self.options["categorical_kernel"]
-                    )
-                    self.options["theta0"] *= np.ones(n_param)
-                else:
-                    self.options["theta0"] *= np.ones(d)
-
-            else:
-                if not (
-                    self.options["categorical_kernel"] in [HOMO_GAUSSIAN, FULL_GAUSSIAN]
-                ):
+        if self.name in ["KPLS"]:
+            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+                raise ValueError(
+                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                )
+            if (
+                self.options["categorical_kernel"]
+                not in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]
+                and self.name == "KPLS"
+            ):
+                if self.options["cat_kernel_comps"] is not None:
                     raise ValueError(
-                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                        % (len(self.options["theta0"]), d)
+                        "cat_kernel_comps option is for homoscedastic kernel."
                     )
-                else:
-                    n_param = compute_n_param(
-                        self.options["xtypes"], self.options["categorical_kernel"]
-                    )
-                    if len(self.options["theta0"]) != n_param:
-                        raise ValueError(
-                            "the length of theta0 (%s) should be equal to %s."
-                            % (len(self.options["theta0"]), n_param)
-                        )
+
+        mat_dim = (
+            self.options["cat_kernel_comps"]
+            if "cat_kernel_comps" in self.options
+            else None
+        )
+        if self.options["categorical_kernel"] in [
+            EXP_HOMO_HSPHERE_KERNEL,
+            HOMO_HSPHERE_KERNEL,
+            CONT_RELAX_KERNEL,
+        ]:
+            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+            n_param = compute_n_param(
+                self.options["xtypes"],
+                self.options["categorical_kernel"],
+                self.nx,
+                d,
+                n_comp,
+                mat_dim,
+            )
+
+            self.options["theta0"] *= np.ones(n_param)
+
+        if len(self.options["theta0"]) != d and self.options[
+            "categorical_kernel"
+        ] not in [
+            EXP_HOMO_HSPHERE_KERNEL,
+            CONT_RELAX_KERNEL,
+            HOMO_HSPHERE_KERNEL,
+        ]:
+            if len(self.options["theta0"]) == 1:
+                self.options["theta0"] *= np.ones(d)
+            else:
+                raise ValueError(
+                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                    % (len(self.options["theta0"]), d)
+                )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:

@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0247462
+     Training - done. Time (sec):  0.0408301
   ___________________________________________________________________________
      
    Evaluation
@@ -168,19 +168,19 @@ Example 2 with mixed variables
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
   
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
   
-  # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
   # FLOAT means x1 continuous
-  # INT means x2 integer
+  # ORD means x2 integer
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
   
   sm = MixedIntegerSurrogateModel(
-      xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+      xtypes=[ORD], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
   )
   sm.set_training_values(xt, yt)
   sm.train()
@@ -277,8 +277,8 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None

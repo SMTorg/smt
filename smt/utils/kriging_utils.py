@@ -12,9 +12,10 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 # TODO: Create hyperclass Kernels and a class for each kernel
-GOWER = "gower"
-HOMO_GAUSSIAN = "homoscedastic_gaussian_matrix_kernel"
-FULL_GAUSSIAN = "full_gaussian_matrix_kernel"
+EXP_HOMO_HSPHERE_KERNEL = "exponential_homoscedastic_matrix_kernel"
+HOMO_HSPHERE_KERNEL = "homoscedastic_matrix_kernel"
+CONT_RELAX_KERNEL = "continuous_relaxation_matrix_kernel"
+GOWER_KERNEL = "gower_matrix_kernel"
 
 
 def standardization(X, y, scale_X_to_unit=False):
@@ -158,6 +159,7 @@ def cross_levels(X, ij, xtypes, y=None):
      n_levels: np.ndarray
             - The number of levels for every categorical variable.
     """
+
     n_levels = []
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
@@ -183,31 +185,76 @@ def cross_levels(X, ij, xtypes, y=None):
     return Lij, n_levels
 
 
-def compute_n_param(xtypes, cat_kernel):
+def cross_levels_homo_space(X, ij, y=None):
+    """
+    Computes the nonzero componentwise (or Hadamard) product between the vectors in X
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+
+    Returns
+    -------
+     dx: np.ndarray [n_obs * (n_obs - 1) / 2,dim]
+            - The Hadamard product between the vectors in X.
+    """
+    dim = np.shape(X)[1]
+    n, _ = ij.shape
+    dx = np.zeros((n, dim))
+    for l in range(n):
+        i, j = ij[l]
+        if y is None:
+            dx[l] = X[i] * X[j]
+        else:
+            dx[l] = X[i] * y[j]
+
+    return dx
+
+
+def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
     xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables
+            -the types (FLOAT,ORD,ENUM) of the input variables,
     cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging",
+            -The kernel to use for categorical inputs. Only for non continuous Kriging,
+    nx: int
+            -The number of variables,
+    d: int
+            - n_comp or nx
+    n_comp : int
+            - if PLS, then it is the number of components else None,
+    mat_dim : int
+            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
     Returns
     -------
      n_param: int
             - The number of parameters.
     """
+    n_param = nx
+    if n_comp is not None:
+        n_param = d
+        if cat_kernel == CONT_RELAX_KERNEL:
+            return n_param
+        if mat_dim is not None:
+            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
 
-    n_param = 0
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
-            if cat_kernel == FULL_GAUSSIAN:
-                n_param += int(xtyp[1] * (xtyp[1] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN:
+            if nx == d:
+                n_param -= 1
+            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-
-        else:
-            n_param += 1
+            if cat_kernel == CONT_RELAX_KERNEL:
+                n_param += int(xtyp[1])
     return n_param
 
 
@@ -395,137 +442,37 @@ def differences(X, Y):
     return D.reshape((-1, X.shape[1]))
 
 
-def matrix_data_corr(
-    corr, theta, theta_bounds, d, Lij, nlevels, cat_features, cat_kernel
-):
+def compute_X_cross(X, n_levels):
     """
-    matrix kernel correlation model.
-
+    Computes the full space cross-relaxation of the input X for
+    the homoscedastic hypersphere kernel.
     Parameters
     ----------
-    corr: correlation_types
-        - The autocorrelation model
-    theta : list[small_d * n_comp]
-        Hyperparameters of the correlation model
-    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-        d_i
-    Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
-            - The levels corresponding to the indices i and j of the vectors in X.
+    X: np.ndarray [n_obs, 1]
+            - The input variables.
     n_levels: np.ndarray
-            - The number of levels for every categorical variable.
-    cat_features: np.ndarray [dim]
-        -  Indices of the categorical input dimensions.
-     cat_kernel : string
-         - The kernel to use for categorical inputs. Only for non continuous Kriging",
+            - The number of levels for the categorical variable.
     Returns
     -------
-    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
+    Zeta: np.ndarray [n_obs, n_levels * (n_levels - 1) / 2]
+         - The non categorical values of the input variables.
     """
-    _correlation_types = {
-        "abs_exp": abs_exp,
-        "squar_exp": squar_exp,
-        "act_exp": act_exp,
-        "matern52": matern52,
-        "matern32": matern32,
-    }
 
-    r = np.zeros((d.shape[0], 1))
-    n_components = d.shape[1]
-    theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-    theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
-    i = 0
-    j = 0
-    for feat in cat_features:
-        if feat:
-            if cat_kernel == FULL_GAUSSIAN:
-                theta_cont_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2)
-                ] = False
-                theta_cat_features[
-                    j : j + int(nlevels[i] * (nlevels[i] + 1) / 2), i
-                ] = [True] * int(nlevels[i] * (nlevels[i] + 1) / 2)
-                j += int(nlevels[i] * (nlevels[i] + 1) / 2)
-            if cat_kernel == HOMO_GAUSSIAN:
-                theta_cont_features[
-                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
-                ] = False
-                theta_cat_features[
-                    j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
-                ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-                j += int(nlevels[i] * (nlevels[i] - 1) / 2)
-            i += 1
-        else:
-            theta_cont_features[j] = True
-            j += 1
+    dim = int(n_levels * (n_levels - 1) / 2)
+    nt = len(X)
+    Zeta = np.zeros((nt, dim))
+    k = 0
+    for i in range(n_levels):
+        for j in range(n_levels):
+            if j > i:
+                s = 0
+                for x in X:
+                    if int(x) == i or int(x) == j:
+                        Zeta[s, k] = 1
+                    s += 1
+                k += 1
 
-    theta_cont = theta[theta_cont_features[:, 0]]
-    d_cont = d[:, np.logical_not(cat_features)]
-    r_cont = _correlation_types[corr](theta_cont, d_cont)
-    r_cat = np.copy(r_cont) * 0
-    r = np.copy(r_cont)
-    ##Theta_cat_i loop
-    for i in range(len(nlevels)):
-        theta_cat = theta[theta_cat_features[:, i]]
-        if cat_kernel == FULL_GAUSSIAN:
-            theta_cat[: -nlevels[i]] = theta_cat[: -nlevels[i]] * (
-                0.5 * np.pi / theta_bounds[1]
-            )
-        if cat_kernel == HOMO_GAUSSIAN:
-            theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-        d_cat = d[:, cat_features]
-        Theta_mat = np.zeros((nlevels[i], nlevels[i]))
-        L = np.zeros((nlevels[i], nlevels[i]))
-        v = 0
-        for j in range(nlevels[i]):
-            for k in range(nlevels[i] - j):
-                if j == k + j:
-                    Theta_mat[j, k + j] = 1
-                else:
-                    Theta_mat[j, k + j] = theta_cat[v]
-                    Theta_mat[k + j, j] = theta_cat[v]
-                    v = v + 1
-
-        for j in range(nlevels[i]):
-            for k in range(nlevels[i] - j):
-                if j == k + j:
-                    if j == 0:
-                        L[j, k + j] = 1
-
-                    else:
-                        L[j, k + j] = 1
-                        for l in range(j):
-                            L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
-
-                else:
-                    if j == 0:
-                        L[k + j, j] = np.cos(Theta_mat[k, 0])
-                    else:
-                        L[k + j, j] = np.cos(Theta_mat[k + j, j])
-                        for l in range(j):
-                            L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
-
-        T = np.dot(L, L.T)
-        T = (T - 1) * theta_bounds[1] / 2
-        T = np.exp(2 * T)
-        k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-        T = (T + np.exp(-theta_bounds[1])) / (k)
-
-        for k in range(np.shape(Lij[i])[0]):
-            indi = int(Lij[i][k][0])
-            indj = int(Lij[i][k][1])
-            if indi == indj:
-                r_cat[k, 0] = 1.0
-            else:
-                if cat_kernel == FULL_GAUSSIAN:
-                    r_cat[k, 0] = np.exp(
-                        -theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indi)]
-                        - theta_cat[int(int(nlevels[i] * (nlevels[i] - 1) / 2) + indj)]
-                    ) * (T[indi, indj])
-                if cat_kernel == HOMO_GAUSSIAN:
-                    r_cat[k, 0] = T[indi, indj]
-        r = np.multiply(r, r_cat)
-    return r
+    return Zeta
 
 
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
@@ -555,7 +502,7 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     Returns
     -------
     r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-        An array containing the values of the autocorrelation model.
+         An array containing the values of the autocorrelation model.
     """
 
     r = np.zeros((d.shape[0], 1))
@@ -615,7 +562,7 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
-    derivative_paramas : dict, optional
+    derivative_params : dict, optional
         List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
@@ -687,6 +634,8 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         Indice for which component the gradient dr/dtheta must be computed. The default is None.
     hess_ind : int, optional
         Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_params : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
 
     Raises
     ------
@@ -708,7 +657,7 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     while i * nb_limit <= d.shape[0]:
         ll = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
         r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-            1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll ** 2.0
+            1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll**2.0
         ).prod(axis=1) * np.exp(-np.sqrt(5.0) * (ll.sum(axis=1)))
         i += 1
     i = 0
@@ -776,7 +725,7 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
                     * fact_2
                 )
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    (fact_4 - fact_1 ** 2) / (fact_2) ** 2
+                    (fact_4 - fact_1**2) / (fact_2) ** 2
                 ) * M52[i * nb_limit : (i + 1) * nb_limit, 0] + r[
                     i * nb_limit : (i + 1) * nb_limit, 0
                 ]
@@ -1009,7 +958,7 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=
         d = d_x
         n_components = d.shape[1]
 
-    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A ** 2.0, axis=1))
+    r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A**2.0, axis=1))
 
     if grad_ind is not None:
         d_grad_ind = grad_ind % n_components
@@ -1302,7 +1251,7 @@ def componentwise_distance_PLS(
             else:
                 if corr == "squar_exp":
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls ** 2
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls**2
                     )
                 else:
                     # abs_exp

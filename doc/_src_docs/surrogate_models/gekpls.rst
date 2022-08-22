@@ -98,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0846102
+     Training - done. Time (sec):  0.1266608
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -154,8 +154,8 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None
@@ -222,6 +222,11 @@ Options
      -  None
      -  ['float']
      -  n_comp evaluation treshold for Wold's R criterion
+  *  -  cat_kernel_comps
+     -  None
+     -  None
+     -  ['list']
+     -  Number of components for PLS categorical kernel
   *  -  xlimits
      -  None
      -  None

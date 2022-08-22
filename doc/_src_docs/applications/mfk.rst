@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0562565
+     Training - done. Time (sec):  0.0940485
   ___________________________________________________________________________
      
    Evaluation
@@ -122,9 +122,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010331
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000102
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -177,12 +177,12 @@ Options
   *  -  corr
      -  squar_exp
      -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
-     -  ['str']
+     -  None
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['gower', 'homoscedastic_gaussian_matrix_kernel', 'full_gaussian_matrix_kernel']
-     -  ['str']
+     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  xtypes
      -  None

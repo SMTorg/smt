@@ -230,19 +230,19 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, INT
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
 
-        # xtypes = [FLOAT, INT, (ENUM, 3), (ENUM, 2)]
+        # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
         # FLOAT means x1 continuous
-        # INT means x2 integer
+        # ORD means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
 
         sm = MixedIntegerSurrogateModel(
-            xtypes=[INT], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
+            xtypes=[ORD], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -275,7 +275,7 @@ class Test(unittest.TestCase):
         from smt.applications.mixed_integer import (
             MixedIntegerSurrogateModel,
             ENUM,
-            GOWER,
+            GOWER_KERNEL,
         )
         from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
@@ -288,7 +288,7 @@ class Test(unittest.TestCase):
 
         # Surrogate
         sm = MixedIntegerSurrogateModel(
-            categorical_kernel=GOWER,
+            categorical_kernel=GOWER_KERNEL,
             xtypes=[(ENUM, 5)],
             xlimits=xlimits,
             surrogate=KRG(theta0=[1e-2]),
@@ -307,6 +307,34 @@ class Test(unittest.TestCase):
         plt.legend()
         plt.show()
 
+    def test_kpls_auto(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from smt.surrogate_models import KPLS
+        from smt.problems import TensorProduct
+        from smt.sampling_methods import LHS
+
+        # The problem is the exponential problem with dimension 10
+        ndim = 10
+        prob = TensorProduct(ndim=ndim, func="exp")
+
+        sm = KPLS(eval_n_comp=True)
+        samp = LHS(xlimits=prob.xlimits, random_state=42)
+        np.random.seed(0)
+        xt = samp(50)
+        yt = prob(xt)
+        np.random.seed(1)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        ## The model automatically choose a dimension of 3
+        l = sm.options["n_comp"]
+        print("\n The model automatically choose " + str(l) + " components.")
+
+        ## You can predict a 10-dimension point from the 3-dimensional model
+        print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+        print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -324,6 +352,7 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
         # estimated variance
+        # add a plot with variance
         s2 = sm.predict_variances(x)
         # to compute the derivative according to the first variable
         dydx = sm.predict_derivatives(xt, 0)
@@ -335,7 +364,6 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-        # add a plot with variance
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
         plt.fill_between(
@@ -527,7 +555,9 @@ class Test(unittest.TestCase):
             )
             return res
 
-        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m")
+        sampling = LHS(
+            xlimits=np.asarray([(-1, 1)] * dim), criterion="m", random_state=42
+        )
         xt = sampling(8)
         yt = np.atleast_2d(fun(xt)).T
 

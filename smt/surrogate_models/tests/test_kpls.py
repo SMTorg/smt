@@ -13,7 +13,7 @@ from smt.sampling_methods import FullFactorial, LHS
 
 class TestKPLS(unittest.TestCase):
     def test_predict_output(self):
-        d, n = (3, 10)
+        d, n = (3, 3)
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
             criterion="m",
@@ -31,13 +31,16 @@ class TestKPLS(unittest.TestCase):
         kriging.set_training_values(x, y)
         kriging.train()
 
-        x_fail_1 = np.asarray([0, 0, 0, 0])
-        x_fail_2 = np.asarray([0])
+        x_fail_1 = np.asarray([[0, 0, 0, 0]])
+        x_fail_2 = np.asarray([[0]])
 
         self.assertRaises(ValueError, lambda: kriging.predict_values(x_fail_1))
         self.assertRaises(ValueError, lambda: kriging.predict_values(x_fail_2))
         var = kriging.predict_variances(x)
         self.assertEqual(y.shape[0], var.shape[0])
+        kriging = KPLS(n_comp=3)
+        kriging.set_training_values(x, y)
+        self.assertRaises(ValueError, lambda: kriging.train())
 
     def test_kpls_training_with_zeroed_outputs(self):
         # Test scikit-learn 0.24 regression cf. https://github.com/SMTorg/smt/issues/274
