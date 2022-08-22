@@ -27,3 +27,4 @@ SMT has been developed thanks to contributions from:
 * Ruben Conde
 * Steven Berguin
 * Vincent Drouet
+* Zhou Tianxun
