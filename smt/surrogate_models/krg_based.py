@@ -24,19 +24,18 @@ from smt.utils.kriging_utils import (
     componentwise_distance_PLS,
     compute_X_cont,
     cross_levels,
-    compute_n_param,
     compute_X_cross,
     cross_levels_homo_space,
 )
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
+from smt.utils.mixed_integer import unfold_with_enum_mask
 
-from smt.utils.kriging_utils import (
-    EXP_HOMO_HSPHERE_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
-    GOWER_KERNEL,
-)
+# TODO: Create hyperclass Kernels and a class for each kernel
+EXP_HOMO_HSPHERE_KERNEL = "exponential_homoscedastic_matrix_kernel"
+HOMO_HSPHERE_KERNEL = "homoscedastic_matrix_kernel"
+CONT_RELAX_KERNEL = "continuous_relaxation_matrix_kernel"
+GOWER_KERNEL = "gower_matrix_kernel"
 
 
 class KrgBased(SurrogateModel):
@@ -1022,8 +1021,6 @@ class KrgBased(SurrogateModel):
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
-                    from smt.applications.mixed_integer import unfold_with_enum_mask
-
                     Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
@@ -1676,3 +1673,44 @@ class KrgBased(SurrogateModel):
                 )
                 % (self.nt, p)
             )
+
+
+def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
+    """
+    Returns the he number of parameters needed for an homoscedastic or full group kernel.
+    Parameters
+     ----------
+    xtypes: np.ndarray [dim]
+            -the types (FLOAT,ORD,ENUM) of the input variables,
+    cat_kernel : string
+            -The kernel to use for categorical inputs. Only for non continuous Kriging,
+    nx: int
+            -The number of variables,
+    d: int
+            - n_comp or nx
+    n_comp : int
+            - if PLS, then it is the number of components else None,
+    mat_dim : int
+            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
+    Returns
+    -------
+     n_param: int
+            - The number of parameters.
+    """
+    n_param = nx
+    if n_comp is not None:
+        n_param = d
+        if cat_kernel == CONT_RELAX_KERNEL:
+            return n_param
+        if mat_dim is not None:
+            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
+
+    for i, xtyp in enumerate(xtypes):
+        if isinstance(xtyp, tuple):
+            if nx == d:
+                n_param -= 1
+            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+            if cat_kernel == CONT_RELAX_KERNEL:
+                n_param += int(xtyp[1])
+    return n_param
