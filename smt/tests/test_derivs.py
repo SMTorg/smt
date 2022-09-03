@@ -8,11 +8,9 @@ import numpy as np
 import unittest
 import inspect
 
-from copy import deepcopy
-
 from collections import OrderedDict
 
-from smt.problems import Sphere, TensorProduct
+from smt.problems import Sphere
 from smt.sampling_methods import LHS
 
 from smt.utils.sm_test_case import SMTestCase

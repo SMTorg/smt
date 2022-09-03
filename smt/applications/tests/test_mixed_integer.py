@@ -7,13 +7,8 @@ matplotlib.use("Agg")
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
-    FLOAT,
-    ENUM,
-    ORD,
-    GOWER_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
+)
+from smt.utils.mixed_integer import (
     check_xspec_consistency,
     unfold_xlimits_with_continuous_limits,
     fold_with_enum_index,
@@ -26,7 +21,7 @@ from smt.applications.mixed_integer import (
 )
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG, QP
+from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD
 
 
 class TestMixedInteger(unittest.TestCase):
@@ -313,13 +308,8 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
         from matplotlib import colors
 
-        from smt.sampling_methods import LHS
-        from smt.applications.mixed_integer import (
-            FLOAT,
-            ORD,
-            ENUM,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.sampling_methods import LHS, FLOAT, ENUM
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         xtypes = [FLOAT, (ENUM, 2)]
         xlimits = [[0.0, 4.0], ["blue", "red"]]
@@ -336,8 +326,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import QP
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+        from smt.surrogate_models import QP, ORD
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -369,9 +359,9 @@ class TestMixedInteger(unittest.TestCase):
         from matplotlib import colors
         from mpl_toolkits.mplot3d import Axes3D
 
-        from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS, Random
-        from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, ORD, ENUM
+        from smt.surrogate_models import KRG, FLOAT, ORD, ENUM
+        from smt.applications.mixed_integer import MixedIntegerContext
 
         xtypes = [ORD, FLOAT, (ENUM, 4)]
         xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
@@ -409,16 +399,12 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower_2D(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            GOWER_KERNEL,
-        )
-        from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KRG, ENUM, FLOAT, GOWER_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -456,16 +442,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_homo_gaussian_2D(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            EXP_HOMO_HSPHERE_KERNEL,
-        )
-        from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KRG, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -503,17 +485,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_homo_hyp_2D(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            EXP_HOMO_HSPHERE_KERNEL,
-            HOMO_HSPHERE_KERNEL,
-        )
-        from smt.surrogate_models import KRG
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KRG, ENUM, FLOAT, HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -551,17 +528,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(np.shape(y), (105, 1))
 
     def test_mixed_homo_gaussian_3D_PLS(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            EXP_HOMO_HSPHERE_KERNEL,
-            GOWER_KERNEL,
-        )
-        from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KPLS, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -596,17 +568,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
     def test_mixed_homo_gaussian_3D_PLS_cate(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            EXP_HOMO_HSPHERE_KERNEL,
-            GOWER_KERNEL,
-        )
-        from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KPLS, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -641,18 +608,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
     def test_mixed_homo_hyp_3D_PLS_cate(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            EXP_HOMO_HSPHERE_KERNEL,
-            HOMO_HSPHERE_KERNEL,
-            GOWER_KERNEL,
-        )
-        from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KPLS, ENUM, FLOAT, HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -687,17 +648,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
 
     def test_mixed_homo_gaussian_3D_ord_cate(self):
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            FLOAT,
-            ORD,
-            EXP_HOMO_HSPHERE_KERNEL,
-        )
-        from smt.surrogate_models import KRG, KPLS
         import matplotlib.pyplot as plt
         import numpy as np
         import itertools
+
+        from smt.surrogate_models import KPLS, ORD, ENUM, EXP_HOMO_HSPHERE_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -743,15 +699,9 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, KPLS
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            ORD,
-            FLOAT,
-            GOWER_KERNEL,
-        )
-        
+        from smt.surrogate_models import KRG, ENUM, FLOAT, GOWER_KERNEL
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
@@ -864,14 +814,13 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, KPLS
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
+        from smt.surrogate_models import (
+            KRG,
             ENUM,
-            ORD,
             FLOAT,
             EXP_HOMO_HSPHERE_KERNEL,
         )
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -985,14 +934,8 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, KPLS
-        from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
-            ENUM,
-            ORD,
-            FLOAT,
-            HOMO_HSPHERE_KERNEL,
-        )
+        from smt.surrogate_models import KRG, HOMO_HSPHERE_KERNEL, ENUM, FLOAT
+        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
