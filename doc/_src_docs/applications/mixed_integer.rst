@@ -12,9 +12,11 @@ The user specifies x feature types through a list of types to be either:
 - ``ORD``: an ordered valued feature,
 - or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
 
-In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While FLOAT and ORD feature still have an interval [lower bound, upper bound], the ENUM features bounds is defined by giving the enumeration/list of possible values (levels). 
+In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` feature still have an interval [lower bound, upper bound], the ``ENUM`` features bounds is defined by giving the enumeration/list of possible values (levels). 
 
 For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
+
+However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6].
 
 
 Mixed integer sampling method
@@ -137,9 +139,9 @@ Example of mixed-integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000199
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
@@ -224,7 +226,7 @@ Another implemented method is using a basic mixed integer kernel based on the Go
 When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
 
 For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
-With this distance, a mixed integer kernel can be build. Details can be found in [2]_ .
+With this distance, a mixed integer kernel can be build. Details can be found in [1]_ .
 
 Example of mixed-integer Gower Distance model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -360,20 +362,9 @@ Example of mixed-integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0059843
+     Predicting - done. Time (sec):  0.0059862
      
-     Prediction time/pt. (sec) :  0.0000598
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0069802
-     
-     Prediction time/pt. (sec) :  0.0000698
+     Prediction time/pt. (sec) :  0.0000599
      
   ___________________________________________________________________________
      
@@ -382,9 +373,20 @@ Example of mixed-integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0069826
+     Predicting - done. Time (sec):  0.0049839
      
-     Prediction time/pt. (sec) :  0.0000698
+     Prediction time/pt. (sec) :  0.0000498
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0049872
+     
+     Prediction time/pt. (sec) :  0.0000499
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
@@ -396,7 +398,7 @@ Example of mixed-integer Gower Distance model
 Mixed-Integer Surrogate with Group Kernel (Homoscedastic Hypersphere)
 ---------------------------------------------------------------------
 
-This surrogate model consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [3]_ and [4]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
+This surrogate model consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
 
 Example of mixed-integer Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -532,7 +534,7 @@ Example of mixed-integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0069804
+     Predicting - done. Time (sec):  0.0069799
      
      Prediction time/pt. (sec) :  0.0000698
      
@@ -543,9 +545,9 @@ Example of mixed-integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0079780
+     Predicting - done. Time (sec):  0.0059888
      
-     Prediction time/pt. (sec) :  0.0000798
+     Prediction time/pt. (sec) :  0.0000599
      
   ___________________________________________________________________________
      
@@ -554,9 +556,9 @@ Example of mixed-integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0079789
+     Predicting - done. Time (sec):  0.0069888
      
-     Prediction time/pt. (sec) :  0.0000798
+     Prediction time/pt. (sec) :  0.0000699
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_hyp.png
@@ -567,7 +569,7 @@ Example of mixed-integer Homoscedastic Hypersphere model
 Mixed-Integer Surrogate with Exponential Homoscedastic Hypersphere
 ------------------------------------------------------------------
 
-This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [5]_ .
+This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
 
 Example of mixed-integer Exponential Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -703,20 +705,9 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0069826
+     Predicting - done. Time (sec):  0.0063519
      
-     Prediction time/pt. (sec) :  0.0000698
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0079772
-     
-     Prediction time/pt. (sec) :  0.0000798
+     Prediction time/pt. (sec) :  0.0000635
      
   ___________________________________________________________________________
      
@@ -725,9 +716,20 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0069823
+     Predicting - done. Time (sec):  0.0069222
      
-     Prediction time/pt. (sec) :  0.0000698
+     Prediction time/pt. (sec) :  0.0000692
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0060115
+     
+     Prediction time/pt. (sec) :  0.0000601
      
   
 .. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_gaussian.png
@@ -735,17 +737,7 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
   :align: center
 
 
-
-
 References
 ----------
 
-.. [1] E.C. Garrido-Merchan and D. Hernandez-Lobato (2020). Dealing with categorical and integer-valued variables in Bayesian Optimization with Gaussian processes. Neurocomputing 380, pp. 20-35. 
-
-.. [2] Halstrup, M. (2016). Black-Box Optimization of Mixed Discrete-Continuous Optimization Problems, Ph.D. thesis, TU Dortmund.
-
-.. [3] Roustant, O., Padonou, E., Deville, Y., Clement, A., Perrin, G., Giorla, J., and Wynn, H. (2020). Group kernels for gaussian process metamodels with categorical inputs. SIAM Journal on Uncertainty Quantification.
-
-.. [4] Pelamatti, J., Brevault, L., Balesdent, M., Talbi, E.-G., and Guerin, Y. (2019). Efficient global optimization of constrained mixed variable problems. Journal of Global Optimization.
-
-.. [5] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
+.. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
