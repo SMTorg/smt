@@ -23,17 +23,19 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
-from smt.surrogate_models import KRG, QP, GEKPLS, KPLS
-from smt.applications.mixed_integer import (
-    MixedIntegerContext,
-    MixedIntegerSamplingMethod,
+from smt.sampling_methods import LHS
+from smt.surrogate_models import KRG, GEKPLS, KPLS
+from smt.surrogate_models import (
     FLOAT,
     ENUM,
     ORD,
     GOWER_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
 )
-from smt.sampling_methods import LHS
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+)
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):

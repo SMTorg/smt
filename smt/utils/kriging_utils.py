@@ -11,12 +11,6 @@ from sklearn.cross_decomposition import PLSRegression as pls
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
-# TODO: Create hyperclass Kernels and a class for each kernel
-EXP_HOMO_HSPHERE_KERNEL = "exponential_homoscedastic_matrix_kernel"
-HOMO_HSPHERE_KERNEL = "homoscedastic_matrix_kernel"
-CONT_RELAX_KERNEL = "continuous_relaxation_matrix_kernel"
-GOWER_KERNEL = "gower_matrix_kernel"
-
 
 def standardization(X, y, scale_X_to_unit=False):
 
@@ -215,47 +209,6 @@ def cross_levels_homo_space(X, ij, y=None):
             dx[l] = X[i] * y[j]
 
     return dx
-
-
-def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
-    """
-    Returns the he number of parameters needed for an homoscedastic or full group kernel.
-    Parameters
-     ----------
-    xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables,
-    cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging,
-    nx: int
-            -The number of variables,
-    d: int
-            - n_comp or nx
-    n_comp : int
-            - if PLS, then it is the number of components else None,
-    mat_dim : int
-            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
-    Returns
-    -------
-     n_param: int
-            - The number of parameters.
-    """
-    n_param = nx
-    if n_comp is not None:
-        n_param = d
-        if cat_kernel == CONT_RELAX_KERNEL:
-            return n_param
-        if mat_dim is not None:
-            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-
-    for i, xtyp in enumerate(xtypes):
-        if isinstance(xtyp, tuple):
-            if nx == d:
-                n_param -= 1
-            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
-                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-            if cat_kernel == CONT_RELAX_KERNEL:
-                n_param += int(xtyp[1])
-    return n_param
 
 
 def compute_X_cont(x, xtypes):
