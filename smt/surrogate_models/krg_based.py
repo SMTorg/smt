@@ -1122,7 +1122,7 @@ class KrgBased(SurrogateModel):
             y = (
                 (
                     df_dx[kx]
-                    - theta[kx] * np.dot(d_dx / (np.abs(d_dx) + 1e-9) * r, gamma)
+                    - theta[kx] * np.dot(np.sign(d_dx) * r, gamma)
                 )
                 * self.y_std
                 / self.X_scale[kx]
