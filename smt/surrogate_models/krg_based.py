@@ -1091,10 +1091,6 @@ class KrgBased(SurrogateModel):
             np.sqrt(3)*self.optimal_theta, dx
         ).reshape(n_eval, self.nt)
 
-        if self.options["corr"] not in ["abs_exp", "squar_exp","matern32"]:
-            raise ValueError(
-                "The derivative is only available for absolute and squared exponential kernel and for matern32 kernel."
-            )
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
@@ -1136,7 +1132,24 @@ class KrgBased(SurrogateModel):
             y = (
                 (
                     df_dx[kx]
-                    -3* theta[kx]*theta[kx] * np.dot(d_dx/(1+np.sqrt(3)*theta[kx]*np.abs(d_dx)) * r, gamma)
+                    + np.dot( 
+                        (-3* theta[kx]**2*d_dx)
+                        /(1+np.sqrt(3)*theta[kx]*np.abs(d_dx)) 
+                        * r, gamma)
+                )
+                * self.y_std
+                / self.X_scale[kx]
+            )
+            return y
+
+        elif self.options["corr"] == "matern52":
+            y = (
+                (
+                    df_dx[kx]
+                    +  np.dot(
+                        (-5* theta[kx]**2*d_dx - 5*np.sqrt(5)/3*theta[kx]**3*d_dx*np.abs(d_dx)+10/3*theta[kx]**2*d_dx)
+                        /(1+np.sqrt(5)*theta[kx]*np.abs(d_dx)+5/3*theta[kx]**2*d_dx**2) 
+                        * r, gamma)
                 )
                 * self.y_std
                 / self.X_scale[kx]
