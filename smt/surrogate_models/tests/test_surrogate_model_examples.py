@@ -463,7 +463,7 @@ class Test(unittest.TestCase):
                 )
 
         fig = plt.figure()
-        ax = fig.gca(projection="3d")
+        ax = fig.gca()
         surf = ax.plot_surface(X, Y, Z)
 
         plt.show()
