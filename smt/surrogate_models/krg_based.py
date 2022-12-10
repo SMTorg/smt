@@ -1087,9 +1087,9 @@ class KrgBased(SurrogateModel):
             self.optimal_theta, d
         ).reshape(n_eval, self.nt)
 
-        if self.options["corr"] != "squar_exp":
+        if self.options["corr"] not in ["abs_exp", "squar_exp"]:
             raise ValueError(
-                "The derivative is only available for squared exponential kernel"
+                "The derivative is only available for absolute or squared exponential kernel"
             )
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1111,12 +1111,20 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        y = (
-            (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
-            * self.y_std
-            / self.X_scale[kx]
-        )
-        return y
+        if self.options["corr"] == "squar_exp":
+            y = (
+                (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
+                * self.y_std
+                / self.X_scale[kx]
+            )
+            return y
+        elif self.options["corr"] == "abs_exp":
+            y = (
+                (df_dx[kx] - theta[kx] * np.dot(d_dx / (np.abs(d_dx)) * r, gamma))
+                * self.y_std
+                / self.X_scale[kx]
+            )
+            return y
 
     def _predict_variances(self, x):
         """
