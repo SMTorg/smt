@@ -1086,10 +1086,14 @@ class KrgBased(SurrogateModel):
         r = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d
         ).reshape(n_eval, self.nt)
+      
+        r_abs_32 = self._correlation_types["abs_exp"](
+            np.sqrt(3)*self.optimal_theta, dx
+        ).reshape(n_eval, self.nt)
 
-        if self.options["corr"] not in ["abs_exp", "squar_exp"]:
+        if self.options["corr"] not in ["abs_exp", "squar_exp","matern32"]:
             raise ValueError(
-                "The derivative is only available for absolute or squared exponential kernel"
+                "The derivative is only available for absolute and squared exponential kernel and for matern32 kernel."
             )
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1123,6 +1127,16 @@ class KrgBased(SurrogateModel):
                 (
                     df_dx[kx]
                     - theta[kx] * np.dot(np.sign(d_dx) * r, gamma)
+                )
+                * self.y_std
+                / self.X_scale[kx]
+            )
+            return y
+        elif self.options["corr"] == "matern32":
+            y = (
+                (
+                    df_dx[kx]
+                    -3* theta[kx]*theta[kx] * np.dot(d_dx/(1+np.sqrt(3)*theta[kx]*np.abs(d_dx)) * r, gamma)
                 )
                 * self.y_std
                 / self.X_scale[kx]
