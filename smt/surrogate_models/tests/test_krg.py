@@ -65,15 +65,20 @@ class TestKRG(unittest.TestCase):
             yt = np.concatenate((yt, yd), axis=1)
 
         # check KRG models
-        sm_krg_c = KRG(poly="constant", print_global=False)
+        sm_krg_c = KRG(poly="constant", corr="squar_exp", print_global=False)
         sm_krg_c.set_training_values(xt, yt[:, 0])
         sm_krg_c.train()
         TestKRG._check_derivatives(sm_krg_c, xt, yt, ndim)
 
-        sm_krg_l = KRG(poly="linear", print_global=False)
+        sm_krg_l = KRG(poly="linear", corr="squar_exp", print_global=False)
         sm_krg_l.set_training_values(xt, yt[:, 0])
         sm_krg_l.train()
         TestKRG._check_derivatives(sm_krg_l, xt, yt, ndim)
+
+        sm_krg_la = KRG(poly="linear", corr="abs_exp", print_global=False)
+        sm_krg_la.set_training_values(xt, yt[:, 0])
+        sm_krg_la.train()
+        TestKRG._check_derivatives(sm_krg_la, xt, yt, ndim)
 
     @staticmethod
     def _check_derivatives(sm, xt, yt, ndim, i=10):
@@ -88,14 +93,16 @@ class TestKRG(unittest.TestCase):
         dydx_predict = np.zeros(ndim)
         for j in range(ndim):
             dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
-            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
-            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
-            dydx_predict[j] = sm.predict_derivatives(x_test, kx=j)[0]
+
         print(dydx_predict)
         print(yt[i, 1:])
 
         # compare results
-        np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=2e-3, rtol=1e-3)
+        if sm.options["corr"] == "squar_exp":
+            np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=2e-3, rtol=1e-3)
+        elif sm.options["corr"] == "abs_exp":
+            # non diffenrentiable at 0
+            np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=20)
 
 
 if __name__ == "__main__":
