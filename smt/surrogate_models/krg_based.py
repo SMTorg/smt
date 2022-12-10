@@ -1147,7 +1147,7 @@ class KrgBased(SurrogateModel):
                 (
                     df_dx[kx]
                     +  np.dot(
-                        (-5* theta[kx]**2*d_dx - 5*np.sqrt(5)/3*theta[kx]**3*d_dx*np.abs(d_dx)+10/3*theta[kx]**2*d_dx)
+                        (-5/3* theta[kx]**2*d_dx - 5*np.sqrt(5)/3*theta[kx]**3*d_dx*np.abs(d_dx))
                         /(1+np.sqrt(5)*theta[kx]*np.abs(d_dx)+5/3*theta[kx]**2*d_dx**2) 
                         * r, gamma)
                 )

@@ -80,6 +80,16 @@ class TestKRG(unittest.TestCase):
         sm_krg_la.train()
         TestKRG._check_derivatives(sm_krg_la, xt, yt, ndim)
 
+        sm_krg_la = KRG(poly="linear", corr="matern32", print_global=False)
+        sm_krg_la.set_training_values(xt, yt[:, 0])
+        sm_krg_la.train()
+        TestKRG._check_derivatives(sm_krg_la, xt, yt, ndim)
+
+        sm_krg_la = KRG(poly="linear", corr="matern52", print_global=False)
+        sm_krg_la.set_training_values(xt, yt[:, 0])
+        sm_krg_la.train()
+        TestKRG._check_derivatives(sm_krg_la, xt, yt, ndim)
+
     @staticmethod
     def _check_derivatives(sm, xt, yt, ndim, i=10):
         # Compares three derivatives at i-th traning point
@@ -100,7 +110,7 @@ class TestKRG(unittest.TestCase):
         # compare results
         if sm.options["corr"] == "squar_exp":
             np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=2e-3, rtol=1e-3)
-        elif sm.options["corr"] == "abs_exp":
+        else:
             # non diffenrentiable at 0
             np.testing.assert_allclose(yt[i, 1:], dydx_predict, atol=20)
 
