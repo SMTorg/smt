@@ -1080,16 +1080,19 @@ class KrgBased(SurrogateModel):
 
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
+
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
+        dd = self._componentwise_distance(
+            dx, theta=self.optimal_theta, return_derivative=True
+        )
+
         # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
-      
-        r_abs_32 = self._correlation_types["abs_exp"](
-            np.sqrt(3)*self.optimal_theta, dx
-        ).reshape(n_eval, self.nt)
+        derivative_dic = {"dx": dx, "dd": dd}
+
+        r, dr = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d, derivative_params=derivative_dic
+        )
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1111,50 +1114,8 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        if self.options["corr"] == "squar_exp":
-            y = (
-                (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
-                * self.y_std
-                / self.X_scale[kx]
-            )
-            return y
-        elif self.options["corr"] == "abs_exp":
-            y = (
-                (
-                    df_dx[kx]
-                    - theta[kx] * np.dot(np.sign(d_dx) * r, gamma)
-                )
-                * self.y_std
-                / self.X_scale[kx]
-            )
-            return y
-        elif self.options["corr"] == "matern32":
-            y = (
-                (
-                    df_dx[kx]
-                    + np.dot( 
-                        (-3* theta[kx]**2*d_dx)
-                        /(1+np.sqrt(3)*theta[kx]*np.abs(d_dx)) 
-                        * r, gamma)
-                )
-                * self.y_std
-                / self.X_scale[kx]
-            )
-            return y
-
-        elif self.options["corr"] == "matern52":
-            y = (
-                (
-                    df_dx[kx]
-                    +  np.dot(
-                        (-5/3* theta[kx]**2*d_dx - 5*np.sqrt(5)/3*theta[kx]**3*d_dx*np.abs(d_dx))
-                        /(1+np.sqrt(5)*theta[kx]*np.abs(d_dx)+5/3*theta[kx]**2*d_dx**2) 
-                        * r, gamma)
-                )
-                * self.y_std
-                / self.X_scale[kx]
-            )
-            return y
+        y = (df_dx[kx] + np.dot(dr[:, kx], gamma)) * self.y_std / self.X_scale[kx]
+        return y
 
     def _predict_variances(self, x):
         """
@@ -1232,7 +1193,7 @@ class KrgBased(SurrogateModel):
         )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
-        MSE = np.einsum("i,j -> ji", A, B)
+        MSE = np.atleast_2d(A * B).T
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
