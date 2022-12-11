@@ -1116,7 +1116,7 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        y = (df_dx[kx] + np.dot(dr[:, kx], gamma)) * self.y_std / self.X_scale[kx]
+        y = (df_dx[kx] + np.dot(dr, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
     def _predict_variances(self, x):
