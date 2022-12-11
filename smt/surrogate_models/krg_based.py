@@ -1093,6 +1093,8 @@ class KrgBased(SurrogateModel):
         r, dr = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d, derivative_params=derivative_dic
         )
+        r= r.reshape(n_eval,self.nt)
+        dr = dr.reshape(n_eval,self.nt)
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1193,7 +1195,7 @@ class KrgBased(SurrogateModel):
         )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
-        MSE = np.atleast_2d(A * B).T
+        MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
         MSE[MSE < 0.0] = 0.0
