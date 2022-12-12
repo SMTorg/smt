@@ -1177,7 +1177,7 @@ class KrgBased(SurrogateModel):
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
-            X_cont=np.copy(x)
+            X_cont = np.copy(x)
             # Get pairwise componentwise L1-distances to the input training set
             dx = differences(x, Y=self.X_norma.copy())
             d = self._componentwise_distance(dx)
@@ -1185,7 +1185,6 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
-            
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
