@@ -1093,8 +1093,8 @@ class KrgBased(SurrogateModel):
         r, dr = self._correlation_types[self.options["corr"]](
             self.optimal_theta, d, derivative_params=derivative_dic
         )
-        r= r.reshape(n_eval,self.nt)
-        dr = dr.reshape(n_eval,self.nt)
+        r = r.reshape(n_eval, self.nt)
+        dr = (dr.T).reshape(n_features_x, self.nt, n_eval)
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1116,7 +1116,7 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        y = (df_dx[kx] + np.dot(dr, gamma)) * self.y_std / self.X_scale[kx]
+        y = (df_dx[kx] + np.dot(dr[kx].T, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
     def _predict_variances(self, x):
