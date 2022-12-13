@@ -1080,17 +1080,22 @@ class KrgBased(SurrogateModel):
 
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
+
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        # Compute the correlation function
-        r = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d
-        ).reshape(n_eval, self.nt)
+        dd = self._componentwise_distance(
+            dx, theta=self.optimal_theta, return_derivative=True
+        )
 
-        if self.options["corr"] != "squar_exp":
-            raise ValueError(
-                "The derivative is only available for squared exponential kernel"
-            )
+        # Compute the correlation function
+        derivative_dic = {"dx": dx, "dd": dd}
+
+        r, dr = self._correlation_types[self.options["corr"]](
+            self.optimal_theta, d, derivative_params=derivative_dic
+        )
+        r = r.reshape(n_eval, self.nt)
+        dr = (dr.T).reshape(n_features_x, self.nt, n_eval)
+
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
         elif self.options["poly"] == "linear":
@@ -1111,11 +1116,7 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        y = (
-            (df_dx[kx] - 2 * theta[kx] * np.dot(d_dx * r, gamma))
-            * self.y_std
-            / self.X_scale[kx]
-        )
+        y = (df_dx[kx] + np.dot(dr[kx].T, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
     def _predict_variances(self, x):
@@ -1176,6 +1177,7 @@ class KrgBased(SurrogateModel):
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
+            X_cont = np.copy(x)
             # Get pairwise componentwise L1-distances to the input training set
             dx = differences(x, Y=self.X_norma.copy())
             d = self._componentwise_distance(dx)
@@ -1223,32 +1225,27 @@ class KrgBased(SurrogateModel):
         dd = self._componentwise_distance(
             dx, theta=self.optimal_theta, return_derivative=True
         )
-        sigma2 = self.optimal_par["sigma2"]
-
-        cholesky_k = self.optimal_par["C"]
-
         derivative_dic = {"dx": dx, "dd": dd}
 
+        sigma2 = self.optimal_par["sigma2"]
+        C = self.optimal_par["C"]
+
+        # p1 : derivative of (rt**2.0).sum(axis=0)
         r, dr = self._correlation_types[self.options["corr"]](
             theta, d, derivative_params=derivative_dic
         )
-        rho1 = linalg.solve_triangular(cholesky_k, r, lower=True)
-        invKr = linalg.solve_triangular(cholesky_k.T, rho1)
+        rt = linalg.solve_triangular(C, r, lower=True)
+        invKr = linalg.solve_triangular(C.T, rt)
+        p1 = 2 * np.dot(dr.T, invKr).T
 
-        p1 = np.dot(dr.T, invKr).T
-
-        p2 = np.dot(invKr.T, dr)
-
+        # p2 : derivative of (u**2.0).sum(axis=0)
         f_x = self._regression_types[self.options["poly"]](x).T
         F = self.F
-
-        rho2 = linalg.solve_triangular(cholesky_k, F, lower=True)
-        invKF = linalg.solve_triangular(cholesky_k.T, rho2)
+        rho2 = linalg.solve_triangular(C, F, lower=True)
+        invKF = linalg.solve_triangular(C.T, rho2)
 
         A = f_x.T - np.dot(r.T, invKF)
-
         B = np.dot(F.T, invKF)
-
         rho3 = linalg.cholesky(B, lower=True)
         invBAt = linalg.solve_triangular(rho3, A.T, lower=True)
         D = linalg.solve_triangular(rho3.T, invBAt)
@@ -1265,10 +1262,12 @@ class KrgBased(SurrogateModel):
             )
 
         dA = df.T - np.dot(dr.T, invKF)
-        p3 = np.dot(dA, D).T
-        p4 = np.dot(D.T, dA.T)
-        prime = -p1 - p2 + p3 + p4
+        p3 = 2 * np.dot(dA, D).T
 
+        # prime : derivative of MSE
+        # MSE ~1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
+        prime = 0 - p1 + p3
+        ## scaling factors
         derived_variance = []
         x_std = np.resize(self.X_scale, self.nx)
 

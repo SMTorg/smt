@@ -97,8 +97,8 @@ class Test(SMTestCase):
                 % (pname[:6], sname, t_error, e_error, e_error0, e_error1)
             )
 
-        self.assert_error(e_error0, 0.0, 2e-1)
-        self.assert_error(e_error1, 0.0, 2e-1)
+        self.assert_error(e_error0, 0.0, 25e-1)
+        self.assert_error(e_error1, 0.0, 25e-1)
 
     # --------------------------------------------------------------------
     # Function: sphere
