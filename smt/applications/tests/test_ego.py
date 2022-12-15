@@ -266,7 +266,7 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
-        xdoe = sampling(20)
+        xdoe = sampling(10)
 
         ego = EGO(
             xdoe=xdoe,
@@ -298,7 +298,7 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
-        xdoe = sampling(20)
+        xdoe = sampling(30)
 
         ego = EGO(
             xdoe=xdoe,
