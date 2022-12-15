@@ -334,6 +334,7 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
+            enable_tunneling=False,
             random_state=42,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
@@ -367,6 +368,7 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
+            enable_tunneling=False,
             random_state=42,
             categorical_kernel=GOWER_KERNEL,
         )
@@ -401,6 +403,7 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
+            enable_tunneling=False,
             random_state=42,
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
@@ -435,6 +438,7 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
+            enable_tunneling=False,
             random_state=42,
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
@@ -475,10 +479,11 @@ class TestEGO(SMTestCase):
             criterion="LCB",
             xlimits=xlimits,
             n_start=30,
+            enable_tunneling=False,
             random_state=42,
         )
         _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_best_point(xdoe, ydoe)
+        x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     @staticmethod
