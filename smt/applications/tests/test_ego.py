@@ -250,7 +250,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
-            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
             or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
@@ -266,7 +266,7 @@ class TestEGO(SMTestCase):
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
-        xdoe = sampling(10)
+        xdoe = sampling(20)
 
         ego = EGO(
             xdoe=xdoe,
@@ -286,7 +286,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3, 2.275]], x_opt, rtol=2)
             or np.allclose([[9, 2.475]], x_opt, rtol=2)
         )
-        self.assertAlmostEqual(0.494, float(y_opt), delta=1.5)
+        self.assertAlmostEqual(0.494, float(y_opt), delta=2)
 
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
