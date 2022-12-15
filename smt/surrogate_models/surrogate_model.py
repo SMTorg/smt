@@ -396,7 +396,7 @@ class SurrogateModel(metaclass=ABCMeta):
         s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
-    def predict_variance_derivatives(self, x):
+    def predict_variance_derivatives(self, x, kx):
         """
         Predict the derivation of the variance at a point
 
@@ -428,7 +428,7 @@ class SurrogateModel(metaclass=ABCMeta):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_variance_derivatives(x)
+            y = self._predict_variance_derivatives(x, kx)
 
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()

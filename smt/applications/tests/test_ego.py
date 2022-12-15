@@ -124,6 +124,25 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
+    def test_rosenbrock_2D_SBO(self):
+        n_iter = 20
+        fun = Rosenbrock(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "SBO"  #'EI' or 'SBO' or 'LCB'
+
+        xdoe = FullFactorial(xlimits=xlimits)(40)
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xlimits=xlimits,
+            random_state=0,
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
+        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
+        self.assertAlmostEqual(0.0, float(y_opt), delta=1)
+
     def test_rosenbrock_2D_parallel(self):
         n_iter = 20
         n_parallel = 5
@@ -207,7 +226,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        qEI = "KB"
+        qEI = "CLmin"
         xtypes = [ORD, FLOAT]
 
         sm = KRG(print_global=False)
@@ -315,7 +334,6 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
-            enable_tunneling=False,
             random_state=42,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
@@ -349,7 +367,6 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
-            enable_tunneling=False,
             random_state=42,
             categorical_kernel=GOWER_KERNEL,
         )
@@ -384,7 +401,6 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
-            enable_tunneling=False,
             random_state=42,
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
@@ -419,7 +435,6 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
-            enable_tunneling=False,
             random_state=42,
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
         )
@@ -460,11 +475,10 @@ class TestEGO(SMTestCase):
             criterion="LCB",
             xlimits=xlimits,
             n_start=30,
-            enable_tunneling=False,
             random_state=42,
         )
         _, _, _, _, _ = ego.optimize(fun=fun)
-        x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
+        x, _ = ego._find_best_point(xdoe, ydoe)
         self.assertAlmostEqual(6.5, float(x), delta=1)
 
     @staticmethod
@@ -510,7 +524,6 @@ class TestEGO(SMTestCase):
             xlimits=fun.xlimits,
             surrogate=sm,
             n_start=30,
-            enable_tunneling=False,
             random_state=42,
         )
 
@@ -539,7 +552,13 @@ class TestEGO(SMTestCase):
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
-            xdoe=xdoe, ydoe=ydoe, n_iter=1, criterion="SBO", xlimits=xlimits, n_start=30
+            xdoe=xdoe,
+            ydoe=ydoe,
+            n_iter=1,
+            n_parallel=2,
+            criterion="SBO",
+            xlimits=xlimits,
+            n_start=30,
         )
         ego._setup_optimizer(fun)
         ego.gpr.set_training_values(xdoe, ydoe)
@@ -677,7 +696,7 @@ class TestEGO(SMTestCase):
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
         )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        qEI = "KB"
+        qEI = "KBRand"
         sm = KRG(print_global=False)
         mixint = MixedIntegerContext(xtypes, xlimits)
         n_doe = 3
@@ -694,6 +713,7 @@ class TestEGO(SMTestCase):
             xlimits=xlimits,
             surrogate=sm,
             qEI=qEI,
+            n_parallel=2,
             random_state=42,
         )
 

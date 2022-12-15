@@ -265,16 +265,18 @@ class Test(SMTestCase):
             y_jacob = np.zeros((2, 5))
 
             for i in range(np.shape(x_valid)[0]):
-                l = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]))[0]
-                y_jacob[:, i] = l
+                l0 = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]), 0)[0]
+                l1 = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]), 1)[0]
+                y_jacob[0, i] = l0
+                y_jacob[1, i] = l1
 
-            diff_g = (y_predicted[1][0] - y_predicted[2][0]) / (2 * e)
-            diff_d = (y_predicted[3][0] - y_predicted[4][0]) / (2 * e)
+            diff_g = (y_predicted[1] - y_predicted[2]) / (2 * e)
+            diff_d = (y_predicted[3] - y_predicted[4]) / (2 * e)
 
-            jac_rel_error1 = abs((y_jacob[0] - diff_g) / y_jacob[0])
+            jac_rel_error1 = abs((y_jacob[0][0] - diff_g) / y_jacob[0][0])
             self.assert_error(jac_rel_error1, 1e-3, atol=0.01, rtol=0.01)
 
-            jac_rel_error2 = abs((y_jacob[1] - diff_d) / y_jacob[1])
+            jac_rel_error2 = abs((y_jacob[1][0] - diff_d) / y_jacob[1][1])
             self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
 
 
