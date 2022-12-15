@@ -117,7 +117,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             xlimits=xlimits,
-            random_state=0,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -125,22 +125,22 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_rosenbrock_2D_SBO(self):
-        n_iter = 20
+        n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "SBO"  #'EI' or 'SBO' or 'LCB'
 
-        xdoe = FullFactorial(xlimits=xlimits)(40)
+        xdoe = FullFactorial(xlimits=xlimits)(50)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
             xlimits=xlimits,
-            random_state=0,
+            random_state=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
+        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_rosenbrock_2D_parallel(self):
@@ -275,6 +275,39 @@ class TestEGO(SMTestCase):
             xtypes=xtypes,
             xlimits=xlimits,
             surrogate=sm,
+            enable_tunneling=False,
+            random_state=42,
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
+        # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
+        self.assertTrue(
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+            or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
+            or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
+        )
+        self.assertAlmostEqual(0.494, float(y_opt), delta=1)
+
+    def test_branin_2D_mixed_tunnel(self):
+        n_iter = 20
+        fun = Branin(ndim=2)
+        xtypes = [ORD, FLOAT]
+        xlimits = fun.xlimits
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+
+        sm = KRG(print_global=False)
+        mixint = MixedIntegerContext(xtypes, xlimits)
+        sampling = MixedIntegerSamplingMethod(xtypes, xlimits, FullFactorial)
+        xdoe = sampling(10)
+
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            xtypes=xtypes,
+            xlimits=xlimits,
+            surrogate=sm,
+            enable_tunneling=True,
             random_state=42,
         )
 
@@ -529,6 +562,7 @@ class TestEGO(SMTestCase):
             xlimits=fun.xlimits,
             surrogate=sm,
             n_start=30,
+            enable_tunneling=False,
             random_state=42,
         )
 

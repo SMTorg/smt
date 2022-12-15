@@ -1253,7 +1253,6 @@ class KrgBased(SurrogateModel):
         rho2 = linalg.solve_triangular(C, F, lower=True)
         invKF = linalg.solve_triangular(C.T, rho2)
 
-
         A = f_x.T - np.dot(r, invKF)
 
         B = np.dot(F.T, invKF)
