@@ -51,7 +51,7 @@ class Test(SMTestCase):
         y_predicted = sm.predict_variances(self.xt)
         variance_at_training_inputs = np.sum(y_predicted**2)
 
-        np.testing.assert_allclose(variance_at_training_inputs, 0, atol=1e-5)
+        np.testing.assert_allclose(variance_at_training_inputs, 0, atol=1e-9)
 
     @staticmethod
     def _check_prediction_derivatives(self, sm):
@@ -68,7 +68,12 @@ class Test(SMTestCase):
         diff_g = (y_predicted[1, 0] - y_predicted[2, 0]) / (2 * e)
         diff_d = (y_predicted[3, 0] - y_predicted[4, 0]) / (2 * e)
 
-        deriv = sm.predict_variance_derivatives(x)
+        deriv = np.array(
+            [
+                sm.predict_variance_derivatives(x, 0)[0],
+                sm.predict_variance_derivatives(x, 1)[0],
+            ]
+        ).T
         pred_errors = np.array(
             [
                 np.abs((diff_g - deriv[0][0]) / diff_g),
@@ -76,7 +81,8 @@ class Test(SMTestCase):
             ]
         )
         total_error = np.sum(pred_errors**2)
-        np.testing.assert_allclose(total_error, 0, atol=5e-2)
+
+        np.testing.assert_allclose(total_error, 0, atol=5e-3)
 
         y_predicted = sm.predict_values(x_valid)
 
@@ -95,7 +101,65 @@ class Test(SMTestCase):
         )
         total_error = np.sum(pred_errors**2)
 
-        np.testing.assert_allclose(total_error, 0, atol=1e-4)
+        np.testing.assert_allclose(total_error, 0, atol=1e-9)
+
+        ### VECTORIZATION TESTS
+
+        x_valid = np.concatenate(
+            (
+                x_valid,
+                np.atleast_2d(np.array([x_valid[0][0] + 1.0, x_valid[0][1] + 1.0])),
+            )
+        )
+
+        # test predict values & variances vectorization
+        all_vals1 = np.zeros((6, 2))
+        for i, x in enumerate(x_valid):
+            all_vals1[i, 0] = sm.predict_values(np.atleast_2d(x))
+            all_vals1[i, 1] = sm.predict_variances(np.atleast_2d(x))
+        all_vals2x = sm.predict_values(np.atleast_2d(x_valid)).flatten()
+        all_vals2y = sm.predict_variances(np.atleast_2d(x_valid)).flatten()
+        total_error = np.sum(
+            [
+                np.power(all_vals1[:, 0] - all_vals2x, 2),
+                np.power(all_vals1[:, 1] - all_vals2y, 2),
+            ]
+        )
+        np.testing.assert_allclose(total_error, 0, atol=1e-9)
+
+        # test predict_derivatives vectorization
+        all_vals1 = np.zeros((6, 2))
+        for i, x in enumerate(x_valid):
+            all_vals1[i, 0] = sm.predict_derivatives(np.atleast_2d(x), 0)
+            all_vals1[i, 1] = sm.predict_derivatives(np.atleast_2d(x), 1)
+        all_vals2x = sm.predict_derivatives(np.atleast_2d(x_valid), 0).flatten()
+        all_vals2y = sm.predict_derivatives(np.atleast_2d(x_valid), 1).flatten()
+        total_error = np.sum(
+            [
+                np.power(all_vals1[:, 0] - all_vals2x, 2),
+                np.power(all_vals1[:, 1] - all_vals2y, 2),
+            ]
+        )
+        np.testing.assert_allclose(total_error, 0, atol=1e-9)
+
+        # test predict_variance_derivatives vectorization
+        all_vals1 = np.zeros((6, 2))
+        for i, x in enumerate(x_valid):
+            all_vals1[i, 0] = sm.predict_variance_derivatives(np.atleast_2d(x), 0)
+            all_vals1[i, 1] = sm.predict_variance_derivatives(np.atleast_2d(x), 1)
+        all_vals2x = sm.predict_variance_derivatives(
+            np.atleast_2d(x_valid), 0
+        ).flatten()
+        all_vals2y = sm.predict_variance_derivatives(
+            np.atleast_2d(x_valid), 1
+        ).flatten()
+        total_error = np.sum(
+            [
+                np.power(all_vals1[:, 0] - all_vals2x, 2),
+                np.power(all_vals1[:, 1] - all_vals2y, 2),
+            ]
+        )
+        np.testing.assert_allclose(total_error, 0, atol=1e-9)
 
 
 if __name__ == "__main__":

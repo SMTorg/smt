@@ -20,17 +20,16 @@ class TestKRG(unittest.TestCase):
             random_state=42,
         )
         x = sx(n)
-        
-        #2-dimensional output
-        n_s =2
+        # 2-dimensional output
+        n_s = 2
         sy = LHS(
-            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_s , axis=0),
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_s, axis=0),
             criterion="m",
             random_state=42,
         )
         y = sy(n)
 
-        kriging = KRG()
+        kriging = KRG(poly="linear")
         kriging.set_training_values(x, y)
         kriging.train()
 
@@ -40,12 +39,12 @@ class TestKRG(unittest.TestCase):
         var = kriging.predict_variances(x)
         self.assertEqual(y.shape, var.shape)
 
-        for kx in range(d) :
-            val_deriv = kriging.predict_derivatives(x,kx)
+        for kx in range(d):
+            val_deriv = kriging.predict_derivatives(x, kx)
             self.assertEqual(y.shape, val_deriv.shape)
-            var_deriv = kriging.predict_variance_derivatives(np.atleast_2d(x[0]))
-            self.assertEqual( (n_s,d)  ,var_deriv.shape)
-   
+            var_deriv = kriging.predict_variance_derivatives(x, 0)
+            self.assertEqual((n, n_s), var_deriv.shape)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1094,7 +1094,8 @@ class KrgBased(SurrogateModel):
             self.optimal_theta, d, derivative_params=derivative_dic
         )
         r = r.reshape(n_eval, self.nt)
-        dr = (dr.T).reshape(n_features_x, self.nt, n_eval)
+
+        drx = dr[:, kx].reshape(n_eval, self.nt)
 
         if self.options["poly"] == "constant":
             df = np.zeros((1, self.nx))
@@ -1116,7 +1117,8 @@ class KrgBased(SurrogateModel):
             theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
         else:
             theta = self.optimal_theta
-        y = (df_dx[kx] + np.dot(dr[kx].T, gamma)) * self.y_std / self.X_scale[kx]
+
+        y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
     def _predict_variances(self, x):
@@ -1202,17 +1204,20 @@ class KrgBased(SurrogateModel):
         MSE[MSE < 0.0] = 0.0
         return MSE
 
-    def _predict_variance_derivatives(self, x):
+    def _predict_variance_derivatives(self, x, kx):
         """
         Provide the derivative of the variance of the model at a set of points
         Parameters
         -----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
+
         Returns
         -------
          derived_variance:  np.ndarray
-             The jacobian of the variance of the kriging model
+             The jacobian of the variance of the kriging model (the kx-th derivative)
         """
 
         # Initialization
@@ -1234,9 +1239,13 @@ class KrgBased(SurrogateModel):
         r, dr = self._correlation_types[self.options["corr"]](
             theta, d, derivative_params=derivative_dic
         )
-        rt = linalg.solve_triangular(C, r, lower=True)
+        r = r.reshape(n_eval, self.nt)
+        drx = dr[:, kx]
+        drx = drx.reshape(n_eval, self.nt)
+
+        rt = linalg.solve_triangular(C, r.T, lower=True)
         invKr = linalg.solve_triangular(C.T, rt)
-        p1 = 2 * np.dot(dr.T, invKr).T
+        p1 = 2 * np.dot(drx, invKr).T
 
         # p2 : derivative of (u**2.0).sum(axis=0)
         f_x = self._regression_types[self.options["poly"]](x).T
@@ -1244,7 +1253,8 @@ class KrgBased(SurrogateModel):
         rho2 = linalg.solve_triangular(C, F, lower=True)
         invKF = linalg.solve_triangular(C.T, rho2)
 
-        A = f_x.T - np.dot(r.T, invKF)
+        A = f_x.T - np.dot(r, invKF)
+
         B = np.dot(F.T, invKF)
         rho3 = linalg.cholesky(B, lower=True)
         invBAt = linalg.solve_triangular(rho3, A.T, lower=True)
@@ -1261,20 +1271,17 @@ class KrgBased(SurrogateModel):
                 + "universal kriging using a linear trend"
             )
 
-        dA = df.T - np.dot(dr.T, invKF)
+        dA = df[:, kx].T - np.dot(drx, invKF)
         p3 = 2 * np.dot(dA, D).T
 
         # prime : derivative of MSE
         # MSE ~1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         prime = 0 - p1 + p3
         ## scaling factors
-        derived_variance = []
-        x_std = np.resize(self.X_scale, self.nx)
+        x_std = self.X_scale[kx]
+        derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
 
-        for i in range(len(x_std)):
-            derived_variance.append(sigma2 * prime.T[i] / x_std[i])
-
-        return np.array(derived_variance).T
+        return np.atleast_2d(derived_variance.T)
 
     def _optimize_hyperparam(self, D):
         """
