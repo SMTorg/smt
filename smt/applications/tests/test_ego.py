@@ -250,7 +250,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
-             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
             or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
@@ -282,7 +282,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
-             np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
+            np.allclose([[-3, 12.275]], x_opt, rtol=0.2)
             or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
@@ -314,7 +314,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         # 3 optimal points possible: [-pi, 12.275], [pi, 2.275], [9.42478, 2.475]
         self.assertTrue(
-            np.allclose([[-3, 12.275]], x_opt,  rtol=2)
+            np.allclose([[-3, 12.275]], x_opt, rtol=2)
             or np.allclose([[3, 2.275]], x_opt, rtol=2)
             or np.allclose([[9, 2.475]], x_opt, rtol=2)
         )
@@ -349,8 +349,9 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]]
-        ,dtype='object')
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
+            dtype="object",
+        )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
             xtypes, xlimits, LHS, criterion="ese", random_state=42
@@ -378,7 +379,8 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],dtype='object'
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
+            dtype="object",
         )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
@@ -413,7 +415,8 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],dtype='object'
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
+            dtype="object",
         )
         n_doe = 2
         sampling = MixedIntegerSamplingMethod(
@@ -448,7 +451,8 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],dtype='object'
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
+            dtype="object",
         )
         n_doe = 7
         sampling = MixedIntegerSamplingMethod(
@@ -732,7 +736,8 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
         xlimits = np.array(
-            [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],dtype='object'
+            [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
+            dtype="object",
         )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
