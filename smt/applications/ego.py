@@ -184,7 +184,7 @@ class EGO(SurrogateBasedApplication):
                     )
                 # Set temporaly the y-coord point based on the kriging prediction
                 x_et_k = np.atleast_2d(x_et_k)
-                if self.mixint :
+                if self.mixint:
                     x_et_k = self.mixint.cast_to_discrete_values(x_et_k)
                 y_et_k = self._get_virtual_point(x_et_k, y_data)
 
@@ -235,9 +235,9 @@ class EGO(SurrogateBasedApplication):
                     x = np.atleast_2d(x)
                     # if np.abs(p-x)<1:
                     # ei[i]=ei[i]*np.reciprocal(1+100*np.exp(-np.reciprocal(1-np.square(p-x))))
-                    pena = (EIp - self.EI(x, enable_tunneling=False)) / (1e-9+np.power(
-                        np.linalg.norm(p - x), 4
-                    ))
+                    pena = (EIp - self.EI(x, enable_tunneling=False)) / (
+                        1e-9 + np.power(np.linalg.norm(p - x), 4)
+                    )
                     if pena > 0:
                         ei[i] = ei[i] - pena
                     ei[i] = max(ei[i], 0)

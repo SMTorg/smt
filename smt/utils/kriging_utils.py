@@ -260,7 +260,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     X_cont: np.ndarray [n_obs, dim_cont]
          - The non categorical values of the input variables.
     """
-    X = X.astype(np.float)
+    X = X.astype(np.float64)
     Xt = X
     X_cont, cat_features = compute_X_cont(Xt, xtypes)
 
@@ -297,7 +297,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     num_max = np.zeros(num_cols)
 
     for col in range(num_cols):
-        col_array = Y_num[:, col].astype(np.float32)
+        col_array = Y_num[:, col].astype(np.float64)
         max = np.nanmax(col_array)
         min = np.nanmin(col_array)
 
