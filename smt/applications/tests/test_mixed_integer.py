@@ -707,7 +707,7 @@ class TestMixedInteger(unittest.TestCase):
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
         xt = np.concatenate((xt1, xt2, xt3), axis=0)
-        xt[:, 1] = xt[:, 1].astype(np.float)
+        xt[:, 1] = xt[:, 1].astype(np.float64)
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
@@ -758,7 +758,7 @@ class TestMixedInteger(unittest.TestCase):
 
         fig, axs = plt.subplots(3, figsize=(8, 6))
 
-        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
         axs[0].plot(x_cont, y1, color="Blue")
         axs[0].fill_between(
             np.ravel(x_cont),
@@ -774,7 +774,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[1].plot(
-            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+            xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
         )
         axs[1].plot(x_cont, y2, color="Red")
         axs[1].fill_between(
@@ -791,7 +791,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[2].plot(
-            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+            xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
         )
         axs[2].plot(x_cont, y3, color="Green")
         axs[2].fill_between(
@@ -827,7 +827,7 @@ class TestMixedInteger(unittest.TestCase):
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
         xt = np.concatenate((xt1, xt2, xt3), axis=0)
-        xt[:, 1] = xt[:, 1].astype(np.float)
+        xt[:, 1] = xt[:, 1].astype(np.float64)
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
@@ -878,7 +878,7 @@ class TestMixedInteger(unittest.TestCase):
 
         fig, axs = plt.subplots(3, figsize=(8, 6))
 
-        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
         axs[0].plot(x_cont, y1, color="Blue")
         axs[0].fill_between(
             np.ravel(x_cont),
@@ -894,7 +894,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[1].plot(
-            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+            xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
         )
         axs[1].plot(x_cont, y2, color="Red")
         axs[1].fill_between(
@@ -911,7 +911,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[2].plot(
-            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+            xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
         )
         axs[2].plot(x_cont, y3, color="Green")
         axs[2].fill_between(
@@ -942,7 +942,7 @@ class TestMixedInteger(unittest.TestCase):
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
 
         xt = np.concatenate((xt1, xt2, xt3), axis=0)
-        xt[:, 1] = xt[:, 1].astype(np.float)
+        xt[:, 1] = xt[:, 1].astype(np.float64)
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
@@ -993,7 +993,7 @@ class TestMixedInteger(unittest.TestCase):
 
         fig, axs = plt.subplots(3, figsize=(8, 6))
 
-        axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+        axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
         axs[0].plot(x_cont, y1, color="Blue")
         axs[0].fill_between(
             np.ravel(x_cont),
@@ -1009,7 +1009,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[1].plot(
-            xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+            xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
         )
         axs[1].plot(x_cont, y2, color="Red")
         axs[1].fill_between(
@@ -1026,7 +1026,7 @@ class TestMixedInteger(unittest.TestCase):
             bbox_to_anchor=[0, 1],
         )
         axs[2].plot(
-            xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+            xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
         )
         axs[2].plot(x_cont, y3, color="Green")
         axs[2].fill_between(
@@ -1048,3 +1048,4 @@ class TestMixedInteger(unittest.TestCase):
 
 if __name__ == "__main__":
     TestMixedInteger().run_mixed_integer_context_example()
+    unittest.main()
