@@ -292,24 +292,14 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     Z_num = Z[:, np.logical_not(cat_features)]
     Y_num = Y[:, np.logical_not(cat_features)]
 
-    num_cols = Z_num.shape[1]
-    num_ranges = np.zeros(num_cols)
-    num_max = np.zeros(num_cols)
-
-    for col in range(num_cols):
-        col_array = Y_num[:, col].astype(np.float64)
-        max = np.nanmax(col_array)
-        min = np.nanmin(col_array)
-
-        if np.isnan(max):
-            max = 0.0
-        if np.isnan(min):
-            min = 0.0
-        num_max[col] = max
-        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
-        num_ranges[col] = 1
     # This is to normalize the numeric values between 0 and 1.
-    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+    Z_offset = np.min(Z_num, axis=0)
+    Z_max = np.max(Z_num, axis=0)
+    Z_scale = Z_max - Z_offset
+    Z_num = (Z_num-Z_offset)/Z_scale
+    
+    num_cols = Z_num.shape[1]
+    num_ranges = np.ones(num_cols)
 
     Z_cat = Z[:, cat_features]
 
@@ -344,15 +334,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             ij[ll_0:ll_1, 0] = k
             ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
             abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
-            try:
-                D_num[ll_0:ll_1] = np.divide(
-                    abs_delta,
-                    num_ranges,
-                    out=np.zeros_like(abs_delta),
-                    where=num_ranges != 0,
-                )
-            except:
-                pass
+            D_num[ll_0:ll_1] = abs_delta
 
         n_samples, n_features = X_cat.shape
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
@@ -378,12 +360,6 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         D = D.reshape((-1, X.shape[1]))
         D = np.abs(D)
         D[:, cat_features] = D[:, cat_features] > 0.5
-        D[:, np.logical_not(cat_features)] = np.divide(
-            D[:, np.logical_not(cat_features)],
-            num_ranges,
-            out=np.zeros_like(D[:, np.logical_not(cat_features)]),
-            where=num_ranges != 0,
-        )
 
         return D
 
