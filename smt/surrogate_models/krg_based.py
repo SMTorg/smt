@@ -89,7 +89,7 @@ class KrgBased(SurrogateModel):
         declare(
             "xlimits",
             None,
-            desc='the upper and lower var bounds.',
+            desc="the upper and lower var bounds.",
         )
         declare(
             "xtypes",
@@ -1008,7 +1008,10 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
-                x, y=np.copy(self.X_train), xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
+                x,
+                y=np.copy(self.X_train),
+                xlimits=self.options["xlimits"],
+                xtypes=self.options["xtypes"],
             )
 
             d = componentwise_distance(
@@ -1143,7 +1146,10 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is not None:
 
             dx = gower_componentwise_distances(
-                x, y=np.copy(self.X_train), xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
+                x,
+                y=np.copy(self.X_train),
+                xlimits=self.options["xlimits"],
+                xtypes=self.options["xtypes"],
             )
             d = componentwise_distance(
                 dx,

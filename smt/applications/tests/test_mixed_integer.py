@@ -428,7 +428,6 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 
@@ -506,7 +505,7 @@ class TestMixedInteger(unittest.TestCase):
         for element in itertools.product(x, x2):
             x1.append(np.array(element))
         x_pred = np.array(x1)
-     
+
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 

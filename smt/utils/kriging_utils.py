@@ -238,7 +238,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, xlimits,  y=None, xtypes=None):
+def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -298,14 +298,15 @@ def gower_componentwise_distances(X, xlimits,  y=None, xtypes=None):
     lim = np.atleast_2d(np.array(xlimits, dtype=object)[np.logical_not(cat_features)])
     lb = np.zeros(np.shape(lim)[1])
     ub = np.zeros(np.shape(lim)[1])
-    for k,i in enumerate(lim[0]) :
-        lb[k]= i[0]
-        ub[k]= i[-1]
-    Z_offset =lb
-    Z_max = ub
-    Z_scale = Z_max - Z_offset
-    Z_num = (Z_num-Z_offset)/Z_scale
-    
+    if np.shape(lim)[0] > 0:
+        for k, i in enumerate(lim[0]):
+            lb[k] = i[0]
+            ub[k] = i[-1]
+        Z_offset = lb
+        Z_max = ub
+        Z_scale = Z_max - Z_offset
+        Z_num = (Z_num - Z_offset) / Z_scale
+
     num_cols = Z_num.shape[1]
     num_ranges = np.zeros(num_cols)
     num_max = np.zeros(num_cols)

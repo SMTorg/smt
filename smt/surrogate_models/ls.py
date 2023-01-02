@@ -31,7 +31,7 @@ class LS(SurrogateModel):
         declare(
             "xlimits",
             None,
-            desc='the upper and lower var bounds.',
+            desc="the upper and lower var bounds.",
         )
         declare(
             "data_dir",
