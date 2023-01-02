@@ -28,7 +28,11 @@ class LS(SurrogateModel):
         super(LS, self)._initialize()
         declare = self.options.declare
         supports = self.supports
-
+        declare(
+            "xlimits",
+            None,
+            desc='the upper and lower var bounds.',
+        )
         declare(
             "data_dir",
             values=None,

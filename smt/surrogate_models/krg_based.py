@@ -86,7 +86,11 @@ class KrgBased(SurrogateModel):
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
-
+        declare(
+            "xlimits",
+            None,
+            desc='the upper and lower var bounds.',
+        )
         declare(
             "xtypes",
             None,
@@ -173,7 +177,7 @@ class KrgBased(SurrogateModel):
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
-                X=X, xtypes=self.options["xtypes"]
+                X=X, xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
             )
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
@@ -1004,7 +1008,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
-                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+                x, y=np.copy(self.X_train), xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
             )
 
             d = componentwise_distance(
@@ -1139,7 +1143,7 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is not None:
 
             dx = gower_componentwise_distances(
-                x, y=np.copy(self.X_train), xtypes=self.options["xtypes"]
+                x, y=np.copy(self.X_train), xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
             )
             d = componentwise_distance(
                 dx,
