@@ -307,7 +307,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             min = 0.0
         num_max[col] = max
         num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
-
+        num_ranges[col] = 1
     # This is to normalize the numeric values between 0 and 1.
     Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
 
