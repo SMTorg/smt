@@ -307,10 +307,6 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
         Z_scale = Z_max - Z_offset
         Z_num = (Z_num - Z_offset) / Z_scale
 
-    num_cols = Z_num.shape[1]
-    num_ranges = np.zeros(num_cols)
-    num_max = np.zeros(num_cols)
-
     Z_cat = Z[:, cat_features]
 
     X_cat = Z_cat[
