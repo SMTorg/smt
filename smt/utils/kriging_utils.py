@@ -293,11 +293,11 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     Z_num = Z[:, np.logical_not(cat_features)]
 
     # This is to normalize the numeric values between 0 and 1.
-    lim = np.atleast_2d(np.array(xlimits, dtype=object)[np.logical_not(cat_features)])
-    lb = np.zeros(np.shape(lim)[1])
-    ub = np.zeros(np.shape(lim)[1])
+    lim = np.array(xlimits, dtype=object)[np.logical_not(cat_features)]
+    lb = np.zeros(np.shape(lim)[0])
+    ub = np.ones(np.shape(lim)[0])
     if np.shape(lim)[0] > 0:
-        for k, i in enumerate(lim[0]):
+        for k, i in enumerate(lim):
             lb[k] = i[0]
             ub[k] = i[-1]
         Z_offset = lb
