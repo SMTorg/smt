@@ -232,8 +232,7 @@ def compute_X_cont(x, xtypes):
     if xtypes is None:
         return x, None
     cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
+        not (xtype == "float_type" or xtype == "ord_type") for xtype in xtypes
     ]
     return x[:, np.logical_not(cat_features)], cat_features
 
