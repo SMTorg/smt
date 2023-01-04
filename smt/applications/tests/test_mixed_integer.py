@@ -678,20 +678,21 @@ class TestMixedInteger(unittest.TestCase):
         # prediction are correct on known points
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
-   
+
         def test_mixed_gower_3D(self):
             from smt.problems import Sphere
             from smt.sampling_methods import LHS
-            from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD,GOWER_KERNEL
-            
-            
-            xtypes = [FLOAT, ORD,ORD]
+            from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD, GOWER_KERNEL
+
+            xtypes = [FLOAT, ORD, ORD]
             xlimits = [[-10, 10], [-10, 10], [-10, 10]]
-            mixint = MixedIntegerContext(xtypes, xlimits,    categorical_kernel=GOWER_KERNEL)
-            
+            mixint = MixedIntegerContext(
+                xtypes, xlimits, categorical_kernel=GOWER_KERNEL
+            )
+
             sm = mixint.build_surrogate_model(KRG(print_prediction=False))
             sampling = mixint.build_sampling_method(LHS, criterion="m")
-            
+
             fun = Sphere(ndim=3)
             xt = sampling(10)
             yt = fun(xt)
@@ -702,6 +703,7 @@ class TestMixedInteger(unittest.TestCase):
                 if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
                     eq_check = False
             self.assertTrue(eq_check)
+
     def test_mixed_gower(self):
         import numpy as np
         import matplotlib.pyplot as plt
