@@ -292,7 +292,6 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-    Y_num = Y[:, np.logical_not(cat_features)]
 
     # This is to normalize the numeric values between 0 and 1.
     lim = np.atleast_2d(np.array(xlimits, dtype=object)[np.logical_not(cat_features)])
@@ -322,8 +321,8 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
         y_index,
     ]
 
-    X_norma = X
-    Y_norma = Y
+    X_norma = np.copy(X)
+    Y_norma = np.copy(Y)
     X_norma[:, np.logical_not(cat_features)] = X_num
     Y_norma[:, np.logical_not(cat_features)] = Y_num
 
