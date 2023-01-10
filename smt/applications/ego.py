@@ -381,8 +381,8 @@ class EGO(SurrogateBasedApplication):
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-                options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
-                bounds = None
+            options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+            bounds = None
         else:
             bounds = self.xlimits
             method = "SLSQP"
