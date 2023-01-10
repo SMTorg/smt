@@ -370,9 +370,10 @@ class EGO(SurrogateBasedApplication):
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
             bounds = self.mixint.get_unfolded_xlimits()
-            n_start += 10
+            method = "COBYLA"
         else:
             bounds = self.xlimits
+            method = "SLSQP"
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
@@ -392,7 +393,7 @@ class EGO(SurrogateBasedApplication):
                         minimize(
                             lambda x: float(np.array(self.obj_k(x)).flat[0]),
                             x_start[ii, :],
-                            method="SLSQP",
+                            method=method,
                             bounds=bounds,
                             options={"maxiter": 200},
                         )
