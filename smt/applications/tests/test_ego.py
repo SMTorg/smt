@@ -352,7 +352,7 @@ class TestEGO(SMTestCase):
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
             dtype="object",
         )
-        n_doe = 2
+        n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             xtypes, xlimits, LHS, criterion="ese", random_state=42
         )
@@ -382,7 +382,7 @@ class TestEGO(SMTestCase):
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
         )
-        n_doe = 2
+        n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             xtypes,
             xlimits,
@@ -418,7 +418,7 @@ class TestEGO(SMTestCase):
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
         )
-        n_doe = 2
+        n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             xtypes,
             xlimits,
