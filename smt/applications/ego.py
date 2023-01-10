@@ -120,7 +120,7 @@ class EGO(SurrogateBasedApplication):
                 HOMO_HSPHERE_KERNEL,
                 CONT_RELAX_KERNEL,
             ],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
             "surrogate",
@@ -132,7 +132,7 @@ class EGO(SurrogateBasedApplication):
             "xtypes",
             None,
             types=list,
-            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            desc="x types specifications: either FLOAT for continuous, INT for integer "
             "or (ENUM n) for categorical doimension with n levels",
         )
         self.options.declare(
@@ -298,12 +298,21 @@ class EGO(SurrogateBasedApplication):
                 random_state=self.options["random_state"],
                 output_in_folded_space=work_in_folded_space,
             )
+            self._sampling_optim = self.mixint.build_sampling_method(
+                LHS,
+                criterion="ese",
+                output_in_folded_space=work_in_folded_space,
+            )
         else:
             self.mixint = None
             self._sampling = LHS(
                 xlimits=self.xlimits,
                 criterion="ese",
                 random_state=self.options["random_state"],
+            )
+            self._sampling_optim = LHS(
+                xlimits=self.xlimits,
+                criterion="ese",
             )
 
         # Build DOE
@@ -361,6 +370,7 @@ class EGO(SurrogateBasedApplication):
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
             bounds = self.mixint.get_unfolded_xlimits()
+            n_start += 10
         else:
             bounds = self.xlimits
 
@@ -375,9 +385,8 @@ class EGO(SurrogateBasedApplication):
         n_optim = 1  # in order to have some success optimizations with SLSQP
         while not success and n_optim <= n_max_optim:
             opt_all = []
-            x_start = self._sampling(n_start)
+            x_start = self._sampling_optim(n_start)
             for ii in range(n_start):
-
                 try:
                     opt_all.append(
                         minimize(
@@ -403,7 +412,7 @@ class EGO(SurrogateBasedApplication):
             if not success:
                 self.log("New start point for the internal optimization")
                 n_optim += 1
-
+                n_start += 10
         if n_optim >= n_max_optim:
             # self.log("Internal optimization failed at EGO iter = {}".format(k))
             return np.atleast_2d(0), False
