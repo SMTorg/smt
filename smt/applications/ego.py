@@ -371,9 +371,17 @@ class EGO(SurrogateBasedApplication):
         if self.mixint:
             bounds = self.mixint.get_unfolded_xlimits()
             method = "COBYLA"
+            cons = []
+            for factor in range(len(bounds)):
+                lower, upper = bounds[factor]
+                l = {"type": "ineq", "fun": lambda x, lb=lower, i=factor: x[i] - lb}
+                u = {"type": "ineq", "fun": lambda x, ub=upper, i=factor: ub - x[i]}
+                cons.append(l)
+                cons.append(u)
         else:
             bounds = self.xlimits
             method = "SLSQP"
+            cons = ()
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
@@ -395,6 +403,7 @@ class EGO(SurrogateBasedApplication):
                             x_start[ii, :],
                             method=method,
                             bounds=bounds,
+                            constraints=cons,
                             options={"maxiter": 200},
                         )
                     )
