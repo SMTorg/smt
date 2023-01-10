@@ -374,19 +374,19 @@ class EGO(SurrogateBasedApplication):
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
-                if isinstance(self.options["xtypes"][j], tuple):
-                    upper = int(upper - 1)
+                if self.options["categorical_kernel"] is not None:
+                    if isinstance(self.options["xtypes"][j], tuple):
+                        upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-                options = {"tol": 1e-6,"rhobeg":0.1}
+                options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
         else:
             bounds = self.xlimits
             method = "SLSQP"
             cons = ()
             options = {"maxiter": 200}
-
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
@@ -436,6 +436,7 @@ class EGO(SurrogateBasedApplication):
         x_et_k = np.atleast_2d(opt["x"])
 
         return x_et_k, True
+
     def _get_virtual_point(self, x, y_data):
         """
         Depending on the qEI attribute return a predicted value at given point x
