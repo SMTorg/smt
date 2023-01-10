@@ -382,6 +382,7 @@ class EGO(SurrogateBasedApplication):
                 cons.append(l)
                 cons.append(u)
                 options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+                bounds = None
         else:
             bounds = self.xlimits
             method = "SLSQP"
