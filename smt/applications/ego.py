@@ -428,7 +428,6 @@ class EGO(SurrogateBasedApplication):
             if not success:
                 self.log("New start point for the internal optimization")
                 n_optim += 1
-                n_start += 10
         if n_optim >= n_max_optim:
             # self.log("Internal optimization failed at EGO iter = {}".format(k))
             return np.atleast_2d(0), False
