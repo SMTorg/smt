@@ -120,7 +120,7 @@ class EGO(SurrogateBasedApplication):
                 HOMO_HSPHERE_KERNEL,
                 CONT_RELAX_KERNEL,
             ],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
             "surrogate",
@@ -132,7 +132,7 @@ class EGO(SurrogateBasedApplication):
             "xtypes",
             None,
             types=list,
-            desc="x type specifications: either FLOAT for continuous, INT for integer "
+            desc="x types specifications: either FLOAT for continuous, INT for integer "
             "or (ENUM n) for categorical doimension with n levels",
         )
         self.options.declare(
@@ -298,12 +298,21 @@ class EGO(SurrogateBasedApplication):
                 random_state=self.options["random_state"],
                 output_in_folded_space=work_in_folded_space,
             )
+            self._sampling_optim = self.mixint.build_sampling_method(
+                LHS,
+                criterion="ese",
+                output_in_folded_space=work_in_folded_space,
+            )
         else:
             self.mixint = None
             self._sampling = LHS(
                 xlimits=self.xlimits,
                 criterion="ese",
                 random_state=self.options["random_state"],
+            )
+            self._sampling_optim = LHS(
+                xlimits=self.xlimits,
+                criterion="ese",
             )
 
         # Build DOE
@@ -361,8 +370,24 @@ class EGO(SurrogateBasedApplication):
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
             bounds = self.mixint.get_unfolded_xlimits()
+            method = "COBYLA"
+            cons = []
+            for j in range(len(bounds)):
+                lower, upper = bounds[j]
+                if self.options["categorical_kernel"] is not None:
+                    if isinstance(self.options["xtypes"][j], tuple):
+                        upper = int(upper - 1)
+                l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
+                u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
+                cons.append(l)
+                cons.append(u)
+            options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+            bounds = None
         else:
             bounds = self.xlimits
+            method = "SLSQP"
+            cons = ()
+            options = {"maxiter": 200}
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
@@ -375,17 +400,17 @@ class EGO(SurrogateBasedApplication):
         n_optim = 1  # in order to have some success optimizations with SLSQP
         while not success and n_optim <= n_max_optim:
             opt_all = []
-            x_start = self._sampling(n_start)
+            x_start = self._sampling_optim(n_start)
             for ii in range(n_start):
-
                 try:
                     opt_all.append(
                         minimize(
                             lambda x: float(np.array(self.obj_k(x)).flat[0]),
                             x_start[ii, :],
-                            method="SLSQP",
+                            method=method,
                             bounds=bounds,
-                            options={"maxiter": 200},
+                            constraints=cons,
+                            options=options,
                         )
                     )
 
@@ -403,7 +428,6 @@ class EGO(SurrogateBasedApplication):
             if not success:
                 self.log("New start point for the internal optimization")
                 n_optim += 1
-
         if n_optim >= n_max_optim:
             # self.log("Internal optimization failed at EGO iter = {}".format(k))
             return np.atleast_2d(0), False

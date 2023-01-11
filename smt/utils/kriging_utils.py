@@ -232,13 +232,12 @@ def compute_X_cont(x, xtypes):
     if xtypes is None:
         return x, None
     cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
+        not (xtype == "float_type" or xtype == "ord_type") for xtype in xtypes
     ]
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, y=None, xtypes=None):
+def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -248,6 +247,8 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             - The input variables.
     y: np.ndarray [n_y, dim]
             - The training data.
+    xlimits: np.ndarray[dim, 2]
+            - The upper and lower var bounds.
     xtypes: np.ndarray [dim]
             -the types (FLOAT,ORD,ENUM) of the input variables
     Returns
@@ -290,26 +291,19 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-    Y_num = Y[:, np.logical_not(cat_features)]
-
-    num_cols = Z_num.shape[1]
-    num_ranges = np.zeros(num_cols)
-    num_max = np.zeros(num_cols)
-
-    for col in range(num_cols):
-        col_array = Y_num[:, col].astype(np.float64)
-        max = np.nanmax(col_array)
-        min = np.nanmin(col_array)
-
-        if np.isnan(max):
-            max = 0.0
-        if np.isnan(min):
-            min = 0.0
-        num_max[col] = max
-        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
 
     # This is to normalize the numeric values between 0 and 1.
-    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+    lim = np.array(xlimits, dtype=object)[np.logical_not(cat_features)]
+    lb = np.zeros(np.shape(lim)[0])
+    ub = np.ones(np.shape(lim)[0])
+    if np.shape(lim)[0] > 0:
+        for k, i in enumerate(lim):
+            lb[k] = i[0]
+            ub[k] = i[-1]
+        Z_offset = lb
+        Z_max = ub
+        Z_scale = Z_max - Z_offset
+        Z_num = (Z_num - Z_offset) / Z_scale
 
     Z_cat = Z[:, cat_features]
 
@@ -326,8 +320,8 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         y_index,
     ]
 
-    X_norma = X
-    Y_norma = Y
+    X_norma = np.copy(X)
+    Y_norma = np.copy(Y)
     X_norma[:, np.logical_not(cat_features)] = X_num
     Y_norma[:, np.logical_not(cat_features)] = Y_num
 
@@ -344,15 +338,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             ij[ll_0:ll_1, 0] = k
             ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
             abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
-            try:
-                D_num[ll_0:ll_1] = np.divide(
-                    abs_delta,
-                    num_ranges,
-                    out=np.zeros_like(abs_delta),
-                    where=num_ranges != 0,
-                )
-            except:
-                pass
+            D_num[ll_0:ll_1] = abs_delta
 
         n_samples, n_features = X_cat.shape
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
@@ -378,12 +364,6 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         D = D.reshape((-1, X.shape[1]))
         D = np.abs(D)
         D[:, cat_features] = D[:, cat_features] > 0.5
-        D[:, np.logical_not(cat_features)] = np.divide(
-            D[:, np.logical_not(cat_features)],
-            num_ranges,
-            out=np.zeros_like(D[:, np.logical_not(cat_features)]),
-            where=num_ranges != 0,
-        )
 
         return D
 

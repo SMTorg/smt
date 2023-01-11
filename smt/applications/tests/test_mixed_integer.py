@@ -428,10 +428,6 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-        i = 0
-        for x in x_pred:
-            print(i, x)
-            i += 1
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 
@@ -471,10 +467,6 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-        i = 0
-        for x in x_pred:
-            print(i, x)
-            i += 1
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 
@@ -514,10 +506,6 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-        i = 0
-        for x in x_pred:
-            print(i, x)
-            i += 1
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 
@@ -684,16 +672,37 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-        i = 0
-        for x in x_pred:
-            print(i, x)
-            i += 1
         y = sm.predict_values(x_pred)
         yvar = sm.predict_variances(x_pred)
 
         # prediction are correct on known points
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
+
+        def test_mixed_gower_3D(self):
+            from smt.problems import Sphere
+            from smt.sampling_methods import LHS
+            from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD, GOWER_KERNEL
+
+            xtypes = [FLOAT, ORD, ORD]
+            xlimits = [[-10, 10], [-10, 10], [-10, 10]]
+            mixint = MixedIntegerContext(
+                xtypes, xlimits, categorical_kernel=GOWER_KERNEL
+            )
+
+            sm = mixint.build_surrogate_model(KRG(print_prediction=False))
+            sampling = mixint.build_sampling_method(LHS, criterion="m")
+
+            fun = Sphere(ndim=3)
+            xt = sampling(10)
+            yt = fun(xt)
+            sm.set_training_values(xt, yt)
+            sm.train()
+            eq_check = True
+            for i in range(xt.shape[0]):
+                if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
+                    eq_check = False
+            self.assertTrue(eq_check)
 
     def test_mixed_gower(self):
         import numpy as np
