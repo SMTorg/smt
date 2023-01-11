@@ -12,6 +12,7 @@ import numpy as np
 from sklearn import linear_model
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
+from smt.utils.kriging_utils import standardization
 
 
 class LS(SurrogateModel):
@@ -29,11 +30,6 @@ class LS(SurrogateModel):
         declare = self.options.declare
         supports = self.supports
         declare(
-            "xlimits",
-            None,
-            desc="the upper and lower var bounds.",
-        )
-        declare(
             "data_dir",
             values=None,
             types=str,
@@ -50,10 +46,8 @@ class LS(SurrogateModel):
         """
         Train the model
         """
-        x = self.training_points[None][0][0]
-        y = self.training_points[None][0][1]
         self.mod = linear_model.LinearRegression()
-        self.mod.fit(x, y)
+        self.mod.fit(self.X_norma, self.y_norma)
 
     def _train(self):
         """
@@ -65,7 +59,6 @@ class LS(SurrogateModel):
                 self.sol = outputs["sol"]
             else:
                 self._new_train()
-                # outputs['sol'] = self.sol
 
     def _predict_values(self, x):
         """
@@ -104,5 +97,4 @@ class LS(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
-
         return y
