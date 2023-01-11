@@ -47,10 +47,8 @@ class QP(SurrogateModel):
         """
         Train the model
         """
-
-        if 0 in self.training_points[None]:
-            x = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
+        x = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
 
         if x.shape[0] < (self.nx + 1) * (self.nx + 2) / 2.0:
             raise Exception(

@@ -50,12 +50,8 @@ class LS(SurrogateModel):
         """
         Train the model
         """
-        pts = self.training_points
-
-        if 0 in pts[None]:
-            x = pts[None][0][0]
-            y = pts[None][0][1]
-
+        x = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
         self.mod = linear_model.LinearRegression()
         self.mod.fit(x, y)
 
