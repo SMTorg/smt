@@ -42,16 +42,16 @@ class QP(SurrogateModel):
         """
         Train the model
         """
-        x = self.training_points[None][0][0]
+        X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
 
-        if x.shape[0] < (self.nx + 1) * (self.nx + 2) / 2.0:
+        if X.shape[0] < (self.nx + 1) * (self.nx + 2) / 2.0:
             raise Exception(
                 "Number of training points should be greater or equal to %d."
                 % ((self.nx + 1) * (self.nx + 2) / 2.0)
             )
 
-        X = self._response_surface(x)
+        X = self._response_surface(X)
         self.coef = np.dot(np.linalg.inv(np.dot(X.T, X)), (np.dot(X.T, y)))
 
     def _train(self):

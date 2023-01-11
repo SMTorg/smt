@@ -44,8 +44,8 @@ class LS(SurrogateModel):
         """
         Train the model
         """
-        X = pts[None][0][0]
-        y = pts[None][0][1]
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
         self.mod = linear_model.LinearRegression()
         self.mod.fit(X, y)
 
