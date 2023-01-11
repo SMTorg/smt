@@ -12,8 +12,6 @@ import numpy as np
 from sklearn import linear_model
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
-from smt.utils.kriging_utils import standardization
-
 
 class LS(SurrogateModel):
 
@@ -46,8 +44,10 @@ class LS(SurrogateModel):
         """
         Train the model
         """
+        X = pts[None][0][0]
+        y = pts[None][0][1]
         self.mod = linear_model.LinearRegression()
-        self.mod.fit(self.X_norma, self.y_norma)
+        self.mod.fit(X, y)
 
     def _train(self):
         """
