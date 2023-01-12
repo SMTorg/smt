@@ -195,7 +195,7 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            if self.mixint and self.work_in_folded_space:
+            if self.mixint and not (self.work_in_folded_space):
                 x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
@@ -205,7 +205,7 @@ class EGO(SurrogateBasedApplication):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        if self.mixint and self.work_in_folded_space:
+        if self.mixint and not (self.work_in_folded_space):
             x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
@@ -325,7 +325,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            if self.mixint and self.work_in_folded_space:
+            if self.mixint and not (self.work_in_folded_space):
                 x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
@@ -374,7 +374,7 @@ class EGO(SurrogateBasedApplication):
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
-                if not (self.work_in_folded_space):
+                if self.work_in_folded_space:
                     if isinstance(self.options["xtypes"][j], tuple):
                         upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
