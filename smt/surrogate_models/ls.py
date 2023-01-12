@@ -29,11 +29,6 @@ class LS(SurrogateModel):
         declare = self.options.declare
         supports = self.supports
         declare(
-            "xlimits",
-            None,
-            desc="the upper and lower var bounds.",
-        )
-        declare(
             "data_dir",
             values=None,
             types=str,
@@ -50,14 +45,10 @@ class LS(SurrogateModel):
         """
         Train the model
         """
-        pts = self.training_points
-
-        if 0 in pts[None]:
-            x = pts[None][0][0]
-            y = pts[None][0][1]
-
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
         self.mod = linear_model.LinearRegression()
-        self.mod.fit(x, y)
+        self.mod.fit(X, y)
 
     def _train(self):
         """
@@ -69,7 +60,6 @@ class LS(SurrogateModel):
                 self.sol = outputs["sol"]
             else:
                 self._new_train()
-                # outputs['sol'] = self.sol
 
     def _predict_values(self, x):
         """
@@ -108,5 +98,4 @@ class LS(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
-
         return y
