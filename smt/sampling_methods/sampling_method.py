@@ -35,12 +35,18 @@ class SamplingMethod(metaclass=ABCMeta):
             types=np.ndarray,
             desc="The interval of the domain in each dimension with shape nx x 2 (required)",
         )
-        self._initialize()
+        self._initialize(**kwargs)
         self.options.update(kwargs)
 
-    def _initialize(self) -> None:
+    def _initialize(self, **kwargs) -> None:
         """
-        Implemented by sampling methods to declare options (optional).
+        Implemented by sampling methods to declare options
+        and/or use these optional values for initialization (optional)
+
+        Parameters
+        ----------
+        **kwargs : named arguments passed by the user
+            Set of options that can be optionally set
 
         Examples
         --------
