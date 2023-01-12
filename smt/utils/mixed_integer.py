@@ -173,7 +173,7 @@ def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
     return ret
 
 
-def fold_with_enum_index(xtypes, x, categorical_kernel=None):
+def fold_with_enum_index(xtypes, x):
     """
     see MixedIntegerContext.fold_with_enum_index
     """
