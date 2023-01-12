@@ -89,7 +89,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=None):
+def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -121,7 +121,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=No
                 xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
-                if categorical_kernel is None:
+                if unfold_space :
                     xlims.extend(xtyp[1] * [[0, 1]])
                 else:
                     listint = list(map(float, [0, len(xlimits[i])]))

@@ -218,7 +218,7 @@ class MixedIntegerContext(object):
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xtypes, xlimits, categorical_kernel
+            self._xtypes, xlimits, unfold_space= (  self._categorical_kernel == None )
         )
         self._work_in_folded_space = work_in_folded_space
 
