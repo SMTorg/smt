@@ -13,6 +13,7 @@ from sklearn import linear_model
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
 
+
 class LS(SurrogateModel):
 
     """

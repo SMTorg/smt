@@ -13,6 +13,7 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
 from smt.utils.kriging_utils import standardization
 
+
 class QP(SurrogateModel):
 
     """
@@ -118,7 +119,7 @@ class QP(SurrogateModel):
             Derivative values.
         """
         dim = self.nx
-        x = (x -self.X_offset)/self.X_scale
+        x = (x - self.X_offset) / self.X_scale
         linear_coef = self.coef[1 + kx, :]
         quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
         neval = np.size(quad_coef, 0)
@@ -134,7 +135,11 @@ class QP(SurrogateModel):
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (kx - (i + 2)))
                 cross_coef += self.coef[k, :] * x[:, i]
 
-        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))* self.y_std / self.X_scale[kx]
+        y = (
+            (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
+            * self.y_std
+            / self.X_scale[kx]
+        )
         return y
 
     def _predict_values(self, x):
@@ -151,7 +156,7 @@ class QP(SurrogateModel):
         y : np.ndarray [n_evals, ny]
             Evaluation point output variable values
         """
-        x = (x -self.X_offset)/self.X_scale
+        x = (x - self.X_offset) / self.X_scale
         M = self._response_surface(x)
         y_ = np.dot(M, self.coef)
         y = (self.y_mean + self.y_std * y_).ravel()
