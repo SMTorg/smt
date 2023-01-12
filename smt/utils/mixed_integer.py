@@ -121,7 +121,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
                 xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
-                if unfold_space :
+                if unfold_space:
                     xlims.extend(xtyp[1] * [[0, 1]])
                 else:
                     listint = list(map(float, [0, len(xlimits[i])]))
