@@ -13,7 +13,7 @@ from smt.sampling_methods.sampling_method import ScaledSamplingMethod
 
 
 class LHS(ScaledSamplingMethod):
-    def _initialize(self):
+    def _initialize(self, **kwargs):
         self.options.declare(
             "criterion",
             "c",
@@ -38,6 +38,18 @@ class LHS(ScaledSamplingMethod):
             desc="Numpy RandomState object or seed number which controls random draws",
         )
 
+        # Update options values passed by the user here to get 'random_state' option
+        self.options.update(kwargs)
+
+        # RandomState is and has to be initialized once at constructor time,
+        # not in _compute to avoid yielding the same dataset again and again
+        if isinstance(self.options["random_state"], np.random.RandomState):
+            self.random_state = self.options["random_state"]
+        elif isinstance(self.options["random_state"], int):
+            self.random_state = np.random.RandomState(self.options["random_state"])
+        else:
+            self.random_state = np.random.RandomState()
+
     def _compute(self, nt):
         """
         Implemented by sampling methods to compute the requested number of sampling points.
@@ -56,13 +68,6 @@ class LHS(ScaledSamplingMethod):
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
-
-        if isinstance(self.options["random_state"], np.random.RandomState):
-            self.random_state = self.options["random_state"]
-        elif isinstance(self.options["random_state"], int):
-            self.random_state = np.random.RandomState(self.options["random_state"])
-        else:
-            self.random_state = np.random.RandomState()
 
         if self.options["criterion"] != "ese":
             return lhs(
@@ -87,7 +92,6 @@ class LHS(ScaledSamplingMethod):
         fixed_index=[],
     ):
         """
-
         Returns an optimized design starting from design X. For more information,
         see R. Jin, W. Chen and A. Sudjianto (2005):
         An efficient algorithm for constructing optimal design of computer
