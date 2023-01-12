@@ -57,7 +57,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xtypes, self._xlimits, None, doe)
+        unfold_xdoe = cast_to_discrete_values(self._xtypes, self._xlimits, True, doe)
         if self._output_in_folded_space:
             return fold_with_enum_index(self._xtypes, unfold_xdoe)
         else:
@@ -146,7 +146,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         else:
             xt2 = xt
         xt2 = cast_to_discrete_values(
-            self._xtypes, self._xlimits, self._categorical_kernel, xt2
+            self._xtypes, self._xlimits, (self._categorical_kernel==None), xt2
         )
         super().set_training_values(xt2, yt)
         self._surrogate.set_training_values(xt2, yt, name)
@@ -166,7 +166,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             x2 = xp
         return self._surrogate.predict_values(
             cast_to_discrete_values(
-                self._xtypes, self._xlimits, self._categorical_kernel, x2
+                self._xtypes, self._xlimits, (self._categorical_kernel==None), x2
             )
         )
 
@@ -178,7 +178,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             x2 = xp
         return self._surrogate.predict_variances(
             cast_to_discrete_values(
-                self._xtypes, self._xlimits, self._categorical_kernel, x2
+                self._xtypes, self._xlimits, (self._categorical_kernel==None), x2
             )
         )
 
@@ -278,7 +278,7 @@ class MixedIntegerContext(object):
             feasible evaluation point value in categorical space.
         """
         return cast_to_discrete_values(
-            self._xtypes, self._xlimits, self._categorical_kernel, x
+            self._xtypes, self._xlimits, (self._categorical_kernel==None), x
         )
 
     def fold_with_enum_index(self, x):

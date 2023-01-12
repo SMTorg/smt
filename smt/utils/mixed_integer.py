@@ -139,7 +139,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
     return np.array(xlims).astype(float)
 
 
-def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
+def cast_to_discrete_values(xtypes, xlimits, unfold_space, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
@@ -157,7 +157,7 @@ def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
                 ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-            if categorical_kernel is None:
+            if unfold_space:
                 # Categorial : The biggest level is selected.
                 xenum = ret[:, x_col : x_col + xtyp[1]]
                 maxx = np.max(xenum, axis=1).reshape((-1, 1))
