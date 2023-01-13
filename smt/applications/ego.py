@@ -103,7 +103,7 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
-        declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
+        declare("xspecs", None, types=dict, desc="Variables specifications")
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -127,13 +127,6 @@ class EGO(SurrogateBasedApplication):
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
             desc="SMT kriging-based surrogate model used internaly",
-        )
-        declare(
-            "xtypes",
-            None,
-            types=list,
-            desc="x types specifications: either FLOAT for continuous, INT for integer "
-            "or (ENUM n) for categorical doimension with n levels",
         )
         self.options.declare(
             "random_state",
@@ -274,19 +267,18 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xlimits = self.options["xlimits"]
+        self.xlimits = self.options["xspecs"]["xlimits"]
 
         # Handle mixed integer optimization
-        xtypes = self.options["xtypes"]
         if self.options["categorical_kernel"] is not None:
             self.work_in_folded_space = True
         else:
             self.work_in_folded_space = False
-        if xtypes:
+        if "xtypes" in self.options["xspecs"] and  self.options["xspecs"]["xtypes"] is not None:
+            self.xtypes = self.options["xspecs"]["xtypes"]
             self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                xtypes,
-                self.xlimits,
+                xspecs = self.options["xspecs"],
                 work_in_folded_space=self.work_in_folded_space,
                 categorical_kernel=self.options["categorical_kernel"],
             )
@@ -375,7 +367,7 @@ class EGO(SurrogateBasedApplication):
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
                 if self.work_in_folded_space:
-                    if isinstance(self.options["xtypes"][j], tuple):
+                    if isinstance(self.xtypes[j], tuple):
                         upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}

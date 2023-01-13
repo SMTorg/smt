@@ -25,11 +25,6 @@ class GEKPLS(KPLS):
             desc="Correlation function type",
             types=(str),
         )
-        declare(
-            "xlimits",
-            types=np.ndarray,
-            desc="Lower/upper bounds in each dimension - ndarray [nx, 2]",
-        )
         declare("delta_x", 1e-4, types=(int, float), desc="Step used in the FOTA")
         declare(
             "extra_points",
