@@ -16,14 +16,14 @@ ENUM = "enum_type"
 
 
 def check_xspec_consistency(xspecs):
-    if 'xlimits' in xspecs:
+    if "xlimits" in xspecs:
         xlimits = xspecs["xlimits"]
-    else : 
-        raise ValueError( "xlimits not specified in xspecs")
-    if 'xtypes' in xspecs:
+    else:
+        raise ValueError("xlimits not specified in xspecs")
+    if "xtypes" in xspecs:
         xtypes = xspecs["xtypes"]
-    else : 
-        raise ValueError( "xtypes not specified in xspecs")     
+    else:
+        raise ValueError("xtypes not specified in xspecs")
     if len(xlimits) != len(xtypes):
         raise ValueError(
             "number of x limits ({}) do not"
@@ -116,14 +116,16 @@ def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
-    check_xspec_consistency(xspecs)
     xtypes = xspecs["xtypes"]
     xlimits = xspecs["xlimits"]
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == ORD:
-            k = xlimits[i][0]
+            try:
+                k = xlimits[i][0]
+            except:
+                print("fsd")
             if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
                 listint = list(map(float, xlimits[i]))
                 listint = [listint[0], listint[-1]]
@@ -237,10 +239,13 @@ def cast_to_enum_value(xlimits, x_col, enum_indexes):
     return [xlimits[x_col][index] for index in enum_indexes]
 
 
-def cast_to_mixed_integer(xtypes, xlimits, x):
+def cast_to_mixed_integer(xspecs, x):
     """
     see MixedIntegerContext.cast_to_mixed_integer
     """
+    check_xspec_consistency(xspecs)
+    xlimits = xspecs["xlimits"]
+    xtypes = xspecs["xtypes"]
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
@@ -255,10 +260,12 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
     return res
 
 
-def encode_with_enum_index(xtypes, xlimits, x):
+def encode_with_enum_index(xspecs, x):
     """
     see MixedIntegerContext.encode_with_enum_index
     """
+    xtypes = xspecs["xtypes"]
+    xlimits = xspecs["xlimits"]
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]

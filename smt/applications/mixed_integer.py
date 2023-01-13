@@ -47,8 +47,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         super()
         self._xspecs = xspecs
         check_xspec_consistency(self._xspecs)
-        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xspecs)
+        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
         self._sampling_method = sampling_method_class(
@@ -231,18 +230,16 @@ class MixedIntegerContext(object):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
-        
+
         kwargs["output_in_folded_space"] = self._work_in_folded_space
-        return MixedIntegerSamplingMethod(
-            self._xspecs, sampling_method_class, **kwargs
-        )
+        return MixedIntegerSamplingMethod(self._xspecs, sampling_method_class, **kwargs)
 
     def build_surrogate_model(self, surrogate):
         """
         Build MixedIntegerSurrogateModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
-            xspecs = self._xspecs,
+            xspecs=self._xspecs,
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
