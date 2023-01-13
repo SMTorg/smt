@@ -27,8 +27,12 @@ from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD
 class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_INT(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
-        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        mixint = MixedIntegerContext(xtypes, xlimits)
+        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]      
+        xspecs = dict.fromkeys(["xtypes","xlimits"])
+        xspecs["xtypes"] = xtypes
+        xspecs["xlimits"] = xlimits
+
+        mixint = MixedIntegerContext(xspecs)
 
         sm = mixint.build_surrogate_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
@@ -50,22 +54,26 @@ class TestMixedInteger(unittest.TestCase):
     def test_check_xspec_consistency(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"]]  # Bad dimension
+        xspecs = dict.fromkeys(["xtypes","xlimits"])
+        xspecs["xtypes"] = xtypes
+        xspecs["xlimits"] = xlimits
+        
         with self.assertRaises(ValueError):
-            check_xspec_consistency(xtypes, xlimits)
+            check_xspec_consistency(xspecs)
 
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]  # Bad enum
         with self.assertRaises(ValueError):
-            check_xspec_consistency(xtypes, xlimits)
+            check_xspec_consistency(xspecs)
 
         xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4", "3"]],
             dtype="object",
         )
-        l = unfold_xlimits_with_continuous_limits(xtypes, xlimits)
+        l = unfold_xlimits_with_continuous_limits(xspecs)
         with self.assertRaises(ValueError):
-            check_xspec_consistency(xtypes, xlimits)
+            check_xspec_consistency(xspecs)
 
     def test_krg_mixed_3D(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]

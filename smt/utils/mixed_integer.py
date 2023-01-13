@@ -15,7 +15,15 @@ ORD = "ord_type"
 ENUM = "enum_type"
 
 
-def check_xspec_consistency(xtypes, xlimits):
+def check_xspec_consistency(xspecs):
+    if 'xlimits' in xspecs:
+        xlimits = xspecs["xlimits"]
+    else : 
+        raise ValueError( "xlimits not specified in xspecs")
+    if 'xtypes' in xspecs:
+        xtypes = xspecs["xtypes"]
+    else : 
+        raise ValueError( "xtypes not specified in xspecs")     
     if len(xlimits) != len(xtypes):
         raise ValueError(
             "number of x limits ({}) do not"
@@ -89,7 +97,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
+def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -108,6 +116,9 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
+    check_xspec_consistency(xspecs)
+    xtypes = xspecs["xtypes"]
+    xlimits = xspecs["xlimits"]
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
@@ -139,10 +150,12 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, unfold_space=True):
     return np.array(xlims).astype(float)
 
 
-def cast_to_discrete_values(xtypes, xlimits, unfold_space, x):
+def cast_to_discrete_values(xspecs, unfold_space, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
+    xtypes = xspecs["xtypes"]
+    xlimits = xspecs["xlimits"]
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
     for i, xtyp in enumerate(xtypes):
