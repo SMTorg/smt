@@ -25,26 +25,6 @@ from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD
 
 
 class TestMixedInteger(unittest.TestCase):
-    def test_qp_mixed_2D_INT(self):
-        xtypes = [FLOAT, ORD]
-        xlimits = [[-10, 10], [-10, 10]]
-        mixint = MixedIntegerContext(xtypes, xlimits)
-
-        sm = mixint.build_surrogate_model(QP(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
-
-        fun = Sphere(ndim=2)
-        xt = sampling(10)
-        yt = fun(xt)
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        eq_check = True
-        for i in range(xt.shape[0]):
-            if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
-                eq_check = False
-        self.assertTrue(eq_check)
-
     def test_krg_mixed_3D_INT(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
@@ -122,20 +102,14 @@ class TestMixedInteger(unittest.TestCase):
         xtypes = [FLOAT, ORD]
         xlimits = [[-10, 10], [-10, 10]]
         mixint = MixedIntegerContext(xtypes, xlimits)
-
-        sm = mixint.build_surrogate_model(QP(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
-
-        fun = Sphere(ndim=2)
-        xt = sampling(10)
-        yt = fun(xt)
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        eq_check = True
-        for i in range(xt.shape[0]):
-            if abs(float(xt[i, :][1]) - int(float(xt[i, :][1]))) > 10e-8:
-                eq_check = False
+        eq_check = False
+        try:
+            sm = mixint.build_surrogate_model(QP(print_prediction=False))
+        except ValueError as err:
+            eq_check = (
+                err.args[0]
+                == "Using Mixed integer model with QP is deprecated. Please opt for a Kriging-based model."
+            )
         self.assertTrue(eq_check)
 
     def test_compute_unfolded_dimension(self):
@@ -320,37 +294,6 @@ class TestMixedInteger(unittest.TestCase):
 
         cmap = colors.ListedColormap(xlimits[1])
         plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
-        plt.show()
-
-    def run_mixed_integer_qp_example(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-
-        from smt.surrogate_models import QP, ORD
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
-
-        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
-
-        # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-        # FLOAT means x1 continuous
-        # ORD means x2 ordered
-        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
-        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-
-        sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        num = 100
-        x = np.linspace(0.0, 4.0, num)
-        y = sm.predict_values(x)
-
-        plt.plot(xt, yt, "o")
-        plt.plot(x, y)
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.legend(["Training data", "Prediction"])
         plt.show()
 
     def run_mixed_integer_context_example(self):
@@ -682,7 +625,7 @@ class TestMixedInteger(unittest.TestCase):
         def test_mixed_gower_3D(self):
             from smt.problems import Sphere
             from smt.sampling_methods import LHS
-            from smt.surrogate_models import KRG, QP, FLOAT, ENUM, ORD, GOWER_KERNEL
+            from smt.surrogate_models import KRG, FLOAT, ENUM, ORD, GOWER_KERNEL
 
             xtypes = [FLOAT, ORD, ORD]
             xlimits = [[-10, 10], [-10, 10], [-10, 10]]

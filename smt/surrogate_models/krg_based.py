@@ -1597,12 +1597,12 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options["xtypes"] is not None) or (self.options["categorical_kernel"] is not None) :
+        if (self.options["xtypes"] is not None) or (
+            self.options["categorical_kernel"] is not None
+        ):
             if self.options["xlimits"] is None:
-                raise ValueError(
-                    "xlimits required for mixed integer Kriging"
-                )
-                
+                raise ValueError("xlimits required for mixed integer Kriging")
+
         if self.name in ["KPLS"]:
             if self.options["corr"] not in ["squar_exp", "abs_exp"]:
                 raise ValueError(
