@@ -111,7 +111,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
 
-        xdoe = FullFactorial(xlimits=xlimits)(10)
+        xdoe = FullFactorial(xlimits=xlimits)(15)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
