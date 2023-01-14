@@ -26,9 +26,9 @@ class RMTS(SurrogateModel):
         supports = self.supports
 
         declare(
-            "xlimits",
-            types=np.ndarray,
-            desc="Lower/upper bounds in each dimension - ndarray [nx, 2]",
+            "xspecs",
+            types=dict,
+            desc="variables specifications.",
         )
         declare(
             "smoothness",
@@ -149,7 +149,7 @@ class RMTS(SurrogateModel):
         # We loop over kx: 0 is for values and kx>0 represents.
         # the 1-based index of the derivative given by the training point data.
         num = self.num
-        xlimits = self.options["xlimits"]
+        xlimits = self.options["xspecs"]["xlimits"]
 
         full_jac_dict = {}
         for kx in self.training_points[None]:
@@ -178,7 +178,7 @@ class RMTS(SurrogateModel):
         # This computes the energy terms that are to be minimized.
         # The quadrature points are the centroids of the multi-dimensional elements.
         num = self.num
-        xlimits = self.options["xlimits"]
+        xlimits = self.options["xspecs"]["xlimits"]
 
         inputs = {}
         inputs["nx"] = xlimits.shape[0]

@@ -92,14 +92,14 @@ class RMTB(RMTS):
         self.rmtsc = PyRMTB()
         self.rmtsc.setup(
             num["x"],
-            np.array(self.options["xlimits"][:, 0]),
-            np.array(self.options["xlimits"][:, 1]),
+            np.array(self.options["xspecs"]["xlimits"][:, 0]),
+            np.array(self.options["xspecs"]["xlimits"][:, 1]),
             np.array(num["order_list"], np.int32),
             np.array(num["ctrl_list"], np.int32),
         )
 
     def _compute_jac_raw(self, ix1, ix2, x):
-        xlimits = self.options["xlimits"]
+        xlimits = self.options["xspecs"]["xlimits"]
 
         t = np.zeros(x.shape)
         for kx in range(self.num["x"]):
