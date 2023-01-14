@@ -273,7 +273,10 @@ class EGO(SurrogateBasedApplication):
             self.work_in_folded_space = True
         else:
             self.work_in_folded_space = False
-        if "xtypes" in self.gpr.options["xspecs"] and  self.gpr.options["xspecs"]["xtypes"] is not None:
+        if (
+            "xtypes" in self.gpr.options["xspecs"]
+            and self.gpr.options["xspecs"]["xtypes"] is not None
+        ):
             self.xtypes = self.gpr.options["xspecs"]["xtypes"]
             self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
@@ -291,7 +294,7 @@ class EGO(SurrogateBasedApplication):
             )
             self._sampling_optim = self.mixint.build_sampling_method(
                 LHS,
-                xspecs= self.gpr._xspecs,
+                xspecs=self.gpr._xspecs,
                 criterion="ese",
                 output_in_folded_space=self.work_in_folded_space,
             )

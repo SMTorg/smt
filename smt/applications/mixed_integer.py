@@ -40,9 +40,9 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             or not (enum masks)
         """
         super()
-        if hasattr(self, "_xspecs") and xspecs is None :
-            xspecs=self._xspecs
-        self._xspecs = xspecs            
+        if hasattr(self, "_xspecs") and xspecs is None:
+            xspecs = self._xspecs
+        self._xspecs = xspecs
         check_xspec_consistency(self._xspecs)
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
@@ -96,7 +96,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._surrogate = surrogate
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
-        
+
         if not (isinstance(self._surrogate, KrgBased)):
             raise ValueError(
                 "Using Mixed integer model with "
@@ -105,7 +105,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             )
         self._xspecs = self._surrogate.options["xspecs"]
         check_xspec_consistency(self._xspecs)
-        
+
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
@@ -128,7 +128,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             if self._cat_kernel_comps is not None:
                 self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
-            self._xspecs["xtypes"] = self._surrogate.options["xspecs"]["xtypes"] 
+            self._xspecs["xtypes"] = self._surrogate.options["xspecs"]["xtypes"]
 
     @property
     def name(self):
@@ -193,7 +193,7 @@ class MixedIntegerContext(object):
 
     def __init__(
         self,
-        xspecs= {"xtypes":None, "xlimits":None},
+        xspecs={"xtypes": None, "xlimits": None},
         work_in_folded_space=True,
         categorical_kernel=None,
         cat_kernel_comps=None,
@@ -214,20 +214,20 @@ class MixedIntegerContext(object):
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
         self._xspecs = xspecs
-        if xspecs["xlimits"] is not None and xspecs["xtypes"] is not None :
+        if xspecs["xlimits"] is not None and xspecs["xtypes"] is not None:
             check_xspec_consistency(self._xspecs)
             self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
                 self._xspecs, unfold_space=(self._categorical_kernel == None)
             )
         self._work_in_folded_space = work_in_folded_space
 
-    def build_sampling_method(self,sampling_method_class, xspecs=None,**kwargs):
+    def build_sampling_method(self, sampling_method_class, xspecs=None, **kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
-        if xspecs is None :
-            xspecs=self._xspecs
-        else  :
+        if xspecs is None:
+            xspecs = self._xspecs
+        else:
             self._xspecs = xspecs
         kwargs["output_in_folded_space"] = self._work_in_folded_space
         return MixedIntegerSamplingMethod(sampling_method_class, xspecs, **kwargs)
@@ -249,7 +249,7 @@ class MixedIntegerContext(object):
         Each level of an enumerate gives a new continuous dimension in [0, 1].
         Each integer dimensions are relaxed continuously.
         """
-        if not(hasattr(self, "_unfolded_xlimits")) :
+        if not (hasattr(self, "_unfolded_xlimits")):
             self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
                 self._xspecs, unfold_space=(self._categorical_kernel == None)
             )
@@ -259,7 +259,7 @@ class MixedIntegerContext(object):
         """
         Returns x dimension (int) taking into account  unfolded categorical features
         """
-        if not(hasattr(self, "_unfolded_xlimits")) :
+        if not (hasattr(self, "_unfolded_xlimits")):
             self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
                 self._xspecs, unfold_space=(self._categorical_kernel == None)
             )

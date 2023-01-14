@@ -565,7 +565,7 @@ class MOE(SurrogateBasedApplication):
                 for i in range(dim):
                     xlimits[i][0] = np.amin(self.x[:, i])
                     xlimits[i][1] = np.amax(self.x[:, i])
-                kwargs = {"xlimits": xlimits}
+                kwargs = {"xspecs": {"xlimits": xlimits}}
 
             sm = sm_class(**kwargs)
             sm.options["print_global"] = False

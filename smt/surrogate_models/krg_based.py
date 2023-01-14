@@ -146,9 +146,9 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "xspecs",
-            {"xtypes":None,"xlimits": None},
+            {"xtypes": None, "xlimits": None},
             types=(dict),
-            desc= """xspecs : x specifications (xtypes,xlimits)
+            desc="""xspecs : x specifications (xtypes,xlimits)
                 xtypes: x types list
                     x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
                 xlimits: array-like
@@ -180,7 +180,9 @@ class KrgBased(SurrogateModel):
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"]["xtypes"]
             )
-            _, self.cat_features = compute_X_cont(self.X_train, self.options["xspecs"]["xtypes"])
+            _, self.cat_features = compute_X_cont(
+                self.X_train, self.options["xspecs"]["xtypes"]
+            )
         # Center and scale X and y
         (
             self.X_norma,
@@ -1593,8 +1595,10 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if ("xtypes" in self.options["xspecs"]) and (self.options["xspecs"]["xtypes"] is not None) or (
-            self.options["categorical_kernel"] is not None
+        if (
+            ("xtypes" in self.options["xspecs"])
+            and (self.options["xspecs"]["xtypes"] is not None)
+            or (self.options["categorical_kernel"] is not None)
         ):
             if self.options["xspecs"]["xlimits"] is None:
                 raise ValueError("xlimits required for mixed integer Kriging")

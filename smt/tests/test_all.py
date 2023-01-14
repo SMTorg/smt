@@ -143,7 +143,7 @@ class Test(SMTestCase):
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
         if sm.options.is_declared("xspecs"):
-            sm.options["xspecs"] = {"xlimits":prob.xlimits}
+            sm.options["xspecs"] = {"xlimits": prob.xlimits}
         sm.options["print_global"] = False
 
         if sname in ["KPLS", "KRG", "KPLSK", "GEKPLS"]:
@@ -343,7 +343,8 @@ class Test(SMTestCase):
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_exp_RMTB(self):
         self.run_test()
- 
+
+
 if __name__ == "__main__":
     print_output = True
     print("%6s %8s %18s %18s" % ("SM", "Problem", "Train. pt. error", "Test pt. error"))

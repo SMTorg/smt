@@ -31,8 +31,7 @@ class TestRMTS(SMTestCase):
         self.yt = function_test_1d(self.xt)
 
         self.xlimits = np.array([[0.0, 25.0]])
-
-        self.smref = smref = RMTB(xlimits=self.xlimits, print_global=False)
+        self.smref = smref = RMTB(xspecs={"xlimits": self.xlimits}, print_global=False)
         smref.set_training_values(self.xt, self.yt)
         with Silence():
             smref.train()
@@ -45,7 +44,7 @@ class TestRMTS(SMTestCase):
     def test_linear_search(self):
         for ls in ["bracketed", "cubic", "quadratic", "null"]:
             self.sms[ls] = RMTB(
-                xlimits=self.xlimits, line_search=ls, print_global=False
+                xspecs={"xlimits": self.xlimits}, line_search=ls, print_global=False
             )
             self.sms[ls].set_training_values(self.xt, self.yt)
 
@@ -69,7 +68,9 @@ class TestRMTS(SMTestCase):
             "mg",
             "null",
         ]:
-            self.sms[ls] = RMTB(xlimits=self.xlimits, solver=ls, print_global=False)
+            self.sms[ls] = RMTB(
+                xspecs={"xlimits": self.xlimits}, solver=ls, print_global=False
+            )
             self.sms[ls].set_training_values(self.xt, self.yt)
 
             with Silence():

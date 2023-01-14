@@ -82,7 +82,7 @@ class Test(unittest.TestCase):
         xlimits = np.array([[0.0, 4.0]])
 
         sm = RMTB(
-            xspecs={"xlimits":xlimits},
+            xspecs={"xlimits": xlimits},
             order=4,
             num_ctrl_pts=20,
             energy_weight=1e-15,
@@ -115,7 +115,7 @@ class Test(unittest.TestCase):
         xlimits = np.array([[0.0, 4.0]])
 
         sm = RMTC(
-            xspecs={"xlimits":xlimits},
+            xspecs={"xlimits": xlimits},
             num_elements=20,
             energy_weight=1e-15,
             regularization_weight=0.0,
@@ -243,9 +243,7 @@ class Test(unittest.TestCase):
         xspecs["xtypes"] = [ORD]
         xspecs["xlimits"] = [[0, 4]]
 
-        sm = MixedIntegerSurrogateModel(
-             surrogate=KRG(xspecs=xspecs, theta0=[1e-2])
-        )
+        sm = MixedIntegerSurrogateModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -289,7 +287,7 @@ class Test(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=GOWER_KERNEL,
-            surrogate=KRG(xspecs = xspecs, theta0=[1e-2]),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-2]),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -439,7 +437,7 @@ class Test(unittest.TestCase):
         # Build the GEKPLS model
         n_comp = 2
         sm = GEKPLS(
-            xspecs = {"xlimits":fun.xlimits},
+            xspecs={"xlimits": fun.xlimits},
             theta0=[1e-2] * n_comp,
             extra_points=1,
             print_prediction=False,
