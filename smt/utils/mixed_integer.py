@@ -122,10 +122,7 @@ def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
     xlims = []
     for i, xtyp in enumerate(xtypes):
         if xtyp == FLOAT or xtyp == ORD:
-            try:
-                k = xlimits[i][0]
-            except:
-                print("fsd")
+            k = xlimits[i][0]
             if xtyp == ORD and (not isinstance(xlimits[i][0], int)):
                 listint = list(map(float, xlimits[i]))
                 listint = [listint[0], listint[-1]]
