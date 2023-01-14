@@ -27,7 +27,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
     handling integer (ORD) or categorical (ENUM) features
     """
 
-    def __init__(self, xspecs, sampling_method_class, **kwargs):
+    def __init__(self, sampling_method_class, xspecs=None, **kwargs):
         """
         Parameters
         ----------
@@ -40,6 +40,8 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             or not (enum masks)
         """
         super()
+        if hasattr(self, "_xspecs") and xspecs is None :
+            xspecs=self._xspecs
         self._xspecs = xspecs            
         check_xspec_consistency(self._xspecs)
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
@@ -219,13 +221,16 @@ class MixedIntegerContext(object):
             )
         self._work_in_folded_space = work_in_folded_space
 
-    def build_sampling_method(self, xspecs,sampling_method_class, **kwargs):
+    def build_sampling_method(self,sampling_method_class, xspecs=None,**kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
-        
+        if xspecs is None :
+            xspecs=self._xspecs
+        else  :
+            self._xspecs = xspecs
         kwargs["output_in_folded_space"] = self._work_in_folded_space
-        return MixedIntegerSamplingMethod(xspecs, sampling_method_class, **kwargs)
+        return MixedIntegerSamplingMethod(sampling_method_class, xspecs, **kwargs)
 
     def build_surrogate_model(self, surrogate):
         """
@@ -244,12 +249,20 @@ class MixedIntegerContext(object):
         Each level of an enumerate gives a new continuous dimension in [0, 1].
         Each integer dimensions are relaxed continuously.
         """
+        if not(hasattr(self, "_unfolded_xlimits")) :
+            self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
+                self._xspecs, unfold_space=(self._categorical_kernel == None)
+            )
         return self._unfolded_xlimits
 
     def get_unfolded_dimension(self):
         """
         Returns x dimension (int) taking into account  unfolded categorical features
         """
+        if not(hasattr(self, "_unfolded_xlimits")) :
+            self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
+                self._xspecs, unfold_space=(self._categorical_kernel == None)
+            )
         return len(self._unfolded_xlimits)
 
     def cast_to_discrete_values(self, x):

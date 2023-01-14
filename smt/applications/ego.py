@@ -103,7 +103,6 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
-        declare("xspecs", None, types=dict, desc="Variables specifications")
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -267,18 +266,17 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xlimits = self.options["xspecs"]["xlimits"]
+        self.xlimits = self.gpr.options["xspecs"]["xlimits"]
 
         # Handle mixed integer optimization
         if self.options["categorical_kernel"] is not None:
             self.work_in_folded_space = True
         else:
             self.work_in_folded_space = False
-        if "xtypes" in self.options["xspecs"] and  self.options["xspecs"]["xtypes"] is not None:
-            self.xtypes = self.options["xspecs"]["xtypes"]
+        if "xtypes" in self.gpr.options["xspecs"] and  self.gpr.options["xspecs"]["xtypes"] is not None:
+            self.xtypes = self.gpr.options["xspecs"]["xtypes"]
             self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                xspecs = self.options["xspecs"],
                 work_in_folded_space=self.work_in_folded_space,
                 categorical_kernel=self.options["categorical_kernel"],
             )
@@ -286,12 +284,14 @@ class EGO(SurrogateBasedApplication):
             self.gpr = self.mixint.build_surrogate_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS,
+                xspecs=self.gpr._xspecs,
                 criterion="ese",
                 random_state=self.options["random_state"],
                 output_in_folded_space=self.work_in_folded_space,
             )
             self._sampling_optim = self.mixint.build_sampling_method(
                 LHS,
+                xspecs= self.gpr._xspecs,
                 criterion="ese",
                 output_in_folded_space=self.work_in_folded_space,
             )

@@ -35,7 +35,7 @@ class TestMixedInteger(unittest.TestCase):
         mixint = MixedIntegerContext()
 
         sm = mixint.build_surrogate_model(KRG(xspecs=xspecs, print_prediction=False))
-        sampling = mixint.build_sampling_method(xspecs, LHS, criterion="m")
+        sampling = mixint.build_sampling_method(LHS, xspecs, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -91,7 +91,7 @@ class TestMixedInteger(unittest.TestCase):
         mixint = MixedIntegerContext()
 
         sm = mixint.build_surrogate_model(KRG(xspecs=xspecs, print_prediction=False))
-        sampling = mixint.build_sampling_method(xspecs, LHS, criterion="m")
+        sampling = mixint.build_sampling_method(LHS, xspecs, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -181,7 +181,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs = dict.fromkeys(["xtypes", "xlimits"])
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
-        sampling = MixedIntegerSamplingMethod(xspecs, LHS, criterion="ese")
+        sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
         doe = sampling(10)
         self.assertEqual((10, 4), doe.shape)
 
@@ -350,7 +350,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
 
-        sampling = MixedIntegerSamplingMethod(xspecs, LHS, criterion="ese")
+        sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
 
         num = 40
         x = sampling(num)

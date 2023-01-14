@@ -1593,7 +1593,7 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options["xspecs"]["xtypes"] is not None) or (
+        if ("xtypes" in self.options["xspecs"]) and (self.options["xspecs"]["xtypes"] is not None) or (
             self.options["categorical_kernel"] is not None
         ):
             if self.options["xspecs"]["xlimits"] is None:

@@ -18,10 +18,14 @@ ENUM = "enum_type"
 def check_xspec_consistency(xspecs):
     if "xlimits" in xspecs:
         xlimits = xspecs["xlimits"]
+        if xlimits is None : 
+            raise ValueError("xlimits is None in the surrogate model.")
     else:
         raise ValueError("xlimits not specified in xspecs")
     if "xtypes" in xspecs:
         xtypes = xspecs["xtypes"]
+        if xtypes is None : 
+            raise ValueError("xtypes is None in the surrogate model.")
     else:
         raise ValueError("xtypes not specified in xspecs")
     if len(xlimits) != len(xtypes):
