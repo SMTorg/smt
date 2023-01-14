@@ -31,11 +31,6 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         """
         Parameters
         ----------
-        xspecs : x specifications (xtypes,xlimits)
-            xtypes: x types list
-                x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-            xlimits: array-like
-                bounds of x features
         sampling_method_class: class name
             SMT sampling method class
         kwargs: options of the given sampling method
@@ -45,7 +40,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             or not (enum masks)
         """
         super()
-        self._xspecs = xspecs
+        self._xspecs = xspecs            
         check_xspec_consistency(self._xspecs)
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
@@ -75,7 +70,6 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
     def __init__(
         self,
-        xspecs,
         surrogate,
         input_in_folded_space=True,
         categorical_kernel=None,
@@ -97,24 +91,22 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
         super().__init__()
-        check_xspec_consistency(xspecs)
         self._surrogate = surrogate
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
-        self._xspecs = xspecs
-        if "xlimits" in self._surrogate.options:
-            self._surrogate.options["xlimits"] = self._xspecs["xlimits"]
-
-        self._input_in_folded_space = input_in_folded_space
-        self.supports = self._surrogate.supports
-        self.options["print_global"] = False
-
+        
         if not (isinstance(self._surrogate, KrgBased)):
             raise ValueError(
                 "Using Mixed integer model with "
                 + str(self._surrogate.name)
                 + " is deprecated. Please opt for a Kriging-based model."
             )
+        self._xspecs = self._surrogate.options["xspecs"]
+        check_xspec_consistency(self._xspecs)
+        
+        self._input_in_folded_space = input_in_folded_space
+        self.supports = self._surrogate.supports
+        self.options["print_global"] = False
 
         if "poly" in self._surrogate.options:
             if self._surrogate.options["poly"] != "constant":
@@ -134,7 +126,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             self._surrogate.options["categorical_kernel"] = self._categorical_kernel
             if self._cat_kernel_comps is not None:
                 self._surrogate.options["cat_kernel_comps"] = self._cat_kernel_comps
-            self._surrogate.options["xtypes"] = self._xspecs["xtypes"]
+            self._xspecs["xtypes"] = self._surrogate.options["xspecs"]["xtypes"] 
 
     @property
     def name(self):
@@ -199,7 +191,7 @@ class MixedIntegerContext(object):
 
     def __init__(
         self,
-        xspecs,
+        xspecs= {"xtypes":None, "xlimits":None},
         work_in_folded_space=True,
         categorical_kernel=None,
         cat_kernel_comps=None,
@@ -217,29 +209,29 @@ class MixedIntegerContext(object):
         categorical_kernel: string
             the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
-        self._xspecs = xspecs
-        check_xspec_consistency(self._xspecs)
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
-        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xspecs, unfold_space=(self._categorical_kernel == None)
-        )
+        self._xspecs = xspecs
+        if xspecs["xlimits"] is not None and xspecs["xtypes"] is not None :
+            check_xspec_consistency(self._xspecs)
+            self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
+                self._xspecs, unfold_space=(self._categorical_kernel == None)
+            )
         self._work_in_folded_space = work_in_folded_space
 
-    def build_sampling_method(self, sampling_method_class, **kwargs):
+    def build_sampling_method(self, xspecs,sampling_method_class, **kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
-
+        
         kwargs["output_in_folded_space"] = self._work_in_folded_space
-        return MixedIntegerSamplingMethod(self._xspecs, sampling_method_class, **kwargs)
+        return MixedIntegerSamplingMethod(xspecs, sampling_method_class, **kwargs)
 
     def build_surrogate_model(self, surrogate):
         """
         Build MixedIntegerSurrogateModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
-            xspecs=self._xspecs,
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,

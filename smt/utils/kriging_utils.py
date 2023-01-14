@@ -237,7 +237,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
+def gower_componentwise_distances(X, xspecs, y=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -263,7 +263,7 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     """
     X = X.astype(np.float64)
     Xt = X
-    X_cont, cat_features = compute_X_cont(Xt, xtypes)
+    X_cont, cat_features = compute_X_cont(Xt, xspecs["xtypes"])
 
     # function checks
     if y is None:
@@ -293,7 +293,7 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     Z_num = Z[:, np.logical_not(cat_features)]
 
     # This is to normalize the numeric values between 0 and 1.
-    lim = np.array(xlimits, dtype=object)[np.logical_not(cat_features)]
+    lim = np.array(xspecs["xlimits"], dtype=object)[np.logical_not(cat_features)]
     lb = np.zeros(np.shape(lim)[0])
     ub = np.ones(np.shape(lim)[0])
     if np.shape(lim)[0] > 0:

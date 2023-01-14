@@ -87,18 +87,6 @@ class KrgBased(SurrogateModel):
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
         declare(
-            "xlimits",
-            None,
-            desc="the upper and lower var bounds.",
-        )
-        declare(
-            "xtypes",
-            None,
-            types=list,
-            desc="x type specifications: either FLOAT for continuous, INT for integer "
-            "or (ENUM n) for categorical dimension with n levels",
-        )
-        declare(
             "nugget",
             100.0 * np.finfo(np.double).eps,
             types=(float),
@@ -156,6 +144,16 @@ class KrgBased(SurrogateModel):
             types=(int),
             desc="number of optimizer runs (multistart method)",
         )
+        declare(
+            "xspecs",
+            {"xtypes":None,"xlimits": None},
+            types=(dict),
+            desc= """xspecs : x specifications (xtypes,xlimits)
+                xtypes: x types list
+                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
+                xlimits: array-like
+                    bounds of x features""",
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
@@ -177,12 +175,12 @@ class KrgBased(SurrogateModel):
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
-                X=X, xlimits=self.options["xlimits"], xtypes=self.options["xtypes"]
+                X=X, xspecs=self.options["xspecs"]
             )
             self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, xtypes=self.options["xtypes"]
+                X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"]["xtypes"]
             )
-            _, self.cat_features = compute_X_cont(self.X_train, self.options["xtypes"])
+            _, self.cat_features = compute_X_cont(self.X_train, self.options["xspecs"]["xtypes"])
         # Center and scale X and y
         (
             self.X_norma,
@@ -586,7 +584,7 @@ class KrgBased(SurrogateModel):
                 from smt.applications.mixed_integer import unfold_with_enum_mask
 
                 X2 = unfold_with_enum_mask(
-                    self.options["xtypes"], self.training_points[None][0][0]
+                    self.options["xspecs"]["xtypes"], self.training_points[None][0][0]
                 )
                 (
                     self.X2_norma,
@@ -600,7 +598,7 @@ class KrgBased(SurrogateModel):
 
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
-                xtypes=self.options["xtypes"],
+                xtypes=self.options["xspecs"]["xtypes"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1009,9 +1007,8 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
+                xspecs=self.options["xspecs"],
                 y=np.copy(self.X_train),
-                xlimits=self.options["xlimits"],
-                xtypes=self.options["xtypes"],
             )
 
             d = componentwise_distance(
@@ -1024,17 +1021,17 @@ class KrgBased(SurrogateModel):
             if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
+                    X=x, ij=ij, xtypes=self.options["xspecs"]["xtypes"], y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
-                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred = unfold_with_enum_mask(self.options["xspecs"]["xtypes"], x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xtypes"],
+                    xtypes=self.options["xspecs"]["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1045,7 +1042,7 @@ class KrgBased(SurrogateModel):
                     x=x,
                 ).reshape(n_eval, self.nt)
 
-            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
+            X_cont, _ = compute_X_cont(x, self.options["xspecs"]["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
@@ -1147,9 +1144,8 @@ class KrgBased(SurrogateModel):
 
             dx = gower_componentwise_distances(
                 x,
+                xspecs=self.options["xspecs"],
                 y=np.copy(self.X_train),
-                xlimits=self.options["xlimits"],
-                xtypes=self.options["xtypes"],
             )
             d = componentwise_distance(
                 dx,
@@ -1162,20 +1158,20 @@ class KrgBased(SurrogateModel):
 
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xtypes"], y=self.X_train
+                    X=x, ij=ij, xtypes=self.options["xspecs"]["xtypes"], y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
-                    Xpred = unfold_with_enum_mask(self.options["xtypes"], x)
+                    Xpred = unfold_with_enum_mask(self.options["xspecs"]["xtypes"], x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
 
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xtypes"],
+                    xtypes=self.options["xspecs"]["xtypes"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1185,7 +1181,7 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     x=x,
                 ).reshape(n_eval, self.nt)
-            X_cont, _ = compute_X_cont(x, self.options["xtypes"])
+            X_cont, _ = compute_X_cont(x, self.options["xspecs"]["xtypes"])
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
@@ -1597,10 +1593,10 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options["xtypes"] is not None) or (
+        if (self.options["xspecs"]["xtypes"] is not None) or (
             self.options["categorical_kernel"] is not None
         ):
-            if self.options["xlimits"] is None:
+            if self.options["xspecs"]["xlimits"] is None:
                 raise ValueError("xlimits required for mixed integer Kriging")
 
         if self.name in ["KPLS"]:
@@ -1630,7 +1626,7 @@ class KrgBased(SurrogateModel):
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xtypes"],
+                self.options["xspecs"]["xtypes"],
                 self.options["categorical_kernel"],
                 self.nx,
                 d,

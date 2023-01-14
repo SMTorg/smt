@@ -32,10 +32,10 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext()
 
-        sm = mixint.build_surrogate_model(KRG(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
+        sm = mixint.build_surrogate_model(KRG(xspecs=xspecs, print_prediction=False))
+        sampling = mixint.build_sampling_method(xspecs, LHS, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -88,10 +88,10 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext()
 
-        sm = mixint.build_surrogate_model(KRG(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
+        sm = mixint.build_surrogate_model(KRG(xspecs=xspecs, print_prediction=False))
+        sampling = mixint.build_sampling_method(xspecs, LHS, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -114,10 +114,10 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext()
         with self.assertRaises(ValueError):
             sm = mixint.build_surrogate_model(
-                KRG(print_prediction=False, poly="linear")
+                KRG(xspecs=xspecs, print_prediction=False, poly="linear")
             )
 
     def test_qp_mixed_2D(self):
@@ -426,8 +426,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=GOWER_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -467,8 +466,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -508,8 +506,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -549,9 +546,12 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
+                xspecs=xspecs,
+                theta0=[1e-2],
+                n_comp=1,
+                cat_kernel_comps=[3],
+                corr="squar_exp",
             ),
         )
         sm.set_training_values(xt, yt)
@@ -591,9 +591,12 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=2, cat_kernel_comps=[3], corr="abs_exp"
+                xspecs=xspecs,
+                theta0=[1e-2],
+                n_comp=2,
+                cat_kernel_comps=[3],
+                corr="abs_exp",
             ),
         )
         sm.set_training_values(xt, yt)
@@ -633,9 +636,12 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3], corr="squar_exp"
+                xspecs=xspecs,
+                theta0=[1e-2],
+                n_comp=1,
+                cat_kernel_comps=[3],
+                corr="squar_exp",
             ),
         )
         sm.set_training_values(xt, yt)
@@ -679,9 +685,12 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
             surrogate=KPLS(
-                theta0=[1e-2], n_comp=1, cat_kernel_comps=[3, 2], corr="squar_exp"
+                xspecs=xspecs,
+                theta0=[1e-2],
+                n_comp=1,
+                cat_kernel_comps=[3, 2],
+                corr="squar_exp",
             ),
         )
         sm.set_training_values(xt, yt)
@@ -755,8 +764,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=GOWER_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -877,8 +885,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -994,8 +1001,7 @@ class TestMixedInteger(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerSurrogateModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
-            xspecs=xspecs,
-            surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
         sm.set_training_values(xt, yt)
         sm.train()
