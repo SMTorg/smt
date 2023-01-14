@@ -15,7 +15,6 @@ from smt.utils.kriging_utils import (
     squar_exp,
     abs_exp,
     act_exp,
-    standardization,
     cross_distances,
     matern52,
     matern32,
@@ -27,6 +26,7 @@ from smt.utils.kriging_utils import (
     compute_X_cross,
     cross_levels_homo_space,
 )
+from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 from smt.utils.mixed_integer import unfold_with_enum_mask
