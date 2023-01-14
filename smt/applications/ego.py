@@ -292,12 +292,6 @@ class EGO(SurrogateBasedApplication):
                 random_state=self.options["random_state"],
                 output_in_folded_space=self.work_in_folded_space,
             )
-            self._sampling_optim = self.mixint.build_sampling_method(
-                LHS,
-                xspecs=self.gpr._xspecs,
-                criterion="ese",
-                output_in_folded_space=self.work_in_folded_space,
-            )
         else:
             self.mixint = None
             self._sampling = LHS(
@@ -305,11 +299,6 @@ class EGO(SurrogateBasedApplication):
                 criterion="ese",
                 random_state=self.options["random_state"],
             )
-            self._sampling_optim = LHS(
-                xlimits=self.xlimits,
-                criterion="ese",
-            )
-
         # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
@@ -395,7 +384,7 @@ class EGO(SurrogateBasedApplication):
         n_optim = 1  # in order to have some success optimizations with SLSQP
         while not success and n_optim <= n_max_optim:
             opt_all = []
-            x_start = self._sampling_optim(n_start)
+            x_start = self._sampling(n_start)
             for ii in range(n_start):
                 try:
                     opt_all.append(

@@ -116,7 +116,7 @@ class TestEGO(SMTestCase):
         xspecs = dict.fromkeys(["xlimits"])
         xspecs["xlimits"] = xlimits
 
-        xdoe = FullFactorial(xlimits=xlimits)(15)
+        xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
