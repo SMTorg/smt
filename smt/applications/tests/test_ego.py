@@ -184,7 +184,7 @@ class TestEGO(SMTestCase):
         xspecs = dict.fromkeys(["xlimits"])
         xspecs["xlimits"] = fun.xlimits
 
-        xdoe = FullFactorial(xlimits=fun.xlimits)(10)
+        xdoe = FullFactorial(xlimits=fun.xlimits)(15)
         ego = EGO(
             surrogate=KRG(xspecs=xspecs, print_global=False),
             n_iter=n_iter,
@@ -199,7 +199,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.2)
         )
-        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.39, float(y_opt), delta=0.5)
 
     def test_branin_2D_parallel(self):
         n_iter = 10
