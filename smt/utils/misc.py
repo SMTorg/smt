@@ -8,7 +8,7 @@ import numpy as np
 from bisect import bisect_left
 
 
-def standardization(X, y, xlimits=None):
+def standardization(X, y):
 
     """
 
