@@ -115,7 +115,7 @@ class Test(SMTestCase):
         if sm.options.is_declared("xspecs"):
             sm.options["xspecs"] = {"xlimits": prob.xlimits}
         if sm.options.is_declared("xlimits"):
-             sm.options["xlimits"] = prob.xlimits
+            sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
 
         sm.set_training_values(xt, yt)

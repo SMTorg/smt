@@ -44,7 +44,7 @@ class TestRMTS(SMTestCase):
     def test_linear_search(self):
         for ls in ["bracketed", "cubic", "quadratic", "null"]:
             self.sms[ls] = RMTB(
-                xlimits = self.xlimits, line_search=ls, print_global=False
+                xlimits=self.xlimits, line_search=ls, print_global=False
             )
             self.sms[ls].set_training_values(self.xt, self.yt)
 
@@ -68,9 +68,7 @@ class TestRMTS(SMTestCase):
             "mg",
             "null",
         ]:
-            self.sms[ls] = RMTB(
-                xlimits=self.xlimits, solver=ls, print_global=False
-            )
+            self.sms[ls] = RMTB(xlimits=self.xlimits, solver=ls, print_global=False)
             self.sms[ls].set_training_values(self.xt, self.yt)
 
             with Silence():

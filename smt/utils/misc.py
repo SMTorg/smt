@@ -3,7 +3,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
+import sys
 import numpy as np
 from bisect import bisect_left
 
@@ -41,8 +41,7 @@ def standardization(X, y, xlimits=None):
             The mean of the output variable.
 
     X_scale:  list(dim)
-            The standard deviation (or the difference between the max and the
-            min if scale_X_to_unit=True) of each input variable.
+            The standard deviation of each input variable.
 
     y_std:  list(1)
             The standard deviation of the output variable.
@@ -52,7 +51,7 @@ def standardization(X, y, xlimits=None):
     X_offset = np.mean(X, axis=0)
     X_scale = X.std(axis=0, ddof=1)
 
-    X_scale[X_scale == 0.0] = 1.0
+    X_scale[np.abs(X_scale) < (100.0 * sys.float_info.epsilon)] = 1.0
     y_mean = np.mean(y, axis=0)
     y_std = y.std(axis=0, ddof=1)
     y_std[y_std == 0.0] = 1.0
