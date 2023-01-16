@@ -82,7 +82,7 @@ class Test(unittest.TestCase):
         xlimits = np.array([[0.0, 4.0]])
 
         sm = RMTB(
-            xspecs={"xlimits": xlimits},
+            xlimits=xlimits,
             order=4,
             num_ctrl_pts=20,
             energy_weight=1e-15,
@@ -115,7 +115,7 @@ class Test(unittest.TestCase):
         xlimits = np.array([[0.0, 4.0]])
 
         sm = RMTC(
-            xspecs={"xlimits": xlimits},
+            xlimits=xlimits,
             num_elements=20,
             energy_weight=1e-15,
             regularization_weight=0.0,
