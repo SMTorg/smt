@@ -148,7 +148,7 @@ class KrgBased(SurrogateModel):
             "xspecs",
             {"xtypes": None, "xlimits": None},
             types=(dict),
-            desc="""xspecs : x specifications (xtypes,xlimits)
+            desc="""xspecs : x specifications  {"xtypes": array-like, "xlimits": array-like}
                 xtypes: x types list
                     x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
                 xlimits: array-like

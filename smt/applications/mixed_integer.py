@@ -80,7 +80,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         """
         Parameters
         ----------
-        xspecs : x specifications (xtypes,xlimits)
+        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
             xtypes: x types list
                 x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
