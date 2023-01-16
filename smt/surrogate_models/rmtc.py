@@ -86,8 +86,8 @@ class RMTC(RMTS):
         self.rmtsc = PyRMTC()
         self.rmtsc.setup(
             num["x"],
-            np.array(self.options["xspecs"]["xlimits"][:, 0]),
-            np.array(self.options["xspecs"]["xlimits"][:, 1]),
+            np.array(self.options["xlimits"][:, 0]),
+            np.array(self.options["xlimits"][:, 1]),
             np.array(num["elem_list"], np.int32),
             np.array(num["term_list"], np.int32),
         )
