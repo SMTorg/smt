@@ -11,7 +11,6 @@ from smt.utils.mixed_integer import (
     cast_to_discrete_values,
     cast_to_enum_value,
     cast_to_mixed_integer,
-    check_xspec_consistency,
     encode_with_enum_index,
     fold_with_enum_index,
     unfold_with_enum_mask,
@@ -43,7 +42,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         if hasattr(self, "_xspecs") and xspecs is None:
             xspecs = self._xspecs
         self._xspecs = xspecs
-        check_xspec_consistency(self._xspecs)
+        self._xspecs.check_xspec_consistency()
         self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
@@ -105,7 +104,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + " is not supported. Please use MixedIntegerKrigingModel instead."
             )
         self._xspecs = xspecs
-        check_xspec_consistency(xspecs)
+        self._xspecs.check_xspec_consistency()
 
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
@@ -215,8 +214,7 @@ class MixedIntegerKrigingModel(KrgBased):
             self._xspecs = self._surrogate.options["xspecs"]
         else:
             self._xspecs = xspecs
-        check_xspec_consistency(self._xspecs)
-
+        self._xspecs.check_xspec_consistency()
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
@@ -326,7 +324,7 @@ class MixedIntegerContext(object):
         self._cat_kernel_comps = cat_kernel_comps
         self._xspecs = xspecs
         if xspecs["xlimits"] is not None and xspecs["xtypes"] is not None:
-            check_xspec_consistency(self._xspecs)
+            self._xspecs.check_xspec_consistency()
             self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
                 self._xspecs, unfold_space=(self._categorical_kernel == None)
             )

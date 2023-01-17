@@ -10,6 +10,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
+from smt.utils.mixed_integer import ENUM, ORD, FLOAT
 
 
 class XSpecs(object):
@@ -64,14 +65,6 @@ class XSpecs(object):
         self._assert_valid(name)
         self._xspecs[name] = value
 
-    def is_declared(self, key):
-        return key in self._xspecs.keys()
-
-    def _assert_valid(self, name):
-        assert name in self._xspecs.keys(), "Option %s is invalid - " % (
-            name,
-        ) + "value must be in  %s" % ([key for key in self._xspecs.keys()],)
-
     def update(self, xspecs):
         """
         Loop over and set all the entries in the given dictionary into self.
@@ -83,6 +76,69 @@ class XSpecs(object):
         for name in xspecs.keys():
             self._assert_valid(name)
             self._xspecs[name] = xspecs[name]
+
+    def is_declared(self, key):
+        return key in self._xspecs.keys()
+
+    def _assert_valid(self, name):
+        assert name in self._xspecs.keys(), "Option %s is invalid - " % (
+            name,
+        ) + "value must be in  %s" % ([key for key in self._xspecs.keys()],)
+
+    def check_xspec_consistency(self):
+        if "xlimits" in self._xspecs:
+            xlimits = self._xspecs["xlimits"]
+            if xlimits is None:
+                raise ValueError("xlimits is None in the surrogate model.")
+        else:
+            raise ValueError("xlimits not specified in xspecs")
+        if "xtypes" in self._xspecs:
+            xtypes = self._xspecs["xtypes"]
+            if xtypes is None:
+                raise ValueError("xtypes is None in the surrogate model.")
+        else:
+            raise ValueError("xtypes not specified in xspecs")
+        if len(xlimits) != len(xtypes):
+            raise ValueError(
+                "number of x limits ({}) do not"
+                "correspond to number of specified types ({})".format(
+                    len(xlimits), len(xtypes)
+                )
+            )
+
+        for i, xtyp in enumerate(xtypes):
+            if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
+                if xtyp == ORD and isinstance(xlimits[i][0], str):
+                    listint = list(map(float, xlimits[i]))
+                    sortedlistint = sorted(listint)
+                    if not np.array_equal(sortedlistint, listint):
+                        raise ValueError(
+                            "Unsorted x limits ({}) for variable type {} (index={})".format(
+                                xlimits[i], xtyp, i
+                            )
+                        )
+
+                else:
+                    raise ValueError(
+                        "Bad x limits ({}) for variable type {} (index={})".format(
+                            xlimits[i], xtyp, i
+                        )
+                    )
+            if (
+                xtyp != FLOAT
+                and xtyp != ORD
+                and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
+            ):
+                raise ValueError("Bad type specification {}".format(xtyp))
+
+            if isinstance(xtyp, tuple) and len(xlimits[i]) != xtyp[1]:
+                raise ValueError(
+                    "Bad x limits and x types specs not consistent. "
+                    "Got a categorical type with {} levels "
+                    "while x limits contains {} values (index={})".format(
+                        xtyp[1], len(xlimits[i]), i
+                    )
+                )
 
 
 def cross_distances(X, y=None):
