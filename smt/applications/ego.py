@@ -284,7 +284,7 @@ class EGO(SurrogateBasedApplication):
                 categorical_kernel=self.options["categorical_kernel"],
             )
 
-            self.gpr = self.mixint.build_surrogate_model(self.gpr)
+            self.gpr = self.mixint.build_kriging_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS,
                 xspecs=self.gpr._xspecs,

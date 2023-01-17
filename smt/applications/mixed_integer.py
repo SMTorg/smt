@@ -65,7 +65,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
 
 class MixedIntegerSurrogateModel(SurrogateModel):
     """
-    Surrogate model decorator that takes an SMT continuous surrogate model and
+    Surrogate model (not Kriging) decorator that takes an SMT continuous surrogate model and
     cast values according x types specification to implement a surrogate model
     handling integer (ORD) or categorical (ENUM) features
     """
@@ -76,6 +76,114 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         input_in_folded_space=True,
         categorical_kernel=None,
         cat_kernel_comps=None,
+        xspecs=None,
+    ):
+        """
+        Parameters
+        ----------
+        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
+            xtypes: x types list
+                x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
+            xlimits: array-like
+                bounds of x features
+        surrogate: SMT surrogate model (not Kriging)
+            instance of a SMT surrogate model
+        input_in_folded_space: bool
+            whether x data are in given in folded space (enum indexes) or not (enum masks)
+        categorical_kernel: string
+            the kernel to use for categorical inputs. Only for non continuous Kriging.
+        """
+        super().__init__()
+        self._surrogate = surrogate
+        self._categorical_kernel = categorical_kernel
+        self._cat_kernel_comps = cat_kernel_comps
+
+        if isinstance(self._surrogate, KrgBased):
+            raise ValueError(
+                "Using MixedIntegerSurrogateModel integer model with "
+                + str(self._surrogate.name)
+                + " is not supported. Please use MixedIntegerKrigingModel instead."
+            )
+        self._xspecs = xspecs
+        check_xspec_consistency(xspecs)
+
+        self._input_in_folded_space = input_in_folded_space
+        self.supports = self._surrogate.supports
+        self.options["print_global"] = False
+
+        if "poly" in self._surrogate.options:
+            if self._surrogate.options["poly"] != "constant":
+                raise ValueError("constant regression must be used with mixed integer")
+
+    @property
+    def name(self):
+        return "MixedInteger" + self._surrogate.name
+
+    def _initialize(self):
+        self.supports["derivatives"] = False
+
+    def set_training_values(self, xt, yt, name=None):
+
+        xt = ensure_2d_array(xt, "xt")
+        if self._input_in_folded_space:
+            xt2 = unfold_with_enum_mask(self._xspecs["xtypes"], xt)
+        else:
+            xt2 = xt
+        xt2 = cast_to_discrete_values(
+            self._xspecs, (self._categorical_kernel == None), xt2
+        )
+        super().set_training_values(xt2, yt)
+        self._surrogate.set_training_values(xt2, yt, name)
+
+    def update_training_values(self, yt, name=None):
+        super().update_training_values(yt, name)
+        self._surrogate.update_training_values(yt, name)
+
+    def _train(self):
+        self._surrogate._train()
+
+    def predict_values(self, x):
+        xp = ensure_2d_array(x, "xp")
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xspecs["xtypes"], xp)
+        else:
+            x2 = xp
+        return self._surrogate.predict_values(
+            cast_to_discrete_values(
+                self._xspecs, (self._categorical_kernel == None), x2
+            )
+        )
+
+    def predict_variances(self, x):
+        xp = ensure_2d_array(x, "xp")
+        if self._input_in_folded_space:
+            x2 = unfold_with_enum_mask(self._xspecs["xtypes"], xp)
+        else:
+            x2 = xp
+        return self._surrogate.predict_variances(
+            cast_to_discrete_values(
+                self._xspecs, (self._categorical_kernel == None), x2
+            )
+        )
+
+    def _predict_values(self, x):
+        pass
+
+
+class MixedIntegerKrigingModel(KrgBased):
+    """
+    Kriging model decorator that takes an SMT continuous surrogate model and
+    cast values according x types specification to implement a surrogate model
+    handling integer (ORD) or categorical (ENUM) features
+    """
+
+    def __init__(
+        self,
+        surrogate,
+        input_in_folded_space=True,
+        categorical_kernel=None,
+        cat_kernel_comps=None,
+        xspecs=None,
     ):
         """
         Parameters
@@ -96,14 +204,17 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._surrogate = surrogate
         self._categorical_kernel = categorical_kernel
         self._cat_kernel_comps = cat_kernel_comps
-
         if not (isinstance(self._surrogate, KrgBased)):
             raise ValueError(
-                "Using Mixed integer model with "
+                "Using MixedIntegerKrigingModel integer model with "
                 + str(self._surrogate.name)
-                + " is deprecated. Please opt for a Kriging-based model."
+                + " is not supported. Please use MixedIntegerSurrogateModel instead."
             )
-        self._xspecs = self._surrogate.options["xspecs"]
+
+        if xspecs is None or xspecs["xlimits"] is None or xspecs["xtypes"] is None:
+            self._xspecs = self._surrogate.options["xspecs"]
+        else:
+            self._xspecs = xspecs
         check_xspec_consistency(self._xspecs)
 
         self._input_in_folded_space = input_in_folded_space
@@ -232,15 +343,28 @@ class MixedIntegerContext(object):
         kwargs["output_in_folded_space"] = self._work_in_folded_space
         return MixedIntegerSamplingMethod(sampling_method_class, xspecs, **kwargs)
 
+    def build_kriging_model(self, surrogate):
+        """
+        Build MixedIntegerKrigingModel from given SMT surrogate model.
+        """
+        return MixedIntegerKrigingModel(
+            surrogate=surrogate,
+            input_in_folded_space=self._work_in_folded_space,
+            categorical_kernel=self._categorical_kernel,
+            cat_kernel_comps=self._cat_kernel_comps,
+            xspecs=self._xspecs,
+        )
+
     def build_surrogate_model(self, surrogate):
         """
-        Build MixedIntegerSurrogateModel from given SMT surrogate model.
+        Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
             cat_kernel_comps=self._cat_kernel_comps,
+            xspecs=self._xspecs,
         )
 
     def get_unfolded_xlimits(self):

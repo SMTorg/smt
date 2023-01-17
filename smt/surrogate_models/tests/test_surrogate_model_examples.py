@@ -229,7 +229,7 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, ORD
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
@@ -243,7 +243,7 @@ class Test(unittest.TestCase):
         xspecs["xtypes"] = [ORD]
         xspecs["xlimits"] = [[0, 4]]
 
-        sm = MixedIntegerSurrogateModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
+        sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -274,7 +274,7 @@ class Test(unittest.TestCase):
     def test_mixed_gower_krg(self):
         from smt.surrogate_models import ENUM, GOWER_KERNEL, KRG
         from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
+            MixedIntegerKrigingModel,
         )
         import matplotlib.pyplot as plt
         import numpy as np
@@ -285,7 +285,7 @@ class Test(unittest.TestCase):
         xspecs["xtypes"] = [(ENUM, 5)]
         xspecs["xlimits"] = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=GOWER_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-2]),
         )
