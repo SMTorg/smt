@@ -63,7 +63,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         return self._compute(nt)
 
 
-class MixedIntegerSurrogateModel(SurrogateModel):
+class MixedIntegerKrigingModel(SurrogateModel):
     """
     Surrogate model decorator that takes an SMT continuous surrogate model and
     cast values according x types specification to implement a surrogate model
@@ -76,7 +76,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         input_in_folded_space=True,
         categorical_kernel=None,
         cat_kernel_comps=None,
-        xspecs = None,
+        xspecs=None,
     ):
         """
         Parameters
@@ -106,7 +106,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             )
         if xspecs is None or xspecs["xlimits"] is None or xspecs["xtypes"] is None:
             self._xspecs = self._surrogate.options["xspecs"]
-        else : 
+        else:
             self._xspecs = xspecs
         check_xspec_consistency(self._xspecs)
 
@@ -238,14 +238,14 @@ class MixedIntegerContext(object):
 
     def build_surrogate_model(self, surrogate):
         """
-        Build MixedIntegerSurrogateModel from given SMT surrogate model.
+        Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
-        return MixedIntegerSurrogateModel(
+        return MixedIntegerKrigingModel(
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
             cat_kernel_comps=self._cat_kernel_comps,
-            xspecs = self._xspecs,
+            xspecs=self._xspecs,
         )
 
     def get_unfolded_xlimits(self):

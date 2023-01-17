@@ -413,7 +413,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KRG, ENUM, FLOAT, GOWER_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -424,7 +424,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xlimits"] = xlimits
 
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=GOWER_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
@@ -454,7 +454,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KRG, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -464,7 +464,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
@@ -494,7 +494,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KRG, ENUM, FLOAT, HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
@@ -504,7 +504,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
         )
@@ -534,7 +534,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KPLS, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -544,7 +544,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
@@ -579,7 +579,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KPLS, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -589,7 +589,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
@@ -624,7 +624,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KPLS, ENUM, FLOAT, HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -634,7 +634,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
@@ -669,7 +669,7 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KPLS, ORD, ENUM, EXP_HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
@@ -683,7 +683,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
@@ -743,7 +743,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, ENUM, FLOAT, GOWER_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -762,7 +762,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=GOWER_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
@@ -864,7 +864,7 @@ class TestMixedInteger(unittest.TestCase):
             FLOAT,
             EXP_HOMO_HSPHERE_KERNEL,
         )
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -883,7 +883,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
@@ -980,7 +980,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, HOMO_HSPHERE_KERNEL, ENUM, FLOAT
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -999,7 +999,7 @@ class TestMixedInteger(unittest.TestCase):
         xspecs["xtypes"] = xtypes
         xspecs["xlimits"] = xlimits
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=HOMO_HSPHERE_KERNEL,
             surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
         )
