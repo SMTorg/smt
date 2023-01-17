@@ -12,6 +12,79 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 
+class XSpecs(object):
+    """
+    XSpecs dictionnary managing class.
+    Attributes
+    ----------
+    _xspecs : dict
+        Dictionary of option values keyed by option names.
+    """
+
+    def __init__(self):
+        self._xspecs = {"xlimits": None, "xtypes": None}
+
+    def clone(self):
+        """
+        Return a clone of this object.
+        Returns
+        -------
+        OptionsDictionary
+            Deep-copied clone.
+        """
+        clone = self.__class__()
+        clone._xspecs = dict(self._xspecs)
+        return clone
+
+    def __getitem__(self, name):
+        """
+        Get an option that was previously declared and optionally set.
+        Arguments
+        ---------
+        name : str
+            The name of the option.
+        Returns
+        -------
+        object
+            Value of the option.
+        """
+        self._assert_valid(name)
+        return self._xspecs[name]
+
+    def __setitem__(self, name, value):
+        """
+        Set an option that was previously declared.
+        Arguments
+        ---------
+        name : str
+            The name of the option.
+        value : object
+            The value to set.
+        """
+        self._assert_valid(name)
+        self._xspecs[name] = value
+
+    def is_declared(self, key):
+        return key in self._xspecs.keys()
+
+    def _assert_valid(self, name):
+        assert name in self._xspecs.keys(), "Option %s is invalid - " % (
+            name,
+        ) + "value must be in  %s" % ([key for key in self._xspecs.keys()],)
+
+    def update(self, xspecs):
+        """
+        Loop over and set all the entries in the given dictionary into self.
+        Arguments
+        ---------
+        dict_ : dict
+            The given dictionary. All keys must have been declared.
+        """
+        for name in xspecs.keys():
+            self._assert_valid(name)
+            self._xspecs[name] = xspecs[name]
+
+
 def cross_distances(X, y=None):
 
     """
