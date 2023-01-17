@@ -230,6 +230,7 @@ class Test(unittest.TestCase):
 
         from smt.surrogate_models import KRG, ORD
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.utils.kriging_utils import XSpecs
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
@@ -239,7 +240,7 @@ class Test(unittest.TestCase):
         # ORD means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = dict.fromkeys(["xtypes", "xlimits"])
+        xspecs = XSpecs()
         xspecs["xtypes"] = [ORD]
         xspecs["xlimits"] = [[0, 4]]
 
@@ -278,10 +279,11 @@ class Test(unittest.TestCase):
         )
         import matplotlib.pyplot as plt
         import numpy as np
+        from smt.utils.kriging_utils import XSpecs
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
-        xspecs = dict.fromkeys(["xtypes", "xlimits"])
+        xspecs = XSpecs()
         xspecs["xtypes"] = [(ENUM, 5)]
         xspecs["xlimits"] = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
         # Surrogate
@@ -423,6 +425,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import GEKPLS
         from smt.problems import Sphere
         from smt.sampling_methods import LHS
+        from smt.utils.kriging_utils import XSpecs
 
         # Construction of the DOE
         fun = Sphere(ndim=2)
@@ -433,11 +436,12 @@ class Test(unittest.TestCase):
         for i in range(2):
             yd = fun(xt, kx=i)
             yt = np.concatenate((yt, yd), axis=1)
-
+        xspecs = XSpecs()
+        xspecs["xlimits"] = fun.xlimits
         # Build the GEKPLS model
         n_comp = 2
         sm = GEKPLS(
-            xspecs={"xlimits": fun.xlimits},
+            xspecs=xspecs,
             theta0=[1e-2] * n_comp,
             extra_points=1,
             print_prediction=False,

@@ -26,6 +26,7 @@ from smt.surrogate_models import (
 )
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import MixedIntegerContext
+from smt.utils.kriging_utils import XSpecs
 
 
 class Evaluator(object):
@@ -273,10 +274,7 @@ class EGO(SurrogateBasedApplication):
             self.work_in_folded_space = True
         else:
             self.work_in_folded_space = False
-        if (
-            "xtypes" in self.gpr.options["xspecs"]
-            and self.gpr.options["xspecs"]["xtypes"] is not None
-        ):
+        if self.gpr.options["xspecs"]["xtypes"] is not None:
             self.xtypes = self.gpr.options["xspecs"]["xtypes"]
             self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(

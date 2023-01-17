@@ -15,70 +15,6 @@ ORD = "ord_type"
 ENUM = "enum_type"
 
 
-def check_xspec_consistency(xspecs):
-    if "xlimits" in xspecs:
-        xlimits = xspecs["xlimits"]
-        if xlimits is None:
-            raise ValueError("xlimits is None in the surrogate model.")
-    else:
-        raise ValueError("xlimits not specified in xspecs")
-    if "xtypes" in xspecs:
-        xtypes = xspecs["xtypes"]
-        if xtypes is None:
-            raise ValueError("xtypes is None in the surrogate model.")
-    else:
-        raise ValueError("xtypes not specified in xspecs")
-    if len(xlimits) != len(xtypes):
-        raise ValueError(
-            "number of x limits ({}) do not"
-            "correspond to number of specified types ({})".format(
-                len(xlimits), len(xtypes)
-            )
-        )
-
-    for i, xtyp in enumerate(xtypes):
-        if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            if xtyp == ORD and isinstance(xlimits[i][0], str):
-                listint = list(map(float, xlimits[i]))
-                sortedlistint = sorted(listint)
-                if not np.array_equal(sortedlistint, listint):
-                    raise ValueError(
-                        "Unsorted x limits ({}) for variable type {} (index={})".format(
-                            xlimits[i], xtyp, i
-                        )
-                    )
-
-            else:
-                raise ValueError(
-                    "Bad x limits ({}) for variable type {} (index={})".format(
-                        xlimits[i], xtyp, i
-                    )
-                )
-        if xtyp == INT:
-            if not isinstance(xlimits[i][0], str):
-                xtyp = ORD
-                xtypes[i] = ORD
-            else:
-                raise ValueError(
-                    "INT do not work with list of ordered values, use ORD instead"
-                )
-        if (
-            xtyp != FLOAT
-            and xtyp != ORD
-            and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
-        ):
-            raise ValueError("Bad type specification {}".format(xtyp))
-
-        if isinstance(xtyp, tuple) and len(xlimits[i]) != xtyp[1]:
-            raise ValueError(
-                "Bad x limits and x types specs not consistent. "
-                "Got a categorical type with {} levels "
-                "while x limits contains {} values (index={})".format(
-                    xtyp[1], len(xlimits[i]), i
-                )
-            )
-
-
 def _raise_value_error(xtyp):
     raise ValueError(
         "Bad xtype specification: "
@@ -244,7 +180,7 @@ def cast_to_mixed_integer(xspecs, x):
     """
     see MixedIntegerContext.cast_to_mixed_integer
     """
-    check_xspec_consistency(xspecs)
+    xspecs.check_xspec_consistency()
     xlimits = xspecs["xlimits"]
     xtypes = xspecs["xtypes"]
     res = []

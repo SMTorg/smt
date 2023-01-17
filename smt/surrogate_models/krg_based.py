@@ -25,6 +25,7 @@ from smt.utils.kriging_utils import (
     cross_levels,
     compute_X_cross,
     cross_levels_homo_space,
+    XSpecs,
 )
 from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
@@ -146,8 +147,8 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "xspecs",
-            {"xtypes": None, "xlimits": None},
-            types=(dict),
+            XSpecs(),
+            types=XSpecs,
             desc="""xspecs : x specifications  {"xtypes": array-like, "xlimits": array-like}
                 xtypes: x types list
                     x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
@@ -1595,10 +1596,8 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (
-            ("xtypes" in self.options["xspecs"])
-            and (self.options["xspecs"]["xtypes"] is not None)
-            or (self.options["categorical_kernel"] is not None)
+        if (self.options["xspecs"]["xtypes"] is not None) or (
+            self.options["categorical_kernel"] is not None
         ):
             if self.options["xspecs"]["xlimits"] is None:
                 raise ValueError("xlimits required for mixed integer Kriging")
