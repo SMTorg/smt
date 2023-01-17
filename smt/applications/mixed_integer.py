@@ -76,6 +76,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         input_in_folded_space=True,
         categorical_kernel=None,
         cat_kernel_comps=None,
+        xspecs = None,
     ):
         """
         Parameters
@@ -103,7 +104,10 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + str(self._surrogate.name)
                 + " is deprecated. Please opt for a Kriging-based model."
             )
-        self._xspecs = self._surrogate.options["xspecs"]
+        if xspecs is None or xspecs["xlimits"] is None or xspecs["xtypes"] is None:
+            self._xspecs = self._surrogate.options["xspecs"]
+        else : 
+            self._xspecs = xspecs
         check_xspec_consistency(self._xspecs)
 
         self._input_in_folded_space = input_in_folded_space
@@ -241,6 +245,7 @@ class MixedIntegerContext(object):
             input_in_folded_space=self._work_in_folded_space,
             categorical_kernel=self._categorical_kernel,
             cat_kernel_comps=self._cat_kernel_comps,
+            xspecs = self._xspecs,
         )
 
     def get_unfolded_xlimits(self):
