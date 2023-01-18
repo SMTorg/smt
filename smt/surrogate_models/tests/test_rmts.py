@@ -31,8 +31,7 @@ class TestRMTS(SMTestCase):
         self.yt = function_test_1d(self.xt)
 
         self.xlimits = np.array([[0.0, 25.0]])
-
-        self.smref = smref = RMTB(xlimits=self.xlimits, print_global=False)
+        smref = RMTB(xlimits=self.xlimits, print_global=False)
         smref.set_training_values(self.xt, self.yt)
         with Silence():
             smref.train()

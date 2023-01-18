@@ -10,7 +10,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
@@ -230,7 +229,8 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, ORD
-        from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.utils.kriging_utils import XSpecs
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
@@ -240,10 +240,11 @@ class Test(unittest.TestCase):
         # ORD means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
+        xspecs = XSpecs()
+        xspecs["xtypes"] = [ORD]
+        xspecs["xlimits"] = [[0, 4]]
 
-        sm = MixedIntegerSurrogateModel(
-            xtypes=[ORD], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
-        )
+        sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -274,22 +275,21 @@ class Test(unittest.TestCase):
     def test_mixed_gower_krg(self):
         from smt.surrogate_models import ENUM, GOWER_KERNEL, KRG
         from smt.applications.mixed_integer import (
-            MixedIntegerSurrogateModel,
+            MixedIntegerKrigingModel,
         )
         import matplotlib.pyplot as plt
         import numpy as np
+        from smt.utils.kriging_utils import XSpecs
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
-
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
-
+        xspecs = XSpecs()
+        xspecs["xtypes"] = [(ENUM, 5)]
+        xspecs["xlimits"] = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
         # Surrogate
-        sm = MixedIntegerSurrogateModel(
+        sm = MixedIntegerKrigingModel(
             categorical_kernel=GOWER_KERNEL,
-            xtypes=[(ENUM, 5)],
-            xlimits=xlimits,
-            surrogate=KRG(theta0=[1e-2]),
+            surrogate=KRG(xspecs=xspecs, theta0=[1e-2]),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -425,6 +425,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import GEKPLS
         from smt.problems import Sphere
         from smt.sampling_methods import LHS
+        from smt.utils.kriging_utils import XSpecs
 
         # Construction of the DOE
         fun = Sphere(ndim=2)
@@ -435,12 +436,13 @@ class Test(unittest.TestCase):
         for i in range(2):
             yd = fun(xt, kx=i)
             yt = np.concatenate((yt, yd), axis=1)
-
+        xspecs = XSpecs()
+        xspecs["xlimits"] = fun.xlimits
         # Build the GEKPLS model
         n_comp = 2
         sm = GEKPLS(
+            xspecs=xspecs,
             theta0=[1e-2] * n_comp,
-            xlimits=fun.xlimits,
             extra_points=1,
             print_prediction=False,
             n_comp=n_comp,

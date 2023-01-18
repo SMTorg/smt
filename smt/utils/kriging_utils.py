@@ -10,71 +10,135 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
+from smt.utils.mixed_integer import ENUM, ORD, FLOAT
 
 
-def standardization(X, y, scale_X_to_unit=False):
-
+class XSpecs(object):
     """
-
-    We substract the mean from each variable. Then, we divide the values of each
-    variable by its standard deviation. If scale_X_to_unit, we scale the input
-    space X to the unit hypercube [0,1]^dim with dim the input dimension.
-
-    Parameters
+    XSpecs dictionnary managing class.
+    Attributes
     ----------
-
-    X: np.ndarray [n_obs, dim]
-            - The input variables.
-
-    y: np.ndarray [n_obs, 1]
-            - The output variable.
-
-    scale_X_to_unit: bool
-            - We substract the mean from each variable and then divide the values
-              of each variable by its standard deviation (scale_X_to_unit=False).
-            - We scale X to the unit hypercube [0,1]^dim (scale_X_to_unit=True).
-
-    Returns
-    -------
-
-    X: np.ndarray [n_obs, dim]
-          The standardized input matrix.
-
-    y: np.ndarray [n_obs, 1]
-          The standardized output vector.
-
-    X_offset: list(dim)
-            The mean (or the min if scale_X_to_unit=True) of each input variable.
-
-    y_mean: list(1)
-            The mean of the output variable.
-
-    X_scale:  list(dim)
-            The standard deviation (or the difference between the max and the
-            min if scale_X_to_unit=True) of each input variable.
-
-    y_std:  list(1)
-            The standard deviation of the output variable.
-
+    _xspecs : dict
+        Dictionary of option values keyed by option names.
     """
 
-    if scale_X_to_unit:
-        X_offset = np.min(X, axis=0)
-        X_max = np.max(X, axis=0)
-        X_scale = X_max - X_offset
-    else:
-        X_offset = np.mean(X, axis=0)
-        X_scale = X.std(axis=0, ddof=1)
+    def __init__(self):
+        self._xspecs = {"xlimits": None, "xtypes": None}
 
-    X_scale[X_scale == 0.0] = 1.0
-    y_mean = np.mean(y, axis=0)
-    y_std = y.std(axis=0, ddof=1)
-    y_std[y_std == 0.0] = 1.0
+    def clone(self):
+        """
+        Return a clone of this object.
+        Returns
+        -------
+        OptionsDictionary
+            Deep-copied clone.
+        """
+        clone = self.__class__()
+        clone._xspecs = dict(self._xspecs)
+        return clone
 
-    # scale X and y
-    X = (X - X_offset) / X_scale
-    y = (y - y_mean) / y_std
-    return X, y, X_offset, y_mean, X_scale, y_std
+    def __getitem__(self, name):
+        """
+        Get an option that was previously declared and optionally set.
+        Arguments
+        ---------
+        name : str
+            The name of the option.
+        Returns
+        -------
+        object
+            Value of the option.
+        """
+        self._assert_valid(name)
+        return self._xspecs[name]
+
+    def __setitem__(self, name, value):
+        """
+        Set an option that was previously declared.
+        Arguments
+        ---------
+        name : str
+            The name of the option.
+        value : object
+            The value to set.
+        """
+        self._assert_valid(name)
+        self._xspecs[name] = value
+
+    def update(self, xspecs):
+        """
+        Loop over and set all the entries in the given dictionary into self.
+        Arguments
+        ---------
+        dict_ : dict
+            The given dictionary. All keys must have been declared.
+        """
+        for name in xspecs.keys():
+            self._assert_valid(name)
+            self._xspecs[name] = xspecs[name]
+
+    def is_declared(self, key):
+        return key in self._xspecs.keys()
+
+    def _assert_valid(self, name):
+        assert name in self._xspecs.keys(), "Option %s is invalid - " % (
+            name,
+        ) + "value must be in  %s" % ([key for key in self._xspecs.keys()],)
+
+    def check_xspec_consistency(self):
+        if "xlimits" in self._xspecs:
+            xlimits = self._xspecs["xlimits"]
+            if xlimits is None:
+                raise ValueError("xlimits is None in the surrogate model.")
+        else:
+            raise ValueError("xlimits not specified in xspecs")
+        if "xtypes" in self._xspecs:
+            xtypes = self._xspecs["xtypes"]
+            if xtypes is None:
+                raise ValueError("xtypes is None in the surrogate model.")
+        else:
+            raise ValueError("xtypes not specified in xspecs")
+        if len(xlimits) != len(xtypes):
+            raise ValueError(
+                "number of x limits ({}) do not"
+                "correspond to number of specified types ({})".format(
+                    len(xlimits), len(xtypes)
+                )
+            )
+
+        for i, xtyp in enumerate(xtypes):
+            if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
+                if xtyp == ORD and isinstance(xlimits[i][0], str):
+                    listint = list(map(float, xlimits[i]))
+                    sortedlistint = sorted(listint)
+                    if not np.array_equal(sortedlistint, listint):
+                        raise ValueError(
+                            "Unsorted x limits ({}) for variable type {} (index={})".format(
+                                xlimits[i], xtyp, i
+                            )
+                        )
+
+                else:
+                    raise ValueError(
+                        "Bad x limits ({}) for variable type {} (index={})".format(
+                            xlimits[i], xtyp, i
+                        )
+                    )
+            if (
+                xtyp != FLOAT
+                and xtyp != ORD
+                and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
+            ):
+                raise ValueError("Bad type specification {}".format(xtyp))
+
+            if isinstance(xtyp, tuple) and len(xlimits[i]) != xtyp[1]:
+                raise ValueError(
+                    "Bad x limits and x types specs not consistent. "
+                    "Got a categorical type with {} levels "
+                    "while x limits contains {} values (index={})".format(
+                        xtyp[1], len(xlimits[i]), i
+                    )
+                )
 
 
 def cross_distances(X, y=None):
@@ -237,7 +301,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
+def gower_componentwise_distances(X, xspecs, y=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -263,7 +327,7 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     """
     X = X.astype(np.float64)
     Xt = X
-    X_cont, cat_features = compute_X_cont(Xt, xtypes)
+    X_cont, cat_features = compute_X_cont(Xt, xspecs["xtypes"])
 
     # function checks
     if y is None:
@@ -293,7 +357,7 @@ def gower_componentwise_distances(X, xlimits, y=None, xtypes=None):
     Z_num = Z[:, np.logical_not(cat_features)]
 
     # This is to normalize the numeric values between 0 and 1.
-    lim = np.array(xlimits, dtype=object)[np.logical_not(cat_features)]
+    lim = np.array(xspecs["xlimits"], dtype=object)[np.logical_not(cat_features)]
     lb = np.zeros(np.shape(lim)[0])
     ub = np.ones(np.shape(lim)[0])
     if np.shape(lim)[0] > 0:

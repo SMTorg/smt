@@ -26,6 +26,7 @@ from smt.surrogate_models import (
 )
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import MixedIntegerContext
+from smt.utils.kriging_utils import XSpecs
 
 
 class Evaluator(object):
@@ -103,7 +104,6 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
-        declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -127,13 +127,6 @@ class EGO(SurrogateBasedApplication):
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
             desc="SMT kriging-based surrogate model used internaly",
-        )
-        declare(
-            "xtypes",
-            None,
-            types=list,
-            desc="x types specifications: either FLOAT for continuous, INT for integer "
-            "or (ENUM n) for categorical doimension with n levels",
         )
         self.options.declare(
             "random_state",
@@ -274,33 +267,27 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xlimits = self.options["xlimits"]
+        self.xlimits = self.gpr.options["xspecs"]["xlimits"]
 
         # Handle mixed integer optimization
-        xtypes = self.options["xtypes"]
         if self.options["categorical_kernel"] is not None:
             self.work_in_folded_space = True
         else:
             self.work_in_folded_space = False
-        if xtypes:
+        if self.gpr.options["xspecs"]["xtypes"] is not None:
+            self.xtypes = self.gpr.options["xspecs"]["xtypes"]
             self.categorical_kernel = self.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                xtypes,
-                self.xlimits,
                 work_in_folded_space=self.work_in_folded_space,
                 categorical_kernel=self.options["categorical_kernel"],
             )
 
-            self.gpr = self.mixint.build_surrogate_model(self.gpr)
+            self.gpr = self.mixint.build_kriging_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS,
+                xspecs=self.gpr._xspecs,
                 criterion="ese",
                 random_state=self.options["random_state"],
-                output_in_folded_space=self.work_in_folded_space,
-            )
-            self._sampling_optim = self.mixint.build_sampling_method(
-                LHS,
-                criterion="ese",
                 output_in_folded_space=self.work_in_folded_space,
             )
         else:
@@ -310,11 +297,6 @@ class EGO(SurrogateBasedApplication):
                 criterion="ese",
                 random_state=self.options["random_state"],
             )
-            self._sampling_optim = LHS(
-                xlimits=self.xlimits,
-                criterion="ese",
-            )
-
         # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
@@ -375,7 +357,7 @@ class EGO(SurrogateBasedApplication):
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
                 if self.work_in_folded_space:
-                    if isinstance(self.options["xtypes"][j], tuple):
+                    if isinstance(self.xtypes[j], tuple):
                         upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
@@ -400,7 +382,7 @@ class EGO(SurrogateBasedApplication):
         n_optim = 1  # in order to have some success optimizations with SLSQP
         while not success and n_optim <= n_max_optim:
             opt_all = []
-            x_start = self._sampling_optim(n_start)
+            x_start = self._sampling(n_start)
             for ii in range(n_start):
                 try:
                     opt_all.append(

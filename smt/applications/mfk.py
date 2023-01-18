@@ -22,9 +22,9 @@ from smt.sampling_methods import LHS
 from smt.utils.kriging_utils import (
     cross_distances,
     componentwise_distance,
-    standardization,
     differences,
 )
+from smt.utils.misc import standardization
 
 
 class NestedLHS(object):

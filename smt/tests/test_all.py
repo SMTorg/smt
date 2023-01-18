@@ -18,6 +18,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP
+from smt.utils.kriging_utils import XSpecs
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -142,6 +143,10 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
+        if sm.options.is_declared("xspecs"):
+            sm.options["xspecs"] = XSpecs()
+            sm.options["xspecs"]["xlimits"] = prob.xlimits
+            {"xlimits": prob.xlimits}
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
@@ -338,6 +343,10 @@ class Test(SMTestCase):
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_cos_RMTB(self):
+        self.run_test()
+
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    def test_exp_RMTB(self):
         self.run_test()
 
 

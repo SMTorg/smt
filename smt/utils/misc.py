@@ -3,9 +3,63 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
+import sys
 import numpy as np
 from bisect import bisect_left
+
+
+def standardization(X, y):
+
+    """
+
+    We substract the mean from each variable. Then, we divide the values of each
+    variable by its standard deviation. If scale_X_to_unit, we scale the input
+    space X to the unit hypercube [0,1]^dim with dim the input dimension.
+
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+
+    y: np.ndarray [n_obs, 1]
+            - The output variable.
+
+    Returns
+    -------
+
+    X: np.ndarray [n_obs, dim]
+          The standardized input matrix.
+
+    y: np.ndarray [n_obs, 1]
+          The standardized output vector.
+
+    X_offset: list(dim)
+            The mean (or the min if scale_X_to_unit=True) of each input variable.
+
+    y_mean: list(1)
+            The mean of the output variable.
+
+    X_scale:  list(dim)
+            The standard deviation of each input variable.
+
+    y_std:  list(1)
+            The standard deviation of the output variable.
+
+    """
+
+    X_offset = np.mean(X, axis=0)
+    X_scale = X.std(axis=0, ddof=1)
+
+    X_scale[np.abs(X_scale) < (100.0 * sys.float_info.epsilon)] = 1.0
+    y_mean = np.mean(y, axis=0)
+    y_std = y.std(axis=0, ddof=1)
+    y_std[y_std == 0.0] = 1.0
+
+    # scale X and y
+    X = (X - X_offset) / X_scale
+    y = (y - y_mean) / y_std
+    return X, y, X_offset, y_mean, X_scale, y_std
 
 
 def compute_rms_error(sm, xe=None, ye=None, kx=None):
