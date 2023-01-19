@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from copy import deepcopy
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
@@ -13,131 +14,93 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.mixed_integer import ENUM, ORD, FLOAT
 
 
-class XSpecs(object):
+class XSpecs:
     """
-    XSpecs dictionnary managing class.
+    A class to specify input variables type and domain
+
     Attributes
     ----------
-    _xspecs : dict
-        Dictionary of option values keyed by option names.
+    _xtypes : list
+        list of mixed integer types
+
+    _xlimits : np.array
+        list of corresponding domain which depends on variable types
     """
 
-    def __init__(self):
-        self._xspecs = {"xlimits": None, "xtypes": None}
+    def __init__(self, xtypes=None, xlimits=None):
+        self._xlimits = xlimits
+        if xtypes is None:  # when xtypes is not specified default to float
+            self._xtypes = [FLOAT] * len(xlimits)
+        else:
+            self._xtypes = xtypes
+
+        self._check_consistency()
+
+    @property
+    def types(self):
+        return self._xtypes
+
+    @property
+    def limits(self):
+        return self._xlimits
+
+    @types.setter
+    def types(self, xtypes):
+        self._xtypes = xtypes
+        self._check_consistency()
+
+    @limits.setter
+    def limits(self, xlimits):
+        self._xlimits = xlimits
+        self._check_consistency()
 
     def clone(self):
         """
         Return a clone of this object.
         Returns
         -------
-        OptionsDictionary
             Deep-copied clone.
         """
-        clone = self.__class__()
-        clone._xspecs = dict(self._xspecs)
-        return clone
+        return XSpecs(deepcopy(self._xtypes), deepcopy(self._xlimits))
 
-    def __getitem__(self, name):
-        """
-        Get an option that was previously declared and optionally set.
-        Arguments
-        ---------
-        name : str
-            The name of the option.
-        Returns
-        -------
-        object
-            Value of the option.
-        """
-        self._assert_valid(name)
-        return self._xspecs[name]
-
-    def __setitem__(self, name, value):
-        """
-        Set an option that was previously declared.
-        Arguments
-        ---------
-        name : str
-            The name of the option.
-        value : object
-            The value to set.
-        """
-        self._assert_valid(name)
-        self._xspecs[name] = value
-
-    def update(self, xspecs):
-        """
-        Loop over and set all the entries in the given dictionary into self.
-        Arguments
-        ---------
-        dict_ : dict
-            The given dictionary. All keys must have been declared.
-        """
-        for name in xspecs.keys():
-            self._assert_valid(name)
-            self._xspecs[name] = xspecs[name]
-
-    def is_declared(self, key):
-        return key in self._xspecs.keys()
-
-    def _assert_valid(self, name):
-        assert name in self._xspecs.keys(), "Option %s is invalid - " % (
-            name,
-        ) + "value must be in  %s" % ([key for key in self._xspecs.keys()],)
-
-    def check_xspec_consistency(self):
-        if "xlimits" in self._xspecs:
-            xlimits = self._xspecs["xlimits"]
-            if xlimits is None:
-                raise ValueError("xlimits is None in the surrogate model.")
-        else:
+    def _check_consistency(self):
+        if self._xlimits is None:
             raise ValueError("xlimits not specified in xspecs")
-        if "xtypes" in self._xspecs:
-            xtypes = self._xspecs["xtypes"]
-            if xtypes is None:
-                raise ValueError("xtypes is None in the surrogate model.")
-        else:
+
+        if self._xtypes is None:
             raise ValueError("xtypes not specified in xspecs")
-        if len(xlimits) != len(xtypes):
+
+        if len(self._xlimits) != len(self._xtypes):
             raise ValueError(
-                "number of x limits ({}) do not"
-                "correspond to number of specified types ({})".format(
-                    len(xlimits), len(xtypes)
-                )
+                f"number of x limits ({len(self._xlimits)}) do not"
+                f" correspond to number of specified types ({len(self._xtypes)})"
             )
 
-        for i, xtyp in enumerate(xtypes):
-            if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-                if xtyp == ORD and isinstance(xlimits[i][0], str):
-                    listint = list(map(float, xlimits[i]))
+        for i, xtyp in enumerate(self._xtypes):
+            if (not isinstance(xtyp, tuple)) and len(self._xlimits[i]) != 2:
+                if xtyp == ORD and isinstance(self._xlimits[i][0], str):
+                    listint = list(map(float, self._xlimits[i]))
                     sortedlistint = sorted(listint)
                     if not np.array_equal(sortedlistint, listint):
                         raise ValueError(
-                            "Unsorted x limits ({}) for variable type {} (index={})".format(
-                                xlimits[i], xtyp, i
-                            )
+                            f"Unsorted x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
                         )
-
                 else:
                     raise ValueError(
-                        "Bad x limits ({}) for variable type {} (index={})".format(
-                            xlimits[i], xtyp, i
-                        )
+                        f"Bad x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
                     )
             if (
                 xtyp != FLOAT
                 and xtyp != ORD
                 and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
             ):
-                raise ValueError("Bad type specification {}".format(xtyp))
+                raise ValueError(f"Bad type specification {xtyp}")
 
-            if isinstance(xtyp, tuple) and len(xlimits[i]) != xtyp[1]:
+            if isinstance(xtyp, tuple) and len(self._xlimits[i]) != xtyp[1]:
                 raise ValueError(
-                    "Bad x limits and x types specs not consistent. "
-                    "Got a categorical type with {} levels "
-                    "while x limits contains {} values (index={})".format(
-                        xtyp[1], len(xlimits[i]), i
-                    )
+                    f"Bad x limits and x types specs not consistent. "
+                    f"Got a categorical type with {xtyp[1]} levels "
+                    f"while x limits contains {len(self._xlimits[i])} values (index={i})"
                 )
 
 
@@ -327,7 +290,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     """
     X = X.astype(np.float64)
     Xt = X
-    X_cont, cat_features = compute_X_cont(Xt, xspecs["xtypes"])
+    X_cont, cat_features = compute_X_cont(Xt, xspecs.types)
 
     # function checks
     if y is None:
@@ -357,7 +320,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     Z_num = Z[:, np.logical_not(cat_features)]
 
     # This is to normalize the numeric values between 0 and 1.
-    lim = np.array(xspecs["xlimits"], dtype=object)[np.logical_not(cat_features)]
+    lim = np.array(xspecs.limits, dtype=object)[np.logical_not(cat_features)]
     lb = np.zeros(np.shape(lim)[0])
     ub = np.ones(np.shape(lim)[0])
     if np.shape(lim)[0] > 0:

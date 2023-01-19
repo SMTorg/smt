@@ -240,10 +240,7 @@ class Test(unittest.TestCase):
         # ORD means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = XSpecs()
-        xspecs["xtypes"] = [ORD]
-        xspecs["xlimits"] = [[0, 4]]
-
+        xspecs = XSpecs(xtypes=[ORD], xlimits=[[0, 4]])
         sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
@@ -283,13 +280,15 @@ class Test(unittest.TestCase):
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
-        xspecs = XSpecs()
-        xspecs["xtypes"] = [(ENUM, 5)]
-        xspecs["xlimits"] = [["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+        xspecs = XSpecs(
+            xtypes=[(ENUM, 5)], xlimits=[["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+        )
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=GOWER_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-2]),
+            surrogate=KRG(
+                xspecs=xspecs, theta0=[1e-2], categorical_kernel=GOWER_KERNEL
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -436,8 +435,7 @@ class Test(unittest.TestCase):
         for i in range(2):
             yd = fun(xt, kx=i)
             yt = np.concatenate((yt, yd), axis=1)
-        xspecs = XSpecs()
-        xspecs["xlimits"] = fun.xlimits
+        xspecs = XSpecs(xlimits=fun.xlimits)
         # Build the GEKPLS model
         n_comp = 2
         sm = GEKPLS(

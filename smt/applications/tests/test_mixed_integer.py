@@ -29,14 +29,12 @@ class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_INT(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs()
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        mixint = MixedIntegerContext()
+        mixint = MixedIntegerContext(xspecs=xspecs)
 
-        sm = mixint.build_kriging_model(KRG(xspecs=xspecs, print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, xspecs, criterion="m")
+        sm = mixint.build_kriging_model(KRG(print_prediction=False))
+        sampling = mixint.build_sampling_method(LHS, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -55,15 +53,12 @@ class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs()
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        mixint = MixedIntegerContext(xspecs=xspecs)
 
-        mixint = MixedIntegerContext()
-
-        sm = mixint.build_kriging_model(KRG(xspecs=xspecs, print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, xspecs, criterion="m")
+        sm = mixint.build_kriging_model(KRG(print_prediction=False))
+        sampling = mixint.build_sampling_method(LHS, criterion="m")
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -82,26 +77,18 @@ class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_bad_regr(self):
         xtypes = [FLOAT, (ENUM, 3), ORD]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs()
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
-
-        mixint = MixedIntegerContext()
+        mixint = MixedIntegerContext(xspecs=xspecs)
         with self.assertRaises(ValueError):
-            sm = mixint.build_kriging_model(
-                KRG(xspecs=xspecs, print_prediction=False, poly="linear")
-            )
+            sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
     def test_qp_mixed_2D_INT(self):
         xtypes = [FLOAT, ORD]
         xlimits = [[-10, 10], [-10, 10]]
-        xspecs = XSpecs()
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
-
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(xspecs=xspecs)
         sm = mixint.build_surrogate_model(QP(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
@@ -157,10 +144,7 @@ class TestMixedInteger(unittest.TestCase):
     def test_unfolded_xlimits_type(self):
         xtypes = [FLOAT, (ENUM, 2), (ENUM, 2), ORD]
         xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], [0, 2]])
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
         doe = sampling(10)
         self.assertEqual((10, 4), doe.shape)
@@ -171,10 +155,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         x = np.array([1.5, 0, 2, 1.1])
         self.assertEqual([1.5, "blue", "long", 1], cast_to_mixed_integer(xspecs, x))
@@ -185,10 +166,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         x = [1.5, "blue", "long", 1]
         self.assertEqual(
@@ -205,10 +183,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         l = unfold_xlimits_with_continuous_limits(xspecs)
         self.assertEqual(
@@ -225,10 +200,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3", "4"]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         l = unfold_xlimits_with_continuous_limits(xspecs)
 
@@ -246,10 +218,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 4]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
 
@@ -269,10 +238,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "2", "4"]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         self.assertEqual(
             np.array_equal(
@@ -290,10 +256,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4"]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         self.assertEqual(
             np.array_equal(
@@ -311,10 +274,7 @@ class TestMixedInteger(unittest.TestCase):
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3.5"]],
             dtype="object",
         )
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         self.assertEqual(
             np.array_equal(
@@ -334,10 +294,7 @@ class TestMixedInteger(unittest.TestCase):
 
         xtypes = [FLOAT, (ENUM, 2)]
         xlimits = [[0.0, 4.0], ["blue", "red"]]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
 
@@ -363,10 +320,8 @@ class TestMixedInteger(unittest.TestCase):
         # ORD means x2 ordered
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-
-        sm = MixedIntegerSurrogateModel(
-            xspec={"xtypes": [ORD], "xlimits": [[0, 4]]}, surrogate=QP()
-        )
+        xspecs = XSpecs(xtypes=[ORD], xlimits=[[0, 4]])
+        sm = MixedIntegerSurrogateModel(xspecs=xspecs, surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -393,16 +348,13 @@ class TestMixedInteger(unittest.TestCase):
 
         xtypes = [ORD, FLOAT, (ENUM, 4)]
         xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         def ftest(x):
             return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
 
         # context to create consistent DOEs and surrogate
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(xspecs=xspecs)
 
         # DOE for training
         lhs = mixint.build_sampling_method(LHS, criterion="ese")
@@ -442,15 +394,16 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [(ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=GOWER_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(
+                xspecs=xspecs,
+                theta0=[1e-2],
+                corr="abs_exp",
+                categorical_kernel=GOWER_KERNEL,
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -484,14 +437,15 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [(ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(
+                xspecs=xspecs,
+                theta0=[1e-2],
+                corr="abs_exp",
+                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -525,14 +479,15 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [(ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=HOMO_HSPHERE_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-2], corr="abs_exp"),
+            surrogate=KRG(
+                xspecs=xspecs,
+                theta0=[1e-2],
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                corr="abs_exp",
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -566,20 +521,15 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [FLOAT, (ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
-        sm = MixedIntegerKrigingModel(
+        sm = surrogate = KPLS(
+            xspecs=xspecs,
+            theta0=[1e-2],
+            n_comp=1,
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            surrogate=KPLS(
-                xspecs=xspecs,
-                theta0=[1e-2],
-                n_comp=1,
-                cat_kernel_comps=[3],
-                corr="squar_exp",
-            ),
+            cat_kernel_comps=[3],
+            corr="squar_exp",
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -606,27 +556,22 @@ class TestMixedInteger(unittest.TestCase):
         import itertools
 
         from smt.surrogate_models import KPLS, ENUM, FLOAT, EXP_HOMO_HSPHERE_KERNEL
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [FLOAT, (ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
-        sm = MixedIntegerKrigingModel(
+        sm = KPLS(
+            xspecs=xspecs,
+            theta0=[1e-2],
+            n_comp=2,
+            corr="abs_exp",
+            cat_kernel_comps=[3],
             categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            surrogate=KPLS(
-                xspecs=xspecs,
-                theta0=[1e-2],
-                n_comp=2,
-                cat_kernel_comps=[3],
-                corr="abs_exp",
-            ),
         )
+
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -658,17 +603,14 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
         xtypes = [FLOAT, (ENUM, 5), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
                 theta0=[1e-2],
                 n_comp=1,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
                 cat_kernel_comps=[3],
                 corr="squar_exp",
             ),
@@ -708,17 +650,14 @@ class TestMixedInteger(unittest.TestCase):
             ["0.0", "1.0", " 2.0", "3.0"],
         ]
         xtypes = [(ENUM, 5), ORD, (ENUM, 4)]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
             surrogate=KPLS(
                 xspecs=xspecs,
                 theta0=[1e-2],
                 n_comp=1,
+                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
                 cat_kernel_comps=[3, 2],
                 corr="squar_exp",
             ),
@@ -749,13 +688,12 @@ class TestMixedInteger(unittest.TestCase):
 
             xtypes = [FLOAT, ORD, ORD]
             xlimits = [[-10, 10], [-10, 10], [-10, 10]]
-            xspecs = XSpecs()
+            xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+            mixint = MixedIntegerContext(xspecs=xspecs)
 
-            xspecs["xtypes"] = xtypes
-            xspecs["xlimits"] = xlimits
-            mixint = MixedIntegerContext(xspecs, categorical_kernel=GOWER_KERNEL)
-
-            sm = mixint.build_kriging_model(KRG(print_prediction=False))
+            sm = mixint.build_kriging_model(
+                KRG(categorical_kernel=GOWER_KERNEL, print_prediction=False)
+            )
             sampling = mixint.build_sampling_method(LHS, criterion="m")
 
             fun = Sphere(ndim=3)
@@ -789,14 +727,16 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
         xtypes = [(ENUM, 3), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=GOWER_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=GOWER_KERNEL,
+                theta0=[1e-1],
+                corr="squar_exp",
+                n_start=20,
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -911,14 +851,16 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
         xtypes = [(ENUM, 3), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(
+                xspecs=xspecs,
+                theta0=[1e-1],
+                corr="squar_exp",
+                n_start=20,
+                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -1028,14 +970,16 @@ class TestMixedInteger(unittest.TestCase):
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
         xtypes = [(ENUM, 3), FLOAT]
-        xspecs = XSpecs()
-
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
-            categorical_kernel=HOMO_HSPHERE_KERNEL,
-            surrogate=KRG(xspecs=xspecs, theta0=[1e-1], corr="squar_exp", n_start=20),
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-1],
+                corr="squar_exp",
+                n_start=20,
+            ),
         )
         sm.set_training_values(xt, yt)
         sm.train()

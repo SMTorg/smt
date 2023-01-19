@@ -25,7 +25,10 @@ from smt.surrogate_models import (
     CONT_RELAX_KERNEL,
 )
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+)
 from smt.utils.kriging_utils import XSpecs
 
 
@@ -112,17 +115,6 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "categorical_kernel",
-            None,
-            values=[
-                GOWER_KERNEL,
-                EXP_HOMO_HSPHERE_KERNEL,
-                HOMO_HSPHERE_KERNEL,
-                CONT_RELAX_KERNEL,
-            ],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
-        )
-        declare(
             "surrogate",
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
@@ -178,7 +170,9 @@ class EGO(SurrogateBasedApplication):
                 # Set temporaly the y-coord point based on the kriging prediction
                 x_et_k = np.atleast_2d(x_et_k)
                 if self.mixint:
-                    x_et_k = self.mixint.cast_to_discrete_values(x_et_k)
+                    x_et_k = self.mixint.cast_to_discrete_values(
+                        x_et_k, self.categorical_kernel == None
+                    )
                 y_et_k = self._get_virtual_point(x_et_k, y_data)
 
                 # Update y_data with predicted value
@@ -267,36 +261,37 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xlimits = self.gpr.options["xspecs"]["xlimits"]
+        self.xspecs = self.gpr.options["xspecs"]
+        self.xlimits = self.xspecs.limits
 
         # Handle mixed integer optimization
-        if self.options["categorical_kernel"] is not None:
-            self.work_in_folded_space = True
-        else:
-            self.work_in_folded_space = False
-        if self.gpr.options["xspecs"]["xtypes"] is not None:
-            self.xtypes = self.gpr.options["xspecs"]["xtypes"]
-            self.categorical_kernel = self.options["categorical_kernel"]
+        self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
+
+        if self.gpr.options["categorical_kernel"] is not None:
+            self.xtypes = self.gpr.options["xspecs"].types
+            self.categorical_kernel = self.gpr.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
+                self.gpr.options["xspecs"],
                 work_in_folded_space=self.work_in_folded_space,
-                categorical_kernel=self.options["categorical_kernel"],
             )
 
             self.gpr = self.mixint.build_kriging_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS,
-                xspecs=self.gpr._xspecs,
                 criterion="ese",
                 random_state=self.options["random_state"],
                 output_in_folded_space=self.work_in_folded_space,
             )
         else:
+            print(self.xlimits)
             self.mixint = None
-            self._sampling = LHS(
-                xlimits=self.xlimits,
+            self._sampling = MixedIntegerSamplingMethod(
+                LHS,
+                self.xspecs,
                 criterion="ese",
                 random_state=self.options["random_state"],
             )
+            self.categorical_kernel = None
         # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
