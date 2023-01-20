@@ -5,6 +5,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import os
 import numpy as np
 import unittest
 import inspect
@@ -216,6 +217,7 @@ class Test(SMTestCase):
     def test_exp_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_exp_GENN(self):
         self.run_test()
 
@@ -271,6 +273,7 @@ class Test(SMTestCase):
     def test_tanh_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_tanh_GENN(self):
         self.run_test()
 
@@ -326,6 +329,7 @@ class Test(SMTestCase):
     def test_cos_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_cos_GENN(self):
         self.run_test()
 

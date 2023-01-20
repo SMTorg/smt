@@ -4,6 +4,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import os
 import numpy as np
 import unittest
 import inspect
@@ -121,6 +122,7 @@ class Test(SMTestCase):
     def test_sphere_QP(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_sphere_KRG(self):
         self.run_test()
 
@@ -144,6 +146,7 @@ class Test(SMTestCase):
     def test_exp_QP(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_exp_KRG(self):
         self.run_test()
 
@@ -167,6 +170,7 @@ class Test(SMTestCase):
     def test_tanh_QP(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_tanh_KRG(self):
         self.run_test()
 
@@ -190,6 +194,7 @@ class Test(SMTestCase):
     def test_cos_QP(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_cos_KRG(self):
         self.run_test()
 
