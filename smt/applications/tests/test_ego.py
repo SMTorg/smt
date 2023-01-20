@@ -208,6 +208,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=0.75)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
@@ -278,6 +279,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
