@@ -8,8 +8,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-import time
-import sys
+import os
 import unittest
 import numpy as np
 from sys import argv
@@ -154,6 +153,7 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_rosenbrock_2D_parallel(self):
         n_iter = 20
         n_parallel = 5
@@ -238,6 +238,7 @@ class TestEGO(SMTestCase):
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed_parallel(self):
         n_parallel = 5
         n_iter = 20
@@ -310,6 +311,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.494, float(y_opt), delta=1)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
         fun = Branin(ndim=2)
@@ -368,6 +370,7 @@ class TestEGO(SMTestCase):
         )
         return y
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
@@ -398,6 +401,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
@@ -432,6 +436,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
@@ -467,6 +472,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
