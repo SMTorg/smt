@@ -109,6 +109,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, float(x_opt), delta=1)
         self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_rosenbrock_2D(self):
         n_iter = 50
         fun = Rosenbrock(ndim=2)
