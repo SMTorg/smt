@@ -21,7 +21,7 @@ class Test(unittest.TestCase):
             XSpecs(xtypes=[3])
 
         # check consistency: badly-formed xlimits
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             XSpecs(xlimits=[3])
 
         # ok default to float
