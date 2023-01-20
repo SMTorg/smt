@@ -23,7 +23,7 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG, GEKPLS, KPLS
+from smt.surrogate_models import KRG, GEKPLS, KPLS, XSpecs
 from smt.surrogate_models import (
     FLOAT,
     ENUM,
@@ -615,10 +615,17 @@ class TestEGO(SMTestCase):
         actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
         self.assertAlmostEqual(expected, actual)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 2, "too slow")
+    def test_examples(self):
+        self.run_ego_example()
+        self.run_ego_parallel_example()
+        self.run_ego_mixed_integer_example()
+
     @staticmethod
     def run_ego_example():
         import numpy as np
         from smt.applications import EGO
+        from smt.surrogate_models import KRG, XSpecs
         import matplotlib.pyplot as plt
 
         def function_test_1d(x):
@@ -703,12 +710,8 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            FLOAT,
-            ENUM,
-            ORD,
-        )
+        from smt.applications.mixed_integer import MixedIntegerContext
+        from smt.surrogate_models import FLOAT, ENUM, ORD, GOWER_KERNEL, XSpecs
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
@@ -737,7 +740,7 @@ class TestEGO(SMTestCase):
                 + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
                 + i
             )
-            return y
+            return y.reshape((-1, 1))
 
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
@@ -745,11 +748,11 @@ class TestEGO(SMTestCase):
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
             dtype="object",
         )
-        xspecs = XSpecs(xtypes=xtypes, limits=xlimits)
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
-        sm = KRG(xspecs=xspecs, print_global=False)
+        sm = KRG(xspecs=xspecs, categorical_kernel=GOWER_KERNEL, print_global=False)
         mixint = MixedIntegerContext(xspecs)
         n_doe = 3
         sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
@@ -791,14 +794,10 @@ class TestEGO(SMTestCase):
     def run_ego_parallel_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.applications.ego import EGO, Evaluator
-        from smt.sampling_methods import FullFactorial
+        from smt.applications.ego import Evaluator
+        from smt.surrogate_models import KRG, XSpecs
 
-        import sklearn
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-        from scipy.stats import norm
 
         def function_test_1d(x):
             # function xsinx
