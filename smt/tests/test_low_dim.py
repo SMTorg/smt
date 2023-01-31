@@ -89,8 +89,7 @@ class Test(SMTestCase):
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
         if sm.options.is_declared("xspecs"):
-            sm.options["xspecs"] = XSpecs()
-            sm.options["xspecs"]["xlimits"] = prob.xlimits
+            sm.options["xspecs"] = XSpecs(xlimits=prob.xlimits)
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False

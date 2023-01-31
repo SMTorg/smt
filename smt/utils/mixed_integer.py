@@ -56,8 +56,8 @@ def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
-    xtypes = xspecs["xtypes"]
-    xlimits = xspecs["xlimits"]
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
@@ -79,10 +79,8 @@ def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
                     xlims.append(listint)
             else:
                 raise ValueError(
-                    "Bad xlimits for categorical var[{}] "
-                    "should have {} categories, got only {} in {}".format(
-                        i, xtyp[1], len(xlimits[i]), xlimits[i]
-                    )
+                    f"Bad xlimits for categorical var[{i}] "
+                    f"should have {xtyp[1]} categories, got only {len(xlimits[i])} in {xlimits[i]}"
                 )
         else:
             _raise_value_error(xtyp)
@@ -93,8 +91,8 @@ def cast_to_discrete_values(xspecs, unfold_space, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
-    xtypes = xspecs["xtypes"]
-    xlimits = xspecs["xlimits"]
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
     for i, xtyp in enumerate(xtypes):
@@ -180,9 +178,8 @@ def cast_to_mixed_integer(xspecs, x):
     """
     see MixedIntegerContext.cast_to_mixed_integer
     """
-    xspecs.check_xspec_consistency()
-    xlimits = xspecs["xlimits"]
-    xtypes = xspecs["xtypes"]
+    xlimits = xspecs.limits
+    xtypes = xspecs.types
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
@@ -201,8 +198,8 @@ def encode_with_enum_index(xspecs, x):
     """
     see MixedIntegerContext.encode_with_enum_index
     """
-    xtypes = xspecs["xtypes"]
-    xlimits = xspecs["xlimits"]
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]

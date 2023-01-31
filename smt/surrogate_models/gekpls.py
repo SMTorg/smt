@@ -50,7 +50,7 @@ class GEKPLS(KPLS):
                 self.options["n_comp"],
                 self.training_points,
                 self.options["delta_x"],
-                self.options["xspecs"]["xlimits"],
+                self.options["xspecs"].limits,
                 self.options["extra_points"],
             )
             if self.options["extra_points"] != 0:
