@@ -372,6 +372,23 @@ class TestMOE(SMTestCase):
         ypred = moe1D.predict_values(x1D)
         self.assertTrue(np.allclose(y1D, ypred))
 
+    def test_bad_allow_value(self):
+        nt = 35
+        sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
+        np.random.seed(0)
+        xt = sampling(nt)
+        yt = self.function_test_1d(xt)
+
+        moe = MOE(n_clusters=1, allow=["TOTO"])
+        moe.set_training_values(xt, yt)
+        with self.assertRaises(ValueError) as context:
+            moe.train()
+        self.assertEqual(
+            "List of experts is empty: check support, allow and deny options wrt "
+            "possible experts: ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']",
+            str(context.exception),
+        )
+
     @staticmethod
     def run_moe_example_1d():
         import numpy as np
@@ -379,7 +396,6 @@ class TestMOE(SMTestCase):
         from smt.sampling_methods import FullFactorial
         import matplotlib.pyplot as plt
 
-        ndim = 1
         nt = 35
 
         def function_test_1d(x):
