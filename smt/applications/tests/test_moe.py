@@ -384,7 +384,7 @@ class TestMOE(SMTestCase):
         with self.assertRaises(ValueError) as context:
             moe.train()
         self.assertEqual(
-            "List of possible experts is empty: check support, allow and deny options wrt "
+            "List of experts is empty: check support, allow and deny options wrt "
             "possible experts: ['KRG', 'KPLS', 'KPLSK', 'LS', 'QP', 'RBF', 'IDW', 'RMTB', 'RMTC']",
             str(context.exception),
         )

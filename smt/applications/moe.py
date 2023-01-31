@@ -380,7 +380,7 @@ class MOE(SurrogateBasedApplication):
             }
         if not prototypes:
             raise ValueError(
-                f"List of possible experts is empty: check support, allow and deny options wrt "
+                f"List of experts is empty: check support, allow and deny options wrt "
                 f"possible experts: {MOE_EXPERT_NAMES}"
             )
 
