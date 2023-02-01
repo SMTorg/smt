@@ -458,16 +458,11 @@ class TestEGO(SMTestCase):
         xtypes = [ORD, FLOAT, FLOAT, ORD, (ENUM, 3), ORD, ORD, ORD]
         xroles = [META, NEUTRAL, NEUTRAL, NEUTRAL, NEUTRAL, DECREED, DECREED, DECREED]
         xspecs = dict.fromkeys(["xtypes", "xlimits"])
-        xspecs["xtypes"] = xtypes
-        xspecs["xlimits"] = xlimits
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 4
-
-        xspecs2 = dict.fromkeys(["xtypes", "xlimits"])
-        xspecs2["xtypes"] = xtypes[1:]
-        xspecs2["xlimits"] = xlimits[1:]
-
+        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
         sampling = MixedIntegerSamplingMethod(
-            xspecs2, LHS, criterion="ese", random_state=42
+            xspecs_samp, LHS, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
@@ -509,13 +504,17 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             xdoe=Xt,
-            xspecs=xspecs,
-            xroles=xroles,
-            surrogate=KRG(theta0=[1e-2], n_start=5, corr="abs_exp", print_global=False),
+            surrogate=KRG(
+                xspecs=xspecs,
+                theta0=[1e-2],
+                n_start=5,
+                corr="abs_exp",
+                print_global=False,
+            ),
             enable_tunneling=False,
             random_state=42,
-            categorical_kernel=HOMO_HSPHERE_KERNEL,
         )
+
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
             f_hv(np.atleast_2d([3, -5, -5, 256, 0, 0, 0, 5])),

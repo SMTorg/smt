@@ -410,145 +410,142 @@ class TestMixedInteger(unittest.TestCase):
 
         plt.show()
 
-        def test_hierarchical_variables(self):
-            def f_neu(x1, x2, x3, x4):
-                if x4 == 0:
-                    return 2 * x1 + x2 - 0.5 * x3
-                if x4 == 1:
-                    return -x1 + 2 * x2 - 0.5 * x3
-                if x4 == 2:
-                    return -x1 + x2 + 0.5 * x3
+    def test_hierarchical_variables(self):
+        def f_neu(x1, x2, x3, x4):
+            if x4 == 0:
+                return 2 * x1 + x2 - 0.5 * x3
+            if x4 == 1:
+                return -x1 + 2 * x2 - 0.5 * x3
+            if x4 == 2:
+                return -x1 + x2 + 0.5 * x3
 
-            def f1(x1, x2, x3, x4, x5):
-                return f_neu(x1, x2, x3, x4) + x5**2
+        def f1(x1, x2, x3, x4, x5):
+            return f_neu(x1, x2, x3, x4) + x5**2
 
-            def f2(x1, x2, x3, x4, x5, x6):
-                return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
+        def f2(x1, x2, x3, x4, x5, x6):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
 
-            def f3(x1, x2, x3, x4, x5, x6, x7):
-                return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
+        def f3(x1, x2, x3, x4, x5, x6, x7):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
 
-            def f(X):
-                y = []
-                for x in X:
-                    if x[0] == 1:
-                        y.append(f1(x[1], x[2], x[3], x[4], x[5]))
-                    elif x[0] == 2:
-                        y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
-                    elif x[0] == 3:
-                        y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
-                return np.array(y)
+        def f(X):
+            y = []
+            for x in X:
+                if x[0] == 1:
+                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                elif x[0] == 2:
+                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
+                elif x[0] == 3:
+                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+            return np.array(y)
 
-            xlimits = [
-                [1, 3],  # meta ord
-                [-5, -2],
-                [-5, -1],
-                ["8", "16", "32", "64", "128", "256"],
-                ["ReLU", "SELU", "ISRLU"],
-                [0.0, 5.0],  # decreed m=1
-                [0.0, 5.0],  # decreed m=2
-                [0.0, 5.0],  # decreed m=3
-            ]
-            xtypes = [ORD, FLOAT, FLOAT, ORD, (ENUM, 3), ORD, ORD, ORD]
-            xroles = [
-                META,
-                NEUTRAL,
-                NEUTRAL,
-                NEUTRAL,
-                NEUTRAL,
-                DECREED,
-                DECREED,
-                DECREED,
-            ]
-            xspecs = dict.fromkeys(["xtypes", "xlimits"])
-            xspecs["xtypes"] = xtypes
-            xspecs["xlimits"] = xlimits
-            n_doe = 100
+        xlimits = [
+            [1, 3],  # meta ord
+            [-5, -2],
+            [-5, -1],
+            ["8", "16", "32", "64", "128", "256"],
+            ["ReLU", "SELU", "ISRLU"],
+            [0.0, 5.0],  # decreed m=1
+            [0.0, 5.0],  # decreed m=2
+            [0.0, 5.0],  # decreed m=3
+        ]
+        xtypes = [ORD, FLOAT, FLOAT, ORD, (ENUM, 3), ORD, ORD, ORD]
+        xroles = [
+            META,
+            NEUTRAL,
+            NEUTRAL,
+            NEUTRAL,
+            NEUTRAL,
+            DECREED,
+            DECREED,
+            DECREED,
+        ]
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        n_doe = 100
 
-            xspecs2 = dict.fromkeys(["xtypes", "xlimits"])
-            xspecs2["xtypes"] = xtypes[1:]
-            xspecs2["xlimits"] = xlimits[1:]
+        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
 
-            sampling = MixedIntegerSamplingMethod(
-                xspecs2, LHS, criterion="ese", random_state=42
-            )
-            x_cont = sampling(3 * n_doe)
+        sampling = MixedIntegerSamplingMethod(
+            LHS, xspecs_samp, criterion="ese", random_state=42
+        )
+        x_cont = sampling(3 * n_doe)
 
-            xdoe1 = np.zeros((n_doe, 6))
-            x_cont2 = x_cont[:n_doe, :5]
-            xdoe1[:, 0] = np.ones(n_doe)
-            xdoe1[:, 1:] = x_cont2
-            ydoe1 = f(xdoe1)
+        xdoe1 = np.zeros((n_doe, 6))
+        x_cont2 = x_cont[:n_doe, :5]
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:] = x_cont2
+        ydoe1 = f(xdoe1)
 
-            xdoe1 = np.zeros((n_doe, 8))
-            xdoe1[:, 0] = np.ones(n_doe)
-            xdoe1[:, 1:6] = x_cont2
+        xdoe1 = np.zeros((n_doe, 8))
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:6] = x_cont2
 
-            xdoe2 = np.zeros((n_doe, 7))
-            x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
-            xdoe2[:, 0] = 2 * np.ones(n_doe)
-            xdoe2[:, 1:7] = x_cont2
-            ydoe2 = f(xdoe2)
+        xdoe2 = np.zeros((n_doe, 7))
+        x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+        ydoe2 = f(xdoe2)
 
-            xdoe2 = np.zeros((n_doe, 8))
-            xdoe2[:, 0] = 2 * np.ones(n_doe)
-            xdoe2[:, 1:7] = x_cont2
+        xdoe2 = np.zeros((n_doe, 8))
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
 
-            xdoe3 = np.zeros((n_doe, 8))
-            xdoe3[:, 0] = 3 * np.ones(n_doe)
-            xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
-            ydoe3 = f(xdoe3)
+        xdoe3 = np.zeros((n_doe, 8))
+        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
+        ydoe3 = f(xdoe3)
 
-            Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
-            Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
-
-            # Surrogate
-            sm = MixedIntegerKrigingModel(
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+        Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
+        Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(
                 xspecs=xspecs,
-                xroles=xroles,
-                surrogate=KRG(theta0=[1e-2], n_start=5, corr="abs_exp"),
-            )
-            sm.set_training_values(Xt, Yt)
-            sm.train()
-            y_s = sm.predict_values(Xt)[:, 0]
-            pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-2],
+                corr="abs_exp",
+                n_start=5,
+            ),
+        )
+        sm.set_training_values(Xt, Yt)
+        sm.train()
+        y_s = sm.predict_values(Xt)[:, 0]
+        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
 
-            y_sv = sm.predict_variances(Xt)[:, 0]
-            var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-            self.assertTrue(pred_RMSE < 1e-7)
-            print("Pred_RMSE", pred_RMSE)
-            self.assertTrue(var_RMSE < 1e-7)
-            self.assertTrue(
-                np.linalg.norm(
-                    sm.predict_values(
-                        np.array(
-                            [
-                                [1, -1, -2, 8, 0, 2, 0, 0],
-                                [2, -1, -2, 16, 1, 2, 1, 0],
-                                [3, -1, -2, 32, 2, 2, 1, -2],
-                            ]
-                        )
-                    )[:, 0]
-                    - sm.predict_values(
-                        np.array(
-                            [
-                                [1, -1, -2, 8, 0, 2, 10, 10],
-                                [2, -1, -2, 16, 1, 2, 1, 10],
-                                [3, -1, -2, 32, 2, 2, 1, -2],
-                            ]
-                        )
-                    )[:, 0]
-                )
-                < 1e-8
+        y_sv = sm.predict_variances(Xt)[:, 0]
+        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+        self.assertTrue(pred_RMSE < 1e-7)
+        print("Pred_RMSE", pred_RMSE)
+        self.assertTrue(var_RMSE < 1e-7)
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(
+                    np.array(
+                        [
+                            [1, -1, -2, 8, 0, 2, 0, 0],
+                            [2, -1, -2, 16, 1, 2, 1, 0],
+                            [3, -1, -2, 32, 2, 2, 1, -2],
+                        ]
+                    )
+                )[:, 0]
+                - sm.predict_values(
+                    np.array(
+                        [
+                            [1, -1, -2, 8, 0, 2, 10, 10],
+                            [2, -1, -2, 16, 1, 2, 1, 10],
+                            [3, -1, -2, 32, 2, 2, 1, -2],
+                        ]
+                    )
+                )[:, 0]
             )
-            self.assertTrue(
-                np.linalg.norm(
-                    sm.predict_values(np.array([[1, -1, -2, 8, 0, 2, 0, 0]]))
-                    - sm.predict_values(np.array([[1, -1, -2, 8, 0, 12, 10, 10]]))
-                )
-                > 1e-8
+            < 1e-8
+        )
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(np.array([[1, -1, -2, 8, 0, 2, 0, 0]]))
+                - sm.predict_values(np.array([[1, -1, -2, 8, 0, 12, 10, 10]]))
             )
+            > 1e-8
+        )
 
     def test_mixed_gower_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])

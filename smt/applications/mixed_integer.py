@@ -75,11 +75,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         """
         Parameters
         ----------
-        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
+        xspecs : x specifications XSpecs
             xtypes: x types list
                 x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
+            xroles: x roles list
+                x roles specification
         surrogate: SMT surrogate model (not Kriging)
             instance of a SMT surrogate model
         input_in_folded_space: bool
@@ -169,13 +171,15 @@ class MixedIntegerKrigingModel(KrgBased):
         """
         Parameters
         ----------
-        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
+        xspecs : x specifications XSpecs
             xtypes: x types list
                 x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
-        surrogate: SMT surrogate model
-            instance of a SMT surrogate model
+            xroles: x roles list
+                x roles specification
+        surrogate: SMT Kriging surrogate model
+            instance of a SMT Kriging surrogate model
         """
         super().__init__()
         self._surrogate = surrogate
