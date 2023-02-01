@@ -11,7 +11,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
-from smt.utils.mixed_integer import ENUM, ORD, FLOAT
+from smt.utils.mixed_integer import ENUM, ORD, FLOAT, NEUTRAL, META, DECREED
 
 
 class XSpecs:
@@ -27,14 +27,21 @@ class XSpecs:
         list of corresponding domain which depends on variable types
     """
 
-    def __init__(self, xtypes=None, xlimits=None):
+    def __init__(self, xtypes=None, xlimits=None, xroles=None):
         self._xlimits = xlimits
         if xtypes is None:  # when xtypes is not specified default to float
             self._xtypes = [FLOAT] * len(xlimits)
         else:
             self._xtypes = xtypes
-
+        if xroles is None:  # when xroles is not specified default to neutral
+            self._xroles = [NEUTRAL] * len(xlimits)
+        else:
+            self._xroles = xroles
         self._check_consistency()
+
+    @property
+    def roles(self):
+        return self._xroles
 
     @property
     def types(self):
@@ -43,6 +50,11 @@ class XSpecs:
     @property
     def limits(self):
         return self._xlimits
+
+    @types.setter
+    def roles(self, xroles):
+        self._xroles = xroles
+        self._check_consistency()
 
     @types.setter
     def types(self, xtypes):
@@ -61,7 +73,9 @@ class XSpecs:
         -------
             Deep-copied clone.
         """
-        return XSpecs(deepcopy(self._xtypes), deepcopy(self._xlimits))
+        return XSpecs(
+            deepcopy(self._xtypes), deepcopy(self._xlimits), deepcopy(self._xroles)
+        )
 
     def _check_consistency(self):
         if self._xlimits is None:
@@ -70,10 +84,19 @@ class XSpecs:
         if self._xtypes is None:
             raise ValueError("xtypes not specified in xspecs")
 
+        if self._xroles is None:
+            raise ValueError("xroles not specified in xspecs")
+
         if len(self._xlimits) != len(self._xtypes):
             raise ValueError(
                 f"number of x limits ({len(self._xlimits)}) do not"
                 f" correspond to number of specified types ({len(self._xtypes)})"
+            )
+
+        if len(self._xlimits) != len(self._xroles):
+            raise ValueError(
+                f"number of x limits ({len(self._xlimits)}) do not"
+                f" correspond to number of specified roles ({len(self._xtypes)})"
             )
 
         for i, xtyp in enumerate(self._xtypes):
