@@ -14,6 +14,7 @@ from .krg_based import (
     EXP_HOMO_HSPHERE_KERNEL,
 )
 from smt.utils.mixed_integer import FLOAT, INT, ORD, ENUM
+from smt.utils.mixed_integer import NEUTRAL, META, DECREED
 from smt.utils.kriging_utils import XSpecs
 
 try:

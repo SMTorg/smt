@@ -23,13 +23,22 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG, GEKPLS, KPLS, XSpecs
+import itertools
 from smt.surrogate_models import (
+    KRG,
+    GEKPLS,
+    KPLS,
+    XSpecs,
+    QP,
     FLOAT,
-    ENUM,
     ORD,
-    GOWER_KERNEL,
+    ENUM,
+    NEUTRAL,
+    META,
+    DECREED,
+    HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
+    GOWER_KERNEL,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -407,6 +416,113 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    def test_ego_mixed_integer_hierarchical(self):
+        def f_neu(x1, x2, x3, x4):
+            if x4 == 0:
+                return 2 * x1 + x2 - 0.5 * x3
+            if x4 == 1:
+                return -x1 + 2 * x2 - 0.5 * x3
+            if x4 == 2:
+                return -x1 + x2 + 0.5 * x3
+
+        def f1(x1, x2, x3, x4, x5):
+            return f_neu(x1, x2, x3, x4) + x5**2
+
+        def f2(x1, x2, x3, x4, x5, x6):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
+
+        def f3(x1, x2, x3, x4, x5, x6, x7):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
+
+        def f_hv(X):
+            y = []
+            for x in X:
+                if x[0] == 1:
+                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                elif x[0] == 2:
+                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
+                elif x[0] == 3:
+                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+            return np.array(y)
+
+        xlimits = [
+            [1, 3],  # meta ord
+            [-5, -2],
+            [-5, -1],
+            ["8", "16", "32", "64", "128", "256"],
+            ["ReLU", "SELU", "ISRLU"],
+            [0.0, 5.0],  # decreed m=1
+            [0.0, 5.0],  # decreed m=2
+            [0.0, 5.0],  # decreed m=3
+        ]
+        xtypes = [ORD, FLOAT, FLOAT, ORD, (ENUM, 3), ORD, ORD, ORD]
+        xroles = [META, NEUTRAL, NEUTRAL, NEUTRAL, NEUTRAL, DECREED, DECREED, DECREED]
+        xspecs = dict.fromkeys(["xtypes", "xlimits"])
+        xspecs["xtypes"] = xtypes
+        xspecs["xlimits"] = xlimits
+        n_doe = 4
+
+        xspecs2 = dict.fromkeys(["xtypes", "xlimits"])
+        xspecs2["xtypes"] = xtypes[1:]
+        xspecs2["xlimits"] = xlimits[1:]
+
+        sampling = MixedIntegerSamplingMethod(
+            xspecs2, LHS, criterion="ese", random_state=42
+        )
+        x_cont = sampling(3 * n_doe)
+
+        xdoe1 = np.zeros((n_doe, 6))
+        x_cont2 = x_cont[:n_doe, :5]
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:] = x_cont2
+        # ydoe1 = self.f_hv(xdoe1)
+
+        xdoe1 = np.zeros((n_doe, 8))
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+
+        xdoe2 = np.zeros((n_doe, 7))
+        x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+        # ydoe2 = self.f_hv(xdoe2)
+
+        xdoe2 = np.zeros((n_doe, 8))
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+
+        xdoe3 = np.zeros((n_doe, 8))
+        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
+        # ydoe3 = self.f_hv(xdoe3)
+
+        Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
+        # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
+
+        n_doe = len(Xt)
+        xlimits = np.array(xlimits, dtype="object")
+
+        n_iter = 6
+        criterion = "EI"
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=Xt,
+            xspecs=xspecs,
+            xroles=xroles,
+            surrogate=KRG(theta0=[1e-2], n_start=5, corr="abs_exp", print_global=False),
+            enable_tunneling=False,
+            random_state=42,
+            categorical_kernel=HOMO_HSPHERE_KERNEL,
+        )
+        x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
+        self.assertAlmostEqual(
+            f_hv(np.atleast_2d([3, -5, -5, 256, 0, 0, 0, 5])),
+            float(y_opt),
+            delta=15,
+        )
+
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
         xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
