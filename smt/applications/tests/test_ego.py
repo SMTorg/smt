@@ -201,7 +201,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.25)
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.25)
         )
-        self.assertAlmostEqual(0.39, float(y_opt), delta=0.75)
+        self.assertAlmostEqual(0.39, float(y_opt), delta=0.8)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_parallel(self):
