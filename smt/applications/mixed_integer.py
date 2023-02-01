@@ -341,7 +341,8 @@ class MixedIntegerContext(object):
         ----------
         x : np.ndarray [n_evals, dim]
             continuous evaluation point input variable values
-
+        unfold_space : boolean
+            wheter or not working in the continuous relaxation folded space
         Returns
         -------
         np.ndarray

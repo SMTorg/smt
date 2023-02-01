@@ -283,7 +283,6 @@ class EGO(SurrogateBasedApplication):
                 output_in_folded_space=self.work_in_folded_space,
             )
         else:
-            print(self.xlimits)
             self.mixint = None
             self._sampling = MixedIntegerSamplingMethod(
                 LHS,
