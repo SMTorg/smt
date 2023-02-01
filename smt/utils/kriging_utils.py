@@ -29,11 +29,15 @@ class XSpecs:
 
     def __init__(self, xtypes=None, xlimits=None, xroles=None):
         self._xlimits = xlimits
-        if xtypes is None:  # when xtypes is not specified default to float
+        if (
+            xtypes is None and xlimits is not None
+        ):  # when xtypes is not specified default to float
             self._xtypes = [FLOAT] * len(xlimits)
         else:
             self._xtypes = xtypes
-        if xroles is None:  # when xroles is not specified default to neutral
+        if (
+            xroles is None and xlimits is not None
+        ):  # when xroles is not specified default to neutral
             self._xroles = [NEUTRAL] * len(xlimits)
         else:
             self._xroles = xroles
