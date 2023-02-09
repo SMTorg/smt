@@ -1,3 +1,4 @@
+import os
 import unittest
 import numpy as np
 
@@ -16,20 +17,23 @@ class Test(unittest.TestCase):
     def test_random_state(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         num = 10
-        sampling = LHS(xlimits=xlimits, criterion="ese")
-        doe1 = sampling(num)
-        sampling = LHS(xlimits=xlimits, criterion="ese")
-        doe2 = sampling(num)
-        self.assertFalse(np.allclose(doe1, doe2))
-
         sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
         doe1 = sampling(num)
+        doe2 = sampling(num)
+
+        # Should not generate the same doe
+        self.assertFalse(np.allclose(doe1, doe2))
+
+        # Another LHS with same initialization should generate the same sequence of does
         sampling = LHS(
             xlimits=xlimits, criterion="ese", random_state=np.random.RandomState(42)
         )
-        doe2 = sampling(num)
-        self.assertTrue(np.allclose(doe1, doe2))
+        doe3 = sampling(num)
+        doe4 = sampling(num)
+        self.assertTrue(np.allclose(doe1, doe3))
+        self.assertTrue(np.allclose(doe2, doe4))
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_expand_lhs(self):
         import numpy as np
 

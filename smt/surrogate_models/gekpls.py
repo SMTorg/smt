@@ -25,11 +25,6 @@ class GEKPLS(KPLS):
             desc="Correlation function type",
             types=(str),
         )
-        declare(
-            "xlimits",
-            types=np.ndarray,
-            desc="Lower/upper bounds in each dimension - ndarray [nx, 2]",
-        )
         declare("delta_x", 1e-4, types=(int, float), desc="Step used in the FOTA")
         declare(
             "extra_points",
@@ -55,7 +50,7 @@ class GEKPLS(KPLS):
                 self.options["n_comp"],
                 self.training_points,
                 self.options["delta_x"],
-                self.options["xlimits"],
+                self.options["xspecs"].limits,
                 self.options["extra_points"],
             )
             if self.options["extra_points"] != 0:

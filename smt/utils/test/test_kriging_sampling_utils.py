@@ -1,6 +1,5 @@
 """
-Author: Alexandre Thouvenot
-
+Author: Paul Saves
 """
 
 import unittest

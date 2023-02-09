@@ -379,9 +379,11 @@ class MOE(SurrogateBasedApplication):
                 if name not in self.options["deny"]
             }
         if not prototypes:
-            ValueError(
-                "List of possible experts is empty: check support, allow and deny options wrt"
+            raise ValueError(
+                f"List of experts is empty: check support, allow and deny options wrt "
+                f"possible experts: {MOE_EXPERT_NAMES}"
             )
+
         return {name: self._surrogate_type[name] for name in prototypes}
 
     def _fit(self, new_model=True):
@@ -566,7 +568,6 @@ class MOE(SurrogateBasedApplication):
                     xlimits[i][0] = np.amin(self.x[:, i])
                     xlimits[i][1] = np.amax(self.x[:, i])
                 kwargs = {"xlimits": xlimits}
-
             sm = sm_class(**kwargs)
             sm.options["print_global"] = False
             sm.set_training_values(training_values[:, 0:dim], training_values[:, dim])

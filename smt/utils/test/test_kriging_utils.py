@@ -1,29 +1,51 @@
+"""
+Author: Paul Saves
+
+"""
+
 import unittest
 import numpy as np
+from smt.utils.kriging_utils import XSpecs
+from smt.utils.mixed_integer import (
+    ORD,
+    FLOAT,
+    ENUM,
+    unfold_xlimits_with_continuous_limits,
+)
 
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.kriging_utils import standardization
-from smt.sampling_methods import LHS
 
+class Test(unittest.TestCase):
+    def test_x_specs(self):
+        # xlimits has to be specified
+        with self.assertRaises(ValueError):
+            XSpecs(xtypes=[3])
 
-class Test(SMTestCase):
-    def test_standardization(self):
-        d, n = (10, 100)
-        sx = LHS(
-            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
-            criterion="m",
-            random_state=42,
+        # check consistency: badly-formed xlimits
+        with self.assertRaises(TypeError):
+            XSpecs(xlimits=[3])
+
+        # ok default to float
+        xspecs = XSpecs(xlimits=[[0, 1]])
+        self.assertEqual([FLOAT], xspecs.types)
+
+    def test_xspecs_check_consistency(self):
+        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xlimits = [[-10, 10], ["blue", "red", "green"]]  # Bad dimension
+        with self.assertRaises(ValueError):
+            XSpecs(xtypes=xtypes, xlimits=xlimits)
+
+        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]  # Bad enum
+        with self.assertRaises(ValueError):
+            XSpecs(xtypes=xtypes, xlimits=xlimits)
+
+        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4", "3"]],
+            dtype="object",
         )
-        X = sx(n)
-        sy = LHS(
-            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
-            criterion="m",
-            random_state=42,
-        )
-        y = sy(n)
-        X_norm, _, _, _, _, _ = standardization(X, y, scale_X_to_unit=True)
-        interval = (np.min(X_norm), np.max(X_norm))
-        self.assertEqual((0, 1), interval)
+        with self.assertRaises(ValueError):
+            XSpecs(xtypes=xtypes, xlimits=xlimits)
 
 
 if __name__ == "__main__":

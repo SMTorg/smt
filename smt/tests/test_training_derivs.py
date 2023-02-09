@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
+from smt.utils.kriging_utils import XSpecs
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
@@ -96,6 +97,8 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
+        if sm.options.is_declared("xspecs"):
+            sm.options["xspecs"] = {"xlimits": prob.xlimits}
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
@@ -110,6 +113,8 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
+        if sm.options.is_declared("xspecs"):
+            sm.options["xspecs"] = XSpecs(xlimits=prob.xlimits)
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False

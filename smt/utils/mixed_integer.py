@@ -15,58 +15,6 @@ ORD = "ord_type"
 ENUM = "enum_type"
 
 
-def check_xspec_consistency(xtypes, xlimits):
-    if len(xlimits) != len(xtypes):
-        raise ValueError(
-            "number of x limits ({}) do not"
-            "correspond to number of specified types ({})".format(
-                len(xlimits), len(xtypes)
-            )
-        )
-
-    for i, xtyp in enumerate(xtypes):
-        if (not isinstance(xtyp, tuple)) and len(xlimits[i]) != 2:
-            if xtyp == ORD and isinstance(xlimits[i][0], str):
-                listint = list(map(float, xlimits[i]))
-                sortedlistint = sorted(listint)
-                if not np.array_equal(sortedlistint, listint):
-                    raise ValueError(
-                        "Unsorted x limits ({}) for variable type {} (index={})".format(
-                            xlimits[i], xtyp, i
-                        )
-                    )
-
-            else:
-                raise ValueError(
-                    "Bad x limits ({}) for variable type {} (index={})".format(
-                        xlimits[i], xtyp, i
-                    )
-                )
-        if xtyp == INT:
-            if not isinstance(xlimits[i][0], str):
-                xtyp = ORD
-                xtypes[i] = ORD
-            else:
-                raise ValueError(
-                    "INT do not work with list of ordered values, use ORD instead"
-                )
-        if (
-            xtyp != FLOAT
-            and xtyp != ORD
-            and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
-        ):
-            raise ValueError("Bad type specification {}".format(xtyp))
-
-        if isinstance(xtyp, tuple) and len(xlimits[i]) != xtyp[1]:
-            raise ValueError(
-                "Bad x limits and x types specs not consistent. "
-                "Got a categorical type with {} levels "
-                "while x limits contains {} values (index={})".format(
-                    xtyp[1], len(xlimits[i]), i
-                )
-            )
-
-
 def _raise_value_error(xtyp):
     raise ValueError(
         "Bad xtype specification: "
@@ -89,7 +37,7 @@ def compute_unfolded_dimension(xtypes):
     return res
 
 
-def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=None):
+def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
     """
     Expand xlimits to add continuous dimensions for enumerate x features
     Each level of an enumerate gives a new continuous dimension in [0, 1].
@@ -108,6 +56,8 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=No
         bounds of the each dimension where limits for enumerates (ENUM)
         are expanded ([0, 1] for each level).
     """
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
@@ -121,7 +71,7 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=No
                 xlims.append(xlimits[i])
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
             if xtyp[1] == len(xlimits[i]):
-                if categorical_kernel is None:
+                if unfold_space:
                     xlims.extend(xtyp[1] * [[0, 1]])
                 else:
                     listint = list(map(float, [0, len(xlimits[i])]))
@@ -129,20 +79,20 @@ def unfold_xlimits_with_continuous_limits(xtypes, xlimits, categorical_kernel=No
                     xlims.append(listint)
             else:
                 raise ValueError(
-                    "Bad xlimits for categorical var[{}] "
-                    "should have {} categories, got only {} in {}".format(
-                        i, xtyp[1], len(xlimits[i]), xlimits[i]
-                    )
+                    f"Bad xlimits for categorical var[{i}] "
+                    f"should have {xtyp[1]} categories, got only {len(xlimits[i])} in {xlimits[i]}"
                 )
         else:
             _raise_value_error(xtyp)
     return np.array(xlims).astype(float)
 
 
-def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
+def cast_to_discrete_values(xspecs, unfold_space, x):
     """
     see MixedIntegerContext.cast_to_discrete_values
     """
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
     for i, xtyp in enumerate(xtypes):
@@ -157,7 +107,7 @@ def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
                 ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
         elif isinstance(xtyp, tuple) and xtyp[0] == ENUM:
-            if categorical_kernel is None:
+            if unfold_space:
                 # Categorial : The biggest level is selected.
                 xenum = ret[:, x_col : x_col + xtyp[1]]
                 maxx = np.max(xenum, axis=1).reshape((-1, 1))
@@ -173,7 +123,7 @@ def cast_to_discrete_values(xtypes, xlimits, categorical_kernel, x):
     return ret
 
 
-def fold_with_enum_index(xtypes, x, categorical_kernel=None):
+def fold_with_enum_index(xtypes, x):
     """
     see MixedIntegerContext.fold_with_enum_index
     """
@@ -224,10 +174,12 @@ def cast_to_enum_value(xlimits, x_col, enum_indexes):
     return [xlimits[x_col][index] for index in enum_indexes]
 
 
-def cast_to_mixed_integer(xtypes, xlimits, x):
+def cast_to_mixed_integer(xspecs, x):
     """
     see MixedIntegerContext.cast_to_mixed_integer
     """
+    xlimits = xspecs.limits
+    xtypes = xspecs.types
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
@@ -242,10 +194,12 @@ def cast_to_mixed_integer(xtypes, xlimits, x):
     return res
 
 
-def encode_with_enum_index(xtypes, xlimits, x):
+def encode_with_enum_index(xspecs, x):
     """
     see MixedIntegerContext.encode_with_enum_index
     """
+    xtypes = xspecs.types
+    xlimits = xspecs.limits
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]

@@ -25,7 +25,11 @@ from smt.surrogate_models import (
     CONT_RELAX_KERNEL,
 )
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+)
+from smt.utils.kriging_utils import XSpecs
 
 
 class Evaluator(object):
@@ -103,7 +107,6 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
-        declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -112,28 +115,10 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
-            "categorical_kernel",
-            None,
-            values=[
-                GOWER_KERNEL,
-                EXP_HOMO_HSPHERE_KERNEL,
-                HOMO_HSPHERE_KERNEL,
-                CONT_RELAX_KERNEL,
-            ],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging.",
-        )
-        declare(
             "surrogate",
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
             desc="SMT kriging-based surrogate model used internaly",
-        )
-        declare(
-            "xtypes",
-            None,
-            types=list,
-            desc="x type specifications: either FLOAT for continuous, INT for integer "
-            "or (ENUM n) for categorical doimension with n levels",
         )
         self.options.declare(
             "random_state",
@@ -185,7 +170,9 @@ class EGO(SurrogateBasedApplication):
                 # Set temporaly the y-coord point based on the kriging prediction
                 x_et_k = np.atleast_2d(x_et_k)
                 if self.mixint:
-                    x_et_k = self.mixint.cast_to_discrete_values(x_et_k)
+                    x_et_k = self.mixint.cast_to_discrete_values(
+                        x_et_k, self.categorical_kernel == None
+                    )
                 y_et_k = self._get_virtual_point(x_et_k, y_data)
 
                 # Update y_data with predicted value
@@ -195,7 +182,7 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            if self.mixint and self.options["categorical_kernel"] is None:
+            if self.mixint and not (self.work_in_folded_space):
                 x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
@@ -205,7 +192,7 @@ class EGO(SurrogateBasedApplication):
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
 
-        if self.mixint and self.options["categorical_kernel"] is None:
+        if self.mixint and not (self.work_in_folded_space):
             x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
@@ -274,38 +261,37 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xlimits = self.options["xlimits"]
+        self.xspecs = self.gpr.options["xspecs"]
+        self.xlimits = self.xspecs.limits
 
         # Handle mixed integer optimization
-        xtypes = self.options["xtypes"]
-        if self.options["categorical_kernel"] is not None:
-            work_in_folded_space = True
-        else:
-            work_in_folded_space = False
-        if xtypes:
-            self.categorical_kernel = self.options["categorical_kernel"]
+        self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
+
+        if self.gpr.options["categorical_kernel"] is not None:
+            self.xtypes = self.gpr.options["xspecs"].types
+            self.categorical_kernel = self.gpr.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                xtypes,
-                self.xlimits,
-                work_in_folded_space=work_in_folded_space,
-                categorical_kernel=self.options["categorical_kernel"],
+                self.gpr.options["xspecs"],
+                work_in_folded_space=self.work_in_folded_space,
             )
 
-            self.gpr = self.mixint.build_surrogate_model(self.gpr)
+            self.gpr = self.mixint.build_kriging_model(self.gpr)
             self._sampling = self.mixint.build_sampling_method(
                 LHS,
                 criterion="ese",
                 random_state=self.options["random_state"],
-                output_in_folded_space=work_in_folded_space,
+                output_in_folded_space=self.work_in_folded_space,
             )
         else:
+            print(self.xlimits)
             self.mixint = None
-            self._sampling = LHS(
-                xlimits=self.xlimits,
+            self._sampling = MixedIntegerSamplingMethod(
+                LHS,
+                self.xspecs,
                 criterion="ese",
                 random_state=self.options["random_state"],
             )
-
+            self.categorical_kernel = None
         # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
@@ -316,7 +302,7 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            if self.mixint and self.options["categorical_kernel"] is None:
+            if self.mixint and not (self.work_in_folded_space):
                 x_doe = self.mixint.unfold_with_enum_mask(x_doe)
 
         ydoe = self.options["ydoe"]
@@ -361,8 +347,24 @@ class EGO(SurrogateBasedApplication):
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
             bounds = self.mixint.get_unfolded_xlimits()
+            method = "COBYLA"
+            cons = []
+            for j in range(len(bounds)):
+                lower, upper = bounds[j]
+                if self.work_in_folded_space:
+                    if isinstance(self.xtypes[j], tuple):
+                        upper = int(upper - 1)
+                l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
+                u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
+                cons.append(l)
+                cons.append(u)
+            options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+            bounds = None
         else:
             bounds = self.xlimits
+            method = "SLSQP"
+            cons = ()
+            options = {"maxiter": 200}
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
@@ -377,15 +379,15 @@ class EGO(SurrogateBasedApplication):
             opt_all = []
             x_start = self._sampling(n_start)
             for ii in range(n_start):
-
                 try:
                     opt_all.append(
                         minimize(
                             lambda x: float(np.array(self.obj_k(x)).flat[0]),
                             x_start[ii, :],
-                            method="SLSQP",
+                            method=method,
                             bounds=bounds,
-                            options={"maxiter": 200},
+                            constraints=cons,
+                            options=options,
                         )
                     )
 
@@ -403,7 +405,6 @@ class EGO(SurrogateBasedApplication):
             if not success:
                 self.log("New start point for the internal optimization")
                 n_optim += 1
-
         if n_optim >= n_max_optim:
             # self.log("Internal optimization failed at EGO iter = {}".format(k))
             return np.atleast_2d(0), False

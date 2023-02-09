@@ -5,76 +5,103 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from copy import deepcopy
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
+from smt.utils.mixed_integer import ENUM, ORD, FLOAT
 
 
-def standardization(X, y, scale_X_to_unit=False):
-
+class XSpecs:
     """
+    A class to specify input variables type and domain
 
-    We substract the mean from each variable. Then, we divide the values of each
-    variable by its standard deviation. If scale_X_to_unit, we scale the input
-    space X to the unit hypercube [0,1]^dim with dim the input dimension.
-
-    Parameters
+    Attributes
     ----------
+    _xtypes : list
+        list of mixed integer types
 
-    X: np.ndarray [n_obs, dim]
-            - The input variables.
-
-    y: np.ndarray [n_obs, 1]
-            - The output variable.
-
-    scale_X_to_unit: bool
-            - We substract the mean from each variable and then divide the values
-              of each variable by its standard deviation (scale_X_to_unit=False).
-            - We scale X to the unit hypercube [0,1]^dim (scale_X_to_unit=True).
-
-    Returns
-    -------
-
-    X: np.ndarray [n_obs, dim]
-          The standardized input matrix.
-
-    y: np.ndarray [n_obs, 1]
-          The standardized output vector.
-
-    X_offset: list(dim)
-            The mean (or the min if scale_X_to_unit=True) of each input variable.
-
-    y_mean: list(1)
-            The mean of the output variable.
-
-    X_scale:  list(dim)
-            The standard deviation (or the difference between the max and the
-            min if scale_X_to_unit=True) of each input variable.
-
-    y_std:  list(1)
-            The standard deviation of the output variable.
-
+    _xlimits : np.array
+        list of corresponding domain which depends on variable types
     """
 
-    if scale_X_to_unit:
-        X_offset = np.min(X, axis=0)
-        X_max = np.max(X, axis=0)
-        X_scale = X_max - X_offset
-    else:
-        X_offset = np.mean(X, axis=0)
-        X_scale = X.std(axis=0, ddof=1)
+    def __init__(self, xtypes=None, xlimits=None):
+        self._xlimits = xlimits
+        if xtypes is None:  # when xtypes is not specified default to float
+            self._xtypes = [FLOAT] * len(xlimits)
+        else:
+            self._xtypes = xtypes
 
-    X_scale[X_scale == 0.0] = 1.0
-    y_mean = np.mean(y, axis=0)
-    y_std = y.std(axis=0, ddof=1)
-    y_std[y_std == 0.0] = 1.0
+        self._check_consistency()
 
-    # scale X and y
-    X = (X - X_offset) / X_scale
-    y = (y - y_mean) / y_std
-    return X, y, X_offset, y_mean, X_scale, y_std
+    @property
+    def types(self):
+        return self._xtypes
+
+    @property
+    def limits(self):
+        return self._xlimits
+
+    @types.setter
+    def types(self, xtypes):
+        self._xtypes = xtypes
+        self._check_consistency()
+
+    @limits.setter
+    def limits(self, xlimits):
+        self._xlimits = xlimits
+        self._check_consistency()
+
+    def clone(self):
+        """
+        Return a clone of this object.
+        Returns
+        -------
+            Deep-copied clone.
+        """
+        return XSpecs(deepcopy(self._xtypes), deepcopy(self._xlimits))
+
+    def _check_consistency(self):
+        if self._xlimits is None:
+            raise ValueError("xlimits not specified in xspecs")
+
+        if self._xtypes is None:
+            raise ValueError("xtypes not specified in xspecs")
+
+        if len(self._xlimits) != len(self._xtypes):
+            raise ValueError(
+                f"number of x limits ({len(self._xlimits)}) do not"
+                f" correspond to number of specified types ({len(self._xtypes)})"
+            )
+
+        for i, xtyp in enumerate(self._xtypes):
+            if (not isinstance(xtyp, tuple)) and len(self._xlimits[i]) != 2:
+                if xtyp == ORD and isinstance(self._xlimits[i][0], str):
+                    listint = list(map(float, self._xlimits[i]))
+                    sortedlistint = sorted(listint)
+                    if not np.array_equal(sortedlistint, listint):
+                        raise ValueError(
+                            f"Unsorted x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
+                        )
+                else:
+                    raise ValueError(
+                        f"Bad x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
+                    )
+            if (
+                xtyp != FLOAT
+                and xtyp != ORD
+                and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM)
+            ):
+                raise ValueError(f"Bad type specification {xtyp}")
+
+            if isinstance(xtyp, tuple) and len(self._xlimits[i]) != xtyp[1]:
+                raise ValueError(
+                    f"Bad x limits and x types specs not consistent. "
+                    f"Got a categorical type with {xtyp[1]} levels "
+                    f"while x limits contains {len(self._xlimits[i])} values (index={i})"
+                )
 
 
 def cross_distances(X, y=None):
@@ -232,13 +259,12 @@ def compute_X_cont(x, xtypes):
     if xtypes is None:
         return x, None
     cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type")
-        for i, xtype in enumerate(xtypes)
+        not (xtype == "float_type" or xtype == "ord_type") for xtype in xtypes
     ]
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, y=None, xtypes=None):
+def gower_componentwise_distances(X, xspecs, y=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -248,6 +274,8 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             - The input variables.
     y: np.ndarray [n_y, dim]
             - The training data.
+    xlimits: np.ndarray[dim, 2]
+            - The upper and lower var bounds.
     xtypes: np.ndarray [dim]
             -the types (FLOAT,ORD,ENUM) of the input variables
     Returns
@@ -262,7 +290,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     """
     X = X.astype(np.float64)
     Xt = X
-    X_cont, cat_features = compute_X_cont(Xt, xtypes)
+    X_cont, cat_features = compute_X_cont(Xt, xspecs.types)
 
     # function checks
     if y is None:
@@ -290,26 +318,19 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
 
     Z_num = Z[:, np.logical_not(cat_features)]
-    Y_num = Y[:, np.logical_not(cat_features)]
-
-    num_cols = Z_num.shape[1]
-    num_ranges = np.zeros(num_cols)
-    num_max = np.zeros(num_cols)
-
-    for col in range(num_cols):
-        col_array = Y_num[:, col].astype(np.float64)
-        max = np.nanmax(col_array)
-        min = np.nanmin(col_array)
-
-        if np.isnan(max):
-            max = 0.0
-        if np.isnan(min):
-            min = 0.0
-        num_max[col] = max
-        num_ranges[col] = (1 - min / max) if (max != 0) else 0.0
 
     # This is to normalize the numeric values between 0 and 1.
-    Z_num = np.divide(Z_num, num_max, out=np.zeros_like(Z_num), where=num_max != 0)
+    lim = np.array(xspecs.limits, dtype=object)[np.logical_not(cat_features)]
+    lb = np.zeros(np.shape(lim)[0])
+    ub = np.ones(np.shape(lim)[0])
+    if np.shape(lim)[0] > 0:
+        for k, i in enumerate(lim):
+            lb[k] = i[0]
+            ub[k] = i[-1]
+        Z_offset = lb
+        Z_max = ub
+        Z_scale = Z_max - Z_offset
+        Z_num = (Z_num - Z_offset) / Z_scale
 
     Z_cat = Z[:, cat_features]
 
@@ -326,8 +347,8 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         y_index,
     ]
 
-    X_norma = X
-    Y_norma = Y
+    X_norma = np.copy(X)
+    Y_norma = np.copy(Y)
     X_norma[:, np.logical_not(cat_features)] = X_num
     Y_norma[:, np.logical_not(cat_features)] = Y_num
 
@@ -344,15 +365,7 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
             ij[ll_0:ll_1, 0] = k
             ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
             abs_delta = np.abs(X_num[k] - Y_num[(k + 1) : n_samples])
-            try:
-                D_num[ll_0:ll_1] = np.divide(
-                    abs_delta,
-                    num_ranges,
-                    out=np.zeros_like(abs_delta),
-                    where=num_ranges != 0,
-                )
-            except:
-                pass
+            D_num[ll_0:ll_1] = abs_delta
 
         n_samples, n_features = X_cat.shape
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
@@ -378,12 +391,6 @@ def gower_componentwise_distances(X, y=None, xtypes=None):
         D = D.reshape((-1, X.shape[1]))
         D = np.abs(D)
         D[:, cat_features] = D[:, cat_features] > 0.5
-        D[:, np.logical_not(cat_features)] = np.divide(
-            D[:, np.logical_not(cat_features)],
-            num_ranges,
-            out=np.zeros_like(D[:, np.logical_not(cat_features)]),
-            where=num_ranges != 0,
-        )
 
         return D
 

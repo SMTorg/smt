@@ -11,6 +11,7 @@ import numpy as np
 import scipy
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
+from smt.utils.misc import standardization
 
 
 class QP(SurrogateModel):
@@ -25,7 +26,6 @@ class QP(SurrogateModel):
         super(QP, self)._initialize()
         declare = self.options.declare
         supports = self.supports
-
         declare(
             "data_dir",
             values=None,
@@ -43,19 +43,25 @@ class QP(SurrogateModel):
         """
         Train the model
         """
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = standardization(X, y)
 
-        if 0 in self.training_points[None]:
-            x = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
-
-        if x.shape[0] < (self.nx + 1) * (self.nx + 2) / 2.0:
+        if X.shape[0] < (self.nx + 1) * (self.nx + 2) / 2.0:
             raise Exception(
                 "Number of training points should be greater or equal to %d."
                 % ((self.nx + 1) * (self.nx + 2) / 2.0)
             )
 
-        X = self._response_surface(x)
-        self.coef = np.dot(np.linalg.inv(np.dot(X.T, X)), (np.dot(X.T, y)))
+        X = self._response_surface(self.X_norma)
+        self.coef = np.dot(np.linalg.inv(np.dot(X.T, X)), (np.dot(X.T, self.y_norma)))
 
     def _train(self):
         """
@@ -67,7 +73,6 @@ class QP(SurrogateModel):
                 self.sol = outputs["sol"]
             else:
                 self._new_train()
-                # outputs['sol'] = self.sol
 
     def _response_surface(self, x):
         """
@@ -114,7 +119,7 @@ class QP(SurrogateModel):
             Derivative values.
         """
         dim = self.nx
-
+        x = (x - self.X_offset) / self.X_scale
         linear_coef = self.coef[1 + kx, :]
         quad_coef = 2 * self.coef[1 + dim + kx, :] * x[:, kx]
         neval = np.size(quad_coef, 0)
@@ -130,7 +135,11 @@ class QP(SurrogateModel):
                 k = int(2 * dim + 2 + (i) * dim - ((i + 1) * (i)) / 2 + (kx - (i + 2)))
                 cross_coef += self.coef[k, :] * x[:, i]
 
-        y = (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
+        y = (
+            (linear_coef + quad_coef + cross_coef).reshape((x.shape[0], self.ny))
+            * self.y_std
+            / self.X_scale[kx]
+        )
         return y
 
     def _predict_values(self, x):
@@ -147,7 +156,8 @@ class QP(SurrogateModel):
         y : np.ndarray [n_evals, ny]
             Evaluation point output variable values
         """
+        x = (x - self.X_offset) / self.X_scale
         M = self._response_surface(x)
-        y = np.dot(M, self.coef)
-
+        y_ = np.dot(M, self.coef)
+        y = (self.y_mean + self.y_std * y_).ravel()
         return y

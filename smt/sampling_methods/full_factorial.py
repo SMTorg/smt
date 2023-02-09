@@ -11,7 +11,7 @@ from smt.sampling_methods.sampling_method import ScaledSamplingMethod
 
 
 class FullFactorial(ScaledSamplingMethod):
-    def _initialize(self):
+    def _initialize(self, **kwargs):
         self.options.declare(
             "weights",
             values=None,

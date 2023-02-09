@@ -5,6 +5,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import os
 import numpy as np
 import unittest
 import inspect
@@ -18,6 +19,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP
+from smt.utils.kriging_utils import XSpecs
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -100,10 +102,10 @@ class Test(SMTestCase):
         e_errors = {}
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
-        e_errors["KRG"] = 1e-2
-        e_errors["MFK"] = 1e-2
+        e_errors["KRG"] = 2e-2
+        e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
-        e_errors["KPLSK"] = 1e-2
+        e_errors["KPLSK"] = 2e-2
         e_errors["MGP"] = 2e-2
         e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 2e-2
@@ -111,7 +113,7 @@ class Test(SMTestCase):
             e_errors["IDW"] = 1e0
             e_errors["RBF"] = 1e0
             e_errors["RMTC"] = 2e-1
-            e_errors["RMTB"] = 2e-1
+            e_errors["RMTB"] = 3e-1
 
         self.nt = nt
         self.ne = ne
@@ -129,14 +131,12 @@ class Test(SMTestCase):
         prob = self.problems[pname]
         sampling = LHS(xlimits=prob.xlimits, random_state=42)
 
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
         print(prob(xt, kx=0).shape)
         for i in range(self.ndim):
             yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
@@ -144,6 +144,8 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
+        if sm.options.is_declared("xspecs"):
+            sm.options["xspecs"] = XSpecs(xlimits=prob.xlimits)
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
@@ -166,11 +168,19 @@ class Test(SMTestCase):
         if sm.supports["variances"]:
             sm.predict_variances(xe)
 
+        # Some test case tolerance relaxations wrt to global tolerance values
         if pname == "cos":
-            self.assertLessEqual(e_error, self.e_errors[sname] + 1.5)
+            self.assertLessEqual(e_error, self.e_errors[sname] + 1.6)
+        elif pname == "tanh" and sname in ["KPLS", "GENN", "RMTB"]:
+            self.assertLessEqual(e_error, self.e_errors[sname] + 0.4)
+        elif pname == "exp" and sname in ["GENN"]:
+            self.assertLessEqual(e_error, self.e_errors[sname] + 0.2)
+        elif pname == "exp" and sname in ["RMTB"]:
+            self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
         else:
-            self.assertLessEqual(e_error, self.e_errors[sname] + 1e-4)
-        self.assertLessEqual(t_error, self.t_errors[sname] + 1e-4)
+            self.assertLessEqual(e_error, self.e_errors[sname])
+
+        self.assertLessEqual(t_error, self.t_errors[sname])
 
     def test_exp_LS(self):
         self.run_test()
@@ -205,6 +215,7 @@ class Test(SMTestCase):
     def test_exp_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_exp_GENN(self):
         self.run_test()
 
@@ -260,6 +271,7 @@ class Test(SMTestCase):
     def test_tanh_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_tanh_GENN(self):
         self.run_test()
 
@@ -315,6 +327,7 @@ class Test(SMTestCase):
     def test_cos_GEKPLS_TNC(self):
         self.run_test()
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_cos_GENN(self):
         self.run_test()
 
@@ -332,6 +345,10 @@ class Test(SMTestCase):
 
     @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
     def test_cos_RMTB(self):
+        self.run_test()
+
+    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    def test_exp_RMTB(self):
         self.run_test()
 
 

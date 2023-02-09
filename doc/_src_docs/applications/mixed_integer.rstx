@@ -93,7 +93,7 @@ With this distance, a mixed integer kernel can be build. Details can be found in
 Example of mixed-integer Gower Distance model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_gower, 80	
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_gower_example, 80	
 
 
 
@@ -103,9 +103,9 @@ Mixed-Integer Surrogate with Group Kernel (Homoscedastic Hypersphere)
 This surrogate model consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
 
 Example of mixed-integer Homoscedastic Hypersphere model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_homo_hyp, 80	
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_homo_hyp_example, 80	
  	
 
 Mixed-Integer Surrogate with Exponential Homoscedastic Hypersphere
@@ -116,7 +116,7 @@ This surrogate model also consider that the correlation kernel between the level
 Example of mixed-integer Exponential Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , test_mixed_homo_gaussian, 80	
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_homo_gaussian_example, 80	
 
 
 References

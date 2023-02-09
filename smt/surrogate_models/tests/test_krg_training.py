@@ -16,10 +16,10 @@ from smt.utils.kriging_utils import (
     act_exp,
     cross_distances,
     componentwise_distance,
-    standardization,
     matern52,
     matern32,
 )
+from smt.utils.misc import standardization
 from smt.sampling_methods.lhs import LHS
 from smt.surrogate_models import KRG, MGP
 
@@ -34,9 +34,7 @@ class Test(SMTestCase):
         lhs = LHS(xlimits=xlimits, random_state=self.random)
         X = lhs(8)
         y = LHS(xlimits=np.asarray([[0, 1]]), random_state=self.random)(8)
-        X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(
-            X, y, scale_X_to_unit=False
-        )
+        X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
         theta = self.random.rand(2)
         corr_str = ["abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
