@@ -327,6 +327,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     meta_features = np.array([(xrole == "meta_role") for xrole in xroles])
     decreed_num_features = decreed_features[np.logical_not(cat_features)]
     meta_num_features = meta_features[np.logical_not(cat_features)]
+    meta_cat_features = meta_features[cat_features]
     # function checks
     if y is None:
         Y = X
@@ -468,22 +469,72 @@ def gower_componentwise_distances(X, xspecs, y=None):
                         * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
                     )
                 )
+
                 abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
 
                 #        abs_delta = (
                 #           np.sqrt(2)
                 #          * np.sqrt(1 - np.cos(np.pi/2*np.abs(X_num[k1] - Y_num[l2])) )
                 #     )
-                # This is the meta variable index
-                minmeta = int(
-                    np.min([X_num[k1][meta_num_features], Y_num[l2][meta_num_features]])
-                )
-                maxmeta = int(
-                    np.max([X_num[k1][meta_num_features], Y_num[l2][meta_num_features]])
-                )
-                ind_dec = min((decreed_num_features).nonzero()[0])
-                abs_delta[minmeta + ind_dec :] = abs_delta[minmeta + ind_dec :] * 0 + 1
-                abs_delta[maxmeta + ind_dec :] = abs_delta[maxmeta + ind_dec :] * 0
+
+                if np.max(meta_num_features):
+                    # This is the meta variable index
+                    minmeta = int(
+                        np.min(
+                            [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
+                        )
+                    )
+                    maxmeta = int(
+                        np.max(
+                            [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
+                        )
+                    )
+                    ind_dec = min((decreed_num_features).nonzero()[0])
+                    abs_delta[minmeta + ind_dec :] = (
+                        abs_delta[minmeta + ind_dec :] * 0 + 1
+                    )
+                    abs_delta[maxmeta + ind_dec :] = abs_delta[maxmeta + ind_dec :] * 0
+                if np.max(meta_cat_features):
+                    # This is the meta variable index
+                    from smt.utils.mixed_integer import cast_to_enum_value
+
+                    actives_x1 = np.array(
+                        list(
+                            map(
+                                int,
+                                cast_to_enum_value(
+                                    xspecs.limits,
+                                    np.where(meta_features * cat_features)[0][0],
+                                    np.int32(X_cat[k1][meta_cat_features]),
+                                )[0].split(","),
+                            )
+                        )
+                    )
+                    actives_y2 = np.array(
+                        list(
+                            map(
+                                int,
+                                cast_to_enum_value(
+                                    xspecs.limits,
+                                    np.where(meta_features * cat_features)[0][0],
+                                    np.int32(Y_cat[l2][meta_cat_features]),
+                                )[0].split(","),
+                            )
+                        )
+                    )
+                    actives_both = np.array(
+                        list(set(actives_x1).intersection(actives_y2))
+                    )
+                    decreed_num_features_inactives = np.copy(decreed_num_features)
+                    decreed_num_features_inactives[actives_x1] = False
+                    decreed_num_features_inactives[actives_y2] = False
+                    decreed_num_features_uniques = np.copy(
+                        decreed_num_features
+                        * np.logical_not(decreed_num_features_inactives)
+                    )
+                    decreed_num_features_uniques[list(actives_both)] = False
+                    abs_delta[decreed_num_features_inactives] = 0
+                    abs_delta[decreed_num_features_uniques] = 1
 
                 D_num[indD] = abs_delta
                 indD += 1
