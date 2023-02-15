@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence

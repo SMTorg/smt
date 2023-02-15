@@ -8,9 +8,8 @@ from __future__ import division
 import numpy as np
 from scipy import linalg
 
-from smt.utils.kriging_utils import differences
+from smt.utils.kriging import differences, componentwise_distance
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging_utils import componentwise_distance
 from smt.utils.checks import check_support, check_nx, ensure_2d_array
 
 """

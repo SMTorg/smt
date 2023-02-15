@@ -17,6 +17,14 @@ from smt.utils.mixed_integer import (
     unfold_xlimits_with_continuous_limits,
 )
 from smt.surrogate_models.krg_based import KrgBased
+from smt.utils.mixed_integer import (
+    ORD_TYPE,
+    ENUM_TYPE,
+    FLOAT_TYPE,
+    DECREED_ROLE,
+    META_ROLE,
+    NEUTRAL_ROLE,
+)
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
@@ -99,6 +107,11 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + " is not supported. Please use MixedIntegerKrigingModel instead."
             )
         self._xspecs = xspecs
+        if META_ROLE in xspecs.roles:
+            raise ValueError(
+                "Using MixedIntegerSurrogateModel integer model with hierarchical variables is not supported. Please use MixedIntegerKrigingModel instead."
+            )
+
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
         self.options["print_global"] = False

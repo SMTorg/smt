@@ -228,9 +228,9 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, ORD
+        from smt.surrogate_models import KRG, ORD_TYPE
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.utils.kriging_utils import XSpecs
+        from smt.utils.kriging import XSpecs
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
@@ -240,7 +240,7 @@ class Test(unittest.TestCase):
         # ORD means x2 integer
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = XSpecs(xtypes=[ORD], xlimits=[[0, 4]])
+        xspecs = XSpecs(xtypes=[ORD_TYPE], xlimits=[[0, 4]])
         sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
@@ -270,18 +270,18 @@ class Test(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower_krg(self):
-        from smt.surrogate_models import ENUM, GOWER_KERNEL, KRG
+        from smt.surrogate_models import ENUM_TYPE, GOWER_KERNEL, KRG
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
         import matplotlib.pyplot as plt
         import numpy as np
-        from smt.utils.kriging_utils import XSpecs
+        from smt.utils.kriging import XSpecs
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
         xspecs = XSpecs(
-            xtypes=[(ENUM, 5)], xlimits=[["0.0", "1.0", " 2.0", "3.0", "4.0"]]
+            xtypes=[(ENUM_TYPE, 5)], xlimits=[["0.0", "1.0", " 2.0", "3.0", "4.0"]]
         )
 
         # Surrogate
@@ -424,7 +424,7 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import GEKPLS
         from smt.problems import Sphere
         from smt.sampling_methods import LHS
-        from smt.utils.kriging_utils import XSpecs
+        from smt.utils.kriging import XSpecs
 
         # Construction of the DOE
         fun = Sphere(ndim=2)
