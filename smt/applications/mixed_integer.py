@@ -16,7 +16,13 @@ from smt.utils.mixed_integer import (
     unfold_with_enum_mask,
     unfold_xlimits_with_continuous_limits,
 )
-from smt.surrogate_models.krg_based import KrgBased
+from smt.surrogate_models.krg_based import (
+    KrgBased,
+    GOWER_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    EXP_HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+)
 from smt.utils.mixed_integer import (
     ORD_TYPE,
     ENUM_TYPE,
@@ -25,6 +31,7 @@ from smt.utils.mixed_integer import (
     META_ROLE,
     NEUTRAL_ROLE,
 )
+import warnings
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
@@ -212,6 +219,13 @@ class MixedIntegerKrigingModel(KrgBased):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
+        if (META_ROLE in self._xspecs.roles) and self._surrogate.options[
+            "categorical_kernel"
+        ] is None:
+            self._surrogate.options["categorical_kernel"] = HOMO_HSPHERE_KERNEL
+            warnings.warn(
+                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel insead."
+            )
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False
 
