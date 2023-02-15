@@ -360,7 +360,7 @@ class EGO(SurrogateBasedApplication):
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-            options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+            options = {"maxiter": 500, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.2}
             bounds = None
         else:
             bounds = self.xlimits
@@ -400,7 +400,12 @@ class EGO(SurrogateBasedApplication):
                     opt_all.append({"success": False})
 
             opt_all = np.asarray(opt_all)
-
+            for opt_i in opt_all:
+                if (
+                    opt_i["message"]
+                    == "Maximum number of function evaluations has been exceeded."
+                ):
+                    opt_i["success"] = True
             opt_success = opt_all[[opt_i["success"] for opt_i in opt_all]]
             obj_success = np.array([opt_i["fun"] for opt_i in opt_success])
             success = obj_success.size != 0

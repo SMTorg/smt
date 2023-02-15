@@ -541,17 +541,11 @@ class TestMixedInteger(unittest.TestCase):
 
         xtypes = [(ENUM, 4), ORD, FLOAT, FLOAT, FLOAT, FLOAT, FLOAT, ORD, ORD, ORD, ORD]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
-        n_doe = 4
+        n_doe = 15
         sampling = MixedIntegerSamplingMethod(
             LHS, xspecs, criterion="ese", random_state=42
         )
         Xt = sampling(n_doe)
-        Yt = f_hv(Xt)
-
-        n_doe = len(Xt)
-        xlimits = np.array(xlimits, dtype="object")
-
-        Xt = sampling(15)
         Yt = f_hv(Xt)
 
         sm = MixedIntegerKrigingModel(
@@ -580,6 +574,20 @@ class TestMixedInteger(unittest.TestCase):
                         [
                             [0.0, 1.0, 64.0, 4.0, 56.0, 37.0, 35.0, 1.0, 2.0, 1.0, 1.0],
                             [1.0, 0.0, 31.0, 92.0, 24.0, 3.0, 17.0, 1.0, 2.0, 1.0, 1.0],
+                            [2.0, 1.0, 28.0, 60.0, 77.0, 66.0, 9.0, 0.0, 1.0, 1.0, 1.0],
+                            [
+                                3.0,
+                                1.0,
+                                50.0,
+                                40.0,
+                                99.0,
+                                35.0,
+                                51.0,
+                                2.0,
+                                1.0,
+                                1.0,
+                                2.0,
+                            ],
                         ]
                     )
                 )[:, 0]
@@ -599,6 +607,20 @@ class TestMixedInteger(unittest.TestCase):
                                 2.0,
                                 1.0,
                                 1.0,
+                            ],
+                            [2.0, 1.0, 28.0, 60.0, 7.0, 66.0, 9.0, 0.0, 2.0, 1.0, 1.0],
+                            [
+                                3.0,
+                                1.0,
+                                50.0,
+                                40.0,
+                                99.0,
+                                35.0,
+                                51.0,
+                                0.0,
+                                0.0,
+                                1.0,
+                                2.0,
                             ],
                         ]
                     )
