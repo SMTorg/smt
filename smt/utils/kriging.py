@@ -333,13 +333,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     X = X.astype(np.float64)
     Xt = X
     X_cont, cat_features = compute_X_cont(Xt, xspecs.types)
-    xroles = xspecs.roles
-    active_roles = len(xspecs.limits) * [NEUTRAL_ROLE] != xroles
-    decreed_features = np.array([(xrole == "decreed_role") for xrole in xroles])
-    meta_features = np.array([(xrole == "meta_role") for xrole in xroles])
-    decreed_num_features = decreed_features[np.logical_not(cat_features)]
-    meta_num_features = meta_features[np.logical_not(cat_features)]
-    meta_cat_features = meta_features[cat_features]
+
     # function checks
     if y is None:
         Y = X
@@ -351,30 +345,28 @@ def gower_componentwise_distances(X, xspecs, y=None):
     else:
         if not X.shape[1] == Y.shape[1]:
             raise TypeError("X and Y must have same y-dim!")
-
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
-
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
     if not isinstance(Y, np.ndarray):
         Y = np.asarray(Y)
-
     Z = np.concatenate((X, Y))
-
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
-
-    Z_num = Z[:, np.logical_not(cat_features)]
+    Z_cat = Z[:, cat_features]
+    X_cat = Z_cat[x_index,]
+    Y_cat = Z_cat[y_index,]
 
     # This is to normalize the numeric values between 0 and 1.
+    Z_num = Z[:, np.logical_not(cat_features)]
     lim = np.array(xspecs.limits, dtype=object)[np.logical_not(cat_features)]
     lb = np.zeros(np.shape(lim)[0])
     ub = np.ones(np.shape(lim)[0])
     maxmetanum = 1
     if np.shape(lim)[0] > 0:
         for k, i in enumerate(lim):
-            if xroles[k] != "meta_role":
+            if xspecs.roles[k] != "meta_role":
                 lb[k] = i[0]
                 ub[k] = i[-1]
             else:
@@ -383,32 +375,21 @@ def gower_componentwise_distances(X, xspecs, y=None):
         Z_max = ub
         Z_scale = Z_max - Z_offset
         Z_num = (Z_num - Z_offset) / Z_scale
+    X_num = Z_num[x_index,]
+    Y_num = Z_num[y_index,]
+    
+    D_cat = compute_D_cat(X_cat,Y_cat,y) 
+    D_num,ij = compute_D_num(X_num,Y_num,y, xspecs,X_cat,Y_cat,cat_features,maxmetanum) 
+    D = np.concatenate((D_cat, D_num), axis=1) * 0
+    D[:, np.logical_not(cat_features)] = D_num
+    D[:, cat_features] = D_cat
+    if y is not None:
+        return D
+    else:
+        return D, ij.astype(np.int32), X_cont
 
-    Z_cat = Z[:, cat_features]
-
-    X_cat = Z_cat[
-        x_index,
-    ]
-    X_num = Z_num[
-        x_index,
-    ]
-    Y_cat = Z_cat[
-        y_index,
-    ]
-    Y_num = Z_num[
-        y_index,
-    ]
-
-    X_norma = np.copy(X)
-    Y_norma = np.copy(Y)
-    X_norma[:, np.logical_not(cat_features)] = X_num
-    Y_norma[:, np.logical_not(cat_features)] = Y_num
-
-    D = X_norma[:, np.newaxis, :] - Y_norma[np.newaxis, :, :]
-    D = D.reshape((-1, X.shape[1]))
-    D = np.abs(D)
-    D[:, cat_features] = D[:, cat_features] > 0.5
-
+def compute_D_cat(X_cat,Y_cat,y) :
+    
     nx_samples, n_features = X_cat.shape
     ny_samples, n_features = Y_cat.shape
     n_nonzero_cross_dist = nx_samples * ny_samples
@@ -429,7 +410,10 @@ def gower_componentwise_distances(X, xspecs, y=None):
                 l2 = k2 + k1 + 1
             D_cat[indD] = X_cat[k1] != Y_cat[l2]
             indD += 1
+    return D_cat
 
+def compute_D_num(X_num,Y_num,y,xspecs,X_cat,Y_cat,cat_features,maxmetanum) :
+    active_roles = len(xspecs.limits) * [NEUTRAL_ROLE] != xspecs.roles
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
     n_nonzero_cross_dist = nx_samples * ny_samples
@@ -457,107 +441,116 @@ def gower_componentwise_distances(X, xspecs, y=None):
             D_num[indD] = np.abs(X_num[k1] - Y_num[l2])
             indD += 1
     if active_roles:
-        indD = 0
-        k1max = nx_samples
+        D_num = apply_the_algebraic_distance_to_the_decreed_variable(xspecs, X_num, Y_num,y,maxmetanum,cat_features,X_cat,Y_cat,D_num) 
+ 
+    return D_num,ij
+
+
+
+def apply_the_algebraic_distance_to_the_decreed_variable(xspecs, X_num, Y_num,y,maxmetanum,cat_features,X_cat,Y_cat,D_num) : 
+    nx_samples, n_features = X_num.shape
+    ny_samples, n_features = Y_num.shape
+    decreed_features = np.array([(xrole == "decreed_role") for xrole in xspecs.roles])
+    meta_features = np.array([(xrole == "meta_role") for xrole in xspecs.roles])
+    decreed_num_features = decreed_features[np.logical_not(cat_features)]
+    meta_num_features = meta_features[np.logical_not(cat_features)]
+    meta_cat_features = meta_features[cat_features]
+    
+    indD = 0
+    k1max = nx_samples
+    if y is None:
+        k1max = nx_samples - 1
+    for k1 in range(k1max):
+        k2max = ny_samples
         if y is None:
-            k1max = nx_samples - 1
-        for k1 in range(k1max):
-            k2max = ny_samples
+            k2max = ny_samples - k1 - 1
+        for k2 in range(k2max):
+            l2 = k2
             if y is None:
-                k2max = ny_samples - k1 - 1
-            for k2 in range(k2max):
-                l2 = k2
-                if y is None:
-                    l2 = k2 + k1 + 1
-                abs_delta = np.abs(X_num[k1] - Y_num[l2])
-                abs_delta[decreed_num_features] = (
-                    2
-                    * np.abs(
-                        X_num[k1][decreed_num_features]
-                        - Y_num[l2][decreed_num_features]
-                    )
-                    / (
-                        np.sqrt(1 + X_num[k1][decreed_num_features] ** 2)
-                        * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
+                l2 = k2 + k1 + 1
+            abs_delta = np.abs(X_num[k1] - Y_num[l2])
+            abs_delta[decreed_num_features] = (
+                2
+                * np.abs(
+                    X_num[k1][decreed_num_features]
+                    - Y_num[l2][decreed_num_features]
+                )
+                / (
+                    np.sqrt(1 + X_num[k1][decreed_num_features] ** 2)
+                    * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
+                )
+            )
+
+            abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
+
+            #        abs_delta = (
+            #           np.sqrt(2)
+            #          * np.sqrt(1 - np.cos(np.pi/2*np.abs(X_num[k1] - Y_num[l2])) )
+            #     )
+
+            if np.max(meta_num_features):
+                # This is the meta variable index
+                minmeta = int(
+                    np.min(
+                        [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
                     )
                 )
+                maxmeta = int(
+                    np.max(
+                        [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
+                    )
+                )
+                ind_dec = min((decreed_num_features).nonzero()[0])
+                abs_delta[minmeta + ind_dec :] = (
+                    abs_delta[minmeta + ind_dec :] * 0 + 1
+                )
+                abs_delta[maxmeta + ind_dec :] = abs_delta[maxmeta + ind_dec :] * 0
+            if np.max(meta_cat_features):
+                # This is the meta variable index
+                from smt.utils.mixed_integer import cast_to_enum_value
 
-                abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
-
-                #        abs_delta = (
-                #           np.sqrt(2)
-                #          * np.sqrt(1 - np.cos(np.pi/2*np.abs(X_num[k1] - Y_num[l2])) )
-                #     )
-
-                if np.max(meta_num_features):
-                    # This is the meta variable index
-                    minmeta = int(
-                        np.min(
-                            [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
+                actives_x1 = np.array(
+                    list(
+                        map(
+                            int,
+                            cast_to_enum_value(
+                                xspecs.limits,
+                                np.where(meta_features * cat_features)[0][0],
+                                np.int32(X_cat[k1][meta_cat_features]),
+                            )[0].split(","),
                         )
                     )
-                    maxmeta = int(
-                        np.max(
-                            [X_num[k1][meta_num_features], Y_num[l2][meta_num_features]]
+                )
+                actives_y2 = np.array(
+                    list(
+                        map(
+                            int,
+                            cast_to_enum_value(
+                                xspecs.limits,
+                                np.where(meta_features * cat_features)[0][0],
+                                np.int32(Y_cat[l2][meta_cat_features]),
+                            )[0].split(","),
                         )
                     )
-                    ind_dec = min((decreed_num_features).nonzero()[0])
-                    abs_delta[minmeta + ind_dec :] = (
-                        abs_delta[minmeta + ind_dec :] * 0 + 1
-                    )
-                    abs_delta[maxmeta + ind_dec :] = abs_delta[maxmeta + ind_dec :] * 0
-                if np.max(meta_cat_features):
-                    # This is the meta variable index
-                    from smt.utils.mixed_integer import cast_to_enum_value
+                )
+                actives_both = np.array(
+                    list(set(actives_x1).intersection(actives_y2))
+                )
+                decreed_num_features_inactives = np.copy(decreed_num_features)
+                decreed_num_features_inactives[actives_x1] = False
+                decreed_num_features_inactives[actives_y2] = False
+                decreed_num_features_uniques = np.copy(
+                    decreed_num_features
+                    * np.logical_not(decreed_num_features_inactives)
+                )
+                decreed_num_features_uniques[list(actives_both)] = False
+                abs_delta[decreed_num_features_inactives] = 0
+                abs_delta[decreed_num_features_uniques] = 1
 
-                    actives_x1 = np.array(
-                        list(
-                            map(
-                                int,
-                                cast_to_enum_value(
-                                    xspecs.limits,
-                                    np.where(meta_features * cat_features)[0][0],
-                                    np.int32(X_cat[k1][meta_cat_features]),
-                                )[0].split(","),
-                            )
-                        )
-                    )
-                    actives_y2 = np.array(
-                        list(
-                            map(
-                                int,
-                                cast_to_enum_value(
-                                    xspecs.limits,
-                                    np.where(meta_features * cat_features)[0][0],
-                                    np.int32(Y_cat[l2][meta_cat_features]),
-                                )[0].split(","),
-                            )
-                        )
-                    )
-                    actives_both = np.array(
-                        list(set(actives_x1).intersection(actives_y2))
-                    )
-                    decreed_num_features_inactives = np.copy(decreed_num_features)
-                    decreed_num_features_inactives[actives_x1] = False
-                    decreed_num_features_inactives[actives_y2] = False
-                    decreed_num_features_uniques = np.copy(
-                        decreed_num_features
-                        * np.logical_not(decreed_num_features_inactives)
-                    )
-                    decreed_num_features_uniques[list(actives_both)] = False
-                    abs_delta[decreed_num_features_inactives] = 0
-                    abs_delta[decreed_num_features_uniques] = 1
+            D_num[indD] = abs_delta
+            indD += 1
+    return D_num
 
-                D_num[indD] = abs_delta
-                indD += 1
-
-    D = np.concatenate((D_cat, D_num), axis=1) * 0
-    D[:, np.logical_not(cat_features)] = D_num
-    D[:, cat_features] = D_cat
-    if y is not None:
-        return D
-    else:
-        return D, ij.astype(np.int32), X_cont
 
 
 def differences(X, Y):
