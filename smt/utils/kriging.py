@@ -28,10 +28,13 @@ class XSpecs:
     Attributes
     ----------
     _xtypes : list
-        list of mixed integer types
+        list of mixed integer variables types
 
     _xlimits : np.array
-        list of corresponding domain which depends on variable types
+        list of corresponding domain which depends on variables types
+
+     _xroles: np.array
+        list of mixed integer variables roles
     """
 
     def __init__(self, xtypes=None, xlimits=None, xroles=None):
@@ -312,9 +315,9 @@ def gower_componentwise_distances(X, xspecs, y=None):
         xlimits: np.ndarray[dim, 2]
                 - The upper and lower var bounds.
         xtypes: np.ndarray [dim]
-                -the types (FLOAT,ORD,ENUM) of the input variables
+                - The types (FLOAT,ORD,ENUM) of the input variables
         xroles: np.ndarray [dim]
-             -the roles (NEUTRAL,META,DECREED) of the input variables
+                - The roles (NEUTRAL,META,DECREED) of the input variables
     Returns
     -------
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]

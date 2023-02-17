@@ -224,7 +224,7 @@ class MixedIntegerKrigingModel(KrgBased):
         ] is None:
             self._surrogate.options["categorical_kernel"] = HOMO_HSPHERE_KERNEL
             warnings.warn(
-                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel insead."
+                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
             )
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False
@@ -373,7 +373,7 @@ class MixedIntegerContext(object):
         x : np.ndarray [n_evals, dim]
             continuous evaluation point input variable values
         unfold_space : boolean
-            wheter or not working in the continuous relaxation folded space
+            whether or not working in the continuous relaxation folded space
         Returns
         -------
         np.ndarray

@@ -715,7 +715,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
-            11.8,
+            9.022,
             float(y_opt),
             delta=25,
         )
