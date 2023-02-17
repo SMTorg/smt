@@ -10,10 +10,12 @@ from smt.utils.mixed_integer import (
     ORD_TYPE,
     FLOAT_TYPE,
     ENUM_TYPE,
+    unfold_xlimits_with_continuous_limits,
+)
+from smt.utils.kriging import (
     NEUTRAL_ROLE,
     DECREED_ROLE,
     META_ROLE,
-    unfold_xlimits_with_continuous_limits,
 )
 
 

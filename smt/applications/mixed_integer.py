@@ -27,6 +27,8 @@ from smt.utils.mixed_integer import (
     ORD_TYPE,
     ENUM_TYPE,
     FLOAT_TYPE,
+)
+from smt.utils.kriging import (
     DECREED_ROLE,
     META_ROLE,
     NEUTRAL_ROLE,

@@ -17,10 +17,13 @@ from smt.utils.mixed_integer import (
     FLOAT_TYPE,
     ORD_TYPE,
     ENUM_TYPE,
+)
+from smt.utils.kriging import (
     NEUTRAL_ROLE,
     META_ROLE,
     DECREED_ROLE,
 )
+
 from smt.utils.kriging import XSpecs
 
 try:

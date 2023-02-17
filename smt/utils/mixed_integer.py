@@ -9,14 +9,10 @@ import numpy as np
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 
+## This define the variables types for mixed surrogate models
 FLOAT_TYPE = "float_type"
-INT_TYPE = "int_type"
 ORD_TYPE = "ord_type"
 ENUM_TYPE = "enum_type"
-
-NEUTRAL_ROLE = "neutral_role"
-DECREED_ROLE = "decreed_role"
-META_ROLE = "meta_role"
 
 
 def _raise_value_error(xtyp):

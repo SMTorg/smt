@@ -15,10 +15,12 @@ from smt.utils.mixed_integer import (
     ENUM_TYPE,
     ORD_TYPE,
     FLOAT_TYPE,
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
 )
+
+## This define the variables roles for hierarchical Kriging models
+NEUTRAL_ROLE = "neutral_role"
+META_ROLE = "meta_role"
+DECREED_ROLE = "decreed_role"
 
 
 class XSpecs:
