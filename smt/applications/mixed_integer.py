@@ -75,6 +75,14 @@ class MixedIntegerSamplingMethod(SamplingMethod):
     def __call__(self, nt):
         return self._compute(nt)
 
+    def expand_lhs(self, x, nt, method="basic"):
+        doe = self._sampling_method(nt)
+        unfold_xdoe = cast_to_discrete_values(self._xspecs, True, doe)
+        if self._output_in_folded_space:
+            return fold_with_enum_index(self._xspecs.types, unfold_xdoe)
+        else:
+            return unfold_xdoe
+
 
 class MixedIntegerSurrogateModel(SurrogateModel):
     """
