@@ -5,12 +5,17 @@ Author: Paul Saves
 
 import unittest
 import numpy as np
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 from smt.utils.mixed_integer import (
-    ORD,
-    FLOAT,
-    ENUM,
+    ORD_TYPE,
+    FLOAT_TYPE,
+    ENUM_TYPE,
     unfold_xlimits_with_continuous_limits,
+)
+from smt.utils.kriging import (
+    NEUTRAL_ROLE,
+    DECREED_ROLE,
+    META_ROLE,
 )
 
 
@@ -26,20 +31,21 @@ class Test(unittest.TestCase):
 
         # ok default to float
         xspecs = XSpecs(xlimits=[[0, 1]])
-        self.assertEqual([FLOAT], xspecs.types)
+        self.assertEqual([FLOAT_TYPE], xspecs.types)
 
     def test_xspecs_check_consistency(self):
-        xtypes = [FLOAT, (ENUM, 3), ORD]
-        xlimits = [[-10, 10], ["blue", "red", "green"]]  # Bad dimension
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3)]
+        xlimits = [[-10, 10], ["blue", "red", "green"]]
+        xroles = [[DECREED_ROLE, META_ROLE, DECREED_ROLE]]  # Bad dimension
         with self.assertRaises(ValueError):
-            XSpecs(xtypes=xtypes, xlimits=xlimits)
+            XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
 
-        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = [[-10, 10], ["blue", "red"], [-10, 10]]  # Bad enum
         with self.assertRaises(ValueError):
             XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4", "3"]],
             dtype="object",

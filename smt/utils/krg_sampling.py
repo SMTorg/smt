@@ -4,7 +4,7 @@ Some parts are copied from KrgBased SMT class
 """
 
 import numpy as np
-from smt.utils.kriging_utils import differences
+from smt.utils.kriging import differences
 from scipy import linalg
 
 

@@ -5,7 +5,7 @@ Author: Paul Saves
 import unittest
 import numpy as np
 from smt.surrogate_models import KRG
-from smt.utils.krg_sampling_utils import (
+from smt.utils.krg_sampling import (
     covariance_matrix,
     sample_trajectory,
     gauss_legendre_grid,

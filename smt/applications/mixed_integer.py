@@ -16,7 +16,24 @@ from smt.utils.mixed_integer import (
     unfold_with_enum_mask,
     unfold_xlimits_with_continuous_limits,
 )
-from smt.surrogate_models.krg_based import KrgBased
+from smt.surrogate_models.krg_based import (
+    KrgBased,
+    GOWER_KERNEL,
+    HOMO_HSPHERE_KERNEL,
+    EXP_HOMO_HSPHERE_KERNEL,
+    CONT_RELAX_KERNEL,
+)
+from smt.utils.mixed_integer import (
+    ORD_TYPE,
+    ENUM_TYPE,
+    FLOAT_TYPE,
+)
+from smt.utils.kriging import (
+    DECREED_ROLE,
+    META_ROLE,
+    NEUTRAL_ROLE,
+)
+import warnings
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
@@ -58,6 +75,14 @@ class MixedIntegerSamplingMethod(SamplingMethod):
     def __call__(self, nt):
         return self._compute(nt)
 
+    def expand_lhs(self, x, nt, method="basic"):
+        doe = self._sampling_method(nt)
+        unfold_xdoe = cast_to_discrete_values(self._xspecs, True, doe)
+        if self._output_in_folded_space:
+            return fold_with_enum_index(self._xspecs.types, unfold_xdoe)
+        else:
+            return unfold_xdoe
+
 
 class MixedIntegerSurrogateModel(SurrogateModel):
     """
@@ -75,11 +100,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         """
         Parameters
         ----------
-        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
+        xspecs : x specifications XSpecs
             xtypes: x types list
                 x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
+            xroles: x roles list
+                x roles specification
         surrogate: SMT surrogate model (not Kriging)
             instance of a SMT surrogate model
         input_in_folded_space: bool
@@ -97,6 +124,11 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + " is not supported. Please use MixedIntegerKrigingModel instead."
             )
         self._xspecs = xspecs
+        if META_ROLE in xspecs.roles:
+            raise ValueError(
+                "Using MixedIntegerSurrogateModel integer model with hierarchical variables is not supported. Please use MixedIntegerKrigingModel instead."
+            )
+
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
@@ -169,13 +201,15 @@ class MixedIntegerKrigingModel(KrgBased):
         """
         Parameters
         ----------
-        xspecs : x specifications { "xlimits": xlimits, "xtypes": xtypes }
+        xspecs : x specifications XSpecs
             xtypes: x types list
                 x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
-        surrogate: SMT surrogate model
-            instance of a SMT surrogate model
+            xroles: x roles list
+                x roles specification
+        surrogate: SMT Kriging surrogate model
+            instance of a SMT Kriging surrogate model
         """
         super().__init__()
         self._surrogate = surrogate
@@ -195,6 +229,13 @@ class MixedIntegerKrigingModel(KrgBased):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
+        if (META_ROLE in self._xspecs.roles) and self._surrogate.options[
+            "categorical_kernel"
+        ] is None:
+            self._surrogate.options["categorical_kernel"] = HOMO_HSPHERE_KERNEL
+            warnings.warn(
+                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
+            )
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False
 
@@ -341,7 +382,8 @@ class MixedIntegerContext(object):
         ----------
         x : np.ndarray [n_evals, dim]
             continuous evaluation point input variable values
-
+        unfold_space : boolean
+            whether or not working in the continuous relaxation folded space
         Returns
         -------
         np.ndarray

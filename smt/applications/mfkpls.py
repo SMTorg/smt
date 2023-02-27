@@ -15,7 +15,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import manhattan_distances
 
 from smt.applications import MFK
-from smt.utils.kriging_utils import componentwise_distance_PLS
+from smt.utils.kriging import componentwise_distance_PLS
 
 
 class MFKPLS(MFK):

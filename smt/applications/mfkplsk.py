@@ -10,7 +10,7 @@ Adapted on March 2020 by Nathalie Bartoli to the new SMT version
 Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
-from smt.utils.kriging_utils import componentwise_distance
+from smt.utils.kriging import componentwise_distance
 from smt.applications import MFKPLS
 
 

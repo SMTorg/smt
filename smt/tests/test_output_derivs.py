@@ -9,7 +9,7 @@ import unittest
 import inspect
 
 from collections import OrderedDict
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 
 from smt.problems import Sphere
 from smt.sampling_methods import FullFactorial
