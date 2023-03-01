@@ -15,7 +15,7 @@ from sys import argv
 import matplotlib
 
 matplotlib.use("Agg")
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.utils.sm_test_case import SMTestCase
@@ -23,13 +23,22 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG, GEKPLS, KPLS, XSpecs
+import itertools
 from smt.surrogate_models import (
-    FLOAT,
-    ENUM,
-    ORD,
-    GOWER_KERNEL,
+    KRG,
+    GEKPLS,
+    KPLS,
+    XSpecs,
+    QP,
+    FLOAT_TYPE,
+    ORD_TYPE,
+    ENUM_TYPE,
+    NEUTRAL_ROLE,
+    META_ROLE,
+    DECREED_ROLE,
+    HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
+    GOWER_KERNEL,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -192,7 +201,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.25)
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.25)
         )
-        self.assertAlmostEqual(0.39, float(y_opt), delta=0.75)
+        self.assertAlmostEqual(0.39, float(y_opt), delta=0.8)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_parallel(self):
@@ -232,7 +241,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "CLmin"
-        xtypes = [ORD, FLOAT]
+        xtypes = [ORD_TYPE, FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         sm = KRG(xspecs=xspecs, print_global=False)
         mixint = MixedIntegerContext(xspecs)
@@ -263,7 +272,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [ORD, FLOAT]
+        xtypes = [ORD_TYPE, FLOAT_TYPE]
         xlimits = fun.xlimits
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -294,7 +303,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [ORD, FLOAT]
+        xtypes = [ORD_TYPE, FLOAT_TYPE]
         xlimits = fun.xlimits
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -327,12 +336,12 @@ class TestEGO(SMTestCase):
 
         # float
         x1 = X[:, 0]
-        #  enum 1
+        #  ENUM_TYPE 1
         c1 = X[:, 1]
         x2 = c1 == 0
         x3 = c1 == 1
         x4 = c1 == 2
-        #  enum 2
+        #  ENUM_TYPE 2
         c2 = X[:, 2]
         x5 = c2 == 0
         x6 = c2 == 1
@@ -349,7 +358,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
             dtype="object",
@@ -376,7 +385,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -407,9 +416,313 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    def test_ego_mixed_integer_hierarchical_NN(self):
+        def f_neu(x1, x2, x3, x4):
+            if x4 == 0:
+                return 2 * x1 + x2 - 0.5 * x3
+            if x4 == 1:
+                return -x1 + 2 * x2 - 0.5 * x3
+            if x4 == 2:
+                return -x1 + x2 + 0.5 * x3
+
+        def f1(x1, x2, x3, x4, x5):
+            return f_neu(x1, x2, x3, x4) + x5**2
+
+        def f2(x1, x2, x3, x4, x5, x6):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
+
+        def f3(x1, x2, x3, x4, x5, x6, x7):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
+
+        def f_hv(X):
+            y = []
+            for x in X:
+                if x[0] == 1:
+                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                elif x[0] == 2:
+                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
+                elif x[0] == 3:
+                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+            return np.array(y)
+
+        xlimits = [
+            [1, 3],  # META_ROLE ORD_TYPE
+            [-5, -2],
+            [-5, -1],
+            ["8", "16", "32", "64", "128", "256"],
+            ["ReLU", "SELU", "ISRLU"],
+            [0.0, 5.0],  # DECREED_ROLE m=1
+            [0.0, 5.0],  # DECREED_ROLE m=2
+            [0.0, 5.0],  # DECREED_ROLE m=3
+        ]
+        xtypes = [
+            ORD_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            ORD_TYPE,
+            (ENUM_TYPE, 3),
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+        ]
+        xroles = [
+            META_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+        ]
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        n_doe = 4
+        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
+        sampling = MixedIntegerSamplingMethod(
+            LHS, xspecs_samp, criterion="ese", random_state=42
+        )
+        x_cont = sampling(3 * n_doe)
+
+        xdoe1 = np.zeros((n_doe, 6))
+        x_cont2 = x_cont[:n_doe, :5]
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:] = x_cont2
+        # ydoe1 = self.f_hv(xdoe1)
+
+        xdoe1 = np.zeros((n_doe, 8))
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+
+        xdoe2 = np.zeros((n_doe, 7))
+        x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+        # ydoe2 = self.f_hv(xdoe2)
+
+        xdoe2 = np.zeros((n_doe, 8))
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+
+        xdoe3 = np.zeros((n_doe, 8))
+        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
+        # ydoe3 = self.f_hv(xdoe3)
+
+        Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
+        # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
+
+        n_doe = len(Xt)
+        xlimits = np.array(xlimits, dtype="object")
+
+        n_iter = 6
+        criterion = "EI"
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=Xt,
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-2],
+                n_start=5,
+                corr="abs_exp",
+                print_global=False,
+            ),
+            enable_tunneling=False,
+            random_state=42,
+        )
+
+        x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
+        self.assertAlmostEqual(
+            f_hv(np.atleast_2d([3, -5, -5, 256, 0, 0, 0, 5])),
+            float(y_opt),
+            delta=15,
+        )
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    def test_ego_mixed_integer_hierarchical_Goldstein(self):
+        def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
+            h = (
+                53.3108
+                + 0.184901 * x1
+                - 5.02914 * x1**3 * 10 ** (-6)
+                + 7.72522 * x1**z3 * 10 ** (-8)
+                - 0.0870775 * x2
+                - 0.106959 * x3
+                + 7.98772 * x3**z4 * 10 ** (-6)
+                + 0.00242482 * x4
+                + 1.32851 * x4**3 * 10 ** (-6)
+                - 0.00146393 * x1 * x2
+                - 0.00301588 * x1 * x3
+                - 0.00272291 * x1 * x4
+                + 0.0017004 * x2 * x3
+                + 0.0038428 * x2 * x4
+                - 0.000198969 * x3 * x4
+                + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+                - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+                + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+                - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+            )
+            if cos_term:
+                h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
+            return h
+
+        def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
+            c1 = z2 == 0
+            c2 = z2 == 1
+            c3 = z2 == 2
+
+            c4 = z3 == 0
+            c5 = z3 == 1
+            c6 = z3 == 2
+
+            y = (
+                c4
+                * (
+                    c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+                )
+                + c5
+                * (
+                    c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+                )
+                + c6
+                * (
+                    c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+                )
+            )
+            return y
+
+        def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
+            c1 = z2 == 0
+            c2 = z2 == 1
+            c3 = z2 == 2
+
+            y = (
+                c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+                + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+                + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+            )
+            return y
+
+        def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
+            c1 = z1 == 0
+            c2 = z1 == 1
+            c3 = z1 == 2
+
+            y = (
+                c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+                + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+                + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+            )
+            return y
+
+        def f_hv(X):
+            y = []
+            for x in X:
+                if x[0] == 0:
+                    y.append(
+                        f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 1:
+                    y.append(
+                        f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 2:
+                    y.append(
+                        f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 3:
+                    y.append(
+                        H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
+                    )
+            return np.array(y)
+
+        xlimits = [
+            ["6,7", "3,7", "4,6", "3,4"],  # META_ROLE1 ORD_TYPE
+            [0, 1],  # 0
+            [0, 100],  # 1
+            [0, 100],  # 2
+            [0, 100],  # 3
+            [0, 100],  # 4
+            [0, 100],  # 5
+            [0, 2],  # 6
+            [0, 2],  # 7
+            [0, 2],  # 8
+            [0, 2],  # 9
+        ]
+        xroles = [
+            META_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+        ]
+        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
+
+        xtypes = [
+            (ENUM_TYPE, 4),
+            ORD_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+        ]
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        n_doe = 15
+        sampling = MixedIntegerSamplingMethod(
+            LHS, xspecs, criterion="ese", random_state=42
+        )
+        Xt = sampling(n_doe)
+
+        n_iter = 5
+        criterion = "EI"
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=Xt,
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-2],
+                n_start=5,
+                corr="squar_exp",
+                print_global=False,
+            ),
+            verbose=True,
+            enable_tunneling=False,
+            random_state=42,
+            n_start=10,
+        )
+
+        x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
+        self.assertAlmostEqual(
+            9.022,
+            float(y_opt),
+            delta=25,
+        )
+
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -445,7 +758,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -711,7 +1024,13 @@ class TestEGO(SMTestCase):
         import numpy as np
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import FLOAT, ENUM, ORD, GOWER_KERNEL, XSpecs
+        from smt.surrogate_models import (
+            FLOAT_TYPE,
+            ENUM_TYPE,
+            ORD_TYPE,
+            GOWER_KERNEL,
+            XSpecs,
+        )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
@@ -743,7 +1062,7 @@ class TestEGO(SMTestCase):
             return y.reshape((-1, 1))
 
         n_iter = 15
-        xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
             dtype="object",

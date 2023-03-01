@@ -10,7 +10,7 @@ from __future__ import print_function, division
 import numpy as np
 import unittest
 from smt.utils.sm_test_case import SMTestCase
-from smt.utils.kriging_utils import (
+from smt.utils.kriging import (
     abs_exp,
     exp, 
     squar_exp,
@@ -71,8 +71,6 @@ class Test(SMTestCase):
 
             sm.set_training_values(xt, yt)
             sm.train()
-            x = np.linspace(0, 4, 100)
-            y = sm.predict_values(x)
             self.assert_error(np.array(sm.optimal_theta), np.array([1.6]), 1e-1, 1e-1)
 
     def test_corr_derivatives(self):

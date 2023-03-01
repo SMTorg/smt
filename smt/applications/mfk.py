@@ -19,7 +19,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.sampling_methods import LHS
-from smt.utils.kriging_utils import (
+from smt.utils.kriging import (
     cross_distances,
     componentwise_distance,
     differences,

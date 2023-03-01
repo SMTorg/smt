@@ -1,3 +1,8 @@
+"""
+Created on Tue Oct 12 10:48:01 2021
+@author: psaves
+"""
+
 import unittest
 import numpy as np
 import matplotlib
@@ -5,11 +10,12 @@ import itertools
 
 matplotlib.use("Agg")
 
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
+    MixedIntegerKrigingModel,
 )
 from smt.utils.mixed_integer import (
     unfold_xlimits_with_continuous_limits,
@@ -27,20 +33,21 @@ from smt.surrogate_models import (
     KRG,
     KPLS,
     QP,
-    FLOAT,
-    ENUM,
-    ORD,
-    XSpecs,
+    FLOAT_TYPE,
+    ORD_TYPE,
+    ENUM_TYPE,
+    NEUTRAL_ROLE,
+    META_ROLE,
+    DECREED_ROLE,
     GOWER_KERNEL,
     HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
 )
-from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
 
 class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_INT(self):
-        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -64,7 +71,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D(self):
-        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -88,7 +95,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D_bad_regr(self):
-        xtypes = [FLOAT, (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -97,7 +104,7 @@ class TestMixedInteger(unittest.TestCase):
             sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
     def test_qp_mixed_2D_INT(self):
-        xtypes = [FLOAT, ORD]
+        xtypes = [FLOAT_TYPE, ORD_TYPE]
         xlimits = [[-10, 10], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -118,29 +125,29 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_compute_unfolded_dimension(self):
-        xtypes = [FLOAT, (ENUM, 2)]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2)]
         self.assertEqual(3, compute_unfolded_dimension(xtypes))
 
     def test_unfold_with_enum_mask(self):
-        xtypes = [FLOAT, (ENUM, 2)]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2)]
         x = np.array([[1.5, 1], [1.5, 0], [1.5, 1]])
         expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
         self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
 
     def test_unfold_with_enum_mask_with_enum_first(self):
-        xtypes = [(ENUM, 2), FLOAT]
+        xtypes = [(ENUM_TYPE, 2), FLOAT_TYPE]
         x = np.array([[1, 1.5], [0, 1.5], [1, 1.5]])
         expected = [[0, 1, 1.5], [1, 0, 1.5], [0, 1, 1.5]]
         self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
 
     def test_fold_with_enum_index(self):
-        xtypes = [FLOAT, (ENUM, 2)]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2)]
         x = np.array([[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]])
         expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
         self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
 
     def test_fold_with_enum_index_with_list(self):
-        xtypes = [FLOAT, (ENUM, 2)]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2)]
         expected = [[1.5, 1]]
         x = np.array([1.5, 0, 1])
         self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
@@ -155,7 +162,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertListEqual(expected, cast_to_enum_value(xlimits, x_col, enum_indexes))
 
     def test_unfolded_xlimits_type(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 2), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 2), ORD_TYPE]
         xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], [0, 2]])
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
@@ -163,7 +170,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual((10, 4), doe.shape)
 
     def test_cast_to_mixed_integer(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
@@ -174,7 +181,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual([1.5, "blue", "long", 1], cast_to_mixed_integer(xspecs, x))
 
     def test_encode_with_enum_index(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
@@ -191,7 +198,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_unfold_xlimits_with_continuous_limits(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
             dtype="object",
@@ -208,7 +215,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_unfold_xlimits_with_continuous_limits_and_ordinal_values(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3", "4"]],
             dtype="object",
@@ -226,7 +233,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
         xlimits = np.array(
             [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 4]],
             dtype="object",
@@ -244,7 +251,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values_with_smooth_rounding_ordinal_values(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
         xlimits = np.array(
@@ -262,7 +269,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values_with_hard_rounding_ordinal_values(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
         xlimits = np.array(
@@ -280,7 +287,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values_with_non_integer_ordinal_values(self):
-        xtypes = [FLOAT, (ENUM, 2), (ENUM, 3), ORD]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2), (ENUM_TYPE, 3), ORD_TYPE]
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
         xlimits = np.array(
@@ -308,10 +315,10 @@ class TestMixedInteger(unittest.TestCase):
         from matplotlib import colors
 
         from smt.sampling_methods import LHS
-        from smt.surrogate_models import FLOAT, ENUM, XSpecs
+        from smt.surrogate_models import FLOAT_TYPE, ENUM_TYPE, XSpecs
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
-        xtypes = [FLOAT, (ENUM, 2)]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 2)]
         xlimits = [[0.0, 4.0], ["blue", "red"]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -328,18 +335,18 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import QP, ORD, XSpecs
+        from smt.surrogate_models import QP, ORD_TYPE, XSpecs
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
 
-        # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-        # FLOAT means x1 continuous
-        # ORD means x2 ordered
+        # xtypes = [FLOAT_TYPE, ORD_TYPE, (ENUM, 3), (ENUM, 2)]
+        # FLOAT_TYPE means x1 continuous
+        # ORD_TYPE means x2 ordered
         # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
         # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = XSpecs(xtypes=[ORD], xlimits=[[0, 4]])
+        xspecs = XSpecs(xtypes=[ORD_TYPE], xlimits=[[0, 4]])
         sm = MixedIntegerSurrogateModel(xspecs=xspecs, surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
@@ -362,10 +369,10 @@ class TestMixedInteger(unittest.TestCase):
         from mpl_toolkits.mplot3d import Axes3D
 
         from smt.sampling_methods import LHS, Random
-        from smt.surrogate_models import KRG, FLOAT, ORD, ENUM, XSpecs
+        from smt.surrogate_models import KRG, FLOAT_TYPE, ORD_TYPE, ENUM_TYPE, XSpecs
         from smt.applications.mixed_integer import MixedIntegerContext
 
-        xtypes = [ORD, FLOAT, (ENUM, 4)]
+        xtypes = [ORD_TYPE, FLOAT_TYPE, (ENUM_TYPE, 4)]
         xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
@@ -401,11 +408,405 @@ class TestMixedInteger(unittest.TestCase):
 
         plt.show()
 
+    def test_hierarchical_variables_Goldstein(self):
+        def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
+            h = (
+                53.3108
+                + 0.184901 * x1
+                - 5.02914 * x1**3 * 10 ** (-6)
+                + 7.72522 * x1**z3 * 10 ** (-8)
+                - 0.0870775 * x2
+                - 0.106959 * x3
+                + 7.98772 * x3**z4 * 10 ** (-6)
+                + 0.00242482 * x4
+                + 1.32851 * x4**3 * 10 ** (-6)
+                - 0.00146393 * x1 * x2
+                - 0.00301588 * x1 * x3
+                - 0.00272291 * x1 * x4
+                + 0.0017004 * x2 * x3
+                + 0.0038428 * x2 * x4
+                - 0.000198969 * x3 * x4
+                + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+                - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+                + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+                - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+            )
+            if cos_term:
+                h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
+            return h
+
+        def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
+            c1 = z2 == 0
+            c2 = z2 == 1
+            c3 = z2 == 2
+
+            c4 = z3 == 0
+            c5 = z3 == 1
+            c6 = z3 == 2
+
+            y = (
+                c4
+                * (
+                    c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+                )
+                + c5
+                * (
+                    c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+                )
+                + c6
+                * (
+                    c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+                )
+            )
+            return y
+
+        def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
+            c1 = z2 == 0
+            c2 = z2 == 1
+            c3 = z2 == 2
+
+            y = (
+                c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+                + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+                + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+            )
+            return y
+
+        def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
+            c1 = z1 == 0
+            c2 = z1 == 1
+            c3 = z1 == 2
+
+            y = (
+                c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+                + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+                + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+            )
+            return y
+
+        def f_hv(X):
+            y = []
+            for x in X:
+                if x[0] == 0:
+                    y.append(
+                        f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 1:
+                    y.append(
+                        f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 2:
+                    y.append(
+                        f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 3:
+                    y.append(
+                        H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
+                    )
+            return np.array(y)
+
+        xlimits = [
+            ["6,7", "3,7", "4,6", "3,4"],  # meta1 ord
+            [0, 1],  # 0
+            [0, 100],  # 1
+            [0, 100],  # 2
+            [0, 100],  # 3
+            [0, 100],  # 4
+            [0, 100],  # 5
+            [0, 2],  # 6
+            [0, 2],  # 7
+            [0, 2],  # 8
+            [0, 2],  # 9
+        ]
+        xroles = [
+            META_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+        ]
+        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
+
+        xtypes = [
+            (ENUM_TYPE, 4),
+            ORD_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+        ]
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        n_doe = 15
+        sampling = MixedIntegerSamplingMethod(
+            LHS, xspecs, criterion="ese", random_state=42
+        )
+        Xt = sampling(n_doe)
+        Yt = f_hv(Xt)
+
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-2],
+                corr="abs_exp",
+                n_start=5,
+            ),
+        )
+        sm.set_training_values(Xt, Yt)
+        sm.train()
+        y_s = sm.predict_values(Xt)[:, 0]
+        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+
+        y_sv = sm.predict_variances(Xt)[:, 0]
+        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+        self.assertTrue(pred_RMSE < 1e-7)
+        print("Pred_RMSE", pred_RMSE)
+        self.assertTrue(var_RMSE < 1e-7)
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(
+                    np.array(
+                        [
+                            [0.0, 1.0, 64.0, 4.0, 56.0, 37.0, 35.0, 1.0, 2.0, 1.0, 1.0],
+                            [1.0, 0.0, 31.0, 92.0, 24.0, 3.0, 17.0, 1.0, 2.0, 1.0, 1.0],
+                            [2.0, 1.0, 28.0, 60.0, 77.0, 66.0, 9.0, 0.0, 1.0, 1.0, 1.0],
+                            [
+                                3.0,
+                                1.0,
+                                50.0,
+                                40.0,
+                                99.0,
+                                35.0,
+                                51.0,
+                                2.0,
+                                1.0,
+                                1.0,
+                                2.0,
+                            ],
+                        ]
+                    )
+                )[:, 0]
+                - sm.predict_values(
+                    np.array(
+                        [
+                            [0.0, 1.0, 64.0, 4.0, 6.0, 7.0, 35.0, 1.0, 2.0, 1.0, 1.0],
+                            [
+                                1.0,
+                                0.0,
+                                31.0,
+                                92.0,
+                                24.0,
+                                30.0,
+                                17.0,
+                                0.0,
+                                2.0,
+                                1.0,
+                                1.0,
+                            ],
+                            [2.0, 1.0, 28.0, 60.0, 7.0, 66.0, 9.0, 0.0, 2.0, 1.0, 1.0],
+                            [
+                                3.0,
+                                1.0,
+                                50.0,
+                                40.0,
+                                99.0,
+                                35.0,
+                                51.0,
+                                0.0,
+                                0.0,
+                                1.0,
+                                2.0,
+                            ],
+                        ]
+                    )
+                )[:, 0]
+            )
+            < 1e-8
+        )
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(
+                    np.array(
+                        [[1.0, 0.0, 31.0, 92.0, 24.0, 3.0, 17.0, 1.0, 2.0, 1.0, 1.0]]
+                    )
+                )
+                - sm.predict_values(
+                    np.array(
+                        [[1.0, 0.0, 31.0, 92.0, 24.0, 3.0, 17.0, 1.0, 1.0, 1.0, 1.0]]
+                    )
+                )
+            )
+            > 1e-8
+        )
+
+    def test_hierarchical_variables_NN(self):
+        def f_neu(x1, x2, x3, x4):
+            if x4 == 0:
+                return 2 * x1 + x2 - 0.5 * x3
+            if x4 == 1:
+                return -x1 + 2 * x2 - 0.5 * x3
+            if x4 == 2:
+                return -x1 + x2 + 0.5 * x3
+
+        def f1(x1, x2, x3, x4, x5):
+            return f_neu(x1, x2, x3, x4) + x5**2
+
+        def f2(x1, x2, x3, x4, x5, x6):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
+
+        def f3(x1, x2, x3, x4, x5, x6, x7):
+            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
+
+        def f(X):
+            y = []
+            for x in X:
+                if x[0] == 1:
+                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                elif x[0] == 2:
+                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
+                elif x[0] == 3:
+                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+            return np.array(y)
+
+        xlimits = [
+            [1, 3],  # meta ord
+            [-5, -2],
+            [-5, -1],
+            ["8", "16", "32", "64", "128", "256"],
+            ["ReLU", "SELU", "ISRLU"],
+            [0.0, 5.0],  # decreed m=1
+            [0.0, 5.0],  # decreed m=2
+            [0.0, 5.0],  # decreed m=3
+        ]
+        xtypes = [
+            ORD_TYPE,
+            FLOAT_TYPE,
+            FLOAT_TYPE,
+            ORD_TYPE,
+            (ENUM_TYPE, 3),
+            ORD_TYPE,
+            ORD_TYPE,
+            ORD_TYPE,
+        ]
+        xroles = [
+            META_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            NEUTRAL_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+            DECREED_ROLE,
+        ]
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        n_doe = 100
+
+        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
+
+        sampling = MixedIntegerSamplingMethod(
+            LHS, xspecs_samp, criterion="ese", random_state=42
+        )
+        x_cont = sampling(3 * n_doe)
+
+        xdoe1 = np.zeros((n_doe, 6))
+        x_cont2 = x_cont[:n_doe, :5]
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:] = x_cont2
+        ydoe1 = f(xdoe1)
+
+        xdoe1 = np.zeros((n_doe, 8))
+        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+
+        xdoe2 = np.zeros((n_doe, 7))
+        x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+        ydoe2 = f(xdoe2)
+
+        xdoe2 = np.zeros((n_doe, 8))
+        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 1:7] = x_cont2
+
+        xdoe3 = np.zeros((n_doe, 8))
+        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
+        ydoe3 = f(xdoe3)
+
+        Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
+        Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                theta0=[1e-2],
+                corr="abs_exp",
+                n_start=5,
+            ),
+        )
+        sm.set_training_values(Xt, Yt)
+        sm.train()
+        y_s = sm.predict_values(Xt)[:, 0]
+        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+
+        y_sv = sm.predict_variances(Xt)[:, 0]
+        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+        self.assertTrue(pred_RMSE < 1e-7)
+        print("Pred_RMSE", pred_RMSE)
+        self.assertTrue(var_RMSE < 1e-7)
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(
+                    np.array(
+                        [
+                            [1, -1, -2, 8, 0, 2, 0, 0],
+                            [2, -1, -2, 16, 1, 2, 1, 0],
+                            [3, -1, -2, 32, 2, 2, 1, -2],
+                        ]
+                    )
+                )[:, 0]
+                - sm.predict_values(
+                    np.array(
+                        [
+                            [1, -1, -2, 8, 0, 2, 10, 10],
+                            [2, -1, -2, 16, 1, 2, 1, 10],
+                            [3, -1, -2, 32, 2, 2, 1, -2],
+                        ]
+                    )
+                )[:, 0]
+            )
+            < 1e-8
+        )
+        self.assertTrue(
+            np.linalg.norm(
+                sm.predict_values(np.array([[1, -1, -2, 8, 0, 2, 0, 0]]))
+                - sm.predict_values(np.array([[1, -1, -2, 8, 0, 12, 10, 10]]))
+            )
+            > 1e-8
+        )
+
     def test_mixed_gower_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(ENUM, 5), FLOAT]
+        xtypes = [(ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         # Surrogate
@@ -441,7 +842,7 @@ class TestMixedInteger(unittest.TestCase):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(ENUM, 5), FLOAT]
+        xtypes = [(ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -476,7 +877,7 @@ class TestMixedInteger(unittest.TestCase):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
         xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(ENUM, 5), FLOAT]
+        xtypes = [(ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -511,7 +912,7 @@ class TestMixedInteger(unittest.TestCase):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [FLOAT, (ENUM, 5), FLOAT]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = surrogate = KPLS(
@@ -545,7 +946,7 @@ class TestMixedInteger(unittest.TestCase):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [FLOAT, (ENUM, 5), FLOAT]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = KPLS(
@@ -580,7 +981,7 @@ class TestMixedInteger(unittest.TestCase):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [FLOAT, (ENUM, 5), FLOAT]
+        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 5), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -620,7 +1021,7 @@ class TestMixedInteger(unittest.TestCase):
             [-5, 5],
             ["0.0", "1.0", " 2.0", "3.0"],
         ]
-        xtypes = [(ENUM, 5), ORD, (ENUM, 4)]
+        xtypes = [(ENUM_TYPE, 5), ORD_TYPE, (ENUM_TYPE, 4)]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -653,7 +1054,7 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
     def test_mixed_gower_3D(self):
-        xtypes = [FLOAT, ORD, ORD]
+        xtypes = [FLOAT_TYPE, ORD_TYPE, ORD_TYPE]
         xlimits = [[-10, 10], [-10, 10], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         mixint = MixedIntegerContext(xspecs=xspecs)
@@ -683,7 +1084,13 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, ENUM, FLOAT, XSpecs, GOWER_KERNEL
+        from smt.surrogate_models import (
+            KRG,
+            ENUM_TYPE,
+            FLOAT_TYPE,
+            XSpecs,
+            GOWER_KERNEL,
+        )
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
@@ -698,7 +1105,7 @@ class TestMixedInteger(unittest.TestCase):
 
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(ENUM, 3), FLOAT]
+        xtypes = [(ENUM_TYPE, 3), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -804,8 +1211,8 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.surrogate_models import (
             KRG,
-            ENUM,
-            FLOAT,
+            ENUM_TYPE,
+            FLOAT_TYPE,
             XSpecs,
             EXP_HOMO_HSPHERE_KERNEL,
         )
@@ -823,7 +1230,7 @@ class TestMixedInteger(unittest.TestCase):
 
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(ENUM, 3), FLOAT]
+        xtypes = [(ENUM_TYPE, 3), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -927,7 +1334,13 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, ENUM, FLOAT, XSpecs, HOMO_HSPHERE_KERNEL
+        from smt.surrogate_models import (
+            KRG,
+            ENUM_TYPE,
+            FLOAT_TYPE,
+            XSpecs,
+            HOMO_HSPHERE_KERNEL,
+        )
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
@@ -942,7 +1355,7 @@ class TestMixedInteger(unittest.TestCase):
 
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
         xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(ENUM, 3), FLOAT]
+        xtypes = [(ENUM_TYPE, 3), FLOAT_TYPE]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         # Surrogate
         sm = MixedIntegerKrigingModel(

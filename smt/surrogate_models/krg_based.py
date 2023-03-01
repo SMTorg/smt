@@ -9,9 +9,11 @@ from copy import deepcopy
 import warnings
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils.kriging_utils import differences
-from smt.utils.kriging_utils import constant, linear, quadratic
-from smt.utils.kriging_utils import (
+from smt.utils.kriging import (
+    differences,
+    constant,
+    linear,
+    quadratic,
     squar_exp,
     abs_exp,
     exp,
@@ -319,7 +321,6 @@ class KrgBased(SurrogateModel):
             "matern32": matern32,
         }
         r = np.zeros((dx.shape[0], 1))
-        n_components = dx.shape[1]
         nx = self.nx
         nlevels = n_levels
         try:
@@ -1132,16 +1133,10 @@ class KrgBased(SurrogateModel):
                 "The derivative is only available for ordinary kriging or "
                 + "universal kriging using a linear trend"
             )
-
         # Beta and gamma = R^-1(y-FBeta)
         beta = self.optimal_par["beta"]
         gamma = self.optimal_par["gamma"]
         df_dx = np.dot(df.T, beta)
-        d_dx = x[:, kx].reshape((n_eval, 1)) - self.X_norma[:, kx].reshape((1, self.nt))
-        if self.name != "Kriging" and "KPLSK" not in self.name:
-            theta = np.sum(self.optimal_theta * self.coeff_pls**2, axis=1)
-        else:
-            theta = self.optimal_theta
 
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y

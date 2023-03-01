@@ -12,6 +12,7 @@ from types import FunctionType
 from scipy.stats import norm
 from scipy.optimize import minimize
 
+from smt.utils.mixed_integer import ORD_TYPE, ENUM_TYPE, FLOAT_TYPE
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KPLS,
@@ -29,7 +30,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
-from smt.utils.kriging_utils import XSpecs
+from smt.utils.kriging import XSpecs
 
 
 class Evaluator(object):
@@ -267,7 +268,9 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
 
-        if self.gpr.options["categorical_kernel"] is not None:
+        if self.gpr.options["xspecs"].types != [FLOAT_TYPE] * len(
+            self.gpr.options["xspecs"].limits
+        ):
             self.xtypes = self.gpr.options["xspecs"].types
             self.categorical_kernel = self.gpr.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
@@ -283,7 +286,6 @@ class EGO(SurrogateBasedApplication):
                 output_in_folded_space=self.work_in_folded_space,
             )
         else:
-            print(self.xlimits)
             self.mixint = None
             self._sampling = MixedIntegerSamplingMethod(
                 LHS,
@@ -358,7 +360,7 @@ class EGO(SurrogateBasedApplication):
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-            options = {"catol": 1e-6, "tol": 1e-6, "rhobeg": 0.1}
+            options = {"maxiter": 500, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.2}
             bounds = None
         else:
             bounds = self.xlimits
@@ -398,7 +400,12 @@ class EGO(SurrogateBasedApplication):
                     opt_all.append({"success": False})
 
             opt_all = np.asarray(opt_all)
-
+            for opt_i in opt_all:
+                if (
+                    opt_i["message"]
+                    == "Maximum number of function evaluations has been exceeded."
+                ):
+                    opt_i["success"] = True
             opt_success = opt_all[[opt_i["success"] for opt_i in opt_all]]
             obj_success = np.array([opt_i["fun"] for opt_i in opt_success])
             success = obj_success.size != 0
