@@ -24,8 +24,8 @@ class KPLS(KrgBased):
         # KPLS used only with "abs_exp" and "squar_exp" correlations
         declare(
             "corr",
-            "squar_exp",
-            values=("abs_exp", "squar_exp"),
+            "exp",
+            values=("abs_exp", "exp", "squar_exp"),
             desc="Correlation function type",
             types=(str),
         )
@@ -74,6 +74,7 @@ class KPLS(KrgBased):
             self.options["corr"],
             self.options["n_comp"],
             self.coeff_pls,
+            power=self.options["power"],
             theta=theta,
             return_derivative=return_derivative,
         )

@@ -14,6 +14,7 @@ from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
     squar_exp,
     abs_exp,
+    exp,
     act_exp,
     cross_distances,
     matern52,
@@ -45,6 +46,7 @@ class KrgBased(SurrogateModel):
 
     _correlation_types = {
         "abs_exp": abs_exp,
+        "exp": exp,
         "squar_exp": squar_exp,
         "act_exp": act_exp,
         "matern52": matern52,
@@ -69,12 +71,19 @@ class KrgBased(SurrogateModel):
             "squar_exp",
             values=(
                 "abs_exp",
+                "exp",
                 "squar_exp",
                 "act_exp",
                 "matern52",
                 "matern32",
             ),
             desc="Correlation function type",
+        )
+        declare(
+            "power",
+            2.0,
+            types=(float),
+            desc="Power for the exp kernel function, values [1.0, 2.0]",
         )
         declare(
             "categorical_kernel",
@@ -263,6 +272,7 @@ class KrgBased(SurrogateModel):
         self,
         corr,
         xtypes,
+        power,
         theta,
         theta_bounds,
         dx,
@@ -302,6 +312,7 @@ class KrgBased(SurrogateModel):
         """
         _correlation_types = {
             "abs_exp": abs_exp,
+            "exp": exp,
             "squar_exp": squar_exp,
             "act_exp": act_exp,
             "matern52": matern52,
@@ -374,6 +385,7 @@ class KrgBased(SurrogateModel):
                     corr,
                     self.options["n_comp"],
                     self.pls_coeff_cont,
+                    power,
                     theta=None,
                     return_derivative=False,
                 )
@@ -385,6 +397,7 @@ class KrgBased(SurrogateModel):
                     corr,
                     self.options["n_comp"],
                     self.pls_coeff_cont,
+                    power,
                     theta=None,
                     return_derivative=False,
                 )
@@ -393,6 +406,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 corr,
                 nx,
+                power=self.options["power"],
                 theta=None,
                 return_derivative=False,
             )
@@ -489,6 +503,7 @@ class KrgBased(SurrogateModel):
                     "squar_exp",
                     self.options["n_comp"],
                     self.coeff_pls,
+                    power=self.options["power"],
                     theta=None,
                     return_derivative=False,
                 )
@@ -602,6 +617,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 xtypes=self.options["xspecs"].types,
+                power=self.options["power"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1018,6 +1034,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 self.options["corr"],
                 self.nx,
+                power=self.options["power"],
                 theta=None,
                 return_derivative=False,
             )
@@ -1035,6 +1052,7 @@ class KrgBased(SurrogateModel):
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
                     xtypes=self.options["xspecs"].types,
+                    power=self.options["power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1154,6 +1172,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 self.options["corr"],
                 self.nx,
+                power=self.options["power"],
                 theta=None,
                 return_derivative=False,
             )
@@ -1175,6 +1194,7 @@ class KrgBased(SurrogateModel):
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
                     xtypes=self.options["xspecs"].types,
+                    power=self.options["power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1602,9 +1622,9 @@ class KrgBased(SurrogateModel):
             raise ValueError("xspecs required for mixed integer Kriging")
 
         if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["squar_exp", "abs_exp"]:
+            if self.options["corr"] not in ["squar_exp", "exp", "abs_exp"]:
                 raise ValueError(
-                    "KPLS only works with a squared exponential or an absolute exponential kernel"
+                    "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
                 )
             if (
                 self.options["categorical_kernel"]

@@ -17,7 +17,7 @@ class KRG(KrgBased):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp", "matern52", "matern32"),
+            values=("abs_exp", "exp", "squar_exp", "matern52", "matern32"),
             desc="Correlation function type",
             types=(str),
         )
@@ -27,6 +27,7 @@ class KRG(KrgBased):
             dx,
             self.options["corr"],
             self.nx,
+            power=self.options["power"],
             theta=theta,
             return_derivative=return_derivative,
         )

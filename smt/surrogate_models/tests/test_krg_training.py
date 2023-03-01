@@ -12,6 +12,7 @@ import unittest
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.kriging_utils import (
     abs_exp,
+    exp, 
     squar_exp,
     act_exp,
     cross_distances,
@@ -37,8 +38,8 @@ class Test(SMTestCase):
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
         theta = self.random.rand(2)
-        corr_str = ["abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
-        corr_def = [abs_exp, squar_exp, act_exp, matern32, matern52]
+        corr_str = ["abs_exp", "exp", "squar_exp", "act_exp", "matern32", "matern52"]
+        corr_def = [abs_exp, exp, squar_exp, act_exp, matern32, matern52]
 
         self.eps = eps
         self.X = X
@@ -149,6 +150,7 @@ class Test(SMTestCase):
     def test_likelihood_derivatives(self):
         for corr_str in [
             "abs_exp",
+            "exp",
             "squar_exp",
             "act_exp",
             "matern32",
@@ -192,6 +194,7 @@ class Test(SMTestCase):
     def test_likelihood_hessian(self):
         for corr_str in [
             "abs_exp",
+            "exp",
             "squar_exp",
             "act_exp",
             "matern32",
@@ -244,6 +247,7 @@ class Test(SMTestCase):
     def test_variance_derivatives(self):
         for corr_str in [
             "abs_exp",
+            "exp",
             "squar_exp",
             "matern32",
             "matern52",

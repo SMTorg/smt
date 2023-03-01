@@ -506,6 +506,77 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
     return r
 
+def exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
+    """
+    Absolute exponential autocorrelation model.
+    (Ornstein-Uhlenbeck stochastic process)::
+
+    Parameters
+    ----------
+
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+         An array containing the values of the autocorrelation model.
+    """
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+    while i * nb_limit <= d.shape[0]:
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                theta.reshape(1, n_components)
+                * d[i * nb_limit : (i + 1) * nb_limit, :],
+                axis=1,
+            )
+        )
+        i += 1
+
+    i = 0
+    if grad_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    i = 0
+    if hess_ind is not None:
+        while i * nb_limit <= d.shape[0]:
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                -d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                * r[i * nb_limit : (i + 1) * nb_limit, 0]
+            )
+            i += 1
+
+    if derivative_params is not None:
+        dd = derivative_params["dd"]
+        r = r.T
+        dr = -np.einsum("i,ij->ij", r[0], dd)
+        return r.T, dr
+
+    return r
+
 
 def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
 
@@ -1081,7 +1152,7 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 
-def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
+def componentwise_distance(D, corr, dim, power = 2.0, theta=None, return_derivative=False):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -1128,6 +1199,9 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
                         D[i * nb_limit : (i + 1) * nb_limit, :] ** 2
                     )
+                elif corr == "exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
+                        D[i * nb_limit : (i + 1) * nb_limit, :] ) ** power
                 elif corr == "act_exp":
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
                         i * nb_limit : (i + 1) * nb_limit, :
@@ -1146,6 +1220,15 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
         if corr == "squar_exp":
             D_corr = 2 * np.einsum("j,ij->ij", theta.T, D)
             return D_corr
+        elif corr == "exp":
+            der = np.ones(D.shape)
+            for i, j in np.ndindex(D.shape):
+                der[i][j] = np.abs(D[i][j])**(power-1)
+                if D[i][j] < 0:
+                    der[i][j] = der[i][j] * (-1)
+
+            D_corr = power*np.einsum("j,ij->ij", theta.T, der)
+            return D_corr
         elif corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
         else:
@@ -1163,7 +1246,7 @@ def componentwise_distance(D, corr, dim, theta=None, return_derivative=False):
 
 
 def componentwise_distance_PLS(
-    D, corr, n_comp, coeff_pls, theta=None, return_derivative=False
+    D, corr, n_comp, coeff_pls, power = 2.0, theta=None, return_derivative=False
 ):
 
     """
@@ -1213,6 +1296,11 @@ def componentwise_distance_PLS(
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
                         D[i * nb_limit : (i + 1) * nb_limit, :] ** 2, coeff_pls**2
                     )
+                elif corr == "exp":
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
+                        np.abs(D[i * nb_limit : (i + 1) * nb_limit, :])**power,
+                        np.abs(coeff_pls)**power,
+                    )
                 else:
                     # abs_exp
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
@@ -1235,6 +1323,17 @@ def componentwise_distance_PLS(
                     coef = coef + theta[l] * coeff_pls[j][l] ** 2
                 coef = 2 * coef
                 D_corr[i][j] = coef * D[i][j]
+            return D_corr
+        
+        elif corr == "exp":
+            D_corr = np.zeros(np.shape(D))
+            der = np.ones(np.shape(D))
+            for i, j in np.ndindex(D.shape):
+                coef = 0
+                for l in range(n_comp):
+                    coef = coef + theta[l] * np.abs(coeff_pls[j][l]) ** power
+                coef = power * coef
+                D_corr[i][j] = coef * np.abs(D[i][j])**(power -1) * der[i][j]
             return D_corr
 
         else:

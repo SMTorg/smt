@@ -30,6 +30,7 @@ class KPLSK(KPLS):
                 dx,
                 self.options["corr"],
                 self.nx,
+                power=self.options["power"],
                 theta=theta,
                 return_derivative=return_derivative,
             )
@@ -40,6 +41,7 @@ class KPLSK(KPLS):
                 self.options["corr"],
                 self.options["n_comp"],
                 self.coeff_pls,
+                power=self.options["power"],
                 theta=theta,
                 return_derivative=return_derivative,
             )
