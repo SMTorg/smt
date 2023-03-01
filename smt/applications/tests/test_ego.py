@@ -23,13 +23,11 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.sampling_methods import LHS
-import itertools
 from smt.surrogate_models import (
     KRG,
     GEKPLS,
     KPLS,
     XSpecs,
-    QP,
     XType,
     NEUTRAL_ROLE,
     META_ROLE,
