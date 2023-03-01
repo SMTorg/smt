@@ -35,9 +35,7 @@ from smt.surrogate_models import (
     QP,
     XType,
     XRole,
-    GOWER_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
+    MixIntKernelType,
 )
 
 
@@ -559,7 +557,7 @@ class TestMixedInteger(unittest.TestCase):
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
@@ -751,7 +749,7 @@ class TestMixedInteger(unittest.TestCase):
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
@@ -811,7 +809,7 @@ class TestMixedInteger(unittest.TestCase):
                 xspecs=xspecs,
                 theta0=[1e-2],
                 corr="abs_exp",
-                categorical_kernel=GOWER_KERNEL,
+                categorical_kernel=MixIntKernelType.GOWER,
             ),
         )
         sm.set_training_values(xt, yt)
@@ -846,7 +844,7 @@ class TestMixedInteger(unittest.TestCase):
                 xspecs=xspecs,
                 theta0=[1e-2],
                 corr="abs_exp",
-                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             ),
         )
         sm.set_training_values(xt, yt)
@@ -880,7 +878,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 theta0=[1e-2],
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 corr="abs_exp",
             ),
         )
@@ -915,7 +913,7 @@ class TestMixedInteger(unittest.TestCase):
             xspecs=xspecs,
             theta0=[1e-2],
             n_comp=1,
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             cat_kernel_comps=[3],
             corr="squar_exp",
         )
@@ -951,7 +949,7 @@ class TestMixedInteger(unittest.TestCase):
             n_comp=2,
             corr="abs_exp",
             cat_kernel_comps=[3],
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
         )
 
         sm.set_training_values(xt, yt)
@@ -985,7 +983,7 @@ class TestMixedInteger(unittest.TestCase):
                 xspecs=xspecs,
                 theta0=[1e-2],
                 n_comp=1,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 cat_kernel_comps=[3],
                 corr="squar_exp",
             ),
@@ -1025,7 +1023,7 @@ class TestMixedInteger(unittest.TestCase):
                 xspecs=xspecs,
                 theta0=[1e-2],
                 n_comp=1,
-                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
                 cat_kernel_comps=[3, 2],
                 corr="squar_exp",
             ),
@@ -1056,7 +1054,7 @@ class TestMixedInteger(unittest.TestCase):
         mixint = MixedIntegerContext(xspecs=xspecs)
 
         sm = mixint.build_kriging_model(
-            KRG(categorical_kernel=GOWER_KERNEL, print_prediction=False)
+            KRG(categorical_kernel=MixIntKernelType.GOWER, print_prediction=False)
         )
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
@@ -1080,12 +1078,7 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import (
-            KRG,
-            XType,
-            XSpecs,
-            GOWER_KERNEL,
-        )
+        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
@@ -1106,7 +1099,7 @@ class TestMixedInteger(unittest.TestCase):
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=GOWER_KERNEL,
+                categorical_kernel=MixIntKernelType.GOWER,
                 theta0=[1e-1],
                 corr="squar_exp",
                 n_start=20,
@@ -1204,12 +1197,7 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import (
-            KRG,
-            XType,
-            XSpecs,
-            EXP_HOMO_HSPHERE_KERNEL,
-        )
+        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
@@ -1233,7 +1221,7 @@ class TestMixedInteger(unittest.TestCase):
                 theta0=[1e-1],
                 corr="squar_exp",
                 n_start=20,
-                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             ),
         )
         sm.set_training_values(xt, yt)
@@ -1328,12 +1316,7 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import (
-            KRG,
-            XType,
-            XSpecs,
-            HOMO_HSPHERE_KERNEL,
-        )
+        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
@@ -1354,7 +1337,7 @@ class TestMixedInteger(unittest.TestCase):
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-1],
                 corr="squar_exp",
                 n_start=20,

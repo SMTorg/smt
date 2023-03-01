@@ -16,13 +16,7 @@ from smt.utils.mixed_integer import (
     unfold_with_enum_mask,
     unfold_xlimits_with_continuous_limits,
 )
-from smt.surrogate_models.krg_based import (
-    KrgBased,
-    GOWER_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
-)
+from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.utils.mixed_integer import XType
 from smt.utils.kriging import XRole
 import warnings
@@ -224,7 +218,9 @@ class MixedIntegerKrigingModel(KrgBased):
         if (XRole.META in self._xspecs.roles) and self._surrogate.options[
             "categorical_kernel"
         ] is None:
-            self._surrogate.options["categorical_kernel"] = HOMO_HSPHERE_KERNEL
+            self._surrogate.options[
+                "categorical_kernel"
+            ] = MixIntKernelType.HOMO_HSPHERE
             warnings.warn(
                 "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
             )

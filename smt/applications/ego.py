@@ -14,17 +14,7 @@ from scipy.optimize import minimize
 
 from smt.utils.mixed_integer import XType
 from smt.sampling_methods import LHS
-from smt.surrogate_models import (
-    KPLS,
-    KRG,
-    KPLSK,
-    MGP,
-    GEKPLS,
-    GOWER_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
-)
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS, MixIntKernelType
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import (
     MixedIntegerContext,

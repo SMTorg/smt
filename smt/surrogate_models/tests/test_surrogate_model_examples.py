@@ -270,7 +270,7 @@ class Test(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower_krg(self):
-        from smt.surrogate_models import XType, GOWER_KERNEL, KRG
+        from smt.surrogate_models import XType, MixIntKernelType, KRG
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
@@ -287,7 +287,7 @@ class Test(unittest.TestCase):
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs, theta0=[1e-2], categorical_kernel=GOWER_KERNEL
+                xspecs=xspecs, theta0=[1e-2], categorical_kernel=MixIntKernelType.GOWER
             ),
         )
         sm.set_training_values(xt, yt)
@@ -306,7 +306,6 @@ class Test(unittest.TestCase):
 
     def test_kpls_auto(self):
         import numpy as np
-        import matplotlib.pyplot as plt
         from smt.surrogate_models import KPLS
         from smt.problems import TensorProduct
         from smt.sampling_methods import LHS

@@ -30,9 +30,7 @@ from smt.surrogate_models import (
     XSpecs,
     XType,
     XRole,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    GOWER_KERNEL,
+    MixIntKernelType,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -400,7 +398,9 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
-                xspecs=xspecs, categorical_kernel=GOWER_KERNEL, print_global=False
+                xspecs=xspecs,
+                categorical_kernel=MixIntKernelType.GOWER,
+                print_global=False,
             ),
             enable_tunneling=False,
             random_state=42,
@@ -517,7 +517,7 @@ class TestEGO(SMTestCase):
             xdoe=Xt,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
                 corr="abs_exp",
@@ -695,7 +695,7 @@ class TestEGO(SMTestCase):
             xdoe=Xt,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
                 corr="squar_exp",
@@ -739,7 +739,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
                 print_global=False,
             ),
             enable_tunneling=False,
@@ -771,7 +771,7 @@ class TestEGO(SMTestCase):
         sm = KPLS(
             print_global=False,
             xspecs=xspecs,
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             n_comp=1,
             cat_kernel_comps=[2, 2],
         )
@@ -1020,7 +1020,7 @@ class TestEGO(SMTestCase):
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import (
             XType,
-            GOWER_KERNEL,
+            MixIntKernelType,
             XSpecs,
         )
         import matplotlib.pyplot as plt
@@ -1063,7 +1063,9 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
-        sm = KRG(xspecs=xspecs, categorical_kernel=GOWER_KERNEL, print_global=False)
+        sm = KRG(
+            xspecs=xspecs, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+        )
         mixint = MixedIntegerContext(xspecs)
         n_doe = 3
         sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
