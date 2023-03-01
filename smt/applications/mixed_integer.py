@@ -16,23 +16,9 @@ from smt.utils.mixed_integer import (
     unfold_with_enum_mask,
     unfold_xlimits_with_continuous_limits,
 )
-from smt.surrogate_models.krg_based import (
-    KrgBased,
-    GOWER_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
-)
-from smt.utils.mixed_integer import (
-    ORD_TYPE,
-    ENUM_TYPE,
-    FLOAT_TYPE,
-)
-from smt.utils.kriging import (
-    DECREED_ROLE,
-    META_ROLE,
-    NEUTRAL_ROLE,
-)
+from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
+from smt.utils.mixed_integer import XType
+from smt.utils.kriging import XRole
 import warnings
 
 
@@ -124,7 +110,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + " is not supported. Please use MixedIntegerKrigingModel instead."
             )
         self._xspecs = xspecs
-        if META_ROLE in xspecs.roles:
+        if XRole.META in xspecs.roles:
             raise ValueError(
                 "Using MixedIntegerSurrogateModel integer model with hierarchical variables is not supported. Please use MixedIntegerKrigingModel instead."
             )
@@ -229,10 +215,12 @@ class MixedIntegerKrigingModel(KrgBased):
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
 
-        if (META_ROLE in self._xspecs.roles) and self._surrogate.options[
+        if (XRole.META in self._xspecs.roles) and self._surrogate.options[
             "categorical_kernel"
         ] is None:
-            self._surrogate.options["categorical_kernel"] = HOMO_HSPHERE_KERNEL
+            self._surrogate.options[
+                "categorical_kernel"
+            ] = MixIntKernelType.HOMO_HSPHERE
             warnings.warn(
                 "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
             )

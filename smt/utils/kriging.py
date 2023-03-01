@@ -5,22 +5,17 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from enum import Enum
 from copy import deepcopy
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
-from smt.utils.mixed_integer import (
-    ENUM_TYPE,
-    ORD_TYPE,
-    FLOAT_TYPE,
-)
+from smt.utils.mixed_integer import XType
 
 ## This define the variables roles for hierarchical Kriging models
-NEUTRAL_ROLE = "neutral_role"
-META_ROLE = "meta_role"
-DECREED_ROLE = "decreed_role"
+XRole = Enum("XType", ["NEUTRAL", "META", "DECREED"])
 
 
 class XSpecs:
@@ -44,13 +39,13 @@ class XSpecs:
         if (
             xtypes is None and xlimits is not None
         ):  # when xtypes is not specified default to float
-            self._xtypes = [FLOAT_TYPE] * len(xlimits)
+            self._xtypes = [XType.FLOAT] * len(xlimits)
         else:
             self._xtypes = xtypes
         if (
             xroles is None and xlimits is not None
         ):  # when xroles is not specified default to neutral
-            self._xroles = [NEUTRAL_ROLE] * len(xlimits)
+            self._xroles = [XRole.NEUTRAL] * len(xlimits)
         else:
             self._xroles = xroles
         self._check_consistency()
@@ -117,7 +112,7 @@ class XSpecs:
 
         for i, xtyp in enumerate(self._xtypes):
             if (not isinstance(xtyp, tuple)) and len(self._xlimits[i]) != 2:
-                if xtyp == ORD_TYPE and isinstance(self._xlimits[i][0], str):
+                if xtyp == XType.ORD and isinstance(self._xlimits[i][0], str):
                     listint = list(map(float, self._xlimits[i]))
                     sortedlistint = sorted(listint)
                     if not np.array_equal(sortedlistint, listint):
@@ -129,9 +124,9 @@ class XSpecs:
                         f"Bad x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
                     )
             if (
-                xtyp != FLOAT_TYPE
-                and xtyp != ORD_TYPE
-                and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM_TYPE)
+                xtyp != XType.FLOAT
+                and xtyp != XType.ORD
+                and (not isinstance(xtyp, tuple) or xtyp[0] != XType.ENUM)
             ):
                 raise ValueError(f"Bad type specification {xtyp}")
 
@@ -298,7 +293,7 @@ def compute_X_cont(x, xtypes):
     if xtypes is None:
         return x, None
     cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type") for xtype in xtypes
+        not (xtype == XType.FLOAT or xtype == XType.ORD) for xtype in xtypes
     ]
     return x[:, np.logical_not(cat_features)], cat_features
 
@@ -370,7 +365,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     maxmetanum = 1
     if np.shape(lim)[0] > 0:
         for k, i in enumerate(lim):
-            if xspecs.roles[k] != "meta_role":
+            if xspecs.roles[k] != XRole.META:
                 lb[k] = i[0]
                 ub[k] = i[-1]
             else:
@@ -425,7 +420,7 @@ def compute_D_cat(X_cat, Y_cat, y):
 
 
 def compute_D_num(X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum):
-    active_roles = len(xspecs.limits) * [NEUTRAL_ROLE] != xspecs.roles
+    active_roles = len(xspecs.limits) * [XRole.NEUTRAL] != xspecs.roles
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
     n_nonzero_cross_dist = nx_samples * ny_samples
@@ -465,8 +460,8 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
 ):
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
-    decreed_features = np.array([(xrole == "decreed_role") for xrole in xspecs.roles])
-    meta_features = np.array([(xrole == "meta_role") for xrole in xspecs.roles])
+    decreed_features = np.array([(xrole == XRole.DECREED) for xrole in xspecs.roles])
+    meta_features = np.array([(xrole == XRole.META) for xrole in xspecs.roles])
     decreed_num_features = decreed_features[np.logical_not(cat_features)]
     meta_num_features = meta_features[np.logical_not(cat_features)]
     meta_cat_features = meta_features[cat_features]
