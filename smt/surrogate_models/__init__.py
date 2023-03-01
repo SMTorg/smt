@@ -14,11 +14,7 @@ from .krg_based import (
     EXP_HOMO_HSPHERE_KERNEL,
 )
 from smt.utils.mixed_integer import XType
-from smt.utils.kriging import (
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
-)
+from smt.utils.kriging import XRole
 
 from smt.utils.kriging import XSpecs
 

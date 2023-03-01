@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from enum import Enum
 from copy import deepcopy
 
 from sklearn.cross_decomposition import PLSRegression as pls
@@ -14,9 +15,7 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.mixed_integer import XType
 
 ## This define the variables roles for hierarchical Kriging models
-NEUTRAL_ROLE = "neutral_role"
-META_ROLE = "meta_role"
-DECREED_ROLE = "decreed_role"
+XRole = Enum("XType", ["NEUTRAL", "META", "DECREED"])
 
 
 class XSpecs:
@@ -46,7 +45,7 @@ class XSpecs:
         if (
             xroles is None and xlimits is not None
         ):  # when xroles is not specified default to neutral
-            self._xroles = [NEUTRAL_ROLE] * len(xlimits)
+            self._xroles = [XRole.NEUTRAL] * len(xlimits)
         else:
             self._xroles = xroles
         self._check_consistency()
@@ -421,7 +420,7 @@ def compute_D_cat(X_cat, Y_cat, y):
 
 
 def compute_D_num(X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum):
-    active_roles = len(xspecs.limits) * [NEUTRAL_ROLE] != xspecs.roles
+    active_roles = len(xspecs.limits) * [XRole.NEUTRAL] != xspecs.roles
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
     n_nonzero_cross_dist = nx_samples * ny_samples

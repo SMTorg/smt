@@ -34,9 +34,7 @@ from smt.surrogate_models import (
     KPLS,
     QP,
     XType,
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
+    XRole,
     GOWER_KERNEL,
     HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
@@ -523,17 +521,17 @@ class TestMixedInteger(unittest.TestCase):
             [0, 2],  # 9
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
         ]
         # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
 
@@ -704,14 +702,14 @@ class TestMixedInteger(unittest.TestCase):
             XType.ORD,
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.DECREED,
         ]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 100

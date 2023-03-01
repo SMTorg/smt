@@ -6,15 +6,8 @@ Author: Paul Saves
 import unittest
 import numpy as np
 from smt.utils.kriging import XSpecs
-from smt.utils.mixed_integer import (
-    XType,
-    unfold_xlimits_with_continuous_limits,
-)
-from smt.utils.kriging import (
-    NEUTRAL_ROLE,
-    DECREED_ROLE,
-    META_ROLE,
-)
+from smt.utils.mixed_integer import XType
+from smt.utils.kriging import XRole
 
 
 class Test(unittest.TestCase):
@@ -34,7 +27,7 @@ class Test(unittest.TestCase):
     def test_xspecs_check_consistency(self):
         xtypes = [XType.FLOAT, (XType.ENUM, 3)]
         xlimits = [[-10, 10], ["blue", "red", "green"]]
-        xroles = [[DECREED_ROLE, META_ROLE, DECREED_ROLE]]  # Bad dimension
+        xroles = [[XRole.DECREED, XRole.META, XRole.DECREED]]  # Bad dimension
         with self.assertRaises(ValueError):
             XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
 

@@ -29,9 +29,7 @@ from smt.surrogate_models import (
     KPLS,
     XSpecs,
     XType,
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
+    XRole,
     HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
     GOWER_KERNEL,
@@ -442,14 +440,14 @@ class TestEGO(SMTestCase):
             return np.array(y)
 
         xlimits = [
-            [1, 3],  # META_ROLE XType.ORD
+            [1, 3],  # XRole.META XType.ORD
             [-5, -2],
             [-5, -1],
             ["8", "16", "32", "64", "128", "256"],
             ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # DECREED_ROLE m=1
-            [0.0, 5.0],  # DECREED_ROLE m=2
-            [0.0, 5.0],  # DECREED_ROLE m=3
+            [0.0, 5.0],  # XRole.DECREED m=1
+            [0.0, 5.0],  # XRole.DECREED m=2
+            [0.0, 5.0],  # XRole.DECREED m=3
         ]
         xtypes = [
             XType.ORD,
@@ -462,14 +460,14 @@ class TestEGO(SMTestCase):
             XType.ORD,
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.DECREED,
         ]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 4
@@ -641,7 +639,7 @@ class TestEGO(SMTestCase):
             return np.array(y)
 
         xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # META_ROLE1 XType.ORD
+            ["6,7", "3,7", "4,6", "3,4"],  # XRole.META1 XType.ORD
             [0, 1],  # 0
             [0, 100],  # 1
             [0, 100],  # 2
@@ -654,17 +652,17 @@ class TestEGO(SMTestCase):
             [0, 2],  # 9
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
         ]
         # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
 
