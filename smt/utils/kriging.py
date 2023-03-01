@@ -365,7 +365,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
     maxmetanum = 1
     if np.shape(lim)[0] > 0:
         for k, i in enumerate(lim):
-            if xspecs.roles[k] != "meta_role":
+            if xspecs.roles[k] != XRole.META:
                 lb[k] = i[0]
                 ub[k] = i[-1]
             else:
@@ -460,8 +460,8 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
 ):
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
-    decreed_features = np.array([(xrole == "decreed_role") for xrole in xspecs.roles])
-    meta_features = np.array([(xrole == "meta_role") for xrole in xspecs.roles])
+    decreed_features = np.array([(xrole == XRole.DECREED) for xrole in xspecs.roles])
+    meta_features = np.array([(xrole == XRole.META) for xrole in xspecs.roles])
     decreed_num_features = decreed_features[np.logical_not(cat_features)]
     meta_num_features = meta_features[np.logical_not(cat_features)]
     meta_cat_features = meta_features[cat_features]
