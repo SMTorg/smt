@@ -13,11 +13,7 @@ from .krg_based import (
     HOMO_HSPHERE_KERNEL,
     EXP_HOMO_HSPHERE_KERNEL,
 )
-from smt.utils.mixed_integer import (
-    FLOAT_TYPE,
-    ORD_TYPE,
-    ENUM_TYPE,
-)
+from smt.utils.mixed_integer import XType
 from smt.utils.kriging import (
     NEUTRAL_ROLE,
     META_ROLE,

@@ -11,11 +11,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
-from smt.utils.mixed_integer import (
-    ENUM_TYPE,
-    ORD_TYPE,
-    FLOAT_TYPE,
-)
+from smt.utils.mixed_integer import XType
 
 ## This define the variables roles for hierarchical Kriging models
 NEUTRAL_ROLE = "neutral_role"
@@ -44,7 +40,7 @@ class XSpecs:
         if (
             xtypes is None and xlimits is not None
         ):  # when xtypes is not specified default to float
-            self._xtypes = [FLOAT_TYPE] * len(xlimits)
+            self._xtypes = [XType.FLOAT] * len(xlimits)
         else:
             self._xtypes = xtypes
         if (
@@ -117,7 +113,7 @@ class XSpecs:
 
         for i, xtyp in enumerate(self._xtypes):
             if (not isinstance(xtyp, tuple)) and len(self._xlimits[i]) != 2:
-                if xtyp == ORD_TYPE and isinstance(self._xlimits[i][0], str):
+                if xtyp == XType.ORD and isinstance(self._xlimits[i][0], str):
                     listint = list(map(float, self._xlimits[i]))
                     sortedlistint = sorted(listint)
                     if not np.array_equal(sortedlistint, listint):
@@ -129,9 +125,9 @@ class XSpecs:
                         f"Bad x limits ({self._xlimits[i]}) for variable type {xtyp} (index={i})"
                     )
             if (
-                xtyp != FLOAT_TYPE
-                and xtyp != ORD_TYPE
-                and (not isinstance(xtyp, tuple) or xtyp[0] != ENUM_TYPE)
+                xtyp != XType.FLOAT
+                and xtyp != XType.ORD
+                and (not isinstance(xtyp, tuple) or xtyp[0] != XType.ENUM)
             ):
                 raise ValueError(f"Bad type specification {xtyp}")
 
@@ -298,7 +294,7 @@ def compute_X_cont(x, xtypes):
     if xtypes is None:
         return x, None
     cat_features = [
-        not (xtype == "float_type" or xtype == "ord_type") for xtype in xtypes
+        not (xtype == XType.FLOAT or xtype == XType.ORD) for xtype in xtypes
     ]
     return x[:, np.logical_not(cat_features)], cat_features
 

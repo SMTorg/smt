@@ -23,11 +23,7 @@ from smt.surrogate_models.krg_based import (
     EXP_HOMO_HSPHERE_KERNEL,
     CONT_RELAX_KERNEL,
 )
-from smt.utils.mixed_integer import (
-    ORD_TYPE,
-    ENUM_TYPE,
-    FLOAT_TYPE,
-)
+from smt.utils.mixed_integer import XType
 from smt.utils.kriging import (
     DECREED_ROLE,
     META_ROLE,
