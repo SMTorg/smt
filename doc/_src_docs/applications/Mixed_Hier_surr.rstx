@@ -7,7 +7,7 @@ To use a surrogate with mixed integer constraints, the user instanciates a ``Mix
 The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
-For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented, therefore, , the user can instanciates a ``MixedIntegerKrigingeModel`` with the given kernel for Kriging.
+For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingeModel`` with the given kernel for Kriging.
 
 Mixed Integer Surrogate with Continuous Relaxation
 --------------------------------------------------
@@ -40,7 +40,7 @@ Example of mixed integer Gower Distance model
 Mixed Integer Kriging with Group Kernel (Homoscedastic Hypersphere)
 -------------------------------------------------------------------
 
-This surrogate model consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
+This surrogate model assumes that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
 
 Example of mixed integer Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

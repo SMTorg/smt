@@ -6,8 +6,8 @@ Mixed Integer and Hierarchical usage (Variables, Sampling and Context)
 Mixed integer variables types
 -----------------------------
 
-SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with categorical (or enumerate) and ordered variables using continuous relaxation.
-For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, bounds are provided, the list will consist of all integers between those bounds.
+SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with categorical (or enumerate) and ordered integer variables using continuous relaxation.
+For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, only lower and upper bounds are provided, the list of all possible values will consists of the integers values between those bounds.
 
 The user specifies x feature types through a list of types to be either:
 
@@ -19,7 +19,7 @@ In the case of mixed integer sampling, bounds of each x feature have to be adapt
 
 For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
 
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6]. Details can be found in [1]_ .
+However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6]. However, these ordered values should be string representation of integer. Details can be found in [1]_ .
 
 Hierarchical variables roles
 ----------------------------
@@ -40,15 +40,6 @@ Mixed and hierarchical specifications
 The ``XSpecs`` class helps implements the types, limits and roles of each variables as follows.
 
   .. autoclass:: smt.utils.kriging.XSpecs
-
-  .. automethod:: smt.utils.kriging.XSpecs.__init__
-
-  .. automethod:: smt.utils.kriging.XSpecs.roles
-
-  .. automethod:: smt.utils.kriging.XSpecs.types
-
-  .. automethod:: smt.utils.kriging.XSpecs.limits
-
 
 Mixed integer sampling method
 -----------------------------
@@ -175,9 +166,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000199
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

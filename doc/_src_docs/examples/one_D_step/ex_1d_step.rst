@@ -130,12 +130,12 @@ RMTB
            Computing dof2coeff ...
            Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0009968
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0009971
+           Computing energy terms - done. Time (sec):  0.0019946
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0019939
+        Pre-computing matrices - done. Time (sec):  0.0019946
         Solving for degrees of freedom ...
            Solving initial startup problem (n=100) ...
               Solving for output 0 ...
@@ -166,10 +166,10 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  17   0 6.113930019e-16 8.453272411e-15
                  Iteration (num., iy, grad. norm, func.) :  18   0 1.911917523e-16 8.453270747e-15
                  Iteration (num., iy, grad. norm, func.) :  19   0 1.931585657e-16 8.453270703e-15
-              Solving for output 0 - done. Time (sec):  0.0987685
-           Solving nonlinear problem (n=100) - done. Time (sec):  0.0987685
-        Solving for degrees of freedom - done. Time (sec):  0.1037552
-     Training - done. Time (sec):  0.1057491
+              Solving for output 0 - done. Time (sec):  0.0997744
+           Solving nonlinear problem (n=100) - done. Time (sec):  0.0997744
+        Solving for degrees of freedom - done. Time (sec):  0.1047611
+     Training - done. Time (sec):  0.1067557
   ___________________________________________________________________________
      
    Evaluation
@@ -227,21 +227,21 @@ RMTC
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0010138
+           Computing dof2coeff - done. Time (sec):  0.0009971
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0019786
+           Computing energy terms - done. Time (sec):  0.0010304
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0029924
+           Computing approximation terms - done. Time (sec):  0.0009646
+        Pre-computing matrices - done. Time (sec):  0.0029922
         Solving for degrees of freedom ...
            Solving initial startup problem (n=82) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.470849329e-01 8.436300000e-03
                  Iteration (num., iy, grad. norm, func.) :   0   0 4.031960886e-12 2.493686471e-14
-              Solving for output 0 - done. Time (sec):  0.0060124
-           Solving initial startup problem (n=82) - done. Time (sec):  0.0060124
+              Solving for output 0 - done. Time (sec):  0.0050130
+           Solving initial startup problem (n=82) - done. Time (sec):  0.0050130
            Solving nonlinear problem (n=82) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 7.484146480e-12 2.493686331e-14
@@ -260,10 +260,10 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  12   0 2.898607110e-15 1.108940698e-14
                  Iteration (num., iy, grad. norm, func.) :  13   0 3.214675952e-16 1.108940346e-14
                  Iteration (num., iy, grad. norm, func.) :  14   0 1.039690103e-17 1.108940340e-14
-              Solving for output 0 - done. Time (sec):  0.0817838
-           Solving nonlinear problem (n=82) - done. Time (sec):  0.0817838
-        Solving for degrees of freedom - done. Time (sec):  0.0877962
-     Training - done. Time (sec):  0.0907886
+              Solving for output 0 - done. Time (sec):  0.0778186
+           Solving nonlinear problem (n=82) - done. Time (sec):  0.0778186
+        Solving for degrees of freedom - done. Time (sec):  0.0828316
+     Training - done. Time (sec):  0.0858238
   ___________________________________________________________________________
      
    Evaluation
@@ -271,9 +271,9 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009973
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000020
      
   
 .. figure:: ex_1d_step.png

@@ -88,7 +88,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         ----------
         xspecs : x specifications XSpecs
             xtypes: x types list
-                x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
+                x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
             xroles: x roles list
@@ -189,7 +189,7 @@ class MixedIntegerKrigingModel(KrgBased):
         ----------
         xspecs : x specifications XSpecs
             xtypes: x types list
-                x type specification: list of either FLOAT, ORD or (ENUM, n) spec.
+                x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
             xroles: x roles list
@@ -301,6 +301,8 @@ class MixedIntegerContext(object):
                 x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
             xlimits: array-like
                 bounds of x features
+            xroles: x roles list
+                x roles specification
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
         categorical_kernel: string
