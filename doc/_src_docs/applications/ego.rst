@@ -199,6 +199,7 @@ Usage
 
   import numpy as np
   from smt.applications import EGO
+  from smt.surrogate_models import KRG, XSpecs
   import matplotlib.pyplot as plt
   
   def function_test_1d(x):
@@ -212,12 +213,18 @@ Usage
   
   n_iter = 6
   xlimits = np.array([[0.0, 25.0]])
+  xspecs = XSpecs(xlimits=xlimits)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   
-  ego = EGO(n_iter=n_iter, criterion=criterion, xdoe=xdoe, xlimits=xlimits)
+  ego = EGO(
+      n_iter=n_iter,
+      criterion=criterion,
+      xdoe=xdoe,
+      surrogate=KRG(xspecs=xspecs, print_global=False),
+  )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
   print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
@@ -287,14 +294,10 @@ Usage with parallel options
 
   import numpy as np
   from smt.applications import EGO
-  from smt.applications.ego import EGO, Evaluator
-  from smt.sampling_methods import FullFactorial
+  from smt.applications.ego import Evaluator
+  from smt.surrogate_models import KRG, XSpecs
   
-  import sklearn
   import matplotlib.pyplot as plt
-  from matplotlib import colors
-  from mpl_toolkits.mplot3d import Axes3D
-  from scipy.stats import norm
   
   def function_test_1d(x):
       # function xsinx
@@ -309,6 +312,7 @@ Usage with parallel options
   n_parallel = 3
   n_start = 50
   xlimits = np.array([[0.0, 25.0]])
+  xspecs = XSpecs(xlimits=xlimits)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -343,7 +347,7 @@ Usage with parallel options
       n_iter=n_iter,
       criterion=criterion,
       xdoe=xdoe,
-      xlimits=xlimits,
+      surrogate=KRG(xspecs=xspecs, print_global=False),
       n_parallel=n_parallel,
       qEI=qEI,
       n_start=n_start,
@@ -439,11 +443,11 @@ Usage with mixed variable
 
   import numpy as np
   from smt.applications import EGO
-  from smt.applications.mixed_integer import (
-      MixedIntegerContext,
-      FLOAT,
-      ENUM,
-      ORD,
+  from smt.applications.mixed_integer import MixedIntegerContext
+  from smt.surrogate_models import (
+      XType,
+      MixIntKernelType,
+      XSpecs,
   )
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
@@ -473,17 +477,22 @@ Usage with mixed variable
           + (x2 + 2 * x3 + 3 * x4) * x6 * 0.95 * x1
           + i
       )
-      return y
+      return y.reshape((-1, 1))
   
   n_iter = 15
-  xtypes = [FLOAT, (ENUM, 3), (ENUM, 2), ORD]
+  xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
   xlimits = np.array(
-      [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]]
+      [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
+      dtype="object",
   )
+  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+  
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-  qEI = "KB"
-  sm = KRG(print_global=False)
-  mixint = MixedIntegerContext(xtypes, xlimits)
+  qEI = "KBRand"
+  sm = KRG(
+      xspecs=xspecs, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+  )
+  mixint = MixedIntegerContext(xspecs)
   n_doe = 3
   sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
   xdoe = sampling(n_doe)
@@ -494,10 +503,9 @@ Usage with mixed variable
       criterion=criterion,
       xdoe=xdoe,
       ydoe=ydoe,
-      xtypes=xtypes,
-      xlimits=xlimits,
       surrogate=sm,
       qEI=qEI,
+      n_parallel=2,
       random_state=42,
   )
   
@@ -523,8 +531,8 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  1.  1.] with f(x)=-13.2
-  Minimum in typed x=[-5.0, 'blue', 'circle', 1]
+  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
+  Minimum in typed x=[-5.0, 'blue', 'circle', 0]
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -580,7 +588,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001638A08E430>
+     -  <smt.applications.ego.Evaluator object at 0x000001E36839D670>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -599,11 +607,6 @@ Options
      -  None
      -  ['ndarray']
      -  Initial doe outputs
-  *  -  xlimits
-     -  None
-     -  None
-     -  ['ndarray']
-     -  Bounds of function fun inputs
   *  -  verbose
      -  False
      -  None
@@ -614,21 +617,11 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
-  *  -  categorical_kernel
-     -  None
-     -  ['gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel', 'continuous_relaxation_matrix_kernel']
-     -  None
-     -  The kernel to use for categorical inputs. Only for non continuous Kriging.
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001638A0A1490>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001E3682A20D0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly
-  *  -  xtypes
-     -  None
-     -  None
-     -  ['list']
-     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical doimension with n levels
   *  -  random_state
      -  None
      -  None

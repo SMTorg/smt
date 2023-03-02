@@ -30,7 +30,7 @@ class XSpecs:
     _xlimits : np.array
         list of corresponding domain which depends on variables types
 
-     _xroles: np.array
+    _xroles : np.array
         list of mixed integer variables roles
     """
 

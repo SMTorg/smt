@@ -131,7 +131,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0408301
+     Training - done. Time (sec):  0.0359063
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009661
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001932
      
   
 .. figure:: krg_Test_test_krg.png
@@ -167,8 +167,9 @@ Example 2 with mixed variables
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+  from smt.surrogate_models import KRG, XType
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.utils.kriging import XSpecs
   
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
@@ -178,10 +179,8 @@ Example 2 with mixed variables
   # ORD means x2 integer
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-  
-  sm = MixedIntegerSurrogateModel(
-      xtypes=[ORD], xlimits=[[0, 4]], surrogate=KRG(theta0=[1e-2])
-  )
+  xspecs = XSpecs(xtypes=[XType.ORD], xlimits=[[0, 4]])
+  sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -218,9 +217,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009868
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000020
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -277,14 +276,9 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
-  *  -  xtypes
-     -  None
-     -  None
-     -  ['list']
-     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -330,3 +324,12 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
+  *  -  xspecs
+     -  None
+     -  None
+     -  ['XSpecs']
+     -  xspecs : x specifications including
+                xtypes: x types list
+                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
+                xlimits: array-like
+                    bounds of x features

@@ -1,0 +1,76 @@
+.. _Mixed Integer and hierarchical Surrogates:
+
+Mixed integer surrogate
+=======================
+
+To use a surrogate with mixed integer constraints, the user instanciates a ``MixedIntegerSurrogateModel`` with the given surrogate.
+The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
+They are various surrogate models implemented that are described below.
+
+For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingeModel`` with the given kernel for Kriging.
+
+Mixed Integer Surrogate with Continuous Relaxation
+--------------------------------------------------
+
+For enum variables, as many x features are added as there is enumerated levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
+For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"], 3 continuous float features x0, x1, x2 are created. Thereafter, the value max(x0, x1, x2), for instance, x1, will give "red" as the value for the original categorical feature. Details can be found in [1]_ .
+
+
+Example of mixed integer Polynomial (QP) surrogate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_qp_example , 80
+
+
+Mixed Integer Kriging with Gower Distance
+-----------------------------------------
+
+Another implemented method to tackle mixed integer with Kriging is using a basic mixed integer kernel based on the Gower distance between two points.
+When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
+
+For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
+With this distance, a mixed integer kernel can be build. Details can be found in [1]_ .
+
+Example of mixed integer Gower Distance model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_gower_example, 80	
+
+
+Mixed Integer Kriging with Group Kernel (Homoscedastic Hypersphere)
+-------------------------------------------------------------------
+
+This surrogate model assumes that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
+
+Example of mixed integer Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_homo_hyp_example, 80	
+ 	
+
+Mixed Integer Kriging with Exponential Homoscedastic Hypersphere
+----------------------------------------------------------------
+
+This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
+
+Example of mixed integer Exponential Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_homo_gaussian_example, 80	
+
+
+Mixed Integer Kriging with hierarchical variables
+-------------------------------------------------
+
+The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingeModel`` for both Hierarchical and mixed categorical variables can be build. More details are given in the usage section.
+
+Example of mixed integer Kriging with hierarchical variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_hierarchical_variables_Goldstein
+
+
+References
+----------
+
+.. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
