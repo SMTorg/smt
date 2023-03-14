@@ -23,14 +23,25 @@ class KPLSK(KPLS):
             types=(str),
         )
 
+        declare(
+            "pow_exp_power",
+            2.0,
+            desc="Power for the pow_exp kernel function",
+            types=(float),
+        )
+
+
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+        
+        self.power_init()
+
         if opt == 0:
             # Kriging step
             d = componentwise_distance(
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["power"],
+                power=self.options["pow_exp_power"],
                 theta=theta,
                 return_derivative=return_derivative,
             )
@@ -41,7 +52,7 @@ class KPLSK(KPLS):
                 self.options["corr"],
                 self.options["n_comp"],
                 self.coeff_pls,
-                power=self.options["power"],
+                power=self.options["pow_exp_power"],
                 theta=theta,
                 return_derivative=return_derivative,
             )

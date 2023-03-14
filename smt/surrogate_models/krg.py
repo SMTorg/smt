@@ -17,17 +17,20 @@ class KRG(KrgBased):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "exp", "squar_exp", "matern52", "matern32"),
+            values=("pow_exp", "abs_exp", "squar_exp", "matern52", "matern32"),
             desc="Correlation function type",
             types=(str),
         )
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+
+        self.power_init()
+
         d = componentwise_distance(
             dx,
             self.options["corr"],
             self.nx,
-            power=self.options["power"],
+            self.options["pow_exp_power"],
             theta=theta,
             return_derivative=return_derivative,
         )

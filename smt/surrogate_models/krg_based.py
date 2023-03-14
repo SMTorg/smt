@@ -14,9 +14,9 @@ from smt.utils.kriging import (
     constant,
     linear,
     quadratic,
+    pow_exp,
     squar_exp,
     abs_exp,
-    exp,
     act_exp,
     cross_distances,
     matern52,
@@ -47,8 +47,8 @@ class KrgBased(SurrogateModel):
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
     _correlation_types = {
+        "pow_exp": pow_exp,
         "abs_exp": abs_exp,
-        "exp": exp,
         "squar_exp": squar_exp,
         "act_exp": act_exp,
         "matern52": matern52,
@@ -72,8 +72,8 @@ class KrgBased(SurrogateModel):
             "corr",
             "squar_exp",
             values=(
+                "pow_exp",
                 "abs_exp",
-                "exp",
                 "squar_exp",
                 "act_exp",
                 "matern52",
@@ -82,10 +82,10 @@ class KrgBased(SurrogateModel):
             desc="Correlation function type",
         )
         declare(
-            "power",
+            "pow_exp_power",
             2.0,
             types=(float),
-            desc="Power for the exp kernel function, values [1.0, 2.0]",
+            desc="Power for the pow_exp kernel function, values [1.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
         )
         declare(
             "categorical_kernel",
@@ -171,6 +171,15 @@ class KrgBased(SurrogateModel):
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
+
+    def power_init(self):
+        # initialize default power values
+        if self.options["corr"] == "squar_exp":
+            # print("I am initializing the power to be 2")
+            self.options["pow_exp_power"] = 2.0
+        elif self.options["corr"] in ["abs_exp", "matern32", "matern52"]:
+            # print("I am initializing the power to be 1")
+            self.options["pow_exp_power"] = 1.0
 
     def _new_train(self):
         # Sampling points X and y
@@ -313,13 +322,14 @@ class KrgBased(SurrogateModel):
             An array containing the values of the autocorrelation model.
         """
         _correlation_types = {
+            "pow_exp": pow_exp,
             "abs_exp": abs_exp,
-            "exp": exp,
             "squar_exp": squar_exp,
             "act_exp": act_exp,
             "matern52": matern52,
             "matern32": matern32,
         }
+
         r = np.zeros((dx.shape[0], 1))
         nx = self.nx
         nlevels = n_levels
@@ -407,7 +417,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 corr,
                 nx,
-                power=self.options["power"],
+                power,
                 theta=None,
                 return_derivative=False,
             )
@@ -504,7 +514,7 @@ class KrgBased(SurrogateModel):
                     "squar_exp",
                     self.options["n_comp"],
                     self.coeff_pls,
-                    power=self.options["power"],
+                    power=self.options["pow_exp_power"],
                     theta=None,
                     return_derivative=False,
                 )
@@ -590,6 +600,8 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"]:
             nugget = 0
 
+        self.power_init()
+
         noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
@@ -618,7 +630,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 xtypes=self.options["xspecs"].types,
-                power=self.options["power"],
+                power=self.options["pow_exp_power"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1024,6 +1036,8 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
+        self.power_init()
+
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
@@ -1035,7 +1049,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["power"],
+                power=self.options["pow_exp_power"],
                 theta=None,
                 return_derivative=False,
             )
@@ -1053,7 +1067,7 @@ class KrgBased(SurrogateModel):
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
                     xtypes=self.options["xspecs"].types,
-                    power=self.options["power"],
+                    power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1156,6 +1170,7 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         X_cont = x
+        self.power_init()
         if self.options["categorical_kernel"] is not None:
 
             dx = gower_componentwise_distances(
@@ -1167,7 +1182,7 @@ class KrgBased(SurrogateModel):
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["power"],
+                self.options["pow_exp_power"],
                 theta=None,
                 return_derivative=False,
             )
@@ -1189,7 +1204,7 @@ class KrgBased(SurrogateModel):
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
                     xtypes=self.options["xspecs"].types,
-                    power=self.options["power"],
+                    power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
                     dx=dx,
@@ -1617,7 +1632,7 @@ class KrgBased(SurrogateModel):
             raise ValueError("xspecs required for mixed integer Kriging")
 
         if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["squar_exp", "exp", "abs_exp"]:
+            if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
                 raise ValueError(
                     "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
                 )

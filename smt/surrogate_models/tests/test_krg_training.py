@@ -11,8 +11,8 @@ import numpy as np
 import unittest
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.kriging import (
+    pow_exp,
     abs_exp,
-    exp, 
     squar_exp,
     act_exp,
     cross_distances,
@@ -38,8 +38,16 @@ class Test(SMTestCase):
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
         theta = self.random.rand(2)
-        corr_str = ["abs_exp", "exp", "squar_exp", "act_exp", "matern32", "matern52"]
-        corr_def = [abs_exp, exp, squar_exp, act_exp, matern32, matern52]
+        corr_str = ["pow_exp", "abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
+        corr_def = [pow_exp, abs_exp, squar_exp, act_exp, matern32, matern52]
+        power_val = {
+            "pow_exp":1.9,
+            "abs_exp":1.0,
+            "squar_exp":2.0,
+            "act_exp":1.0,
+            "matern32":1.0,
+            "matern52":1.0,
+        }
 
         self.eps = eps
         self.X = X
@@ -63,6 +71,7 @@ class Test(SMTestCase):
         self.theta = theta
         self.corr_str = corr_str
         self.corr_def = corr_def
+        self.power_val = power_val
 
         def test_noise_estimation(self):
             xt = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
@@ -75,8 +84,8 @@ class Test(SMTestCase):
 
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
-            self.corr_str[ind] = self.corr_def[ind]
-            D = componentwise_distance(self.D, self.corr_str, self.X.shape[1])
+            # self.corr_str[ind] = self.corr_def[ind]
+            D = componentwise_distance(self.D, self.corr_str[ind], self.X.shape[1], self.power_val[self.corr_str[ind]])
 
             k = corr(self.theta, D)
             K = np.eye(self.X.shape[0])
@@ -110,8 +119,8 @@ class Test(SMTestCase):
 
     def test_corr_hessian(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
-            self.corr_str[ind] = self.corr_def[ind]
-            D = componentwise_distance(self.D, self.corr_str, self.X.shape[1])
+            # self.corr_str[ind] = self.corr_def[ind]
+            D = componentwise_distance(self.D, self.corr_str[ind], self.X.shape[1], self.power_val[self.corr_str[ind]])
 
             grad_norm_all = []
             diff_norm_all = []
@@ -147,8 +156,8 @@ class Test(SMTestCase):
 
     def test_likelihood_derivatives(self):
         for corr_str in [
+            "pow_exp", 
             "abs_exp",
-            "exp",
             "squar_exp",
             "act_exp",
             "matern32",
@@ -163,6 +172,7 @@ class Test(SMTestCase):
                     theta = self.theta
                 kr.options["poly"] = poly_str
                 kr.options["corr"] = corr_str
+                kr.options["pow_exp_power"] = self.power_val[corr_str]
                 kr.set_training_values(self.X, self.y)
                 kr.train()
 
@@ -191,8 +201,8 @@ class Test(SMTestCase):
 
     def test_likelihood_hessian(self):
         for corr_str in [
+            "pow_exp", 
             "abs_exp",
-            "exp",
             "squar_exp",
             "act_exp",
             "matern32",
@@ -207,6 +217,7 @@ class Test(SMTestCase):
                     theta = self.theta
                 kr.options["poly"] = poly_str
                 kr.options["corr"] = corr_str
+                kr.options["pow_exp_power"] = self.power_val[corr_str]
                 kr.set_training_values(self.X, self.y)
                 kr.train()
                 grad_red, dpar = kr._reduced_likelihood_gradient(theta)
@@ -244,8 +255,8 @@ class Test(SMTestCase):
 
     def test_variance_derivatives(self):
         for corr_str in [
+            "pow_exp", 
             "abs_exp",
-            "exp",
             "squar_exp",
             "matern32",
             "matern52",
@@ -253,10 +264,11 @@ class Test(SMTestCase):
             kr = KRG(print_global=False)
             kr.options["poly"] = "constant"
             kr.options["corr"] = corr_str
+            kr.options["pow_exp_power"] = self.power_val[corr_str]
             kr.set_training_values(self.X, self.y)
             kr.train()
 
-            e = 1e-6
+            e = 1e-4
             xa = self.random.random()
             xb = self.random.random()
             x_valid = [[xa, xb], [xa + e, xb], [xa - e, xb], [xa, xb + e], [xa, xb - e]]

@@ -29,15 +29,15 @@ class Test(SMTestCase):
 
     def test_predictions(self):
         trends = ["constant", "linear"]
-        kernels = ["squar_exp", "exp", "abs_exp", "matern32", "matern52"]
+        kernels = ["pow_exp", "squar_exp", "abs_exp", "matern32", "matern52"]
         powers = [1.0, 1.5, 2.0]
 
         for trend in trends:
             for kernel in kernels:
-                if kernel == "exp":
+                if kernel == "pow_exp":
                     for power in powers:
                         sm = KRG(
-                            theta0=[0.01], print_global=False, poly=trend, corr=kernel, power = power
+                            theta0=[0.01], print_global=False, poly=trend, corr=kernel, pow_exp_power = power
                         )  # ,eval_noise=True)
                         sm.set_training_values(self.xt, self.yt)
                         sm.train()

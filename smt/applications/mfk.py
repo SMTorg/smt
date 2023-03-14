@@ -130,6 +130,12 @@ class MFK(KrgBased):
         )
         self.name = "MFK"
 
+        # initialize default power values
+        if self.options["corr"] == "squar_exp":
+            self.options["pow_exp_power"] = 2.0
+        elif self.options["corr"] in ["abs_exp", "matern32", "matern52"]:
+            self.options["pow_exp_power"] = 1.0
+
     def _differences(self, X, Y):
         """
         Compute the distances
@@ -364,7 +370,9 @@ class MFK(KrgBased):
             self._new_train()
 
     def _componentwise_distance(self, dx, opt=0):
-        d = componentwise_distance(dx, self.options["corr"], self.nx, power=self.options["power"])
+        self.power_init()
+
+        d = componentwise_distance(dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"])
         return d
 
     def _predict_intermediate_values(self, X, lvl, descale=True):

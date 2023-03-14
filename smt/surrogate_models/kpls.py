@@ -24,8 +24,8 @@ class KPLS(KrgBased):
         # KPLS used only with "abs_exp" and "squar_exp" correlations
         declare(
             "corr",
-            "exp",
-            values=("abs_exp", "exp", "squar_exp"),
+            "squar_exp",
+            values=("abs_exp", "squar_exp"), # Should add pow_exp?
             desc="Correlation function type",
             types=(str),
         )
@@ -49,6 +49,7 @@ class KPLS(KrgBased):
             desc="Number of components for PLS categorical kernel",
         )
 
+
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
         self.coeff_pls = 0
@@ -69,12 +70,15 @@ class KPLS(KrgBased):
         return X, y
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+
+        self.power_init()
+
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],
             self.options["n_comp"],
             self.coeff_pls,
-            power=self.options["power"],
+            power=self.options["pow_exp_power"],
             theta=theta,
             return_derivative=return_derivative,
         )
