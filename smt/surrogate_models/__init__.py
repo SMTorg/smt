@@ -8,7 +8,7 @@ from .genn import GENN
 from .mgp import MGP
 
 from .krg_based import MixIntKernelType
-from smt.utils.kriging import MixHierKernelType
+from smt.utils.kriging import MixHrcKernelType
 from smt.utils.mixed_integer import XType
 from smt.utils.kriging import XRole
 

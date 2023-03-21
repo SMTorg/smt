@@ -29,7 +29,7 @@ from smt.utils.kriging import (
     compute_X_cross,
     cross_levels_homo_space,
     XSpecs,
-    MixHierKernelType 
+    MixHrcKernelType,
 )
 from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
@@ -91,12 +91,12 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "hierarchical_kernel",
-            MixHierKernelType.ALG_KERNEL,
+            MixHrcKernelType.ALG_KERNEL,
             values=[
-                MixHierKernelType.ALG_KERNEL,
-                MixHierKernelType.ARC_KERNEL,
+                MixHrcKernelType.ALG_KERNEL,
+                MixHrcKernelType.ARC_KERNEL,
             ],
-            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
+            desc="The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging",
         )
         declare(
             "nugget",
@@ -187,7 +187,9 @@ class KrgBased(SurrogateModel):
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
-                X=X, xspecs=self.options["xspecs"],hierarchical_kernel=self.options["hierarchical_kernel"],
+                X=X,
+                xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
