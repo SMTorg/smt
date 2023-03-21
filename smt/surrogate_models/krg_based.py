@@ -29,6 +29,7 @@ from smt.utils.kriging import (
     compute_X_cross,
     cross_levels_homo_space,
     XSpecs,
+    MixHierKernelType 
 )
 from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
@@ -85,6 +86,15 @@ class KrgBased(SurrogateModel):
                 MixIntKernelType.GOWER,
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
+            ],
+            desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
+        )
+        declare(
+            "hierarchical_kernel",
+            MixHierKernelType.ALG_KERNEL,
+            values=[
+                MixHierKernelType.ALG_KERNEL,
+                MixHierKernelType.ARC_KERNEL,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
@@ -177,7 +187,7 @@ class KrgBased(SurrogateModel):
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
-                X=X, xspecs=self.options["xspecs"]
+                X=X, xspecs=self.options["xspecs"],hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
@@ -1026,6 +1036,7 @@ class KrgBased(SurrogateModel):
             dx = gower_componentwise_distances(
                 x,
                 xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
             )
 
@@ -1157,6 +1168,7 @@ class KrgBased(SurrogateModel):
             dx = gower_componentwise_distances(
                 x,
                 xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
             )
             d = componentwise_distance(

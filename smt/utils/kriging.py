@@ -14,6 +14,9 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.mixed_integer import XType
 
+MixHierKernelType = Enum(
+    "MixHierKernelType", ["ARC_KERNEL", "ALG_KERNEL"]
+)
 ## This define the variables roles for hierarchical Kriging models
 XRole = Enum("XType", ["NEUTRAL", "META", "DECREED"])
 
@@ -298,7 +301,7 @@ def compute_X_cont(x, xtypes):
     return x[:, np.logical_not(cat_features)], cat_features
 
 
-def gower_componentwise_distances(X, xspecs, y=None):
+def gower_componentwise_distances(X, xspecs,hierarchical_kernel, y=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -383,7 +386,7 @@ def gower_componentwise_distances(X, xspecs, y=None):
 
     D_cat = compute_D_cat(X_cat, Y_cat, y)
     D_num, ij = compute_D_num(
-        X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum
+        X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum,hierarchical_kernel
     )
     D = np.concatenate((D_cat, D_num), axis=1) * 0
     D[:, np.logical_not(cat_features)] = D_num
@@ -419,7 +422,7 @@ def compute_D_cat(X_cat, Y_cat, y):
     return D_cat
 
 
-def compute_D_num(X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum):
+def compute_D_num(X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum,hierarchical_kernel):
     active_roles = len(xspecs.limits) * [XRole.NEUTRAL] != xspecs.roles
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
@@ -449,14 +452,14 @@ def compute_D_num(X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanu
             indD += 1
     if active_roles:
         D_num = apply_the_algebraic_distance_to_the_decreed_variable(
-            xspecs, X_num, Y_num, y, maxmetanum, cat_features, X_cat, Y_cat, D_num
+            xspecs, X_num, Y_num, y, maxmetanum, cat_features, X_cat, Y_cat, D_num,hierarchical_kernel
         )
 
     return D_num, ij
 
 
 def apply_the_algebraic_distance_to_the_decreed_variable(
-    xspecs, X_num, Y_num, y, maxmetanum, cat_features, X_cat, Y_cat, D_num
+    xspecs, X_num, Y_num, y, maxmetanum, cat_features, X_cat, Y_cat, D_num,hierarchical_kernel
 ):
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
@@ -479,28 +482,29 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
             if y is None:
                 l2 = k2 + k1 + 1
             abs_delta = np.abs(X_num[k1] - Y_num[l2])
-            abs_delta[decreed_num_features] = (
-                2
-                * np.abs(
-                    X_num[k1][decreed_num_features] - Y_num[l2][decreed_num_features]
-                )
-                / (
-                    np.sqrt(1 + X_num[k1][decreed_num_features] ** 2)
-                    * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
-                )
-            )
-
-            abs_delta[decreed_num_features] = np.sqrt(2) * np.sqrt(
-                1
-                - np.cos(
-                    np.pi
+            
+            if hierarchical_kernel == MixHierKernelType.ALG_KERNEL :
+                abs_delta[decreed_num_features] = (
+                    2
                     * np.abs(
-                        X_num[k1][decreed_num_features]
-                        - Y_num[l2][decreed_num_features]
+                        X_num[k1][decreed_num_features] - Y_num[l2][decreed_num_features]
+                    )
+                    / (
+                        np.sqrt(1 + X_num[k1][decreed_num_features] ** 2)
+                        * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
                     )
                 )
-            )
-
+            elif hierarchical_kernel == MixHierKernelType.ARC_KERNEL :
+                abs_delta[decreed_num_features] = np.sqrt(2) * np.sqrt(
+                    1
+                    - np.cos(
+                        np.pi
+                        * np.abs(
+                            X_num[k1][decreed_num_features]
+                            - Y_num[l2][decreed_num_features]
+                        )
+                    )
+                )
             abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
 
             if np.max(meta_num_features):
