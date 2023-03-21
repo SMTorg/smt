@@ -5,14 +5,13 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+from enum import Enum
 
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
 
 ## This define the variables types for mixed surrogate models
-FLOAT_TYPE = "float_type"
-ORD_TYPE = "ord_type"
-ENUM_TYPE = "enum_type"
+XType = Enum("XType", ["FLOAT", "ORD", "ENUM"])
 
 
 def _raise_value_error(xtyp):
@@ -28,9 +27,9 @@ def compute_unfolded_dimension(xtypes):
     """
     res = 0
     for xtyp in xtypes:
-        if xtyp == FLOAT_TYPE or xtyp == ORD_TYPE:
+        if xtyp == XType.FLOAT or xtyp == XType.ORD:
             res += 1
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             res += xtyp[1]
         else:
             _raise_value_error(xtyp)
@@ -61,14 +60,14 @@ def unfold_xlimits_with_continuous_limits(xspecs, unfold_space=True):
     # Continuous optimization : do nothing
     xlims = []
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT_TYPE or xtyp == ORD_TYPE:
-            if xtyp == ORD_TYPE and (not isinstance(xlimits[i][0], int)):
+        if xtyp == XType.FLOAT or xtyp == XType.ORD:
+            if xtyp == XType.ORD and (not isinstance(xlimits[i][0], int)):
                 listint = list(map(float, xlimits[i]))
                 listint = [listint[0], listint[-1]]
                 xlims.append(listint)
             else:
                 xlims.append(xlimits[i])
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             if xtyp[1] == len(xlimits[i]):
                 if unfold_space:
                     xlims.extend(xtyp[1] * [[0, 1]])
@@ -95,17 +94,17 @@ def cast_to_discrete_values(xspecs, unfold_space, x):
     ret = ensure_2d_array(x, "x").copy()
     x_col = 0
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT_TYPE:
+        if xtyp == XType.FLOAT:
             x_col += 1
             continue
-        elif xtyp == ORD_TYPE:
+        elif xtyp == XType.ORD:
             if isinstance(xlimits[i][0], str):
                 listint = list(map(float, xlimits[i]))
                 ret[:, x_col] = take_closest_in_list(listint, ret[:, x_col])
             else:
                 ret[:, x_col] = np.round(ret[:, x_col])
             x_col += 1
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             if unfold_space:
                 # Categorial : The biggest level is selected.
                 xenum = ret[:, x_col : x_col + xtyp[1]]
@@ -130,10 +129,10 @@ def fold_with_enum_index(xtypes, x):
     xfold = np.zeros((x.shape[0], len(xtypes)))
     unfold_index = 0
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT_TYPE or xtyp == ORD_TYPE:
+        if xtyp == XType.FLOAT or xtyp == XType.ORD:
             xfold[:, i] = x[:, unfold_index]
             unfold_index += 1
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             index = np.argmax(x[:, unfold_index : unfold_index + xtyp[1]], axis=1)
             xfold[:, i] = index
             unfold_index += xtyp[1]
@@ -150,10 +149,10 @@ def unfold_with_enum_mask(xtypes, x):
     xunfold = np.zeros((x.shape[0], compute_unfolded_dimension(xtypes)))
     unfold_index = 0
     for i, xtyp in enumerate(xtypes):
-        if xtyp == FLOAT_TYPE or xtyp == ORD_TYPE:
+        if xtyp == XType.FLOAT or xtyp == XType.ORD:
             xunfold[:, unfold_index] = x[:, i]
             unfold_index += 1
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             enum_slice = xunfold[:, unfold_index : unfold_index + xtyp[1]]
             for row in range(x.shape[0]):
                 if isinstance(x[row, i], np.ndarray):
@@ -182,11 +181,11 @@ def cast_to_mixed_integer(xspecs, x):
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
-        if xtyp == FLOAT_TYPE:
+        if xtyp == XType.FLOAT:
             res.append(xi)
-        elif xtyp == ORD_TYPE:
+        elif xtyp == XType.ORD:
             res.append(int(xi))
-        elif isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        elif isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             res.append(xlimits[i][int(xi)])
         else:
             _raise_value_error(xtyp)
@@ -202,9 +201,9 @@ def encode_with_enum_index(xspecs, x):
     res = []
     for i, xtyp in enumerate(xtypes):
         xi = x[i]
-        if isinstance(xtyp, tuple) and xtyp[0] == ENUM_TYPE:
+        if isinstance(xtyp, tuple) and xtyp[0] == XType.ENUM:
             res.append(xlimits[i].index(xi))
-        elif xtyp == ORD_TYPE or xtyp == FLOAT_TYPE:
+        elif xtyp == XType.ORD or xtyp == XType.FLOAT:
             res.append(xi)
         else:
             _raise_value_error(xtyp)

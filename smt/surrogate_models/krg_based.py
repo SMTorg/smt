@@ -4,6 +4,7 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 import numpy as np
+from enum import Enum
 from scipy import linalg, optimize
 from copy import deepcopy
 import warnings
@@ -35,11 +36,9 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 from smt.utils.mixed_integer import unfold_with_enum_mask
 
-# TODO: Create hyperclass Kernels and a class for each kernel
-EXP_HOMO_HSPHERE_KERNEL = "exponential_homoscedastic_matrix_kernel"
-HOMO_HSPHERE_KERNEL = "homoscedastic_matrix_kernel"
-CONT_RELAX_KERNEL = "continuous_relaxation_matrix_kernel"
-GOWER_KERNEL = "gower_matrix_kernel"
+MixIntKernelType = Enum(
+    "MixIntKernelType", ["EXP_HOMO_HSPHERE", "HOMO_HSPHERE", "CONT_RELAX", "GOWER"]
+)
 
 
 class KrgBased(SurrogateModel):
@@ -91,10 +90,10 @@ class KrgBased(SurrogateModel):
             "categorical_kernel",
             None,
             values=[
-                CONT_RELAX_KERNEL,
-                GOWER_KERNEL,
-                EXP_HOMO_HSPHERE_KERNEL,
-                HOMO_HSPHERE_KERNEL,
+                MixIntKernelType.CONT_RELAX,
+                MixIntKernelType.GOWER,
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
@@ -355,7 +354,10 @@ class KrgBased(SurrogateModel):
         n_theta_cont = 0
         for feat in cat_features:
             if feat:
-                if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
                     theta_cont_features[
                         j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
                     ] = False
@@ -365,7 +367,10 @@ class KrgBased(SurrogateModel):
                     j += int(nlevels[i] * (nlevels[i] - 1) / 2)
                 i += 1
             else:
-                if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
                     if n_theta_cont < ncomp:
                         theta_cont_features[j] = True
                         j += 1
@@ -374,13 +379,13 @@ class KrgBased(SurrogateModel):
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
 
-        if cat_kernel == CONT_RELAX_KERNEL:
+        if cat_kernel == MixIntKernelType.CONT_RELAX:
             from smt.applications.mixed_integer import unfold_with_enum_mask
 
             X_pls_space = unfold_with_enum_mask(xtypes, X)
             nx = len(theta)
 
-        elif cat_kernel == GOWER_KERNEL:
+        elif cat_kernel == MixIntKernelType.GOWER:
             X_pls_space = np.copy(X)
         else:
             X_pls_space, _ = compute_X_cont(X, xtypes)
@@ -390,7 +395,10 @@ class KrgBased(SurrogateModel):
             if self.pls_coeff_cont == []:
                 X, y = self._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = self.coeff_pls
-            if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
+            if (
+                cat_kernel == MixIntKernelType.CONT_RELAX
+                or cat_kernel == MixIntKernelType.GOWER
+            ):
                 d = componentwise_distance_PLS(
                     dx,
                     corr,
@@ -421,10 +429,13 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if cat_kernel != CONT_RELAX_KERNEL:
+            if cat_kernel != MixIntKernelType.CONT_RELAX:
                 d_cont = d[:, np.logical_not(cat_features)]
 
-        if cat_kernel == CONT_RELAX_KERNEL or cat_kernel == GOWER_KERNEL:
+        if (
+            cat_kernel == MixIntKernelType.CONT_RELAX
+            or cat_kernel == MixIntKernelType.GOWER
+        ):
             r = _correlation_types[corr](theta, d)
             return r
 
@@ -439,9 +450,9 @@ class KrgBased(SurrogateModel):
             self.coeff_pls_cat = []
         for i in range(len(nlevels)):
             theta_cat = theta[theta_cat_features[:, i]]
-            if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
+            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
                 theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
-            elif cat_kernel == HOMO_HSPHERE_KERNEL:
+            elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
                 theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
             Theta_mat = np.zeros((nlevels[i], nlevels[i]))
             L = np.zeros((nlevels[i], nlevels[i]))
@@ -476,7 +487,7 @@ class KrgBased(SurrogateModel):
 
             T = np.dot(L, L.T)
 
-            if cat_kernel == EXP_HOMO_HSPHERE_KERNEL:
+            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
                 T = (T - 1) * theta_bounds[1] / 2
                 T = np.exp(2 * T)
             k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
@@ -526,7 +537,10 @@ class KrgBased(SurrogateModel):
                 if indi == indj:
                     r_cat[k] = 1.0
                 else:
-                    if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+                    if cat_kernel in [
+                        MixIntKernelType.EXP_HOMO_HSPHERE,
+                        MixIntKernelType.HOMO_HSPHERE,
+                    ]:
                         if cat_kernel_comps is not None:
                             Theta_i_red = np.zeros(
                                 int((nlevels[i] - 1) * nlevels[i] / 2)
@@ -611,7 +625,7 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[self.D.shape[1] :]
         if self.options["categorical_kernel"] is not None:
             dx = self.D
-            if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 from smt.applications.mixed_integer import unfold_with_enum_mask
 
                 X2 = unfold_with_enum_mask(
@@ -1059,7 +1073,7 @@ class KrgBased(SurrogateModel):
                     X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
                 )
                 self.ij = ij
-                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                     Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
@@ -1193,7 +1207,7 @@ class KrgBased(SurrogateModel):
                     X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
                 )
                 self.ij = ij
-                if self.options["categorical_kernel"] == CONT_RELAX_KERNEL:
+                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                     from smt.applications.mixed_integer import unfold_with_enum_mask
 
                     Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
@@ -1638,7 +1652,10 @@ class KrgBased(SurrogateModel):
                 )
             if (
                 self.options["categorical_kernel"]
-                not in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]
+                not in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]
                 and self.name == "KPLS"
             ):
                 if self.options["cat_kernel_comps"] is not None:
@@ -1652,9 +1669,9 @@ class KrgBased(SurrogateModel):
             else None
         )
         if self.options["categorical_kernel"] in [
-            EXP_HOMO_HSPHERE_KERNEL,
-            HOMO_HSPHERE_KERNEL,
-            CONT_RELAX_KERNEL,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.CONT_RELAX,
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
@@ -1671,9 +1688,9 @@ class KrgBased(SurrogateModel):
         if len(self.options["theta0"]) != d and self.options[
             "categorical_kernel"
         ] not in [
-            EXP_HOMO_HSPHERE_KERNEL,
-            CONT_RELAX_KERNEL,
-            HOMO_HSPHERE_KERNEL,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.CONT_RELAX,
+            MixIntKernelType.HOMO_HSPHERE,
         ]:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
@@ -1750,7 +1767,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
     n_param = nx
     if n_comp is not None:
         n_param = d
-        if cat_kernel == CONT_RELAX_KERNEL:
+        if cat_kernel == MixIntKernelType.CONT_RELAX:
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
@@ -1759,8 +1776,11 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if isinstance(xtyp, tuple):
             if nx == d:
                 n_param -= 1
-            if cat_kernel in [EXP_HOMO_HSPHERE_KERNEL, HOMO_HSPHERE_KERNEL]:
+            if cat_kernel in [
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]:
                 n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
-            if cat_kernel == CONT_RELAX_KERNEL:
+            if cat_kernel == MixIntKernelType.CONT_RELAX:
                 n_param += int(xtyp[1])
     return n_param

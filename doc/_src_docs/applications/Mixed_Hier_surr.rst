@@ -1,155 +1,4 @@
-.. _Mixed-Integer Sampling and and Variables Types Specifications: 
-
-Mixed-Integer usage (Variables, Sampling and Context)
-=====================================================
-
-SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with categorical (or enumerate) and ordered variables using continuous relaxation.
-For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, bounds are provided, the list will consist of all integers between those bounds.
-
-The user specifies x feature types through a list of types to be either:
-
-- ``FLOAT``: a continuous feature,
-- ``ORD``: an ordered valued feature,
-- or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
-
-In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` feature still have an interval [lower bound, upper bound], the ``ENUM`` features bounds is defined by giving the enumeration/list of possible values (levels). 
-
-For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
-
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6].
-
-
-Mixed integer sampling method
------------------------------
-
-To use a sampling method with mixed integer typed features, the user instanciates a ``MixedIntegerSamplingMethod`` with a given sampling method.
-The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface and decorates the original sampling method to provide a DOE while conforming to integer and categorical types.
-
-Example of mixed-integer LHS sampling method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from matplotlib import colors
-  
-  from smt.sampling_methods import LHS
-  from smt.applications.mixed_integer import (
-      FLOAT,
-      ORD,
-      ENUM,
-      MixedIntegerSamplingMethod,
-  )
-  
-  xtypes = [FLOAT, (ENUM, 2)]
-  xlimits = [[0.0, 4.0], ["blue", "red"]]
-  sampling = MixedIntegerSamplingMethod(xtypes, xlimits, LHS, criterion="ese")
-  
-  num = 40
-  x = sampling(num)
-  
-  cmap = colors.ListedColormap(xlimits[1])
-  plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
-  plt.show()
-  
-.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_lhs_example.png
-  :scale: 80 %
-  :align: center
-
-Mixed integer context
----------------------
-
-the ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
-
-  .. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.__init__
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.fold_with_enum_index
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.unfold_with_enum_mask
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_mixed_integer
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_enum_value
-
-Example of mixed-integer context usage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from matplotlib import colors
-  from mpl_toolkits.mplot3d import Axes3D
-  
-  from smt.surrogate_models import KRG
-  from smt.sampling_methods import LHS, Random
-  from smt.applications.mixed_integer import MixedIntegerContext, FLOAT, ORD, ENUM
-  
-  xtypes = [ORD, FLOAT, (ENUM, 4)]
-  xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
-  
-  def ftest(x):
-      return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
-  
-  # context to create consistent DOEs and surrogate
-  mixint = MixedIntegerContext(xtypes, xlimits)
-  
-  # DOE for training
-  lhs = mixint.build_sampling_method(LHS, criterion="ese")
-  
-  num = mixint.get_unfolded_dimension() * 5
-  print("DOE point nb = {}".format(num))
-  xt = lhs(num)
-  yt = ftest(xt)
-  
-  # Surrogate
-  sm = mixint.build_surrogate_model(KRG())
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  # DOE for validation
-  rand = mixint.build_sampling_method(Random)
-  xv = rand(50)
-  yv = ftest(xv)
-  yp = sm.predict_values(xv)
-  
-  plt.plot(yv, yv)
-  plt.plot(yv, yp, "o")
-  plt.xlabel("actual")
-  plt.ylabel("prediction")
-  
-  plt.show()
-  
-::
-
-  DOE point nb = 30
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 50
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  
-.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_context_example.png
-  :scale: 80 %
-  :align: center
-
-
-.. _Mixed-Integer Surrogates:
+.. _Mixed Integer and hierarchical Surrogates:
 
 Mixed integer surrogate
 =======================
@@ -158,14 +7,16 @@ To use a surrogate with mixed integer constraints, the user instanciates a ``Mix
 The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
-Mixed-Integer Surrogate with Continuous Relaxation
+For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingeModel`` with the given kernel for Kriging.
+
+Mixed Integer Surrogate with Continuous Relaxation
 --------------------------------------------------
 
 For enum variables, as many x features are added as there is enumerated levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
 For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"], 3 continuous float features x0, x1, x2 are created. Thereafter, the value max(x0, x1, x2), for instance, x1, will give "red" as the value for the original categorical feature. Details can be found in [1]_ .
 
 
-Example of mixed-integer Polynomial (QP) surrogate
+Example of mixed integer Polynomial (QP) surrogate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
@@ -173,19 +24,19 @@ Example of mixed-integer Polynomial (QP) surrogate
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import QP
-  from smt.applications.mixed_integer import MixedIntegerSurrogateModel, ORD
+  from smt.surrogate_models import QP, XType, XSpecs
+  from smt.applications.mixed_integer import MixedIntegerSurrogateModel
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
   
-  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-  # FLOAT means x1 continuous
-  # ORD means x2 ordered
+  # xtypes = [XType.FLOAT, XType.ORD, (ENUM, 3), (ENUM, 2)]
+  # XType.FLOAT means x1 continuous
+  # XType.ORD means x2 ordered
   # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
   # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-  
-  sm = MixedIntegerSurrogateModel(xtypes=[ORD], xlimits=[[0, 4]], surrogate=QP())
+  xspecs = XSpecs(xtypes=[XType.ORD], xlimits=[[0, 4]])
+  sm = MixedIntegerSurrogateModel(xspecs=xspecs, surrogate=QP())
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -214,21 +65,21 @@ Example of mixed-integer Polynomial (QP) surrogate
      Prediction time/pt. (sec) :  0.0000000
      
   
-.. figure:: mixed_integer_TestMixedInteger_run_mixed_integer_qp_example.png
+.. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_integer_qp_example.png
   :scale: 80 %
   :align: center
 
 
-Mixed-Integer Surrogate with Gower Distance
--------------------------------------------
+Mixed Integer Kriging with Gower Distance
+-----------------------------------------
 
-Another implemented method is using a basic mixed integer kernel based on the Gower distance between two points.
+Another implemented method to tackle mixed integer with Kriging is using a basic mixed integer kernel based on the Gower distance between two points.
 When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
 
 For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
 With this distance, a mixed integer kernel can be build. Details can be found in [1]_ .
 
-Example of mixed-integer Gower Distance model
+Example of mixed integer Gower Distance model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
@@ -236,34 +87,32 @@ Example of mixed-integer Gower Distance model
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import KRG, KPLS
-  from smt.applications.mixed_integer import (
-      MixedIntegerSurrogateModel,
-      ENUM,
-      ORD,
-      FLOAT,
-      GOWER_KERNEL,
-  )
+  from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
   xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
   
   xt = np.concatenate((xt1, xt2, xt3), axis=0)
-  xt[:, 1] = xt[:, 1].astype(np.float)
+  xt[:, 1] = xt[:, 1].astype(np.float64)
   yt1 = np.array([0.0, 9.0, 16.0])
   yt2 = np.array([0.0, -4, -13.0])
   yt3 = np.array([-10, 3, 11.0])
   
   yt = np.concatenate((yt1, yt2, yt3), axis=0)
   xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-  xtypes = [(ENUM, 3), FLOAT]
+  xtypes = [(XType.ENUM, 3), XType.FLOAT]
+  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
   # Surrogate
-  sm = MixedIntegerSurrogateModel(
-      categorical_kernel=GOWER_KERNEL,
-      xtypes=xtypes,
-      xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(
+          xspecs=xspecs,
+          categorical_kernel=MixIntKernelType.GOWER,
+          theta0=[1e-1],
+          corr="squar_exp",
+          n_start=20,
+      ),
   )
   sm.set_training_values(xt, yt)
   sm.train()
@@ -301,7 +150,7 @@ Example of mixed-integer Gower Distance model
   
   fig, axs = plt.subplots(3, figsize=(8, 6))
   
-  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+  axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
   axs[0].plot(x_cont, y1, color="Blue")
   axs[0].fill_between(
       np.ravel(x_cont),
@@ -317,7 +166,7 @@ Example of mixed-integer Gower Distance model
       bbox_to_anchor=[0, 1],
   )
   axs[1].plot(
-      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+      xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
   )
   axs[1].plot(x_cont, y2, color="Red")
   axs[1].fill_between(
@@ -334,7 +183,7 @@ Example of mixed-integer Gower Distance model
       bbox_to_anchor=[0, 1],
   )
   axs[2].plot(
-      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+      xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
   )
   axs[2].plot(x_cont, y3, color="Green")
   axs[2].fill_between(
@@ -362,20 +211,9 @@ Example of mixed-integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0059862
+     Predicting - done. Time (sec):  0.0079916
      
-     Prediction time/pt. (sec) :  0.0000599
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0049839
-     
-     Prediction time/pt. (sec) :  0.0000498
+     Prediction time/pt. (sec) :  0.0000799
      
   ___________________________________________________________________________
      
@@ -384,157 +222,7 @@ Example of mixed-integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0049872
-     
-     Prediction time/pt. (sec) :  0.0000499
-     
-  
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_gower.png
-  :scale: 80	 %
-  :align: center
-
-
-
-Mixed-Integer Surrogate with Group Kernel (Homoscedastic Hypersphere)
----------------------------------------------------------------------
-
-This surrogate model consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
-
-Example of mixed-integer Homoscedastic Hypersphere model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  
-  from smt.surrogate_models import KRG, KPLS
-  from smt.applications.mixed_integer import (
-      MixedIntegerSurrogateModel,
-      ENUM,
-      ORD,
-      FLOAT,
-      HOMO_HSPHERE_KERNEL,
-  )
-  
-  xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
-  xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
-  xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
-  
-  xt = np.concatenate((xt1, xt2, xt3), axis=0)
-  xt[:, 1] = xt[:, 1].astype(np.float)
-  yt1 = np.array([0.0, 9.0, 16.0])
-  yt2 = np.array([0.0, -4, -13.0])
-  yt3 = np.array([-10, 3, 11.0])
-  
-  yt = np.concatenate((yt1, yt2, yt3), axis=0)
-  xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-  xtypes = [(ENUM, 3), FLOAT]
-  # Surrogate
-  sm = MixedIntegerSurrogateModel(
-      categorical_kernel=HOMO_HSPHERE_KERNEL,
-      xtypes=xtypes,
-      xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
-  )
-  sm.set_training_values(xt, yt)
-  sm.train()
-  
-  # DOE for validation
-  n = 100
-  x_cat1 = []
-  x_cat2 = []
-  x_cat3 = []
-  
-  for i in range(n):
-      x_cat1.append(0)
-      x_cat2.append(1)
-      x_cat3.append(2)
-  
-  x_cont = np.linspace(0.0, 4.0, n)
-  x1 = np.concatenate(
-      (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
-  )
-  x2 = np.concatenate(
-      (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
-  )
-  x3 = np.concatenate(
-      (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
-  )
-  
-  y1 = sm.predict_values(x1)
-  y2 = sm.predict_values(x2)
-  y3 = sm.predict_values(x3)
-  
-  # estimated variance
-  s2_1 = sm.predict_variances(x1)
-  s2_2 = sm.predict_variances(x2)
-  s2_3 = sm.predict_variances(x3)
-  
-  fig, axs = plt.subplots(3, figsize=(8, 6))
-  
-  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
-  axs[0].plot(x_cont, y1, color="Blue")
-  axs[0].fill_between(
-      np.ravel(x_cont),
-      np.ravel(y1 - 3 * np.sqrt(s2_1)),
-      np.ravel(y1 + 3 * np.sqrt(s2_1)),
-      color="lightgrey",
-  )
-  axs[0].set_xlabel("x")
-  axs[0].set_ylabel("y")
-  axs[0].legend(
-      ["Training data", "Prediction", "Confidence Interval 99%"],
-      loc="upper left",
-      bbox_to_anchor=[0, 1],
-  )
-  axs[1].plot(
-      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
-  )
-  axs[1].plot(x_cont, y2, color="Red")
-  axs[1].fill_between(
-      np.ravel(x_cont),
-      np.ravel(y2 - 3 * np.sqrt(s2_2)),
-      np.ravel(y2 + 3 * np.sqrt(s2_2)),
-      color="lightgrey",
-  )
-  axs[1].set_xlabel("x")
-  axs[1].set_ylabel("y")
-  axs[1].legend(
-      ["Training data", "Prediction", "Confidence Interval 99%"],
-      loc="upper left",
-      bbox_to_anchor=[0, 1],
-  )
-  axs[2].plot(
-      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
-  )
-  axs[2].plot(x_cont, y3, color="Green")
-  axs[2].fill_between(
-      np.ravel(x_cont),
-      np.ravel(y3 - 3 * np.sqrt(s2_3)),
-      np.ravel(y3 + 3 * np.sqrt(s2_3)),
-      color="lightgrey",
-  )
-  axs[2].set_xlabel("x")
-  axs[2].set_ylabel("y")
-  axs[2].legend(
-      ["Training data", "Prediction", "Confidence Interval 99%"],
-      loc="upper left",
-      bbox_to_anchor=[0, 1],
-  )
-  plt.tight_layout()
-  plt.show()
-  
-::
-
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0069799
+     Predicting - done. Time (sec):  0.0069785
      
      Prediction time/pt. (sec) :  0.0000698
      
@@ -545,68 +233,55 @@ Example of mixed-integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0059888
+     Predicting - done. Time (sec):  0.0079403
      
-     Prediction time/pt. (sec) :  0.0000599
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0069888
-     
-     Prediction time/pt. (sec) :  0.0000699
+     Prediction time/pt. (sec) :  0.0000794
      
   
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_hyp.png
+.. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
   :scale: 80	 %
   :align: center
- 	
 
-Mixed-Integer Surrogate with Exponential Homoscedastic Hypersphere
-------------------------------------------------------------------
 
-This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
+Mixed Integer Kriging with Group Kernel (Homoscedastic Hypersphere)
+-------------------------------------------------------------------
 
-Example of mixed-integer Exponential Homoscedastic Hypersphere model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This surrogate model assumes that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
+
+Example of mixed integer Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import KRG, KPLS
-  from smt.applications.mixed_integer import (
-      MixedIntegerSurrogateModel,
-      ENUM,
-      ORD,
-      FLOAT,
-      EXP_HOMO_HSPHERE_KERNEL,
-  )
+  from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
   xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
   
   xt = np.concatenate((xt1, xt2, xt3), axis=0)
-  xt[:, 1] = xt[:, 1].astype(np.float)
+  xt[:, 1] = xt[:, 1].astype(np.float64)
   yt1 = np.array([0.0, 9.0, 16.0])
   yt2 = np.array([0.0, -4, -13.0])
   yt3 = np.array([-10, 3, 11.0])
   
   yt = np.concatenate((yt1, yt2, yt3), axis=0)
   xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-  xtypes = [(ENUM, 3), FLOAT]
+  xtypes = [(XType.ENUM, 3), XType.FLOAT]
+  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
   # Surrogate
-  sm = MixedIntegerSurrogateModel(
-      categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
-      xtypes=xtypes,
-      xlimits=xlimits,
-      surrogate=KRG(theta0=[1e-1], corr="squar_exp", n_start=20),
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(
+          xspecs=xspecs,
+          categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+          theta0=[1e-1],
+          corr="squar_exp",
+          n_start=20,
+      ),
   )
   sm.set_training_values(xt, yt)
   sm.train()
@@ -644,7 +319,7 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
   
   fig, axs = plt.subplots(3, figsize=(8, 6))
   
-  axs[0].plot(xt1[:, 1].astype(np.float), yt1, "o", linestyle="None")
+  axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
   axs[0].plot(x_cont, y1, color="Blue")
   axs[0].fill_between(
       np.ravel(x_cont),
@@ -660,7 +335,7 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
       bbox_to_anchor=[0, 1],
   )
   axs[1].plot(
-      xt2[:, 1].astype(np.float), yt2, marker="o", color="r", linestyle="None"
+      xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
   )
   axs[1].plot(x_cont, y2, color="Red")
   axs[1].fill_between(
@@ -677,7 +352,7 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
       bbox_to_anchor=[0, 1],
   )
   axs[2].plot(
-      xt3[:, 1].astype(np.float), yt3, marker="o", color="r", linestyle="None"
+      xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
   )
   axs[2].plot(x_cont, y3, color="Green")
   axs[2].fill_between(
@@ -705,20 +380,9 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0063519
+     Predicting - done. Time (sec):  0.0089796
      
-     Prediction time/pt. (sec) :  0.0000635
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0069222
-     
-     Prediction time/pt. (sec) :  0.0000692
+     Prediction time/pt. (sec) :  0.0000898
      
   ___________________________________________________________________________
      
@@ -727,14 +391,409 @@ Example of mixed-integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0060115
+     Predicting - done. Time (sec):  0.0089800
      
-     Prediction time/pt. (sec) :  0.0000601
+     Prediction time/pt. (sec) :  0.0000898
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0089800
+     
+     Prediction time/pt. (sec) :  0.0000898
      
   
-.. figure:: mixed_integer_TestMixedInteger_test_mixed_homo_gaussian.png
+.. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
   :scale: 80	 %
   :align: center
+ 	
+
+Mixed Integer Kriging with Exponential Homoscedastic Hypersphere
+----------------------------------------------------------------
+
+This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
+
+Example of mixed integer Exponential Homoscedastic Hypersphere model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  
+  xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+  xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+  xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
+  
+  xt = np.concatenate((xt1, xt2, xt3), axis=0)
+  xt[:, 1] = xt[:, 1].astype(np.float64)
+  yt1 = np.array([0.0, 9.0, 16.0])
+  yt2 = np.array([0.0, -4, -13.0])
+  yt3 = np.array([-10, 3, 11.0])
+  
+  yt = np.concatenate((yt1, yt2, yt3), axis=0)
+  xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
+  xtypes = [(XType.ENUM, 3), XType.FLOAT]
+  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+  # Surrogate
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(
+          xspecs=xspecs,
+          theta0=[1e-1],
+          corr="squar_exp",
+          n_start=20,
+          categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
+      ),
+  )
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  # DOE for validation
+  n = 100
+  x_cat1 = []
+  x_cat2 = []
+  x_cat3 = []
+  
+  for i in range(n):
+      x_cat1.append(0)
+      x_cat2.append(1)
+      x_cat3.append(2)
+  
+  x_cont = np.linspace(0.0, 4.0, n)
+  x1 = np.concatenate(
+      (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x2 = np.concatenate(
+      (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  x3 = np.concatenate(
+      (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+  )
+  
+  y1 = sm.predict_values(x1)
+  y2 = sm.predict_values(x2)
+  y3 = sm.predict_values(x3)
+  
+  # estimated variance
+  s2_1 = sm.predict_variances(x1)
+  s2_2 = sm.predict_variances(x2)
+  s2_3 = sm.predict_variances(x3)
+  
+  fig, axs = plt.subplots(3, figsize=(8, 6))
+  
+  axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
+  axs[0].plot(x_cont, y1, color="Blue")
+  axs[0].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y1 - 3 * np.sqrt(s2_1)),
+      np.ravel(y1 + 3 * np.sqrt(s2_1)),
+      color="lightgrey",
+  )
+  axs[0].set_xlabel("x")
+  axs[0].set_ylabel("y")
+  axs[0].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[1].plot(
+      xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
+  )
+  axs[1].plot(x_cont, y2, color="Red")
+  axs[1].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y2 - 3 * np.sqrt(s2_2)),
+      np.ravel(y2 + 3 * np.sqrt(s2_2)),
+      color="lightgrey",
+  )
+  axs[1].set_xlabel("x")
+  axs[1].set_ylabel("y")
+  axs[1].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  axs[2].plot(
+      xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
+  )
+  axs[2].plot(x_cont, y3, color="Green")
+  axs[2].fill_between(
+      np.ravel(x_cont),
+      np.ravel(y3 - 3 * np.sqrt(s2_3)),
+      np.ravel(y3 + 3 * np.sqrt(s2_3)),
+      color="lightgrey",
+  )
+  axs[2].set_xlabel("x")
+  axs[2].set_ylabel("y")
+  axs[2].legend(
+      ["Training data", "Prediction", "Confidence Interval 99%"],
+      loc="upper left",
+      bbox_to_anchor=[0, 1],
+  )
+  plt.tight_layout()
+  plt.show()
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0089765
+     
+     Prediction time/pt. (sec) :  0.0000898
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0099738
+     
+     Prediction time/pt. (sec) :  0.0000997
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0089769
+     
+     Prediction time/pt. (sec) :  0.0000898
+     
+  
+.. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
+  :scale: 80	 %
+  :align: center
+
+
+Mixed Integer Kriging with hierarchical variables
+-------------------------------------------------
+
+The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingeModel`` for both Hierarchical and mixed categorical variables can be build. More details are given in the usage section.
+
+Example of mixed integer Kriging with hierarchical variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  from smt.utils.kriging import XSpecs
+  from smt.applications.mixed_integer import (
+      MixedIntegerContext,
+      MixedIntegerSamplingMethod,
+      MixedIntegerKrigingModel,
+  )
+  from smt.sampling_methods import LHS
+  from smt.surrogate_models import (
+      KRG,
+      KPLS,
+      QP,
+      XType,
+      XRole,
+      MixIntKernelType,
+  )
+  
+  def f_hv(X):
+      import numpy as np
+  
+      def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
+          import numpy as np
+  
+          h = (
+              53.3108
+              + 0.184901 * x1
+              - 5.02914 * x1**3 * 10 ** (-6)
+              + 7.72522 * x1**z3 * 10 ** (-8)
+              - 0.0870775 * x2
+              - 0.106959 * x3
+              + 7.98772 * x3**z4 * 10 ** (-6)
+              + 0.00242482 * x4
+              + 1.32851 * x4**3 * 10 ** (-6)
+              - 0.00146393 * x1 * x2
+              - 0.00301588 * x1 * x3
+              - 0.00272291 * x1 * x4
+              + 0.0017004 * x2 * x3
+              + 0.0038428 * x2 * x4
+              - 0.000198969 * x3 * x4
+              + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+              - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+              + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+              - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+          )
+          if cos_term:
+              h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
+          return h
+  
+      def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
+          c1 = z2 == 0
+          c2 = z2 == 1
+          c3 = z2 == 2
+  
+          c4 = z3 == 0
+          c5 = z3 == 1
+          c6 = z3 == 2
+  
+          y = (
+              c4
+              * (
+                  c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+              )
+              + c5
+              * (
+                  c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+              )
+              + c6
+              * (
+                  c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+              )
+          )
+          return y
+  
+      def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
+          c1 = z2 == 0
+          c2 = z2 == 1
+          c3 = z2 == 2
+  
+          y = (
+              c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+              + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+              + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+          )
+          return y
+  
+      def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
+          c1 = z1 == 0
+          c2 = z1 == 1
+          c3 = z1 == 2
+  
+          y = (
+              c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+              + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+              + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+          )
+          return y
+  
+      y = []
+      for x in X:
+          if x[0] == 0:
+              y.append(
+                  f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
+              )
+          elif x[0] == 1:
+              y.append(
+                  f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
+              )
+          elif x[0] == 2:
+              y.append(
+                  f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
+              )
+          elif x[0] == 3:
+              y.append(
+                  H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
+              )
+      return np.array(y)
+  
+  xlimits = [
+      ["6,7", "3,7", "4,6", "3,4"],  # meta1 ord
+      [0, 1],  # 0
+      [0, 100],  # 1
+      [0, 100],  # 2
+      [0, 100],  # 3
+      [0, 100],  # 4
+      [0, 100],  # 5
+      [0, 2],  # 6
+      [0, 2],  # 7
+      [0, 2],  # 8
+      [0, 2],  # 9
+  ]
+  xroles = [
+      XRole.META,
+      XRole.NEUTRAL,
+      XRole.NEUTRAL,
+      XRole.NEUTRAL,
+      XRole.DECREED,
+      XRole.DECREED,
+      XRole.NEUTRAL,
+      XRole.DECREED,
+      XRole.DECREED,
+      XRole.NEUTRAL,
+      XRole.NEUTRAL,
+  ]
+  # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
+  
+  xtypes = [
+      (XType.ENUM, 4),
+      XType.ORD,
+      XType.FLOAT,
+      XType.FLOAT,
+      XType.FLOAT,
+      XType.FLOAT,
+      XType.FLOAT,
+      XType.ORD,
+      XType.ORD,
+      XType.ORD,
+      XType.ORD,
+  ]
+  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+  n_doe = 15
+  sampling = MixedIntegerSamplingMethod(
+      LHS, xspecs, criterion="ese", random_state=42
+  )
+  Xt = sampling(n_doe)
+  Yt = f_hv(Xt)
+  
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(
+          xspecs=xspecs,
+          categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+          theta0=[1e-2],
+          corr="abs_exp",
+          n_start=5,
+      ),
+  )
+  sm.set_training_values(Xt, Yt)
+  sm.train()
+  y_s = sm.predict_values(Xt)[:, 0]
+  pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+  
+  y_sv = sm.predict_variances(Xt)[:, 0]
+  var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 15
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0159690
+     
+     Prediction time/pt. (sec) :  0.0010646
+     
+  
 
 
 References
