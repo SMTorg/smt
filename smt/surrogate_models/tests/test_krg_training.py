@@ -254,12 +254,12 @@ class Test(SMTestCase):
                 )  # from utils/smt_test_case.py
 
     def test_variance_derivatives(self):
-        for corr_str in [
-            "pow_exp", 
+        for corr_str in [ 
             "abs_exp",
             "squar_exp",
             "matern32",
             "matern52",
+            "pow_exp",
         ]:
             kr = KRG(print_global=False)
             kr.options["poly"] = "constant"
@@ -268,7 +268,7 @@ class Test(SMTestCase):
             kr.set_training_values(self.X, self.y)
             kr.train()
 
-            e = 1e-4
+            e = 1e-6
             xa = self.random.random()
             xb = self.random.random()
             x_valid = [[xa, xb], [xa + e, xb], [xa - e, xb], [xa, xb + e], [xa, xb - e]]
