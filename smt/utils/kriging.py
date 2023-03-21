@@ -490,12 +490,18 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
                 )
             )
 
-            abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
+            abs_delta[decreed_num_features] = np.sqrt(2) * np.sqrt(
+                1
+                - np.cos(
+                    np.pi
+                    * np.abs(
+                        X_num[k1][decreed_num_features]
+                        - Y_num[l2][decreed_num_features]
+                    )
+                )
+            )
 
-            #        abs_delta = (
-            #           np.sqrt(2)
-            #          * np.sqrt(1 - np.cos(np.pi/2*np.abs(X_num[k1] - Y_num[l2])) )
-            #     )
+            abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
 
             if np.max(meta_num_features):
                 # This is the meta variable index
