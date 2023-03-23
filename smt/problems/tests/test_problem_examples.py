@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
 
         problem = MixedCantileverBeam()
 
-        n_doe = 4
+        n_doe = 100
         xtypes = [(XType.ENUM, 12), XType.FLOAT, XType.FLOAT]
         xlimits = np.array(
             [
@@ -75,11 +75,16 @@ class Test(unittest.TestCase):
         )
         xdoe = sampling(n_doe)
         y = problem(xdoe)
+        
+        plt.scatter(xdoe[:, 0], y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
 
     def test_hier_neural_network(self):
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.problems import HierNN
+        from smt.problems import HierarchicalNeuralNetwork
         from smt.utils.kriging import XSpecs
         from smt.applications.mixed_integer import (
             MixedIntegerContext,
@@ -94,9 +99,9 @@ class Test(unittest.TestCase):
             MixIntKernelType,
         )
 
-        problem = HierNN()
+        problem = HierarchicalNeuralNetwork()
 
-        n_doe = 4
+        n_doe = 100
         xlimits = [
             [1, 3],  # meta ord
             [-5, -2],
@@ -135,6 +140,11 @@ class Test(unittest.TestCase):
         )
         xdoe = sampling(n_doe)
         y = problem(xdoe)
+        
+        plt.scatter(xdoe[:, 0], y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
 
     def test_robot_arm(self):
         import numpy as np

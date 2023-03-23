@@ -11,7 +11,7 @@ import numpy as np
 from smt.problems.problem import Problem
 
 
-class HierNN(Problem):
+class HierarchicalNeuralNetwork(Problem):
     def _initialize(self):
         self.options.declare("name", "HierarchicalNeuralNetwork", types=str)
 
