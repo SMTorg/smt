@@ -55,7 +55,7 @@ class MFKPLSK(MFKPLS):
             self.options["theta0"] = theta0
             self.options["noise0"] = noise0
 
-        self._new_train_finalize(lvl)
+        self._reinterpolate(lvl)
 
     def _get_theta(self, i):
         return self.optimal_theta[i]
