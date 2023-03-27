@@ -363,14 +363,14 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
     lim = np.array(xspecs.limits, dtype=object)[np.logical_not(cat_features)]
     lb = np.zeros(np.shape(lim)[0])
     ub = np.ones(np.shape(lim)[0])
-    maxmetanum = 1
+    max_meta_num = 1
     if np.shape(lim)[0] > 0:
         for k, i in enumerate(lim):
             if xspecs.roles[k] != XRole.META:
                 lb[k] = i[0]
                 ub[k] = i[-1]
             else:
-                maxmetanum = i[-1]
+                max_meta_num = i[-1]
         Z_offset = lb
         Z_max = ub
         Z_scale = Z_max - Z_offset
@@ -391,7 +391,7 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
         X_cat,
         Y_cat,
         cat_features,
-        maxmetanum,
+        max_meta_num,
         hierarchical_kernel,
     )
     D = np.concatenate((D_cat, D_num), axis=1) * 0
@@ -429,7 +429,15 @@ def compute_D_cat(X_cat, Y_cat, y):
 
 
 def compute_D_num(
-    X_num, Y_num, y, xspecs, X_cat, Y_cat, cat_features, maxmetanum, hierarchical_kernel
+    X_num,
+    Y_num,
+    y,
+    xspecs,
+    X_cat,
+    Y_cat,
+    cat_features,
+    max_meta_num,
+    hierarchical_kernel,
 ):
     active_roles = len(xspecs.limits) * [XRole.NEUTRAL] != xspecs.roles
     nx_samples, n_features = X_num.shape
@@ -464,7 +472,7 @@ def compute_D_num(
             X_num,
             Y_num,
             y,
-            maxmetanum,
+            max_meta_num,
             cat_features,
             X_cat,
             Y_cat,
@@ -480,7 +488,7 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
     X_num,
     Y_num,
     y,
-    maxmetanum,
+    max_meta_num,
     cat_features,
     X_cat,
     Y_cat,
@@ -532,7 +540,7 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
                         )
                     )
                 )
-            abs_delta[meta_num_features] = abs_delta[meta_num_features] / maxmetanum
+            abs_delta[meta_num_features] = abs_delta[meta_num_features] / max_meta_num
 
             if np.max(meta_num_features):
                 # This is the meta variable index
