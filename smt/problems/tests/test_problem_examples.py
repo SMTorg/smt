@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
         )
         xdoe = sampling(n_doe)
         y = problem(xdoe)
-        
+
         plt.scatter(xdoe[:, 0], y)
         plt.xlabel("x")
         plt.ylabel("y")
@@ -140,7 +140,7 @@ class Test(unittest.TestCase):
         )
         xdoe = sampling(n_doe)
         y = problem(xdoe)
-        
+
         plt.scatter(xdoe[:, 0], y)
         plt.xlabel("x")
         plt.ylabel("y")
