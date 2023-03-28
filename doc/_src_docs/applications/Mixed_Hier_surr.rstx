@@ -61,7 +61,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
 Mixed Integer Kriging with hierarchical variables
 -------------------------------------------------
 
-The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingModel`` for both Hierarchical and Mixed-categorical variables can be build. More details are given in the usage section. Two kernels for hierarchical variables are avalaible, namely ``Arc-Kernel`` and ``Alg-Kernel``.
+The class ``XSpecs`` implements the types, the domain and also the roles of the variables. Therefore, a ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical variables can be build by specifying the variables. Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section. 
 
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
