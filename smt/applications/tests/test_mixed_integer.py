@@ -559,7 +559,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
-                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
+                hierarchical_kernel=MixHrcKernelType.ARC_KERNEL,
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
@@ -830,7 +830,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
-                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
+                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
