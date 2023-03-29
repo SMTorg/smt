@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0339122
+     Training - done. Time (sec):  0.0349047
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009646
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000096
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009990
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001998
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  2.9034190
+     Training - done. Time (sec):  2.9889770
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,9 +168,9 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009978
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0009978
+     Prediction time/pt. (sec) :  0.0000000
      
   [[20.57448753]]
   [[1073.87724138]]
@@ -229,6 +229,11 @@ Options
      -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  hierarchical_kernel
+     -  MixHrcKernelType.ALG_KERNEL
+     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  None
+     -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
      -  2.220446049250313e-14
      -  None

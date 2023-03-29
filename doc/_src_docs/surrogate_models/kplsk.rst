@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0638351
+     Training - done. Time (sec):  0.0638292
   ___________________________________________________________________________
      
    Evaluation
@@ -104,9 +104,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009973
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001995
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -166,6 +166,11 @@ Options
      -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  hierarchical_kernel
+     -  MixHrcKernelType.ALG_KERNEL
+     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  None
+     -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
      -  2.220446049250313e-14
      -  None
