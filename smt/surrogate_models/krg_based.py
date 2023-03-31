@@ -172,7 +172,8 @@ class KrgBased(SurrogateModel):
         supports["variances"] = True
         supports["variance_derivatives"] = True
 
-    def power_init(self):
+    def _final_initialize(self):
+        # super(KrgBased, self)._final_initialize()
         # initialize default power values
         if self.options["corr"] == "squar_exp":
             # print("I am initializing the power to be 2")
@@ -599,8 +600,6 @@ class KrgBased(SurrogateModel):
         nugget = self.options["nugget"]
         if self.options["eval_noise"]:
             nugget = 0
-
-        self.power_init()
 
         noise = self.noise0
         tmp_var = theta
@@ -1036,7 +1035,6 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         n_eval, n_features_x = x.shape
-        self.power_init()
 
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
@@ -1170,7 +1168,7 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
         X_cont = x
-        self.power_init()
+
         if self.options["categorical_kernel"] is not None:
 
             dx = gower_componentwise_distances(

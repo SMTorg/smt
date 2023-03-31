@@ -93,6 +93,7 @@ class SurrogateModel(metaclass=ABCMeta):
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)
         self.printer = Printer()
+        self._final_initialize()
 
     @property
     @abstractmethod
@@ -451,6 +452,12 @@ class SurrogateModel(metaclass=ABCMeta):
     def _train(self) -> None:
         """
         Implemented by surrogate models to perform training (optional, but typically implemented).
+        """
+        pass
+
+    def _final_initialize(self):
+        """
+        Implemented by surrogate models to assign the power exponential coefficient for kriging-based models.
         """
         pass
 

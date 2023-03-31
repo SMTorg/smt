@@ -30,7 +30,6 @@ class MFKPLSK(MFKPLS):
 
     def _componentwise_distance(self, dx, opt=0):
 
-        self.power_init()
         # Modif for KPLSK model
         if opt == 0:
             # Kriging step
