@@ -23,13 +23,6 @@ class KPLSK(KPLS):
             types=(str),
         )
 
-        declare(
-            "pow_exp_power",
-            2.0,
-            desc="Power for the pow_exp kernel function",
-            types=(float),
-        )
-
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
 

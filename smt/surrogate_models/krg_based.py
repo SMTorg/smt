@@ -83,9 +83,9 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "pow_exp_power",
-            2.0,
+            1.0,
             types=(float),
-            desc="Power for the pow_exp kernel function, values [1.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
+            desc="Power for the pow_exp kernel function, values (0.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
         )
         declare(
             "categorical_kernel",
@@ -173,14 +173,15 @@ class KrgBased(SurrogateModel):
         supports["variance_derivatives"] = True
 
     def _final_initialize(self):
-        # super(KrgBased, self)._final_initialize()
+
         # initialize default power values
         if self.options["corr"] == "squar_exp":
-            # print("I am initializing the power to be 2")
             self.options["pow_exp_power"] = 2.0
         elif self.options["corr"] in ["abs_exp", "matern32", "matern52"]:
-            # print("I am initializing the power to be 1")
             self.options["pow_exp_power"] = 1.0
+
+        # Check the pow_exp_power is >0 and <=2
+        assert (self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <=2)
 
     def _new_train(self):
         # Sampling points X and y
