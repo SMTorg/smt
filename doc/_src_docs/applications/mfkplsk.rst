@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1601353
+     Training - done. Time (sec):  0.1665223
   ___________________________________________________________________________
      
    Evaluation
@@ -189,6 +189,11 @@ Options
      -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  hierarchical_kernel
+     -  MixHrcKernelType.ALG_KERNEL
+     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  None
+     -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
      -  2.220446049250313e-14
      -  None

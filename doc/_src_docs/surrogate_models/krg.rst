@@ -136,7 +136,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0359063
+     Training - done. Time (sec):  0.0359077
   ___________________________________________________________________________
      
    Evaluation
@@ -155,9 +155,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009661
+     Predicting - done. Time (sec):  0.0009673
      
-     Prediction time/pt. (sec) :  0.0001932
+     Prediction time/pt. (sec) :  0.0001935
      
   
 .. figure:: krg_Test_test_krg.png
@@ -222,9 +222,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009868
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000020
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -284,6 +284,11 @@ Options
      -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  hierarchical_kernel
+     -  MixHrcKernelType.ALG_KERNEL
+     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  None
+     -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
      -  2.220446049250313e-14
      -  None
