@@ -83,7 +83,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "pow_exp_power",
-            1.0,
+            3.0,
             types=(float),
             desc="Power for the pow_exp kernel function, values (0.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
         )
@@ -181,7 +181,9 @@ class KrgBased(SurrogateModel):
             self.options["pow_exp_power"] = 1.0
 
         # Check the pow_exp_power is >0 and <=2
-        assert (self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <=2)
+        assert (self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <=2),  (
+                "The power value for exponential power function can only be >0 and <=2, but %s was given" %self.options["pow_exp_power"]
+            )
 
     def _new_train(self):
         # Sampling points X and y
