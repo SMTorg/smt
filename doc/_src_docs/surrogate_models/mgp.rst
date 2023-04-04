@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0243082
+     Training - done. Time (sec):  0.9749014
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -184,14 +184,9 @@ Options
      -  Correlation function type
   *  -  categorical_kernel
      -  None
-     -  ['continuous_relaxation_matrix_kernel', 'gower_matrix_kernel', 'exponential_homoscedastic_matrix_kernel', 'homoscedastic_matrix_kernel']
+     -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
-  *  -  xtypes
-     -  None
-     -  None
-     -  ['list']
-     -  x type specifications: either FLOAT for continuous, INT for integer or (ENUM n) for categorical dimension with n levels
   *  -  nugget
      -  2.220446049250313e-14
      -  None
@@ -237,6 +232,15 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
+  *  -  xspecs
+     -  None
+     -  None
+     -  ['XSpecs']
+     -  xspecs : x specifications including
+                xtypes: x types list
+                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
+                xlimits: array-like
+                    bounds of x features
   *  -  n_comp
      -  1
      -  None

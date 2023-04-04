@@ -12,19 +12,9 @@ from types import FunctionType
 from scipy.stats import norm
 from scipy.optimize import minimize
 
-from smt.utils.mixed_integer import ORD_TYPE, ENUM_TYPE, FLOAT_TYPE
+from smt.utils.mixed_integer import XType
 from smt.sampling_methods import LHS
-from smt.surrogate_models import (
-    KPLS,
-    KRG,
-    KPLSK,
-    MGP,
-    GEKPLS,
-    GOWER_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    CONT_RELAX_KERNEL,
-)
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS, MixIntKernelType
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -268,7 +258,7 @@ class EGO(SurrogateBasedApplication):
         # Handle mixed integer optimization
         self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
 
-        if self.gpr.options["xspecs"].types != [FLOAT_TYPE] * len(
+        if self.gpr.options["xspecs"].types != [XType.FLOAT] * len(
             self.gpr.options["xspecs"].limits
         ):
             self.xtypes = self.gpr.options["xspecs"].types

@@ -23,22 +23,14 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import FullFactorial
 from multiprocessing import Pool
 from smt.sampling_methods import LHS
-import itertools
 from smt.surrogate_models import (
     KRG,
     GEKPLS,
     KPLS,
     XSpecs,
-    QP,
-    FLOAT_TYPE,
-    ORD_TYPE,
-    ENUM_TYPE,
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-    GOWER_KERNEL,
+    XType,
+    XRole,
+    MixIntKernelType,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -241,7 +233,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "CLmin"
-        xtypes = [ORD_TYPE, FLOAT_TYPE]
+        xtypes = [XType.ORD, XType.FLOAT]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         sm = KRG(xspecs=xspecs, print_global=False)
         mixint = MixedIntegerContext(xspecs)
@@ -272,7 +264,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [ORD_TYPE, FLOAT_TYPE]
+        xtypes = [XType.ORD, XType.FLOAT]
         xlimits = fun.xlimits
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -303,7 +295,7 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [ORD_TYPE, FLOAT_TYPE]
+        xtypes = [XType.ORD, XType.FLOAT]
         xlimits = fun.xlimits
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -336,12 +328,12 @@ class TestEGO(SMTestCase):
 
         # float
         x1 = X[:, 0]
-        #  ENUM_TYPE 1
+        #  XType.ENUM 1
         c1 = X[:, 1]
         x2 = c1 == 0
         x3 = c1 == 1
         x4 = c1 == 2
-        #  ENUM_TYPE 2
+        #  XType.ENUM 2
         c2 = X[:, 2]
         x5 = c2 == 0
         x6 = c2 == 1
@@ -358,7 +350,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
             dtype="object",
@@ -385,7 +377,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -406,7 +398,9 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
-                xspecs=xspecs, categorical_kernel=GOWER_KERNEL, print_global=False
+                xspecs=xspecs,
+                categorical_kernel=MixIntKernelType.GOWER,
+                print_global=False,
             ),
             enable_tunneling=False,
             random_state=42,
@@ -446,34 +440,34 @@ class TestEGO(SMTestCase):
             return np.array(y)
 
         xlimits = [
-            [1, 3],  # META_ROLE ORD_TYPE
+            [1, 3],  # XRole.META XType.ORD
             [-5, -2],
             [-5, -1],
             ["8", "16", "32", "64", "128", "256"],
             ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # DECREED_ROLE m=1
-            [0.0, 5.0],  # DECREED_ROLE m=2
-            [0.0, 5.0],  # DECREED_ROLE m=3
+            [0.0, 5.0],  # XRole.DECREED m=1
+            [0.0, 5.0],  # XRole.DECREED m=2
+            [0.0, 5.0],  # XRole.DECREED m=3
         ]
         xtypes = [
-            ORD_TYPE,
-            FLOAT_TYPE,
-            FLOAT_TYPE,
-            ORD_TYPE,
-            (ENUM_TYPE, 3),
-            ORD_TYPE,
-            ORD_TYPE,
-            ORD_TYPE,
+            XType.ORD,
+            XType.FLOAT,
+            XType.FLOAT,
+            XType.ORD,
+            (XType.ENUM, 3),
+            XType.ORD,
+            XType.ORD,
+            XType.ORD,
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.DECREED,
         ]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 4
@@ -523,7 +517,7 @@ class TestEGO(SMTestCase):
             xdoe=Xt,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
                 corr="abs_exp",
@@ -645,7 +639,7 @@ class TestEGO(SMTestCase):
             return np.array(y)
 
         xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # META_ROLE1 ORD_TYPE
+            ["6,7", "3,7", "4,6", "3,4"],  # XRole.META1 XType.ORD
             [0, 1],  # 0
             [0, 100],  # 1
             [0, 100],  # 2
@@ -658,32 +652,32 @@ class TestEGO(SMTestCase):
             [0, 2],  # 9
         ]
         xroles = [
-            META_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            DECREED_ROLE,
-            DECREED_ROLE,
-            NEUTRAL_ROLE,
-            NEUTRAL_ROLE,
+            XRole.META,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.DECREED,
+            XRole.DECREED,
+            XRole.NEUTRAL,
+            XRole.NEUTRAL,
         ]
         # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
 
         xtypes = [
-            (ENUM_TYPE, 4),
-            ORD_TYPE,
-            FLOAT_TYPE,
-            FLOAT_TYPE,
-            FLOAT_TYPE,
-            FLOAT_TYPE,
-            FLOAT_TYPE,
-            ORD_TYPE,
-            ORD_TYPE,
-            ORD_TYPE,
-            ORD_TYPE,
+            (XType.ENUM, 4),
+            XType.ORD,
+            XType.FLOAT,
+            XType.FLOAT,
+            XType.FLOAT,
+            XType.FLOAT,
+            XType.FLOAT,
+            XType.ORD,
+            XType.ORD,
+            XType.ORD,
+            XType.ORD,
         ]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 15
@@ -701,7 +695,7 @@ class TestEGO(SMTestCase):
             xdoe=Xt,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
                 corr="squar_exp",
@@ -722,7 +716,7 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
-        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -745,7 +739,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             surrogate=KRG(
                 xspecs=xspecs,
-                categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+                categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
                 print_global=False,
             ),
             enable_tunneling=False,
@@ -758,7 +752,7 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
-        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
         xlimits = np.array(
             [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
             dtype="object",
@@ -777,7 +771,7 @@ class TestEGO(SMTestCase):
         sm = KPLS(
             print_global=False,
             xspecs=xspecs,
-            categorical_kernel=EXP_HOMO_HSPHERE_KERNEL,
+            categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             n_comp=1,
             cat_kernel_comps=[2, 2],
         )
@@ -1025,10 +1019,8 @@ class TestEGO(SMTestCase):
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import (
-            FLOAT_TYPE,
-            ENUM_TYPE,
-            ORD_TYPE,
-            GOWER_KERNEL,
+            XType,
+            MixIntKernelType,
             XSpecs,
         )
         import matplotlib.pyplot as plt
@@ -1062,7 +1054,7 @@ class TestEGO(SMTestCase):
             return y.reshape((-1, 1))
 
         n_iter = 15
-        xtypes = [FLOAT_TYPE, (ENUM_TYPE, 3), (ENUM_TYPE, 2), ORD_TYPE]
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
         xlimits = np.array(
             [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
             dtype="object",
@@ -1071,7 +1063,9 @@ class TestEGO(SMTestCase):
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
-        sm = KRG(xspecs=xspecs, categorical_kernel=GOWER_KERNEL, print_global=False)
+        sm = KRG(
+            xspecs=xspecs, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+        )
         mixint = MixedIntegerContext(xspecs)
         n_doe = 3
         sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)

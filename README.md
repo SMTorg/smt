@@ -46,7 +46,7 @@ pip install git+https://github.com/SMTOrg/smt.git@master
 ```
 
 # Usage
-For examples demonstrating how to use SMT, you can take a look at the [tutorial notebook](tutorial/SMT_Tutorial.ipynb) or go to the 'smt/examples' folder.
+For examples demonstrating how to use SMT, you can take a look at the [tutorial notebooks](https://github.com/SMTorg/smt/tree/master/tutorial#readme) or go to the 'smt/examples' folder.
 
 # Documentation
 [Documentation of Surrogate Modeling Toolbox](http://smt.readthedocs.io/en/stable).

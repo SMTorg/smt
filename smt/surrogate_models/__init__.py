@@ -7,22 +7,9 @@ from .kplsk import KPLSK
 from .genn import GENN
 from .mgp import MGP
 
-from .krg_based import (
-    CONT_RELAX_KERNEL,
-    GOWER_KERNEL,
-    HOMO_HSPHERE_KERNEL,
-    EXP_HOMO_HSPHERE_KERNEL,
-)
-from smt.utils.mixed_integer import (
-    FLOAT_TYPE,
-    ORD_TYPE,
-    ENUM_TYPE,
-)
-from smt.utils.kriging import (
-    NEUTRAL_ROLE,
-    META_ROLE,
-    DECREED_ROLE,
-)
+from .krg_based import MixIntKernelType
+from smt.utils.mixed_integer import XType
+from smt.utils.kriging import XRole
 
 from smt.utils.kriging import XSpecs
 
