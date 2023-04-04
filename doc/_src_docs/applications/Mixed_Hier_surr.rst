@@ -7,11 +7,10 @@ To use a surrogate with mixed integer constraints, the user instanciates a ``Mix
 The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
-For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingeModel`` with the given kernel for Kriging.
+For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingModel`` with the given kernel for Kriging. Currently, 4 methods (CR, GD, EHH and  HH) are implemented that are described hereafter. 
 
-Mixed Integer Surrogate with Continuous Relaxation
---------------------------------------------------
-
+Mixed Integer Surrogate with Continuous Relaxation (CR)
+-------------------------------------------------------
 For enum variables, as many x features are added as there is enumerated levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
 For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"], 3 continuous float features x0, x1, x2 are created. Thereafter, the value max(x0, x1, x2), for instance, x1, will give "red" as the value for the original categorical feature. Details can be found in [1]_ .
 
@@ -70,8 +69,8 @@ Example of mixed integer Polynomial (QP) surrogate
   :align: center
 
 
-Mixed Integer Kriging with Gower Distance
------------------------------------------
+Mixed Integer Kriging with Gower Distance (GD)
+----------------------------------------------
 
 Another implemented method to tackle mixed integer with Kriging is using a basic mixed integer kernel based on the Gower distance between two points.
 When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
@@ -211,20 +210,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0079916
+     Predicting - done. Time (sec):  0.0089762
      
-     Prediction time/pt. (sec) :  0.0000799
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0069785
-     
-     Prediction time/pt. (sec) :  0.0000698
+     Prediction time/pt. (sec) :  0.0000898
      
   ___________________________________________________________________________
      
@@ -233,9 +221,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0079403
+     Predicting - done. Time (sec):  0.0079777
      
-     Prediction time/pt. (sec) :  0.0000794
+     Prediction time/pt. (sec) :  0.0000798
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0090075
+     
+     Prediction time/pt. (sec) :  0.0000901
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -243,8 +242,8 @@ Example of mixed integer Gower Distance model
   :align: center
 
 
-Mixed Integer Kriging with Group Kernel (Homoscedastic Hypersphere)
--------------------------------------------------------------------
+Mixed Integer Kriging with Homoscedastic Hypersphere (HH) 
+---------------------------------------------------------
 
 This surrogate model assumes that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Details can be found in [1]_ . Note that this model is the only one to consider negative correlations between levels ("blue" can be correlated negatively to "red").
 
@@ -380,20 +379,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089796
+     Predicting - done. Time (sec):  0.0099738
      
-     Prediction time/pt. (sec) :  0.0000898
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0089800
-     
-     Prediction time/pt. (sec) :  0.0000898
+     Prediction time/pt. (sec) :  0.0000997
      
   ___________________________________________________________________________
      
@@ -402,9 +390,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089800
+     Predicting - done. Time (sec):  0.0099423
      
-     Prediction time/pt. (sec) :  0.0000898
+     Prediction time/pt. (sec) :  0.0000994
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0119987
+     
+     Prediction time/pt. (sec) :  0.0001200
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -412,8 +411,8 @@ Example of mixed integer Homoscedastic Hypersphere model
   :align: center
  	
 
-Mixed Integer Kriging with Exponential Homoscedastic Hypersphere
-----------------------------------------------------------------
+Mixed Integer Kriging with Exponential Homoscedastic Hypersphere (EHH)
+----------------------------------------------------------------------
 
 This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
 
@@ -549,9 +548,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089765
+     Predicting - done. Time (sec):  0.0099730
      
-     Prediction time/pt. (sec) :  0.0000898
+     Prediction time/pt. (sec) :  0.0000997
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0099730
+     
+     Prediction time/pt. (sec) :  0.0000997
      
   ___________________________________________________________________________
      
@@ -564,17 +574,6 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
      
      Prediction time/pt. (sec) :  0.0000997
      
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0089769
-     
-     Prediction time/pt. (sec) :  0.0000898
-     
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
   :scale: 80	 %
@@ -584,7 +583,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
 Mixed Integer Kriging with hierarchical variables
 -------------------------------------------------
 
-The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingeModel`` for both Hierarchical and mixed categorical variables can be build. More details are given in the usage section.
+The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingModel`` for both Hierarchical and Mixed-categorical variables can be build. More details are given in the usage section. Two kernels for hierarchical variables are avalaible, namely ``Arc-Kernel`` and ``Alg-Kernel``.
 
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -606,6 +605,7 @@ Example of mixed integer Kriging with hierarchical variables
       XType,
       XRole,
       MixIntKernelType,
+      MixHrcKernelType,
   )
   
   def f_hv(X):
@@ -767,6 +767,7 @@ Example of mixed integer Kriging with hierarchical variables
       surrogate=KRG(
           xspecs=xspecs,
           categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+          hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
           theta0=[1e-2],
           corr="abs_exp",
           n_start=5,
@@ -789,9 +790,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0159690
+     Predicting - done. Time (sec):  0.0169606
      
-     Prediction time/pt. (sec) :  0.0010646
+     Prediction time/pt. (sec) :  0.0011307
      
   
 

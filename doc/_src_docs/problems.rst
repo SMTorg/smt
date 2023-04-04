@@ -14,6 +14,8 @@ These are listed below.
    problems/rosenbrock
    problems/tensorproduct
    problems/cantileverbeam
+   problems/mixedcantileverbeam
+   problems/neuralnetwork
    problems/robotarm
    problems/torsionvibration
    problems/waterflow

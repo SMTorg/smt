@@ -36,6 +36,7 @@ from smt.surrogate_models import (
     XType,
     XRole,
     MixIntKernelType,
+    MixHrcKernelType,
 )
 
 
@@ -430,13 +431,13 @@ class TestMixedInteger(unittest.TestCase):
             return h
 
         def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
-            c1 = z2 == 0
-            c2 = z2 == 1
-            c3 = z2 == 2
+            c1 = z1 == 0
+            c2 = z1 == 1
+            c3 = z1 == 2
 
-            c4 = z3 == 0
-            c5 = z3 == 1
-            c6 = z3 == 2
+            c4 = z2 == 0
+            c5 = z2 == 1
+            c6 = z2 == 2
 
             y = (
                 c4
@@ -461,14 +462,14 @@ class TestMixedInteger(unittest.TestCase):
             return y
 
         def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
-            c1 = z2 == 0
-            c2 = z2 == 1
-            c3 = z2 == 2
+            c4 = z2 == 0
+            c5 = z2 == 1
+            c6 = z2 == 2
 
             y = (
-                c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
-                + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
-                + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+                c4 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+                + c5 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+                + c6 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
             )
             return y
 
@@ -558,6 +559,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                hierarchical_kernel=MixHrcKernelType.ARC_KERNEL,
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
@@ -666,6 +668,7 @@ class TestMixedInteger(unittest.TestCase):
             XType,
             XRole,
             MixIntKernelType,
+            MixHrcKernelType,
         )
 
         def f_hv(X):
@@ -827,6 +830,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,
@@ -940,6 +944,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 xspecs=xspecs,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=5,

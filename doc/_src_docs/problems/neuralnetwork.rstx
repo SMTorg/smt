@@ -1,0 +1,20 @@
+Multi-layer perceptron
+======================
+
+.. math ::
+ y =  f_1(x_1,x_2,x_3,x_4,x_5) \ if \ x_0 == 1 \\
+ y =  f_2(x_1,x_2,x_3,x_4,x_5,x_6) \ if \ x_0 == 2 \\
+ y =  f_3(x_1,x_2,x_3,x_4,x_5,x_6,x_7) \ if \ x_0 == 3 \\
+
+
+:math:`x_0 \in \{1,2,3\} , x_1 \in [-5,-2], x_2 \in [-5,-1], x_3 \in [8,16,32,64,128,256], x_4 \in \{ReLU,SeLU,ISRLU\}, x_{5,6,7} \in [0,5]  .`
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.problems.tests.test_problem_examples , Test , test_hier_neural_network, 80
+
+Options
+-------
+
+.. embed-options-table :: smt.problems , CantileverBeam , options

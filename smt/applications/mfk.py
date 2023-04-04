@@ -197,7 +197,7 @@ class MFK(KrgBased):
             self.options["theta0"] = theta0
             self.options["noise0"] = noise0
 
-        self._new_train_finalize(lvl)
+        self._reinterpolate(lvl)
 
     def _new_train_init(self):
         if self.name in ["MFKPLS", "MFKPLSK"]:
@@ -356,7 +356,7 @@ class MFK(KrgBased):
             self.optimal_noise_all[lvl] = self.optimal_noise
         del self.y_norma, self.D, self.optimal_noise
 
-    def _new_train_finalize(self, lvl):
+    def _reinterpolate(self, lvl):
         if self.options["eval_noise"] and self.options["optim_var"]:
             X = self.X
             for lvl in range(self.nlvl - 1):
@@ -368,6 +368,7 @@ class MFK(KrgBased):
             )
             self.options["eval_noise"] = False
             self._new_train()
+            self.options["eval_noise"] = True
 
     def _componentwise_distance(self, dx, opt=0):
         self.power_init()
