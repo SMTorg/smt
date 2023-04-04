@@ -83,7 +83,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "pow_exp_power",
-            3.0,
+            1.9,
             types=(float),
             desc="Power for the pow_exp kernel function, values (0.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
         )
