@@ -130,12 +130,6 @@ class MFK(KrgBased):
         )
         self.name = "MFK"
 
-        # initialize default power values
-        if self.options["corr"] == "squar_exp":
-            self.options["pow_exp_power"] = 2.0
-        elif self.options["corr"] in ["abs_exp", "matern32", "matern52"]:
-            self.options["pow_exp_power"] = 1.0
-
     def _differences(self, X, Y):
         """
         Compute the distances

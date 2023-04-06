@@ -457,7 +457,7 @@ class SurrogateModel(metaclass=ABCMeta):
 
     def _final_initialize(self):
         """
-        Implemented by surrogate models to assign the power exponential coefficient for kriging-based models.
+        Implemented by surrogate models to complete the initialization after options are declared and possibly updated by the user.
         """
         pass
 

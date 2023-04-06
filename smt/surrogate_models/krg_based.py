@@ -85,7 +85,7 @@ class KrgBased(SurrogateModel):
             "pow_exp_power",
             1.9,
             types=(float),
-            desc="Power for the pow_exp kernel function, values (0.0, 2.0], for squar, abs, and matern, this will be initialized correspondingly by default",
+            desc="Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.",
         )
         declare(
             "categorical_kernel",

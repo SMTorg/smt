@@ -1310,13 +1310,6 @@ def componentwise_distance(D, corr, dim, power=None, theta=None, return_derivati
 
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, int(limit)
-    # Maybe this assignment should be earlier, and better to use an assertion here?
-    # if corr == "squar_exp":
-    #         power = 2.0
-    #         # assert power == 2.0, "The power coefficient for the squar exp should be 2.0"
-    # elif corr in ["abs_exp", "matern32", "matern52"]:
-    #         power = 1.0
-    #         # assert power == 1.0, "The power coefficient for the abs exp should be 1.0"
 
     if (power is None) and (not (corr == "act_exp")):
         raise ValueError(

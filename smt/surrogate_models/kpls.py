@@ -25,7 +25,7 @@ class KPLS(KrgBased):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp"), # Should add pow_exp?
+            values=("abs_exp", "squar_exp", "pow_exp"),
             desc="Correlation function type",
             types=(str),
         )
