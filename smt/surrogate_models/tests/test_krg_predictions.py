@@ -29,21 +29,38 @@ class Test(SMTestCase):
 
     def test_predictions(self):
         trends = ["constant", "linear"]
-        kernels = ["squar_exp", "abs_exp", "matern32", "matern52"]
+        kernels = ["pow_exp", "squar_exp", "abs_exp", "matern32", "matern52"]
+        powers = [1.0, 1.5, 2.0]
 
         for trend in trends:
             for kernel in kernels:
-                sm = KRG(
-                    theta0=[0.01], print_global=False, poly=trend, corr=kernel
-                )  # ,eval_noise=True)
-                sm.set_training_values(self.xt, self.yt)
-                sm.train()
+                if kernel == "pow_exp":
+                    for power in powers:
+                        sm = KRG(
+                            theta0=[0.01], print_global=False, poly=trend, corr=kernel, pow_exp_power = power
+                        )  # ,eval_noise=True)
+                        sm.set_training_values(self.xt, self.yt)
+                        sm.train()
 
-                print(f"\n*** TREND = {trend} & kernel = {kernel} ***\n")
+                        print(f"\n*** TREND = {trend} & kernel = {kernel} ***\n")
 
-                # quality of the surrogate on validation points
-                Test._check_prediction_variances(self, sm)
-                Test._check_prediction_derivatives(self, sm)
+                        # quality of the surrogate on validation points
+                        Test._check_prediction_variances(self, sm)
+                        Test._check_prediction_derivatives(self, sm)
+
+                else:
+
+                    sm = KRG(
+                        theta0=[0.01], print_global=False, poly=trend, corr=kernel
+                    )  # ,eval_noise=True)
+                    sm.set_training_values(self.xt, self.yt)
+                    sm.train()
+
+                    print(f"\n*** TREND = {trend} & kernel = {kernel} ***\n")
+
+                    # quality of the surrogate on validation points
+                    Test._check_prediction_variances(self, sm)
+                    Test._check_prediction_derivatives(self, sm)
 
     @staticmethod
     def _check_prediction_variances(self, sm):

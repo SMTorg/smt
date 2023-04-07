@@ -232,6 +232,7 @@ class MixedIntegerKrigingModel(KrgBased):
         return "MixedInteger" + self._surrogate.name
 
     def _initialize(self):
+        super()._initialize()
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):

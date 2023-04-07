@@ -23,6 +23,11 @@ Squared Exponential (Gaussian) correlation function:
 
 .. math ::
   \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left(x_l^{(i)}-x_l^{(j)}\right)^{2}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+Exponential correlation function with a variable power:
+
+.. math ::
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|^{p}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
 Matérn 5/2 correlation function:
 
