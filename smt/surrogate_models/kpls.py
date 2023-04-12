@@ -49,7 +49,6 @@ class KPLS(KrgBased):
             desc="Number of components for PLS categorical kernel",
         )
 
-
     def _compute_pls(self, X, y):
         _pls = pls(self.options["n_comp"])
         self.coeff_pls = 0

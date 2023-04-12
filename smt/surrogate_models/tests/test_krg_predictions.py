@@ -37,7 +37,11 @@ class Test(SMTestCase):
                 if kernel == "pow_exp":
                     for power in powers:
                         sm = KRG(
-                            theta0=[0.01], print_global=False, poly=trend, corr=kernel, pow_exp_power = power
+                            theta0=[0.01],
+                            print_global=False,
+                            poly=trend,
+                            corr=kernel,
+                            pow_exp_power=power,
                         )  # ,eval_noise=True)
                         sm.set_training_values(self.xt, self.yt)
                         sm.train()

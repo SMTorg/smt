@@ -190,9 +190,12 @@ class KrgBased(SurrogateModel):
             self.options["pow_exp_power"] = 1.0
 
         # Check the pow_exp_power is >0 and <=2
-        assert (self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <=2),  (
-                "The power value for exponential power function can only be >0 and <=2, but %s was given" %self.options["pow_exp_power"]
-            )
+        assert (
+            self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
+        ), (
+            "The power value for exponential power function can only be >0 and <=2, but %s was given"
+            % self.options["pow_exp_power"]
+        )
 
     def _new_train(self):
         # Sampling points X and y

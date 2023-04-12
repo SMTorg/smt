@@ -14,7 +14,7 @@ from smt.sampling_methods import FullFactorial, LHS
 class TestKPLS(unittest.TestCase):
     def test_predict_output(self):
         for corr_str in [
-            "pow_exp", 
+            "pow_exp",
             "abs_exp",
             "squar_exp",
         ]:
@@ -50,7 +50,7 @@ class TestKPLS(unittest.TestCase):
     def test_kpls_training_with_zeroed_outputs(self):
         # Test scikit-learn 0.24 regression cf. https://github.com/SMTorg/smt/issues/274
         for corr_str in [
-            "pow_exp", 
+            "pow_exp",
             "abs_exp",
             "squar_exp",
         ]:
