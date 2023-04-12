@@ -210,9 +210,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089762
+     Predicting - done. Time (sec):  0.0079460
      
-     Prediction time/pt. (sec) :  0.0000898
+     Prediction time/pt. (sec) :  0.0000795
      
   ___________________________________________________________________________
      
@@ -221,7 +221,7 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0079777
+     Predicting - done. Time (sec):  0.0079813
      
      Prediction time/pt. (sec) :  0.0000798
      
@@ -232,7 +232,7 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0090075
+     Predicting - done. Time (sec):  0.0090144
      
      Prediction time/pt. (sec) :  0.0000901
      
@@ -379,7 +379,7 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099738
+     Predicting - done. Time (sec):  0.0099742
      
      Prediction time/pt. (sec) :  0.0000997
      
@@ -390,9 +390,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099423
+     Predicting - done. Time (sec):  0.0099750
      
-     Prediction time/pt. (sec) :  0.0000994
+     Prediction time/pt. (sec) :  0.0000997
      
   ___________________________________________________________________________
      
@@ -401,9 +401,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0119987
+     Predicting - done. Time (sec):  0.0099716
      
-     Prediction time/pt. (sec) :  0.0001200
+     Prediction time/pt. (sec) :  0.0000997
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -414,7 +414,7 @@ Example of mixed integer Homoscedastic Hypersphere model
 Mixed Integer Kriging with Exponential Homoscedastic Hypersphere (EHH)
 ----------------------------------------------------------------------
 
-This surrogate model also consider that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
+This surrogate model also considers that the correlation kernel between the levels of a given variable is a symmetric positive definite matrix. The latter matrix is estimated through an hypersphere parametrization depending on several hyperparameters. Thereafter, an exponential kernel is applied to the matrix. To finish with, the data correlation matrix is build as the product of the correlation matrices over the various variables. Therefore, this model could not model negative correlation and only works with absolute exponential and Gaussian kernels. Details can be found in [1]_ .
 
 Example of mixed integer Exponential Homoscedastic Hypersphere model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -548,7 +548,18 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099730
+     Predicting - done. Time (sec):  0.0099795
+     
+     Prediction time/pt. (sec) :  0.0000998
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0099721
      
      Prediction time/pt. (sec) :  0.0000997
      
@@ -559,20 +570,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099730
+     Predicting - done. Time (sec):  0.0099812
      
-     Prediction time/pt. (sec) :  0.0000997
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0099738
-     
-     Prediction time/pt. (sec) :  0.0000997
+     Prediction time/pt. (sec) :  0.0000998
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -583,7 +583,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
 Mixed Integer Kriging with hierarchical variables
 -------------------------------------------------
 
-The class ``XSpecs`` implements the roles, variables and types of the variables. Therefore, by specifying the variables, a ``MixedIntegerKrigingModel`` for both Hierarchical and Mixed-categorical variables can be build. More details are given in the usage section. Two kernels for hierarchical variables are avalaible, namely ``Arc-Kernel`` and ``Alg-Kernel``.
+The class ``XSpecs`` implements the types, the domain and also the roles of the variables. Therefore, a ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical variables can be build by specifying the variables. Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section. 
 
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -790,9 +790,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0169606
+     Predicting - done. Time (sec):  0.0209436
      
-     Prediction time/pt. (sec) :  0.0011307
+     Prediction time/pt. (sec) :  0.0013962
      
   
 
