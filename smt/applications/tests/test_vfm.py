@@ -28,7 +28,6 @@ from smt.examples.rans_crm_wing.rans_crm_wing import (
 
 
 def setupCRM(LF_candidate="QP", Bridge_candidate="KRG", type_bridge="Additive"):
-
     xt, yt, _ = get_rans_crm_wing()
 
     optionsLF = {}
@@ -187,7 +186,6 @@ class TestVFM(SMTestCase):
         plt.show()
 
     def test_KRG_KRG_additive(self):
-
         with Silence():
             M, xt = setupCRM(
                 LF_candidate="KRG", Bridge_candidate="KRG", type_bridge="Additive"
@@ -200,7 +198,6 @@ class TestVFM(SMTestCase):
         self.assert_error(dyp, np.array([[0.07007729, 3.619421]]), atol=3e-1, rtol=1e-2)
 
     def test_QP_KRG_additive(self):
-
         with Silence():
             M, xt = setupCRM(
                 LF_candidate="QP", Bridge_candidate="KRG", type_bridge="Additive"
@@ -216,7 +213,6 @@ class TestVFM(SMTestCase):
         )
 
     def test_KRG_KRG_mult(self):
-
         with Silence():
             M, xt = setupCRM(
                 LF_candidate="KRG", Bridge_candidate="KRG", type_bridge="Multiplicative"
@@ -230,7 +226,6 @@ class TestVFM(SMTestCase):
         self.assert_error(dyp, np.array([[0.07007729, 3.619421]]), atol=3e-1, rtol=1e-2)
 
     def test_QP_KRG_mult(self):
-
         with Silence():
             M, xt = setupCRM(
                 LF_candidate="QP", Bridge_candidate="KRG", type_bridge="Multiplicative"

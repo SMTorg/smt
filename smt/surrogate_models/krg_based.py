@@ -43,7 +43,6 @@ MixIntKernelType = Enum(
 
 
 class KrgBased(SurrogateModel):
-
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
     _correlation_types = {
@@ -182,7 +181,6 @@ class KrgBased(SurrogateModel):
         supports["variance_derivatives"] = True
 
     def _final_initialize(self):
-
         # initialize default power values
         if self.options["corr"] == "squar_exp":
             self.options["pow_exp_power"] = 2.0
@@ -738,7 +736,6 @@ class KrgBased(SurrogateModel):
         if (self.best_iteration_fail is not None) and (
             not np.isinf(reduced_likelihood_function_value)
         ):
-
             if reduced_likelihood_function_value > self.best_iteration_fail:
                 self.best_iteration_fail = reduced_likelihood_function_value
                 self._thetaMemory = np.array(tmp_var)
@@ -1203,7 +1200,6 @@ class KrgBased(SurrogateModel):
         X_cont = x
 
         if self.options["categorical_kernel"] is not None:
-
             dx = gower_componentwise_distances(
                 x,
                 xspecs=self.options["xspecs"],
@@ -1219,7 +1215,6 @@ class KrgBased(SurrogateModel):
                 return_derivative=False,
             )
             if self.options["categorical_kernel"] is not None:
-
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
                     X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train

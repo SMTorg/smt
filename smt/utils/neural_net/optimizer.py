@@ -76,7 +76,6 @@ class Optimizer(object):
         return self._current_cost
 
     def __init__(self, **kwargs):
-
         self.learning_rate = 0.1
         self.beta_1 = 0.9
         self.beta_2 = 0.99

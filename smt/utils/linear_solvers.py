@@ -523,7 +523,6 @@ class MultigridSolver(LinearSolver):
                 self._smooth_and_interpolate(ind_level, -1, ind_y)
 
             for ind_cycle in range(self.options["mg_cycles"]):
-
                 for ind_level in range(len(self.mg_ops)):
                     self._smooth_and_restrict(ind_level, ind_cycle, ind_y)
 

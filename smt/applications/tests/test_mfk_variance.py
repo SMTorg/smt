@@ -22,10 +22,12 @@ from smt.utils.sm_test_case import SMTestCase
 
 print_output = True
 
-#%%
+# %%
 # Define the low and high fidelity models
 # Example on a 2D problem: Branin  Function
 A_corr = 0
+
+
 # high fidelity model
 def HF(point):
     # Expensive Forretal function
@@ -354,7 +356,6 @@ class TestMFK_variance(SMTestCase):
         )
 
     def test_mfk_variance(self):
-
         # To create the doe
         # dim = 2
         nlevel = 2

@@ -39,7 +39,6 @@ class QP(SurrogateModel):
     ############################################################################
 
     def _new_train(self):
-
         """
         Train the model
         """

@@ -11,7 +11,6 @@ from smt.examples.rans_crm_wing.rans_crm_wing import (
 
 
 def setup_sm(sm_name, settings={}):
-
     xt, yt, xlimits = get_rans_crm_wing()
 
     _tmp = __import__("smt", globals(), locals(), ["surrogate_models"], 0)
@@ -25,7 +24,6 @@ def setup_sm(sm_name, settings={}):
 
 class ArrayOutputTest(SMTestCase):
     def test_QP(self):
-
         xt, yt, interp = setup_sm(sm_name="QP")
         with Silence():
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
@@ -35,7 +33,6 @@ class ArrayOutputTest(SMTestCase):
         )
 
     def test_KRG(self):
-
         xt, yt, interp = setup_sm(sm_name="KRG")
         with Silence():
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
@@ -45,7 +42,6 @@ class ArrayOutputTest(SMTestCase):
         )
 
     def test_RBF(self):
-
         xt, yt, interp = setup_sm(sm_name="RBF")
         with Silence():
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
@@ -53,7 +49,6 @@ class ArrayOutputTest(SMTestCase):
         self.assert_error(d0, np.array([[0.15741522, 4.80265154]]), atol=0.2, rtol=0.03)
 
     def test_LS(self):
-
         xt, yt, interp = setup_sm(sm_name="LS")
         with Silence():
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
@@ -61,7 +56,6 @@ class ArrayOutputTest(SMTestCase):
         self.assert_error(d0, np.array([[0.2912748, 5.39911101]]), atol=0.2, rtol=0.03)
 
     def test_IDW(self):
-
         xt, yt, interp = setup_sm(sm_name="IDW")
         with Silence():
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
@@ -70,6 +64,5 @@ class ArrayOutputTest(SMTestCase):
 
 
 if __name__ == "__main__":
-
     xt, yt, sm = setup_sm("QP")
     unittest.main()
