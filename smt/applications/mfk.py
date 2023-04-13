@@ -366,7 +366,9 @@ class MFK(KrgBased):
 
     def _componentwise_distance(self, dx, opt=0):
 
-        d = componentwise_distance(dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"])
+        d = componentwise_distance(
+            dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
+        )
         return d
 
     def _predict_intermediate_values(self, X, lvl, descale=True):

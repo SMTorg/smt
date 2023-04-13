@@ -19,12 +19,12 @@ In the case of mixed integer sampling, bounds of each x feature have to be adapt
 
 For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
 
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6]. However, these ordered values should be string representation of integer. Details can be found in [1]_ .
+However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will correspond to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will correspond to [0,5,6]. However, these ordered values should be string representation of integer. Details can be found in [1]_ .
 
 Hierarchical variables roles
 ----------------------------
 
-The ``mixed_integer`` module uses the framework of Audet et al. [2]_ to manage both mixed variables and hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may affect the dimension of the problem and decide if some other decreed variables are included or excluded. The variable size problem can also includes neutral variables that are always included and actives. 
+The ``mixed_integer`` module uses the framework of Audet et al. [2]_ to manage both mixed variables and hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may affect the dimension of the problem and decide if some other decreed variables are included or excluded. The variable size problem can also include neutral variables that are always included and active. 
 
 The user specifies x feature role through a list of roles amongst:
 
@@ -44,11 +44,11 @@ The ``XSpecs`` class helps implements the types, limits and roles of each variab
 Mixed integer sampling method
 -----------------------------
 
-In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` feature still have an interval [lower bound, upper bound], the ``ENUM`` features bounds is defined by giving the enumeration/list of possible values (levels). 
+In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` features still have an interval [lower bound, upper bound], the ``ENUM`` feature bounds are defined by giving the enumeration/list of possible values (levels). 
 
 For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
 
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will corresponds to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will corresponds to [0,5,6].
+However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will correspond to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will correspond to [0,5,6].
 
 To use a sampling method with mixed integer typed features, the user instanciates a ``MixedIntegerSamplingMethod`` with a given sampling method.
 The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface and decorates the original sampling method to provide a DOE while conforming to integer and categorical types.

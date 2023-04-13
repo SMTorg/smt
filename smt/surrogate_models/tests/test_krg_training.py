@@ -38,15 +38,22 @@ class Test(SMTestCase):
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
         theta = self.random.rand(2)
-        corr_str = ["pow_exp", "abs_exp", "squar_exp", "act_exp", "matern32", "matern52"]
+        corr_str = [
+            "pow_exp",
+            "abs_exp",
+            "squar_exp",
+            "act_exp",
+            "matern32",
+            "matern52",
+        ]
         corr_def = [pow_exp, abs_exp, squar_exp, act_exp, matern32, matern52]
         power_val = {
-            "pow_exp":1.9,
-            "abs_exp":1.0,
-            "squar_exp":2.0,
-            "act_exp":1.0,
-            "matern32":1.0,
-            "matern52":1.0,
+            "pow_exp": 1.9,
+            "abs_exp": 1.0,
+            "squar_exp": 2.0,
+            "act_exp": 1.0,
+            "matern32": 1.0,
+            "matern52": 1.0,
         }
 
         self.eps = eps
@@ -85,7 +92,12 @@ class Test(SMTestCase):
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
             # self.corr_str[ind] = self.corr_def[ind]
-            D = componentwise_distance(self.D, self.corr_str[ind], self.X.shape[1], self.power_val[self.corr_str[ind]])
+            D = componentwise_distance(
+                self.D,
+                self.corr_str[ind],
+                self.X.shape[1],
+                self.power_val[self.corr_str[ind]],
+            )
 
             k = corr(self.theta, D)
             K = np.eye(self.X.shape[0])
@@ -120,7 +132,12 @@ class Test(SMTestCase):
     def test_corr_hessian(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
             # self.corr_str[ind] = self.corr_def[ind]
-            D = componentwise_distance(self.D, self.corr_str[ind], self.X.shape[1], self.power_val[self.corr_str[ind]])
+            D = componentwise_distance(
+                self.D,
+                self.corr_str[ind],
+                self.X.shape[1],
+                self.power_val[self.corr_str[ind]],
+            )
 
             grad_norm_all = []
             diff_norm_all = []
@@ -156,7 +173,7 @@ class Test(SMTestCase):
 
     def test_likelihood_derivatives(self):
         for corr_str in [
-            "pow_exp", 
+            "pow_exp",
             "abs_exp",
             "squar_exp",
             "act_exp",
@@ -201,7 +218,7 @@ class Test(SMTestCase):
 
     def test_likelihood_hessian(self):
         for corr_str in [
-            "pow_exp", 
+            "pow_exp",
             "abs_exp",
             "squar_exp",
             "act_exp",
@@ -254,7 +271,7 @@ class Test(SMTestCase):
                 )  # from utils/smt_test_case.py
 
     def test_variance_derivatives(self):
-        for corr_str in [ 
+        for corr_str in [
             "abs_exp",
             "squar_exp",
             "matern32",

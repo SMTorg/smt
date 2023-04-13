@@ -637,6 +637,7 @@ def compute_X_cross(X, n_levels):
 
     return Zeta
 
+
 def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
     Absolute exponential autocorrelation model.
@@ -667,7 +668,14 @@ def abs_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
          An array containing the values of the autocorrelation model.
     """
 
-    return pow_exp(theta, d, grad_ind=grad_ind, hess_ind=hess_ind, derivative_params=derivative_params)
+    return pow_exp(
+        theta,
+        d,
+        grad_ind=grad_ind,
+        hess_ind=hess_ind,
+        derivative_params=derivative_params,
+    )
+
 
 def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
@@ -698,7 +706,14 @@ def squar_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
          An array containing the values of the autocorrelation model.
     """
 
-    return pow_exp(theta, d, grad_ind=grad_ind, hess_ind=hess_ind, derivative_params=derivative_params)
+    return pow_exp(
+        theta,
+        d,
+        grad_ind=grad_ind,
+        hess_ind=hess_ind,
+        derivative_params=derivative_params,
+    )
+
 
 def pow_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
@@ -1272,7 +1287,9 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
     return np.abs(coeff_pls).mean(axis=0), XX, yy
 
 
-def componentwise_distance(D, corr, dim, power=None, theta=None, return_derivative=False):
+def componentwise_distance(
+    D, corr, dim, power=None, theta=None, return_derivative=False
+):
 
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
@@ -1322,10 +1339,12 @@ def componentwise_distance(D, corr, dim, power=None, theta=None, return_derivati
                 return D_corr
             else:
                 D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
-                        i * nb_limit : (i + 1) * nb_limit, :]
+                    i * nb_limit : (i + 1) * nb_limit, :
+                ]
                 if not (corr == "act_exp"):
-                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.abs(
-                        D_corr[i * nb_limit : (i + 1) * nb_limit, :] ) ** power
+                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
+                        np.abs(D_corr[i * nb_limit : (i + 1) * nb_limit, :]) ** power
+                    )
                 i += 1
     else:
         if theta is None:
@@ -1337,11 +1356,11 @@ def componentwise_distance(D, corr, dim, power=None, theta=None, return_derivati
         else:
             der = np.ones(D.shape)
             for i, j in np.ndindex(D.shape):
-                der[i][j] = np.abs(D[i][j])**(power-1)
+                der[i][j] = np.abs(D[i][j]) ** (power - 1)
                 if D[i][j] < 0:
-                    der[i][j] = - der[i][j] 
+                    der[i][j] = -der[i][j]
 
-            D_corr = power*np.einsum("j,ij->ij", theta.T, der)
+            D_corr = power * np.einsum("j,ij->ij", theta.T, der)
             return D_corr
 
         i += 1
@@ -1388,10 +1407,10 @@ def componentwise_distance_PLS(
     limit = int(1e4)
 
     if corr == "squar_exp":
-            power = 2.0
-            # assert power == 2.0, "The power coefficient for the squar exp should be 2.0"
+        power = 2.0
+        # assert power == 2.0, "The power coefficient for the squar exp should be 2.0"
     elif corr in ["abs_exp", "matern32", "matern52"]:
-            power = 1.0
+        power = 1.0
 
     D_corr = np.zeros((D.shape[0], n_comp))
     i, nb_limit = 0, int(limit)
@@ -1406,8 +1425,8 @@ def componentwise_distance_PLS(
                     )
                 elif corr == "pow_exp":
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
-                        np.abs(D[i * nb_limit : (i + 1) * nb_limit, :])**power,
-                        np.abs(coeff_pls)**power,
+                        np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]) ** power,
+                        np.abs(coeff_pls) ** power,
                     )
                 else:
                     # abs_exp
@@ -1432,7 +1451,7 @@ def componentwise_distance_PLS(
                 coef = 2 * coef
                 D_corr[i][j] = coef * D[i][j]
             return D_corr
-        
+
         elif corr == "pow_exp":
             D_corr = np.zeros(np.shape(D))
             der = np.ones(np.shape(D))
@@ -1441,7 +1460,7 @@ def componentwise_distance_PLS(
                 for l in range(n_comp):
                     coef = coef + theta[l] * np.abs(coeff_pls[j][l]) ** power
                 coef = power * coef
-                D_corr[i][j] = coef * np.abs(D[i][j])**(power -1) * der[i][j]
+                D_corr[i][j] = coef * np.abs(D[i][j]) ** (power - 1) * der[i][j]
             return D_corr
 
         else:
