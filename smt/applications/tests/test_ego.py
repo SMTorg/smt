@@ -37,6 +37,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 
+
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
     def run(self, fun, x):
@@ -47,7 +48,6 @@ class ParallelEvaluator(Evaluator):
 
 
 class TestEGO(SMTestCase):
-
     plot = None
 
     @staticmethod

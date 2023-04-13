@@ -90,7 +90,6 @@ class MOESurrogateModel(SurrogateModel):
 
 
 class MOE(SurrogateBasedApplication):
-
     # Names of experts available to be part of the mixture
     AVAILABLE_EXPERTS = [
         name
@@ -492,7 +491,6 @@ class MOE(SurrogateBasedApplication):
         for i in range(len(sort_proba)):
             recombined_value = 0
             for j in range(len(self._experts)):
-
                 if output_variances:
                     expert_value = (
                         self._experts[j].predict_variances(np.atleast_2d(x[i]))[0]

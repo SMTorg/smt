@@ -282,7 +282,6 @@ def run_demo_1D(is_gradient_enhancement=True):  # pragma: no cover
 
 
 if __name__ == "__main__":
-
     # 1D example: compare with and without gradient enhancement
     run_demo_1D(is_gradient_enhancement=False)
     run_demo_1D(is_gradient_enhancement=True)

@@ -161,14 +161,12 @@ def L_grads_forward(X, parameters, activations):
 
     # Loop over partials
     for j in range(0, n_x):
-
         # Initialize (first layer)
         A = np.copy(X).reshape(n_x, m)
         A_prime_j = J0[:, j, :]
 
         # Loop over layers
         for l in range(1, L + 1):
-
             # Previous layer
             A_prev = A
             A_prime_j_prev = A_prime_j

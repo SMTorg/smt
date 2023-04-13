@@ -9,7 +9,6 @@ from bisect import bisect_left
 
 
 def standardization(X, y):
-
     """
 
     We substract the mean from each variable. Then, we divide the values of each

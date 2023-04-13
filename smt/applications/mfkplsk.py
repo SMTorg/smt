@@ -29,7 +29,6 @@ class MFKPLSK(MFKPLS):
         self.name = "MFKPLSK"
 
     def _componentwise_distance(self, dx, opt=0):
-
         # Modif for KPLSK model
         if opt == 0:
             # Kriging step

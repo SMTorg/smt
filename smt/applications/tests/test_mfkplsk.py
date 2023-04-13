@@ -88,7 +88,6 @@ class TestMFKPLSK(SMTestCase):
             self.assert_error(e_error, 0.0, 1.5)
 
     def test_mfkplsk_derivs(self):
-
         if self.ndim < 2:
             print("To try test_mfkplsk_derivs the dimension must be greater than 1")
 

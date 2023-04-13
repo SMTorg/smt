@@ -131,7 +131,6 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):
-
         xt = ensure_2d_array(xt, "xt")
         if self._input_in_folded_space:
             xt2 = unfold_with_enum_mask(self._xspecs.types, xt)
@@ -236,7 +235,6 @@ class MixedIntegerKrigingModel(KrgBased):
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None):
-
         xt = ensure_2d_array(xt, "xt")
         if self._input_in_folded_space:
             xt2 = unfold_with_enum_mask(self._xspecs.types, xt)

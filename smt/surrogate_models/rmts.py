@@ -304,9 +304,7 @@ class RMTS(SurrogateModel):
 
         p = self.options["approx_order"]
         for ind_y in range(rhs.shape[1]):
-
             with self.printer._timed_context("Solving for output %i" % ind_y):
-
                 yt_dict = self._get_yt_dict(ind_y)
 
                 norm = self._opt_norm(sol[:, ind_y], p, yt_dict)
@@ -367,7 +365,6 @@ class RMTS(SurrogateModel):
         with self.printer._timed_context(
             "Solving initial startup problem (n=%i)" % total_size
         ):
-
             approx_order = options["approx_order"]
             nonlinear_maxiter = options["nonlinear_maxiter"]
             options["approx_order"] = 2
@@ -381,7 +378,6 @@ class RMTS(SurrogateModel):
         with self.printer._timed_context(
             "Solving nonlinear problem (n=%i)" % total_size
         ):
-
             self._run_newton_solver(sol)
 
         return sol
@@ -391,7 +387,6 @@ class RMTS(SurrogateModel):
         Train the model
         """
         with self.printer._timed_context("Pre-computing matrices", "assembly"):
-
             with self.printer._timed_context("Computing dof2coeff", "dof2coeff"):
                 self.full_dof2coeff = self._compute_dof2coeff()
 
@@ -513,7 +508,6 @@ class RMTS(SurrogateModel):
         # The extrapolation function is non-differentiable at boundaries:
         # i.e., where x_k = a_k or x_k = b_k for at least one k.
         if options["extrapolate"]:
-
             # First we evaluate the vector pointing to each evaluation points
             # from the nearest point on the domain, in a matrix called dx.
             # If the ith evaluation point is not external, dx[i, :] = 0.

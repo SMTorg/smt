@@ -16,7 +16,6 @@ except:
 
 
 class SurrogateBasedApplication:
-
     if compiled_available:
         _surrogate_type = {
             "KRG": KRG,

@@ -253,7 +253,6 @@ class Test(SMTestCase):
 
                     grad_red_eps, _ = kr._reduced_likelihood_gradient(eps_omega)
                     for i, theta_i in enumerate(theta):
-
                         hess_eps = (grad_red_eps[i] - grad_red[i]) / self.eps
 
                         grad_norm_all.append(
