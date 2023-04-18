@@ -172,7 +172,6 @@ class LHS(ScaledSamplingMethod):
 
             # Inner loop
             for i in range(inner_loop):
-
                 modulo = (i + 1) % d
                 l_X = list()
                 l_PhiP = list()

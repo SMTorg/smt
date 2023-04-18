@@ -115,7 +115,6 @@ def linear_activation_backward(dA, dA_prime, cache, J_cache, lambd, gamma):
 
     # Gradient enhancement
     if gamma != 0:
-
         # 2nd derivative of activation function A = G(Z)
         G_prime_prime = activation.second_derivative(Z)
 

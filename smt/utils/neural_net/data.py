@@ -203,7 +203,6 @@ def normalize_data(X, Y, J=None, is_classification=False):
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     # Check that data is read in correctly
     csv = "train_data.csv"
     x_labels = ["X[0]", "X[1]"]

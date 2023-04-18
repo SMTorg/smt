@@ -53,7 +53,6 @@ class Test(SMTestCase):
                         Test._check_prediction_derivatives(self, sm)
 
                 else:
-
                     sm = KRG(
                         theta0=[0.01], print_global=False, poly=trend, corr=kernel
                     )  # ,eval_noise=True)
@@ -68,7 +67,6 @@ class Test(SMTestCase):
 
     @staticmethod
     def _check_prediction_variances(self, sm):
-
         y_predicted = sm.predict_variances(self.xt)
         variance_at_training_inputs = np.sum(y_predicted**2)
 

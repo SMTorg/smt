@@ -91,7 +91,6 @@ class TestMFK(SMTestCase):
             self.assert_error(e_error, 0.0, 1)
 
     def test_mfk_derivs(self):
-
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
 

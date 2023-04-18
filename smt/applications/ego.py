@@ -140,7 +140,6 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
-
             # Virtual enrichement loop
             for p in range(n_parallel):
                 # find next best x-coord point to evaluate

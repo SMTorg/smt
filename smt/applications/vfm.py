@@ -240,7 +240,6 @@ class VFM(SurrogateBasedApplication):
         self.sm_HF = sm_HF
 
     def _check_param(self):
-
         """
         This function check some parameters of the model.
         """

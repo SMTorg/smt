@@ -69,7 +69,6 @@ class KPLS(KrgBased):
         return X, y
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
-
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],

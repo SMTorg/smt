@@ -82,7 +82,6 @@ def lse(y_true, y_pred, lambd=0.0, w=None, dy_true=None, dy_pred=None, gamma=0.0
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     # Check that LSE computes correctly
     w = [np.array(1.0), np.array(2.0)]
     f = lambda x: w[0] * x + w[1] * x**2

@@ -201,7 +201,6 @@ class Model(object):
                 self._X_norm, self._Y_norm, self._J_norm, mini_batch_size, seed
             )
             for b, mini_batch in enumerate(mini_batches):
-
                 # Get training data from this mini-batch
                 X, Y, J = mini_batch
 

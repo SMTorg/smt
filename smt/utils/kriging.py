@@ -140,7 +140,6 @@ class XSpecs:
 
 
 def cross_distances(X, y=None):
-
     """
     Computes the nonzero componentwise cross-distances between the vectors
     in X or between the vectors in X and the vectors in y.
@@ -192,7 +191,6 @@ def cross_distances(X, y=None):
 
 
 def cross_levels(X, ij, xtypes, y=None):
-
     """
     Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
     Parameters
@@ -351,12 +349,8 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
     Z_cat = Z[:, cat_features]
-    X_cat = Z_cat[
-        x_index,
-    ]
-    Y_cat = Z_cat[
-        y_index,
-    ]
+    X_cat = Z_cat[x_index,]
+    Y_cat = Z_cat[y_index,]
 
     # This is to normalize the numeric values between 0 and 1.
     Z_num = Z[:, np.logical_not(cat_features)]
@@ -375,12 +369,8 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
         Z_max = ub
         Z_scale = Z_max - Z_offset
         Z_num = (Z_num - Z_offset) / Z_scale
-    X_num = Z_num[
-        x_index,
-    ]
-    Y_num = Z_num[
-        y_index,
-    ]
+    X_num = Z_num[x_index,]
+    Y_num = Z_num[y_index,]
 
     D_cat = compute_D_cat(X_cat, Y_cat, y)
     D_num, ij = compute_D_num(
@@ -404,7 +394,6 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
 
 
 def compute_D_cat(X_cat, Y_cat, y):
-
     nx_samples, n_features = X_cat.shape
     ny_samples, n_features = Y_cat.shape
     n_nonzero_cross_dist = nx_samples * ny_samples
@@ -1148,7 +1137,6 @@ def act_exp(theta, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=
 
 
 def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
-
     """
     Gradient-enhanced PLS-coefficients.
 
@@ -1290,7 +1278,6 @@ def ge_compute_pls(X, y, n_comp, pts, delta_x, xlimits, extra_points):
 def componentwise_distance(
     D, corr, dim, power=None, theta=None, return_derivative=False
 ):
-
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
     between the vectors in X.
@@ -1369,7 +1356,6 @@ def componentwise_distance(
 def componentwise_distance_PLS(
     D, corr, n_comp, coeff_pls, power=2.0, theta=None, return_derivative=False
 ):
-
     """
     Computes the nonzero componentwise cross-spatial-correlation-distance
     between the vectors in X.
