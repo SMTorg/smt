@@ -5,13 +5,10 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from enum import Enum
 
 from smt.utils.checks import ensure_2d_array
 from smt.utils.misc import take_closest_in_list
-
-## This define the variables types for mixed surrogate models
-XType = Enum("XType", ["FLOAT", "ORD", "ENUM"])
+from smt.utils.design_space import XType
 
 
 def _raise_value_error(xtyp):
