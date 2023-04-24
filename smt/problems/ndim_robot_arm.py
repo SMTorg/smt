@@ -15,6 +15,7 @@ from smt.problems.robot_arm import RobotArm
 
 class NdimRobotArm(Problem):
     def __init__(self, ndim=1, w=0.2):
+        super().__init__()
         self.problem = ReducedProblem(
             RobotArm(ndim=2 * (ndim + 1)), np.arange(3, 2 * (ndim + 1), 2), w=w
         )

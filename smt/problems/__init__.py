@@ -13,6 +13,7 @@ from .wing_weight import WingWeight
 from .ndim_cantilever_beam import NdimCantileverBeam
 from .mixed_cantilever_beam import MixedCantileverBeam
 from .neural_network import HierarchicalNeuralNetwork
+from .hierarchical_goldstein import HierarchicalGoldstein
 from .ndim_robot_arm import NdimRobotArm
 from .ndim_rosenbrock import NdimRosenbrock
 from .ndim_step_function import NdimStepFunction

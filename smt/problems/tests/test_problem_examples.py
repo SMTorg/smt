@@ -31,6 +31,9 @@ class Test(unittest.TestCase):
         print(y.shape)
         print(yd.shape)
 
+        ds = problem.design_space
+        self.assertEqual(len(ds.design_variables), ndim)
+
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel("x")
         plt.ylabel("y")
@@ -41,31 +44,17 @@ class Test(unittest.TestCase):
         import matplotlib.pyplot as plt
         from smt.problems import MixedCantileverBeam
         from smt.utils.kriging import XSpecs
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
-            MixedIntegerKrigingModel,
-        )
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-        from smt.surrogate_models import (
-            KRG,
-            XType,
-            XRole,
-            MixIntKernelType,
-        )
 
         problem = MixedCantileverBeam()
+        ds = problem.design_space
+        self.assertEqual(len(ds.design_variables), 3)
+        self.assertEqual(problem.options['ndim'], 3)
 
         n_doe = 100
-        xtypes = [(XType.ENUM, 12), XType.FLOAT, XType.FLOAT]
-        xlimits = np.array(
-            [
-                list(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]),
-                list([10.0, 20.0]),
-                list([1.0, 2.0]),
-            ],
-            dtype=object,
-        )
+        xtypes = ds.get_x_types()
+        xlimits = ds.get_x_limits()
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
         sampling = MixedIntegerSamplingMethod(
@@ -76,7 +65,12 @@ class Test(unittest.TestCase):
         xdoe = sampling(n_doe)
         y = problem(xdoe)
 
+        xdoe2, is_acting2 = ds.sample_valid_x(n_doe)
+        y2 = problem(xdoe2)
+        self.assertTrue(np.all(is_acting2))
+
         plt.scatter(xdoe[:, 0], y)
+        plt.scatter(xdoe2[:, 0], y2)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.show()
@@ -85,60 +79,30 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
         from smt.problems import HierarchicalNeuralNetwork
-        from smt.utils.kriging import XSpecs
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
-            MixedIntegerKrigingModel,
-        )
-        from smt.sampling_methods import LHS
-        from smt.surrogate_models import (
-            KRG,
-            XType,
-            XRole,
-            MixIntKernelType,
-        )
 
         problem = HierarchicalNeuralNetwork()
+        ds = problem.design_space
+        assert len(ds.design_variables) == 8
+
+        x_corr, is_active = ds.correct_get_acting(np.array([
+            [0, 0, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 1, 1, 1],
+            [2, 0, 0, 0, 0, 1, 1, 1],
+        ]))
+        self.assertTrue(np.all(x_corr == np.array([
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 1, 1, 0],
+            [2, 0, 0, 0, 0, 1, 1, 1],
+        ])))
+        self.assertTrue(np.all(is_active == np.array([
+            [1, 1, 1, 1, 1, 1, 0, 0],
+            [1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+        ], dtype=bool)))
 
         n_doe = 100
-        xlimits = [
-            [1, 3],  # meta ord
-            [-5, -2],
-            [-5, -1],
-            ["8", "16", "32", "64", "128", "256"],
-            ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # decreed m=1
-            [0.0, 5.0],  # decreed m=2
-            [0.0, 5.0],  # decreed m=3
-        ]
-        xtypes = [
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            (XType.ENUM, 3),
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.DECREED,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
-        sampling = MixedIntegerSamplingMethod(
-            LHS,
-            xspecs,
-            criterion="ese",
-        )
-        xdoe = sampling(n_doe)
+        xdoe, is_active = ds.sample_valid_x(n_doe)
+        self.assertFalse(np.all(is_active))
         y = problem(xdoe)
 
         plt.scatter(xdoe[:, 0], y)

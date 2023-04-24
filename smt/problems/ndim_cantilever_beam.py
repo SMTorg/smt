@@ -15,6 +15,7 @@ from smt.problems.cantilever_beam import CantileverBeam
 
 class NdimCantileverBeam(Problem):
     def __init__(self, ndim=1, w=0.2):
+        super().__init__()
         self.problem = ReducedProblem(
             CantileverBeam(ndim=3 * ndim), np.arange(1, 3 * ndim, 3), w=w
         )

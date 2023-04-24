@@ -10,6 +10,7 @@ import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import ensure_2d_array
+from smt.utils.design_space import BaseDesignSpace, LegacyDesignSpace
 
 
 class Problem:
@@ -36,6 +37,10 @@ class Problem:
         self.options.update(kwargs)
 
         self.xlimits = np.zeros((self.options["ndim"], 2))
+        self._design_space = None
+
+        self.eval_x = None
+        self.eval_is_acting = None
 
         self._setup()
 
@@ -52,9 +57,27 @@ class Problem:
     def _setup(self) -> None:
         pass
 
+    def _set_design_space(self, design_space: BaseDesignSpace):
+        """
+        Set the design space definition (best is to use the smt.utils.design_space.DesignSpace class directly) of
+        this problem from the _setup function. If used, there is no need to set xlimits.
+        """
+        self._design_space = design_space
+        self.options['ndim'] = len(design_space.design_variables)
+        self.xlimits = design_space.get_num_bounds()
+
+    @property
+    def design_space(self) -> BaseDesignSpace:
+        """Gets the design space definitions as an instance of BaseDesignSpace"""
+        if self._design_space is None:
+            self._design_space = LegacyDesignSpace(x_limits=self.xlimits)
+        return self._design_space
+
     def __call__(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
         """
         Evaluate the function.
+        The input vectors might be corrected if it is a hierarchical design space. You can get the corrected x and
+        information about which variables are acting from: problem.eval_x and problem.eval_is_acting
 
         Parameters
         ----------
@@ -80,7 +103,11 @@ class Problem:
             if not isinstance(kx, int) or kx < 0:
                 raise TypeError("kx should be None or a non-negative int.")
 
-        y = self._evaluate(x, kx)
+        # Correct the design vector and get information about which design variables are active
+        x_corr, self.eval_is_acting = self.design_space.correct_get_acting(x)
+        self.eval_x = x_corr
+
+        y = self._evaluate(x_corr, kx)
 
         if self.options["return_complex"]:
             return y
