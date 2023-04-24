@@ -22,6 +22,28 @@ class XType(Enum):
     ENUM = 'ENUM'
 
 
+def ensure_design_space(xt=None, xlimits=None, xtypes=None, xspecs=None, design_space=None) -> 'BaseDesignSpace':
+    """Interface to turn legacy input formats into a DesignSpace"""
+    from smt.utils.kriging import XSpecs, XRole
+
+    if design_space is not None and isinstance(design_space, BaseDesignSpace):
+        return design_space
+
+    if xspecs is not None and isinstance(xspecs, XSpecs):
+        if not all([r == XRole.NEUTRAL for r in xspecs.roles]):
+            raise RuntimeError(f'Conversion from XSpecs non-NEUTRAL roles not supported! '
+                               f'Directly use DesignSpace to implement hierarchical structure')
+        return LegacyDesignSpace(x_limits=xspecs.limits, x_types=xspecs.types)
+
+    if xlimits is not None:
+        return LegacyDesignSpace(x_limits=xlimits, x_types=xtypes)
+
+    if xt is not None:
+        return LegacyDesignSpace(x_limits=[[0, 1]]*xt.shape[1])
+
+    raise ValueError('Nothing defined that could be interpreted as a design space!')
+
+
 class DesignVariable:
     """Base class for defining a design variable"""
     upper: Union[float, int]
@@ -87,7 +109,7 @@ class IntegerVariable(DesignVariable):
 class OrdinalVariable(DesignVariable):
     """An ordinal variable that can take any of the given value, and where order between the values matters"""
 
-    def __init__(self, values: List[str]):
+    def __init__(self, values: List[Union[str, int, float]]):
         if len(values) < 2:
             raise ValueError(f'There should at least be 2 values: {values}')
         self.values = values
@@ -117,7 +139,7 @@ class OrdinalVariable(DesignVariable):
 class CategoricalVariable(DesignVariable):
     """A categorical variable that can take any of the given values, and where order does not matter"""
 
-    def __init__(self, values: List[str]):
+    def __init__(self, values: List[Union[str, int, float]]):
         if len(values) < 2:
             raise ValueError(f'There should at least be 2 values: {values}')
         self.values = values
@@ -131,14 +153,15 @@ class CategoricalVariable(DesignVariable):
         return len(self.values)-1
 
     @property
-    def n_dim_unfolded(self):
+    def n_values(self):
         return len(self.values)
 
     def get_type(self) -> Tuple[XType, int]:
         return XType.ENUM, len(self.values)
 
-    def get_limits(self) -> List[str]:
-        return self.values
+    def get_limits(self) -> List[Union[str, int, float]]:
+        # We convert to strings for compatibility reasons
+        return [str(value) for value in self.values]
 
     def __str__(self):
         return f'Cat {self.values}'
@@ -166,6 +189,8 @@ class BaseDesignSpace:
 
     def __init__(self, design_variables: List[DesignVariable] = None):
         self._design_variables = design_variables
+        self._is_cat_mask = None
+        self._is_conditionally_acting_mask = None
 
     @property
     def design_variables(self) -> List[DesignVariable]:
@@ -176,17 +201,34 @@ class BaseDesignSpace:
                                    'or as output from _get_design_variables!')
         return self._design_variables
 
-    def correct_get_acting(self, x: np.ndarray, x_is_unfolded=False) -> Tuple[np.ndarray, np.ndarray]:
+    @property
+    def is_cat_mask(self) -> np.ndarray:
+        """Boolean mask specifying for each design variable whether it is a categorical variable"""
+        if self._is_cat_mask is None:
+            self._is_cat_mask = np.array([isinstance(dv, CategoricalVariable) for dv in self.design_variables])
+        return self._is_cat_mask
+
+    @property
+    def is_conditionally_acting(self) -> np.ndarray:
+        """Boolean mask specifying for each design variable whether it is conditionally acting (can be non-acting)"""
+        if self._is_conditionally_acting_mask is None:
+            self._is_conditionally_acting_mask = self._is_conditionally_acting()
+        return self._is_conditionally_acting_mask
+
+    @property
+    def n_dv(self) -> int:
+        """Get the number of design variables"""
+        return len(self.design_variables)
+
+    def correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Correct the given matrix of design vectors and return the corrected vectors and the is_acting matrix.
+        It is automatically detected whether input is provided in unfolded space or not.
 
         Parameters
         ----------
         x: np.ndarray [n_obs, dim]
            - Input variables
-        x_is_unfolded: bool
-           - Whether the provided x is provided in unfolded space (each categorical level gets its own
-             dimension), if True also returns x_corrected and is_acting in unfolded space
 
         Returns
         -------
@@ -196,6 +238,14 @@ class BaseDesignSpace:
            - Boolean matrix specifying for each variable whether it is acting or non-acting
         """
 
+        # Detect whether input is provided in unfolded space
+        if x.shape[1] == self.n_dv:
+            x_is_unfolded = False
+        elif x.shape[1] == self._get_n_dim_unfolded():
+            x_is_unfolded = True
+        else:
+            raise ValueError(f'Incorrect shape, expecting {self.n_dv} columns!')
+
         # If needed, fold before correcting
         if x_is_unfolded:
             x, _ = self.fold_x(x)
@@ -203,11 +253,35 @@ class BaseDesignSpace:
         # Correct and get the is_acting matrix
         x_corrected, is_acting = self._correct_get_acting(x)
 
+        # Check conditionally-acting status
+        if np.any(~is_acting[:, ~self.is_conditionally_acting]):
+            raise RuntimeError('Unconditionally acting variables cannot be non-acting!')
+
         # Unfold if needed
         if x_is_unfolded:
             x_corrected, is_acting = self.unfold_x(x_corrected, is_acting)
 
         return x_corrected, is_acting
+
+    def decode_values(self, x: np.ndarray, i_dv: int) -> List[Union[str, int, float]]:
+        """
+        Return decoded values: converts ordinal and categorical back to their original values.
+        """
+        if len(x.shape) == 2:
+            x_i = x[:, i_dv]
+        elif len(x.shape) == 1:
+            x_i = x
+        else:
+            raise ValueError('Expected either 1 or 2-dimensional matrix!')
+
+        dv = self.design_variables[i_dv]
+        if isinstance(dv, (OrdinalVariable, CategoricalVariable)):
+            values = dv.values
+            decoded_values = [values[int(x_ij)] for x_ij in x_i]
+            return decoded_values
+
+        # No need to decode for integer or float variable
+        return list(x_i)
 
     def sample_valid_x(self, n: int, unfolded=False) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -230,6 +304,10 @@ class BaseDesignSpace:
 
         # Sample from the design space
         x, is_acting = self._sample_valid_x(n)
+
+        # Check conditionally-acting status
+        if np.any(~is_acting[:, ~self.is_conditionally_acting]):
+            raise RuntimeError('Unconditionally acting variables cannot be non-acting!')
 
         # Unfold if needed
         if unfolded:
@@ -268,7 +346,7 @@ class BaseDesignSpace:
         unfolded_x_limits = []
         for dv in self.design_variables:
             if isinstance(dv, CategoricalVariable):
-                unfolded_x_limits += [[0, 1]]*dv.n_dim_unfolded
+                unfolded_x_limits += [[0, 1]]*dv.n_values
 
             elif isinstance(dv, OrdinalVariable):
                 # Note that this interpretation is slightly different from the original mixed_integer implementation in
@@ -309,7 +387,7 @@ class BaseDesignSpace:
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, CategoricalVariable):
-                n_dim_cat = dv.n_dim_unfolded
+                n_dim_cat = dv.n_values
 
                 # Categorical values are folded by reversed one-hot encoding:
                 # [[1, 0, 0], [0, 1, 0], [0, 0, 1]] --> [0, 1, 2].T
@@ -359,7 +437,7 @@ class BaseDesignSpace:
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, CategoricalVariable):
-                n_dim_cat = dv.n_dim_unfolded
+                n_dim_cat = dv.n_values
                 x_cat = x_unfolded[:, i_x_unfold:i_x_unfold+n_dim_cat]
 
                 # Categorical values are unfolded by one-hot encoding:
@@ -384,7 +462,7 @@ class BaseDesignSpace:
         return x_unfolded, is_acting_unfolded
 
     def _get_n_dim_unfolded(self) -> int:
-        return sum([dv.n_dim_unfolded if isinstance(dv, CategoricalVariable) else 1 for dv in self.design_variables])
+        return sum([dv.n_values if isinstance(dv, CategoricalVariable) else 1 for dv in self.design_variables])
 
     @staticmethod
     def _round_equally_distributed(x_cont, lower: int, upper: int):
@@ -393,6 +471,10 @@ class BaseDesignSpace:
         to extend to 0.5 beyond the integer limits and then round. This ensures that the values at the limits get a
         large-enough share of the continuous values.
         """
+
+        x_cont[x_cont < lower] = lower
+        x_cont[x_cont > upper] = upper
+
         diff = upper-lower
         x_stretched = (x_cont-lower)*((diff+.9999)/(diff+1e-16))-.5
         return np.round(x_stretched)+lower
@@ -401,6 +483,18 @@ class BaseDesignSpace:
 
     def _get_design_variables(self) -> List[DesignVariable]:
         """Return the design variables defined in this design space if not provided upon initialization of the class"""
+
+    def _is_conditionally_acting(self) -> np.ndarray:
+        """
+        Return for each design variable whether it is conditionally acting or not. A design variable is conditionally
+        acting if it MAY be non-acting.
+
+        Returns
+        -------
+        is_conditionally_acting: np.ndarray [dim]
+            - Boolean vector specifying for each design variable whether it is conditionally acting
+        """
+        raise NotImplementedError
 
     def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -469,10 +563,10 @@ class DesignSpace(BaseDesignSpace):
     >>> assert len(ds.design_variables) == 4
 
     You can define decreed variables (conditional activation):
-    >>> ds.define_decreed_var(decreed_var=1, meta_var=0, meta_value='A')  # Activate x1 if x0 == A
+    >>> ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')  # Activate x1 if x0 == A
 
     Decreed variables can be chained (however no cycles and no "diamonds" are supported):
-    >>> ds.define_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])  # Activate x2 if x1 == C or D
+    >>> ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])  # Activate x2 if x1 == C or D
 
     If combinations of values between two variables are not allowed, this can be done using a value constraint:
     >>> ds.add_value_constraint(var1=0, value1='A', var2=2, value2=[0, 1])  # Forbid x0 == A && x2 == 0 or 1
@@ -504,7 +598,7 @@ class DesignSpace(BaseDesignSpace):
     """
 
     def __init__(self, design_variables: List[DesignVariable], seed=None):
-        self._seed = seed  # For testing
+        self.seed = seed  # For testing
 
         cs_vars = {}
         for i, dv in enumerate(design_variables):
@@ -521,19 +615,20 @@ class DesignSpace(BaseDesignSpace):
                 raise ValueError(f'Unknown variable type: {dv!r}')
 
         self._cs = ConfigurationSpace(space=cs_vars, seed=seed)
+        self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
         super().__init__(design_variables)
 
-    def define_decreed_var(self, decreed_var: int, meta_var: int, meta_value: VarValueType):
+    def declare_decreed_var(self, decreed_var: int, meta_var: int, meta_value: VarValueType):
         """
-        Define a decreed variable to be active when the meta variable has (one of) the provided values.
+        Define a conditional (decreed) variable to be active when the meta variable has (one of) the provided values.
 
         Parameters
         ----------
         decreed_var: int
-           - Index of the decreed variable (the variable that is conditionally active)
+           - Index of the conditional variable (the variable that is conditionally active)
         meta_var: int
-           - Index of the meta variable (the variable that determines whether the decreed var is active)
+           - Index of the meta variable (the variable that determines whether the conditional var is active)
         meta_value: int | str | list[int|str]
            - The value or list of values that the meta variable can have to activate the decreed var
         """
@@ -549,6 +644,9 @@ class DesignSpace(BaseDesignSpace):
             condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
         self._cs.add_condition(condition)
+
+        # Mark as decreed (conditionally acting)
+        self._is_decreed[decreed_var] = True
 
     def add_value_constraint(self, var1: int, value1: VarValueType, var2: int, value2: VarValueType):
         """
@@ -609,6 +707,10 @@ class DesignSpace(BaseDesignSpace):
         """
         return np.array([int(param[1:]) for param in self._cs.get_hyperparameter_names()])
 
+    def _is_conditionally_acting(self) -> np.ndarray:
+        # Decreed variables are the conditionally acting variables
+        return self._is_decreed
+
     def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Correct and impute design vectors"""
 
@@ -663,7 +765,7 @@ class DesignSpace(BaseDesignSpace):
                 # At this point, the parameter active statuses are set correctly, so we only need to correct the
                 # configuration to one that does not violate the forbidden clauses
                 elif isinstance(e, ForbiddenValueError):
-                    return get_random_neighbor(config, seed=self._seed)
+                    return get_random_neighbor(config, seed=self.seed)
 
                 else:
                     raise
@@ -753,9 +855,14 @@ class LegacyDesignSpace(BaseDesignSpace):
     Converts the legacy design space definition into a design space definition. Does not support hierarchy.
     """
 
-    def __init__(self, x_limits: List[Sequence[Union[float, int, str]]], x_types: List[XType] = None):
+    def __init__(self, x_limits: Union[np.ndarray, List[Sequence[Union[float, int, str]]]], x_types: List[XType] = None):
+        if isinstance(x_limits, np.ndarray):
+            x_limits = x_limits.tolist()
         self.x_limits = x_limits
         self.seed = None  # For testing
+
+        self.sampler_class = LHS
+        self.sampler_kwargs = {'criterion': 'ese'}
 
         if x_types is None:
             x_types = [XType.FLOAT]*len(x_limits)
@@ -818,12 +925,22 @@ class LegacyDesignSpace(BaseDesignSpace):
 
         return x_corr, is_acting
 
+    def _is_conditionally_acting(self) -> np.ndarray:
+        # None of the variables are conditionally acting, because there is no hierarchy
+        return np.zeros((self.n_dv,), dtype=bool)
+
     def _sample_valid_x(self, n: int) -> Tuple[np.ndarray, np.ndarray]:
         """Sample n design vectors using LHS and additionally return the is_acting matrix."""
 
         # Sample design vectors in unfolded space
         x_limits_unfolded = self.get_unfolded_num_bounds()
-        sampler = LHS(xlimits=x_limits_unfolded, criterion='ese', random_state=self.seed)
+
+        sampler_kwargs = self.sampler_kwargs.copy()
+        sampler_class = self.sampler_class
+        if issubclass(sampler_class, LHS):
+            sampler_kwargs['random_state'] = self.seed
+        sampler = sampler_class(xlimits=x_limits_unfolded, **sampler_kwargs)
+
         x = sampler(n)
 
         # Cast to discrete and fold
@@ -861,13 +978,13 @@ class LegacyDesignSpace(BaseDesignSpace):
             elif isinstance(dv, CategoricalVariable):
                 if unfolded:
                     # For the one-hot encoding, we select the column with the largest continuous value
-                    i_selected = np.argmax(x[:, i_x:i_x+dv.n_dim_unfolded], axis=1)
+                    i_selected = np.argmax(x[:, i_x:i_x+dv.n_values], axis=1)
 
-                    x_cast_enum = x_cast[:, i_x:i_x+dv.n_dim_unfolded]
+                    x_cast_enum = x_cast[:, i_x:i_x+dv.n_values]
                     x_cast_enum[:, :] = 0
                     x_cast_enum[np.arange(len(i_selected)), i_selected] = 1
 
-                    i_x += dv.n_dim_unfolded
+                    i_x += dv.n_values
                     continue
 
                 else:

@@ -134,6 +134,7 @@ class Test(unittest.TestCase):
             x_types=[XType.FLOAT, XType.ORD, XType.ORD, (XType.ENUM, 4)],
         )
         self.assertEqual(len(ds.design_variables), 4)
+        self.assertTrue(np.all(~ds.is_conditionally_acting))
 
         dv0, dv1, dv2, dv3 = ds.design_variables
         self.assertIsInstance(dv0, FloatVariable)
@@ -162,13 +163,20 @@ class Test(unittest.TestCase):
         self.assertTrue(np.all(is_acting))
 
         x_sampled_externally = LHS(xlimits=ds.get_unfolded_num_bounds(), criterion='ese', random_state=42)(3)
-        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally, x_is_unfolded=True)
+        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally)
         x_corr, is_acting_corr = ds.fold_x(x_corr, is_acting_corr)
         self.assertTrue(np.all(x_corr == x))
         self.assertTrue(np.all(is_acting_corr))
 
         self.assertTrue(str(ds))
         self.assertTrue(repr(ds))
+
+        ds = LegacyDesignSpace(x_limits=np.array([[0, 1], [2, 3], [4, 5]]))
+        self.assertEqual(len(ds.design_variables), 3)
+        self.assertTrue(all(isinstance(dv, FloatVariable) for dv in ds.design_variables))
+        self.assertEqual(ds.design_variables[0].get_limits(), (0, 1))
+        self.assertEqual(ds.get_x_limits(), [(0, 1), (2, 3), (4, 5)])
+        self.assertTrue(np.all(ds.get_num_bounds() == np.array([[0, 1], [2, 3], [4, 5]])))
 
     def test_design_space(self):
         ds = DesignSpace([
@@ -179,6 +187,7 @@ class Test(unittest.TestCase):
         ], seed=42)
         self.assertEqual(len(ds.design_variables), 4)
         self.assertEqual(len(ds._cs.get_hyperparameters()), 4)
+        self.assertTrue(np.all(~ds.is_conditionally_acting))
 
         x, is_acting = ds.sample_valid_x(3)
         self.assertEqual(x.shape, (3, 4))
@@ -190,12 +199,17 @@ class Test(unittest.TestCase):
         self.assertEqual(x.shape, (3, 4))
         self.assertEqual(is_acting.shape, x.shape)
 
+        self.assertEqual(ds.decode_values(x, i_dv=0), ['B', 'C', 'C'])
+        self.assertEqual(ds.decode_values(x, i_dv=1), ['E', 'E', 'E'])
+        self.assertEqual(ds.decode_values(np.array([0, 1, 2]), i_dv=0), ['A', 'B', 'C'])
+        self.assertEqual(ds.decode_values(np.array([0, 1]), i_dv=1), ['E', 'F'])
+
         x_corr, is_act_corr = ds.correct_get_acting(x)
         self.assertTrue(np.all(x_corr == x))
         self.assertTrue(np.all(is_act_corr == is_acting))
 
         x_sampled_externally = LHS(xlimits=ds.get_unfolded_num_bounds(), criterion='ese', random_state=42)(3)
-        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally, x_is_unfolded=True)
+        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally)
         x_corr, is_acting_corr = ds.fold_x(x_corr, is_acting_corr)
         self.assertTrue(np.all(np.abs(x_corr-np.array([
             [2, 0, -1, 1.342],
@@ -222,11 +236,13 @@ class Test(unittest.TestCase):
             IntegerVariable(0, 1),  # x2
             FloatVariable(0, 1),  # x3
         ], seed=42)
-        ds.define_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
+        ds.declare_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
         ds.add_value_constraint(var1=0, value1='C', var2=1, value2='F')  # Prevent a == C and b == F
 
         x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1], [0, 1], [.25, .75])))
         self.assertEqual(x_cartesian.shape, (24, 4))
+
+        self.assertTrue(np.all(ds.is_conditionally_acting == [False, False, False, True]))
 
         x, is_acting = ds.correct_get_acting(x_cartesian)
         _, is_unique = np.unique(x, axis=0, return_index=True)
@@ -279,6 +295,23 @@ class Test(unittest.TestCase):
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
         assert len(seen_x) == 14
         assert len(seen_is_acting) == 2
+
+    def test_check_conditionally_acting(self):
+
+        class WrongDesignSpace(DesignSpace):
+
+            def _is_conditionally_acting(self) -> np.ndarray:
+                return np.zeros((self.n_dv,), dtype=bool)
+
+        ds = WrongDesignSpace([
+            CategoricalVariable(['A', 'B', 'C']),  # x0
+            CategoricalVariable(['E', 'F']),  # x1
+            IntegerVariable(0, 1),  # x2
+            FloatVariable(0, 1),  # x3
+        ], seed=42)
+        ds.declare_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
+
+        self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
 
 
 if __name__ == '__main__':

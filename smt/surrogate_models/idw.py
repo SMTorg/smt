@@ -77,7 +77,7 @@ class IDW(SurrogateModel):
                 self._new_train()
                 # outputs['sol'] = self.sol
 
-    def _predict_values(self, x):
+    def _predict_values(self, x, is_acting=None):
         """
         This function is used by _predict function. See _predict for more details.
         """

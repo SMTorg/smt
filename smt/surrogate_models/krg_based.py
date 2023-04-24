@@ -35,11 +35,14 @@ from smt.utils.kriging import (
 from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from smt.utils.mixed_integer import unfold_with_enum_mask
+from smt.utils.design_space import BaseDesignSpace, ensure_design_space, CategoricalVariable
 
-MixIntKernelType = Enum(
-    "MixIntKernelType", ["EXP_HOMO_HSPHERE", "HOMO_HSPHERE", "CONT_RELAX", "GOWER"]
-)
+
+class MixIntKernelType(Enum):
+    EXP_HOMO_HSPHERE = 'EXP_HOMO_HSPHERE'
+    HOMO_HSPHERE = 'HOMO_HSPHERE'
+    CONT_RELAX = 'CONT_RELAX'
+    GOWER = 'GOWER'
 
 
 class KrgBased(SurrogateModel):
@@ -174,6 +177,13 @@ class KrgBased(SurrogateModel):
                 xlimits: array-like
                     bounds of x features""",
         )
+        declare(
+            "design_space",
+            None,
+            types=BaseDesignSpace,
+            desc="definition of the (hierarchical) design space: "
+                 "use `smt.utils.design_space.DesignSpace` as the main API"
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         supports["derivatives"] = True
@@ -195,10 +205,27 @@ class KrgBased(SurrogateModel):
             % self.options["pow_exp_power"]
         )
 
+    @property
+    def design_space(self) -> BaseDesignSpace:
+        if self.options['design_space'] is None:
+            xt = self.training_points.get(None)
+            if xt is not None:
+                xt = xt[0][0]
+
+            self.options['design_space'] = ensure_design_space(xt=xt, xspecs=self.options['xspecs'])
+        return self.options['design_space']
+
     def _new_train(self):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
+
+        # Get is_acting status from design space model if needed (might correct training points)
+        is_acting = self.is_acting_points.get(None)
+        if is_acting is None:
+            X, is_acting = self.design_space.correct_get_acting(X)
+            self.training_points[None][0][0] = X
+            self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
@@ -207,18 +234,20 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
+        self.is_acting_train = is_acting
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
                 X=X,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
+                X=self.X_train, ij=self.ij, design_space=self.design_space
             )
             _, self.cat_features = compute_X_cont(
-                self.X_train, self.options["xspecs"].types
+                self.X_train, self.design_space
             )
         # Center and scale X and y
         (
@@ -298,7 +327,7 @@ class KrgBased(SurrogateModel):
     def _matrix_data_corr(
         self,
         corr,
-        xtypes,
+        design_space,
         power,
         theta,
         theta_bounds,
@@ -316,8 +345,8 @@ class KrgBased(SurrogateModel):
         ----------
         corr: correlation_types
             - The autocorrelation model
-        xtypes: np.ndarray [dim]
-                -the types (FLOAT,ORD,ENUM) of the input variables
+        design_space: BaseDesignSpace
+            - The design space definition
         theta : list[small_d * n_comp]
             Hyperparameters of the correlation model
         dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
@@ -399,13 +428,13 @@ class KrgBased(SurrogateModel):
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             from smt.applications.mixed_integer import unfold_with_enum_mask
 
-            X_pls_space = unfold_with_enum_mask(xtypes, X)
+            X_pls_space, _ = design_space.unfold_x(x)
             nx = len(theta)
 
         elif cat_kernel == MixIntKernelType.GOWER:
             X_pls_space = np.copy(X)
         else:
-            X_pls_space, _ = compute_X_cont(X, xtypes)
+            X_pls_space, _ = compute_X_cont(X, design_space)
             d_cont = dx[:, np.logical_not(cat_features)]
         if cat_kernel_comps is not None or ncomp < 1e5:
             ###Modifier la condition : if PLS cont
@@ -641,11 +670,7 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is not None:
             dx = self.D
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                from smt.applications.mixed_integer import unfold_with_enum_mask
-
-                X2 = unfold_with_enum_mask(
-                    self.options["xspecs"].types, self.training_points[None][0][0]
-                )
+                X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
                 (
                     self.X2_norma,
                     _,
@@ -658,7 +683,7 @@ class KrgBased(SurrogateModel):
 
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
-                xtypes=self.options["xspecs"].types,
+                design_space=self.design_space,
                 power=self.options["pow_exp_power"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
@@ -1048,7 +1073,7 @@ class KrgBased(SurrogateModel):
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
 
-    def _predict_values(self, x):
+    def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 
@@ -1056,6 +1081,8 @@ class KrgBased(SurrogateModel):
         ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------
@@ -1063,38 +1090,43 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
+        if is_acting is None:
+            x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
 
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
+                y_is_acting=self.is_acting_train,
             )
 
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                power=self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
+            # d = componentwise_distance(
+            #     dx,
+            #     self.options["corr"],
+            #     self.nx,
+            #     power=self.options["pow_exp_power"],
+            #     theta=None,
+            #     return_derivative=False,
+            # )
             if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+                    Xpred, _ = self.design_space.unfold_x(x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
+                    design_space=self.design_space,
                     power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
@@ -1106,7 +1138,7 @@ class KrgBased(SurrogateModel):
                     x=x,
                 ).reshape(n_eval, self.nt)
 
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+            X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
@@ -1183,54 +1215,59 @@ class KrgBased(SurrogateModel):
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
-    def _predict_variances(self, x):
+    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Provide uncertainty of the model at a set of points
         Parameters
         ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
         Returns
         -------
         MSE : np.ndarray
             Evaluation point output variable MSE
         """
         # Initialization
+        if is_acting is None:
+            x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
         X_cont = x
 
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
+                y_is_acting=self.is_acting_train,
             )
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
+            # d = componentwise_distance(
+            #     dx,
+            #     self.options["corr"],
+            #     self.nx,
+            #     self.options["pow_exp_power"],
+            #     theta=None,
+            #     return_derivative=False,
+            # )
             if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    from smt.applications.mixed_integer import unfold_with_enum_mask
-
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+                    Xpred, _ = self.design_space.unfold_x(x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
 
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
+                    design_space=self.design_space,
                     power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
@@ -1241,7 +1278,8 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     x=x,
                 ).reshape(n_eval, self.nt)
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+
+            X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
@@ -1653,10 +1691,10 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options["xspecs"] is None) and (
+        if (self.options['design_space'] is None and self.options['xspecs'] is None) and (
             self.options["categorical_kernel"] is not None
         ):
-            raise ValueError("xspecs required for mixed integer Kriging")
+            raise ValueError("Design space definition (design_space) required for mixed integer Kriging")
 
         if self.name in ["KPLS"]:
             if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
@@ -1688,9 +1726,8 @@ class KrgBased(SurrogateModel):
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xspecs"].types,
+                self.design_space,
                 self.options["categorical_kernel"],
-                self.nx,
                 d,
                 n_comp,
                 mat_dim,
@@ -1755,17 +1792,15 @@ class KrgBased(SurrogateModel):
             )
 
 
-def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
+def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
-    xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables,
+    design_space: BaseDesignSpace
+            - design space definition
     cat_kernel : string
             -The kernel to use for categorical inputs. Only for non continuous Kriging,
-    nx: int
-            -The number of variables,
     d: int
             - n_comp or nx
     n_comp : int
@@ -1777,7 +1812,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
      n_param: int
             - The number of parameters.
     """
-    n_param = nx
+    n_param = design_space.n_dv
     if n_comp is not None:
         n_param = d
         if cat_kernel == MixIntKernelType.CONT_RELAX:
@@ -1785,15 +1820,16 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
 
-    for i, xtyp in enumerate(xtypes):
-        if isinstance(xtyp, tuple):
-            if nx == d:
+    for i, dv in enumerate(design_space.design_variables):
+        if isinstance(dv, CategoricalVariable):
+            n_values = dv.n_values
+            if design_space.n_dv == d:
                 n_param -= 1
             if cat_kernel in [
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
             ]:
-                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+                n_param += int(n_values * (n_values - 1) / 2)
             if cat_kernel == MixIntKernelType.CONT_RELAX:
-                n_param += int(xtyp[1])
+                n_param += int(n_values)
     return n_param

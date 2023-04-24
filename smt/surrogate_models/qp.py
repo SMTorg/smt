@@ -141,7 +141,7 @@ class QP(SurrogateModel):
         )
         return y
 
-    def _predict_values(self, x):
+    def _predict_values(self, x, is_acting=None):
         """
         Evaluates the model at a set of points.
 

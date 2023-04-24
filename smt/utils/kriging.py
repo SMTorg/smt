@@ -4,6 +4,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import warnings
 import numpy as np
 from enum import Enum
 from copy import deepcopy
@@ -13,8 +14,14 @@ from sklearn.cross_decomposition import PLSRegression as pls
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.mixed_integer import XType
+from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
 
-MixHrcKernelType = Enum("MixHrcKernelType", ["ARC_KERNEL", "ALG_KERNEL"])
+
+class MixHrcKernelType(Enum):
+    ARC_KERNEL = 'ARC_KERNEL'
+    ALG_KERNEL = 'ALG_KERNEL'
+
+
 ## This define the variables roles for hierarchical Kriging models
 XRole = Enum("XType", ["NEUTRAL", "META", "DECREED"])
 
@@ -36,6 +43,7 @@ class XSpecs:
     """
 
     def __init__(self, xtypes=None, xlimits=None, xroles=None):
+        warnings.warn('Please use DesignSpace to specify the (hierarchical) design space!', category=DeprecationWarning)
         self._xlimits = xlimits
         if (
             xtypes is None and xlimits is not None
@@ -190,7 +198,7 @@ def cross_distances(X, y=None):
     return D, ij.astype(np.int32)
 
 
-def cross_levels(X, ij, xtypes, y=None):
+def cross_levels(X, ij, design_space, y=None):
     """
     Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
     Parameters
@@ -203,8 +211,8 @@ def cross_levels(X, ij, xtypes, y=None):
     ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
             - The indices i and j of the vectors in X associated to the cross-
               distances in D.
-    xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables
+    design_space: BaseDesignSpace
+        - The design space definition
     Returns
     -------
 
@@ -215,13 +223,13 @@ def cross_levels(X, ij, xtypes, y=None):
     """
 
     n_levels = []
-    for i, xtyp in enumerate(xtypes):
-        if isinstance(xtyp, tuple):
-            n_levels.append(xtyp[1])
+    for dv in design_space.design_variables:
+        if isinstance(dv, CategoricalVariable):
+            n_levels.append(dv.n_values)
     n_levels = np.array(n_levels)
     n_var = n_levels.shape[0]
     n, _ = ij.shape
-    X_cont, cat_features = compute_X_cont(X, xtypes)
+    X_cont, cat_features = compute_X_cont(X, design_space)
     X_cat = X[:, cat_features]
 
     Lij = np.zeros((n_var, n, 2))
@@ -271,16 +279,15 @@ def cross_levels_homo_space(X, ij, y=None):
     return dx
 
 
-def compute_X_cont(x, xtypes):
+def compute_X_cont(x, design_space):
     """
-    Some parts were extracted from gower 0.0.5 library
-    Computes the X_cont part of a vector x for mixed integer
+    Gets the X_cont part of a vector x for mixed integer
     Parameters
     ----------
     x: np.ndarray [n_obs, dim]
             - The input variables.
-    xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables
+    design_space : BaseDesignSpace
+        - The design space definition
     Returns
     -------
     X_cont: np.ndarray [n_obs, dim_cont]
@@ -289,31 +296,26 @@ def compute_X_cont(x, xtypes):
         -  Indices of the categorical input dimensions.
 
     """
-    if xtypes is None:
-        return x, None
-    cat_features = [
-        not (xtype == XType.FLOAT or xtype == XType.ORD) for xtype in xtypes
-    ]
-    return x[:, np.logical_not(cat_features)], cat_features
+    is_cat_mask = design_space.is_cat_mask
+    return x[:, ~is_cat_mask], is_cat_mask
 
 
-def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
+def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_kernel, y=None, y_is_acting=None):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
     Parameters
     ----------
     X: np.ndarray [n_obs, dim]
-            - The input variables.
+        - The input variables.
+    x_is_acting: np.ndarray [n_obs, dim]
+        - is_acting matrix for the inputs
+    design_space : BaseDesignSpace
+        - The design space definition
     y: np.ndarray [n_y, dim]
-            - The training data.
-    xspecs : XSpecs object including
-        xlimits: np.ndarray[dim, 2]
-                - The upper and lower var bounds.
-        xtypes: np.ndarray [dim]
-                - The types (FLOAT,ORD,ENUM) of the input variables
-        xroles: np.ndarray [dim]
-                - The roles (NEUTRAL,META,DECREED) of the input variables
+        - The training data
+    y_is_acting: np.ndarray [n_y, dim]
+        - is_acting matrix for the training points
     Returns
     -------
     D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
@@ -326,62 +328,75 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
     """
     X = X.astype(np.float64)
     Xt = X
-    X_cont, cat_features = compute_X_cont(Xt, xspecs.types)
+    X_cont, cat_features = compute_X_cont(Xt, design_space)
+    is_decreed = design_space.is_conditionally_acting
 
     # function checks
     if y is None:
         Y = X
+        y_is_acting = x_is_acting
     else:
         Y = y
+        if y_is_acting is None:
+            raise ValueError(f'Expected y_is_acting because y is given')
+
     if not isinstance(X, np.ndarray):
         if not np.array_equal(X.columns, Y.columns):
             raise TypeError("X and Y must have same columns!")
     else:
         if not X.shape[1] == Y.shape[1]:
             raise TypeError("X and Y must have same y-dim!")
+
+    if x_is_acting.shape != X.shape or y_is_acting.shape != Y.shape:
+        raise ValueError(f'is_acting matrices must have same shape as X!')
+
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
     if not isinstance(X, np.ndarray):
         X = np.asarray(X)
     if not isinstance(Y, np.ndarray):
         Y = np.asarray(Y)
+
     Z = np.concatenate((X, Y))
+    z_is_acting = np.concatenate((x_is_acting, y_is_acting))
+    Z_cat = Z[:, cat_features]
+    z_cat_is_acting = z_is_acting[:, cat_features]
+    cat_is_decreed = is_decreed[cat_features]
+
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
-    Z_cat = Z[:, cat_features]
     X_cat = Z_cat[x_index,]
     Y_cat = Z_cat[y_index,]
+    x_cat_is_acting = z_cat_is_acting[x_index,]
+    y_cat_is_acting = z_cat_is_acting[y_index,]
+
+    # To support categorical decreed variables, some extra math wizardry is needed
+    if np.any(cat_is_decreed) or np.any(~x_cat_is_acting) or np.any(~y_cat_is_acting):
+        raise ValueError('Decreed (conditionally-active) categorical variables are not supported yet!')
 
     # This is to normalize the numeric values between 0 and 1.
-    Z_num = Z[:, np.logical_not(cat_features)]
-    lim = np.array(xspecs.limits, dtype=object)[np.logical_not(cat_features)]
-    lb = np.zeros(np.shape(lim)[0])
-    ub = np.ones(np.shape(lim)[0])
-    max_meta_num = 1
-    if np.shape(lim)[0] > 0:
-        for k, i in enumerate(lim):
-            if xspecs.roles[k] != XRole.META:
-                lb[k] = i[0]
-                ub[k] = i[-1]
-            else:
-                max_meta_num = i[-1]
-        Z_offset = lb
-        Z_max = ub
+    Z_num = Z[:, ~cat_features]
+    z_num_is_acting = z_is_acting[:, ~cat_features]
+    num_is_decreed = is_decreed[~cat_features]
+    num_bounds = design_space.get_num_bounds()[~cat_features, :]
+    if num_bounds.shape[0] > 0:
+        Z_offset = num_bounds[:, 0]
+        Z_max = num_bounds[:, 1]
         Z_scale = Z_max - Z_offset
         Z_num = (Z_num - Z_offset) / Z_scale
     X_num = Z_num[x_index,]
     Y_num = Z_num[y_index,]
+    x_num_is_acting = z_num_is_acting[x_index,]
+    y_num_is_acting = z_num_is_acting[y_index,]
 
     D_cat = compute_D_cat(X_cat, Y_cat, y)
     D_num, ij = compute_D_num(
         X_num,
         Y_num,
+        x_num_is_acting,
+        y_num_is_acting,
+        num_is_decreed,
         y,
-        xspecs,
-        X_cat,
-        Y_cat,
-        cat_features,
-        max_meta_num,
         hierarchical_kernel,
     )
     D = np.concatenate((D_cat, D_num), axis=1) * 0
@@ -420,15 +435,12 @@ def compute_D_cat(X_cat, Y_cat, y):
 def compute_D_num(
     X_num,
     Y_num,
+    x_num_is_acting,
+    y_num_is_acting,
+    num_is_decreed,
     y,
-    xspecs,
-    X_cat,
-    Y_cat,
-    cat_features,
-    max_meta_num,
     hierarchical_kernel,
 ):
-    active_roles = len(xspecs.limits) * [XRole.NEUTRAL] != xspecs.roles
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
     n_nonzero_cross_dist = nx_samples * ny_samples
@@ -455,16 +467,15 @@ def compute_D_num(
                 l2 = k2 + k1 + 1
             D_num[indD] = np.abs(X_num[k1] - Y_num[l2])
             indD += 1
-    if active_roles:
+
+    if any(num_is_decreed):
         D_num = apply_the_algebraic_distance_to_the_decreed_variable(
-            xspecs,
             X_num,
             Y_num,
+            x_num_is_acting,
+            y_num_is_acting,
+            num_is_decreed,
             y,
-            max_meta_num,
-            cat_features,
-            X_cat,
-            Y_cat,
             D_num,
             hierarchical_kernel,
         )
@@ -473,24 +484,17 @@ def compute_D_num(
 
 
 def apply_the_algebraic_distance_to_the_decreed_variable(
-    xspecs,
     X_num,
     Y_num,
+    x_num_is_acting,
+    y_num_is_acting,
+    num_is_decreed,
     y,
-    max_meta_num,
-    cat_features,
-    X_cat,
-    Y_cat,
     D_num,
     hierarchical_kernel,
 ):
     nx_samples, n_features = X_num.shape
     ny_samples, n_features = Y_num.shape
-    decreed_features = np.array([(xrole == XRole.DECREED) for xrole in xspecs.roles])
-    meta_features = np.array([(xrole == XRole.META) for xrole in xspecs.roles])
-    decreed_num_features = decreed_features[np.logical_not(cat_features)]
-    meta_num_features = meta_features[np.logical_not(cat_features)]
-    meta_cat_features = meta_features[cat_features]
 
     indD = 0
     k1max = nx_samples
@@ -500,87 +504,45 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
         k2max = ny_samples
         if y is None:
             k2max = ny_samples - k1 - 1
+        x_k1_acting = x_num_is_acting[k1]
         for k2 in range(k2max):
             l2 = k2
             if y is None:
                 l2 = k2 + k1 + 1
             abs_delta = np.abs(X_num[k1] - Y_num[l2])
+            y_l2_acting = y_num_is_acting[l2]
 
+            # Calculate the distances between the decreed (aka conditionally acting) variables
             if hierarchical_kernel == MixHrcKernelType.ALG_KERNEL:
-                abs_delta[decreed_num_features] = (
+                abs_delta[num_is_decreed] = (
                     2
                     * np.abs(
-                        X_num[k1][decreed_num_features]
-                        - Y_num[l2][decreed_num_features]
+                        X_num[k1][num_is_decreed]
+                        - Y_num[l2][num_is_decreed]
                     )
                     / (
-                        np.sqrt(1 + X_num[k1][decreed_num_features] ** 2)
-                        * np.sqrt(1 + Y_num[l2][decreed_num_features] ** 2)
+                        np.sqrt(1 + X_num[k1][num_is_decreed] ** 2)
+                        * np.sqrt(1 + Y_num[l2][num_is_decreed] ** 2)
                     )
                 )
             elif hierarchical_kernel == MixHrcKernelType.ARC_KERNEL:
-                abs_delta[decreed_num_features] = np.sqrt(2) * np.sqrt(
+                abs_delta[num_is_decreed] = np.sqrt(2) * np.sqrt(
                     1
                     - np.cos(
                         np.pi
                         * np.abs(
-                            X_num[k1][decreed_num_features]
-                            - Y_num[l2][decreed_num_features]
+                            X_num[k1][num_is_decreed]
+                            - Y_num[l2][num_is_decreed]
                         )
                     )
                 )
-            abs_delta[meta_num_features] = abs_delta[meta_num_features] / max_meta_num
 
-            if np.max(meta_num_features):
-                # This is the meta variable index
-                minmeta = int(
-                    np.min([X_num[k1][meta_num_features], Y_num[l2][meta_num_features]])
-                )
-                maxmeta = int(
-                    np.max([X_num[k1][meta_num_features], Y_num[l2][meta_num_features]])
-                )
-                ind_dec = min((decreed_num_features).nonzero()[0])
-                abs_delta[minmeta + ind_dec :] = abs_delta[minmeta + ind_dec :] * 0 + 1
-                abs_delta[maxmeta + ind_dec :] = abs_delta[maxmeta + ind_dec :] * 0
-            if np.max(meta_cat_features):
-                # This is the meta variable index
-                from smt.utils.mixed_integer import cast_to_enum_value
+            # Set distances for non-acting variables: 0 if both are non-acting, 1 if only one is non-acting
+            both_non_acting = num_is_decreed & ~(x_k1_acting | y_l2_acting)
+            abs_delta[both_non_acting] = 0.
 
-                actives_x1 = np.array(
-                    list(
-                        map(
-                            int,
-                            cast_to_enum_value(
-                                xspecs.limits,
-                                np.where(meta_features * cat_features)[0][0],
-                                np.int32(X_cat[k1][meta_cat_features]),
-                            )[0].split(","),
-                        )
-                    )
-                )
-                actives_y2 = np.array(
-                    list(
-                        map(
-                            int,
-                            cast_to_enum_value(
-                                xspecs.limits,
-                                np.where(meta_features * cat_features)[0][0],
-                                np.int32(Y_cat[l2][meta_cat_features]),
-                            )[0].split(","),
-                        )
-                    )
-                )
-                actives_both = np.array(list(set(actives_x1).intersection(actives_y2)))
-                decreed_num_features_inactives = np.copy(decreed_num_features)
-                decreed_num_features_inactives[actives_x1] = False
-                decreed_num_features_inactives[actives_y2] = False
-                decreed_num_features_uniques = np.copy(
-                    decreed_num_features
-                    * np.logical_not(decreed_num_features_inactives)
-                )
-                decreed_num_features_uniques[list(actives_both)] = False
-                abs_delta[decreed_num_features_inactives] = 0
-                abs_delta[decreed_num_features_uniques] = 1
+            either_acting = num_is_decreed & (x_k1_acting != y_l2_acting)
+            abs_delta[either_acting] = 1.
 
             D_num[indD] = abs_delta
             indD += 1

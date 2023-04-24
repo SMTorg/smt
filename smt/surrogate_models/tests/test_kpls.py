@@ -32,7 +32,7 @@ class TestKPLS(unittest.TestCase):
             )
             y = sy(n)
 
-            kriging = KPLS(n_comp=2)
+            kriging = KPLS(n_comp=2, corr=corr_str)
             kriging.set_training_values(x, y)
             kriging.train()
 

@@ -27,7 +27,8 @@ from smt.utils.mixed_integer import (
     cast_to_discrete_values,
     encode_with_enum_index,
 )
-from smt.problems import Sphere
+from smt.problems import Sphere, HierarchicalGoldstein, HierarchicalNeuralNetwork
+from smt.utils.design_space import DesignSpace
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
@@ -404,160 +405,41 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def test_hierarchical_variables_Goldstein(self):
-        def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
-            h = (
-                53.3108
-                + 0.184901 * x1
-                - 5.02914 * x1**3 * 10 ** (-6)
-                + 7.72522 * x1**z3 * 10 ** (-8)
-                - 0.0870775 * x2
-                - 0.106959 * x3
-                + 7.98772 * x3**z4 * 10 ** (-6)
-                + 0.00242482 * x4
-                + 1.32851 * x4**3 * 10 ** (-6)
-                - 0.00146393 * x1 * x2
-                - 0.00301588 * x1 * x3
-                - 0.00272291 * x1 * x4
-                + 0.0017004 * x2 * x3
-                + 0.0038428 * x2 * x4
-                - 0.000198969 * x3 * x4
-                + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
-                - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
-                + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
-                - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
-            )
-            if cos_term:
-                h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
-            return h
+        problem = HierarchicalGoldstein()
+        ds = problem.design_space
+        self.assertIsInstance(ds, DesignSpace)
+        self.assertEqual(ds.n_dv, 11)
 
-        def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
-            c1 = z1 == 0
-            c2 = z1 == 1
-            c3 = z1 == 2
+        x = np.array([
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ])
+        y = problem(x)
+        self.assertTrue(np.linalg.norm(y - np.array([50.75285716, 56.62074043, 50.97693309, 56.29235443])) < 1e-8)
+        self.assertTrue(np.linalg.norm(problem.eval_is_acting.astype(int) - np.array([
+            [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+            [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+        ])) < 1e-8)
+        self.assertTrue(np.linalg.norm(problem.eval_x - np.array([
+            [0, 1, 1, 1, 50, 50, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1,  1, 50, 1, 0, 1, 1, 1],
+            [2, 1, 1, 1, 50,  1, 1, 1, 0, 1, 1],
+            [3, 1, 1, 1,  1,  1, 1, 0, 0, 1, 1],
+        ])) < 1e-8)
+        self.assertTrue(np.linalg.norm(y - problem(problem.eval_x)) < 1e-8)
 
-            c4 = z2 == 0
-            c5 = z2 == 1
-            c6 = z2 == 2
-
-            y = (
-                c4
-                * (
-                    c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
-                    + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
-                    + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
-                )
-                + c5
-                * (
-                    c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
-                    + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
-                    + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
-                )
-                + c6
-                * (
-                    c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
-                    + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
-                    + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
-                )
-            )
-            return y
-
-        def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
-            c4 = z2 == 0
-            c5 = z2 == 1
-            c6 = z2 == 2
-
-            y = (
-                c4 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
-                + c5 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
-                + c6 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
-            )
-            return y
-
-        def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
-            c1 = z1 == 0
-            c2 = z1 == 1
-            c3 = z1 == 2
-
-            y = (
-                c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
-                + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
-                + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
-            )
-            return y
-
-        def f_hv(X):
-            y = []
-            for x in X:
-                if x[0] == 0:
-                    y.append(
-                        f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 1:
-                    y.append(
-                        f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 2:
-                    y.append(
-                        f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 3:
-                    y.append(
-                        H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
-                    )
-            return np.array(y)
-
-        xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # meta1 ord
-            [0, 1],  # 0
-            [0, 100],  # 1
-            [0, 100],  # 2
-            [0, 100],  # 3
-            [0, 100],  # 4
-            [0, 100],  # 5
-            [0, 2],  # 6
-            [0, 2],  # 7
-            [0, 2],  # 8
-            [0, 2],  # 9
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-        ]
-        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
-
-        xtypes = [
-            (XType.ENUM, 4),
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
         n_doe = 15
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        Xt = sampling(n_doe)
-        Yt = f_hv(Xt)
+        ds.seed = 42
+        Xt, is_acting = ds.sample_valid_x(n_doe)
+        Yt = problem(Xt)
 
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=ds,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ARC_KERNEL,
                 theta0=[1e-2],
@@ -565,7 +447,7 @@ class TestMixedInteger(unittest.TestCase):
                 n_start=5,
             ),
         )
-        sm.set_training_values(Xt, Yt)
+        sm.set_training_values(Xt, Yt, is_acting=is_acting)
         sm.train()
         y_s = sm.predict_values(Xt)[:, 0]
         pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
@@ -654,181 +536,24 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_hierarchical_variables_Goldstein(self):
         import numpy as np
-        from smt.utils.kriging import XSpecs
         from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
             MixedIntegerKrigingModel,
         )
-        from smt.sampling_methods import LHS
         from smt.surrogate_models import (
             KRG,
-            KPLS,
-            QP,
-            XType,
-            XRole,
             MixIntKernelType,
             MixHrcKernelType,
         )
 
-        def f_hv(X):
-            import numpy as np
-
-            def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
-                import numpy as np
-
-                h = (
-                    53.3108
-                    + 0.184901 * x1
-                    - 5.02914 * x1**3 * 10 ** (-6)
-                    + 7.72522 * x1**z3 * 10 ** (-8)
-                    - 0.0870775 * x2
-                    - 0.106959 * x3
-                    + 7.98772 * x3**z4 * 10 ** (-6)
-                    + 0.00242482 * x4
-                    + 1.32851 * x4**3 * 10 ** (-6)
-                    - 0.00146393 * x1 * x2
-                    - 0.00301588 * x1 * x3
-                    - 0.00272291 * x1 * x4
-                    + 0.0017004 * x2 * x3
-                    + 0.0038428 * x2 * x4
-                    - 0.000198969 * x3 * x4
-                    + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
-                    - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
-                    + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
-                    - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
-                )
-                if cos_term:
-                    h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
-                return h
-
-            def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
-                c1 = z2 == 0
-                c2 = z2 == 1
-                c3 = z2 == 2
-
-                c4 = z3 == 0
-                c5 = z3 == 1
-                c6 = z3 == 2
-
-                y = (
-                    c4
-                    * (
-                        c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
-                        + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
-                        + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
-                    )
-                    + c5
-                    * (
-                        c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
-                        + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
-                        + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
-                    )
-                    + c6
-                    * (
-                        c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
-                        + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
-                        + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
-                    )
-                )
-                return y
-
-            def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
-                c1 = z2 == 0
-                c2 = z2 == 1
-                c3 = z2 == 2
-
-                y = (
-                    c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
-                    + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
-                    + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
-                )
-                return y
-
-            def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
-                c1 = z1 == 0
-                c2 = z1 == 1
-                c3 = z1 == 2
-
-                y = (
-                    c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
-                    + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
-                    + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
-                )
-                return y
-
-            y = []
-            for x in X:
-                if x[0] == 0:
-                    y.append(
-                        f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 1:
-                    y.append(
-                        f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 2:
-                    y.append(
-                        f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
-                    )
-                elif x[0] == 3:
-                    y.append(
-                        H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
-                    )
-            return np.array(y)
-
-        xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # meta1 ord
-            [0, 1],  # 0
-            [0, 100],  # 1
-            [0, 100],  # 2
-            [0, 100],  # 3
-            [0, 100],  # 4
-            [0, 100],  # 5
-            [0, 2],  # 6
-            [0, 2],  # 7
-            [0, 2],  # 8
-            [0, 2],  # 9
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-        ]
-        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
-
-        xtypes = [
-            (XType.ENUM, 4),
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        from smt.problems import HierarchicalGoldstein
+        problem = HierarchicalGoldstein()
         n_doe = 15
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        Xt = sampling(n_doe)
-        Yt = f_hv(Xt)
+        Xt, is_acting = problem.design_space.sample_valid_x(n_doe)
+        Yt = problem(Xt)
 
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=problem.design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
                 theta0=[1e-2],
@@ -845,104 +570,48 @@ class TestMixedInteger(unittest.TestCase):
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
     def test_hierarchical_variables_NN(self):
-        def f_neu(x1, x2, x3, x4):
-            if x4 == 0:
-                return 2 * x1 + x2 - 0.5 * x3
-            if x4 == 1:
-                return -x1 + 2 * x2 - 0.5 * x3
-            if x4 == 2:
-                return -x1 + x2 + 0.5 * x3
-
-        def f1(x1, x2, x3, x4, x5):
-            return f_neu(x1, x2, x3, x4) + x5**2
-
-        def f2(x1, x2, x3, x4, x5, x6):
-            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6
-
-        def f3(x1, x2, x3, x4, x5, x6, x7):
-            return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
-
-        def f(X):
-            y = []
-            for x in X:
-                if x[0] == 1:
-                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
-                elif x[0] == 2:
-                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
-                elif x[0] == 3:
-                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
-            return np.array(y)
-
-        xlimits = [
-            [1, 3],  # meta ord
-            [-5, -2],
-            [-5, -1],
-            ["8", "16", "32", "64", "128", "256"],
-            ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # decreed m=1
-            [0.0, 5.0],  # decreed m=2
-            [0.0, 5.0],  # decreed m=3
-        ]
-        xtypes = [
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            (XType.ENUM, 3),
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.DECREED,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        problem = HierarchicalNeuralNetwork()
+        ds = problem.design_space
+        self.assertEqual(ds.n_dv, 8)
         n_doe = 100
 
-        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
+        xspecs_samp = XSpecs(xtypes=ds.get_x_types()[1:], xlimits=ds.get_x_limits()[1:])
 
         sampling = MixedIntegerSamplingMethod(
             LHS, xspecs_samp, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
-        xdoe1 = np.zeros((n_doe, 6))
+        xdoe1 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[:n_doe, :5]
-        xdoe1[:, 0] = np.ones(n_doe)
-        xdoe1[:, 1:] = x_cont2
-        ydoe1 = f(xdoe1)
+        xdoe1[:, 0] = np.zeros(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+        ydoe1 = problem(xdoe1)
 
         xdoe1 = np.zeros((n_doe, 8))
-        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 0] = np.zeros(n_doe)
         xdoe1[:, 1:6] = x_cont2
 
-        xdoe2 = np.zeros((n_doe, 7))
+        xdoe2 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
-        ydoe2 = f(xdoe2)
+        ydoe2 = problem(xdoe2)
 
         xdoe2 = np.zeros((n_doe, 8))
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
 
         xdoe3 = np.zeros((n_doe, 8))
-        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 0] = 2 * np.ones(n_doe)
         xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
-        ydoe3 = f(xdoe3)
+        ydoe3 = problem(xdoe3)
 
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=problem.design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
                 theta0=[1e-2],
@@ -965,18 +634,18 @@ class TestMixedInteger(unittest.TestCase):
                 sm.predict_values(
                     np.array(
                         [
-                            [1, -1, -2, 8, 0, 2, 0, 0],
-                            [2, -1, -2, 16, 1, 2, 1, 0],
-                            [3, -1, -2, 32, 2, 2, 1, -2],
+                            [0, -1, -2, 8, 0, 2, 0, 0],
+                            [1, -1, -2, 16, 1, 2, 1, 0],
+                            [2, -1, -2, 32, 2, 2, 1, -2],
                         ]
                     )
                 )[:, 0]
                 - sm.predict_values(
                     np.array(
                         [
-                            [1, -1, -2, 8, 0, 2, 10, 10],
-                            [2, -1, -2, 16, 1, 2, 1, 10],
-                            [3, -1, -2, 32, 2, 2, 1, -2],
+                            [0, -1, -2, 8, 0, 2, 10, 10],
+                            [1, -1, -2, 16, 1, 2, 1, 10],
+                            [2, -1, -2, 32, 2, 2, 1, -2],
                         ]
                     )
                 )[:, 0]
@@ -985,8 +654,8 @@ class TestMixedInteger(unittest.TestCase):
         )
         self.assertTrue(
             np.linalg.norm(
-                sm.predict_values(np.array([[1, -1, -2, 8, 0, 2, 0, 0]]))
-                - sm.predict_values(np.array([[1, -1, -2, 8, 0, 12, 10, 10]]))
+                sm.predict_values(np.array([[0, -1, -2, 8, 0, 2, 0, 0]]))
+                - sm.predict_values(np.array([[0, -1, -2, 8, 0, 12, 10, 10]]))
             )
             > 1e-8
         )

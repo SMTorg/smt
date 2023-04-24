@@ -208,7 +208,7 @@ class GENN(SurrogateModel):
 
         self._is_trained = True
 
-    def _predict_values(self, x):
+    def _predict_values(self, x, is_acting=None):
         """
         API method: predict values using appropriate methods from the neural_network.py module
 

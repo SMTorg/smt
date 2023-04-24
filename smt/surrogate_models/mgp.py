@@ -64,7 +64,7 @@ class MGP(KrgBased):
             d = componentwise_distance(dx, self.options["corr"], self.nx)
         return d
 
-    def _predict_values(self, x):
+    def _predict_values(self, x, is_acting=None):
         """
         Predict the value of the MGP for a given point
 
@@ -152,7 +152,7 @@ class MGP(KrgBased):
 
         return MSE, dy, dMSE
 
-    def _predict_variances(self, x):
+    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Predict the variance of a specific point
 

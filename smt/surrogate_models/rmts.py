@@ -443,7 +443,7 @@ class RMTS(SurrogateModel):
                 outputs["full_hess"] = self.full_hess
                 outputs["full_jac_dict"] = self.full_jac_dict
 
-    def _predict_values(self, x):
+    def _predict_values(self, x, is_acting=None):
         """
         Evaluates the model at a set of points.
 
