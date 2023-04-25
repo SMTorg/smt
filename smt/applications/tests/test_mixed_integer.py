@@ -557,6 +557,7 @@ class TestMixedInteger(unittest.TestCase):
         print(is_acting)
 
     def run_hierarchical_design_space_example(self):
+        import numpy as np
         from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
 
         ds = DesignSpace([

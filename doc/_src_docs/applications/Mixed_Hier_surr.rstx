@@ -3,15 +3,15 @@
 Mixed integer surrogate
 =======================
 
-To use a surrogate with mixed integer constraints, the user instanciates a ``MixedIntegerSurrogateModel`` with the given surrogate.
+To use a surrogate with mixed integer constraints, the user instantiates a ``MixedIntegerSurrogateModel`` with the given surrogate.
 The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
-For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instanciates a ``MixedIntegerKrigingModel`` with the given kernel for Kriging. Currently, 4 methods (CR, GD, EHH and  HH) are implemented that are described hereafter. 
+For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instantiate a ``MixedIntegerKrigingModel`` with the given kernel for Kriging. Currently, 4 methods (CR, GD, EHH and  HH) are implemented that are described hereafter.
 
 Mixed Integer Surrogate with Continuous Relaxation (CR)
 -------------------------------------------------------
-For enum variables, as many x features are added as there is enumerated levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
+For categorical variables, as many x features are added as there are levels for the variables. These new dimensions have [0, 1] bounds and the max of these feature float values will correspond to the choice of one the enum value: this is the so-called "one-hot encoding".
 For instance, for a categorical variable (one feature of x) with three levels ["blue", "red", "green"], 3 continuous float features x0, x1, x2 are created. Thereafter, the value max(x0, x1, x2), for instance, x1, will give "red" as the value for the original categorical feature. Details can be found in [1]_ .
 
 
@@ -61,7 +61,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
 Mixed Integer Kriging with hierarchical variables
 -------------------------------------------------
 
-The class ``XSpecs`` implements the types, the domain and also the roles of the variables. Therefore, a ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical variables can be build by specifying the variables. Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section. 
+The ``DesignSpace`` class can be used to model design variable hierarchy: conditionally active design variables and value constraints.
+A ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical variables can be build using this.
+Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section.
 
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

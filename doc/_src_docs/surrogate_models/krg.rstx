@@ -65,7 +65,7 @@ then we round in the prediction to the output dimension giving the greatest cont
 A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
 See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
 
-More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
+More details available in [2]_. See also :ref:`Mixed Integer and hierarchical Surrogates`.
 
 Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 

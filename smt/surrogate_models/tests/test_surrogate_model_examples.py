@@ -228,20 +228,17 @@ class Test(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, XType
+        from smt.surrogate_models import KRG
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.utils.kriging import XSpecs
+        from smt.utils.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
 
-        # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-        # FLOAT means x1 continuous
-        # ORD means x2 integer
-        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
-        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = XSpecs(xtypes=[XType.ORD], xlimits=[[0, 4]])
-        sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
+        design_space = DesignSpace([
+            IntegerVariable(0, 4),
+        ])
+        sm = MixedIntegerKrigingModel(surrogate=KRG(design_space=design_space, theta0=[1e-2]))
         sm.set_training_values(xt, yt)
         sm.train()
 

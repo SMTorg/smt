@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0930774
+     Training - done. Time (sec):  1.3759763
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -179,17 +179,22 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
      -  None
      -  Correlation function type
+  *  -  pow_exp_power
+     -  1.9
+     -  None
+     -  ['float']
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  None
-     -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
-     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
@@ -246,6 +251,11 @@ Options
                     x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
                 xlimits: array-like
                     bounds of x features
+  *  -  design_space
+     -  None
+     -  None
+     -  ['BaseDesignSpace']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
   *  -  n_comp
      -  1
      -  None

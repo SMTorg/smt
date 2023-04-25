@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0349047
+     Training - done. Time (sec):  0.0511756
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009646
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000096
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009990
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001998
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  2.9889770
+     Training - done. Time (sec):  3.1084862
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -172,8 +172,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[20.57448753]]
-  [[1073.87724138]]
+  [[20.62631581]]
+  [[1077.05754261]]
   
 
 Options
@@ -221,17 +221,22 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp']
+     -  ['abs_exp', 'squar_exp', 'pow_exp']
      -  ['str']
      -  Correlation function type
+  *  -  pow_exp_power
+     -  1.9
+     -  None
+     -  ['float']
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  None
-     -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
-     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
@@ -288,6 +293,11 @@ Options
                     x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
                 xlimits: array-like
                     bounds of x features
+  *  -  design_space
+     -  None
+     -  None
+     -  ['BaseDesignSpace']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
   *  -  n_comp
      -  1
      -  None

@@ -14,63 +14,14 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
   from smt.problems import HierarchicalNeuralNetwork
-  from smt.utils.kriging import XSpecs
-  from smt.applications.mixed_integer import (
-      MixedIntegerContext,
-      MixedIntegerSamplingMethod,
-      MixedIntegerKrigingModel,
-  )
-  from smt.sampling_methods import LHS
-  from smt.surrogate_models import (
-      KRG,
-      XType,
-      XRole,
-      MixIntKernelType,
-  )
   
   problem = HierarchicalNeuralNetwork()
   
   n_doe = 100
-  xlimits = [
-      [1, 3],  # meta ord
-      [-5, -2],
-      [-5, -1],
-      ["8", "16", "32", "64", "128", "256"],
-      ["ReLU", "SELU", "ISRLU"],
-      [0.0, 5.0],  # decreed m=1
-      [0.0, 5.0],  # decreed m=2
-      [0.0, 5.0],  # decreed m=3
-  ]
-  xtypes = [
-      XType.ORD,
-      XType.FLOAT,
-      XType.FLOAT,
-      XType.ORD,
-      (XType.ENUM, 3),
-      XType.ORD,
-      XType.ORD,
-      XType.ORD,
-  ]
-  xroles = [
-      XRole.META,
-      XRole.NEUTRAL,
-      XRole.NEUTRAL,
-      XRole.NEUTRAL,
-      XRole.NEUTRAL,
-      XRole.DECREED,
-      XRole.DECREED,
-      XRole.DECREED,
-  ]
-  xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
-  sampling = MixedIntegerSamplingMethod(
-      LHS,
-      xspecs,
-      criterion="ese",
-  )
-  xdoe = sampling(n_doe)
+  xdoe, x_is_acting = problem.design_space.sample_valid_x(n_doe)  # If acting information is needed
+  # xdoe = problem.sample(n_doe)  # Also possible
   y = problem(xdoe)
   
   plt.scatter(xdoe[:, 0], y)

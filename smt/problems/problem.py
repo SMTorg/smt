@@ -73,6 +73,10 @@ class Problem:
             self._design_space = LegacyDesignSpace(x_limits=self.xlimits)
         return self._design_space
 
+    def sample(self, n):
+        x, _ = self.design_space.sample_valid_x(n)
+        return x
+
     def __call__(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
         """
         Evaluate the function.

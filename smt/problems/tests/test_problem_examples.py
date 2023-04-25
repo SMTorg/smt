@@ -31,78 +31,35 @@ class Test(unittest.TestCase):
         print(y.shape)
         print(yd.shape)
 
-        ds = problem.design_space
-        self.assertEqual(len(ds.design_variables), ndim)
-
         plt.plot(x[:, 0], y[:, 0])
         plt.xlabel("x")
         plt.ylabel("y")
         plt.show()
 
     def test_mixed_cantilever_beam(self):
-        import numpy as np
         import matplotlib.pyplot as plt
         from smt.problems import MixedCantileverBeam
-        from smt.utils.kriging import XSpecs
-        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
-        from smt.sampling_methods import LHS
 
         problem = MixedCantileverBeam()
-        ds = problem.design_space
-        self.assertEqual(len(ds.design_variables), 3)
-        self.assertEqual(problem.options['ndim'], 3)
 
         n_doe = 100
-        xtypes = ds.get_x_types()
-        xlimits = ds.get_x_limits()
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-
-        sampling = MixedIntegerSamplingMethod(
-            LHS,
-            xspecs,
-            criterion="ese",
-        )
-        xdoe = sampling(n_doe)
+        xdoe = problem.sample(n_doe)
         y = problem(xdoe)
 
-        xdoe2, is_acting2 = ds.sample_valid_x(n_doe)
-        y2 = problem(xdoe2)
-        self.assertTrue(np.all(is_acting2))
-
         plt.scatter(xdoe[:, 0], y)
-        plt.scatter(xdoe2[:, 0], y2)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.show()
 
     def test_hier_neural_network(self):
-        import numpy as np
         import matplotlib.pyplot as plt
         from smt.problems import HierarchicalNeuralNetwork
 
         problem = HierarchicalNeuralNetwork()
-        ds = problem.design_space
-        assert len(ds.design_variables) == 8
-
-        x_corr, is_active = ds.correct_get_acting(np.array([
-            [0, 0, 0, 0, 0, 1, 1, 1],
-            [1, 0, 0, 0, 0, 1, 1, 1],
-            [2, 0, 0, 0, 0, 1, 1, 1],
-        ]))
-        self.assertTrue(np.all(x_corr == np.array([
-            [0, 0, 0, 0, 0, 1, 0, 0],
-            [1, 0, 0, 0, 0, 1, 1, 0],
-            [2, 0, 0, 0, 0, 1, 1, 1],
-        ])))
-        self.assertTrue(np.all(is_active == np.array([
-            [1, 1, 1, 1, 1, 1, 0, 0],
-            [1, 1, 1, 1, 1, 1, 1, 0],
-            [1, 1, 1, 1, 1, 1, 1, 1],
-        ], dtype=bool)))
 
         n_doe = 100
-        xdoe, is_active = ds.sample_valid_x(n_doe)
-        self.assertFalse(np.all(is_active))
+        xdoe, x_is_acting = problem.design_space.sample_valid_x(n_doe)  # If acting information is needed
+        # xdoe = problem.sample(n_doe)  # Also possible
         y = problem(xdoe)
 
         plt.scatter(xdoe[:, 0], y)
