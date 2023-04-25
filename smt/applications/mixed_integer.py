@@ -18,7 +18,7 @@ from smt.utils.mixed_integer import (
     unfold_xlimits_with_continuous_limits,
 )
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
-from smt.utils.design_space import CategoricalVariable, ensure_design_space
+from smt.utils.design_space import BaseDesignSpace, CategoricalVariable, ensure_design_space
 import warnings
 
 
@@ -275,42 +275,42 @@ class MixedIntegerContext(object):
     to handle integer and categorical variables consistently.
     """
 
-    def __init__(self, xspecs, work_in_folded_space=True):
+    def __init__(self, design_space, work_in_folded_space=True):
         """
         Parameters
         ----------
-        xspecs : x specifications XSpecs
-            xtypes: x types list
-                x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-            xlimits: array-like
-                bounds of x features
-            xroles: x roles list
-                x roles specification
+        design_space: BaseDesignSpace
+            the design space definition (includes mixed-discrete and/or hierarchical specifications)
         work_in_folded_space: bool
             whether x data are in given in folded space (enum indexes) or not (enum masks)
-        categorical_kernel: string
-            the kernel to use for categorical inputs. Only for non continuous Kriging.
         """
 
-        self._xspecs = xspecs
+        self._design_space = ensure_design_space(xspecs=design_space, design_space=design_space)
         self._unfold_space = not work_in_folded_space
-        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(
-            self._xspecs, unfold_space=self._unfold_space
-        )
+        self._unfolded_xlimits = self._design_space.get_unfolded_num_bounds()
         self._work_in_folded_space = work_in_folded_space
 
-    def build_sampling_method(self, sampling_method_class, **kwargs):
+    @property
+    def design_space(self) -> BaseDesignSpace:
+        return self._design_space
+
+    def build_sampling_method(self, *_, **__):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
-        kwargs["output_in_folded_space"] = self._work_in_folded_space
-        return MixedIntegerSamplingMethod(sampling_method_class, self._xspecs, **kwargs)
+        return_folded = self._work_in_folded_space
+
+        def sample(n):
+            x, _ = self._design_space.sample_valid_x(n, unfolded=not return_folded)
+            return x
+
+        return sample
 
     def build_kriging_model(self, surrogate):
         """
         Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
-        surrogate.options["xspecs"] = self._xspecs
+        surrogate.options["design_space"] = self._design_space
         return MixedIntegerKrigingModel(
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
@@ -321,7 +321,7 @@ class MixedIntegerContext(object):
         Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
         return MixedIntegerSurrogateModel(
-            self._xspecs,
+            self._design_space,
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
         )
@@ -341,115 +341,3 @@ class MixedIntegerContext(object):
         """
 
         return len(self._unfolded_xlimits)
-
-    def cast_to_discrete_values(self, x, unfold_space):
-        """
-        Project continuously relaxed values to their closer assessable values.
-        Note: categorical (or enum) x dimensions are still expanded that is
-        there are still as many columns as categorical possible values for the given x dimension.
-        For instance, if an input dimension is typed ["blue", "red", "green"] in xlimits a sample/row of
-        the input x may contain the values (or mask) [..., 0, 0, 1, ...] to specify "green" for
-        this original dimension.
-
-        Parameters
-        ----------
-        x : np.ndarray [n_evals, dim]
-            continuous evaluation point input variable values
-        unfold_space : boolean
-            whether or not working in the continuous relaxation folded space
-        Returns
-        -------
-        np.ndarray
-            feasible evaluation point value in categorical space.
-        """
-        return cast_to_discrete_values(self._xspecs, unfold_space, x)
-
-    def fold_with_enum_index(self, x):
-        """
-        Reduce categorical inputs from discrete unfolded space to
-        initial x dimension space where categorical x dimensions are valued by the index
-        in the corresponding enumerate list.
-        For instance, if an input dimension is typed ["blue", "red", "green"] a sample/row of
-        the input x may contain the mask [..., 0, 0, 1, ...] which will be contracted in [..., 2, ...]
-        meaning the "green" value.
-        This function is the opposite of unfold_with_enum_mask().
-
-        Parameters
-        ----------
-        x: np.ndarray [n_evals, dim]
-            continuous evaluation point input variable values
-
-        Returns
-        -------
-        np.ndarray [n_evals, dim]
-            evaluation point input variable values with enumerate index for categorical variables
-        """
-        return fold_with_enum_index(self._xspecs.types, x)
-
-    def unfold_with_enum_mask(self, x):
-        """
-        Expand categorical inputs from initial x dimension space where categorical x dimensions
-        are valued by the index in the corresponding enumerate list to the discrete unfolded space.
-        For instance, if an input dimension is typed ["blue", "red", "green"] a sample/row of
-        the input x may contain [..., 2, ...] which will be expanded in [..., 0, 0, 1, ...].
-        This function is the opposite of fold_with_enum_index().
-
-        Parameters
-        ----------
-        x: np.ndarray [n_evals, nx]
-            continuous evaluation point input variable values
-
-        Returns
-        -------
-        np.ndarray [n_evals, nx continuous]
-            evaluation point input variable values with enumerate index for categorical variables
-        """
-        return unfold_with_enum_mask(self._xspecs.types, x)
-
-    def cast_to_enum_value(self, x_col, enum_indexes):
-        """
-        Return enumerate levels from indexes for the given x feature specified by x_col.
-
-        Parameters
-        ----------
-        x_col: int
-            index of the feature typed as enum
-        enum_indexes: list
-            list of indexes in the possible values for the enum
-
-        Returns
-        -------
-            list of levels (labels) for the given enum feature
-        """
-        return cast_to_enum_value(self._xspecs, x_col, enum_indexes)
-
-    def cast_to_mixed_integer(self, x):
-        """
-        Convert an x point with enum indexes to x point with enum levels
-
-        Parameters
-        ----------
-        x: array-like
-            point to convert
-
-        Returns
-        -------
-            x as a list with enum levels if any
-        """
-        return cast_to_mixed_integer(self._xspecs, x)
-
-    def encode_with_enum_index(self, x):
-        """
-        Convert an x point with enum levels to x point with enum indexes
-
-        Parameters
-        ----------
-        x as a list with enum levels if any
-            point to convert
-        Returns
-        -------
-        np.ndarray [n_evals, dim]
-            evaluation point input variable values with enumerate index for categorical variables
-        """
-
-        return encode_with_enum_index(self._specs, x)

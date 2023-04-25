@@ -12,15 +12,10 @@ from types import FunctionType
 from scipy.stats import norm
 from scipy.optimize import minimize
 
-from smt.utils.mixed_integer import XType
-from smt.sampling_methods import LHS
-from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS, MixIntKernelType
+from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import (
-    MixedIntegerContext,
-    MixedIntegerSamplingMethod,
-)
-from smt.utils.kriging import XSpecs
+from smt.applications.mixed_integer import MixedIntegerContext
+from smt.utils.design_space import BaseDesignSpace, DesignSpace, FloatVariable, CategoricalVariable
 
 
 class Evaluator(object):
@@ -160,9 +155,7 @@ class EGO(SurrogateBasedApplication):
                 # Set temporaly the y-coord point based on the kriging prediction
                 x_et_k = np.atleast_2d(x_et_k)
                 if self.mixint:
-                    x_et_k = self.mixint.cast_to_discrete_values(
-                        x_et_k, self.categorical_kernel == None
-                    )
+                    x_et_k, _ = self.design_space.correct_get_acting(x_et_k)
                 y_et_k = self._get_virtual_point(x_et_k, y_data)
 
                 # Update y_data with predicted value
@@ -173,7 +166,7 @@ class EGO(SurrogateBasedApplication):
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             if self.mixint and not (self.work_in_folded_space):
-                x_to_compute = self.mixint.fold_with_enum_index(x_to_compute)
+                x_to_compute, _ = self.design_space.fold_x(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
@@ -183,7 +176,8 @@ class EGO(SurrogateBasedApplication):
         y_opt = y_data[ind_best]
 
         if self.mixint and not (self.work_in_folded_space):
-            x_opt = self.mixint.fold_with_enum_index(x_opt)[0]
+            x_opt, _ = self.design_space.fold_x(x_opt)
+            x_opt = x_opt[0]
 
         return x_opt, y_opt, ind_best, x_data, y_data
 
@@ -251,38 +245,28 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
-        self.xspecs = self.gpr.options["xspecs"]
-        self.xlimits = self.xspecs.limits
+        self.design_space: BaseDesignSpace = self.gpr.design_space
+        if isinstance(self.design_space, DesignSpace):
+            self.design_space.seed = self.options['random_state']
 
         # Handle mixed integer optimization
         self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
 
-        if self.gpr.options["xspecs"].types != [XType.FLOAT] * len(
-            self.gpr.options["xspecs"].limits
-        ):
-            self.xtypes = self.gpr.options["xspecs"].types
+        is_continuous = all(isinstance(dv, FloatVariable) for dv in self.design_space.design_variables)
+        if not is_continuous:
             self.categorical_kernel = self.gpr.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
-                self.gpr.options["xspecs"],
+                self.design_space,
                 work_in_folded_space=self.work_in_folded_space,
             )
 
             self.gpr = self.mixint.build_kriging_model(self.gpr)
-            self._sampling = self.mixint.build_sampling_method(
-                LHS,
-                criterion="ese",
-                random_state=self.options["random_state"],
-                output_in_folded_space=self.work_in_folded_space,
-            )
+            self._sampling = self.mixint.build_sampling_method()
         else:
             self.mixint = None
-            self._sampling = MixedIntegerSamplingMethod(
-                LHS,
-                self.xspecs,
-                criterion="ese",
-                random_state=self.options["random_state"],
-            )
+            self._sampling = lambda n: self.design_space.sample_valid_x(n)[0]
             self.categorical_kernel = None
+
         # Build DOE
         self._evaluator = self.options["evaluator"]
         xdoe = self.options["xdoe"]
@@ -294,7 +278,7 @@ class EGO(SurrogateBasedApplication):
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
             if self.mixint and not (self.work_in_folded_space):
-                x_doe = self.mixint.unfold_with_enum_mask(x_doe)
+                x_doe, _ = self.design_space.unfold_x(xdoe)
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -337,13 +321,16 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
-            bounds = self.mixint.get_unfolded_xlimits()
+            if self.work_in_folded_space:
+                bounds = self.design_space.get_num_bounds()
+            else:
+                bounds = self.design_space.get_unfolded_num_bounds()
             method = "COBYLA"
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
                 if self.work_in_folded_space:
-                    if isinstance(self.xtypes[j], tuple):
+                    if isinstance(self.design_space.design_variables, CategoricalVariable):
                         upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
@@ -352,7 +339,7 @@ class EGO(SurrogateBasedApplication):
             options = {"maxiter": 500, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.2}
             bounds = None
         else:
-            bounds = self.xlimits
+            bounds = self.design_space.get_num_bounds()
             method = "SLSQP"
             cons = ()
             options = {"maxiter": 200}

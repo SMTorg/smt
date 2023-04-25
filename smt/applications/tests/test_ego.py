@@ -386,7 +386,7 @@ class TestEGO(SMTestCase):
         n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             LHS,
-            xspecs=xspecs,
+            design_space=xspecs,
             criterion="ese",
             random_state=42,
             output_in_folded_space=True,
@@ -1085,7 +1085,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
         print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
-        print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
+        # print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
 
         min_ref = -15
         mini = np.zeros(n_iter)

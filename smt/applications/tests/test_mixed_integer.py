@@ -47,7 +47,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        mixint = MixedIntegerContext(xspecs)
 
         sm = mixint.build_kriging_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
@@ -71,7 +71,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        mixint = MixedIntegerContext(xspecs)
 
         sm = mixint.build_kriging_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
@@ -95,7 +95,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        mixint = MixedIntegerContext(xspecs)
         with self.assertRaises(ValueError):
             sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
@@ -104,7 +104,7 @@ class TestMixedInteger(unittest.TestCase):
         xlimits = [[-10, 10], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
 
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        mixint = MixedIntegerContext(xspecs)
         sm = mixint.build_surrogate_model(QP(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
@@ -304,26 +304,29 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_integer_lhs_example()
         self.run_mixed_integer_qp_example()
         self.run_mixed_integer_context_example()
+        self.run_hierarchical_variables_Goldstein()
+        self.run_mixed_discrete_design_space_example()
+        self.run_hierarchical_design_space_example()
 
     def run_mixed_integer_lhs_example(self):
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib import colors
 
-        from smt.sampling_methods import LHS
-        from smt.surrogate_models import XType, XSpecs
-        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+        from smt.utils.design_space import DesignSpace, FloatVariable, CategoricalVariable
 
-        xtypes = [XType.FLOAT, (XType.ENUM, 2)]
-        xlimits = [[0.0, 4.0], ["blue", "red"]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        float_var = FloatVariable(0, 4)
+        cat_var = CategoricalVariable(['blue', 'red'])
 
-        sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
+        design_space = DesignSpace([
+            float_var,
+            cat_var,
+        ])
 
         num = 40
-        x = sampling(num)
+        x, x_is_acting = design_space.sample_valid_x(num)
 
-        cmap = colors.ListedColormap(xlimits[1])
+        cmap = colors.ListedColormap(cat_var.values)
         plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
         plt.show()
 
@@ -331,19 +334,19 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import QP, XType, XSpecs
+        from smt.surrogate_models import QP
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.utils.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
 
-        # xtypes = [XType.FLOAT, XType.ORD, (ENUM, 3), (ENUM, 2)]
-        # XType.FLOAT means x1 continuous
-        # XType.ORD means x2 ordered
-        # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
-        # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-        xspecs = XSpecs(xtypes=[XType.ORD], xlimits=[[0, 4]])
-        sm = MixedIntegerSurrogateModel(xspecs=xspecs, surrogate=QP())
+        # Specify the design space using the DesignSpace
+        # class and various available variable types
+        design_space = DesignSpace([
+            IntegerVariable(0, 4),
+        ])
+        sm = MixedIntegerSurrogateModel(design_space=design_space, surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -359,41 +362,38 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def run_mixed_integer_context_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
-        from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
-
-        from smt.sampling_methods import LHS, Random
-        from smt.surrogate_models import KRG, XType, XSpecs
+        from smt.surrogate_models import KRG
         from smt.applications.mixed_integer import MixedIntegerContext
+        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, CategoricalVariable
 
-        xtypes = [XType.ORD, XType.FLOAT, (XType.ENUM, 4)]
-        xlimits = [[0, 5], [0.0, 4.0], ["blue", "red", "green", "yellow"]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            IntegerVariable(0, 5),
+            FloatVariable(0., 4.),
+            CategoricalVariable(["blue", "red", "green", "yellow"]),
+        ])
 
         def ftest(x):
             return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
 
-        # context to create consistent DOEs and surrogate
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        # Helper class for creating surrogate models
+        mi_context = MixedIntegerContext(design_space)
 
         # DOE for training
-        lhs = mixint.build_sampling_method(LHS, criterion="ese")
+        sampler = mi_context.build_sampling_method()
 
-        num = mixint.get_unfolded_dimension() * 5
+        num = mi_context.get_unfolded_dimension() * 5
         print("DOE point nb = {}".format(num))
-        xt = lhs(num)
+        xt = sampler(num)
         yt = ftest(xt)
 
         # Surrogate
-        sm = mixint.build_kriging_model(KRG())
+        sm = mi_context.build_kriging_model(KRG())
         sm.set_training_values(xt, yt)
         sm.train()
 
         # DOE for validation
-        rand = mixint.build_sampling_method(Random)
-        xv = rand(50)
+        xv = sampler(50)
         yv = ftest(xv)
         yp = sm.predict_values(xv)
 
@@ -534,26 +534,214 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
+    def run_mixed_discrete_design_space_example(self):
+        import numpy as np
+        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+
+        ds = DesignSpace([
+            CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
+            OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
+            IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+            FloatVariable(0, 1),  # c3 continuous between 0 and 1
+        ])
+
+        # Sample the design space
+        # Note: is_acting_sampled specifies for each design variable whether it is acting or not
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+
+        # Correct design vectors: round discrete variables, correct hierarchical variables
+        x_corr, is_acting = ds.correct_get_acting(np.array([
+            [0, 0, 2, .25],
+            [0, 2, 1, .75],
+        ]))
+        print(is_acting)
+
+    def run_hierarchical_design_space_example(self):
+        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+
+        ds = DesignSpace([
+            CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
+            OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
+            IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+            FloatVariable(0, 1),  # c3 continuous between 0 and 1
+        ])
+
+        # Declare that x1 is acting if x0 == A
+        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')
+
+        # Nested hierarchy is possible: activate x2 if x1 == C or D
+        ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])
+
+        # It is also possible to explicitly forbid two values from occurring simultaneously
+        ds.add_value_constraint(var1=0, value1='A', var2=2, value2=[0, 1])  # Forbid x0 == A && x2 == 0 or 1
+
+        # Sample the design space
+        # Note: is_acting_sampled specifies for each design variable whether it is acting or not
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+
+        # Correct design vectors: round discrete variables, correct hierarchical variables
+        x_corr, is_acting = ds.correct_get_acting(np.array([
+            [0, 0, 2, .25],
+            [0, 2, 1, .75],
+            [1, 2, 1, .66],
+        ]))
+
+        # Observe the hierarchical behavior:
+        assert np.all(is_acting == np.array([
+            [True, True, True, True],
+            [True, True, False, True],  # x2 is not acting if x1 != C or D (0 or 1)
+            [True, False, False, True],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
+        ]))
+        assert np.all(x_corr == np.array([
+            [0, 0, 2, .25],
+            [0, 2, 0, .75],
+            # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+            [1, 0, 0, .66],  # x1 and x2 are imputed
+        ]))
+
     def run_hierarchical_variables_Goldstein(self):
         import numpy as np
-        from smt.applications.mixed_integer import (
-            MixedIntegerKrigingModel,
-        )
-        from smt.surrogate_models import (
-            KRG,
-            MixIntKernelType,
-            MixHrcKernelType,
-        )
+        from smt.utils.design_space import DesignSpace, CategoricalVariable, IntegerVariable, FloatVariable
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
 
-        from smt.problems import HierarchicalGoldstein
-        problem = HierarchicalGoldstein()
+        def f_hv(X):
+            import numpy as np
+
+            def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
+                import numpy as np
+
+                h = (
+                        53.3108
+                        + 0.184901 * x1
+                        - 5.02914 * x1 ** 3 * 10 ** (-6)
+                        + 7.72522 * x1 ** z3 * 10 ** (-8)
+                        - 0.0870775 * x2
+                        - 0.106959 * x3
+                        + 7.98772 * x3 ** z4 * 10 ** (-6)
+                        + 0.00242482 * x4
+                        + 1.32851 * x4 ** 3 * 10 ** (-6)
+                        - 0.00146393 * x1 * x2
+                        - 0.00301588 * x1 * x3
+                        - 0.00272291 * x1 * x4
+                        + 0.0017004 * x2 * x3
+                        + 0.0038428 * x2 * x4
+                        - 0.000198969 * x3 * x4
+                        + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+                        - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+                        + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+                        - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+                )
+                if cos_term:
+                    h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
+                return h
+
+            def f1(x1, x2, z1, z2, z3, z4, x5, cos_term):
+                c1 = z2 == 0
+                c2 = z2 == 1
+                c3 = z2 == 2
+
+                c4 = z3 == 0
+                c5 = z3 == 1
+                c6 = z3 == 2
+
+                y = (
+                        c4
+                        * (
+                                c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                                + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                                + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+                        )
+                        + c5
+                        * (
+                                c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                                + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                                + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+                        )
+                        + c6
+                        * (
+                                c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                                + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                                + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+                        )
+                )
+                return y
+
+            def f2(x1, x2, x3, z2, z3, z4, x5, cos_term):
+                c1 = z2 == 0
+                c2 = z2 == 1
+                c3 = z2 == 2
+
+                y = (
+                        c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+                        + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+                        + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+                )
+                return y
+
+            def f3(x1, x2, x4, z1, z3, z4, x5, cos_term):
+                c1 = z1 == 0
+                c2 = z1 == 1
+                c3 = z1 == 2
+
+                y = (
+                        c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+                        + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+                        + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+                )
+                return y
+
+            y = []
+            for x in X:
+                if x[0] == 0:
+                    y.append(
+                        f1(x[2], x[3], x[7], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 1:
+                    y.append(
+                        f2(x[2], x[3], x[4], x[8], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 2:
+                    y.append(
+                        f3(x[2], x[3], x[5], x[7], x[9], x[10], x[6], cos_term=x[1])
+                    )
+                elif x[0] == 3:
+                    y.append(
+                        H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
+                    )
+            return np.array(y)
+
+        design_space = DesignSpace([
+            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+            IntegerVariable(0, 1),  # x1
+            FloatVariable(0, 100),  # x2
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            IntegerVariable(0, 2),  # x7
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+        ])
+
+        # x4 is acting if meta == 1, 3
+        design_space.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
+        # x5 is acting if meta == 2, 3
+        design_space.declare_decreed_var(decreed_var=5, meta_var=0, meta_value=[2, 3])
+        # x7 is acting if meta == 0, 2
+        design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=[0, 2])
+        # x8 is acting if meta == 0, 1
+        design_space.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
+
+        # Sample from the design spaces, correctly considering hierarchy
         n_doe = 15
-        Xt, is_acting = problem.design_space.sample_valid_x(n_doe)
-        Yt = problem(Xt)
+        Xt, Xt_is_acting = design_space.sample_valid_x(n_doe)
+        Yt = f_hv(Xt)
 
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                design_space=problem.design_space,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
                 theta0=[1e-2],
@@ -561,7 +749,7 @@ class TestMixedInteger(unittest.TestCase):
                 n_start=5,
             ),
         )
-        sm.set_training_values(Xt, Yt)
+        sm.set_training_values(Xt, Yt, is_acting=Xt_is_acting)
         sm.train()
         y_s = sm.predict_values(Xt)[:, 0]
         pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
@@ -915,7 +1103,7 @@ class TestMixedInteger(unittest.TestCase):
         xtypes = [XType.FLOAT, XType.ORD, XType.ORD]
         xlimits = [[-10, 10], [-10, 10], [-10, 10]]
         xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-        mixint = MixedIntegerContext(xspecs=xspecs)
+        mixint = MixedIntegerContext(xspecs)
 
         sm = mixint.build_kriging_model(
             KRG(categorical_kernel=MixIntKernelType.GOWER, print_prediction=False)
@@ -933,18 +1121,13 @@ class TestMixedInteger(unittest.TestCase):
                 eq_check = False
         self.assertTrue(eq_check)
 
-    def test_examples(self):
-        self.run_mixed_gower_example()
-        self.run_mixed_homo_gaussian_example()
-        self.run_mixed_homo_hyp_example()
-        self.run_hierarchical_variables_Goldstein()
-
     def run_mixed_gower_example(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -955,15 +1138,17 @@ class TestMixedInteger(unittest.TestCase):
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
-
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
-        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(XType.ENUM, 3), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+
+        design_space = DesignSpace([
+            CategoricalVariable(['Blue', 'Red', 'Green']),
+            FloatVariable(0, 4),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.GOWER,
                 theta0=[1e-1],
                 corr="squar_exp",
@@ -1062,8 +1247,9 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -1074,15 +1260,17 @@ class TestMixedInteger(unittest.TestCase):
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
-
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
-        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(XType.ENUM, 3), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+
+        design_space = DesignSpace([
+            CategoricalVariable(['Blue', 'Red', 'Green']),
+            FloatVariable(0, 4),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-1],
                 corr="squar_exp",
                 n_start=20,
@@ -1181,8 +1369,9 @@ class TestMixedInteger(unittest.TestCase):
         import numpy as np
         import matplotlib.pyplot as plt
 
-        from smt.surrogate_models import KRG, XType, XSpecs, MixIntKernelType
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -1193,15 +1382,17 @@ class TestMixedInteger(unittest.TestCase):
         yt1 = np.array([0.0, 9.0, 16.0])
         yt2 = np.array([0.0, -4, -13.0])
         yt3 = np.array([-10, 3, 11.0])
-
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
-        xlimits = [["Blue", "Red", "Green"], [0.0, 4.0]]
-        xtypes = [(XType.ENUM, 3), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+
+        design_space = DesignSpace([
+            CategoricalVariable(['Blue', 'Red', 'Green']),
+            FloatVariable(0, 4),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-1],
                 corr="squar_exp",
