@@ -313,6 +313,19 @@ class Test(unittest.TestCase):
 
         self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
 
+    def test_restrictive_value_constraint(self):
+        ds = DesignSpace([
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+        ])
+        assert ds._cs.get_hyperparameters()[0].default_value == 1
+
+        ds.add_value_constraint(var1=0, value1=1, var2=0, value2=1)
+        ds.sample_valid_x(100)
+
+        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
+        ds.correct_get_acting(x_cartesian)
+
 
 if __name__ == '__main__':
     unittest.main()

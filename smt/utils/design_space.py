@@ -579,7 +579,7 @@ class DesignSpace(BaseDesignSpace):
     >>> ]))
     >>> assert np.all(x_corr == np.array([
     >>>     [0, 0, 2, .25],
-    >>>     [0, 2, 0, .25],
+    >>>     [0, 2, 0, .75],
     >>> ]))
     >>> assert np.all(is_acting == np.array([
     >>>     [True, True, True, True],
@@ -614,7 +614,7 @@ class DesignSpace(BaseDesignSpace):
             else:
                 raise ValueError(f'Unknown variable type: {dv!r}')
 
-        self._cs = ConfigurationSpace(space=cs_vars, seed=seed)
+        self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
         super().__init__(design_variables)
@@ -832,6 +832,16 @@ class DesignSpace(BaseDesignSpace):
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.design_variables!r})'
+
+
+class NoDefaultConfigurationSpace(ConfigurationSpace):
+    """ConfigurationSpace that supports no default configuration"""
+
+    def get_default_configuration(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _check_default_configuration(self, *args, **kwargs):
+        pass
 
 
 class FixedIntegerParam(UniformIntegerHyperparameter):
