@@ -30,6 +30,9 @@ from smt.utils.kriging import (
     compute_X_cross,
     cross_levels_homo_space,
     MixHrcKernelType,
+    matrix_data_corr_levels_cat_matrix,
+    matrix_data_corr_levels_cat_mod,
+    matrix_data_corr_levels_cat_mod_comps,
 )
 from smt.utils.misc import standardization
 from scipy.stats import multivariate_normal as m_norm
@@ -236,6 +239,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         self.is_acting_train = is_acting
+        self._corr_params = None
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
@@ -325,6 +329,62 @@ class KrgBased(SurrogateModel):
 
         self._new_train()
 
+    def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
+        if self._corr_params is not None:
+            return self._corr_params
+
+        nx = self.nx
+        try:
+            cat_kernel_comps = self.options["cat_kernel_comps"]
+            if cat_kernel_comps is not None:
+                n_levels = np.array(cat_kernel_comps)
+        except KeyError:
+            cat_kernel_comps = None
+        try:
+            ncomp = self.options["n_comp"]
+            try:
+                self.pls_coeff_cont
+            except AttributeError:
+                self.pls_coeff_cont = []
+        except KeyError:
+            cat_kernel_comps = None
+            ncomp = 1e5
+
+        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
+        theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
+        i = 0
+        j = 0
+        n_theta_cont = 0
+        for feat in cat_features:
+            if feat:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
+                    # theta_cont_features[
+                    #     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
+                    # ] = False  # Matrix is already False
+                    theta_cat_features[
+                        j : j + int(n_levels[i] * (n_levels[i] - 1) / 2), i
+                    ] = [True] * int(n_levels[i] * (n_levels[i] - 1) / 2)
+                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)
+                i += 1
+            else:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
+                    if n_theta_cont < ncomp:
+                        theta_cont_features[j] = True
+                        j += 1
+                        n_theta_cont += 1
+
+        theta_cat_features = ([np.where(theta_cat_features[:, i_lvl])[0] for i_lvl in range(len(n_levels))],
+                              np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None)
+
+        self._corr_params = params = (cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels)
+        return params
+
     def _matrix_data_corr(
         self,
         corr,
@@ -367,6 +427,7 @@ class KrgBased(SurrogateModel):
         r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
             An array containing the values of the autocorrelation model.
         """
+
         _correlation_types = {
             "pow_exp": pow_exp,
             "abs_exp": abs_exp,
@@ -376,52 +437,10 @@ class KrgBased(SurrogateModel):
             "matern32": matern32,
         }
 
-        r = np.zeros((dx.shape[0], 1))
-        nx = self.nx
-        nlevels = n_levels
-        try:
-            cat_kernel_comps = self.options["cat_kernel_comps"]
-            if cat_kernel_comps is not None:
-                nlevels = np.array(cat_kernel_comps)
-        except KeyError:
-            cat_kernel_comps = None
-        try:
-            ncomp = self.options["n_comp"]
-            try:
-                self.pls_coeff_cont
-            except AttributeError:
-                self.pls_coeff_cont = []
-        except KeyError:
-            cat_kernel_comps = None
-            ncomp = 1e5
-        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
-        i = 0
-        j = 0
-        n_theta_cont = 0
-        for feat in cat_features:
-            if feat:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    theta_cont_features[
-                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
-                    ] = False
-                    theta_cat_features[
-                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
-                    ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-                    j += int(nlevels[i] * (nlevels[i] - 1) / 2)
-                i += 1
-            else:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    if n_theta_cont < ncomp:
-                        theta_cont_features[j] = True
-                        j += 1
-                        n_theta_cont += 1
+        # Initialize static parameters
+        cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels = \
+            self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
+
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -493,50 +512,19 @@ class KrgBased(SurrogateModel):
             self.coeff_pls_cat
         except AttributeError:
             self.coeff_pls_cat = []
-        for i in range(len(nlevels)):
-            theta_cat = theta[theta_cat_features[:, i]]
+
+        theta_cat_kernel = theta
+        if len(n_levels) > 0:
+            theta_cat_kernel = theta.copy()
             if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+                theta_cat_kernel[theta_cat_features[1]] *= (0.5 * np.pi / theta_bounds[1])
             elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
-                theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
-            Theta_mat = np.zeros((nlevels[i], nlevels[i]))
-            L = np.zeros((nlevels[i], nlevels[i]))
-            v = 0
-            for j in range(nlevels[i]):
-                for k in range(nlevels[i] - j):
-                    if j == k + j:
-                        Theta_mat[j, k + j] = 1
-                    else:
-                        Theta_mat[j, k + j] = theta_cat[v]
-                        Theta_mat[k + j, j] = theta_cat[v]
-                        v = v + 1
+                theta_cat_kernel[theta_cat_features[1]] *= (2.0 * np.pi / theta_bounds[1])
 
-            for j in range(nlevels[i]):
-                for k in range(nlevels[i] - j):
-                    if j == k + j:
-                        if j == 0:
-                            L[j, k + j] = 1
-
-                        else:
-                            L[j, k + j] = 1
-                            for l in range(j):
-                                L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
-
-                    else:
-                        if j == 0:
-                            L[k + j, j] = np.cos(Theta_mat[k, 0])
-                        else:
-                            L[k + j, j] = np.cos(Theta_mat[k + j, j])
-                            for l in range(j):
-                                L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
-
-            T = np.dot(L, L.T)
-
-            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                T = (T - 1) * theta_bounds[1] / 2
-                T = np.exp(2 * T)
-            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-            T = (T + np.exp(-theta_bounds[1])) / (k)
+        for i in range(len(n_levels)):
+            theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
+            T = matrix_data_corr_levels_cat_matrix(i, n_levels, theta_cat, theta_bounds,
+                                                   is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE)
 
             if cat_kernel_comps is not None:
                 # Sampling points X and y
@@ -547,7 +535,7 @@ class KrgBased(SurrogateModel):
                 old_n_comp = (
                     self.options["n_comp"] if "n_comp" in self.options else None
                 )
-                self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
+                self.options["n_comp"] = int(n_levels[i] / 2 * (n_levels[i] - 1))
                 X_full_space = compute_X_cross(X_icat, n_levels[i])
                 try:
                     self.coeff_pls = self.coeff_pls_cat[i]
@@ -575,35 +563,15 @@ class KrgBased(SurrogateModel):
                     return_derivative=False,
                 )
 
-            for k in range(np.shape(Lij[i])[0]):
-                indi = int(Lij[i][k][0])
-                indj = int(Lij[i][k][1])
-
-                if indi == indj:
-                    r_cat[k] = 1.0
-                else:
-                    if cat_kernel in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                    ]:
-                        if cat_kernel_comps is not None:
-                            Theta_i_red = np.zeros(
-                                int((nlevels[i] - 1) * nlevels[i] / 2)
-                            )
-                            indmatvec = 0
-                            for j in range(nlevels[i]):
-                                for l in range(nlevels[i]):
-                                    if l > j:
-                                        Theta_i_red[indmatvec] = T[j, l]
-                                        indmatvec += 1
-                            kval_cat = 0
-                            for indijk in range(len(Theta_i_red)):
-                                kval_cat += np.multiply(
-                                    Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
-                                )
-                            r_cat[k] = kval_cat
-                        else:
-                            r_cat[k] = T[indi, indj]
+                matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel=cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ])
+            else:
+                matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel=cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ])
 
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
@@ -1558,6 +1526,7 @@ class KrgBased(SurrogateModel):
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
                 optimal_theta_res = {"fun": float("inf")}
+                optimal_theta_res_loop = None
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
                         for theta0_loop in theta_all_loops:
@@ -1591,6 +1560,8 @@ class KrgBased(SurrogateModel):
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
 
+                    if 'x' not in optimal_theta_res:
+                        raise ValueError(f'Optimizer encountered a problem: {optimal_theta_res_loop!s}')
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:

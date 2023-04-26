@@ -849,6 +849,7 @@ class TestMixedInteger(unittest.TestCase):
         )
         sm.set_training_values(xt, yt)
         sm.train()
+        self.assertTrue(np.sum(np.abs(sm._surrogate.optimal_theta - [5.35414994e-05, 8.36317793e+00])) < 1e-6)
 
         # DOE for validation
         x = np.linspace(0, 4, 5)
@@ -862,6 +863,9 @@ class TestMixedInteger(unittest.TestCase):
         yvar = sm.predict_variances(x_pred)
 
         # prediction are correct on known points
+        self.assertAlmostEqual(y[20, 0], 0)
+        self.assertAlmostEqual(y[50, 0], 1)
+        self.assertAlmostEqual(y[95, 0], 1.5)
         self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
         self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
 

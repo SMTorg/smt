@@ -29,9 +29,9 @@ class HierarchicalNeuralNetwork(Problem):
         ])
 
         # x6 is active when x0 >= 2
-        design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3]),
+        design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3])
         # x7 is active when x0 >= 3
-        design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3),
+        design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3)
 
         self._set_design_space(design_space)
 

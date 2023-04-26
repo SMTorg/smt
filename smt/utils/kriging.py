@@ -3,17 +3,41 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
-
 import warnings
 import numpy as np
 from enum import Enum
 from copy import deepcopy
+from numba import njit, prange
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
+
+USE_NUMBA_JIT = True  # Set False to temporarily disable
+"""
+Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
+
+| Scenario                 | No numba | Numba    | Numba with caching | Speedup | Overhead |
+|--------------------------|----------|----------|--------------------|---------|----------|
+| HGoldstein 15 pt DoE     | 1.3 sec  | 7.8 sec  | 1.1 sec            | 15%     | 6.7 sec  |
+| HGoldstein 15 pt DoE x10 | 12.1 sec | 16.7 sec | 10.3 sec           | 15%     | 6.4 sec  |
+| HGoldstein 150 pt DoE    | 38 sec   | 13.8 sec | 6.6 sec            | 83%     | 7.2 sec  |
+
+Important to note: caching is only needed once after installation of smt, so users will only
+experience this overhead ONCE --> the rest of the time they use smt it will be faster than without numba!
+"""
+
+
+def njit_use(parallel=False):
+    if USE_NUMBA_JIT:
+        # njit:          https://numba.readthedocs.io/en/stable/user/jit.html#nopython
+        # cache=True:    https://numba.readthedocs.io/en/stable/user/jit.html#cache
+        # parallel=True: https://numba.readthedocs.io/en/stable/user/parallel.html
+        return njit(parallel=parallel, cache=True)
+
+    return lambda func: func
 
 
 class MixHrcKernelType(Enum):
@@ -48,28 +72,39 @@ def cross_distances(X, y=None):
         n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
         ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
         D = np.zeros((n_nonzero_cross_dist, n_features))
-        ll_1 = 0
 
-        for k in range(n_samples - 1):
-            ll_0 = ll_1
-            ll_1 = ll_0 + n_samples - k - 1
-            ij[ll_0:ll_1, 0] = k
-            ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-            D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
+        _cross_dist_mat(n_samples, ij, X, D)
     else:
         n_y, n_features = y.shape
         X, y = check_pairwise_arrays(X, y)
         n_nonzero_cross_dist = n_samples * n_y
         ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
         D = np.zeros((n_nonzero_cross_dist, n_features))
-        for k in range(n_nonzero_cross_dist):
-            xk = k // n_y
-            yk = k % n_y
-            D[k] = X[xk] - y[yk]
-            ij[k, 0] = xk
-            ij[k, 1] = yk
+
+        _cross_dist_mat_y(n_nonzero_cross_dist, n_y, X, y, D, ij)
 
     return D, ij.astype(np.int32)
+
+
+@njit_use()
+def _cross_dist_mat(n_samples, ij, X, D):
+    ll_1 = 0
+    for k in range(n_samples - 1):
+        ll_0 = ll_1
+        ll_1 = ll_0 + n_samples - k - 1
+        ij[ll_0:ll_1, 0] = k
+        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
+        D[ll_0:ll_1] = X[k] - X[(k + 1) : n_samples]
+
+
+@njit_use()
+def _cross_dist_mat_y(n_nonzero_cross_dist, n_y, X, y, D, ij):
+    for k in prange(n_nonzero_cross_dist):
+        xk = k // n_y
+        yk = k % n_y
+        D[k] = X[xk] - y[yk]
+        ij[k, 0] = xk
+        ij[k, 1] = yk
 
 
 def cross_levels(X, ij, design_space, y=None):
@@ -106,19 +141,35 @@ def cross_levels(X, ij, design_space, y=None):
     X_cont, cat_features = compute_X_cont(X, design_space)
     X_cat = X[:, cat_features]
 
-    Lij = np.zeros((n_var, n, 2))
-    for k in range(n_var):
-        for l in range(n):
-            i, j = ij[l]
-            if y is None:
-                Lij[k][l][0] = X_cat[i, k]
-                Lij[k][l][1] = X_cat[j, k]
-            else:
-                y_cat = y[:, cat_features]
-                Lij[k][l][0] = X_cat[i, k]
-                Lij[k][l][1] = y_cat[j, k]
+    if y is None:
+        Lij = _cross_levels_mat(n_var, n, X_cat, ij)
+    else:
+        Lij = _cross_levels_mat_y(n_var, n, X_cat, ij, y, cat_features)
 
     return Lij, n_levels
+
+
+@njit_use(parallel=True)
+def _cross_levels_mat(n_var, n, X_cat, ij):
+    Lij = np.zeros((n_var, n, 2))
+    for k in prange(n_var):
+        for l in prange(n):
+            i, j = ij[l]
+            Lij[k][l][0] = X_cat[i, k]
+            Lij[k][l][1] = X_cat[j, k]
+    return Lij
+
+
+@njit_use(parallel=True)
+def _cross_levels_mat_y(n_var, n, X_cat, ij, y, cat_features):
+    Lij = np.zeros((n_var, n, 2))
+    y_cat = y[:, cat_features]
+    for k in prange(n_var):
+        for l in prange(n):
+            i, j = ij[l]
+            Lij[k][l][0] = X_cat[i, k]
+            Lij[k][l][1] = y_cat[j, k]
+    return Lij
 
 
 def cross_levels_homo_space(X, ij, y=None):
@@ -282,6 +333,7 @@ def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_ker
         return D, ij.astype(np.int32), X_cont
 
 
+@njit_use(parallel=True)
 def compute_D_cat(X_cat, Y_cat, y):
     nx_samples, n_features = X_cat.shape
     ny_samples, n_features = Y_cat.shape
@@ -297,15 +349,16 @@ def compute_D_cat(X_cat, Y_cat, y):
         k2max = ny_samples
         if y is None:
             k2max = ny_samples - k1 - 1
-        for k2 in range(k2max):
+        for k2 in prange(k2max):
             l2 = k2
             if y is None:
                 l2 = k2 + k1 + 1
-            D_cat[indD] = X_cat[k1] != Y_cat[l2]
-            indD += 1
+            D_cat[indD+k2] = X_cat[k1] != Y_cat[l2]
+        indD += k2max
     return D_cat
 
 
+@njit_use()  # setting parallel=True results in a stack overflow
 def compute_D_num(
     X_num,
     Y_num,
@@ -342,7 +395,7 @@ def compute_D_num(
             D_num[indD] = np.abs(X_num[k1] - Y_num[l2])
             indD += 1
 
-    if any(num_is_decreed):
+    if np.any(num_is_decreed):
         D_num = apply_the_algebraic_distance_to_the_decreed_variable(
             X_num,
             Y_num,
@@ -357,6 +410,7 @@ def compute_D_num(
     return D_num, ij
 
 
+@njit_use()  # setting parallel=True results in a stack overflow
 def apply_the_algebraic_distance_to_the_decreed_variable(
     X_num,
     Y_num,
@@ -1145,30 +1199,15 @@ def componentwise_distance(
               vectors in X.
 
     """
-    # Fit the matrix iteratively: avoid some memory troubles .
-    limit = int(1e4)
-
-    D_corr = np.zeros((D.shape[0], dim))
-    i, nb_limit = 0, int(limit)
-
-    if (power is None) and (not (corr == "act_exp")):
+    if power is None and corr != "act_exp":
         raise ValueError(
             "Missing power initialization to compute cross-spatial correlation distance"
         )
 
-    if return_derivative == False:
-        while True:
-            if i * nb_limit > D_corr.shape[0]:
-                return D_corr
-            else:
-                D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
-                    i * nb_limit : (i + 1) * nb_limit, :
-                ]
-                if not (corr == "act_exp"):
-                    D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
-                        np.abs(D_corr[i * nb_limit : (i + 1) * nb_limit, :]) ** power
-                    )
-                i += 1
+    if not return_derivative:
+        if corr == 'act_exp':
+            return _comp_dist_act_exp(D, dim)
+        return _comp_dist(D, dim, power)
     else:
         if theta is None:
             raise ValueError(
@@ -1176,17 +1215,41 @@ def componentwise_distance(
             )
         if corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
-        else:
-            der = np.ones(D.shape)
-            for i, j in np.ndindex(D.shape):
-                der[i][j] = np.abs(D[i][j]) ** (power - 1)
-                if D[i][j] < 0:
-                    der[i][j] = -der[i][j]
+        der = _comp_dist_derivative(D, power)
+        D_corr = power * np.einsum("j,ij->ij", theta.T, der)
+        return D_corr
 
-            D_corr = power * np.einsum("j,ij->ij", theta.T, der)
-            return D_corr
 
-        i += 1
+@njit_use(parallel=True)
+def _comp_dist_act_exp(D, dim):
+    D_corr = np.zeros((D.shape[0], dim))
+    i, nb_limit = 0, 1000
+    for i in prange((D_corr.shape[0] // nb_limit)+1):
+        D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
+            i * nb_limit : (i + 1) * nb_limit, :
+        ]
+    return D_corr
+
+
+@njit_use()
+def _comp_dist(D, dim, power):
+    D_corr = np.zeros((D.shape[0], dim))
+    i, nb_limit = 0, 1000
+    for i in range((D_corr.shape[0] // nb_limit)+1):
+        D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
+            np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]) ** power
+        )
+    return D_corr
+
+
+@njit_use()
+def _comp_dist_derivative(D, power):
+    der = np.ones(D.shape)
+    for i, j in np.ndindex(D.shape):
+        der[i][j] = np.abs(D[i][j]) ** (power - 1)
+        if D[i][j] < 0:
+            der[i][j] = -der[i][j]
+    return der
 
 
 def componentwise_distance_PLS(
@@ -1386,3 +1449,86 @@ def quadratic(x):
         f = np.hstack([f, x[:, k, np.newaxis] * x[:, k:]])
 
     return f
+
+
+@njit_use(parallel=True)
+def matrix_data_corr_levels_cat_matrix(i, n_levels, theta_cat, theta_bounds, is_ehh: bool):
+    Theta_mat = np.zeros((n_levels[i], n_levels[i]))
+    L = np.zeros((n_levels[i], n_levels[i]))
+    v = 0
+    for j in range(n_levels[i]):
+        for k in range(n_levels[i] - j):
+            if j == k + j:
+                Theta_mat[j, k + j] = 1
+            else:
+                Theta_mat[j, k + j] = theta_cat[v]
+                Theta_mat[k + j, j] = theta_cat[v]
+                v = v + 1
+
+    for j in range(n_levels[i]):
+        for k in range(n_levels[i] - j):
+            if j == k + j:
+                if j == 0:
+                    L[j, k + j] = 1
+
+                else:
+                    L[j, k + j] = 1
+                    for l in range(j):
+                        L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
+
+            else:
+                if j == 0:
+                    L[k + j, j] = np.cos(Theta_mat[k, 0])
+                else:
+                    L[k + j, j] = np.cos(Theta_mat[k + j, j])
+                    for l in range(j):
+                        L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+
+    T = np.dot(L, L.T)
+
+    if is_ehh:
+        T = (T - 1) * theta_bounds[1] / 2
+        T = np.exp(2 * T)
+    k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+    T = (T + np.exp(-theta_bounds[1])) / (k)
+    return T
+
+
+@njit_use()
+def matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel):
+    for k in range(np.shape(Lij[i])[0]):
+        indi = int(Lij[i][k][0])
+        indj = int(Lij[i][k][1])
+
+        if indi == indj:
+            r_cat[k] = 1.0
+        else:
+            if has_cat_kernel:
+                r_cat[k] = T[indi, indj]
+
+
+@njit_use()
+def matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel):
+    for k in range(np.shape(Lij[i])[0]):
+        indi = int(Lij[i][k][0])
+        indj = int(Lij[i][k][1])
+
+        if indi == indj:
+            r_cat[k] = 1.0
+        else:
+            if has_cat_kernel:
+                Theta_i_red = np.zeros(
+                    int((n_levels[i] - 1) * n_levels[i] / 2)
+                )
+                indmatvec = 0
+                for j in range(n_levels[i]):
+                    for l in range(n_levels[i]):
+                        if l > j:
+                            Theta_i_red[indmatvec] = T[j, l]
+                            indmatvec += 1
+                kval_cat = 0
+                for indijk in range(len(Theta_i_red)):
+                    kval_cat += np.multiply(
+                        Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                    )
+                r_cat[k] = kval_cat
