@@ -260,8 +260,18 @@ class EGO(SurrogateBasedApplication):
                 work_in_folded_space=self.work_in_folded_space,
             )
 
+            underlying_gpr = self.gpr
             self.gpr = self.mixint.build_kriging_model(self.gpr)
+
+            # Recreated mixed integer context because the "work_in_folded_space" status might have changed
+            self.categorical_kernel = underlying_gpr.options["categorical_kernel"]
+            self.work_in_folded_space = self.categorical_kernel is not None
+            self.mixint = MixedIntegerContext(
+                self.design_space,
+                work_in_folded_space=self.work_in_folded_space,
+            )
             self._sampling = self.mixint.build_sampling_method()
+
         else:
             self.mixint = None
             self._sampling = lambda n: self.design_space.sample_valid_x(n)[0]

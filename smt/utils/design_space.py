@@ -239,6 +239,7 @@ class BaseDesignSpace:
         """
 
         # Detect whether input is provided in unfolded space
+        x = np.atleast_2d(x)
         if x.shape[1] == self.n_dv:
             x_is_unfolded = False
         elif x.shape[1] == self._get_n_dim_unfolded():
@@ -381,6 +382,7 @@ class BaseDesignSpace:
         """
 
         # Get number of unfolded dimension
+        x = np.atleast_2d(x)
         x_folded = np.zeros((x.shape[0], len(self.design_variables)))
         is_acting_folded = np.ones(x_folded.shape, dtype=bool) if is_acting is not None else None
 
@@ -431,6 +433,7 @@ class BaseDesignSpace:
 
         # Get number of unfolded dimension
         n_dim_unfolded = self._get_n_dim_unfolded()
+        x = np.atleast_2d(x)
         x_unfolded = np.zeros((x.shape[0], n_dim_unfolded))
         is_acting_unfolded = np.ones(x_unfolded.shape, dtype=bool) if is_acting is not None else None
 
@@ -803,7 +806,7 @@ class DesignSpace(BaseDesignSpace):
     def _cs_normalize_x(self, x: np.ndarray):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
-                x[:, i] = (x[:, i]-dv.lower)/(dv.upper-dv.lower+1e-16)
+                x[:, i] = np.clip((x[:, i]-dv.lower)/(dv.upper-dv.lower+1e-16), 0, 1)
 
             elif isinstance(dv, IntegerVariable):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)

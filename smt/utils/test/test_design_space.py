@@ -229,6 +229,8 @@ class Test(unittest.TestCase):
         self.assertTrue(str(ds))
         self.assertTrue(repr(ds))
 
+        ds.correct_get_acting(np.array([[0, 0, 0, 1.6]]))
+
     def test_design_space_hierarchical(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),  # x0

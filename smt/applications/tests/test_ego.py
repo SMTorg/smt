@@ -36,6 +36,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
+from smt.utils.design_space import DesignSpace, OrdinalVariable, FloatVariable, CategoricalVariable, IntegerVariable
 
 
 # This implementation only works with Python > 3.3
@@ -350,23 +351,21 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         n_doe = 5
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        xdoe = sampling(n_doe)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            OrdinalVariable([0, 2, 3]),
+        ])
+        xdoe, _ = design_space.sample_valid_x(n_doe)
+
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             enable_tunneling=False,
             random_state=42,
         )
@@ -377,28 +376,22 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         n_doe = 5
-        sampling = MixedIntegerSamplingMethod(
-            LHS,
-            design_space=xspecs,
-            criterion="ese",
-            random_state=42,
-            output_in_folded_space=True,
-        )
-        xdoe = sampling(n_doe)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            IntegerVariable(0, 2),
+        ])
+        xdoe, _ = design_space.sample_valid_x(n_doe)
+
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.GOWER,
                 print_global=False,
             ),
@@ -414,10 +407,12 @@ class TestEGO(SMTestCase):
         def f_neu(x1, x2, x3, x4):
             if x4 == 0:
                 return 2 * x1 + x2 - 0.5 * x3
-            if x4 == 1:
+            elif x4 == 1:
                 return -x1 + 2 * x2 - 0.5 * x3
-            if x4 == 2:
+            elif x4 == 2:
                 return -x1 + x2 + 0.5 * x3
+            else:
+                raise ValueError(f'Unexpected x4: {x4}')
 
         def f1(x1, x2, x3, x4, x5):
             return f_neu(x1, x2, x3, x4) + x5**2
@@ -431,82 +426,68 @@ class TestEGO(SMTestCase):
         def f_hv(X):
             y = []
             for x in X:
-                if x[0] == 1:
-                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                x3_decoded = design_space.decode_values(x, i_dv=3)[0]
+                if x[0] == 0:
+                    y.append(f1(x[1], x[2], x3_decoded, x[4], x[5]))
+                elif x[0] == 1:
+                    y.append(f2(x[1], x[2], x3_decoded, x[4], x[5], x[6]))
                 elif x[0] == 2:
-                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
-                elif x[0] == 3:
-                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+                    y.append(f3(x[1], x[2], x3_decoded, x[4], x[5], x[6], x[7]))
+                else:
+                    raise ValueError(f'Unexpected x0: {x[0]}')
             return np.array(y)
 
-        xlimits = [
-            [1, 3],  # XRole.META XType.ORD
-            [-5, -2],
-            [-5, -1],
-            ["8", "16", "32", "64", "128", "256"],
-            ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # XRole.DECREED m=1
-            [0.0, 5.0],  # XRole.DECREED m=2
-            [0.0, 5.0],  # XRole.DECREED m=3
-        ]
-        xtypes = [
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            (XType.ENUM, 3),
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.DECREED,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        design_space = DesignSpace([
+            OrdinalVariable(values=[1, 2, 3]),  # x0
+            FloatVariable(-5, 2),
+            FloatVariable(-5, 2),
+            OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
+            CategoricalVariable(values=['ReLU', 'SELU', 'ISRLU']),  # x4
+            IntegerVariable(0, 5),  # x5
+            IntegerVariable(0, 5),  # x6
+            IntegerVariable(0, 5),  # x7
+        ])
+
+        # x6 is active when x0 >= 2
+        design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3])
+        # x7 is active when x0 >= 3
+        design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3)
+
         n_doe = 4
-        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
+        xspecs_samp = XSpecs(xtypes=design_space.get_x_types()[1:], xlimits=design_space.get_x_limits()[1:])
+
         sampling = MixedIntegerSamplingMethod(
             LHS, xspecs_samp, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
-        xdoe1 = np.zeros((n_doe, 6))
+        xdoe1 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[:n_doe, :5]
-        xdoe1[:, 0] = np.ones(n_doe)
-        xdoe1[:, 1:] = x_cont2
-        # ydoe1 = self.f_hv(xdoe1)
+        xdoe1[:, 0] = np.zeros(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+        # ydoe1 = f_hv(xdoe1)
 
         xdoe1 = np.zeros((n_doe, 8))
-        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 0] = np.zeros(n_doe)
         xdoe1[:, 1:6] = x_cont2
 
-        xdoe2 = np.zeros((n_doe, 7))
+        xdoe2 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
-        # ydoe2 = self.f_hv(xdoe2)
+        # ydoe2 = f_hv(xdoe2)
 
         xdoe2 = np.zeros((n_doe, 8))
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
 
         xdoe3 = np.zeros((n_doe, 8))
-        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 0] = 2 * np.ones(n_doe)
         xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
-        # ydoe3 = self.f_hv(xdoe3)
+        # ydoe3 = f_hv(xdoe3)
 
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
-
-        n_doe = len(Xt)
-        xlimits = np.array(xlimits, dtype="object")
 
         n_iter = 6
         criterion = "EI"
@@ -516,7 +497,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
@@ -529,7 +510,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
-            f_hv(np.atleast_2d([3, -5, -5, 256, 0, 0, 0, 5])),
+            f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
             float(y_opt),
             delta=15,
         )
@@ -636,55 +617,35 @@ class TestEGO(SMTestCase):
                     y.append(
                         H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
                     )
+                else:
+                    raise ValueError
             return np.array(y)
 
-        xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # XRole.META1 XType.ORD
-            [0, 1],  # 0
-            [0, 100],  # 1
-            [0, 100],  # 2
-            [0, 100],  # 3
-            [0, 100],  # 4
-            [0, 100],  # 5
-            [0, 2],  # 6
-            [0, 2],  # 7
-            [0, 2],  # 8
-            [0, 2],  # 9
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-        ]
-        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
+        ds = DesignSpace([
+            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+            OrdinalVariable(values=[0, 1]),  # x1
+            FloatVariable(0, 100),  # x2
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            IntegerVariable(0, 2),  # x7
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+        ])
 
-        xtypes = [
-            (XType.ENUM, 4),
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        # x4 is acting if meta == 1, 3
+        ds.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
+        # x5 is acting if meta == 2, 3
+        ds.declare_decreed_var(decreed_var=5, meta_var=0, meta_value=[2, 3])
+        # x7 is acting if meta == 0, 2
+        ds.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=[0, 2])
+        # x8 is acting if meta == 0, 1
+        ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
+
         n_doe = 15
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        Xt = sampling(n_doe)
+        Xt, x_is_active = ds.sample_valid_x(n_doe)
 
         n_iter = 5
         criterion = "EI"
@@ -694,7 +655,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=ds,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
