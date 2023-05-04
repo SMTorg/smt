@@ -108,6 +108,11 @@ metadata = dict(
         "pyDOE2",
         "scipy",
     ],
+    extras_require={
+        'numba': [  # pip install smt[numba]
+            "numba~=0.56.4",
+        ],
+    },
     python_requires=">=3.7",
     zip_safe=False,
     ext_modules=ext,

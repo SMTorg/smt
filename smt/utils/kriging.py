@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 from enum import Enum
 from copy import deepcopy
-from numba import njit, prange
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
@@ -15,7 +14,13 @@ from pyDOE2 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
 
-USE_NUMBA_JIT = True  # Set False to temporarily disable
+try:
+    from numba import njit, prange
+    USE_NUMBA_JIT = True  # Set False to temporarily disable
+
+except ImportError:  # pip install smt[numba]
+    USE_NUMBA_JIT = False
+
 """
 Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
 
