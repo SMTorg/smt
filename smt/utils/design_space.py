@@ -9,11 +9,23 @@ from enum import Enum
 from typing import List, Union, Tuple, Sequence, Optional
 
 from smt.sampling_methods import LHS
-from ConfigSpace import ConfigurationSpace, Configuration, UniformIntegerHyperparameter, UniformFloatHyperparameter,\
-    CategoricalHyperparameter, OrdinalHyperparameter, EqualsCondition, InCondition, ForbiddenEqualsClause,\
-    ForbiddenInClause, ForbiddenAndConjunction
-from ConfigSpace.exceptions import ForbiddenValueError
-from ConfigSpace.util import get_random_neighbor
+
+try:
+    from ConfigSpace import ConfigurationSpace, Configuration, UniformIntegerHyperparameter, UniformFloatHyperparameter,\
+        CategoricalHyperparameter, OrdinalHyperparameter, EqualsCondition, InCondition, ForbiddenEqualsClause,\
+        ForbiddenInClause, ForbiddenAndConjunction
+    from ConfigSpace.exceptions import ForbiddenValueError
+    from ConfigSpace.util import get_random_neighbor
+    HAS_CONFIG_SPACE = True
+
+except ImportError:
+    HAS_CONFIG_SPACE = False
+
+    class ConfigurationSpace:
+        pass
+
+    class UniformIntegerHyperparameter:
+        pass
 
 
 class XType(Enum):
@@ -601,6 +613,9 @@ class DesignSpace(BaseDesignSpace):
     """
 
     def __init__(self, design_variables: List[DesignVariable], seed=None):
+        if not HAS_CONFIG_SPACE:
+            raise RuntimeError('Dependencies are not installed, run: pip install smt[hierarchy]')
+
         self.seed = seed  # For testing
 
         cs_vars = {}
@@ -741,7 +756,7 @@ class DesignSpace(BaseDesignSpace):
         # Convert Configuration objects to design vectors and get the is_active matrix
         return self._configs_to_x(configs)
 
-    def _get_correct_config(self, vector: np.ndarray) -> Configuration:
+    def _get_correct_config(self, vector: np.ndarray) -> 'Configuration':
         config = Configuration(self._cs, vector=vector)
 
         # Unfortunately we cannot directly ask which parameters SHOULD be active
@@ -773,7 +788,7 @@ class DesignSpace(BaseDesignSpace):
                 else:
                     raise
 
-    def _configs_to_x(self, configs: List[Configuration]) -> Tuple[np.ndarray, np.ndarray]:
+    def _configs_to_x(self, configs: List['Configuration']) -> Tuple[np.ndarray, np.ndarray]:
         x = np.zeros((len(configs), len(self.design_variables)))
         is_active = np.zeros(x.shape, dtype=bool)
         if len(configs) == 0:

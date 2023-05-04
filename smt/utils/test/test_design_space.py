@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 from smt.sampling_methods import LHS
 from smt.utils.design_space import XType, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable,\
-    BaseDesignSpace, DesignSpace, LegacyDesignSpace
+    BaseDesignSpace, DesignSpace, LegacyDesignSpace, HAS_CONFIG_SPACE
 
 
 class Test(unittest.TestCase):
@@ -178,6 +178,13 @@ class Test(unittest.TestCase):
         self.assertEqual(ds.get_x_limits(), [(0, 1), (2, 3), (4, 5)])
         self.assertTrue(np.all(ds.get_num_bounds() == np.array([[0, 1], [2, 3], [4, 5]])))
 
+    def test_create_design_space(self):
+        if HAS_CONFIG_SPACE:
+            DesignSpace([FloatVariable(0, 1)])
+        else:
+            self.assertRaises(RuntimeError, lambda: DesignSpace([FloatVariable(0, 1)]))
+
+    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_design_space(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),
@@ -231,6 +238,7 @@ class Test(unittest.TestCase):
 
         ds.correct_get_acting(np.array([[0, 0, 0, 1.6]]))
 
+    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_design_space_hierarchical(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),  # x0
@@ -298,6 +306,7 @@ class Test(unittest.TestCase):
         assert len(seen_x) == 14
         assert len(seen_is_acting) == 2
 
+    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_check_conditionally_acting(self):
 
         class WrongDesignSpace(DesignSpace):
@@ -315,6 +324,7 @@ class Test(unittest.TestCase):
 
         self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
 
+    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_restrictive_value_constraint(self):
         ds = DesignSpace([
             IntegerVariable(0, 2),

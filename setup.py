@@ -107,8 +107,12 @@ metadata = dict(
         "scikit-learn",
         "pyDOE2",
         "scipy",
-        "ConfigSpace~=0.6.1",
     ],
+    extras_require={
+        'hierarchy': [  # pip install smt[hierarchy]
+            "ConfigSpace~=0.6.1",
+        ],
+    },
     python_requires=">=3.7",
     zip_safe=False,
     ext_modules=ext,
