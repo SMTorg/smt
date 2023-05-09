@@ -3,10 +3,22 @@ Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 """
 import unittest
 import itertools
+import contextlib
 import numpy as np
 from smt.sampling_methods import LHS
 from smt.utils.design_space import XType, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable,\
     BaseDesignSpace, DesignSpace, LegacyDesignSpace, HAS_CONFIG_SPACE
+import smt.utils.design_space as ds
+
+
+@contextlib.contextmanager
+def simulate_no_config_space(do_simulate=True):
+    if ds.HAS_CONFIG_SPACE and do_simulate:
+        ds.HAS_CONFIG_SPACE = False
+        yield
+        ds.HAS_CONFIG_SPACE = True
+    else:
+        yield
 
 
 class Test(unittest.TestCase):
@@ -179,12 +191,10 @@ class Test(unittest.TestCase):
         self.assertTrue(np.all(ds.get_num_bounds() == np.array([[0, 1], [2, 3], [4, 5]])))
 
     def test_create_design_space(self):
-        if HAS_CONFIG_SPACE:
+        DesignSpace([FloatVariable(0, 1)])
+        with simulate_no_config_space():
             DesignSpace([FloatVariable(0, 1)])
-        else:
-            self.assertRaises(RuntimeError, lambda: DesignSpace([FloatVariable(0, 1)]))
 
-    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_design_space(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),
@@ -193,16 +203,26 @@ class Test(unittest.TestCase):
             FloatVariable(.5, 1.5),
         ], seed=42)
         self.assertEqual(len(ds.design_variables), 4)
-        self.assertEqual(len(ds._cs.get_hyperparameters()), 4)
+        if HAS_CONFIG_SPACE:
+            self.assertEqual(len(ds._cs.get_hyperparameters()), 4)
         self.assertTrue(np.all(~ds.is_conditionally_acting))
 
-        x, is_acting = ds.sample_valid_x(3)
-        self.assertEqual(x.shape, (3, 4))
-        self.assertTrue(np.all(np.abs(x - np.array([
-            [1, 0, 0, .834],
-            [2, 0, -1, .6434],
-            [2, 0, 0, 1.151],
-        ])) < 1e-2))
+        if HAS_CONFIG_SPACE:
+            x, is_acting = ds.sample_valid_x(3)
+            self.assertEqual(x.shape, (3, 4))
+            self.assertTrue(np.all(np.abs(x - np.array([
+                [1, 0, 0, .834],
+                [2, 0, -1, .6434],
+                [2, 0, 0, 1.151],
+            ])) < 1e-2))
+        else:
+            ds.sample_valid_x(3)
+            x = np.array([
+                [1, 0, 0, .834],
+                [2, 0, -1, .6434],
+                [2, 0, 0, 1.151],
+            ])
+            x, is_acting = ds.correct_get_acting(x)
         self.assertEqual(x.shape, (3, 4))
         self.assertEqual(is_acting.shape, x.shape)
 
@@ -227,19 +247,92 @@ class Test(unittest.TestCase):
 
         x_unfolded, is_acting_unfolded = ds.sample_valid_x(3, unfolded=True)
         self.assertEqual(x_unfolded.shape, (3, 6))
-        self.assertTrue(np.all(np.abs(x_unfolded - np.array([
-            [1, 0, 0, 1, -1, .932],
-            [0, 0, 1, 1, 0, .791],
-            [0, 0, 1, 1, 1, 1.112],
-        ])) < 1e-2))
+        if HAS_CONFIG_SPACE:
+            self.assertTrue(np.all(np.abs(x_unfolded - np.array([
+                [1, 0, 0, 1, -1, .932],
+                [0, 0, 1, 1, 0, .791],
+                [0, 0, 1, 1, 1, 1.112],
+            ])) < 1e-2))
 
         self.assertTrue(str(ds))
         self.assertTrue(repr(ds))
 
         ds.correct_get_acting(np.array([[0, 0, 0, 1.6]]))
 
-    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_design_space_hierarchical(self):
+        with simulate_no_config_space():
+            ds = DesignSpace([
+                CategoricalVariable(['A', 'B', 'C']),  # x0
+                CategoricalVariable(['E', 'F']),  # x1
+                IntegerVariable(0, 1),  # x2
+                FloatVariable(0, 1),  # x3
+            ], seed=42)
+            ds.declare_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
+            self.assertRaises(RuntimeError, lambda: ds.add_value_constraint(var1=0, value1='C', var2=1, value2='F'))
+
+            x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1], [0, 1], [.25, .75])))
+            self.assertEqual(x_cartesian.shape, (24, 4))
+
+            self.assertTrue(np.all(ds.is_conditionally_acting == [False, False, False, True]))
+
+            x, is_acting = ds.correct_get_acting(x_cartesian)
+            _, is_unique = np.unique(x, axis=0, return_index=True)
+            self.assertEqual(len(is_unique), 16)
+            self.assertTrue(np.all(x[is_unique, :] == np.array([
+                [0, 0, 0, .25],
+                [0, 0, 0, .75],
+                [0, 0, 1, .25],
+                [0, 0, 1, .75],
+                [0, 1, 0, .25],
+                [0, 1, 0, .75],
+                [0, 1, 1, .25],
+                [0, 1, 1, .75],
+                [1, 0, 0, .5],
+                [1, 0, 1, .5],
+                [1, 1, 0, .5],
+                [1, 1, 1, .5],
+                [2, 0, 0, .5],
+                [2, 0, 1, .5],
+                [2, 1, 0, .5],
+                [2, 1, 1, .5],
+            ])))
+            self.assertTrue(np.all(is_acting[is_unique, :] == np.array([
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+                [True, True, True, False],
+            ])))
+
+            x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+            assert x_sampled.shape == (100, 4)
+            x_sampled[is_acting_sampled[:, 3], 3] = np.round(x_sampled[is_acting_sampled[:, 3], 3])
+
+            x_corr, is_acting_corr = ds.correct_get_acting(x_sampled)
+            self.assertTrue(np.all(x_corr == x_sampled))
+            self.assertTrue(np.all(is_acting_corr == is_acting_sampled))
+
+            seen_x = set()
+            seen_is_acting = set()
+            for i, xi in enumerate(x_sampled):
+                seen_x.add(tuple(xi))
+                seen_is_acting.add(tuple(is_acting_sampled[i, :]))
+            assert len(seen_x) == 16
+            assert len(seen_is_acting) == 2
+
+    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
+    def test_design_space_hierarchical_config_space(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),  # x0
             CategoricalVariable(['E', 'F']),  # x1
@@ -306,7 +399,6 @@ class Test(unittest.TestCase):
         assert len(seen_x) == 14
         assert len(seen_is_acting) == 2
 
-    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_check_conditionally_acting(self):
 
         class WrongDesignSpace(DesignSpace):
@@ -314,15 +406,17 @@ class Test(unittest.TestCase):
             def _is_conditionally_acting(self) -> np.ndarray:
                 return np.zeros((self.n_dv,), dtype=bool)
 
-        ds = WrongDesignSpace([
-            CategoricalVariable(['A', 'B', 'C']),  # x0
-            CategoricalVariable(['E', 'F']),  # x1
-            IntegerVariable(0, 1),  # x2
-            FloatVariable(0, 1),  # x3
-        ], seed=42)
-        ds.declare_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
+        for simulate_no_cs in [True, False]:
+            with simulate_no_config_space(simulate_no_cs):
+                ds = WrongDesignSpace([
+                    CategoricalVariable(['A', 'B', 'C']),  # x0
+                    CategoricalVariable(['E', 'F']),  # x1
+                    IntegerVariable(0, 1),  # x2
+                    FloatVariable(0, 1),  # x3
+                ], seed=42)
+                ds.declare_decreed_var(decreed_var=3, meta_var=0, meta_value='A')  # Activate x3 if x0 == A
 
-        self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
+                self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
 
     @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
     def test_restrictive_value_constraint(self):

@@ -109,7 +109,7 @@ metadata = dict(
         "scipy",
     ],
     extras_require={
-        'hierarchy': [  # pip install smt[hierarchy]
+        'cs': [  # pip install smt[cs]
             "ConfigSpace~=0.6.1",
         ],
     },

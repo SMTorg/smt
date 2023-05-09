@@ -571,9 +571,11 @@ class TestMixedInteger(unittest.TestCase):
         ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')
 
         # Nested hierarchy is possible: activate x2 if x1 == C or D
+        # Note: only if ConfigSpace is installed! pip install smt[cs]
         ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])
 
         # It is also possible to explicitly forbid two values from occurring simultaneously
+        # Note: only if ConfigSpace is installed! pip install smt[cs]
         ds.add_value_constraint(var1=0, value1='A', var2=2, value2=[0, 1])  # Forbid x0 == A && x2 == 0 or 1
 
         # Sample the design space
