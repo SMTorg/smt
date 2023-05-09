@@ -108,11 +108,6 @@ metadata = dict(
         "pyDOE2",
         "scipy",
     ],
-    extras_require={
-        'cs': [  # pip install smt[cs]
-            "ConfigSpace~=0.6.1",
-        ],
-    },
     python_requires=">=3.7",
     zip_safe=False,
     ext_modules=ext,

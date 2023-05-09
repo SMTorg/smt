@@ -6,4 +6,3 @@ pyDOE2
 matplotlib   # used in examples and tests
 pytest
 pytest-xdist # allows running parallel testing with pytest -n <num_workers>
-ConfigSpace~=0.6.1

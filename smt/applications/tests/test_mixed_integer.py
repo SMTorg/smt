@@ -570,14 +570,6 @@ class TestMixedInteger(unittest.TestCase):
         # Declare that x1 is acting if x0 == A
         ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')
 
-        # Nested hierarchy is possible: activate x2 if x1 == C or D
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])
-
-        # It is also possible to explicitly forbid two values from occurring simultaneously
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        ds.add_value_constraint(var1=0, value1='A', var2=2, value2=[0, 1])  # Forbid x0 == A && x2 == 0 or 1
-
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         x_sampled, is_acting_sampled = ds.sample_valid_x(100)
@@ -585,21 +577,18 @@ class TestMixedInteger(unittest.TestCase):
         # Correct design vectors: round discrete variables, correct hierarchical variables
         x_corr, is_acting = ds.correct_get_acting(np.array([
             [0, 0, 2, .25],
-            [0, 2, 1, .75],
             [1, 2, 1, .66],
         ]))
 
         # Observe the hierarchical behavior:
         assert np.all(is_acting == np.array([
             [True, True, True, True],
-            [True, True, False, True],  # x2 is not acting if x1 != C or D (0 or 1)
-            [True, False, False, True],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
+            [True, False, True, True],  # x1 is not acting if x0 != A
         ]))
         assert np.all(x_corr == np.array([
             [0, 0, 2, .25],
-            [0, 2, 0, .75],
-            # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-            [1, 0, 0, .66],  # x1 and x2 are imputed
+            # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+            [1, 0, 1, .66],
         ]))
 
     def run_hierarchical_variables_Goldstein(self):
