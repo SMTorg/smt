@@ -1461,6 +1461,8 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = self.theta0
             else:
+                theta_bounds = self.options["theta_bounds"]
+                log10t_bounds = np.log10(theta_bounds)
                 theta0_rand = np.random.rand(len(self.theta0))
                 theta0_rand = (
                     theta0_rand * (log10t_bounds[1] - log10t_bounds[0])

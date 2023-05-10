@@ -116,7 +116,7 @@ class KPLS(KrgBased):
                     self.options["n_comp"] -= 1
                     nextcomp = False
                     break
-                ye = self._predict_values(Xtest)
+                ye = self._predict_values(Xtest).reshape(Xtest.shape[0], ytest.shape[1])
                 press_m1 = press_m1 + np.sum(np.power((1 / len(X)) * (ye - ytest), 2))
             if self.options["n_comp"] > 1 and press_m1 / press_m > eval_comp_treshold:
                 self.options["n_comp"] -= 1
