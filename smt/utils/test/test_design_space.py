@@ -228,6 +228,22 @@ class Test(unittest.TestCase):
 
         ds.correct_get_acting(np.array([[0, 0, 0, 1.6]]))
 
+    def test_float_design_space(self):
+        ds = DesignSpace([(0, 1), (.5, 2.5), (-.4, 10)])
+        assert ds.n_dv == 3
+        assert all(isinstance(dv, FloatVariable) for dv in ds.design_variables)
+        assert np.all(ds.get_num_bounds() == np.array([[0, 1], [.5, 2.5], [-.4, 10]]))
+
+        ds = DesignSpace([[0, 1], [.5, 2.5], [-.4, 10]])
+        assert ds.n_dv == 3
+        assert all(isinstance(dv, FloatVariable) for dv in ds.design_variables)
+        assert np.all(ds.get_num_bounds() == np.array([[0, 1], [.5, 2.5], [-.4, 10]]))
+
+        ds = DesignSpace(np.array([[0, 1], [.5, 2.5], [-.4, 10]]))
+        assert ds.n_dv == 3
+        assert all(isinstance(dv, FloatVariable) for dv in ds.design_variables)
+        assert np.all(ds.get_num_bounds() == np.array([[0, 1], [.5, 2.5], [-.4, 10]]))
+
     def test_design_space_hierarchical(self):
         ds = DesignSpace([
             CategoricalVariable(['A', 'B', 'C']),  # x0

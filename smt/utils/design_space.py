@@ -585,6 +585,10 @@ class DesignSpace(BaseDesignSpace):
     It is also possible to randomly sample design vectors conforming to the constraints:
     >>> x_sampled, is_acting_sampled = ds.sample_valid_x(100)
 
+    You can also instantiate a purely-continuous design space from bounds directly:
+    >>> continuous_design_space = DesignSpace([(0, 1), (0, 2), (.5, 5.5)])
+    >>> assert continuous_design_space.n_dv == 3
+
     If needed, it is possible to get the legacy design space definition format:
     >>> xlimits = ds.get_x_limits()
     >>> xtypes = ds.get_x_types()
@@ -593,7 +597,25 @@ class DesignSpace(BaseDesignSpace):
 
     """
 
-    def __init__(self, design_variables: List[DesignVariable], seed=None):
+    def __init__(self, design_variables: Union[List[DesignVariable], list, np.ndarray], seed=None):
+
+        # Assume float variable bounds as inputs
+        def _is_num(val):
+            try:
+                float(val)
+                return True
+            except ValueError:
+                return False
+
+        if len(design_variables) > 0 and not isinstance(design_variables[0], DesignVariable):
+            converted_dvs = []
+            for bounds in design_variables:
+                if len(bounds) != 2 or not _is_num(bounds[0]) or not _is_num(bounds[1]):
+                    raise RuntimeError(f'Expecting either a list of DesignVariable objects or float variable '
+                                       f'bounds! Unrecognized: {bounds!r}')
+                converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
+            design_variables = converted_dvs
+
         self.seed = seed  # For testing
 
         self._meta_vars = {}  # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
