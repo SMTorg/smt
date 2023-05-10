@@ -178,11 +178,18 @@ class KrgBased(SurrogateModel):
                     bounds of x features""",
         )
         declare(
+            'xlimits',
+            None,
+            types=(list, np.ndarray),
+            desc="definition of a design space of float (continuous) variables: "
+                 "array-like of size nx x 2 (lower, upper bounds)"
+        )
+        declare(
             "design_space",
             None,
-            types=BaseDesignSpace,
+            types=(BaseDesignSpace, list, np.ndarray),
             desc="definition of the (hierarchical) design space: "
-                 "use `smt.utils.design_space.DesignSpace` as the main API"
+                 "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds"
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -207,12 +214,17 @@ class KrgBased(SurrogateModel):
 
     @property
     def design_space(self) -> BaseDesignSpace:
-        if self.options['design_space'] is None:
-            xt = self.training_points.get(None)
-            if xt is not None:
-                xt = xt[0][0]
+        xt = self.training_points.get(None)
+        if xt is not None:
+            xt = xt[0][0]
 
+        if self.options['design_space'] is None:
             self.options['design_space'] = ensure_design_space(xt=xt, xspecs=self.options['xspecs'])
+
+        elif not isinstance(self.options['design_space'], BaseDesignSpace):
+            ds_input = self.options['design_space']
+            self.options['design_space'] = ensure_design_space(xt=xt, xlimits=ds_input, design_space=ds_input)
+
         return self.options['design_space']
 
     def _new_train(self):
