@@ -36,10 +36,9 @@ Usage
   from mpl_toolkits.mplot3d import Axes3D
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import GEKPLS
+  from smt.surrogate_models import GEKPLS, DesignSpace
   from smt.problems import Sphere
   from smt.sampling_methods import LHS
-  from smt.utils.kriging import XSpecs
   
   # Construction of the DOE
   fun = Sphere(ndim=2)
@@ -50,11 +49,11 @@ Usage
   for i in range(2):
       yd = fun(xt, kx=i)
       yt = np.concatenate((yt, yd), axis=1)
-  xspecs = XSpecs(xlimits=fun.xlimits)
+  design_space = DesignSpace(fun.xlimits)
   # Build the GEKPLS model
   n_comp = 2
   sm = GEKPLS(
-      xspecs=xspecs,
+      design_space=design_space,
       theta0=[1e-2] * n_comp,
       extra_points=1,
       print_prediction=False,
@@ -99,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1582127
+     Training - done. Time (sec):  0.1639359
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -213,20 +212,16 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
-  *  -  xspecs
+  *  -  xlimits
      -  None
      -  None
-     -  ['XSpecs']
-     -  xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
   *  -  design_space
      -  None
      -  None
-     -  ['BaseDesignSpace']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
   *  -  n_comp
      -  2
      -  None

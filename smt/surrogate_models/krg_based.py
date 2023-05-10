@@ -29,7 +29,6 @@ from smt.utils.kriging import (
     cross_levels,
     compute_X_cross,
     cross_levels_homo_space,
-    XSpecs,
     MixHrcKernelType,
 )
 from smt.utils.misc import standardization
@@ -168,16 +167,6 @@ class KrgBased(SurrogateModel):
             desc="number of optimizer runs (multistart method)",
         )
         declare(
-            "xspecs",
-            None,
-            types=XSpecs,
-            desc="""xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features""",
-        )
-        declare(
             'xlimits',
             None,
             types=(list, np.ndarray),
@@ -219,7 +208,7 @@ class KrgBased(SurrogateModel):
             xt = xt[0][0]
 
         if self.options['design_space'] is None:
-            self.options['design_space'] = ensure_design_space(xt=xt, xspecs=self.options['xspecs'])
+            self.options['design_space'] = ensure_design_space(xt=xt)
 
         elif not isinstance(self.options['design_space'], BaseDesignSpace):
             ds_input = self.options['design_space']
@@ -438,8 +427,6 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
-            from smt.applications.mixed_integer import unfold_with_enum_mask
-
             X_pls_space, _ = design_space.unfold_x(x)
             nx = len(theta)
 
@@ -1703,7 +1690,7 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options['design_space'] is None and self.options['xspecs'] is None) and (
+        if self.options['design_space'] is None and (
             self.options["categorical_kernel"] is not None
         ):
             raise ValueError("Design space definition (design_space) required for mixed integer Kriging")

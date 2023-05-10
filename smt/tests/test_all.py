@@ -18,8 +18,7 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP
-from smt.utils.kriging import XSpecs
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN, MGP, DesignSpace
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -144,8 +143,8 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared("xspecs"):
-            sm.options["xspecs"] = XSpecs(xlimits=prob.xlimits)
+        if sm.options.is_declared("design_space"):
+            sm.options["design_space"] = DesignSpace(prob.xlimits)
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False

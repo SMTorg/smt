@@ -11,7 +11,7 @@ from smt.utils import compute_rms_error
 
 from smt.problems import Sphere, NdimRobotArm
 from smt.sampling_methods import LHS
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, XSpecs
+from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, DesignSpace
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -342,11 +342,11 @@ if plot_status:
 ########### The GEKPLS model using 1 approximating points
 
 # 'n_comp' and 'theta0' must be an integer in [1,ndim[ and a list of length n_comp, respectively.
-xspecs = XSpecs(xlimits=fun.xlimits)
+design_space = DesignSpace(fun.xlimits)
 t = GEKPLS(
     n_comp=1,
     theta0=[1e-2],
-    xspecs=xspecs,
+    design_space=design_space,
     delta_x=1e-2,
     extra_points=1,
     print_prediction=False,

@@ -5,36 +5,22 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from enum import Enum
 from typing import List, Union, Tuple, Sequence, Optional
 
 from smt.sampling_methods import LHS
 
 
-class XType(Enum):
-    FLOAT = 'FLOAT'
-    ORD = 'ORD'
-    ENUM = 'ENUM'
-
-
-def ensure_design_space(xt=None, xlimits=None, xtypes=None, xspecs=None, design_space=None) -> 'BaseDesignSpace':
+def ensure_design_space(xt=None, xlimits=None, design_space=None) -> 'BaseDesignSpace':
     """Interface to turn legacy input formats into a DesignSpace"""
-    from smt.utils.kriging import XSpecs, XRole
 
     if design_space is not None and isinstance(design_space, BaseDesignSpace):
         return design_space
 
-    if xspecs is not None and isinstance(xspecs, XSpecs):
-        if not all([r == XRole.NEUTRAL for r in xspecs.roles]):
-            raise RuntimeError(f'Conversion from XSpecs non-NEUTRAL roles not supported! '
-                               f'Directly use DesignSpace to implement hierarchical structure')
-        return LegacyDesignSpace(x_limits=xspecs.limits, x_types=xspecs.types)
-
     if xlimits is not None:
-        return LegacyDesignSpace(x_limits=xlimits, x_types=xtypes)
+        return DesignSpace(xlimits)
 
     if xt is not None:
-        return LegacyDesignSpace(x_limits=[[0, 1]]*xt.shape[1])
+        return DesignSpace([[0, 1]]*xt.shape[1])
 
     raise ValueError('Nothing defined that could be interpreted as a design space!')
 
@@ -43,9 +29,6 @@ class DesignVariable:
     """Base class for defining a design variable"""
     upper: Union[float, int]
     lower: Union[float, int]
-
-    def get_type(self) -> Union[XType, Tuple[XType, int]]:
-        raise NotImplementedError
 
     def get_limits(self) -> Union[list, tuple]:
         raise NotImplementedError
@@ -66,9 +49,6 @@ class FloatVariable(DesignVariable):
         self.lower = lower
         self.upper = upper
 
-    def get_type(self) -> XType:
-        return XType.FLOAT
-
     def get_limits(self) -> Tuple[float, float]:
         return self.lower, self.upper
 
@@ -87,9 +67,6 @@ class IntegerVariable(DesignVariable):
             raise ValueError(f'Upper bound should be higher than lower bound: {upper} <= {lower}')
         self.lower = lower
         self.upper = upper
-
-    def get_type(self) -> XType:
-        return XType.ORD
 
     def get_limits(self) -> Tuple[int, int]:
         return self.lower, self.upper
@@ -116,9 +93,6 @@ class OrdinalVariable(DesignVariable):
     @property
     def upper(self) -> int:
         return len(self.values)-1
-
-    def get_type(self) -> XType:
-        return XType.ORD
 
     def get_limits(self) -> List[str]:
         # We convert to integer strings for compatibility reasons
@@ -150,9 +124,6 @@ class CategoricalVariable(DesignVariable):
     @property
     def n_values(self):
         return len(self.values)
-
-    def get_type(self) -> Tuple[XType, int]:
-        return XType.ENUM, len(self.values)
 
     def get_limits(self) -> List[Union[str, int, float]]:
         # We convert to strings for compatibility reasons
@@ -314,10 +285,6 @@ class BaseDesignSpace:
     def get_x_limits(self) -> list:
         """Returns the variable limit definitions in SMT style"""
         return [dv.get_limits() for dv in self.design_variables]
-
-    def get_x_types(self) -> List[Union[XType, Tuple[XType, int]]]:
-        """Returns the type definitions in SMT style"""
-        return [dv.get_type() for dv in self.design_variables]
 
     def get_num_bounds(self):
         """
@@ -591,7 +558,6 @@ class DesignSpace(BaseDesignSpace):
 
     If needed, it is possible to get the legacy design space definition format:
     >>> xlimits = ds.get_x_limits()
-    >>> xtypes = ds.get_x_types()
     >>> cont_bounds = ds.get_num_bounds()
     >>> unfolded_cont_bounds = ds.get_unfolded_num_bounds()
 
@@ -736,153 +702,3 @@ class DesignSpace(BaseDesignSpace):
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.design_variables!r})'
-
-
-class LegacyDesignSpace(BaseDesignSpace):
-    """
-    Converts the legacy design space definition into a design space definition. Does not support hierarchy.
-    """
-
-    def __init__(self, x_limits: Union[np.ndarray, List[Sequence[Union[float, int, str]]]], x_types: List[XType] = None):
-        if isinstance(x_limits, np.ndarray):
-            x_limits = x_limits.tolist()
-        self.x_limits = x_limits
-        self.seed = None  # For testing
-
-        self.sampler_class = LHS
-        self.sampler_kwargs = {'criterion': 'ese'}
-
-        if x_types is None:
-            x_types = [XType.FLOAT]*len(x_limits)
-        self.x_types = x_types
-
-        if len(x_limits) != len(x_types):
-            raise ValueError(f'Number of x limits ({len(x_limits)}) do not correspond '
-                             f'to number of specified types ({len(x_types)})')
-
-        self._des_vars = des_vars = []
-        for i, x_type in enumerate(x_types):
-            x_limit = x_limits[i]
-
-            # Check that ORD type variables have str values in their list of values
-            if not isinstance(x_type, tuple) and len(x_limit) != 2:
-                if x_type == XType.ORD and isinstance(x_limit[0], str):
-                    list_int = list(map(float, x_limit))
-                    sorted_list_int = sorted(list_int)
-                    if not np.array_equal(sorted_list_int, list_int):
-                        raise ValueError(f'Unsorted x limits ({x_limit}) for variable type {x_type} (index={i})')
-                else:
-                    raise ValueError(f'Bad x_limits ({x_limit}) for variable type {x_type} (index={i})')
-
-            # ENUM types must be specified as (ENUM, n_levels)
-            if x_type not in [XType.FLOAT, XType.ORD] and (not isinstance(x_type, tuple) or x_type[0] != XType.ENUM):
-                raise ValueError(f'Bad type specification: {x_type}')
-
-            if isinstance(x_type, tuple) and len(x_limit) != x_type[1]:
-                raise ValueError(f'Bad x_limits and x_type specs not consistent. Got a categorical type with'
-                                 f'{x_type[1]} levels, while x_limits contains {len(x_limit)} values (index={i})')
-
-            if x_type == XType.FLOAT:
-                des_vars.append(FloatVariable(x_limit[0], x_limit[1]))
-
-            elif x_type == XType.ORD:
-                if len(x_limit) == 2:
-                    des_vars.append(IntegerVariable(x_limit[0], x_limit[1]))
-                else:
-                    des_vars.append(OrdinalVariable(x_limit))
-
-            elif isinstance(x_type, tuple) and x_type[0] == XType.ENUM:
-                des_vars.append(CategoricalVariable(x_limit))
-
-            else:
-                raise ValueError(f'Unknown variable type ({i}): {x_type}, {x_limit}')
-
-        super().__init__(des_vars)
-
-    def get_design_variables(self) -> List[DesignVariable]:
-        return self._des_vars
-
-    def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Correct discrete variables"""
-
-        # Correct discrete variables
-        x_corr = self._cast_to_discrete(x)
-
-        # No hierarchy, all variables are acting
-        is_acting = np.ones(x.shape, dtype=bool)
-
-        return x_corr, is_acting
-
-    def _is_conditionally_acting(self) -> np.ndarray:
-        # None of the variables are conditionally acting, because there is no hierarchy
-        return np.zeros((self.n_dv,), dtype=bool)
-
-    def _sample_valid_x(self, n: int) -> Tuple[np.ndarray, np.ndarray]:
-        """Sample n design vectors using LHS and additionally return the is_acting matrix."""
-
-        # Sample design vectors in unfolded space
-        x_limits_unfolded = self.get_unfolded_num_bounds()
-
-        sampler_kwargs = self.sampler_kwargs.copy()
-        sampler_class = self.sampler_class
-        if issubclass(sampler_class, LHS):
-            sampler_kwargs['random_state'] = self.seed
-        sampler = sampler_class(xlimits=x_limits_unfolded, **sampler_kwargs)
-
-        x = sampler(n)
-
-        # Cast to discrete and fold
-        x = self._cast_to_discrete(x, unfolded=True)
-        x, _ = self.fold_x(x)
-
-        # No hierarchy, all variables are acting
-        is_acting = np.ones(x.shape, dtype=bool)
-
-        return x, is_acting
-
-    def _cast_to_discrete(self, x: np.ndarray, unfolded=False):
-        """
-        Cast continuous values to discrete values for discrete variables.
-
-        Parameters
-        ----------
-        x: np.ndarray [n, dim]
-           - Continuous design vectors
-        unfolded: bool
-           - Whether input and output is in unfolded space
-
-        Returns
-        -------
-        x_cast: np.ndarray [n, dim]
-           - Valid design vectors
-        """
-
-        x_cast = x.copy()
-        i_x = 0
-        for i, dv in enumerate(self.design_variables):
-            if isinstance(dv, (IntegerVariable, OrdinalVariable)):
-                x_cast[:, i_x] = self._round_equally_distributed(x[:, i_x], dv.lower, dv.upper)
-
-            elif isinstance(dv, CategoricalVariable):
-                if unfolded:
-                    # For the one-hot encoding, we select the column with the largest continuous value
-                    i_selected = np.argmax(x[:, i_x:i_x+dv.n_values], axis=1)
-
-                    x_cast_enum = x_cast[:, i_x:i_x+dv.n_values]
-                    x_cast_enum[:, :] = 0
-                    x_cast_enum[np.arange(len(i_selected)), i_selected] = 1
-
-                    i_x += dv.n_values
-                    continue
-
-                else:
-                    x_cast[:, i_x] = self._round_equally_distributed(x[:, i_x], 0, len(dv.values)-1)
-
-            i_x += 1
-        return x_cast
-
-    def __str__(self):
-        return f'Legacy design space:\nx_limits: {self.x_limits!s}\nx_types: {self.x_types!s}'
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.x_limits!r}, x_types={self.x_types!r})'

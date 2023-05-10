@@ -10,7 +10,7 @@ import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.utils.checks import ensure_2d_array
-from smt.utils.design_space import BaseDesignSpace, LegacyDesignSpace
+from smt.utils.design_space import BaseDesignSpace, DesignSpace
 
 
 class Problem:
@@ -70,7 +70,7 @@ class Problem:
     def design_space(self) -> BaseDesignSpace:
         """Gets the design space definitions as an instance of BaseDesignSpace"""
         if self._design_space is None:
-            self._design_space = LegacyDesignSpace(x_limits=self.xlimits)
+            self._design_space = DesignSpace(self.xlimits)
         return self._design_space
 
     def sample(self, n):

@@ -8,15 +8,6 @@ import numpy as np
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
-from smt.utils.mixed_integer import (
-    cast_to_discrete_values,
-    cast_to_enum_value,
-    cast_to_mixed_integer,
-    encode_with_enum_index,
-    fold_with_enum_index,
-    unfold_with_enum_mask,
-    unfold_xlimits_with_continuous_limits,
-)
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.utils.design_space import BaseDesignSpace, CategoricalVariable, ensure_design_space
 import warnings
@@ -29,12 +20,14 @@ class MixedIntegerSamplingMethod(SamplingMethod):
     handling integer (ORD) or categorical (ENUM) features
     """
 
-    def __init__(self, sampling_method_class, xspecs, **kwargs):
+    def __init__(self, sampling_method_class, design_space, **kwargs):
         """
         Parameters
         ----------
         sampling_method_class: class name
             SMT sampling method class
+        design_space: BaseDesignSpace
+            design space definition
         kwargs: options of the given sampling method
             options used to instanciate the SMT sampling method
             with the additional 'output_in_folded_space' boolean option
@@ -44,8 +37,8 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         warnings.warn('MixedIntegerSamplingMethod has been deprecated, use DesignSpace.sample_valid_x instead!',
                       category=DeprecationWarning)
 
-        self._xspecs = xspecs
-        self._unfolded_xlimits = unfold_xlimits_with_continuous_limits(self._xspecs)
+        self._design_space = design_space
+        self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
         self._sampling_method = sampling_method_class(
@@ -55,22 +48,21 @@ class MixedIntegerSamplingMethod(SamplingMethod):
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xspecs, True, doe)
+
+        x_doe, _ = self._design_space.correct_get_acting(doe)
         if self._output_in_folded_space:
-            return fold_with_enum_index(self._xspecs.types, unfold_xdoe)
-        else:
-            return unfold_xdoe
+            x_doe, _ = self._design_space.fold_x(x_doe)
+        return x_doe
 
     def __call__(self, nt):
         return self._compute(nt)
 
     def expand_lhs(self, x, nt, method="basic"):
         doe = self._sampling_method(nt)
-        unfold_xdoe = cast_to_discrete_values(self._xspecs, True, doe)
+        x_doe, _ = self._design_space.correct_get_acting(doe)
         if self._output_in_folded_space:
-            return fold_with_enum_index(self._xspecs.types, unfold_xdoe)
-        else:
-            return unfold_xdoe
+            x_doe, _ = self._design_space.fold_x(x_doe)
+        return x_doe
 
 
 class MixedIntegerSurrogateModel(SurrogateModel):
@@ -107,7 +99,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
                 + str(self._surrogate.name)
                 + " is not supported. Please use MixedIntegerKrigingModel instead."
             )
-        self.design_space = ensure_design_space(xspecs=design_space, design_space=design_space)
+        self.design_space = ensure_design_space(design_space=design_space)
 
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
@@ -285,7 +277,7 @@ class MixedIntegerContext(object):
             whether x data are in given in folded space (enum indexes) or not (enum masks)
         """
 
-        self._design_space = ensure_design_space(xspecs=design_space, design_space=design_space)
+        self._design_space = ensure_design_space(design_space=design_space)
         self._unfold_space = not work_in_folded_space
         self._unfolded_xlimits = self._design_space.get_unfolded_num_bounds()
         self._work_in_folded_space = work_in_folded_space

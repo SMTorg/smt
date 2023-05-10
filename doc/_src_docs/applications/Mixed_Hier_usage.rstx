@@ -34,7 +34,7 @@ Variables are specified using the ``DesignVariable`` classes in ``smt.utils.desi
 
 The design space is then defined from a list of design variables and implements sampling and correction interfaces:
 
-.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_discrete_design_space_example , 80
+.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_discrete_design_space_example
 
 Hierarchical variables
 ----------------------
@@ -46,7 +46,7 @@ affect the dimension of the problem and decide if some other decreed variables a
 The hierarchy relationships are specified after instantiating the design space:
 
 
-.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_hierarchical_design_space_example , 80
+.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_hierarchical_design_space_example
 
 Design space and variable class references
 ------------------------------------------

@@ -16,7 +16,7 @@ from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
-from smt.utils.kriging import XSpecs
+from smt.utils.design_space import DesignSpace
 
 from smt.applications import MFK
 
@@ -78,8 +78,8 @@ class Test(SMTestCase):
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
-        if sm.options.is_declared("xspecs"):
-            sm.options["xspecs"] = XSpecs(xlimits=prob.xlimits)
+        if sm.options.is_declared("design_space"):
+            sm.options["design_space"] = DesignSpace(prob.xlimits)
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False

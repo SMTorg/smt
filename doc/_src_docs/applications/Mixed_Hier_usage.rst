@@ -61,6 +61,7 @@ The design space is then defined from a list of design variables and implements 
 
   [[ True  True  True  True]
    [ True  True  True  True]]
+  
 
 Hierarchical variables
 ----------------------
@@ -107,6 +108,7 @@ The hierarchy relationships are specified after instantiating the design space:
       # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
       [1, 0, 1, .66],
   ]))
+  
 
 Design space and variable class references
 ------------------------------------------
@@ -231,9 +233,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0192678
+     Predicting - done. Time (sec):  0.0182462
      
-     Prediction time/pt. (sec) :  0.0003854
+     Prediction time/pt. (sec) :  0.0003649
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

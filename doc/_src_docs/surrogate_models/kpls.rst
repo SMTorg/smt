@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0511756
+     Training - done. Time (sec):  0.0512569
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009992
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009823
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001965
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  3.1084862
+     Training - done. Time (sec):  3.1427436
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,9 +168,9 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010169
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0010169
      
   [[20.62631581]]
   [[1077.05754261]]
@@ -284,20 +284,16 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
-  *  -  xspecs
+  *  -  xlimits
      -  None
      -  None
-     -  ['XSpecs']
-     -  xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
   *  -  design_space
      -  None
      -  None
-     -  ['BaseDesignSpace']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
   *  -  n_comp
      -  1
      -  None

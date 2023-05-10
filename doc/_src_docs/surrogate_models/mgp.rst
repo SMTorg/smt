@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.2665241
+     Training - done. Time (sec):  1.2441185
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -242,20 +242,16 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
-  *  -  xspecs
+  *  -  xlimits
      -  None
      -  None
-     -  ['XSpecs']
-     -  xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
   *  -  design_space
      -  None
      -  None
-     -  ['BaseDesignSpace']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
   *  -  n_comp
      -  1
      -  None

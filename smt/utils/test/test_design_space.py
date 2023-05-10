@@ -5,8 +5,8 @@ import unittest
 import itertools
 import numpy as np
 from smt.sampling_methods import LHS
-from smt.utils.design_space import XType, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable,\
-    BaseDesignSpace, DesignSpace, LegacyDesignSpace
+from smt.utils.design_space import FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable,\
+    BaseDesignSpace, DesignSpace
 
 
 class Test(unittest.TestCase):
@@ -19,7 +19,6 @@ class Test(unittest.TestCase):
         self.assertEqual(float_var.lower, 0)
         self.assertEqual(float_var.upper, 1)
         self.assertEqual(float_var.get_limits(), (0, 1))
-        self.assertEqual(float_var.get_type(), XType.FLOAT)
         self.assertTrue(str(float_var))
         self.assertTrue(repr(float_var))
 
@@ -30,7 +29,6 @@ class Test(unittest.TestCase):
         self.assertEqual(int_var.lower, 0)
         self.assertEqual(int_var.upper, 1)
         self.assertEqual(int_var.get_limits(), (0, 1))
-        self.assertEqual(int_var.get_type(), XType.ORD)
         self.assertTrue(str(int_var))
         self.assertTrue(repr(int_var))
 
@@ -42,7 +40,6 @@ class Test(unittest.TestCase):
         ord_var = OrdinalVariable(['A', 'B', 'C'])
         self.assertEqual(ord_var.values, ['A', 'B', 'C'])
         self.assertEqual(ord_var.get_limits(), ['0', '1', '2'])
-        self.assertEqual(ord_var.get_type(), XType.ORD)
         self.assertEqual(ord_var.lower, 0)
         self.assertEqual(ord_var.upper, 2)
         self.assertTrue(str(ord_var))
@@ -56,7 +53,6 @@ class Test(unittest.TestCase):
         cat_var = CategoricalVariable(['A', 'B', 'C'])
         self.assertEqual(cat_var.values, ['A', 'B', 'C'])
         self.assertEqual(cat_var.get_limits(), ['A', 'B', 'C'])
-        self.assertEqual(cat_var.get_type(), (XType.ENUM, 3))
         self.assertEqual(cat_var.lower, 0)
         self.assertEqual(cat_var.upper, 2)
         self.assertTrue(str(cat_var))
@@ -95,7 +91,6 @@ class Test(unittest.TestCase):
             IntegerVariable(0, 3),
             FloatVariable(-.5, .5),
         ])
-        self.assertEqual(ds.get_x_types(), [(XType.ENUM, 2), XType.ORD, XType.FLOAT])
         self.assertEqual(ds.get_x_limits(), [['A', 'B'], (0, 3), (-.5, .5)])
         self.assertTrue(np.all(ds.get_num_bounds() == [[0, 1], [0, 3], [-.5, .5]]))
         self.assertTrue(np.all(ds.get_unfolded_num_bounds() == [[0, 1], [0, 1], [0, 3], [-.5, .5]]))
@@ -127,56 +122,6 @@ class Test(unittest.TestCase):
         x_folded, is_acting_folded = ds.fold_x(x_unfolded, is_acting_unfolded)
         self.assertTrue(np.all(x_folded == x))
         self.assertTrue(np.all(is_acting_folded == is_acting))
-
-    def test_legacy_design_space(self):
-        ds = LegacyDesignSpace(
-            x_limits=[[0, 1], (0, 2), ['05', '09', '23', '27'], ['C172', 'PA28', 'DA20', 'A210']],
-            x_types=[XType.FLOAT, XType.ORD, XType.ORD, (XType.ENUM, 4)],
-        )
-        self.assertEqual(len(ds.design_variables), 4)
-        self.assertTrue(np.all(~ds.is_conditionally_acting))
-
-        dv0, dv1, dv2, dv3 = ds.design_variables
-        self.assertIsInstance(dv0, FloatVariable)
-        self.assertEqual(dv0.lower, 0)
-        self.assertEqual(dv0.upper, 1)
-
-        self.assertIsInstance(dv1, IntegerVariable)
-        self.assertEqual(dv1.lower, 0)
-        self.assertEqual(dv1.upper, 2)
-
-        self.assertIsInstance(dv2, OrdinalVariable)
-        self.assertEqual(dv2.values, ['05', '09', '23', '27'])
-
-        self.assertIsInstance(dv3, CategoricalVariable)
-        self.assertEqual(dv3.values, ['C172', 'PA28', 'DA20', 'A210'])
-
-        ds.seed = 42
-        x, is_acting = ds.sample_valid_x(3)
-        self.assertEqual(x.shape, (3, 4))
-        self.assertTrue(np.all(np.abs(x - np.array([
-            [.125, 2, 2, 0],
-            [.622, 0, 3, 1],
-            [.727, 1, 0, 3],
-        ])) < 1e-2))
-        self.assertEqual(is_acting.shape, x.shape)
-        self.assertTrue(np.all(is_acting))
-
-        x_sampled_externally = LHS(xlimits=ds.get_unfolded_num_bounds(), criterion='ese', random_state=42)(3)
-        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally)
-        x_corr, is_acting_corr = ds.fold_x(x_corr, is_acting_corr)
-        self.assertTrue(np.all(x_corr == x))
-        self.assertTrue(np.all(is_acting_corr))
-
-        self.assertTrue(str(ds))
-        self.assertTrue(repr(ds))
-
-        ds = LegacyDesignSpace(x_limits=np.array([[0, 1], [2, 3], [4, 5]]))
-        self.assertEqual(len(ds.design_variables), 3)
-        self.assertTrue(all(isinstance(dv, FloatVariable) for dv in ds.design_variables))
-        self.assertEqual(ds.design_variables[0].get_limits(), (0, 1))
-        self.assertEqual(ds.get_x_limits(), [(0, 1), (2, 3), (4, 5)])
-        self.assertTrue(np.all(ds.get_num_bounds() == np.array([[0, 1], [2, 3], [4, 5]])))
 
     def test_create_design_space(self):
         DesignSpace([FloatVariable(0, 1)])

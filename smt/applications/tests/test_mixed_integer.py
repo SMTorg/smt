@@ -10,32 +10,18 @@ import itertools
 
 matplotlib.use("Agg")
 
-from smt.utils.kriging import XSpecs
-
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
     MixedIntegerKrigingModel,
 )
-from smt.utils.mixed_integer import (
-    unfold_xlimits_with_continuous_limits,
-    fold_with_enum_index,
-    unfold_with_enum_mask,
-    compute_unfolded_dimension,
-    cast_to_enum_value,
-    cast_to_mixed_integer,
-    cast_to_discrete_values,
-    encode_with_enum_index,
-)
 from smt.problems import Sphere, HierarchicalGoldstein, HierarchicalNeuralNetwork
-from smt.utils.design_space import DesignSpace
+from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
     KPLS,
     QP,
-    XType,
-    XRole,
     MixIntKernelType,
     MixHrcKernelType,
 )
@@ -43,11 +29,13 @@ from smt.surrogate_models import (
 
 class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_INT(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), XType.ORD]
-        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-10, 10),
+            CategoricalVariable(['blue', 'red', 'green']),
+            IntegerVariable(-10, 10),
+        ])
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
@@ -67,11 +55,13 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), XType.ORD]
-        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-10, 10),
+            CategoricalVariable(['blue', 'red', 'green']),
+            IntegerVariable(-10, 10),
+        ])
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(KRG(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
@@ -91,20 +81,23 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D_bad_regr(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), XType.ORD]
-        xlimits = [[-10, 10], ["blue", "red", "green"], [-10, 10]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-10, 10),
+            CategoricalVariable(['blue', 'red', 'green']),
+            IntegerVariable(-10, 10),
+        ])
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(design_space)
         with self.assertRaises(ValueError):
             sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
     def test_qp_mixed_2D_INT(self):
-        xtypes = [XType.FLOAT, XType.ORD]
-        xlimits = [[-10, 10], [-10, 10]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-10, 10),
+            IntegerVariable(-10, 10),
+        ])
 
-        mixint = MixedIntegerContext(xspecs)
+        mixint = MixedIntegerContext(design_space)
         sm = mixint.build_surrogate_model(QP(print_prediction=False))
         sampling = mixint.build_sampling_method(LHS, criterion="m")
 
@@ -121,181 +114,179 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_compute_unfolded_dimension(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2)]
-        self.assertEqual(3, compute_unfolded_dimension(xtypes))
+        design_space = DesignSpace([
+            FloatVariable(0, 1),
+            CategoricalVariable(['A', 'B']),
+        ])
+        assert design_space.get_unfolded_num_bounds().shape[0] == 3
 
     def test_unfold_with_enum_mask(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2)]
         x = np.array([[1.5, 1], [1.5, 0], [1.5, 1]])
         expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
-        self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
+
+        design_space = DesignSpace([
+            FloatVariable(1, 2),
+            CategoricalVariable(['A', 'B']),
+        ])
+        x_unfolded, _ = design_space.unfold_x(x)
+        self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_unfold_with_enum_mask_with_enum_first(self):
-        xtypes = [(XType.ENUM, 2), XType.FLOAT]
         x = np.array([[1, 1.5], [0, 1.5], [1, 1.5]])
         expected = [[0, 1, 1.5], [1, 0, 1.5], [0, 1, 1.5]]
-        self.assertListEqual(expected, unfold_with_enum_mask(xtypes, x).tolist())
+
+        design_space = DesignSpace([
+            CategoricalVariable(['A', 'B']),
+            FloatVariable(1, 2),
+        ])
+        x_unfolded, _ = design_space.unfold_x(x)
+        self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_fold_with_enum_index(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2)]
         x = np.array([[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]])
         expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
-        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+
+        design_space = DesignSpace([
+            FloatVariable(1, 2),
+            CategoricalVariable(['A', 'B']),
+        ])
+        x_folded, _ = design_space.fold_x(x)
+        self.assertListEqual(expected, x_folded.tolist())
 
     def test_fold_with_enum_index_with_list(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2)]
         expected = [[1.5, 1]]
         x = np.array([1.5, 0, 1])
-        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+
+        design_space = DesignSpace([
+            FloatVariable(1, 2),
+            CategoricalVariable(['A', 'B']),
+        ])
+        x_folded, _ = design_space.fold_x(x)
+        self.assertListEqual(expected, x_folded.tolist())
         x = [1.5, 0, 1]
-        self.assertListEqual(expected, fold_with_enum_index(xtypes, x).tolist())
+        x_folded, _ = design_space.fold_x(x)
+        self.assertListEqual(expected, x_folded.tolist())
 
     def test_cast_to_enum_value(self):
-        xlimits = [[0.0, 4.0], ["blue", "red"]]
-        x_col = 1
-        enum_indexes = [1, 1, 0, 1, 0]
+        design_space = DesignSpace([
+            FloatVariable(0, 4),
+            CategoricalVariable(['blue', 'red']),
+        ])
+        x = np.zeros((5, 2))
+        x[:, 1] = [1, 1, 0, 1, 0]
+        decoded = design_space.decode_values(x, i_dv=1)
         expected = ["red", "red", "blue", "red", "blue"]
-        self.assertListEqual(expected, cast_to_enum_value(xlimits, x_col, enum_indexes))
+        self.assertListEqual(expected, decoded)
 
     def test_unfolded_xlimits_type(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array([[-5, 5], ["2", "3"], ["4", "5"], [0, 2]])
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-        sampling = MixedIntegerSamplingMethod(LHS, xspecs, criterion="ese")
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['2', '3']),
+            CategoricalVariable(['4', '5']),
+            IntegerVariable(0, 2),
+        ])
+        sampling = MixedIntegerSamplingMethod(LHS, design_space, criterion="ese")
         doe = sampling(10)
         self.assertEqual((10, 4), doe.shape)
 
-    def test_cast_to_mixed_integer(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-
-        x = np.array([1.5, 0, 2, 1.1])
-        self.assertEqual([1.5, "blue", "long", 1], cast_to_mixed_integer(xspecs, x))
-
-    def test_encode_with_enum_index(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-
-        x = [1.5, "blue", "long", 1]
-        self.assertEqual(
-            np.array_equal(
-                np.array([1.5, 0, 2, 1]),
-                encode_with_enum_index(xspecs, x),
-            ),
-            True,
-        )
-
     def test_unfold_xlimits_with_continuous_limits(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            IntegerVariable(0, 2),
+        ])
 
-        l = unfold_xlimits_with_continuous_limits(xspecs)
+        unfolded_limits = design_space.get_unfolded_num_bounds()
         self.assertEqual(
             np.array_equal(
                 [[-5, 5], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 2]],
-                unfold_xlimits_with_continuous_limits(xspecs),
+                unfolded_limits,
             ),
             True,
         )
 
     def test_unfold_xlimits_with_continuous_limits_and_ordinal_values(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3", "4"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            OrdinalVariable(["0", "3", "4"]),
+        ])
 
-        l = unfold_xlimits_with_continuous_limits(xspecs)
-
+        unfolded_limits = design_space.get_unfolded_num_bounds()
         self.assertEqual(
             np.array_equal(
-                [[-5, 5], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 4]],
-                unfold_xlimits_with_continuous_limits(xspecs),
+                [[-5, 5], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 2]],
+                unfolded_limits,
             ),
             True,
         )
 
     def test_cast_to_discrete_values(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], [0, 4]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            IntegerVariable(0, 4),
+        ])
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
-
         self.assertEqual(
             np.array_equal(
                 np.array([[2.6, 0, 1, 0, 0, 1, 3]]),
-                cast_to_discrete_values(xspecs, True, x),
+                design_space.correct_get_acting(x)[0],
             ),
             True,
         )
 
     def test_cast_to_discrete_values_with_smooth_rounding_ordinal_values(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-
-        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "2", "4"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 1.1]])
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            OrdinalVariable(["0", "2", "4"]),
+        ])
 
         self.assertEqual(
             np.array_equal(
-                np.array([[2.6, 0, 1, 0, 0, 1, 4]]),
-                cast_to_discrete_values(xspecs, True, x),
+                np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+                design_space.correct_get_acting(x)[0],
             ),
             True,
         )
 
     def test_cast_to_discrete_values_with_hard_rounding_ordinal_values(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-
-        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "4"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, .9]])
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            OrdinalVariable(["0", "4"]),
+        ])
 
         self.assertEqual(
             np.array_equal(
-                np.array([[2.6, 0, 1, 0, 0, 1, 4]]),
-                cast_to_discrete_values(xspecs, True, x),
+                np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+                design_space.correct_get_acting(x)[0],
             ),
             True,
         )
 
     def test_cast_to_discrete_values_with_non_integer_ordinal_values(self):
-        xtypes = [XType.FLOAT, (XType.ENUM, 2), (XType.ENUM, 3), XType.ORD]
-
-        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red"], ["short", "medium", "long"], ["0", "3.5"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, .8]])
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["blue", "red"]),
+            CategoricalVariable(["short", "medium", "long"]),
+            OrdinalVariable(["0", "3.5"]),
+        ])
 
         self.assertEqual(
             np.array_equal(
-                np.array([[2.6, 0, 1, 0, 0, 1, 3.5]]),
-                cast_to_discrete_values(xspecs, True, x),
+                np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+                design_space.correct_get_acting(x)[0],
             ),
             True,
         )
@@ -755,10 +746,9 @@ class TestMixedInteger(unittest.TestCase):
         self.assertEqual(ds.n_dv, 8)
         n_doe = 100
 
-        xspecs_samp = XSpecs(xtypes=ds.get_x_types()[1:], xlimits=ds.get_x_limits()[1:])
-
+        ds_sampling = DesignSpace(ds.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs_samp, criterion="ese", random_state=42
+            LHS, ds_sampling, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
@@ -843,14 +833,15 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_gower_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-2],
                 corr="abs_exp",
                 categorical_kernel=MixIntKernelType.GOWER,
@@ -879,13 +870,15 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-2],
                 corr="abs_exp",
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -914,13 +907,15 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_hyp_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        xlimits = [["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [(XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-2],
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 corr="abs_exp",
@@ -949,12 +944,15 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_PLS(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [XType.FLOAT, (XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
+
         # Surrogate
         sm = surrogate = KPLS(
-            xspecs=xspecs,
+            design_space=design_space,
             theta0=[1e-2],
             n_comp=1,
             categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -983,12 +981,15 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_PLS_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [XType.FLOAT, (XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
+
         # Surrogate
         sm = KPLS(
-            xspecs=xspecs,
+            design_space=design_space,
             theta0=[1e-2],
             n_comp=2,
             corr="abs_exp",
@@ -1018,13 +1019,16 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_hyp_3D_PLS_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        xlimits = [[-5, 5], ["0.0", "1.0", " 2.0", "3.0", "4.0"], [-5, 5]]
-        xtypes = [XType.FLOAT, (XType.ENUM, 5), XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KPLS(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-2],
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
@@ -1054,17 +1058,16 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_ord_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        xlimits = [
-            ["0.0", "1.0", " 2.0", "3.0", "4.0"],
-            [-5, 5],
-            ["0.0", "1.0", " 2.0", "3.0"],
-        ]
-        xtypes = [(XType.ENUM, 5), XType.ORD, (XType.ENUM, 4)]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            FloatVariable(-5, 5),
+            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0"]),
+        ])
+
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KPLS(
-                xspecs=xspecs,
+                design_space=design_space,
                 theta0=[1e-2],
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -1092,10 +1095,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
     def test_mixed_gower_3D(self):
-        xtypes = [XType.FLOAT, XType.ORD, XType.ORD]
-        xlimits = [[-10, 10], [-10, 10], [-10, 10]]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-        mixint = MixedIntegerContext(xspecs)
+        design_space = DesignSpace([
+            FloatVariable(-10, 10),
+            IntegerVariable(-10, 10),
+            IntegerVariable(-10, 10),
+        ])
+        mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(
             KRG(categorical_kernel=MixIntKernelType.GOWER, print_prediction=False)

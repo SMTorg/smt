@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1208653
+     Training - done. Time (sec):  0.1229501
   ___________________________________________________________________________
      
    Evaluation
@@ -111,9 +111,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010633
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000105
      
   ___________________________________________________________________________
      
@@ -122,9 +122,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010173
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000101
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -239,20 +239,16 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
-  *  -  xspecs
+  *  -  xlimits
      -  None
      -  None
-     -  ['XSpecs']
-     -  xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
   *  -  design_space
      -  None
      -  None
-     -  ['BaseDesignSpace']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']
