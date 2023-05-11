@@ -347,8 +347,7 @@ class TestEGO(SMTestCase):
         )
         return y
 
- 
-   @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
@@ -382,7 +381,7 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
-        
+
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_CR(self):
         n_iter = 15
