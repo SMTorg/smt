@@ -349,8 +349,12 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
     Z_cat = Z[:, cat_features]
-    X_cat = Z_cat[x_index,]
-    Y_cat = Z_cat[y_index,]
+    X_cat = Z_cat[
+        x_index,
+    ]
+    Y_cat = Z_cat[
+        y_index,
+    ]
 
     # This is to normalize the numeric values between 0 and 1.
     Z_num = Z[:, np.logical_not(cat_features)]
@@ -369,8 +373,12 @@ def gower_componentwise_distances(X, xspecs, hierarchical_kernel, y=None):
         Z_max = ub
         Z_scale = Z_max - Z_offset
         Z_num = (Z_num - Z_offset) / Z_scale
-    X_num = Z_num[x_index,]
-    Y_num = Z_num[y_index,]
+    X_num = Z_num[
+        x_index,
+    ]
+    Y_num = Z_num[
+        y_index,
+    ]
 
     D_cat = compute_D_cat(X_cat, Y_cat, y)
     D_num, ij = compute_D_num(
