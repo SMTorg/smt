@@ -347,34 +347,8 @@ class TestEGO(SMTestCase):
         )
         return y
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
-    def test_ego_mixed_integer(self):
-        n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-        n_doe = 5
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        xdoe = sampling(n_doe)
-        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        ego = EGO(
-            n_iter=n_iter,
-            criterion=criterion,
-            xdoe=xdoe,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
-            enable_tunneling=False,
-            random_state=42,
-        )
-        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
-
-        self.assertAlmostEqual(-15, float(y_opt), delta=5)
-
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+ 
+   @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
@@ -408,7 +382,8 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
-
+        
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_CR(self):
         n_iter = 15
         xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
