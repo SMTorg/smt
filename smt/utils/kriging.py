@@ -20,6 +20,7 @@ try:
 
 except ImportError:  # pip install smt[numba]
     USE_NUMBA_JIT = False
+    prange = range
 
 """
 Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
