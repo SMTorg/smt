@@ -61,7 +61,7 @@ class LS(SurrogateModel):
             else:
                 self._new_train()
 
-    def _predict_values(self, x, is_acting=None):
+    def _predict_values(self, x):
         """
         Evaluates the model at a set of points.
 

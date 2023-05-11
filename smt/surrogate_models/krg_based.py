@@ -35,6 +35,7 @@ from smt.utils.kriging import (
     matrix_data_corr_levels_cat_mod_comps,
 )
 from smt.utils.misc import standardization
+from smt.utils.checks import ensure_2d_array, check_support
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 from smt.utils.design_space import BaseDesignSpace, ensure_design_space, CategoricalVariable
@@ -185,9 +186,11 @@ class KrgBased(SurrogateModel):
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
+        self.is_acting_points = {}
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
+        supports["x_hierarchy"] = True
 
     def _final_initialize(self):
         # initialize default power values
@@ -218,6 +221,26 @@ class KrgBased(SurrogateModel):
             self.options['design_space'] = ensure_design_space(xt=xt, xlimits=ds_input, design_space=ds_input)
 
         return self.options['design_space']
+
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None, is_acting=None) -> None:
+        """
+        Set training data (values).
+
+        Parameters
+        ----------
+        xt : np.ndarray[nt, nx] or np.ndarray[nt]
+            The input values for the nt training points.
+        yt : np.ndarray[nt, ny] or np.ndarray[nt]
+            The output values for the nt training points.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying which of the design variables is acting in a hierarchical design space
+        """
+        super().set_training_values(xt, yt, name=name)
+        if is_acting is not None:
+            self.is_acting_points[name] = is_acting
 
     def _new_train(self):
         # Sampling points X and y
@@ -1040,6 +1063,53 @@ class KrgBased(SurrogateModel):
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
 
+    def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+        """
+        Predict the output values at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
+
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output values at the prediction points.
+        """
+        x = ensure_2d_array(x, "x")
+        self._check_xdim(x)
+
+        if is_acting is not None:
+            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            if is_acting.shape != x.shape:
+                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+
+        n = x.shape[0]
+        x2 = np.copy(x)
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
+
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
+
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_values(x2, is_acting=is_acting)
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+        return y.reshape((n, self.ny))
+
     def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Evaluates the model at a set of points.
@@ -1181,6 +1251,36 @@ class KrgBased(SurrogateModel):
 
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
+
+    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+        """
+        Predict the variances at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
+
+        Returns
+        -------
+        s2 : np.ndarray[nt, ny]
+            Variances.
+        """
+        check_support(self, "variances")
+        x = ensure_2d_array(x, "x")
+        self._check_xdim(x)
+
+        if is_acting is not None:
+            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            if is_acting.shape != x.shape:
+                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+
+        n = x.shape[0]
+        x2 = np.copy(x)
+        s2 = self._predict_variances(x2, is_acting=is_acting)
+        return s2.reshape((n, self.ny))
 
     def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """

@@ -59,6 +59,7 @@ class SurrogateModel(metaclass=ABCMeta):
         supports["adjoint_api"] = False
         supports["variances"] = False
         supports["variance_derivatives"] = False
+        supports["x_hierarchy"] = False
 
         declare = self.options.declare
 
@@ -92,7 +93,6 @@ class SurrogateModel(metaclass=ABCMeta):
         self._initialize()
         self.options.update(kwargs)
         self.training_points = defaultdict(dict)
-        self.is_acting_points = {}
         self.printer = Printer()
         self._final_initialize()
 
@@ -101,7 +101,7 @@ class SurrogateModel(metaclass=ABCMeta):
     def name(self):
         pass
 
-    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None, is_acting=None) -> None:
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
         """
         Set training data (values).
 
@@ -114,8 +114,6 @@ class SurrogateModel(metaclass=ABCMeta):
         name : str or None
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
-        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
-            Matrix specifying which of the design variables is acting in a hierarchical design space
         """
         xt = ensure_2d_array(xt, "xt")
         yt = ensure_2d_array(yt, "yt")
@@ -130,8 +128,6 @@ class SurrogateModel(metaclass=ABCMeta):
         self.ny = yt.shape[1]
         kx = 0
         self.training_points[name][kx] = [np.array(xt), np.array(yt)]
-        if is_acting is not None:
-            self.is_acting_points[name] = is_acting
 
     def update_training_values(
         self, yt: np.ndarray, name: Optional[str] = None
@@ -276,7 +272,7 @@ class SurrogateModel(metaclass=ABCMeta):
         with self.printer._timed_context("Training", "training"):
             self._train()
 
-    def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the output values at a set of points.
 
@@ -284,8 +280,6 @@ class SurrogateModel(metaclass=ABCMeta):
         ----------
         x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
-        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
-            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------
@@ -294,11 +288,6 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
-
-        if is_acting is not None:
-            is_acting = ensure_2d_array(is_acting, 'is_acting')
-            if is_acting.shape != x.shape:
-                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
 
         n = x.shape[0]
         x2 = np.copy(x)
@@ -316,7 +305,7 @@ class SurrogateModel(metaclass=ABCMeta):
 
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
-            y = self._predict_values(x2, is_acting=is_acting)
+            y = self._predict_values(x2)
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
@@ -388,7 +377,7 @@ class SurrogateModel(metaclass=ABCMeta):
         dy_dyt = self._predict_output_derivatives(x)
         return dy_dyt
 
-    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -396,8 +385,6 @@ class SurrogateModel(metaclass=ABCMeta):
         ----------
         x : np.ndarray[nt, nx] or np.ndarray[nt]
             Input values for the prediction points.
-        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
-            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------
@@ -408,14 +395,9 @@ class SurrogateModel(metaclass=ABCMeta):
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
 
-        if is_acting is not None:
-            is_acting = ensure_2d_array(is_acting, 'is_acting')
-            if is_acting.shape != x.shape:
-                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
-
         n = x.shape[0]
         x2 = np.copy(x)
-        s2 = self._predict_variances(x2, is_acting=is_acting)
+        s2 = self._predict_variances(x2)
         return s2.reshape((n, self.ny))
 
     def predict_variance_derivatives(self, x, kx):
@@ -483,7 +465,7 @@ class SurrogateModel(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_values(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the output values.
 
@@ -491,8 +473,6 @@ class SurrogateModel(metaclass=ABCMeta):
         ----------
         x : np.ndarray[nt, nx]
             Input values for the prediction points.
-        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
-            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------
@@ -551,7 +531,7 @@ class SurrogateModel(metaclass=ABCMeta):
         check_support(self, "output_derivatives", fail=True)
         return {}
 
-    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Implemented by surrogate models to predict the variances at a set of points (optional).
 

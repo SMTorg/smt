@@ -116,23 +116,20 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     def _initialize(self):
         self.supports["derivatives"] = False
 
-    def set_training_values(self, xt, yt, name=None, is_acting=None) -> None:
+    def set_training_values(self, xt, yt, name=None) -> None:
         xt = ensure_2d_array(xt, "xt")
 
-        # Assume input is not corrected if is_acting is not provided
+        # Round inputs
         design_space = self.design_space
-        if is_acting is None:
-            xt, is_acting = design_space.correct_get_acting(xt)
-        if not np.all(is_acting):
-            raise ValueError(f'Hierarchical design spaces are not supported, use MixedIntegerKrigingModel instead!')
+        xt, _ = design_space.correct_get_acting(xt)
 
         if self._input_in_folded_space:
-            xt_apply, is_acting_apply = design_space.unfold_x(xt, is_acting)
+            xt_apply, _ = design_space.unfold_x(xt)
         else:
-            xt_apply, is_acting_apply = xt, is_acting
+            xt_apply = xt
 
-        super().set_training_values(xt_apply, yt, is_acting=is_acting_apply)
-        self._surrogate.set_training_values(xt_apply, yt, name, is_acting=is_acting_apply)
+        super().set_training_values(xt_apply, yt)
+        self._surrogate.set_training_values(xt_apply, yt, name)
 
     def update_training_values(self, yt, name=None):
         super().update_training_values(yt, name)
@@ -141,13 +138,13 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     def _train(self):
         self._surrogate._train()
 
-    def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_values(self, x: np.ndarray) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
-        return self._surrogate.predict_values(x_corr, is_acting=is_acting)
+        return self._surrogate.predict_values(x_corr)
 
-    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_variances(self, x: np.ndarray) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
-        return self._surrogate.predict_variances(x_corr, is_acting=is_acting)
+        return self._surrogate.predict_variances(x_corr)
 
     def _get_x_for_surrogate_model(self, x):
         xp = ensure_2d_array(x, "xp")
@@ -157,7 +154,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
             x_corr, is_acting = self.design_space.unfold_x(x_corr, is_acting=is_acting)
         return x_corr, is_acting
 
-    def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_values(self, x: np.ndarray) -> np.ndarray:
         pass
 
 
