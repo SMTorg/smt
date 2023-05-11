@@ -409,6 +409,40 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, float(y_opt), delta=5)
 
+    def test_ego_mixed_integer_CR(self):
+        n_iter = 15
+        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
+        xlimits = np.array(
+            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
+            dtype="object",
+        )
+        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        n_doe = 5
+        sampling = MixedIntegerSamplingMethod(
+            LHS,
+            xspecs=xspecs,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            surrogate=KRG(
+                xspecs=xspecs,
+                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                print_global=False,
+            ),
+            enable_tunneling=False,
+            random_state=42,
+        )
+        _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
+
+        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_NN(self):
         def f_neu(x1, x2, x3, x4):
