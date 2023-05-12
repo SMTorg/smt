@@ -25,11 +25,10 @@ except ImportError:  # pip install smt[numba]
 """
 Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
 
-| Scenario                 | No numba | Numba    | Numba with caching | Speedup | Overhead |
-|--------------------------|----------|----------|--------------------|---------|----------|
-| HGoldstein 15 pt DoE     | 1.3 sec  | 7.8 sec  | 1.1 sec            | 15%     | 6.7 sec  |
-| HGoldstein 15 pt DoE x10 | 12.1 sec | 16.7 sec | 10.3 sec           | 15%     | 6.4 sec  |
-| HGoldstein 150 pt DoE    | 38 sec   | 13.8 sec | 6.6 sec            | 83%     | 7.2 sec  |
+| Scenario                 | No numba | Numba   | Numba with caching | Speedup | Overhead |
+|--------------------------|----------|---------|--------------------|---------|----------|
+| HGoldstein 15 pt DoE     | 1.3 sec  | ~25 sec | 1.1 sec            | 15%     | 24 sec   |
+| HGoldstein 150 pt DoE    | 38 sec   | ~29 sec | 7.4 sec            | 80%     | 23 sec   |
 
 Important to note: caching is only needed once after installation of smt, so users will only
 experience this overhead ONCE --> the rest of the time they use smt it will be faster than without numba!
