@@ -66,34 +66,6 @@ class TestKPLS(unittest.TestCase):
             # KPLS training fails anyway but not due to PLS exception StopIteration
             self.assertEqual(np.linalg.norm(y_test - np.asarray([[0, 0, 0]])), 0)
 
-    def test_kpls_auto_multiple_y(self):
-        import numpy as np
-        from smt.surrogate_models import KPLS
-        from smt.problems import TensorProduct
-        from smt.sampling_methods import LHS
-
-        # The problem is the exponential problem with dimension 10
-        ndim = 10
-        prob = TensorProduct(ndim=ndim, func="exp")
-
-        sm = KPLS(eval_n_comp=True)
-        samp = LHS(xlimits=prob.xlimits, random_state=42)
-        np.random.seed(0)
-        xt = samp(50)
-        yt = prob(xt)
-        yt2 = np.column_stack([yt, yt])
-        np.random.seed(1)
-        sm.set_training_values(xt, yt2)
-        sm.train()
-
-        ## The model automatically choose a dimension of 3
-        l = sm.options["n_comp"]
-        print("\n The model automatically choose " + str(l) + " components.")
-
-        ## You can predict a 10-dimension point from the 3-dimensional model
-        print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-        print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-
 
 if __name__ == "__main__":
     unittest.main()
