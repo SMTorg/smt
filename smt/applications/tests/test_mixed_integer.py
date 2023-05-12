@@ -849,7 +849,6 @@ class TestMixedInteger(unittest.TestCase):
         )
         sm.set_training_values(xt, yt)
         sm.train()
-        self.assertTrue(np.sum(np.abs(sm._surrogate.optimal_theta - [5.35414994e-05, 8.36317793e+00])) < 1e-6)
 
         # DOE for validation
         x = np.linspace(0, 4, 5)

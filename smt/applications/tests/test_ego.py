@@ -361,7 +361,7 @@ class TestEGO(SMTestCase):
             CategoricalVariable(['blue', 'red', 'green']),
             CategoricalVariable(['large', 'small']),
             OrdinalVariable([0, 2, 3]),
-        ])
+        ], seed=42)
         xdoe, _ = design_space.sample_valid_x(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -459,8 +459,9 @@ class TestEGO(SMTestCase):
 
         n_doe = 4
 
+        neutral_var_ds = DesignSpace(design_space.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
-            LHS, design_space, criterion="ese", random_state=42
+            LHS, neutral_var_ds, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
