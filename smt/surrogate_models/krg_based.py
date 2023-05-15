@@ -469,7 +469,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
-            X_pls_space, _ = design_space.unfold_x(x)
+            X_pls_space, _ = design_space.unfold_x(X)
             nx = len(theta)
 
         elif cat_kernel == MixIntKernelType.GOWER:
