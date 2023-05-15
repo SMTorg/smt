@@ -88,7 +88,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "categorical_kernel",
-            None,
+            MixIntKernelType.CONT_RELAX,
             values=[
                 MixIntKernelType.CONT_RELAX,
                 MixIntKernelType.GOWER,
@@ -202,24 +202,23 @@ class KrgBased(SurrogateModel):
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
-            if self.options["categorical_kernel"] is None:
+            if self.options["categorical_kernel"] is MixIntKernelType.CONT_RELAX:
                 X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
         self.X_train = X
 
-        if self.options["categorical_kernel"] is not None:
-            D, self.ij, X = gower_componentwise_distances(
-                X=X,
-                xspecs=self.options["xspecs"],
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-            )
-            self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
-            )
-            _, self.cat_features = compute_X_cont(
-                self.X_train, self.options["xspecs"].types
-            )
+        D, self.ij, X = gower_componentwise_distances(
+            X=X,
+            xspecs=self.options["xspecs"],
+            hierarchical_kernel=self.options["hierarchical_kernel"],
+        )
+        self.Lij, self.n_levels = cross_levels(
+            X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
+        )
+        _, self.cat_features = compute_X_cont(
+            self.X_train, self.options["xspecs"].types
+        )
         # Center and scale X and y
         (
             self.X_norma,
@@ -253,7 +252,7 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if self.options["categorical_kernel"] is None:
+        if self.options["categorical_kernel"] is MixIntKernelType.CONT_RELAX:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -638,40 +637,35 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] is not None:
-            dx = self.D
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                from smt.applications.mixed_integer import unfold_with_enum_mask
+        dx = self.D
+        if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+            from smt.applications.mixed_integer import unfold_with_enum_mask
 
-                X2 = unfold_with_enum_mask(
-                    self.options["xspecs"].types, self.training_points[None][0][0]
-                )
-                (
-                    self.X2_norma,
-                    _,
-                    self.X2_offset,
-                    _,
-                    self.X2_scale,
-                    _,
-                ) = standardization(X2, self.training_points[None][0][1])
-                dx, _ = cross_distances(self.X2_norma)
-
-            r = self._matrix_data_corr(
-                corr=self.options["corr"],
-                xtypes=self.options["xspecs"].types,
-                power=self.options["pow_exp_power"],
-                theta=theta,
-                theta_bounds=self.options["theta_bounds"],
-                dx=dx,
-                Lij=self.Lij,
-                n_levels=self.n_levels,
-                cat_features=self.cat_features,
-                cat_kernel=self.options["categorical_kernel"],
-            ).reshape(-1, 1)
-        else:
-            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
-                -1, 1
+            X2 = unfold_with_enum_mask(
+                self.options["xspecs"].types, self.training_points[None][0][0]
             )
+            (
+                self.X2_norma,
+                _,
+                self.X2_offset,
+                _,
+                self.X2_scale,
+                _,
+            ) = standardization(X2, self.training_points[None][0][1])
+            dx, _ = cross_distances(self.X2_norma)
+
+        r = self._matrix_data_corr(
+            corr=self.options["corr"],
+            xtypes=self.options["xspecs"].types,
+            power=self.options["pow_exp_power"],
+            theta=theta,
+            theta_bounds=self.options["theta_bounds"],
+            dx=dx,
+            Lij=self.Lij,
+            n_levels=self.n_levels,
+            cat_features=self.cat_features,
+            cat_kernel=self.options["categorical_kernel"],
+        ).reshape(-1, 1)
 
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
@@ -1065,60 +1059,48 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, n_features_x = x.shape
 
-        if self.options["categorical_kernel"] is not None:
-            dx = gower_componentwise_distances(
-                x,
-                xspecs=self.options["xspecs"],
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-                y=np.copy(self.X_train),
-            )
+        dx = gower_componentwise_distances(
+            x,
+            xspecs=self.options["xspecs"],
+            hierarchical_kernel=self.options["hierarchical_kernel"],
+            y=np.copy(self.X_train),
+        )
 
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                power=self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
-            if self.options["categorical_kernel"] is not None:
-                _, ij = cross_distances(x, self.X_train)
-                Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
-                )
-                self.ij = ij
-                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
-                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                    # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                r = self._matrix_data_corr(
-                    corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
-                    power=self.options["pow_exp_power"],
-                    theta=self.optimal_theta,
-                    theta_bounds=self.options["theta_bounds"],
-                    dx=dx,
-                    Lij=Lij,
-                    n_levels=self.n_levels,
-                    cat_features=self.cat_features,
-                    cat_kernel=self.options["categorical_kernel"],
-                    x=x,
-                ).reshape(n_eval, self.nt)
-
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
-            X_cont = (X_cont - self.X_offset) / self.X_scale
-
-        else:
-            X_cont = (x - self.X_offset) / self.X_scale
+        d = componentwise_distance(
+            dx,
+            self.options["corr"],
+            self.nx,
+            power=self.options["pow_exp_power"],
+            theta=None,
+            return_derivative=False,
+        )
+        _, ij = cross_distances(x, self.X_train)
+        Lij, _ = cross_levels(
+            X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+        )
+        self.ij = ij
+        if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+            Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+            Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
             # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(X_cont, Y=self.X_norma.copy())
-            d = self._componentwise_distance(dx)
-            # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
-            y = np.zeros(n_eval)
+            dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+        r = self._matrix_data_corr(
+            corr=self.options["corr"],
+            xtypes=self.options["xspecs"].types,
+            power=self.options["pow_exp_power"],
+            theta=self.optimal_theta,
+            theta_bounds=self.options["theta_bounds"],
+            dx=dx,
+            Lij=Lij,
+            n_levels=self.n_levels,
+            cat_features=self.cat_features,
+            cat_kernel=self.options["categorical_kernel"],
+            x=x,
+        ).reshape(n_eval, self.nt)
+
+        X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+        X_cont = (X_cont - self.X_offset) / self.X_scale
+
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
@@ -1199,60 +1181,48 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         X_cont = x
 
-        if self.options["categorical_kernel"] is not None:
-            dx = gower_componentwise_distances(
-                x,
-                xspecs=self.options["xspecs"],
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-                y=np.copy(self.X_train),
-            )
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
-            if self.options["categorical_kernel"] is not None:
-                _, ij = cross_distances(x, self.X_train)
-                Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
-                )
-                self.ij = ij
-                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    from smt.applications.mixed_integer import unfold_with_enum_mask
+        dx = gower_componentwise_distances(
+            x,
+            xspecs=self.options["xspecs"],
+            hierarchical_kernel=self.options["hierarchical_kernel"],
+            y=np.copy(self.X_train),
+        )
+        d = componentwise_distance(
+            dx,
+            self.options["corr"],
+            self.nx,
+            self.options["pow_exp_power"],
+            theta=None,
+            return_derivative=False,
+        )
+        _, ij = cross_distances(x, self.X_train)
+        Lij, _ = cross_levels(
+            X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+        )
+        self.ij = ij
+        if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+            from smt.applications.mixed_integer import unfold_with_enum_mask
 
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
-                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+            Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+            Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
 
-                    # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                r = self._matrix_data_corr(
-                    corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
-                    power=self.options["pow_exp_power"],
-                    theta=self.optimal_theta,
-                    theta_bounds=self.options["theta_bounds"],
-                    dx=dx,
-                    Lij=Lij,
-                    n_levels=self.n_levels,
-                    cat_features=self.cat_features,
-                    cat_kernel=self.options["categorical_kernel"],
-                    x=x,
-                ).reshape(n_eval, self.nt)
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
-            X_cont = (X_cont - self.X_offset) / self.X_scale
-        else:
-            x = (x - self.X_offset) / self.X_scale
-            X_cont = np.copy(x)
             # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(x, Y=self.X_norma.copy())
-            d = self._componentwise_distance(dx)
-            # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+            dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+        r = self._matrix_data_corr(
+            corr=self.options["corr"],
+            xtypes=self.options["xspecs"].types,
+            power=self.options["pow_exp_power"],
+            theta=self.optimal_theta,
+            theta_bounds=self.options["theta_bounds"],
+            dx=dx,
+            Lij=Lij,
+            n_levels=self.n_levels,
+            cat_features=self.cat_features,
+            cat_kernel=self.options["categorical_kernel"],
+            x=x,
+        ).reshape(n_eval, self.nt)
+        X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+        X_cont = (X_cont - self.X_offset) / self.X_scale
 
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
