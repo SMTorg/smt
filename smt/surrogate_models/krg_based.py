@@ -1624,7 +1624,7 @@ class KrgBased(SurrogateModel):
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
         if (self.options["xspecs"] is None) and (
-            self.options["categorical_kernel"] is not None
+            self.options["categorical_kernel"] is not MixIntKernelType.CONT_RELAX
         ):
             raise ValueError("xspecs required for mixed integer Kriging")
 
@@ -1651,11 +1651,9 @@ class KrgBased(SurrogateModel):
             if "cat_kernel_comps" in self.options
             else None
         )
-        if self.options["categorical_kernel"] in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.HOMO_HSPHERE,
-            MixIntKernelType.CONT_RELAX,
-        ]:
+        n_param = self.nx
+
+        if hasattr(self.options["xspecs"], "types"):
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
                 self.options["xspecs"].types,
@@ -1672,16 +1670,16 @@ class KrgBased(SurrogateModel):
             "categorical_kernel"
         ] not in [
             MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.CONT_RELAX,
             MixIntKernelType.HOMO_HSPHERE,
         ]:
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
-                raise ValueError(
-                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                    % (len(self.options["theta0"]), d)
-                )
+                if not (hasattr(self.options["xspecs"], "types")):
+                    raise ValueError(
+                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                        % (len(self.options["theta0"]), d)
+                    )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:
@@ -1754,7 +1752,8 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-
+    if cat_kernel == MixIntKernelType.GOWER:
+        return n_param
     for i, xtyp in enumerate(xtypes):
         if isinstance(xtyp, tuple):
             if nx == d:
