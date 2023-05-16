@@ -1031,7 +1031,7 @@ class TestEGO(SMTestCase):
             design_space=design_space, categorical_kernel=MixIntKernelType.GOWER, print_global=False
         )
         mixint = MixedIntegerContext(design_space)
-        n_doe = 3
+        n_doe = 15
         sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
