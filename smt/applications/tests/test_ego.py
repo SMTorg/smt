@@ -648,7 +648,7 @@ class TestEGO(SMTestCase):
         # x8 is acting if meta == 0, 1
         ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
 
-        n_doe = 15
+        n_doe = 25
         Xt, x_is_active = ds.sample_valid_x(n_doe)
 
         n_iter = 5
