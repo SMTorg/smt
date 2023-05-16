@@ -175,6 +175,14 @@ class BaseDesignSpace:
         return self._is_cat_mask
 
     @property
+    def is_all_cont(self) -> bool:
+        """Whether or not the space is continuous"""
+        is_continuous = all(
+            isinstance(dv, FloatVariable) for dv in self.design_variables
+        )
+        return is_continuous
+
+    @property
     def is_conditionally_acting(self) -> np.ndarray:
         """Boolean mask specifying for each design variable whether it is conditionally acting (can be non-acting)"""
         if self._is_conditionally_acting_mask is None:

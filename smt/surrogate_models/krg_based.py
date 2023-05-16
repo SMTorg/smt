@@ -38,8 +38,11 @@ from smt.utils.misc import standardization
 from smt.utils.checks import ensure_2d_array, check_support
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from smt.utils.design_space import BaseDesignSpace, ensure_design_space, CategoricalVariable
-
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    ensure_design_space,
+    CategoricalVariable,
+)
 
 class MixIntKernelType(Enum):
     EXP_HOMO_HSPHERE = 'EXP_HOMO_HSPHERE'
@@ -94,7 +97,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "categorical_kernel",
-            None,
+            MixIntKernelType.CONT_RELAX,
             values=[
                 MixIntKernelType.CONT_RELAX,
                 MixIntKernelType.GOWER,
@@ -215,14 +218,21 @@ class KrgBased(SurrogateModel):
 
         if self.options['design_space'] is None:
             self.options['design_space'] = ensure_design_space(xt=xt)
+            
+        elif not isinstance(self.options["design_space"], BaseDesignSpace):
+            ds_input = self.options["design_space"]
+            self.options["design_space"] = ensure_design_space(
+                xt=xt, xlimits=ds_input, design_space=ds_input
+            )
+        return self.options["design_space"]
 
-        elif not isinstance(self.options['design_space'], BaseDesignSpace):
-            ds_input = self.options['design_space']
-            self.options['design_space'] = ensure_design_space(xt=xt, xlimits=ds_input, design_space=ds_input)
+    @property
+    def is_continuous(self) -> bool:
+        return self.design_space.is_all_cont
 
-        return self.options['design_space']
-
-    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None, is_acting=None) -> None:
+    def set_training_values(
+        self, xt: np.ndarray, yt: np.ndarray, name=None, is_acting=None
+    ) -> None:
         """
         Set training data (values).
 
@@ -246,7 +256,6 @@ class KrgBased(SurrogateModel):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
-
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
         if is_acting is None:
@@ -256,7 +265,7 @@ class KrgBased(SurrogateModel):
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
-            if self.options["categorical_kernel"] is None:
+            if self.is_continuous:
                 X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
@@ -264,7 +273,7 @@ class KrgBased(SurrogateModel):
         self.is_acting_train = is_acting
         self._corr_params = None
 
-        if self.options["categorical_kernel"] is not None:
+        if not (self.is_continuous):
             D, self.ij, X = gower_componentwise_distances(
                 X=X,
                 x_is_acting=is_acting,
@@ -310,7 +319,7 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if self.options["categorical_kernel"] is None:
+        if self.is_continuous:
             # Calculate matrix of distances D between samples
             D, self.ij = cross_distances(self.X_norma)
 
@@ -657,7 +666,7 @@ class KrgBased(SurrogateModel):
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             theta = tmp_var[0 : self.D.shape[1]]
             noise = tmp_var[self.D.shape[1] :]
-        if self.options["categorical_kernel"] is not None:
+        if not (self.is_continuous):
             dx = self.D
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
@@ -1131,7 +1140,7 @@ class KrgBased(SurrogateModel):
             x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
 
-        if self.options["categorical_kernel"] is not None:
+        if not (self.is_continuous):
             dx = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
@@ -1140,40 +1149,30 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
+            _, ij = cross_distances(x, self.X_train)
+            Lij, _ = cross_levels(
+                X=x, ij=ij, design_space=self.design_space, y=self.X_train
+            )
+            self.ij = ij
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                # Get pairwise componentwise L1-distances to the input training set
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
 
-            # d = componentwise_distance(
-            #     dx,
-            #     self.options["corr"],
-            #     self.nx,
-            #     power=self.options["pow_exp_power"],
-            #     theta=None,
-            #     return_derivative=False,
-            # )
-            if self.options["categorical_kernel"] is not None:
-                _, ij = cross_distances(x, self.X_train)
-                Lij, _ = cross_levels(
-                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
-                )
-                self.ij = ij
-                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred, _ = self.design_space.unfold_x(x)
-                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                    # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-
-                r = self._matrix_data_corr(
-                    corr=self.options["corr"],
-                    design_space=self.design_space,
-                    power=self.options["pow_exp_power"],
-                    theta=self.optimal_theta,
-                    theta_bounds=self.options["theta_bounds"],
-                    dx=dx,
-                    Lij=Lij,
-                    n_levels=self.n_levels,
-                    cat_features=self.cat_features,
-                    cat_kernel=self.options["categorical_kernel"],
-                    x=x,
-                ).reshape(n_eval, self.nt)
+            r = self._matrix_data_corr(
+                corr=self.options["corr"],
+                design_space=self.design_space,
+                power=self.options["pow_exp_power"],
+                theta=self.optimal_theta,
+                theta_bounds=self.options["theta_bounds"],
+                dx=dx,
+                Lij=Lij,
+                n_levels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+                x=x,
+            ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1302,7 +1301,7 @@ class KrgBased(SurrogateModel):
         n_eval, n_features_x = x.shape
         X_cont = x
 
-        if self.options["categorical_kernel"] is not None:
+        if not (self.is_continuous):
             dx = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
@@ -1311,40 +1310,31 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
-            # d = componentwise_distance(
-            #     dx,
-            #     self.options["corr"],
-            #     self.nx,
-            #     self.options["pow_exp_power"],
-            #     theta=None,
-            #     return_derivative=False,
-            # )
-            if self.options["categorical_kernel"] is not None:
-                _, ij = cross_distances(x, self.X_train)
-                Lij, _ = cross_levels(
-                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
-                )
-                self.ij = ij
-                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred, _ = self.design_space.unfold_x(x)
-                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+            _, ij = cross_distances(x, self.X_train)
+            Lij, _ = cross_levels(
+                X=x, ij=ij, design_space=self.design_space, y=self.X_train
+            )
+            self.ij = ij
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
 
-                    # Get pairwise componentwise L1-distances to the input training set
-                    dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                # Get pairwise componentwise L1-distances to the input training set
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
 
-                r = self._matrix_data_corr(
-                    corr=self.options["corr"],
-                    design_space=self.design_space,
-                    power=self.options["pow_exp_power"],
-                    theta=self.optimal_theta,
-                    theta_bounds=self.options["theta_bounds"],
-                    dx=dx,
-                    Lij=Lij,
-                    n_levels=self.n_levels,
-                    cat_features=self.cat_features,
-                    cat_kernel=self.options["categorical_kernel"],
-                    x=x,
-                ).reshape(n_eval, self.nt)
+            r = self._matrix_data_corr(
+                corr=self.options["corr"],
+                design_space=self.design_space,
+                power=self.options["pow_exp_power"],
+                theta=self.optimal_theta,
+                theta_bounds=self.options["theta_bounds"],
+                dx=dx,
+                Lij=Lij,
+                n_levels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+                x=x,
+            ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1570,7 +1560,7 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = np.log10(self.theta0)
 
-            if self.options["categorical_kernel"]:
+            if not (self.is_continuous):
                 self.D = D
             else:
                 ##from abs distance to kernel distance
@@ -1762,12 +1752,6 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
-
-        if self.options['design_space'] is None and (
-            self.options["categorical_kernel"] is not None
-        ):
-            raise ValueError("Design space definition (design_space) required for mixed integer Kriging")
-
         if self.name in ["KPLS"]:
             if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
                 raise ValueError(
@@ -1791,29 +1775,22 @@ class KrgBased(SurrogateModel):
             if "cat_kernel_comps" in self.options
             else None
         )
-        if self.options["categorical_kernel"] in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.HOMO_HSPHERE,
-            MixIntKernelType.CONT_RELAX,
-        ]:
-            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
-            n_param = compute_n_param(
-                self.design_space,
-                self.options["categorical_kernel"],
-                d,
-                n_comp,
-                mat_dim,
-            )
 
-            self.options["theta0"] *= np.ones(n_param)
+        n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+        n_param = compute_n_param(
+            self.design_space,
+            self.options["categorical_kernel"],
+            d,
+            n_comp,
+            mat_dim,
+        )
 
-        if len(self.options["theta0"]) != d and self.options[
-            "categorical_kernel"
-        ] not in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.CONT_RELAX,
-            MixIntKernelType.HOMO_HSPHERE,
-        ]:
+        self.options["theta0"] *= np.ones(n_param)
+
+        if len(self.options["theta0"]) != d and (
+            self.options["categorical_kernel"] == MixIntKernelType.GOWER
+            or self.is_continuous
+        ):
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
@@ -1891,7 +1868,8 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-
+    if cat_kernel == MixIntKernelType.GOWER:
+        return n_param
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
             n_values = dv.n_values

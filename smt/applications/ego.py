@@ -165,8 +165,6 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            if self.mixint and not (self.work_in_folded_space):
-                x_to_compute, _ = self.design_space.fold_x(x_to_compute)
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
 
@@ -174,11 +172,6 @@ class EGO(SurrogateBasedApplication):
         ind_best = np.argmin(y_data if y_data.ndim == 1 else y_data[:, 0])
         x_opt = x_data[ind_best]
         y_opt = y_data[ind_best]
-
-        if self.mixint and not (self.work_in_folded_space):
-            x_opt, _ = self.design_space.fold_x(x_opt)
-            x_opt = x_opt[0]
-
         return x_opt, y_opt, ind_best, x_data, y_data
 
     def log(self, msg):
@@ -250,25 +243,21 @@ class EGO(SurrogateBasedApplication):
             self.design_space.seed = self.options['random_state']
 
         # Handle mixed integer optimization
-        self.work_in_folded_space = self.gpr.options["categorical_kernel"] is not None
-
-        is_continuous = all(isinstance(dv, FloatVariable) for dv in self.design_space.design_variables)
+        is_continuous = self.design_space.is_all_cont
         if not is_continuous:
             self.categorical_kernel = self.gpr.options["categorical_kernel"]
             self.mixint = MixedIntegerContext(
                 self.design_space,
-                work_in_folded_space=self.work_in_folded_space,
+                work_in_folded_space=True,
             )
 
             underlying_gpr = self.gpr
             self.gpr = self.mixint.build_kriging_model(self.gpr)
 
-            # Recreated mixed integer context because the "work_in_folded_space" status might have changed
             self.categorical_kernel = underlying_gpr.options["categorical_kernel"]
-            self.work_in_folded_space = self.categorical_kernel is not None
             self.mixint = MixedIntegerContext(
                 self.design_space,
-                work_in_folded_space=self.work_in_folded_space,
+                work_in_folded_space=True,
             )
             self._sampling = self.mixint.build_sampling_method()
 
@@ -287,8 +276,6 @@ class EGO(SurrogateBasedApplication):
         else:
             self.log("Initial DOE given")
             x_doe = np.atleast_2d(xdoe)
-            if self.mixint and not (self.work_in_folded_space):
-                x_doe, _ = self.design_space.unfold_x(xdoe)
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
@@ -331,17 +318,13 @@ class EGO(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
         if self.mixint:
-            if self.work_in_folded_space:
-                bounds = self.design_space.get_num_bounds()
-            else:
-                bounds = self.design_space.get_unfolded_num_bounds()
+            bounds = self.design_space.get_num_bounds()
             method = "COBYLA"
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
-                if self.work_in_folded_space:
-                    if isinstance(self.design_space.design_variables, CategoricalVariable):
-                        upper = int(upper - 1)
+                if isinstance(self.design_space.design_variables, CategoricalVariable):
+                    upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
