@@ -182,6 +182,7 @@ class TestEGO(SMTestCase):
             surrogate=KRG(design_space=design_space, print_global=False),
             n_iter=n_iter,
             criterion=criterion,
+            n_doe=10,
             random_state=42,
         )
 
