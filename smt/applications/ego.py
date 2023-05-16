@@ -323,8 +323,6 @@ class EGO(SurrogateBasedApplication):
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
-                if isinstance(self.design_space.design_variables, CategoricalVariable):
-                    upper = int(upper - 1)
                 l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
