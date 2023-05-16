@@ -24,6 +24,7 @@ class ReducedProblem(Problem):
         w : float
             The value to use for all unaccounted for inputs where 0/1 is lower/upper bound.
         """
+        super().__init__()
         self.problem = problem
         self.w = w
 

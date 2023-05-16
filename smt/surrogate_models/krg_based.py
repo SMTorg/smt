@@ -29,17 +29,23 @@ from smt.utils.kriging import (
     cross_levels,
     compute_X_cross,
     cross_levels_homo_space,
-    XSpecs,
     MixHrcKernelType,
+    matrix_data_corr_levels_cat_matrix,
+    matrix_data_corr_levels_cat_mod,
+    matrix_data_corr_levels_cat_mod_comps,
 )
 from smt.utils.misc import standardization
+from smt.utils.checks import ensure_2d_array, check_support
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from smt.utils.mixed_integer import unfold_with_enum_mask
+from smt.utils.design_space import BaseDesignSpace, ensure_design_space, CategoricalVariable
 
-MixIntKernelType = Enum(
-    "MixIntKernelType", ["EXP_HOMO_HSPHERE", "HOMO_HSPHERE", "CONT_RELAX", "GOWER"]
-)
+
+class MixIntKernelType(Enum):
+    EXP_HOMO_HSPHERE = 'EXP_HOMO_HSPHERE'
+    HOMO_HSPHERE = 'HOMO_HSPHERE'
+    CONT_RELAX = 'CONT_RELAX'
+    GOWER = 'GOWER'
 
 
 class KrgBased(SurrogateModel):
@@ -165,20 +171,26 @@ class KrgBased(SurrogateModel):
             desc="number of optimizer runs (multistart method)",
         )
         declare(
-            "xspecs",
+            'xlimits',
             None,
-            types=XSpecs,
-            desc="""xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features""",
+            types=(list, np.ndarray),
+            desc="definition of a design space of float (continuous) variables: "
+                 "array-like of size nx x 2 (lower, upper bounds)"
+        )
+        declare(
+            "design_space",
+            None,
+            types=(BaseDesignSpace, list, np.ndarray),
+            desc="definition of the (hierarchical) design space: "
+                 "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds"
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
+        self.is_acting_points = {}
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
+        supports["x_hierarchy"] = True
 
     def _final_initialize(self):
         # initialize default power values
@@ -195,10 +207,52 @@ class KrgBased(SurrogateModel):
             % self.options["pow_exp_power"]
         )
 
+    @property
+    def design_space(self) -> BaseDesignSpace:
+        xt = self.training_points.get(None)
+        if xt is not None:
+            xt = xt[0][0]
+
+        if self.options['design_space'] is None:
+            self.options['design_space'] = ensure_design_space(xt=xt)
+
+        elif not isinstance(self.options['design_space'], BaseDesignSpace):
+            ds_input = self.options['design_space']
+            self.options['design_space'] = ensure_design_space(xt=xt, xlimits=ds_input, design_space=ds_input)
+
+        return self.options['design_space']
+
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None, is_acting=None) -> None:
+        """
+        Set training data (values).
+
+        Parameters
+        ----------
+        xt : np.ndarray[nt, nx] or np.ndarray[nt]
+            The input values for the nt training points.
+        yt : np.ndarray[nt, ny] or np.ndarray[nt]
+            The output values for the nt training points.
+        name : str or None
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying which of the design variables is acting in a hierarchical design space
+        """
+        super().set_training_values(xt, yt, name=name)
+        if is_acting is not None:
+            self.is_acting_points[name] = is_acting
+
     def _new_train(self):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
+
+        # Get is_acting status from design space model if needed (might correct training points)
+        is_acting = self.is_acting_points.get(None)
+        if is_acting is None:
+            X, is_acting = self.design_space.correct_get_acting(X)
+            self.training_points[None][0][0] = X
+            self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
         if self.name not in ["Kriging", "MGP"]:
@@ -207,18 +261,21 @@ class KrgBased(SurrogateModel):
 
         self._check_param()
         self.X_train = X
+        self.is_acting_train = is_acting
+        self._corr_params = None
 
         if self.options["categorical_kernel"] is not None:
             D, self.ij, X = gower_componentwise_distances(
                 X=X,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, xtypes=self.options["xspecs"].types
+                X=self.X_train, ij=self.ij, design_space=self.design_space
             )
             _, self.cat_features = compute_X_cont(
-                self.X_train, self.options["xspecs"].types
+                self.X_train, self.design_space
             )
         # Center and scale X and y
         (
@@ -295,10 +352,66 @@ class KrgBased(SurrogateModel):
 
         self._new_train()
 
+    def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
+        if self._corr_params is not None:
+            return self._corr_params
+
+        nx = self.nx
+        try:
+            cat_kernel_comps = self.options["cat_kernel_comps"]
+            if cat_kernel_comps is not None:
+                n_levels = np.array(cat_kernel_comps)
+        except KeyError:
+            cat_kernel_comps = None
+        try:
+            ncomp = self.options["n_comp"]
+            try:
+                self.pls_coeff_cont
+            except AttributeError:
+                self.pls_coeff_cont = []
+        except KeyError:
+            cat_kernel_comps = None
+            ncomp = 1e5
+
+        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
+        theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
+        i = 0
+        j = 0
+        n_theta_cont = 0
+        for feat in cat_features:
+            if feat:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
+                    # theta_cont_features[
+                    #     j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
+                    # ] = False  # Matrix is already False
+                    theta_cat_features[
+                        j : j + int(n_levels[i] * (n_levels[i] - 1) / 2), i
+                    ] = [True] * int(n_levels[i] * (n_levels[i] - 1) / 2)
+                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)
+                i += 1
+            else:
+                if cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]:
+                    if n_theta_cont < ncomp:
+                        theta_cont_features[j] = True
+                        j += 1
+                        n_theta_cont += 1
+
+        theta_cat_features = ([np.where(theta_cat_features[:, i_lvl])[0] for i_lvl in range(len(n_levels))],
+                              np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None)
+
+        self._corr_params = params = (cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels)
+        return params
+
     def _matrix_data_corr(
         self,
         corr,
-        xtypes,
+        design_space,
         power,
         theta,
         theta_bounds,
@@ -316,8 +429,8 @@ class KrgBased(SurrogateModel):
         ----------
         corr: correlation_types
             - The autocorrelation model
-        xtypes: np.ndarray [dim]
-                -the types (FLOAT,ORD,ENUM) of the input variables
+        design_space: BaseDesignSpace
+            - The design space definition
         theta : list[small_d * n_comp]
             Hyperparameters of the correlation model
         dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
@@ -337,6 +450,7 @@ class KrgBased(SurrogateModel):
         r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
             An array containing the values of the autocorrelation model.
         """
+
         _correlation_types = {
             "pow_exp": pow_exp,
             "abs_exp": abs_exp,
@@ -346,66 +460,22 @@ class KrgBased(SurrogateModel):
             "matern32": matern32,
         }
 
-        r = np.zeros((dx.shape[0], 1))
-        nx = self.nx
-        nlevels = n_levels
-        try:
-            cat_kernel_comps = self.options["cat_kernel_comps"]
-            if cat_kernel_comps is not None:
-                nlevels = np.array(cat_kernel_comps)
-        except KeyError:
-            cat_kernel_comps = None
-        try:
-            ncomp = self.options["n_comp"]
-            try:
-                self.pls_coeff_cont
-            except AttributeError:
-                self.pls_coeff_cont = []
-        except KeyError:
-            cat_kernel_comps = None
-            ncomp = 1e5
-        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.zeros((len(theta), len(nlevels)), dtype=bool)
-        i = 0
-        j = 0
-        n_theta_cont = 0
-        for feat in cat_features:
-            if feat:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    theta_cont_features[
-                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2)
-                    ] = False
-                    theta_cat_features[
-                        j : j + int(nlevels[i] * (nlevels[i] - 1) / 2), i
-                    ] = [True] * int(nlevels[i] * (nlevels[i] - 1) / 2)
-                    j += int(nlevels[i] * (nlevels[i] - 1) / 2)
-                i += 1
-            else:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    if n_theta_cont < ncomp:
-                        theta_cont_features[j] = True
-                        j += 1
-                        n_theta_cont += 1
+        # Initialize static parameters
+        cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels = \
+            self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
+
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
-            from smt.applications.mixed_integer import unfold_with_enum_mask
-
-            X_pls_space = unfold_with_enum_mask(xtypes, X)
+            X_pls_space, _ = design_space.unfold_x(X)
             nx = len(theta)
 
         elif cat_kernel == MixIntKernelType.GOWER:
             X_pls_space = np.copy(X)
         else:
-            X_pls_space, _ = compute_X_cont(X, xtypes)
+            X_pls_space, _ = compute_X_cont(X, design_space)
             d_cont = dx[:, np.logical_not(cat_features)]
         if cat_kernel_comps is not None or ncomp < 1e5:
             ###Modifier la condition : if PLS cont
@@ -465,50 +535,19 @@ class KrgBased(SurrogateModel):
             self.coeff_pls_cat
         except AttributeError:
             self.coeff_pls_cat = []
-        for i in range(len(nlevels)):
-            theta_cat = theta[theta_cat_features[:, i]]
+
+        theta_cat_kernel = theta
+        if len(n_levels) > 0:
+            theta_cat_kernel = theta.copy()
             if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                theta_cat = theta_cat * (0.5 * np.pi / theta_bounds[1])
+                theta_cat_kernel[theta_cat_features[1]] *= (0.5 * np.pi / theta_bounds[1])
             elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
-                theta_cat = theta_cat * (2.0 * np.pi / theta_bounds[1])
-            Theta_mat = np.zeros((nlevels[i], nlevels[i]))
-            L = np.zeros((nlevels[i], nlevels[i]))
-            v = 0
-            for j in range(nlevels[i]):
-                for k in range(nlevels[i] - j):
-                    if j == k + j:
-                        Theta_mat[j, k + j] = 1
-                    else:
-                        Theta_mat[j, k + j] = theta_cat[v]
-                        Theta_mat[k + j, j] = theta_cat[v]
-                        v = v + 1
+                theta_cat_kernel[theta_cat_features[1]] *= (2.0 * np.pi / theta_bounds[1])
 
-            for j in range(nlevels[i]):
-                for k in range(nlevels[i] - j):
-                    if j == k + j:
-                        if j == 0:
-                            L[j, k + j] = 1
-
-                        else:
-                            L[j, k + j] = 1
-                            for l in range(j):
-                                L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
-
-                    else:
-                        if j == 0:
-                            L[k + j, j] = np.cos(Theta_mat[k, 0])
-                        else:
-                            L[k + j, j] = np.cos(Theta_mat[k + j, j])
-                            for l in range(j):
-                                L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
-
-            T = np.dot(L, L.T)
-
-            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                T = (T - 1) * theta_bounds[1] / 2
-                T = np.exp(2 * T)
-            k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
-            T = (T + np.exp(-theta_bounds[1])) / (k)
+        for i in range(len(n_levels)):
+            theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
+            T = matrix_data_corr_levels_cat_matrix(i, n_levels, theta_cat, theta_bounds,
+                                                   is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE)
 
             if cat_kernel_comps is not None:
                 # Sampling points X and y
@@ -519,7 +558,7 @@ class KrgBased(SurrogateModel):
                 old_n_comp = (
                     self.options["n_comp"] if "n_comp" in self.options else None
                 )
-                self.options["n_comp"] = int(nlevels[i] / 2 * (nlevels[i] - 1))
+                self.options["n_comp"] = int(n_levels[i] / 2 * (n_levels[i] - 1))
                 X_full_space = compute_X_cross(X_icat, n_levels[i])
                 try:
                     self.coeff_pls = self.coeff_pls_cat[i]
@@ -547,35 +586,15 @@ class KrgBased(SurrogateModel):
                     return_derivative=False,
                 )
 
-            for k in range(np.shape(Lij[i])[0]):
-                indi = int(Lij[i][k][0])
-                indj = int(Lij[i][k][1])
-
-                if indi == indj:
-                    r_cat[k] = 1.0
-                else:
-                    if cat_kernel in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                    ]:
-                        if cat_kernel_comps is not None:
-                            Theta_i_red = np.zeros(
-                                int((nlevels[i] - 1) * nlevels[i] / 2)
-                            )
-                            indmatvec = 0
-                            for j in range(nlevels[i]):
-                                for l in range(nlevels[i]):
-                                    if l > j:
-                                        Theta_i_red[indmatvec] = T[j, l]
-                                        indmatvec += 1
-                            kval_cat = 0
-                            for indijk in range(len(Theta_i_red)):
-                                kval_cat += np.multiply(
-                                    Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
-                                )
-                            r_cat[k] = kval_cat
-                        else:
-                            r_cat[k] = T[indi, indj]
+                matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel=cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ])
+            else:
+                matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel=cat_kernel in [
+                    MixIntKernelType.EXP_HOMO_HSPHERE,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ])
 
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
@@ -641,11 +660,7 @@ class KrgBased(SurrogateModel):
         if self.options["categorical_kernel"] is not None:
             dx = self.D
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                from smt.applications.mixed_integer import unfold_with_enum_mask
-
-                X2 = unfold_with_enum_mask(
-                    self.options["xspecs"].types, self.training_points[None][0][0]
-                )
+                X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
                 (
                     self.X2_norma,
                     _,
@@ -658,7 +673,7 @@ class KrgBased(SurrogateModel):
 
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
-                xtypes=self.options["xspecs"].types,
+                design_space=self.design_space,
                 power=self.options["pow_exp_power"],
                 theta=theta,
                 theta_bounds=self.options["theta_bounds"],
@@ -1048,7 +1063,54 @@ class KrgBased(SurrogateModel):
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
 
-    def _predict_values(self, x):
+    def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+        """
+        Predict the output values at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
+
+        Returns
+        -------
+        y : np.ndarray[nt, ny]
+            Output values at the prediction points.
+        """
+        x = ensure_2d_array(x, "x")
+        self._check_xdim(x)
+
+        if is_acting is not None:
+            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            if is_acting.shape != x.shape:
+                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+
+        n = x.shape[0]
+        x2 = np.copy(x)
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
+
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
+
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_values(x2, is_acting=is_acting)
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+        return y.reshape((n, self.ny))
+
+    def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 
@@ -1056,6 +1118,8 @@ class KrgBased(SurrogateModel):
         ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------
@@ -1063,38 +1127,43 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
+        if is_acting is None:
+            x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
 
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
+                y_is_acting=self.is_acting_train,
             )
 
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                power=self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
+            # d = componentwise_distance(
+            #     dx,
+            #     self.options["corr"],
+            #     self.nx,
+            #     power=self.options["pow_exp_power"],
+            #     theta=None,
+            #     return_derivative=False,
+            # )
             if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+                    Xpred, _ = self.design_space.unfold_x(x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
+                    design_space=self.design_space,
                     power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
@@ -1106,7 +1175,7 @@ class KrgBased(SurrogateModel):
                     x=x,
                 ).reshape(n_eval, self.nt)
 
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+            X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
@@ -1183,54 +1252,89 @@ class KrgBased(SurrogateModel):
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
-    def _predict_variances(self, x):
+    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+        """
+        Predict the variances at a set of points.
+
+        Parameters
+        ----------
+        x : np.ndarray[nt, nx] or np.ndarray[nt]
+            Input values for the prediction points.
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
+
+        Returns
+        -------
+        s2 : np.ndarray[nt, ny]
+            Variances.
+        """
+        check_support(self, "variances")
+        x = ensure_2d_array(x, "x")
+        self._check_xdim(x)
+
+        if is_acting is not None:
+            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            if is_acting.shape != x.shape:
+                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+
+        n = x.shape[0]
+        x2 = np.copy(x)
+        s2 = self._predict_variances(x2, is_acting=is_acting)
+        return s2.reshape((n, self.ny))
+
+    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Provide uncertainty of the model at a set of points
         Parameters
         ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
         Returns
         -------
         MSE : np.ndarray
             Evaluation point output variable MSE
         """
         # Initialization
+        if is_acting is None:
+            x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
         X_cont = x
 
         if self.options["categorical_kernel"] is not None:
             dx = gower_componentwise_distances(
                 x,
-                xspecs=self.options["xspecs"],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X_train),
+                y_is_acting=self.is_acting_train,
             )
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                self.options["pow_exp_power"],
-                theta=None,
-                return_derivative=False,
-            )
+            # d = componentwise_distance(
+            #     dx,
+            #     self.options["corr"],
+            #     self.nx,
+            #     self.options["pow_exp_power"],
+            #     theta=None,
+            #     return_derivative=False,
+            # )
             if self.options["categorical_kernel"] is not None:
                 _, ij = cross_distances(x, self.X_train)
                 Lij, _ = cross_levels(
-                    X=x, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_train
+                    X=x, ij=ij, design_space=self.design_space, y=self.X_train
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    from smt.applications.mixed_integer import unfold_with_enum_mask
-
-                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, x)
+                    Xpred, _ = self.design_space.unfold_x(x)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
 
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
-                    xtypes=self.options["xspecs"].types,
+                    design_space=self.design_space,
                     power=self.options["pow_exp_power"],
                     theta=self.optimal_theta,
                     theta_bounds=self.options["theta_bounds"],
@@ -1241,7 +1345,8 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     x=x,
                 ).reshape(n_eval, self.nt)
-            X_cont, _ = compute_X_cont(x, self.options["xspecs"].types)
+
+            X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
             x = (x - self.X_offset) / self.X_scale
@@ -1456,6 +1561,8 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = self.theta0
             else:
+                theta_bounds = self.options["theta_bounds"]
+                log10t_bounds = np.log10(theta_bounds)
                 theta0_rand = np.random.rand(len(self.theta0))
                 theta0_rand = (
                     theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
@@ -1521,6 +1628,7 @@ class KrgBased(SurrogateModel):
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
                 optimal_theta_res = {"fun": float("inf")}
+                optimal_theta_res_loop = None
                 try:
                     if self.options["hyper_opt"] == "Cobyla":
                         for theta0_loop in theta_all_loops:
@@ -1554,6 +1662,8 @@ class KrgBased(SurrogateModel):
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
 
+                    if 'x' not in optimal_theta_res:
+                        raise ValueError(f'Optimizer encountered a problem: {optimal_theta_res_loop!s}')
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
@@ -1653,10 +1763,10 @@ class KrgBased(SurrogateModel):
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
-        if (self.options["xspecs"] is None) and (
+        if self.options['design_space'] is None and (
             self.options["categorical_kernel"] is not None
         ):
-            raise ValueError("xspecs required for mixed integer Kriging")
+            raise ValueError("Design space definition (design_space) required for mixed integer Kriging")
 
         if self.name in ["KPLS"]:
             if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
@@ -1688,9 +1798,8 @@ class KrgBased(SurrogateModel):
         ]:
             n_comp = self.options["n_comp"] if "n_comp" in self.options else None
             n_param = compute_n_param(
-                self.options["xspecs"].types,
+                self.design_space,
                 self.options["categorical_kernel"],
-                self.nx,
                 d,
                 n_comp,
                 mat_dim,
@@ -1755,17 +1864,15 @@ class KrgBased(SurrogateModel):
             )
 
 
-def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
+def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
     Parameters
      ----------
-    xtypes: np.ndarray [dim]
-            -the types (FLOAT,ORD,ENUM) of the input variables,
+    design_space: BaseDesignSpace
+            - design space definition
     cat_kernel : string
             -The kernel to use for categorical inputs. Only for non continuous Kriging,
-    nx: int
-            -The number of variables,
     d: int
             - n_comp or nx
     n_comp : int
@@ -1777,7 +1884,7 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
      n_param: int
             - The number of parameters.
     """
-    n_param = nx
+    n_param = design_space.n_dv
     if n_comp is not None:
         n_param = d
         if cat_kernel == MixIntKernelType.CONT_RELAX:
@@ -1785,15 +1892,16 @@ def compute_n_param(xtypes, cat_kernel, nx, d, n_comp, mat_dim):
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
 
-    for i, xtyp in enumerate(xtypes):
-        if isinstance(xtyp, tuple):
-            if nx == d:
+    for i, dv in enumerate(design_space.design_variables):
+        if isinstance(dv, CategoricalVariable):
+            n_values = dv.n_values
+            if design_space.n_dv == d:
                 n_param -= 1
             if cat_kernel in [
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
             ]:
-                n_param += int(xtyp[1] * (xtyp[1] - 1) / 2)
+                n_param += int(n_values * (n_values - 1) / 2)
             if cat_kernel == MixIntKernelType.CONT_RELAX:
-                n_param += int(xtyp[1])
+                n_param += int(n_values)
     return n_param

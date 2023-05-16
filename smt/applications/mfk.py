@@ -430,7 +430,7 @@ class MFK(KrgBased):
 
         return mu[:, -1].reshape((n_eval, 1))
 
-    def _predict_values(self, X):
+    def _predict_values(self, X, is_acting=None):
         """
         Evaluates the model at a set of points.
 
@@ -447,7 +447,7 @@ class MFK(KrgBased):
 
         return self._predict_intermediate_values(X, self.nlvl)
 
-    def _predict_variances(self, X):
+    def _predict_variances(self, X: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 

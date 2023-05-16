@@ -26,6 +26,7 @@ Developer API
 
    dev_docs/dev_surrogate_models
    dev_docs/dev_problems
+   dev_docs/dev_design_space
    dev_docs/dev_sampling_methods
 
 

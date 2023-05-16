@@ -1,67 +1,85 @@
 .. _Mixed Integer and Hierarchical Variables Types Specifications: 
 
-Mixed Integer and Hierarchical usage (Variables, Sampling and Context)
-======================================================================
+Mixed Integer and Hierarchical Design Spaces (Variables, Sampling and Context)
+==============================================================================
 
-Mixed integer variables types
------------------------------
+Mixed-discrete surrogate models need detailed information about the behavior of the design space (the input space),
+which you can specify using the ``design_space`` module. The design space definition module also supports specifying
+design space hierarchy including conditionally active design variables.
 
-SMT provides the ``mixed_integer`` module to adapt existing surrogates to deal with categorical (or enumerate) and ordered integer variables using continuous relaxation.
-For ordered variables, the values are rounded to the nearest values from a provided list. If, instead, only lower and upper bounds are provided, the list of all possible values will consists of the integers values between those bounds.
+Design variables types
+----------------------
 
-The user specifies x feature types through a list of types to be either:
+The following variable types are supported:
 
-- ``FLOAT``: a continuous feature,
-- ``ORD``: an ordered valued feature,
-- or a tuple ``(ENUM, n)`` where n is the number of levels of the catagorical feature (i.e. an enumerate with n values)
+- Float: the variable can assume any real/continuous value between two bounds (inclusive)
+- Integer: the variable can assume any integer value between two bounds (inclusive)
+- Ordinal: the variable can assume any value from some set, order is relevant
+- Categorical: the variable can assume any value from some set, order is not relevant
 
-In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` feature still have an interval [lower bound, upper bound], the ``ENUM`` features bounds is defined by giving the enumeration/list of possible values (levels). 
+Integer, ordinal and categorical variables are all *discrete* variables, as they can only assume specific values from
+some set. The main differences between these types is the question whether distance and whether ordering matters:
 
-For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
+- Integer: distance and order matters, e.g. the number of engines on an aircraft
+- Ordinal: only order matters, e.g. steps in a process
+- Categorical: neither distance nor order matters, e.g. different means for providing some functionality
 
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will correspond to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will correspond to [0,5,6]. However, these ordered values should be string representation of integer. Details can be found in [1]_ .
+More details can be found in [1]_ .
 
-Hierarchical variables roles
-----------------------------
+Variables are specified using the ``DesignVariable`` classes in ``smt.utils.design_space``:
+- ``FloatVariable(lower_bound, upper_bound)``, upper should be greater than lower bound
+- ``IntegerVariable(lower_bound, upper_bound)``, bounds should be integers
+- ``OrdinalVariable(values)``, values is a list of int, float or str, encoded as integers from 0 to len(values)-1
+- ``CategoricalVariable(values)``, same specification and encoding as ordinal
 
-The ``mixed_integer`` module uses the framework of Audet et al. [2]_ to manage both mixed variables and hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may affect the dimension of the problem and decide if some other decreed variables are included or excluded. The variable size problem can also include neutral variables that are always included and active. 
+The design space is then defined from a list of design variables and implements sampling and correction interfaces:
 
-The user specifies x feature role through a list of roles amongst:
+.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_discrete_design_space_example
 
-- ``META``: a dimensional feature,
-- ``DECREED``: an ordered or continuous decreed feature: either included or excluded in the variable-size problem,
-- ``NEUTRAL``: a neutral feature, part of the fixed-size problem
+Hierarchical variables
+----------------------
 
-Note that we do not consider decreed categorical variable. The decreed variables are always continuous or ordered.
+The design space definition uses the framework of Audet et al. [2]_ to manage both mixed-discrete variables and
+hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may
+affect the dimension of the problem and decide if some other decreed variables are acting or non-acting.
 
-Mixed and hierarchical specifications
--------------------------------------
+The hierarchy relationships are specified after instantiating the design space:
 
-The ``XSpecs`` class helps implements the types, limits and roles of each variables as follows.
 
-  .. autoclass:: smt.utils.kriging.XSpecs
+.. embed-test-print :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_hierarchical_design_space_example
 
-Mixed integer sampling method
------------------------------
+Design space and variable class references
+------------------------------------------
 
-In the case of mixed integer sampling, bounds of each x feature have to be adapted to take into account feature types. While ``FLOAT`` and ``ORD`` features still have an interval [lower bound, upper bound], the ``ENUM`` feature bounds are defined by giving the enumeration/list of possible values (levels). 
+The ``DesignSpace`` class and design variable classes implement the relevant functionality.
 
-For instance, if we have the following ``xtypes``: ``[FLOAT, ORD, (ENUM, 2), (ENUM, 3)]``, a compatible ``xlimits`` could be ``[[0., 4], [-10, 10], ["blue", "red"], ["short", "medium",  "long"]]``.
+  .. autoclass:: smt.utils.design_space.FloatVariable
+     :exclude-members: get_type, get_limits
 
-However, the functioning of ``ORD`` is twofold. As previously mentioned, it can be used like [lower bound, upper bound], in this case [0,5] will correspond to [0,1,2,3,4,5]. But, on the other hand, ``ORD`` can be used as an enumeration/list of possible values (levels), in this case ["0","5","6"] will correspond to [0,5,6].
+  .. autoclass:: smt.utils.design_space.IntegerVariable
+     :exclude-members: get_type, get_limits
 
-To use a sampling method with mixed integer typed features, the user instanciates a ``MixedIntegerSamplingMethod`` with a given sampling method.
-The ``MixedIntegerSamplingMethod`` implements the ``SamplingMethod`` interface and decorates the original sampling method to provide a DOE while conforming to integer and categorical types.
+  .. autoclass:: smt.utils.design_space.OrdinalVariable
+     :exclude-members: get_type, get_limits
 
-Example of mixed integer LHS sampling method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  .. autoclass:: smt.utils.design_space.CategoricalVariable
+     :exclude-members: get_type, get_limits
+
+  .. autoclass:: smt.utils.design_space.DesignSpace
+     :members:
+     :inherited-members:
+     :exclude-members: get_unfolded_num_bounds, fold_x, unfold_x, get_num_bounds, get_x_limits, get_x_types
+
+Example of sampling a mixed-discrete design space
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_integer_lhs_example , 80
 
 Mixed integer context
 ---------------------
 
-The ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently by acting as a factory for those objects given a x specification: (xtypes, xlimits). 
+The ``MixedIntegerContext`` class helps the user to use mixed integer sampling methods and surrogate models consistently
+by acting as a factory for those objects given a x specification: (xtypes, xlimits).
 
   .. autoclass:: smt.applications.mixed_integer.MixedIntegerContext
 
@@ -70,16 +88,6 @@ The ``MixedIntegerContext`` class helps the user to use mixed integer sampling m
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_sampling_method
 
   .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.build_surrogate_model
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_discrete_values
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.fold_with_enum_index
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.unfold_with_enum_mask
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_mixed_integer
-
-  .. automethod:: smt.applications.mixed_integer.MixedIntegerContext.cast_to_enum_value
 
 Example of mixed integer context usage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

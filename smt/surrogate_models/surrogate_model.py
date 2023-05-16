@@ -59,6 +59,7 @@ class SurrogateModel(metaclass=ABCMeta):
         supports["adjoint_api"] = False
         supports["variances"] = False
         supports["variance_derivatives"] = False
+        supports["x_hierarchy"] = False
 
         declare = self.options.declare
 
@@ -287,6 +288,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
+
         n = x.shape[0]
         x2 = np.copy(x)
         self.printer.active = (
@@ -392,6 +394,7 @@ class SurrogateModel(metaclass=ABCMeta):
         check_support(self, "variances")
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
+
         n = x.shape[0]
         x2 = np.copy(x)
         s2 = self._predict_variances(x2)
@@ -543,6 +546,8 @@ class SurrogateModel(metaclass=ABCMeta):
         ----------
         x : np.ndarray[nt, nx]
             Input values for the prediction points.
+        is_acting : np.ndarray[nt, nx] or np.ndarray[nt]
+            Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
 
         Returns
         -------

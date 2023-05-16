@@ -65,7 +65,7 @@ then we round in the prediction to the output dimension giving the greatest cont
 A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
 See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
 
-More details available in [2]_. See also :ref:`Mixed-Integer Sampling and Surrogate`.
+More details available in [2]_. See also :ref:`Mixed Integer and hierarchical Surrogates`.
 
 Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
 
@@ -136,7 +136,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0359077
+     Training - done. Time (sec):  0.0496159
   ___________________________________________________________________________
      
    Evaluation
@@ -144,9 +144,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010180
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000102
      
   ___________________________________________________________________________
      
@@ -155,9 +155,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009673
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001935
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg.png
@@ -172,20 +172,17 @@ Example 2 with mixed variables
   import numpy as np
   import matplotlib.pyplot as plt
   
-  from smt.surrogate_models import KRG, XType
+  from smt.surrogate_models import KRG
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
-  from smt.utils.kriging import XSpecs
+  from smt.utils.design_space import DesignSpace, IntegerVariable
   
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
   
-  # xtypes = [FLOAT, ORD, (ENUM, 3), (ENUM, 2)]
-  # FLOAT means x1 continuous
-  # ORD means x2 integer
-  # (ENUM, 3) means x3, x4 & x5 are 3 levels of the same categorical variable
-  # (ENUM, 2) means x6 & x7 are 2 levels of the same categorical variable
-  xspecs = XSpecs(xtypes=[XType.ORD], xlimits=[[0, 4]])
-  sm = MixedIntegerKrigingModel(surrogate=KRG(xspecs=xspecs, theta0=[1e-2]))
+  design_space = DesignSpace([
+      IntegerVariable(0, 4),
+  ])
+  sm = MixedIntegerKrigingModel(surrogate=KRG(design_space=design_space, theta0=[1e-2]))
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -276,17 +273,22 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['abs_exp', 'squar_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
+  *  -  pow_exp_power
+     -  1.9
+     -  None
+     -  ['float']
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  None
-     -  [<MixIntKernelType.CONT_RELAX: 3>, <MixIntKernelType.GOWER: 4>, <MixIntKernelType.EXP_HOMO_HSPHERE: 1>, <MixIntKernelType.HOMO_HSPHERE: 2>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
-     -  [<MixHrcKernelType.ALG_KERNEL: 2>, <MixHrcKernelType.ARC_KERNEL: 1>]
+     -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
@@ -334,12 +336,13 @@ Options
      -  None
      -  ['int']
      -  number of optimizer runs (multistart method)
-  *  -  xspecs
+  *  -  xlimits
      -  None
      -  None
-     -  ['XSpecs']
-     -  xspecs : x specifications including
-                xtypes: x types list
-                    x types specification: list of either FLOAT, ORD or (ENUM, n) spec.
-                xlimits: array-like
-                    bounds of x features
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
+  *  -  design_space
+     -  None
+     -  None
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds

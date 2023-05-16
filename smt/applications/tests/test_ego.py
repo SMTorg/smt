@@ -15,7 +15,6 @@ from sys import argv
 import matplotlib
 
 matplotlib.use("Agg")
-from smt.utils.kriging import XSpecs
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.utils.sm_test_case import SMTestCase
@@ -27,10 +26,10 @@ from smt.surrogate_models import (
     KRG,
     GEKPLS,
     KPLS,
-    XSpecs,
-    XType,
-    XRole,
     MixIntKernelType,
+    DesignSpace,
+    OrdinalVariable, FloatVariable,
+    CategoricalVariable, IntegerVariable,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -69,13 +68,13 @@ class TestEGO(SMTestCase):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
         criterion = "EI"
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             random_state=42,
         )
 
@@ -87,7 +86,7 @@ class TestEGO(SMTestCase):
     def test_function_test_1d_parallel(self):
         n_iter = 3
         xlimits = np.array([[0.0, 25.0]])
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         criterion = "EI"
         n_parallel = 3
@@ -96,7 +95,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_parallel=n_parallel,
             evaluator=ParallelEvaluator(),
             random_state=42,
@@ -112,14 +111,14 @@ class TestEGO(SMTestCase):
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             random_state=42,
         )
 
@@ -132,14 +131,14 @@ class TestEGO(SMTestCase):
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "SBO"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         xdoe = FullFactorial(xlimits=xlimits)(50)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             random_state=42,
         )
 
@@ -154,7 +153,7 @@ class TestEGO(SMTestCase):
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         qEI = "KB"
@@ -162,7 +161,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_parallel=n_parallel,
             qEI=qEI,
             evaluator=ParallelEvaluator(),
@@ -178,11 +177,12 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=fun.xlimits)
+        design_space = fun.design_space
         ego = EGO(
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_iter=n_iter,
             criterion=criterion,
+            n_doe=10,
             random_state=42,
         )
 
@@ -202,14 +202,14 @@ class TestEGO(SMTestCase):
         n_parallel = 5
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
             xdoe=xdoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_parallel=n_parallel,
             random_state=42,
         )
@@ -233,10 +233,12 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "CLmin"
-        xtypes = [XType.ORD, XType.FLOAT]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
-        sm = KRG(xspecs=xspecs, print_global=False)
-        mixint = MixedIntegerContext(xspecs)
+        design_space = DesignSpace([
+            IntegerVariable(*xlimits[0]),
+            FloatVariable(*xlimits[1]),
+        ])
+        sm = KRG(design_space=design_space, print_global=False)
+        mixint = MixedIntegerContext(design_space)
         sampling = mixint.build_sampling_method(FullFactorial)
         xdoe = sampling(10)
 
@@ -264,13 +266,15 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [XType.ORD, XType.FLOAT]
         xlimits = fun.xlimits
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            IntegerVariable(*xlimits[0]),
+            FloatVariable(*xlimits[1]),
+        ])
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
-        sm = KRG(xspecs=xspecs, print_global=False)
-        sampling = MixedIntegerSamplingMethod(FullFactorial, xspecs)
+        sm = KRG(design_space=design_space, print_global=False)
+        sampling = MixedIntegerSamplingMethod(FullFactorial, design_space)
         xdoe = sampling(10)
 
         ego = EGO(
@@ -295,13 +299,15 @@ class TestEGO(SMTestCase):
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
         fun = Branin(ndim=2)
-        xtypes = [XType.ORD, XType.FLOAT]
         xlimits = fun.xlimits
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            IntegerVariable(*xlimits[0]),
+            FloatVariable(*xlimits[1]),
+        ])
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
-        sm = KRG(xspecs=xspecs, print_global=False)
-        sampling = MixedIntegerSamplingMethod(FullFactorial, xspecs)
+        sm = KRG(design_space=design_space, print_global=False)
+        sampling = MixedIntegerSamplingMethod(FullFactorial, design_space)
         xdoe = sampling(30)
 
         ego = EGO(
@@ -350,23 +356,21 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], ["0", "2", "3"]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         n_doe = 5
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        xdoe = sampling(n_doe)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            OrdinalVariable([0, 2, 3]),
+        ], seed=42)
+        xdoe, _ = design_space.sample_valid_x(n_doe)
+
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             enable_tunneling=False,
             random_state=42,
         )
@@ -377,28 +381,22 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
         n_doe = 5
-        sampling = MixedIntegerSamplingMethod(
-            LHS,
-            xspecs=xspecs,
-            criterion="ese",
-            random_state=42,
-            output_in_folded_space=True,
-        )
-        xdoe = sampling(n_doe)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            IntegerVariable(0, 2),
+        ])
+        xdoe, _ = design_space.sample_valid_x(n_doe)
+
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.GOWER,
                 print_global=False,
             ),
@@ -414,10 +412,12 @@ class TestEGO(SMTestCase):
         def f_neu(x1, x2, x3, x4):
             if x4 == 0:
                 return 2 * x1 + x2 - 0.5 * x3
-            if x4 == 1:
+            elif x4 == 1:
                 return -x1 + 2 * x2 - 0.5 * x3
-            if x4 == 2:
+            elif x4 == 2:
                 return -x1 + x2 + 0.5 * x3
+            else:
+                raise ValueError(f'Unexpected x4: {x4}')
 
         def f1(x1, x2, x3, x4, x5):
             return f_neu(x1, x2, x3, x4) + x5**2
@@ -431,82 +431,68 @@ class TestEGO(SMTestCase):
         def f_hv(X):
             y = []
             for x in X:
-                if x[0] == 1:
-                    y.append(f1(x[1], x[2], x[3], x[4], x[5]))
+                x3_decoded = design_space.decode_values(x, i_dv=3)[0]
+                if x[0] == 0:
+                    y.append(f1(x[1], x[2], x3_decoded, x[4], x[5]))
+                elif x[0] == 1:
+                    y.append(f2(x[1], x[2], x3_decoded, x[4], x[5], x[6]))
                 elif x[0] == 2:
-                    y.append(f2(x[1], x[2], x[3], x[4], x[5], x[6]))
-                elif x[0] == 3:
-                    y.append(f3(x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
+                    y.append(f3(x[1], x[2], x3_decoded, x[4], x[5], x[6], x[7]))
+                else:
+                    raise ValueError(f'Unexpected x0: {x[0]}')
             return np.array(y)
 
-        xlimits = [
-            [1, 3],  # XRole.META XType.ORD
-            [-5, -2],
-            [-5, -1],
-            ["8", "16", "32", "64", "128", "256"],
-            ["ReLU", "SELU", "ISRLU"],
-            [0.0, 5.0],  # XRole.DECREED m=1
-            [0.0, 5.0],  # XRole.DECREED m=2
-            [0.0, 5.0],  # XRole.DECREED m=3
-        ]
-        xtypes = [
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            (XType.ENUM, 3),
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.DECREED,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
+        design_space = DesignSpace([
+            OrdinalVariable(values=[1, 2, 3]),  # x0
+            FloatVariable(-5, 2),
+            FloatVariable(-5, 2),
+            OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
+            CategoricalVariable(values=['ReLU', 'SELU', 'ISRLU']),  # x4
+            IntegerVariable(0, 5),  # x5
+            IntegerVariable(0, 5),  # x6
+            IntegerVariable(0, 5),  # x7
+        ])
+
+        # x6 is active when x0 >= 2
+        design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3])
+        # x7 is active when x0 >= 3
+        design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3)
+
         n_doe = 4
-        xspecs_samp = XSpecs(xtypes=xtypes[1:], xlimits=xlimits[1:])
+
+        neutral_var_ds = DesignSpace(design_space.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs_samp, criterion="ese", random_state=42
+            LHS, neutral_var_ds, criterion="ese", random_state=42
         )
         x_cont = sampling(3 * n_doe)
 
-        xdoe1 = np.zeros((n_doe, 6))
+        xdoe1 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[:n_doe, :5]
-        xdoe1[:, 0] = np.ones(n_doe)
-        xdoe1[:, 1:] = x_cont2
-        # ydoe1 = self.f_hv(xdoe1)
+        xdoe1[:, 0] = np.zeros(n_doe)
+        xdoe1[:, 1:6] = x_cont2
+        # ydoe1 = f_hv(xdoe1)
 
         xdoe1 = np.zeros((n_doe, 8))
-        xdoe1[:, 0] = np.ones(n_doe)
+        xdoe1[:, 0] = np.zeros(n_doe)
         xdoe1[:, 1:6] = x_cont2
 
-        xdoe2 = np.zeros((n_doe, 7))
+        xdoe2 = np.zeros((n_doe, 8))
         x_cont2 = x_cont[n_doe : 2 * n_doe, :6]
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
-        # ydoe2 = self.f_hv(xdoe2)
+        # ydoe2 = f_hv(xdoe2)
 
         xdoe2 = np.zeros((n_doe, 8))
-        xdoe2[:, 0] = 2 * np.ones(n_doe)
+        xdoe2[:, 0] = np.ones(n_doe)
         xdoe2[:, 1:7] = x_cont2
 
         xdoe3 = np.zeros((n_doe, 8))
-        xdoe3[:, 0] = 3 * np.ones(n_doe)
+        xdoe3[:, 0] = 2 * np.ones(n_doe)
         xdoe3[:, 1:] = x_cont[2 * n_doe :, :]
-        # ydoe3 = self.f_hv(xdoe3)
+        # ydoe3 = f_hv(xdoe3)
 
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
-
-        n_doe = len(Xt)
-        xlimits = np.array(xlimits, dtype="object")
 
         n_iter = 6
         criterion = "EI"
@@ -516,7 +502,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
@@ -529,7 +515,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
-            f_hv(np.atleast_2d([3, -5, -5, 256, 0, 0, 0, 5])),
+            f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
             float(y_opt),
             delta=15,
         )
@@ -636,55 +622,35 @@ class TestEGO(SMTestCase):
                     y.append(
                         H(x[2], x[3], x[4], x[5], x[9], x[10], x[6], cos_term=x[1])
                     )
+                else:
+                    raise ValueError
             return np.array(y)
 
-        xlimits = [
-            ["6,7", "3,7", "4,6", "3,4"],  # XRole.META1 XType.ORD
-            [0, 1],  # 0
-            [0, 100],  # 1
-            [0, 100],  # 2
-            [0, 100],  # 3
-            [0, 100],  # 4
-            [0, 100],  # 5
-            [0, 2],  # 6
-            [0, 2],  # 7
-            [0, 2],  # 8
-            [0, 2],  # 9
-        ]
-        xroles = [
-            XRole.META,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.DECREED,
-            XRole.DECREED,
-            XRole.NEUTRAL,
-            XRole.NEUTRAL,
-        ]
-        # z or x, cos?;          x1,x2,          x3, x4,        x5:cos,       z1,z2;            exp1,exp2
+        ds = DesignSpace([
+            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+            OrdinalVariable(values=[0, 1]),  # x1
+            FloatVariable(0, 100),  # x2
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            FloatVariable(0, 100),
+            IntegerVariable(0, 2),  # x7
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+            IntegerVariable(0, 2),
+        ])
 
-        xtypes = [
-            (XType.ENUM, 4),
-            XType.ORD,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.FLOAT,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-            XType.ORD,
-        ]
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits, xroles=xroles)
-        n_doe = 15
-        sampling = MixedIntegerSamplingMethod(
-            LHS, xspecs, criterion="ese", random_state=42
-        )
-        Xt = sampling(n_doe)
+        # x4 is acting if meta == 1, 3
+        ds.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
+        # x5 is acting if meta == 2, 3
+        ds.declare_decreed_var(decreed_var=5, meta_var=0, meta_value=[2, 3])
+        # x7 is acting if meta == 0, 2
+        ds.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=[0, 2])
+        # x8 is acting if meta == 0, 1
+        ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
+
+        n_doe = 50
+        Xt, x_is_active = ds.sample_valid_x(n_doe)
 
         n_iter = 5
         criterion = "EI"
@@ -694,7 +660,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=ds,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
                 n_start=5,
@@ -704,7 +670,7 @@ class TestEGO(SMTestCase):
             verbose=True,
             enable_tunneling=False,
             random_state=42,
-            n_start=10,
+            n_start=20,
         )
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
@@ -716,16 +682,16 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            IntegerVariable(0, 2),
+        ])
         n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             LHS,
-            xspecs,
+            design_space,
             criterion="ese",
             random_state=42,
             output_in_folded_space=True,
@@ -738,7 +704,7 @@ class TestEGO(SMTestCase):
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
-                xspecs=xspecs,
+                design_space=design_space,
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
                 print_global=False,
             ),
@@ -752,15 +718,15 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["blue", "red", "green"], ["large", "small"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['large', 'small']),
+            IntegerVariable(0, 2),
+        ])
         sampling = MixedIntegerSamplingMethod(
             LHS,
-            xspecs,
+            design_space,
             criterion="ese",
             random_state=42,
             output_in_folded_space=True,
@@ -770,7 +736,7 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         sm = KPLS(
             print_global=False,
-            xspecs=xspecs,
+            design_space=design_space,
             categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             n_comp=1,
             cat_kernel_comps=[2, 2],
@@ -792,7 +758,7 @@ class TestEGO(SMTestCase):
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
 
@@ -801,7 +767,7 @@ class TestEGO(SMTestCase):
             ydoe=ydoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             random_state=42,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=fun)
@@ -811,7 +777,7 @@ class TestEGO(SMTestCase):
     def test_find_best_point(self):
         fun = TestEGO.function_test_1d
         xlimits = np.array([[0.0, 25.0]])
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
@@ -819,7 +785,7 @@ class TestEGO(SMTestCase):
             ydoe=ydoe,
             n_iter=1,
             criterion="LCB",
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_start=30,
             enable_tunneling=False,
             random_state=42,
@@ -846,7 +812,7 @@ class TestEGO(SMTestCase):
                 return np.hstack((response, sens))
 
         fun = TensorProductIndirect(ndim=2, func=func)
-        xspecs = XSpecs(xlimits=fun.xlimits)
+        design_space = DesignSpace(fun.xlimits)
 
         # Construction of the DOE
         sampling = LHS(xlimits=fun.xlimits, criterion="m", random_state=42)
@@ -857,7 +823,7 @@ class TestEGO(SMTestCase):
         n_comp = 2
         sm = GEKPLS(
             theta0=[1e-2] * n_comp,
-            xspecs=xspecs,
+            design_space=design_space,
             extra_points=1,
             eval_comp_treshold=0.8,
             print_prediction=False,
@@ -898,7 +864,7 @@ class TestEGO(SMTestCase):
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d
         xlimits = np.array([[0.0, 25.0]])
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
@@ -907,7 +873,7 @@ class TestEGO(SMTestCase):
             n_iter=1,
             n_parallel=2,
             criterion="SBO",
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_start=30,
         )
         ego._setup_optimizer(fun)
@@ -932,7 +898,8 @@ class TestEGO(SMTestCase):
     def run_ego_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.surrogate_models import KRG, XSpecs
+        from smt.surrogate_models import KRG
+        from smt.utils.design_space import DesignSpace
         import matplotlib.pyplot as plt
 
         def function_test_1d(x):
@@ -946,7 +913,7 @@ class TestEGO(SMTestCase):
 
         n_iter = 6
         xlimits = np.array([[0.0, 25.0]])
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
@@ -956,7 +923,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
         )
 
         x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -1018,11 +985,8 @@ class TestEGO(SMTestCase):
         import numpy as np
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import (
-            XType,
-            MixIntKernelType,
-            XSpecs,
-        )
+        from smt.surrogate_models import MixIntKernelType
+        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable, IntegerVariable
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
@@ -1054,20 +1018,20 @@ class TestEGO(SMTestCase):
             return y.reshape((-1, 1))
 
         n_iter = 15
-        xtypes = [XType.FLOAT, (XType.ENUM, 3), (XType.ENUM, 2), XType.ORD]
-        xlimits = np.array(
-            [[-5, 5], ["red", "green", "blue"], ["square", "circle"], [0, 2]],
-            dtype="object",
-        )
-        xspecs = XSpecs(xtypes=xtypes, xlimits=xlimits)
+        design_space = DesignSpace([
+            FloatVariable(-5, 5),
+            CategoricalVariable(['blue', 'red', 'green']),
+            CategoricalVariable(['square', 'circle']),
+            IntegerVariable(0, 2),
+        ])
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
         sm = KRG(
-            xspecs=xspecs, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+            design_space=design_space, categorical_kernel=MixIntKernelType.GOWER, print_global=False
         )
-        mixint = MixedIntegerContext(xspecs)
-        n_doe = 3
+        mixint = MixedIntegerContext(design_space)
+        n_doe = 15
         sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
@@ -1085,7 +1049,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
         print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
-        print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
+        # print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
 
         min_ref = -15
         mini = np.zeros(n_iter)
@@ -1108,7 +1072,7 @@ class TestEGO(SMTestCase):
         import numpy as np
         from smt.applications import EGO
         from smt.applications.ego import Evaluator
-        from smt.surrogate_models import KRG, XSpecs
+        from smt.surrogate_models import KRG, DesignSpace
 
         import matplotlib.pyplot as plt
 
@@ -1125,7 +1089,7 @@ class TestEGO(SMTestCase):
         n_parallel = 3
         n_start = 50
         xlimits = np.array([[0.0, 25.0]])
-        xspecs = XSpecs(xlimits=xlimits)
+        design_space = DesignSpace(xlimits)
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
@@ -1160,7 +1124,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
-            surrogate=KRG(xspecs=xspecs, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False),
             n_parallel=n_parallel,
             qEI=qEI,
             n_start=n_start,

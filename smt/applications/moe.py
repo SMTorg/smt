@@ -82,10 +82,10 @@ class MOESurrogateModel(SurrogateModel):
             self.moe.set_training_values(xt, yt, name=name)
         self.moe.train()
 
-    def _predict_values(self, x: np.ndarray) -> np.ndarray:
+    def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         return self.moe.predict_values(x)
 
-    def _predict_variances(self, x: np.ndarray) -> np.ndarray:
+    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         return self.moe.predict_variances(x)
 
 

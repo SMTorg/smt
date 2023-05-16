@@ -8,11 +8,8 @@ from .genn import GENN
 from .mgp import MGP
 
 from .krg_based import MixIntKernelType
+from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
 from smt.utils.kriging import MixHrcKernelType
-from smt.utils.mixed_integer import XType
-from smt.utils.kriging import XRole
-
-from smt.utils.kriging import XSpecs
 
 try:
     from .idw import IDW
