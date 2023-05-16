@@ -4,5 +4,6 @@ scipy
 scikit-learn
 pyDOE2
 matplotlib   # used in examples and tests
-pytest
+pytest       # tests runner
 pytest-xdist # allows running parallel testing with pytest -n <num_workers>
+black        # check code format

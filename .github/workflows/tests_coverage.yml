@@ -31,6 +31,12 @@ jobs:
         pip list
         pip install -e .
 
+    - name: Check format with black
+      run: |
+        black --version
+        black --diff smt
+        black --check smt
+
     - name: Test with pytest and coverage
       run: |
         pip install coverage
