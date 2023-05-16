@@ -182,6 +182,7 @@ class TestEGO(SMTestCase):
             surrogate=KRG(design_space=design_space, print_global=False),
             n_iter=n_iter,
             criterion=criterion,
+            n_doe=10,
             random_state=42,
         )
 
@@ -648,7 +649,7 @@ class TestEGO(SMTestCase):
         # x8 is acting if meta == 0, 1
         ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
 
-        n_doe = 15
+        n_doe = 50
         Xt, x_is_active = ds.sample_valid_x(n_doe)
 
         n_iter = 5
@@ -669,7 +670,7 @@ class TestEGO(SMTestCase):
             verbose=True,
             enable_tunneling=False,
             random_state=42,
-            n_start=10,
+            n_start=20,
         )
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
