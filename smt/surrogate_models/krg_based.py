@@ -282,16 +282,16 @@ class KrgBased(SurrogateModel):
                 hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                 X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
-                 (
-                     self.X2_norma,
-                     _,
-                     self.X2_offset,
-                     _,
-                     self.X2_scale,
-                     _,
-                 ) = standardization(X2, self.training_points[None][0][1])
-                 D, _ = cross_distances(self.X2_norma)
+                X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
+                (
+                    self.X2_norma,
+                    _,
+                    self.X2_offset,
+                    _,
+                    self.X2_scale,
+                    _,
+                ) = standardization(X2, self.training_points[None][0][1])
+                D, _ = cross_distances(self.X2_norma)
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, design_space=self.design_space
             )
@@ -405,7 +405,7 @@ class KrgBased(SurrogateModel):
                     theta_cat_features[
                         j : j + int(n_levels[i] * (n_levels[i] - 1) / 2), i
                     ] = [True] * int(n_levels[i] * (n_levels[i] - 1) / 2)
-                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)    
+                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)
                 i += 1
             else:
                 if n_theta_cont < ncomp:
@@ -511,7 +511,7 @@ class KrgBased(SurrogateModel):
             if self.pls_coeff_cont == []:
                 X, y = self._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = self.coeff_pls
-            if cat_kernel in [MixIntKernelType.GOWER,MixIntKernelType.CONT_RELAX] :
+            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
                 d = componentwise_distance_PLS(
                     dx,
                     corr,
@@ -542,10 +542,10 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if cat_kernel == MixIntKernelType.GOWER :
+            if cat_kernel == MixIntKernelType.GOWER:
                 d_cont = d[:, np.logical_not(cat_features)]
 
-        if cat_kernel in [MixIntKernelType.GOWER,MixIntKernelType.CONT_RELAX] :
+        if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
             r = _correlation_types[corr](theta, d)
             return r
 
@@ -1177,7 +1177,7 @@ class KrgBased(SurrogateModel):
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())    
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
             _, ij = cross_distances(x, self.X_train)
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
@@ -1338,7 +1338,7 @@ class KrgBased(SurrogateModel):
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())    
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
             _, ij = cross_distances(x, self.X_train)
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train

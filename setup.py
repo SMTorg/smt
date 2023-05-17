@@ -109,7 +109,7 @@ metadata = dict(
         "scipy",
     ],
     extras_require={
-        'numba': [  # pip install smt[numba]
+        "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
         ],
     },
