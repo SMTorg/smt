@@ -20,7 +20,9 @@ Usage
   problem = HierarchicalNeuralNetwork()
   
   n_doe = 100
-  xdoe, x_is_acting = problem.design_space.sample_valid_x(n_doe)  # If acting information is needed
+  xdoe, x_is_acting = problem.design_space.sample_valid_x(
+      n_doe
+  )  # If acting information is needed
   # xdoe = problem.sample(n_doe)  # Also possible
   y = problem(xdoe)
   
