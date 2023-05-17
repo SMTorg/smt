@@ -16,7 +16,13 @@ from smt.applications.mixed_integer import (
     MixedIntegerKrigingModel,
 )
 from smt.problems import Sphere, HierarchicalGoldstein, HierarchicalNeuralNetwork
-from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+from smt.utils.design_space import (
+    DesignSpace,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+    CategoricalVariable,
+)
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
@@ -29,11 +35,13 @@ from smt.surrogate_models import (
 
 class TestMixedInteger(unittest.TestCase):
     def test_krg_mixed_3D_INT(self):
-        design_space = DesignSpace([
-            FloatVariable(-10, 10),
-            CategoricalVariable(['blue', 'red', 'green']),
-            IntegerVariable(-10, 10),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-10, 10),
+                CategoricalVariable(["blue", "red", "green"]),
+                IntegerVariable(-10, 10),
+            ]
+        )
 
         mixint = MixedIntegerContext(design_space)
 
@@ -55,11 +63,13 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D(self):
-        design_space = DesignSpace([
-            FloatVariable(-10, 10),
-            CategoricalVariable(['blue', 'red', 'green']),
-            IntegerVariable(-10, 10),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-10, 10),
+                CategoricalVariable(["blue", "red", "green"]),
+                IntegerVariable(-10, 10),
+            ]
+        )
 
         mixint = MixedIntegerContext(design_space)
 
@@ -81,21 +91,25 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_krg_mixed_3D_bad_regr(self):
-        design_space = DesignSpace([
-            FloatVariable(-10, 10),
-            CategoricalVariable(['blue', 'red', 'green']),
-            IntegerVariable(-10, 10),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-10, 10),
+                CategoricalVariable(["blue", "red", "green"]),
+                IntegerVariable(-10, 10),
+            ]
+        )
 
         mixint = MixedIntegerContext(design_space)
         with self.assertRaises(ValueError):
             sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
     def test_qp_mixed_2D_INT(self):
-        design_space = DesignSpace([
-            FloatVariable(-10, 10),
-            IntegerVariable(-10, 10),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-10, 10),
+                IntegerVariable(-10, 10),
+            ]
+        )
 
         mixint = MixedIntegerContext(design_space)
         sm = mixint.build_surrogate_model(QP(print_prediction=False))
@@ -114,20 +128,24 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def test_compute_unfolded_dimension(self):
-        design_space = DesignSpace([
-            FloatVariable(0, 1),
-            CategoricalVariable(['A', 'B']),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(0, 1),
+                CategoricalVariable(["A", "B"]),
+            ]
+        )
         assert design_space.get_unfolded_num_bounds().shape[0] == 3
 
     def test_unfold_with_enum_mask(self):
         x = np.array([[1.5, 1], [1.5, 0], [1.5, 1]])
         expected = [[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]]
 
-        design_space = DesignSpace([
-            FloatVariable(1, 2),
-            CategoricalVariable(['A', 'B']),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(1, 2),
+                CategoricalVariable(["A", "B"]),
+            ]
+        )
         x_unfolded, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
@@ -135,10 +153,12 @@ class TestMixedInteger(unittest.TestCase):
         x = np.array([[1, 1.5], [0, 1.5], [1, 1.5]])
         expected = [[0, 1, 1.5], [1, 0, 1.5], [0, 1, 1.5]]
 
-        design_space = DesignSpace([
-            CategoricalVariable(['A', 'B']),
-            FloatVariable(1, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["A", "B"]),
+                FloatVariable(1, 2),
+            ]
+        )
         x_unfolded, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
@@ -146,10 +166,12 @@ class TestMixedInteger(unittest.TestCase):
         x = np.array([[1.5, 0, 1], [1.5, 1, 0], [1.5, 0, 1]])
         expected = [[1.5, 1], [1.5, 0], [1.5, 1]]
 
-        design_space = DesignSpace([
-            FloatVariable(1, 2),
-            CategoricalVariable(['A', 'B']),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(1, 2),
+                CategoricalVariable(["A", "B"]),
+            ]
+        )
         x_folded, _ = design_space.fold_x(x)
         self.assertListEqual(expected, x_folded.tolist())
 
@@ -157,10 +179,12 @@ class TestMixedInteger(unittest.TestCase):
         expected = [[1.5, 1]]
         x = np.array([1.5, 0, 1])
 
-        design_space = DesignSpace([
-            FloatVariable(1, 2),
-            CategoricalVariable(['A', 'B']),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(1, 2),
+                CategoricalVariable(["A", "B"]),
+            ]
+        )
         x_folded, _ = design_space.fold_x(x)
         self.assertListEqual(expected, x_folded.tolist())
         x = [1.5, 0, 1]
@@ -168,10 +192,12 @@ class TestMixedInteger(unittest.TestCase):
         self.assertListEqual(expected, x_folded.tolist())
 
     def test_cast_to_enum_value(self):
-        design_space = DesignSpace([
-            FloatVariable(0, 4),
-            CategoricalVariable(['blue', 'red']),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(0, 4),
+                CategoricalVariable(["blue", "red"]),
+            ]
+        )
         x = np.zeros((5, 2))
         x[:, 1] = [1, 1, 0, 1, 0]
         decoded = design_space.decode_values(x, i_dv=1)
@@ -179,23 +205,27 @@ class TestMixedInteger(unittest.TestCase):
         self.assertListEqual(expected, decoded)
 
     def test_unfolded_xlimits_type(self):
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['2', '3']),
-            CategoricalVariable(['4', '5']),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["2", "3"]),
+                CategoricalVariable(["4", "5"]),
+                IntegerVariable(0, 2),
+            ]
+        )
         sampling = MixedIntegerSamplingMethod(LHS, design_space, criterion="ese")
         doe = sampling(10)
         self.assertEqual((10, 4), doe.shape)
 
     def test_unfold_xlimits_with_continuous_limits(self):
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                IntegerVariable(0, 2),
+            ]
+        )
 
         unfolded_limits = design_space.get_unfolded_num_bounds()
         self.assertEqual(
@@ -207,12 +237,14 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_unfold_xlimits_with_continuous_limits_and_ordinal_values(self):
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            OrdinalVariable(["0", "3", "4"]),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                OrdinalVariable(["0", "3", "4"]),
+            ]
+        )
 
         unfolded_limits = design_space.get_unfolded_num_bounds()
         self.assertEqual(
@@ -224,12 +256,14 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values(self):
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            IntegerVariable(0, 4),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                IntegerVariable(0, 4),
+            ]
+        )
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
         self.assertEqual(
@@ -242,12 +276,14 @@ class TestMixedInteger(unittest.TestCase):
 
     def test_cast_to_discrete_values_with_smooth_rounding_ordinal_values(self):
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 1.1]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            OrdinalVariable(["0", "2", "4"]),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                OrdinalVariable(["0", "2", "4"]),
+            ]
+        )
 
         self.assertEqual(
             np.array_equal(
@@ -258,13 +294,15 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values_with_hard_rounding_ordinal_values(self):
-        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, .9]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            OrdinalVariable(["0", "4"]),
-        ])
+        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 0.9]])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                OrdinalVariable(["0", "4"]),
+            ]
+        )
 
         self.assertEqual(
             np.array_equal(
@@ -275,13 +313,15 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_cast_to_discrete_values_with_non_integer_ordinal_values(self):
-        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, .8]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["blue", "red"]),
-            CategoricalVariable(["short", "medium", "long"]),
-            OrdinalVariable(["0", "3.5"]),
-        ])
+        x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 0.8]])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red"]),
+                CategoricalVariable(["short", "medium", "long"]),
+                OrdinalVariable(["0", "3.5"]),
+            ]
+        )
 
         self.assertEqual(
             np.array_equal(
@@ -304,15 +344,21 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
         from matplotlib import colors
 
-        from smt.utils.design_space import DesignSpace, FloatVariable, CategoricalVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            FloatVariable,
+            CategoricalVariable,
+        )
 
         float_var = FloatVariable(0, 4)
-        cat_var = CategoricalVariable(['blue', 'red'])
+        cat_var = CategoricalVariable(["blue", "red"])
 
-        design_space = DesignSpace([
-            float_var,
-            cat_var,
-        ])
+        design_space = DesignSpace(
+            [
+                float_var,
+                cat_var,
+            ]
+        )
 
         num = 40
         x, x_is_acting = design_space.sample_valid_x(num)
@@ -334,9 +380,11 @@ class TestMixedInteger(unittest.TestCase):
 
         # Specify the design space using the DesignSpace
         # class and various available variable types
-        design_space = DesignSpace([
-            IntegerVariable(0, 4),
-        ])
+        design_space = DesignSpace(
+            [
+                IntegerVariable(0, 4),
+            ]
+        )
         sm = MixedIntegerSurrogateModel(design_space=design_space, surrogate=QP())
         sm.set_training_values(xt, yt)
         sm.train()
@@ -356,13 +404,20 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, CategoricalVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            CategoricalVariable,
+        )
 
-        design_space = DesignSpace([
-            IntegerVariable(0, 5),
-            FloatVariable(0., 4.),
-            CategoricalVariable(["blue", "red", "green", "yellow"]),
-        ])
+        design_space = DesignSpace(
+            [
+                IntegerVariable(0, 5),
+                FloatVariable(0.0, 4.0),
+                CategoricalVariable(["blue", "red", "green", "yellow"]),
+            ]
+        )
 
         def ftest(x):
             return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
@@ -401,26 +456,49 @@ class TestMixedInteger(unittest.TestCase):
         self.assertIsInstance(ds, DesignSpace)
         self.assertEqual(ds.n_dv, 11)
 
-        x = np.array([
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        ])
+        x = np.array(
+            [
+                [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            ]
+        )
         y = problem(x)
-        self.assertTrue(np.linalg.norm(y - np.array([50.75285716, 56.62074043, 50.97693309, 56.29235443])) < 1e-8)
-        self.assertTrue(np.linalg.norm(problem.eval_is_acting.astype(int) - np.array([
-            [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
-            [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-        ])) < 1e-8)
-        self.assertTrue(np.linalg.norm(problem.eval_x - np.array([
-            [0, 1, 1, 1, 50, 50, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1,  1, 50, 1, 0, 1, 1, 1],
-            [2, 1, 1, 1, 50,  1, 1, 1, 0, 1, 1],
-            [3, 1, 1, 1,  1,  1, 1, 0, 0, 1, 1],
-        ])) < 1e-8)
+        self.assertTrue(
+            np.linalg.norm(
+                y - np.array([50.75285716, 56.62074043, 50.97693309, 56.29235443])
+            )
+            < 1e-8
+        )
+        self.assertTrue(
+            np.linalg.norm(
+                problem.eval_is_acting.astype(int)
+                - np.array(
+                    [
+                        [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+                        [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+                    ]
+                )
+            )
+            < 1e-8
+        )
+        self.assertTrue(
+            np.linalg.norm(
+                problem.eval_x
+                - np.array(
+                    [
+                        [0, 1, 1, 1, 50, 50, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 50, 1, 0, 1, 1, 1],
+                        [2, 1, 1, 1, 50, 1, 1, 1, 0, 1, 1],
+                        [3, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+                    ]
+                )
+            )
+            < 1e-8
+        )
         self.assertTrue(np.linalg.norm(y - problem(problem.eval_x)) < 1e-8)
 
         n_doe = 15
@@ -527,64 +605,115 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_mixed_discrete_design_space_example(self):
         import numpy as np
-        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            OrdinalVariable,
+            CategoricalVariable,
+        )
 
-        ds = DesignSpace([
-            CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
-            OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
-            IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-            FloatVariable(0, 1),  # c3 continuous between 0 and 1
-        ])
+        ds = DesignSpace(
+            [
+                CategoricalVariable(
+                    ["A", "B"]
+                ),  # x0 categorical: A or B; order is not relevant
+                OrdinalVariable(
+                    ["C", "D", "E"]
+                ),  # x1 ordinal: C, D or E; order is relevant
+                IntegerVariable(
+                    0, 2
+                ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+                FloatVariable(0, 1),  # c3 continuous between 0 and 1
+            ]
+        )
 
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         x_sampled, is_acting_sampled = ds.sample_valid_x(100)
 
         # Correct design vectors: round discrete variables, correct hierarchical variables
-        x_corr, is_acting = ds.correct_get_acting(np.array([
-            [0, 0, 2, .25],
-            [0, 2, 1, .75],
-        ]))
+        x_corr, is_acting = ds.correct_get_acting(
+            np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    [0, 2, 1, 0.75],
+                ]
+            )
+        )
         print(is_acting)
 
     def run_hierarchical_design_space_example(self):
         import numpy as np
-        from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            OrdinalVariable,
+            CategoricalVariable,
+        )
 
-        ds = DesignSpace([
-            CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
-            OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
-            IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-            FloatVariable(0, 1),  # c3 continuous between 0 and 1
-        ])
+        ds = DesignSpace(
+            [
+                CategoricalVariable(
+                    ["A", "B"]
+                ),  # x0 categorical: A or B; order is not relevant
+                OrdinalVariable(
+                    ["C", "D", "E"]
+                ),  # x1 ordinal: C, D or E; order is relevant
+                IntegerVariable(
+                    0, 2
+                ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+                FloatVariable(0, 1),  # c3 continuous between 0 and 1
+            ]
+        )
 
         # Declare that x1 is acting if x0 == A
-        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')
+        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
 
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         x_sampled, is_acting_sampled = ds.sample_valid_x(100)
 
         # Correct design vectors: round discrete variables, correct hierarchical variables
-        x_corr, is_acting = ds.correct_get_acting(np.array([
-            [0, 0, 2, .25],
-            [1, 2, 1, .66],
-        ]))
+        x_corr, is_acting = ds.correct_get_acting(
+            np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    [1, 2, 1, 0.66],
+                ]
+            )
+        )
 
         # Observe the hierarchical behavior:
-        assert np.all(is_acting == np.array([
-            [True, True, True, True],
-            [True, False, True, True],  # x1 is not acting if x0 != A
-        ]))
-        assert np.all(x_corr == np.array([
-            [0, 0, 2, .25],
-            # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-            [1, 0, 1, .66],
-        ]))
+        assert np.all(
+            is_acting
+            == np.array(
+                [
+                    [True, True, True, True],
+                    [True, False, True, True],  # x1 is not acting if x0 != A
+                ]
+            )
+        )
+        assert np.all(
+            x_corr
+            == np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+                    [1, 0, 1, 0.66],
+                ]
+            )
+        )
 
     def run_hierarchical_variables_Goldstein(self):
         import numpy as np
-        from smt.utils.design_space import DesignSpace, CategoricalVariable, IntegerVariable, FloatVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            IntegerVariable,
+            FloatVariable,
+        )
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
 
@@ -595,25 +724,25 @@ class TestMixedInteger(unittest.TestCase):
                 import numpy as np
 
                 h = (
-                        53.3108
-                        + 0.184901 * x1
-                        - 5.02914 * x1 ** 3 * 10 ** (-6)
-                        + 7.72522 * x1 ** z3 * 10 ** (-8)
-                        - 0.0870775 * x2
-                        - 0.106959 * x3
-                        + 7.98772 * x3 ** z4 * 10 ** (-6)
-                        + 0.00242482 * x4
-                        + 1.32851 * x4 ** 3 * 10 ** (-6)
-                        - 0.00146393 * x1 * x2
-                        - 0.00301588 * x1 * x3
-                        - 0.00272291 * x1 * x4
-                        + 0.0017004 * x2 * x3
-                        + 0.0038428 * x2 * x4
-                        - 0.000198969 * x3 * x4
-                        + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
-                        - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
-                        + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
-                        - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+                    53.3108
+                    + 0.184901 * x1
+                    - 5.02914 * x1**3 * 10 ** (-6)
+                    + 7.72522 * x1**z3 * 10 ** (-8)
+                    - 0.0870775 * x2
+                    - 0.106959 * x3
+                    + 7.98772 * x3**z4 * 10 ** (-6)
+                    + 0.00242482 * x4
+                    + 1.32851 * x4**3 * 10 ** (-6)
+                    - 0.00146393 * x1 * x2
+                    - 0.00301588 * x1 * x3
+                    - 0.00272291 * x1 * x4
+                    + 0.0017004 * x2 * x3
+                    + 0.0038428 * x2 * x4
+                    - 0.000198969 * x3 * x4
+                    + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+                    - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+                    + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+                    - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
                 )
                 if cos_term:
                     h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
@@ -629,24 +758,24 @@ class TestMixedInteger(unittest.TestCase):
                 c6 = z3 == 2
 
                 y = (
-                        c4
-                        * (
-                                c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
-                                + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
-                                + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
-                        )
-                        + c5
-                        * (
-                                c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
-                                + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
-                                + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
-                        )
-                        + c6
-                        * (
-                                c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
-                                + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
-                                + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
-                        )
+                    c4
+                    * (
+                        c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                        + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                        + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+                    )
+                    + c5
+                    * (
+                        c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                        + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                        + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+                    )
+                    + c6
+                    * (
+                        c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                        + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                        + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+                    )
                 )
                 return y
 
@@ -656,9 +785,9 @@ class TestMixedInteger(unittest.TestCase):
                 c3 = z2 == 2
 
                 y = (
-                        c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
-                        + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
-                        + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+                    c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
                 )
                 return y
 
@@ -668,9 +797,9 @@ class TestMixedInteger(unittest.TestCase):
                 c3 = z1 == 2
 
                 y = (
-                        c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
-                        + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
-                        + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+                    c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+                    + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+                    + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
                 )
                 return y
 
@@ -694,19 +823,21 @@ class TestMixedInteger(unittest.TestCase):
                     )
             return np.array(y)
 
-        design_space = DesignSpace([
-            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
-            IntegerVariable(0, 1),  # x1
-            FloatVariable(0, 100),  # x2
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            IntegerVariable(0, 2),  # x7
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+                IntegerVariable(0, 1),  # x1
+                FloatVariable(0, 100),  # x2
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                IntegerVariable(0, 2),  # x7
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+            ]
+        )
 
         # x4 is acting if meta == 1, 3
         design_space.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
@@ -833,10 +964,12 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_gower_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        design_space = DesignSpace([
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -915,10 +1048,12 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        design_space = DesignSpace([
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -952,10 +1087,12 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_hyp_2D(self):
         xt = np.array([[0, 5], [2, -1], [4, 0.5]])
         yt = np.array([[0.0], [1.0], [1.5]])
-        design_space = DesignSpace([
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -989,11 +1126,13 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_PLS(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = surrogate = KPLS(
@@ -1026,11 +1165,13 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_PLS_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = KPLS(
@@ -1064,11 +1205,13 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_hyp_3D_PLS_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -1103,11 +1246,13 @@ class TestMixedInteger(unittest.TestCase):
     def test_mixed_homo_gaussian_3D_ord_cate(self):
         xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
-        design_space = DesignSpace([
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-            FloatVariable(-5, 5),
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0"]),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0"]),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -1140,11 +1285,13 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)) < 1e-6)))
 
     def test_mixed_gower_3D(self):
-        design_space = DesignSpace([
-            FloatVariable(-10, 10),
-            IntegerVariable(-10, 10),
-            IntegerVariable(-10, 10),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-10, 10),
+                IntegerVariable(-10, 10),
+                IntegerVariable(-10, 10),
+            ]
+        )
         mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(
@@ -1169,7 +1316,11 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            FloatVariable,
+        )
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -1182,10 +1333,12 @@ class TestMixedInteger(unittest.TestCase):
         yt3 = np.array([-10, 3, 11.0])
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
 
-        design_space = DesignSpace([
-            CategoricalVariable(['Blue', 'Red', 'Green']),
-            FloatVariable(0, 4),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["Blue", "Red", "Green"]),
+                FloatVariable(0, 4),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -1291,7 +1444,11 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            FloatVariable,
+        )
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -1304,10 +1461,12 @@ class TestMixedInteger(unittest.TestCase):
         yt3 = np.array([-10, 3, 11.0])
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
 
-        design_space = DesignSpace([
-            CategoricalVariable(['Blue', 'Red', 'Green']),
-            FloatVariable(0, 4),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["Blue", "Red", "Green"]),
+                FloatVariable(0, 4),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
@@ -1413,7 +1572,11 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            FloatVariable,
+        )
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -1426,10 +1589,12 @@ class TestMixedInteger(unittest.TestCase):
         yt3 = np.array([-10, 3, 11.0])
         yt = np.concatenate((yt1, yt2, yt3), axis=0)
 
-        design_space = DesignSpace([
-            CategoricalVariable(['Blue', 'Red', 'Green']),
-            FloatVariable(0, 4),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["Blue", "Red", "Green"]),
+                FloatVariable(0, 4),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(

@@ -9,7 +9,11 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.utils.checks import ensure_2d_array
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
-from smt.utils.design_space import BaseDesignSpace, CategoricalVariable, ensure_design_space
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    CategoricalVariable,
+    ensure_design_space,
+)
 import warnings
 
 
@@ -34,8 +38,10 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             specifying if doe output should be in folded space (enum indexes)
             or not (enum masks)
         """
-        warnings.warn('MixedIntegerSamplingMethod has been deprecated, use DesignSpace.sample_valid_x instead!',
-                      category=DeprecationWarning)
+        warnings.warn(
+            "MixedIntegerSamplingMethod has been deprecated, use DesignSpace.sample_valid_x instead!",
+            category=DeprecationWarning,
+        )
 
         self._design_space = design_space
         self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
@@ -184,7 +190,7 @@ class MixedIntegerKrigingModel(KrgBased):
                 + str(self._surrogate.name)
                 + " is not supported. Please use MixedIntegerSurrogateModel instead."
             )
-        self.options['design_space'] = self._surrogate.design_space
+        self.options["design_space"] = self._surrogate.design_space
 
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
@@ -195,9 +201,13 @@ class MixedIntegerKrigingModel(KrgBased):
                 raise ValueError("constant regression must be used with mixed integer")
 
         design_space = self.design_space
-        if any(isinstance(dv, CategoricalVariable) for dv in design_space.design_variables) and self._surrogate.options[
-            "categorical_kernel"
-        ] is None:
+        if (
+            any(
+                isinstance(dv, CategoricalVariable)
+                for dv in design_space.design_variables
+            )
+            and self._surrogate.options["categorical_kernel"] is None
+        ):
             self._surrogate.options[
                 "categorical_kernel"
             ] = MixIntKernelType.HOMO_HSPHERE
@@ -229,7 +239,9 @@ class MixedIntegerKrigingModel(KrgBased):
             xt_apply, is_acting_apply = xt, is_acting
 
         super().set_training_values(xt_apply, yt, is_acting=is_acting_apply)
-        self._surrogate.set_training_values(xt_apply, yt, name, is_acting=is_acting_apply)
+        self._surrogate.set_training_values(
+            xt_apply, yt, name, is_acting=is_acting_apply
+        )
 
     def update_training_values(self, yt, name=None):
         super().update_training_values(yt, name)

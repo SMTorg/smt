@@ -16,6 +16,7 @@ from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
 
 try:
     from numba import njit, prange
+
     USE_NUMBA_JIT = True  # Set False to temporarily disable
 
 except ImportError:  # pip install smt[numba]
@@ -46,8 +47,8 @@ def njit_use(parallel=False):
 
 
 class MixHrcKernelType(Enum):
-    ARC_KERNEL = 'ARC_KERNEL'
-    ALG_KERNEL = 'ALG_KERNEL'
+    ARC_KERNEL = "ARC_KERNEL"
+    ALG_KERNEL = "ALG_KERNEL"
 
 
 def cross_distances(X, y=None):
@@ -230,7 +231,9 @@ def compute_X_cont(x, design_space):
     return x[:, ~is_cat_mask], is_cat_mask
 
 
-def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_kernel, y=None, y_is_acting=None):
+def gower_componentwise_distances(
+    X, x_is_acting, design_space, hierarchical_kernel, y=None, y_is_acting=None
+):
     """
     Computes the nonzero Gower-distances componentwise between the vectors
     in X.
@@ -268,7 +271,7 @@ def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_ker
     else:
         Y = y
         if y_is_acting is None:
-            raise ValueError(f'Expected y_is_acting because y is given')
+            raise ValueError(f"Expected y_is_acting because y is given")
 
     if not isinstance(X, np.ndarray):
         if not np.array_equal(X.columns, Y.columns):
@@ -278,7 +281,7 @@ def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_ker
             raise TypeError("X and Y must have same y-dim!")
 
     if x_is_acting.shape != X.shape or y_is_acting.shape != Y.shape:
-        raise ValueError(f'is_acting matrices must have same shape as X!')
+        raise ValueError(f"is_acting matrices must have same shape as X!")
 
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
@@ -302,7 +305,9 @@ def gower_componentwise_distances(X, x_is_acting, design_space, hierarchical_ker
 
     # To support categorical decreed variables, some extra math wizardry is needed
     if np.any(cat_is_decreed) or np.any(~x_cat_is_acting) or np.any(~y_cat_is_acting):
-        raise ValueError('Decreed (conditionally-active) categorical variables are not supported yet!')
+        raise ValueError(
+            "Decreed (conditionally-active) categorical variables are not supported yet!"
+        )
 
     # This is to normalize the numeric values between 0 and 1.
     Z_num = Z[:, ~cat_features]
@@ -358,7 +363,7 @@ def compute_D_cat(X_cat, Y_cat, y):
             l2 = k2
             if y is None:
                 l2 = k2 + k1 + 1
-            D_cat[indD+k2] = X_cat[k1] != Y_cat[l2]
+            D_cat[indD + k2] = X_cat[k1] != Y_cat[l2]
         indD += k2max
     return D_cat
 
@@ -449,10 +454,7 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
             if hierarchical_kernel == MixHrcKernelType.ALG_KERNEL:
                 abs_delta[num_is_decreed] = (
                     2
-                    * np.abs(
-                        X_num[k1][num_is_decreed]
-                        - Y_num[l2][num_is_decreed]
-                    )
+                    * np.abs(X_num[k1][num_is_decreed] - Y_num[l2][num_is_decreed])
                     / (
                         np.sqrt(1 + X_num[k1][num_is_decreed] ** 2)
                         * np.sqrt(1 + Y_num[l2][num_is_decreed] ** 2)
@@ -463,19 +465,16 @@ def apply_the_algebraic_distance_to_the_decreed_variable(
                     1
                     - np.cos(
                         np.pi
-                        * np.abs(
-                            X_num[k1][num_is_decreed]
-                            - Y_num[l2][num_is_decreed]
-                        )
+                        * np.abs(X_num[k1][num_is_decreed] - Y_num[l2][num_is_decreed])
                     )
                 )
 
             # Set distances for non-acting variables: 0 if both are non-acting, 1 if only one is non-acting
             both_non_acting = num_is_decreed & ~(x_k1_acting | y_l2_acting)
-            abs_delta[both_non_acting] = 0.
+            abs_delta[both_non_acting] = 0.0
 
             either_acting = num_is_decreed & (x_k1_acting != y_l2_acting)
-            abs_delta[either_acting] = 1.
+            abs_delta[either_acting] = 1.0
 
             D_num[indD] = abs_delta
             indD += 1
@@ -1210,7 +1209,7 @@ def componentwise_distance(
         )
 
     if not return_derivative:
-        if corr == 'act_exp':
+        if corr == "act_exp":
             return _comp_dist_act_exp(D, dim)
         return _comp_dist(D, dim, power)
     else:
@@ -1229,7 +1228,7 @@ def componentwise_distance(
 def _comp_dist_act_exp(D, dim):
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, 1000
-    for i in prange((D_corr.shape[0] // nb_limit)+1):
+    for i in prange((D_corr.shape[0] // nb_limit) + 1):
         D_corr[i * nb_limit : (i + 1) * nb_limit, :] = D[
             i * nb_limit : (i + 1) * nb_limit, :
         ]
@@ -1240,7 +1239,7 @@ def _comp_dist_act_exp(D, dim):
 def _comp_dist(D, dim, power):
     D_corr = np.zeros((D.shape[0], dim))
     i, nb_limit = 0, 1000
-    for i in range((D_corr.shape[0] // nb_limit)+1):
+    for i in range((D_corr.shape[0] // nb_limit) + 1):
         D_corr[i * nb_limit : (i + 1) * nb_limit, :] = (
             np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]) ** power
         )
@@ -1457,7 +1456,9 @@ def quadratic(x):
 
 
 @njit_use(parallel=True)
-def matrix_data_corr_levels_cat_matrix(i, n_levels, theta_cat, theta_bounds, is_ehh: bool):
+def matrix_data_corr_levels_cat_matrix(
+    i, n_levels, theta_cat, theta_bounds, is_ehh: bool
+):
     Theta_mat = np.zeros((n_levels[i], n_levels[i]))
     L = np.zeros((n_levels[i], n_levels[i]))
     v = 0
@@ -1513,7 +1514,9 @@ def matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel):
 
 
 @njit_use()
-def matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel):
+def matrix_data_corr_levels_cat_mod_comps(
+    i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel
+):
     for k in range(np.shape(Lij[i])[0]):
         indi = int(Lij[i][k][0])
         indj = int(Lij[i][k][1])
@@ -1522,9 +1525,7 @@ def matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, h
             r_cat[k] = 1.0
         else:
             if has_cat_kernel:
-                Theta_i_red = np.zeros(
-                    int((n_levels[i] - 1) * n_levels[i] / 2)
-                )
+                Theta_i_red = np.zeros(int((n_levels[i] - 1) * n_levels[i] / 2))
                 indmatvec = 0
                 for j in range(n_levels[i]):
                     for l in range(n_levels[i]):

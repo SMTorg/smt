@@ -9,7 +9,13 @@ C. Audet, E. Hall e-Hannan, and S. Le Digabel. A general mathematical framework 
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import DesignSpace, OrdinalVariable, FloatVariable, CategoricalVariable, IntegerVariable
+from smt.utils.design_space import (
+    DesignSpace,
+    OrdinalVariable,
+    FloatVariable,
+    CategoricalVariable,
+    IntegerVariable,
+)
 
 
 class HierarchicalNeuralNetwork(Problem):
@@ -17,16 +23,18 @@ class HierarchicalNeuralNetwork(Problem):
         self.options.declare("name", "HierarchicalNeuralNetwork", types=str)
 
     def _setup(self):
-        design_space = DesignSpace([
-            OrdinalVariable(values=[1, 2, 3]),  # x0
-            FloatVariable(-5, 2),
-            FloatVariable(-5, 2),
-            OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
-            CategoricalVariable(values=['ReLU', 'SELU', 'ISRLU']),  # x4
-            IntegerVariable(0, 5),  # x5
-            IntegerVariable(0, 5),  # x6
-            IntegerVariable(0, 5),  # x7
-        ])
+        design_space = DesignSpace(
+            [
+                OrdinalVariable(values=[1, 2, 3]),  # x0
+                FloatVariable(-5, 2),
+                FloatVariable(-5, 2),
+                OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
+                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4
+                IntegerVariable(0, 5),  # x5
+                IntegerVariable(0, 5),  # x6
+                IntegerVariable(0, 5),  # x7
+            ]
+        )
 
         # x6 is active when x0 >= 2
         design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3])
@@ -50,14 +58,14 @@ class HierarchicalNeuralNetwork(Problem):
         ds = self.design_space
 
         def f_neu(x1, x2, x3, x4):
-            if x4 == 'ReLU':
+            if x4 == "ReLU":
                 return 2 * x1 + x2 - 0.5 * x3
-            elif x4 == 'SELU':
+            elif x4 == "SELU":
                 return -x1 + 2 * x2 - 0.5 * x3
-            elif x4 == 'ISRLU':
+            elif x4 == "ISRLU":
                 return -x1 + x2 + 0.5 * x3
             else:
-                raise ValueError(f'Unexpected x4: {x4}')
+                raise ValueError(f"Unexpected x4: {x4}")
 
         def f1(x1, x2, x3, x4, x5):
             return f_neu(x1, x2, x3, x4) + x5**2
@@ -84,7 +92,7 @@ class HierarchicalNeuralNetwork(Problem):
                 elif x0 == 3:
                     y.append(f3(x[1], x[2], x3, x4, x[5], x[6], x[7]))
                 else:
-                    raise ValueError(f'Unexpected x0 value: {x0}')
+                    raise ValueError(f"Unexpected x0 value: {x0}")
             return np.array(y)
 
         return f(x)

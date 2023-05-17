@@ -28,8 +28,10 @@ from smt.surrogate_models import (
     KPLS,
     MixIntKernelType,
     DesignSpace,
-    OrdinalVariable, FloatVariable,
-    CategoricalVariable, IntegerVariable,
+    OrdinalVariable,
+    FloatVariable,
+    CategoricalVariable,
+    IntegerVariable,
 )
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -233,10 +235,12 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "CLmin"
-        design_space = DesignSpace([
-            IntegerVariable(*xlimits[0]),
-            FloatVariable(*xlimits[1]),
-        ])
+        design_space = DesignSpace(
+            [
+                IntegerVariable(*xlimits[0]),
+                FloatVariable(*xlimits[1]),
+            ]
+        )
         sm = KRG(design_space=design_space, print_global=False)
         mixint = MixedIntegerContext(design_space)
         sampling = mixint.build_sampling_method(FullFactorial)
@@ -267,10 +271,12 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        design_space = DesignSpace([
-            IntegerVariable(*xlimits[0]),
-            FloatVariable(*xlimits[1]),
-        ])
+        design_space = DesignSpace(
+            [
+                IntegerVariable(*xlimits[0]),
+                FloatVariable(*xlimits[1]),
+            ]
+        )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         sm = KRG(design_space=design_space, print_global=False)
@@ -300,10 +306,12 @@ class TestEGO(SMTestCase):
         n_iter = 20
         fun = Branin(ndim=2)
         xlimits = fun.xlimits
-        design_space = DesignSpace([
-            IntegerVariable(*xlimits[0]),
-            FloatVariable(*xlimits[1]),
-        ])
+        design_space = DesignSpace(
+            [
+                IntegerVariable(*xlimits[0]),
+                FloatVariable(*xlimits[1]),
+            ]
+        )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
         sm = KRG(design_space=design_space, print_global=False)
@@ -357,12 +365,15 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer(self):
         n_iter = 15
         n_doe = 5
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['blue', 'red', 'green']),
-            CategoricalVariable(['large', 'small']),
-            OrdinalVariable([0, 2, 3]),
-        ], seed=42)
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red", "green"]),
+                CategoricalVariable(["large", "small"]),
+                OrdinalVariable([0, 2, 3]),
+            ],
+            seed=42,
+        )
         xdoe, _ = design_space.sample_valid_x(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -382,12 +393,14 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         n_doe = 5
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['blue', 'red', 'green']),
-            CategoricalVariable(['large', 'small']),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red", "green"]),
+                CategoricalVariable(["large", "small"]),
+                IntegerVariable(0, 2),
+            ]
+        )
         xdoe, _ = design_space.sample_valid_x(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -417,7 +430,7 @@ class TestEGO(SMTestCase):
             elif x4 == 2:
                 return -x1 + x2 + 0.5 * x3
             else:
-                raise ValueError(f'Unexpected x4: {x4}')
+                raise ValueError(f"Unexpected x4: {x4}")
 
         def f1(x1, x2, x3, x4, x5):
             return f_neu(x1, x2, x3, x4) + x5**2
@@ -439,19 +452,21 @@ class TestEGO(SMTestCase):
                 elif x[0] == 2:
                     y.append(f3(x[1], x[2], x3_decoded, x[4], x[5], x[6], x[7]))
                 else:
-                    raise ValueError(f'Unexpected x0: {x[0]}')
+                    raise ValueError(f"Unexpected x0: {x[0]}")
             return np.array(y)
 
-        design_space = DesignSpace([
-            OrdinalVariable(values=[1, 2, 3]),  # x0
-            FloatVariable(-5, 2),
-            FloatVariable(-5, 2),
-            OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
-            CategoricalVariable(values=['ReLU', 'SELU', 'ISRLU']),  # x4
-            IntegerVariable(0, 5),  # x5
-            IntegerVariable(0, 5),  # x6
-            IntegerVariable(0, 5),  # x7
-        ])
+        design_space = DesignSpace(
+            [
+                OrdinalVariable(values=[1, 2, 3]),  # x0
+                FloatVariable(-5, 2),
+                FloatVariable(-5, 2),
+                OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
+                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4
+                IntegerVariable(0, 5),  # x5
+                IntegerVariable(0, 5),  # x6
+                IntegerVariable(0, 5),  # x7
+            ]
+        )
 
         # x6 is active when x0 >= 2
         design_space.declare_decreed_var(decreed_var=6, meta_var=0, meta_value=[2, 3])
@@ -626,19 +641,21 @@ class TestEGO(SMTestCase):
                     raise ValueError
             return np.array(y)
 
-        ds = DesignSpace([
-            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
-            OrdinalVariable(values=[0, 1]),  # x1
-            FloatVariable(0, 100),  # x2
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            IntegerVariable(0, 2),  # x7
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-        ])
+        ds = DesignSpace(
+            [
+                CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+                OrdinalVariable(values=[0, 1]),  # x1
+                FloatVariable(0, 100),  # x2
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                IntegerVariable(0, 2),  # x7
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+            ]
+        )
 
         # x4 is acting if meta == 1, 3
         ds.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
@@ -682,12 +699,14 @@ class TestEGO(SMTestCase):
 
     def test_ego_mixed_integer_homo_gaussian(self):
         n_iter = 15
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['blue', 'red', 'green']),
-            CategoricalVariable(['large', 'small']),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red", "green"]),
+                CategoricalVariable(["large", "small"]),
+                IntegerVariable(0, 2),
+            ]
+        )
         n_doe = 5
         sampling = MixedIntegerSamplingMethod(
             LHS,
@@ -718,12 +737,14 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['blue', 'red', 'green']),
-            CategoricalVariable(['large', 'small']),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red", "green"]),
+                CategoricalVariable(["large", "small"]),
+                IntegerVariable(0, 2),
+            ]
+        )
         sampling = MixedIntegerSamplingMethod(
             LHS,
             design_space,
@@ -986,7 +1007,12 @@ class TestEGO(SMTestCase):
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import MixIntKernelType
-        from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable, IntegerVariable
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            FloatVariable,
+            IntegerVariable,
+        )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
         from smt.sampling_methods import LHS
@@ -1018,17 +1044,21 @@ class TestEGO(SMTestCase):
             return y.reshape((-1, 1))
 
         n_iter = 15
-        design_space = DesignSpace([
-            FloatVariable(-5, 5),
-            CategoricalVariable(['blue', 'red', 'green']),
-            CategoricalVariable(['square', 'circle']),
-            IntegerVariable(0, 2),
-        ])
+        design_space = DesignSpace(
+            [
+                FloatVariable(-5, 5),
+                CategoricalVariable(["blue", "red", "green"]),
+                CategoricalVariable(["square", "circle"]),
+                IntegerVariable(0, 2),
+            ]
+        )
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBRand"
         sm = KRG(
-            design_space=design_space, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+            design_space=design_space,
+            categorical_kernel=MixIntKernelType.GOWER,
+            print_global=False,
         )
         mixint = MixedIntegerContext(design_space)
         n_doe = 3

@@ -8,25 +8,32 @@ P. Saves, Y. Diouane, N. Bartoli, T. Lefebvre, and J. Morlier. A mixed-categoric
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import DesignSpace, OrdinalVariable, FloatVariable, CategoricalVariable, IntegerVariable
+from smt.utils.design_space import (
+    DesignSpace,
+    OrdinalVariable,
+    FloatVariable,
+    CategoricalVariable,
+    IntegerVariable,
+)
 
 
 class HierarchicalGoldstein(Problem):
-
     def _setup(self):
-        ds = DesignSpace([
-            CategoricalVariable(values=[0, 1, 2, 3]),  # meta
-            OrdinalVariable(values=[0, 1]),  # x1
-            FloatVariable(0, 100),  # x2
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            FloatVariable(0, 100),
-            IntegerVariable(0, 2),  # x7
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-            IntegerVariable(0, 2),
-        ])
+        ds = DesignSpace(
+            [
+                CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+                OrdinalVariable(values=[0, 1]),  # x1
+                FloatVariable(0, 100),  # x2
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                FloatVariable(0, 100),
+                IntegerVariable(0, 2),  # x7
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+                IntegerVariable(0, 2),
+            ]
+        )
 
         # x4 is acting if meta == 1, 3
         ds.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
@@ -40,7 +47,6 @@ class HierarchicalGoldstein(Problem):
         self._set_design_space(ds)
 
     def _evaluate(self, x: np.ndarray, kx=0) -> np.ndarray:
-
         def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
             h = (
                 53.3108
@@ -141,5 +147,5 @@ class HierarchicalGoldstein(Problem):
                     H(xi[2], xi[3], xi[4], xi[5], xi[9], xi[10], xi[6], cos_term=xi[1])
                 )
             else:
-                raise ValueError(f'Unexpected x0: {xi[0]}')
+                raise ValueError(f"Unexpected x0: {xi[0]}")
         return np.array(y)

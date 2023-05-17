@@ -235,10 +235,14 @@ class Test(unittest.TestCase):
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
 
-        design_space = DesignSpace([
-            IntegerVariable(0, 4),
-        ])
-        sm = MixedIntegerKrigingModel(surrogate=KRG(design_space=design_space, theta0=[1e-2]))
+        design_space = DesignSpace(
+            [
+                IntegerVariable(0, 4),
+            ]
+        )
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(design_space=design_space, theta0=[1e-2])
+        )
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -267,7 +271,12 @@ class Test(unittest.TestCase):
         plt.show()
 
     def test_mixed_gower_krg(self):
-        from smt.surrogate_models import MixIntKernelType, KRG, DesignSpace, CategoricalVariable
+        from smt.surrogate_models import (
+            MixIntKernelType,
+            KRG,
+            DesignSpace,
+            CategoricalVariable,
+        )
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
@@ -276,14 +285,18 @@ class Test(unittest.TestCase):
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
-        design_space = DesignSpace([
-            CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
-        ])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+            ]
+        )
 
         # Surrogate
         sm = MixedIntegerKrigingModel(
             surrogate=KRG(
-                design_space=design_space, theta0=[1e-2], categorical_kernel=MixIntKernelType.GOWER
+                design_space=design_space,
+                theta0=[1e-2],
+                categorical_kernel=MixIntKernelType.GOWER,
             ),
         )
         sm.set_training_values(xt, yt)

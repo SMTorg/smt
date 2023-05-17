@@ -8,7 +8,13 @@ from .genn import GENN
 from .mgp import MGP
 
 from .krg_based import MixIntKernelType
-from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+from smt.utils.design_space import (
+    DesignSpace,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+    CategoricalVariable,
+)
 from smt.utils.kriging import MixHrcKernelType
 
 try:

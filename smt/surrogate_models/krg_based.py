@@ -44,11 +44,12 @@ from smt.utils.design_space import (
     CategoricalVariable,
 )
 
+
 class MixIntKernelType(Enum):
-    EXP_HOMO_HSPHERE = 'EXP_HOMO_HSPHERE'
-    HOMO_HSPHERE = 'HOMO_HSPHERE'
-    CONT_RELAX = 'CONT_RELAX'
-    GOWER = 'GOWER'
+    EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
+    HOMO_HSPHERE = "HOMO_HSPHERE"
+    CONT_RELAX = "CONT_RELAX"
+    GOWER = "GOWER"
 
 
 class KrgBased(SurrogateModel):
@@ -174,18 +175,18 @@ class KrgBased(SurrogateModel):
             desc="number of optimizer runs (multistart method)",
         )
         declare(
-            'xlimits',
+            "xlimits",
             None,
             types=(list, np.ndarray),
             desc="definition of a design space of float (continuous) variables: "
-                 "array-like of size nx x 2 (lower, upper bounds)"
+            "array-like of size nx x 2 (lower, upper bounds)",
         )
         declare(
             "design_space",
             None,
             types=(BaseDesignSpace, list, np.ndarray),
             desc="definition of the (hierarchical) design space: "
-                 "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds"
+            "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -216,9 +217,9 @@ class KrgBased(SurrogateModel):
         if xt is not None:
             xt = xt[0][0]
 
-        if self.options['design_space'] is None:
-            self.options['design_space'] = ensure_design_space(xt=xt)
-            
+        if self.options["design_space"] is None:
+            self.options["design_space"] = ensure_design_space(xt=xt)
+
         elif not isinstance(self.options["design_space"], BaseDesignSpace):
             ds_input = self.options["design_space"]
             self.options["design_space"] = ensure_design_space(
@@ -283,9 +284,7 @@ class KrgBased(SurrogateModel):
             self.Lij, self.n_levels = cross_levels(
                 X=self.X_train, ij=self.ij, design_space=self.design_space
             )
-            _, self.cat_features = compute_X_cont(
-                self.X_train, self.design_space
-            )
+            _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         # Center and scale X and y
         (
             self.X_norma,
@@ -411,10 +410,22 @@ class KrgBased(SurrogateModel):
                         j += 1
                         n_theta_cont += 1
 
-        theta_cat_features = ([np.where(theta_cat_features[:, i_lvl])[0] for i_lvl in range(len(n_levels))],
-                              np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None)
+        theta_cat_features = (
+            [
+                np.where(theta_cat_features[:, i_lvl])[0]
+                for i_lvl in range(len(n_levels))
+            ],
+            np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None,
+        )
 
-        self._corr_params = params = (cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels)
+        self._corr_params = params = (
+            cat_kernel_comps,
+            ncomp,
+            theta_cat_features,
+            theta_cont_features,
+            nx,
+            n_levels,
+        )
         return params
 
     def _matrix_data_corr(
@@ -470,8 +481,14 @@ class KrgBased(SurrogateModel):
         }
 
         # Initialize static parameters
-        cat_kernel_comps, ncomp, theta_cat_features, theta_cont_features, nx, n_levels = \
-            self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
+        (
+            cat_kernel_comps,
+            ncomp,
+            theta_cat_features,
+            theta_cont_features,
+            nx,
+            n_levels,
+        ) = self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
 
         # Sampling points X and y
         X = self.training_points[None][0][0]
@@ -549,14 +566,19 @@ class KrgBased(SurrogateModel):
         if len(n_levels) > 0:
             theta_cat_kernel = theta.copy()
             if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= (0.5 * np.pi / theta_bounds[1])
+                theta_cat_kernel[theta_cat_features[1]] *= 0.5 * np.pi / theta_bounds[1]
             elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= (2.0 * np.pi / theta_bounds[1])
+                theta_cat_kernel[theta_cat_features[1]] *= 2.0 * np.pi / theta_bounds[1]
 
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
-            T = matrix_data_corr_levels_cat_matrix(i, n_levels, theta_cat, theta_bounds,
-                                                   is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE)
+            T = matrix_data_corr_levels_cat_matrix(
+                i,
+                n_levels,
+                theta_cat,
+                theta_bounds,
+                is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
+            )
 
             if cat_kernel_comps is not None:
                 # Sampling points X and y
@@ -595,15 +617,31 @@ class KrgBased(SurrogateModel):
                     return_derivative=False,
                 )
 
-                matrix_data_corr_levels_cat_mod_comps(i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel=cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ])
+                matrix_data_corr_levels_cat_mod_comps(
+                    i,
+                    Lij,
+                    r_cat,
+                    n_levels,
+                    T,
+                    d_cat_i,
+                    has_cat_kernel=cat_kernel
+                    in [
+                        MixIntKernelType.EXP_HOMO_HSPHERE,
+                        MixIntKernelType.HOMO_HSPHERE,
+                    ],
+                )
             else:
-                matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel=cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ])
+                matrix_data_corr_levels_cat_mod(
+                    i,
+                    Lij,
+                    r_cat,
+                    T,
+                    has_cat_kernel=cat_kernel
+                    in [
+                        MixIntKernelType.EXP_HOMO_HSPHERE,
+                        MixIntKernelType.HOMO_HSPHERE,
+                    ],
+                )
 
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
@@ -1092,9 +1130,11 @@ class KrgBased(SurrogateModel):
         self._check_xdim(x)
 
         if is_acting is not None:
-            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            is_acting = ensure_2d_array(is_acting, "is_acting")
             if is_acting.shape != x.shape:
-                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+                raise ValueError(
+                    f"is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}"
+                )
 
         n = x.shape[0]
         x2 = np.copy(x)
@@ -1272,9 +1312,11 @@ class KrgBased(SurrogateModel):
         self._check_xdim(x)
 
         if is_acting is not None:
-            is_acting = ensure_2d_array(is_acting, 'is_acting')
+            is_acting = ensure_2d_array(is_acting, "is_acting")
             if is_acting.shape != x.shape:
-                raise ValueError(f'is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}')
+                raise ValueError(
+                    f"is_acting should have the same dimensions as x: {is_acting.shape} != {x.shape}"
+                )
 
         n = x.shape[0]
         x2 = np.copy(x)
@@ -1652,8 +1694,10 @@ class KrgBased(SurrogateModel):
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
 
-                    if 'x' not in optimal_theta_res:
-                        raise ValueError(f'Optimizer encountered a problem: {optimal_theta_res_loop!s}')
+                    if "x" not in optimal_theta_res:
+                        raise ValueError(
+                            f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
+                        )
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
