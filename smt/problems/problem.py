@@ -63,7 +63,7 @@ class Problem:
         this problem from the _setup function. If used, there is no need to set xlimits.
         """
         self._design_space = design_space
-        self.options['ndim'] = len(design_space.design_variables)
+        self.options["ndim"] = len(design_space.design_variables)
         self.xlimits = design_space.get_num_bounds()
 
     @property

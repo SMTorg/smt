@@ -36,11 +36,15 @@ class MixedCantileverBeam(Problem):
             0.369,
         ]
 
-        self._set_design_space(DesignSpace([
-            CategoricalVariable(values=[str(i+1) for i in range(12)]),
-            FloatVariable(10., 20.),
-            FloatVariable(1., 2.),
-        ]))
+        self._set_design_space(
+            DesignSpace(
+                [
+                    CategoricalVariable(values=[str(i + 1) for i in range(12)]),
+                    FloatVariable(10.0, 20.0),
+                    FloatVariable(1.0, 2.0),
+                ]
+            )
+        )
 
     def _evaluate(self, x, kx=0):
         """

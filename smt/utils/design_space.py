@@ -10,7 +10,7 @@ from typing import List, Union, Tuple, Sequence, Optional
 from smt.sampling_methods import LHS
 
 
-def ensure_design_space(xt=None, xlimits=None, design_space=None) -> 'BaseDesignSpace':
+def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesignSpace":
     """Interface to turn legacy input formats into a DesignSpace"""
 
     if design_space is not None and isinstance(design_space, BaseDesignSpace):
@@ -20,13 +20,14 @@ def ensure_design_space(xt=None, xlimits=None, design_space=None) -> 'BaseDesign
         return DesignSpace(xlimits)
 
     if xt is not None:
-        return DesignSpace([[0, 1]]*xt.shape[1])
+        return DesignSpace([[0, 1]] * xt.shape[1])
 
-    raise ValueError('Nothing defined that could be interpreted as a design space!')
+    raise ValueError("Nothing defined that could be interpreted as a design space!")
 
 
 class DesignVariable:
     """Base class for defining a design variable"""
+
     upper: Union[float, int]
     lower: Union[float, int]
 
@@ -45,7 +46,9 @@ class FloatVariable(DesignVariable):
 
     def __init__(self, lower: float, upper: float):
         if upper <= lower:
-            raise ValueError(f'Upper bound should be higher than lower bound: {upper} <= {lower}')
+            raise ValueError(
+                f"Upper bound should be higher than lower bound: {upper} <= {lower}"
+            )
         self.lower = lower
         self.upper = upper
 
@@ -53,10 +56,10 @@ class FloatVariable(DesignVariable):
         return self.lower, self.upper
 
     def __str__(self):
-        return f'Float ({self.lower}, {self.upper})'
+        return f"Float ({self.lower}, {self.upper})"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.lower}, {self.upper})'
+        return f"{self.__class__.__name__}({self.lower}, {self.upper})"
 
 
 class IntegerVariable(DesignVariable):
@@ -64,7 +67,9 @@ class IntegerVariable(DesignVariable):
 
     def __init__(self, lower: int, upper: int):
         if upper <= lower:
-            raise ValueError(f'Upper bound should be higher than lower bound: {upper} <= {lower}')
+            raise ValueError(
+                f"Upper bound should be higher than lower bound: {upper} <= {lower}"
+            )
         self.lower = lower
         self.upper = upper
 
@@ -72,10 +77,10 @@ class IntegerVariable(DesignVariable):
         return self.lower, self.upper
 
     def __str__(self):
-        return f'Int ({self.lower}, {self.upper})'
+        return f"Int ({self.lower}, {self.upper})"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.lower}, {self.upper})'
+        return f"{self.__class__.__name__}({self.lower}, {self.upper})"
 
 
 class OrdinalVariable(DesignVariable):
@@ -83,7 +88,7 @@ class OrdinalVariable(DesignVariable):
 
     def __init__(self, values: List[Union[str, int, float]]):
         if len(values) < 2:
-            raise ValueError(f'There should at least be 2 values: {values}')
+            raise ValueError(f"There should at least be 2 values: {values}")
         self.values = values
 
     @property
@@ -92,17 +97,17 @@ class OrdinalVariable(DesignVariable):
 
     @property
     def upper(self) -> int:
-        return len(self.values)-1
+        return len(self.values) - 1
 
     def get_limits(self) -> List[str]:
         # We convert to integer strings for compatibility reasons
         return [str(i) for i in range(len(self.values))]
 
     def __str__(self):
-        return f'Ord {self.values}'
+        return f"Ord {self.values}"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.values})'
+        return f"{self.__class__.__name__}({self.values})"
 
 
 class CategoricalVariable(DesignVariable):
@@ -110,7 +115,7 @@ class CategoricalVariable(DesignVariable):
 
     def __init__(self, values: List[Union[str, int, float]]):
         if len(values) < 2:
-            raise ValueError(f'There should at least be 2 values: {values}')
+            raise ValueError(f"There should at least be 2 values: {values}")
         self.values = values
 
     @property
@@ -119,7 +124,7 @@ class CategoricalVariable(DesignVariable):
 
     @property
     def upper(self) -> int:
-        return len(self.values)-1
+        return len(self.values) - 1
 
     @property
     def n_values(self):
@@ -130,10 +135,10 @@ class CategoricalVariable(DesignVariable):
         return [str(value) for value in self.values]
 
     def __str__(self):
-        return f'Cat {self.values}'
+        return f"Cat {self.values}"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.values})'
+        return f"{self.__class__.__name__}({self.values})"
 
 
 class BaseDesignSpace:
@@ -163,15 +168,19 @@ class BaseDesignSpace:
         if self._design_variables is None:
             self._design_variables = dvs = self._get_design_variables()
             if dvs is None:
-                raise RuntimeError('Design space should either specify the design variables upon initialization '
-                                   'or as output from _get_design_variables!')
+                raise RuntimeError(
+                    "Design space should either specify the design variables upon initialization "
+                    "or as output from _get_design_variables!"
+                )
         return self._design_variables
 
     @property
     def is_cat_mask(self) -> np.ndarray:
         """Boolean mask specifying for each design variable whether it is a categorical variable"""
         if self._is_cat_mask is None:
-            self._is_cat_mask = np.array([isinstance(dv, CategoricalVariable) for dv in self.design_variables])
+            self._is_cat_mask = np.array(
+                [isinstance(dv, CategoricalVariable) for dv in self.design_variables]
+            )
         return self._is_cat_mask
 
     @property
@@ -219,7 +228,7 @@ class BaseDesignSpace:
         elif x.shape[1] == self._get_n_dim_unfolded():
             x_is_unfolded = True
         else:
-            raise ValueError(f'Incorrect shape, expecting {self.n_dv} columns!')
+            raise ValueError(f"Incorrect shape, expecting {self.n_dv} columns!")
 
         # If needed, fold before correcting
         if x_is_unfolded:
@@ -230,7 +239,7 @@ class BaseDesignSpace:
 
         # Check conditionally-acting status
         if np.any(~is_acting[:, ~self.is_conditionally_acting]):
-            raise RuntimeError('Unconditionally acting variables cannot be non-acting!')
+            raise RuntimeError("Unconditionally acting variables cannot be non-acting!")
 
         # Unfold if needed
         if x_is_unfolded:
@@ -247,7 +256,7 @@ class BaseDesignSpace:
         elif len(x.shape) == 1:
             x_i = x
         else:
-            raise ValueError('Expected either 1 or 2-dimensional matrix!')
+            raise ValueError("Expected either 1 or 2-dimensional matrix!")
 
         dv = self.design_variables[i_dv]
         if isinstance(dv, (OrdinalVariable, CategoricalVariable)):
@@ -282,7 +291,7 @@ class BaseDesignSpace:
 
         # Check conditionally-acting status
         if np.any(~is_acting[:, ~self.is_conditionally_acting]):
-            raise RuntimeError('Unconditionally acting variables cannot be non-acting!')
+            raise RuntimeError("Unconditionally acting variables cannot be non-acting!")
 
         # Unfold if needed
         if unfolded:
@@ -317,7 +326,7 @@ class BaseDesignSpace:
         unfolded_x_limits = []
         for dv in self.design_variables:
             if isinstance(dv, CategoricalVariable):
-                unfolded_x_limits += [[0, 1]]*dv.n_values
+                unfolded_x_limits += [[0, 1]] * dv.n_values
 
             elif isinstance(dv, OrdinalVariable):
                 # Note that this interpretation is slightly different from the original mixed_integer implementation in
@@ -331,7 +340,9 @@ class BaseDesignSpace:
 
         return np.array(unfolded_x_limits).astype(float)
 
-    def fold_x(self, x: np.ndarray, is_acting: np.ndarray = None) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    def fold_x(
+        self, x: np.ndarray, is_acting: np.ndarray = None
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Fold x and optionally is_acting. Folding reverses the one-hot encoding of categorical variables applied by
         unfolding.
@@ -354,7 +365,9 @@ class BaseDesignSpace:
         # Get number of unfolded dimension
         x = np.atleast_2d(x)
         x_folded = np.zeros((x.shape[0], len(self.design_variables)))
-        is_acting_folded = np.ones(x_folded.shape, dtype=bool) if is_acting is not None else None
+        is_acting_folded = (
+            np.ones(x_folded.shape, dtype=bool) if is_acting is not None else None
+        )
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
@@ -363,7 +376,7 @@ class BaseDesignSpace:
 
                 # Categorical values are folded by reversed one-hot encoding:
                 # [[1, 0, 0], [0, 1, 0], [0, 0, 1]] --> [0, 1, 2].T
-                x_cat_unfolded = x[:, i_x_unfold:i_x_unfold+n_dim_cat]
+                x_cat_unfolded = x[:, i_x_unfold : i_x_unfold + n_dim_cat]
                 value_index = np.argmax(x_cat_unfolded, axis=1)
                 x_folded[:, i] = value_index
 
@@ -381,7 +394,9 @@ class BaseDesignSpace:
 
         return x_folded, is_acting_folded
 
-    def unfold_x(self, x: np.ndarray, is_acting: np.ndarray = None) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    def unfold_x(
+        self, x: np.ndarray, is_acting: np.ndarray = None
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Unfold x and optionally is_acting. Unfolding creates one extra dimension for each categorical variable using
         one-hot encoding.
@@ -405,13 +420,15 @@ class BaseDesignSpace:
         n_dim_unfolded = self._get_n_dim_unfolded()
         x = np.atleast_2d(x)
         x_unfolded = np.zeros((x.shape[0], n_dim_unfolded))
-        is_acting_unfolded = np.ones(x_unfolded.shape, dtype=bool) if is_acting is not None else None
+        is_acting_unfolded = (
+            np.ones(x_unfolded.shape, dtype=bool) if is_acting is not None else None
+        )
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, CategoricalVariable):
                 n_dim_cat = dv.n_values
-                x_cat = x_unfolded[:, i_x_unfold:i_x_unfold+n_dim_cat]
+                x_cat = x_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat]
 
                 # Categorical values are unfolded by one-hot encoding:
                 # [0, 1, 2].T --> [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
@@ -422,7 +439,9 @@ class BaseDesignSpace:
 
                 # The is_acting matrix is simply repeated column-wise
                 if is_acting is not None:
-                    is_acting_unfolded[:, i_x_unfold:i_x_unfold+n_dim_cat] = np.tile(is_acting[:, [i]], (1, n_dim_cat))
+                    is_acting_unfolded[
+                        :, i_x_unfold : i_x_unfold + n_dim_cat
+                    ] = np.tile(is_acting[:, [i]], (1, n_dim_cat))
 
                 i_x_unfold += n_dim_cat
 
@@ -435,7 +454,12 @@ class BaseDesignSpace:
         return x_unfolded, is_acting_unfolded
 
     def _get_n_dim_unfolded(self) -> int:
-        return sum([dv.n_values if isinstance(dv, CategoricalVariable) else 1 for dv in self.design_variables])
+        return sum(
+            [
+                dv.n_values if isinstance(dv, CategoricalVariable) else 1
+                for dv in self.design_variables
+            ]
+        )
 
     @staticmethod
     def _round_equally_distributed(x_cont, lower: int, upper: int):
@@ -448,9 +472,9 @@ class BaseDesignSpace:
         x_cont[x_cont < lower] = lower
         x_cont[x_cont > upper] = upper
 
-        diff = upper-lower
-        x_stretched = (x_cont-lower)*((diff+.9999)/(diff+1e-16))-.5
-        return np.round(x_stretched)+lower
+        diff = upper - lower
+        x_stretched = (x_cont - lower) * ((diff + 0.9999) / (diff + 1e-16)) - 0.5
+        return np.round(x_stretched) + lower
 
     """IMPLEMENT FUNCTIONS BELOW"""
 
@@ -511,7 +535,7 @@ VarValueType = Union[int, str, List[Union[int, str]]]
 
 
 def raise_config_space():
-    raise RuntimeError('Dependencies are not installed, run: pip install smt[cs]')
+    raise RuntimeError("Dependencies are not installed, run: pip install smt[cs]")
 
 
 class DesignSpace(BaseDesignSpace):
@@ -571,8 +595,9 @@ class DesignSpace(BaseDesignSpace):
 
     """
 
-    def __init__(self, design_variables: Union[List[DesignVariable], list, np.ndarray], seed=None):
-
+    def __init__(
+        self, design_variables: Union[List[DesignVariable], list, np.ndarray], seed=None
+    ):
         # Assume float variable bounds as inputs
         def _is_num(val):
             try:
@@ -581,23 +606,31 @@ class DesignSpace(BaseDesignSpace):
             except ValueError:
                 return False
 
-        if len(design_variables) > 0 and not isinstance(design_variables[0], DesignVariable):
+        if len(design_variables) > 0 and not isinstance(
+            design_variables[0], DesignVariable
+        ):
             converted_dvs = []
             for bounds in design_variables:
                 if len(bounds) != 2 or not _is_num(bounds[0]) or not _is_num(bounds[1]):
-                    raise RuntimeError(f'Expecting either a list of DesignVariable objects or float variable '
-                                       f'bounds! Unrecognized: {bounds!r}')
+                    raise RuntimeError(
+                        f"Expecting either a list of DesignVariable objects or float variable "
+                        f"bounds! Unrecognized: {bounds!r}"
+                    )
                 converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
             design_variables = converted_dvs
 
         self.seed = seed  # For testing
 
-        self._meta_vars = {}  # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
+        self._meta_vars = (
+            {}
+        )  # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
         super().__init__(design_variables)
 
-    def declare_decreed_var(self, decreed_var: int, meta_var: int, meta_value: VarValueType):
+    def declare_decreed_var(
+        self, decreed_var: int, meta_var: int, meta_value: VarValueType
+    ):
         """
         Define a conditional (decreed) variable to be active when the meta variable has (one of) the provided values.
 
@@ -613,18 +646,20 @@ class DesignSpace(BaseDesignSpace):
 
         # Variables cannot be both meta and decreed at the same time
         if self._is_decreed[meta_var]:
-            raise RuntimeError(f'Variable cannot be both meta and decreed ({meta_var})!')
+            raise RuntimeError(
+                f"Variable cannot be both meta and decreed ({meta_var})!"
+            )
 
         # Variables can only be decreed by one meta var
         if self._is_decreed[decreed_var]:
-            raise RuntimeError(f'Variable is already decreed: {decreed_var}')
+            raise RuntimeError(f"Variable is already decreed: {decreed_var}")
 
         # Define meta-decreed relationship
         if meta_var not in self._meta_vars:
             self._meta_vars[meta_var] = {}
 
         meta_var_obj = self.design_variables[meta_var]
-        for value in (meta_value if isinstance(meta_value, Sequence) else [meta_value]):
+        for value in meta_value if isinstance(meta_value, Sequence) else [meta_value]:
             encoded_value = value
             if isinstance(meta_var_obj, (OrdinalVariable, CategoricalVariable)):
                 if value in meta_var_obj.values:
@@ -683,7 +718,7 @@ class DesignSpace(BaseDesignSpace):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 # Impute continuous variables to the mid of their bounds
-                x[~is_acting[:, i], i] = .5*(dv.upper-dv.lower)
+                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower)
 
             else:
                 # Impute discrete variables to their lower bounds
@@ -705,8 +740,8 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
 
     def __str__(self):
-        dvs = '\n'.join([f'x{i}: {dv!s}' for i, dv in enumerate(self.design_variables)])
-        return f'Design space:\n{dvs}'
+        dvs = "\n".join([f"x{i}: {dv!s}" for i, dv in enumerate(self.design_variables)])
+        return f"Design space:\n{dvs}"
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.design_variables!r})'
+        return f"{self.__class__.__name__}({self.design_variables!r})"

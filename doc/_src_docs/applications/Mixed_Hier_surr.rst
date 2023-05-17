@@ -32,9 +32,11 @@ Example of mixed integer Polynomial (QP) surrogate
   
   # Specify the design space using the DesignSpace
   # class and various available variable types
-  design_space = DesignSpace([
-      IntegerVariable(0, 4),
-  ])
+  design_space = DesignSpace(
+      [
+          IntegerVariable(0, 4),
+      ]
+  )
   sm = MixedIntegerSurrogateModel(design_space=design_space, surrogate=QP())
   sm.set_training_values(xt, yt)
   sm.train()
@@ -88,7 +90,11 @@ Example of mixed integer Gower Distance model
   
   from smt.surrogate_models import KRG, MixIntKernelType
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
-  from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      CategoricalVariable,
+      FloatVariable,
+  )
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -101,10 +107,12 @@ Example of mixed integer Gower Distance model
   yt3 = np.array([-10, 3, 11.0])
   yt = np.concatenate((yt1, yt2, yt3), axis=0)
   
-  design_space = DesignSpace([
-      CategoricalVariable(['Blue', 'Red', 'Green']),
-      FloatVariable(0, 4),
-  ])
+  design_space = DesignSpace(
+      [
+          CategoricalVariable(["Blue", "Red", "Green"]),
+          FloatVariable(0, 4),
+      ]
+  )
   
   # Surrogate
   sm = MixedIntegerKrigingModel(
@@ -213,20 +221,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0090590
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000906
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0100665
-     
-     Prediction time/pt. (sec) :  0.0001007
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -235,9 +232,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089962
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000900
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0080512
+     
+     Prediction time/pt. (sec) :  0.0000805
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -260,7 +268,11 @@ Example of mixed integer Homoscedastic Hypersphere model
   
   from smt.surrogate_models import KRG, MixIntKernelType
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
-  from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      CategoricalVariable,
+      FloatVariable,
+  )
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -273,10 +285,12 @@ Example of mixed integer Homoscedastic Hypersphere model
   yt3 = np.array([-10, 3, 11.0])
   yt = np.concatenate((yt1, yt2, yt3), axis=0)
   
-  design_space = DesignSpace([
-      CategoricalVariable(['Blue', 'Red', 'Green']),
-      FloatVariable(0, 4),
-  ])
+  design_space = DesignSpace(
+      [
+          CategoricalVariable(["Blue", "Red", "Green"]),
+          FloatVariable(0, 4),
+      ]
+  )
   
   # Surrogate
   sm = MixedIntegerKrigingModel(
@@ -385,20 +399,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0111101
+     Predicting - done. Time (sec):  0.0020177
      
-     Prediction time/pt. (sec) :  0.0001111
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0111420
-     
-     Prediction time/pt. (sec) :  0.0001114
+     Prediction time/pt. (sec) :  0.0000202
      
   ___________________________________________________________________________
      
@@ -407,9 +410,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0111282
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001113
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -432,7 +446,11 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
   
   from smt.surrogate_models import KRG, MixIntKernelType
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
-  from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      CategoricalVariable,
+      FloatVariable,
+  )
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -445,10 +463,12 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
   yt3 = np.array([-10, 3, 11.0])
   yt = np.concatenate((yt1, yt2, yt3), axis=0)
   
-  design_space = DesignSpace([
-      CategoricalVariable(['Blue', 'Red', 'Green']),
-      FloatVariable(0, 4),
-  ])
+  design_space = DesignSpace(
+      [
+          CategoricalVariable(["Blue", "Red", "Green"]),
+          FloatVariable(0, 4),
+      ]
+  )
   
   # Surrogate
   sm = MixedIntegerKrigingModel(
@@ -557,20 +577,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0109916
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001099
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0110435
-     
-     Prediction time/pt. (sec) :  0.0001104
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -579,9 +588,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0119944
+     Predicting - done. Time (sec):  0.0080462
      
-     Prediction time/pt. (sec) :  0.0001199
+     Prediction time/pt. (sec) :  0.0000805
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0020158
+     
+     Prediction time/pt. (sec) :  0.0000202
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -602,7 +622,12 @@ Example of mixed integer Kriging with hierarchical variables
 .. code-block:: python
 
   import numpy as np
-  from smt.utils.design_space import DesignSpace, CategoricalVariable, IntegerVariable, FloatVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      CategoricalVariable,
+      IntegerVariable,
+      FloatVariable,
+  )
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
   from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
   
@@ -613,25 +638,25 @@ Example of mixed integer Kriging with hierarchical variables
           import numpy as np
   
           h = (
-                  53.3108
-                  + 0.184901 * x1
-                  - 5.02914 * x1 ** 3 * 10 ** (-6)
-                  + 7.72522 * x1 ** z3 * 10 ** (-8)
-                  - 0.0870775 * x2
-                  - 0.106959 * x3
-                  + 7.98772 * x3 ** z4 * 10 ** (-6)
-                  + 0.00242482 * x4
-                  + 1.32851 * x4 ** 3 * 10 ** (-6)
-                  - 0.00146393 * x1 * x2
-                  - 0.00301588 * x1 * x3
-                  - 0.00272291 * x1 * x4
-                  + 0.0017004 * x2 * x3
-                  + 0.0038428 * x2 * x4
-                  - 0.000198969 * x3 * x4
-                  + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
-                  - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
-                  + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
-                  - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
+              53.3108
+              + 0.184901 * x1
+              - 5.02914 * x1**3 * 10 ** (-6)
+              + 7.72522 * x1**z3 * 10 ** (-8)
+              - 0.0870775 * x2
+              - 0.106959 * x3
+              + 7.98772 * x3**z4 * 10 ** (-6)
+              + 0.00242482 * x4
+              + 1.32851 * x4**3 * 10 ** (-6)
+              - 0.00146393 * x1 * x2
+              - 0.00301588 * x1 * x3
+              - 0.00272291 * x1 * x4
+              + 0.0017004 * x2 * x3
+              + 0.0038428 * x2 * x4
+              - 0.000198969 * x3 * x4
+              + 1.86025 * x1 * x2 * x3 * 10 ** (-5)
+              - 1.88719 * x1 * x2 * x4 * 10 ** (-6)
+              + 2.50923 * x1 * x3 * x4 * 10 ** (-5)
+              - 5.62199 * x2 * x3 * x4 * 10 ** (-5)
           )
           if cos_term:
               h += 5.0 * np.cos(2.0 * np.pi * (x5 / 100.0)) - 2.0
@@ -647,24 +672,24 @@ Example of mixed integer Kriging with hierarchical variables
           c6 = z3 == 2
   
           y = (
-                  c4
-                  * (
-                          c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
-                          + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
-                          + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
-                  )
-                  + c5
-                  * (
-                          c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
-                          + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
-                          + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
-                  )
-                  + c6
-                  * (
-                          c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
-                          + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
-                          + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
-                  )
+              c4
+              * (
+                  c1 * H(x1, x2, 20, 20, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 20, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 20, z3, z4, x5, cos_term)
+              )
+              + c5
+              * (
+                  c1 * H(x1, x2, 20, 50, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 50, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 50, z3, z4, x5, cos_term)
+              )
+              + c6
+              * (
+                  c1 * H(x1, x2, 20, 80, z3, z4, x5, cos_term)
+                  + c2 * H(x1, x2, 50, 80, z3, z4, x5, cos_term)
+                  + c3 * H(x1, x2, 80, 80, z3, z4, x5, cos_term)
+              )
           )
           return y
   
@@ -674,9 +699,9 @@ Example of mixed integer Kriging with hierarchical variables
           c3 = z2 == 2
   
           y = (
-                  c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
-                  + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
-                  + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
+              c1 * H(x1, x2, x3, 20, z3, z4, x5, cos_term)
+              + c2 * H(x1, x2, x3, 50, z3, z4, x5, cos_term)
+              + c3 * H(x1, x2, x3, 80, z3, z4, x5, cos_term)
           )
           return y
   
@@ -686,9 +711,9 @@ Example of mixed integer Kriging with hierarchical variables
           c3 = z1 == 2
   
           y = (
-                  c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
-                  + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
-                  + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
+              c1 * H(x1, x2, 20, x4, z3, z4, x5, cos_term)
+              + c2 * H(x1, x2, 50, x4, z3, z4, x5, cos_term)
+              + c3 * H(x1, x2, 80, x4, z3, z4, x5, cos_term)
           )
           return y
   
@@ -712,19 +737,21 @@ Example of mixed integer Kriging with hierarchical variables
               )
       return np.array(y)
   
-  design_space = DesignSpace([
-      CategoricalVariable(values=[0, 1, 2, 3]),  # meta
-      IntegerVariable(0, 1),  # x1
-      FloatVariable(0, 100),  # x2
-      FloatVariable(0, 100),
-      FloatVariable(0, 100),
-      FloatVariable(0, 100),
-      FloatVariable(0, 100),
-      IntegerVariable(0, 2),  # x7
-      IntegerVariable(0, 2),
-      IntegerVariable(0, 2),
-      IntegerVariable(0, 2),
-  ])
+  design_space = DesignSpace(
+      [
+          CategoricalVariable(values=[0, 1, 2, 3]),  # meta
+          IntegerVariable(0, 1),  # x1
+          FloatVariable(0, 100),  # x2
+          FloatVariable(0, 100),
+          FloatVariable(0, 100),
+          FloatVariable(0, 100),
+          FloatVariable(0, 100),
+          IntegerVariable(0, 2),  # x7
+          IntegerVariable(0, 2),
+          IntegerVariable(0, 2),
+          IntegerVariable(0, 2),
+      ]
+  )
   
   # x4 is acting if meta == 1, 3
   design_space.declare_decreed_var(decreed_var=4, meta_var=0, meta_value=[1, 3])
@@ -767,9 +794,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0081131
+     Predicting - done. Time (sec):  0.0080450
      
-     Prediction time/pt. (sec) :  0.0005409
+     Prediction time/pt. (sec) :  0.0005363
      
   
 

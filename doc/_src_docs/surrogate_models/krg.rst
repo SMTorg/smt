@@ -136,7 +136,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0496159
+     Training - done. Time (sec):  0.0312955
   ___________________________________________________________________________
      
    Evaluation
@@ -144,9 +144,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010180
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000102
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -179,10 +179,14 @@ Example 2 with mixed variables
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
   
-  design_space = DesignSpace([
-      IntegerVariable(0, 4),
-  ])
-  sm = MixedIntegerKrigingModel(surrogate=KRG(design_space=design_space, theta0=[1e-2]))
+  design_space = DesignSpace(
+      [
+          IntegerVariable(0, 4),
+      ]
+  )
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(design_space=design_space, theta0=[1e-2])
+  )
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -282,7 +286,7 @@ Options
      -  ['float']
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
-     -  None
+     -  MixIntKernelType.CONT_RELAX
      -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging

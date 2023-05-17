@@ -15,7 +15,12 @@ from scipy.optimize import minimize
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS
 from smt.applications.application import SurrogateBasedApplication
 from smt.applications.mixed_integer import MixedIntegerContext
-from smt.utils.design_space import BaseDesignSpace, DesignSpace, FloatVariable, CategoricalVariable
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    DesignSpace,
+    FloatVariable,
+    CategoricalVariable,
+)
 
 
 class Evaluator(object):
@@ -240,7 +245,7 @@ class EGO(SurrogateBasedApplication):
         self.gpr = self.options["surrogate"]
         self.design_space: BaseDesignSpace = self.gpr.design_space
         if isinstance(self.design_space, DesignSpace):
-            self.design_space.seed = self.options['random_state']
+            self.design_space.seed = self.options["random_state"]
 
         # Handle mixed integer optimization
         is_continuous = self.design_space.is_all_cont

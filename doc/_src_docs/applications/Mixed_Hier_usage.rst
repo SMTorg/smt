@@ -37,24 +37,42 @@ The design space is then defined from a list of design variables and implements 
 .. code-block:: python
 
   import numpy as np
-  from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      FloatVariable,
+      IntegerVariable,
+      OrdinalVariable,
+      CategoricalVariable,
+  )
   
-  ds = DesignSpace([
-      CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
-      OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
-      IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-      FloatVariable(0, 1),  # c3 continuous between 0 and 1
-  ])
+  ds = DesignSpace(
+      [
+          CategoricalVariable(
+              ["A", "B"]
+          ),  # x0 categorical: A or B; order is not relevant
+          OrdinalVariable(
+              ["C", "D", "E"]
+          ),  # x1 ordinal: C, D or E; order is relevant
+          IntegerVariable(
+              0, 2
+          ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+          FloatVariable(0, 1),  # c3 continuous between 0 and 1
+      ]
+  )
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
   x_sampled, is_acting_sampled = ds.sample_valid_x(100)
   
   # Correct design vectors: round discrete variables, correct hierarchical variables
-  x_corr, is_acting = ds.correct_get_acting(np.array([
-      [0, 0, 2, .25],
-      [0, 2, 1, .75],
-  ]))
+  x_corr, is_acting = ds.correct_get_acting(
+      np.array(
+          [
+              [0, 0, 2, 0.25],
+              [0, 2, 1, 0.75],
+          ]
+      )
+  )
   print(is_acting)
   
 ::
@@ -76,38 +94,66 @@ The hierarchy relationships are specified after instantiating the design space:
 .. code-block:: python
 
   import numpy as np
-  from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      FloatVariable,
+      IntegerVariable,
+      OrdinalVariable,
+      CategoricalVariable,
+  )
   
-  ds = DesignSpace([
-      CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
-      OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
-      IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-      FloatVariable(0, 1),  # c3 continuous between 0 and 1
-  ])
+  ds = DesignSpace(
+      [
+          CategoricalVariable(
+              ["A", "B"]
+          ),  # x0 categorical: A or B; order is not relevant
+          OrdinalVariable(
+              ["C", "D", "E"]
+          ),  # x1 ordinal: C, D or E; order is relevant
+          IntegerVariable(
+              0, 2
+          ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+          FloatVariable(0, 1),  # c3 continuous between 0 and 1
+      ]
+  )
   
   # Declare that x1 is acting if x0 == A
-  ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')
+  ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
   x_sampled, is_acting_sampled = ds.sample_valid_x(100)
   
   # Correct design vectors: round discrete variables, correct hierarchical variables
-  x_corr, is_acting = ds.correct_get_acting(np.array([
-      [0, 0, 2, .25],
-      [1, 2, 1, .66],
-  ]))
+  x_corr, is_acting = ds.correct_get_acting(
+      np.array(
+          [
+              [0, 0, 2, 0.25],
+              [1, 2, 1, 0.66],
+          ]
+      )
+  )
   
   # Observe the hierarchical behavior:
-  assert np.all(is_acting == np.array([
-      [True, True, True, True],
-      [True, False, True, True],  # x1 is not acting if x0 != A
-  ]))
-  assert np.all(x_corr == np.array([
-      [0, 0, 2, .25],
-      # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-      [1, 0, 1, .66],
-  ]))
+  assert np.all(
+      is_acting
+      == np.array(
+          [
+              [True, True, True, True],
+              [True, False, True, True],  # x1 is not acting if x0 != A
+          ]
+      )
+  )
+  assert np.all(
+      x_corr
+      == np.array(
+          [
+              [0, 0, 2, 0.25],
+              # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+              [1, 0, 1, 0.66],
+          ]
+      )
+  )
   
 
 Design space and variable class references
@@ -141,15 +187,21 @@ Example of sampling a mixed-discrete design space
   import matplotlib.pyplot as plt
   from matplotlib import colors
   
-  from smt.utils.design_space import DesignSpace, FloatVariable, CategoricalVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      FloatVariable,
+      CategoricalVariable,
+  )
   
   float_var = FloatVariable(0, 4)
-  cat_var = CategoricalVariable(['blue', 'red'])
+  cat_var = CategoricalVariable(["blue", "red"])
   
-  design_space = DesignSpace([
-      float_var,
-      cat_var,
-  ])
+  design_space = DesignSpace(
+      [
+          float_var,
+          cat_var,
+      ]
+  )
   
   num = 40
   x, x_is_acting = design_space.sample_valid_x(num)
@@ -184,13 +236,20 @@ Example of mixed integer context usage
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
   from smt.applications.mixed_integer import MixedIntegerContext
-  from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, CategoricalVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      FloatVariable,
+      IntegerVariable,
+      CategoricalVariable,
+  )
   
-  design_space = DesignSpace([
-      IntegerVariable(0, 5),
-      FloatVariable(0., 4.),
-      CategoricalVariable(["blue", "red", "green", "yellow"]),
-  ])
+  design_space = DesignSpace(
+      [
+          IntegerVariable(0, 5),
+          FloatVariable(0.0, 4.0),
+          CategoricalVariable(["blue", "red", "green", "yellow"]),
+      ]
+  )
   
   def ftest(x):
       return (x[:, 0] * x[:, 0] + x[:, 1] * x[:, 1]) * (x[:, 2] + 1)
@@ -233,9 +292,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0182462
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0003649
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

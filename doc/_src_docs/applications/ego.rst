@@ -279,7 +279,6 @@ Usage
           ],
       )
   plt.show()
-  # Check the optimal point is x_opt=18.9, y_opt =-15.1
   
 ::
 
@@ -447,7 +446,12 @@ Usage with mixed variable
   from smt.applications import EGO
   from smt.applications.mixed_integer import MixedIntegerContext
   from smt.surrogate_models import MixIntKernelType
-  from smt.utils.design_space import DesignSpace, CategoricalVariable, FloatVariable, IntegerVariable
+  from smt.utils.design_space import (
+      DesignSpace,
+      CategoricalVariable,
+      FloatVariable,
+      IntegerVariable,
+  )
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
   from smt.sampling_methods import LHS
@@ -479,17 +483,21 @@ Usage with mixed variable
       return y.reshape((-1, 1))
   
   n_iter = 15
-  design_space = DesignSpace([
-      FloatVariable(-5, 5),
-      CategoricalVariable(['blue', 'red', 'green']),
-      CategoricalVariable(['square', 'circle']),
-      IntegerVariable(0, 2),
-  ])
+  design_space = DesignSpace(
+      [
+          FloatVariable(-5, 5),
+          CategoricalVariable(["blue", "red", "green"]),
+          CategoricalVariable(["square", "circle"]),
+          IntegerVariable(0, 2),
+      ]
+  )
   
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
   qEI = "KBRand"
   sm = KRG(
-      design_space=design_space, categorical_kernel=MixIntKernelType.GOWER, print_global=False
+      design_space=design_space,
+      categorical_kernel=MixIntKernelType.GOWER,
+      print_global=False,
   )
   mixint = MixedIntegerContext(design_space)
   n_doe = 3
@@ -530,7 +538,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  0.  0.] with f(x)=-15.0
+  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -586,7 +594,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001D236EBAF10>
+     -  <smt.applications.ego.Evaluator object at 0x00000218041F7A60>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -616,7 +624,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001D236EBA7C0>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000218041F79A0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly
