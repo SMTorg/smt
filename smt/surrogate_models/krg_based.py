@@ -505,7 +505,6 @@ class KrgBased(SurrogateModel):
             X_pls_space = np.copy(X)
         else:
             X_pls_space, _ = compute_X_cont(X, design_space)
-            d_cont = dx[:, np.logical_not(cat_features)]
         if cat_kernel_comps is not None or ncomp < 1e5:
             ###Modifier la condition : if PLS cont
             if self.pls_coeff_cont == []:
@@ -542,7 +541,7 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if cat_kernel == MixIntKernelType.GOWER:
+            if cat_kernel != MixIntKernelType.CONT_RELAX:
                 d_cont = d[:, np.logical_not(cat_features)]
 
         if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
