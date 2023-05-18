@@ -524,7 +524,7 @@ class KrgBased(SurrogateModel):
                 return r
             else:
                 d_cont = componentwise_distance_PLS(
-                    d_cont,
+                    dx[:,np.logical_not(cat_features)],
                     corr,
                     self.options["n_comp"],
                     self.pls_coeff_cont,
@@ -541,13 +541,13 @@ class KrgBased(SurrogateModel):
                 theta=None,
                 return_derivative=False,
             )
-            if cat_kernel != MixIntKernelType.CONT_RELAX:
+            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
+                r = _correlation_types[corr](theta, d)
+                return r
+            else :
                 d_cont = d[:, np.logical_not(cat_features)]
 
-        if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-            r = _correlation_types[corr](theta, d)
-            return r
-
+        
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
         r_cat = np.copy(r_cont) * 0
