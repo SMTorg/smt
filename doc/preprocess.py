@@ -35,7 +35,6 @@ for root, file_name in file_paths_list_rstx:
         lines = f.readlines()
 
     for iline, line in enumerate(lines):
-
         if ".. embed-test" in line:
             lines[iline] = process_test(root, file_name, iline, line)
         elif ".. embed-options-table" in line:
