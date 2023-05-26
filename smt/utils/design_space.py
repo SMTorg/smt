@@ -247,25 +247,47 @@ class BaseDesignSpace:
 
         return x_corrected, is_acting
 
-    def decode_values(self, x: np.ndarray, i_dv: int) -> List[Union[str, int, float]]:
+    def decode_values(self, x: np.ndarray, i_dv: int = None) -> List[Union[str, int, float, list]]:
         """
         Return decoded values: converts ordinal and categorical back to their original values.
+
+        If i_dv is given, decoding is done for one specific design variable only.
+        If i_dv=None, decoding will be done for all design variables: 1d input is interpreted as a design vector,
+        2d input is interpreted as a set of design vectors.
         """
-        if len(x.shape) == 2:
-            x_i = x[:, i_dv]
-        elif len(x.shape) == 1:
-            x_i = x
-        else:
-            raise ValueError("Expected either 1 or 2-dimensional matrix!")
 
-        dv = self.design_variables[i_dv]
-        if isinstance(dv, (OrdinalVariable, CategoricalVariable)):
-            values = dv.values
-            decoded_values = [values[int(x_ij)] for x_ij in x_i]
-            return decoded_values
+        def _decode_dv(x_encoded: np.ndarray, i_dv_decode):
+            dv = self.design_variables[i_dv_decode]
+            if isinstance(dv, (OrdinalVariable, CategoricalVariable)):
+                values = dv.values
+                decoded_values = [values[int(x_ij)] for x_ij in x_encoded]
+                return decoded_values
 
-        # No need to decode for integer or float variable
-        return list(x_i)
+            # No need to decode integer or float variables
+            return list(x_encoded)
+
+        # Decode one design variable
+        if i_dv is not None:
+            if len(x.shape) == 2:
+                x_i = x[:, i_dv]
+            elif len(x.shape) == 1:
+                x_i = x
+            else:
+                raise ValueError("Expected either 1 or 2-dimensional matrix!")
+
+            # No need to decode for integer or float variable
+            return _decode_dv(x_i, i_dv_decode=i_dv)
+
+        # Decode design vectors
+        n_dv = self.n_dv
+        is_1d = len(x.shape) == 1
+        x_mat = np.atleast_2d(x)
+        if x_mat.shape[1] != n_dv:
+            raise ValueError(f'Incorrect number of inputs, expected {n_dv} design variables, received {x_mat.shape[1]}')
+
+        decoded_des_vars = [_decode_dv(x_mat[:, i], i_dv_decode=i) for i in range(n_dv)]
+        decoded_des_vectors = [[decoded_des_vars[i][ix] for i in range(n_dv)] for ix in range(x_mat.shape[0])]
+        return decoded_des_vectors[0] if is_1d else decoded_des_vectors
 
     def sample_valid_x(self, n: int, unfolded=False) -> Tuple[np.ndarray, np.ndarray]:
         """
