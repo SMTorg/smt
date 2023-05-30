@@ -189,13 +189,16 @@ class Test(unittest.TestCase):
         self.assertEqual(ds.decode_values(np.array([0, 1, 2]), i_dv=0), ["A", "B", "C"])
         self.assertEqual(ds.decode_values(np.array([0, 1]), i_dv=1), ["E", "F"])
 
-        self.assertEqual(ds.decode_values(x[0, :]), ['B', 'E', 0, .834])
-        self.assertEqual(ds.decode_values(x[[0], :]), [['B', 'E', 0, .834]])
-        self.assertEqual(ds.decode_values(x), [
-            ['B', 'E', 0, .834],
-            ['C', 'E', -1, .6434],
-            ['C', 'E', 0, 1.151],
-        ])
+        self.assertEqual(ds.decode_values(x[0, :]), ["B", "E", 0, 0.834])
+        self.assertEqual(ds.decode_values(x[[0], :]), [["B", "E", 0, 0.834]])
+        self.assertEqual(
+            ds.decode_values(x),
+            [
+                ["B", "E", 0, 0.834],
+                ["C", "E", -1, 0.6434],
+                ["C", "E", 0, 1.151],
+            ],
+        )
 
         x_corr, is_act_corr = ds.correct_get_acting(x)
         self.assertTrue(np.all(x_corr == x))
