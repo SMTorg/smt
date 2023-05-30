@@ -15,7 +15,19 @@ SMT is documented using custom tools for embedding automatically-tested code and
 
 SMT is distributed under the New BSD license.
 
-To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
+To cite SMT 2.0: P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins. SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes. ArXiv preprint, 2023.
+
+```
+@article{SMT2ArXiv,
+	Author = {P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins},
+	Journal = {ArXiv preprint},	
+	Title = {{SMT} 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes},
+	Publisher = {ArXiv},		
+	doi = {https://doi.org/10.48550/arXiv.2305.13998},
+	Year = {2023}}
+```
+
+To cite SMT legacy: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins. A Python surrogate modeling framework with derivatives. Advances in Engineering Software, 2019.
 
 ```
 @article{SMT2019,
@@ -23,7 +35,6 @@ To cite SMT: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. M
 	Journal = {Advances in Engineering Software},
 	Title = {A Python surrogate modeling framework with derivatives},
 	pages = {102662},
-	year = {2019},
 	issn = {0965-9978},
 	doi = {https://doi.org/10.1016/j.advengsoft.2019.03.005},
 	Year = {2019}}
