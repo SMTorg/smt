@@ -667,6 +667,8 @@ class TestEGO(SMTestCase):
         ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
 
         n_doe = 25
+        random_state = 0
+        ds.seed = random_state
         Xt, x_is_active = ds.sample_valid_x(n_doe)
 
         n_iter = 5
@@ -686,7 +688,7 @@ class TestEGO(SMTestCase):
             ),
             verbose=True,
             enable_tunneling=False,
-            random_state=42,
+            random_state=random_state,
             n_start=10,
         )
 
