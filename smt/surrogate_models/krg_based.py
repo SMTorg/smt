@@ -259,7 +259,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
-        if is_acting is not None or self.design_space.is_all_cont == False:
+        if is_acting is not None or not (self.design_space.is_all_cont):
             X, is_acting = self.design_space.correct_get_acting(X)
             self.training_points[None][0][0] = X
             self.is_acting_points[None] = is_acting
@@ -1159,7 +1159,7 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if is_acting is not None or self.design_space.is_all_cont == False:
+        if is_acting is not None or not (self.design_space.is_all_cont):
             x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
 
@@ -1319,7 +1319,7 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable MSE
         """
         # Initialization
-        if is_acting is not None or self.design_space.is_all_cont == False:
+        if is_acting is not None or not (self.design_space.is_all_cont):
             x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
         X_cont = x
