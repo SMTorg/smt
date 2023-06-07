@@ -322,9 +322,10 @@ class EGO(SurrogateBasedApplication):
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
+        method = "SLSQP"
+        options = {"maxiter": 200}
         if self.mixint:
             bounds = self.design_space.get_num_bounds()
-            method = "COBYLA"
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
@@ -332,13 +333,10 @@ class EGO(SurrogateBasedApplication):
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-            options = {"maxiter": 200, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.4}
             bounds = None
         else:
             bounds = self.design_space.get_num_bounds()
-            method = "SLSQP"
             cons = ()
-            options = {"maxiter": 200}
 
         if criterion == "EI":
             self.obj_k = lambda x: -self.EI(np.atleast_2d(x), enable_tunneling, x_data)
