@@ -332,7 +332,7 @@ class EGO(SurrogateBasedApplication):
                 u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
                 cons.append(l)
                 cons.append(u)
-            options = {"maxiter": 500, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.2}
+            options = {"maxiter": 200, "catol": 1e-6, "tol": 1e-6, "rhobeg": 0.4}
             bounds = None
         else:
             bounds = self.design_space.get_num_bounds()
