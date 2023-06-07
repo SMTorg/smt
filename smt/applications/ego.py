@@ -334,6 +334,7 @@ class EGO(SurrogateBasedApplication):
                 cons.append(l)
                 cons.append(u)
             bounds = None
+            options = {"maxiter": 300}
         else:
             bounds = self.design_space.get_num_bounds()
             cons = ()
