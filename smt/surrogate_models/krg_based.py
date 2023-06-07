@@ -1513,7 +1513,7 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]) + 5, 0.5
+        limit, _rhobeg = max(10 * len(self.options["theta0"]), 25), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
