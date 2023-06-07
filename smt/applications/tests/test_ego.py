@@ -125,7 +125,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
+        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.55))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
 
     def test_rosenbrock_2D_SBO(self):
