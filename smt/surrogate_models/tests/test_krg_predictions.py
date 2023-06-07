@@ -9,6 +9,8 @@ import numpy as np
 from smt.surrogate_models import KRG
 from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
+import time
+import os
 
 
 class Test(SMTestCase):
@@ -182,4 +184,6 @@ class Test(SMTestCase):
 
 
 if __name__ == "__main__":
+    a = time.time()
     unittest.main()
+    print(time.time() - a)

@@ -15,9 +15,9 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
 
 
-USE_NUMBA_JIT = (int(os.getenv("USE_NUMBA_JIT", 0)) > 1e-9)
+USE_NUMBA_JIT = int(os.getenv("USE_NUMBA_JIT", 0)) > 1e-9
 prange = range
-if USE_NUMBA_JIT :
+if USE_NUMBA_JIT:
     from numba import njit, prange
 
 # Set False to temporarily disable
