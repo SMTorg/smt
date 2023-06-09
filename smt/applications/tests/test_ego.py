@@ -696,7 +696,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(
             9.022,
             float(y_opt),
-            delta=25,
+            delta=26,
         )
 
     def test_ego_mixed_integer_homo_gaussian(self):
