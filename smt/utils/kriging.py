@@ -1318,7 +1318,7 @@ def componentwise_distance_PLS(
                     # abs_exp
                     D_corr[i * nb_limit : (i + 1) * nb_limit, :] = np.dot(
                         np.abs(D[i * nb_limit : (i + 1) * nb_limit, :]),
-                        np.abs(coeff_pls),
+                        np.abs(coeff_pls)**2,
                     )
                 i += 1
 
