@@ -513,7 +513,7 @@ class TestMixedInteger(unittest.TestCase):
                 hierarchical_kernel=MixHrcKernelType.ARC_KERNEL,
                 theta0=[1e-2],
                 corr="abs_exp",
-                n_start=5,
+                n_start=10,
             ),
         )
         sm.set_training_values(Xt, Yt, is_acting=is_acting)
