@@ -64,7 +64,8 @@ class KPLS(KrgBased):
             if np.shape(X)[1] == 1:
                 self.coeff_pls = np.atleast_2d(np.array([1]))
             else:
-                self.coeff_pls = _pls.fit(X.copy(), y.copy()).x_rotations_
+                self.coeff_pls = abs(_pls.fit(X.copy(), y.copy()).x_rotations_)
+    #            self.coeff_pls = self.coeff_pls/np.sum(self.coeff_pls,axis=1)[:,None]
 
         return X, y
 
