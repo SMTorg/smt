@@ -671,7 +671,7 @@ class TestEGO(SMTestCase):
         ds.seed = random_state
         Xt, x_is_active = ds.sample_valid_x(n_doe)
 
-        n_iter = 5
+        n_iter = 10
         criterion = "EI"
 
         ego = EGO(
@@ -682,21 +682,21 @@ class TestEGO(SMTestCase):
                 design_space=ds,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-2],
-                n_start=5,
+                n_start=10,
                 corr="squar_exp",
                 print_global=False,
             ),
             verbose=True,
             enable_tunneling=False,
             random_state=random_state,
-            n_start=10,
+            n_start=25,
         )
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
             9.022,
             float(y_opt),
-            delta=26,
+            delta=25,
         )
 
     def test_ego_mixed_integer_homo_gaussian(self):
