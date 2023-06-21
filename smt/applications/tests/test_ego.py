@@ -115,10 +115,6 @@ class TestEGO(SMTestCase):
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
         random_state = 42
         design_space = DesignSpace(xlimits, seed=random_state)
-<<<<<<< HEAD
-
-=======
->>>>>>> 280cb28... add seeding @relf
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
             n_start=30,
@@ -249,12 +245,7 @@ class TestEGO(SMTestCase):
             ],
             seed=random_state,
         )
-<<<<<<< HEAD
-        sm = KRG(design_space=design_space, print_global=False)
-
-=======
-        sm = KRG(design_space=design_space, print_global=False, n_start=25)
->>>>>>> 96d0786... improve EGO tests consistency for convergence on GitHub Actions
+      sm = KRG(design_space=design_space, print_global=False, n_start=25)
         mixint = MixedIntegerContext(design_space)
         sampling = mixint.build_sampling_method(FullFactorial)
         xdoe = sampling(10)
@@ -411,16 +402,8 @@ class TestEGO(SMTestCase):
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
-<<<<<<< HEAD
         n_doe = 5
-        random_state = 42
-=======
-        n_doe = 6
-<<<<<<< HEAD
->>>>>>> 96d0786... improve EGO tests consistency for convergence on GitHub Actions
-=======
-        random_state = 42
->>>>>>> 280cb28... add seeding @relf
+        random_state = 42    
         design_space = DesignSpace(
             [
                 FloatVariable(-5, 5),
@@ -435,7 +418,7 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_start=30,
-            n_iter=n_iter,
+        n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
