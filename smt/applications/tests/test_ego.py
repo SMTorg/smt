@@ -403,7 +403,7 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         n_doe = 5
-        random_state = 42    
+        random_state = 42
         design_space = DesignSpace(
             [
                 FloatVariable(-5, 5),
@@ -418,7 +418,7 @@ class TestEGO(SMTestCase):
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
             n_start=30,
-        n_iter=n_iter,
+            n_iter=n_iter,
             criterion=criterion,
             xdoe=xdoe,
             surrogate=KRG(
