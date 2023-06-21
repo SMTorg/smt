@@ -229,7 +229,7 @@ class TestEGO(SMTestCase):
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
-    #  @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed_parallel(self):
         n_parallel = 5
         n_iter = 20
