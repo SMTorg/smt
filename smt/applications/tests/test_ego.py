@@ -245,7 +245,7 @@ class TestEGO(SMTestCase):
             ],
             seed=random_state,
         )
-      sm = KRG(design_space=design_space, print_global=False, n_start=25)
+        sm = KRG(design_space=design_space, print_global=False, n_start=25)
         mixint = MixedIntegerContext(design_space)
         sampling = mixint.build_sampling_method(FullFactorial)
         xdoe = sampling(10)
