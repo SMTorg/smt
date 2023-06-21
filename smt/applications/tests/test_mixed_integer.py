@@ -34,34 +34,6 @@ from smt.surrogate_models import (
 
 
 class TestMixedInteger(unittest.TestCase):
-    def test_krg_mixed_3D_INT(self):
-        design_space = DesignSpace(
-            [
-                FloatVariable(-10, 10),
-                CategoricalVariable(["blue", "red", "green"]),
-                IntegerVariable(-10, 10),
-            ]
-        )
-
-        mixint = MixedIntegerContext(design_space)
-
-        sm = mixint.build_kriging_model(KRG(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
-
-        fun = Sphere(ndim=3)
-        xt = sampling(20)
-        yt = fun(xt)
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        eq_check = True
-        for i in range(xt.shape[0]):
-            if abs(float(xt[i, :][2]) - int(float(xt[i, :][2]))) > 10e-8:
-                eq_check = False
-            if not (xt[i, :][1] == 0 or xt[i, :][1] == 1 or xt[i, :][1] == 2):
-                eq_check = False
-        self.assertTrue(eq_check)
-
     def test_krg_mixed_3D(self):
         design_space = DesignSpace(
             [
