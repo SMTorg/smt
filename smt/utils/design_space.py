@@ -329,7 +329,7 @@ class BaseDesignSpace:
         return x, is_acting
 
     def get_x_limits(self) -> list:
-        """Returns the variable limit definitions in SMT style"""
+        """Returns the variable limit definitions in SMT < 2.0 style"""
         return [dv.get_limits() for dv in self.design_variables]
 
     def get_num_bounds(self):
@@ -572,7 +572,8 @@ class DesignSpace(BaseDesignSpace):
     Class for defining a (hierarchical) design space by defining design variables, and defining decreed variables
     (optional).
 
-    Numerical bounds, as defined in legacy SMT < 2.0, can be requested using `get_x_limits()`.
+    Numerical bounds can be requested using `get_num_bounds()`.
+    If needed, it is possible to get the legacy SMT < 2.0 `xlimits` format using `get_x_limits()`.
 
     Parameters
     ----------
