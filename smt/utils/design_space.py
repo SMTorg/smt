@@ -572,8 +572,7 @@ class DesignSpace(BaseDesignSpace):
     Class for defining a (hierarchical) design space by defining design variables, and defining decreed variables
     (optional).
 
-    If needed, it is possible to get the legacy design space definition format using `get_x_limits()` and
-    `get_x_types()`. Numerical bounds can be requested
+    Numerical bounds, as defined in legacy SMT < 2.0, can be requested using `get_x_limits()`.
 
     Parameters
     ----------
