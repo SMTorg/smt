@@ -162,21 +162,21 @@ Design space and variable class references
 The ``DesignSpace`` class and design variable classes implement the relevant functionality.
 
   .. autoclass:: smt.utils.design_space.FloatVariable
-     :exclude-members: get_type, get_limits
+     :exclude-members: get_limits
 
   .. autoclass:: smt.utils.design_space.IntegerVariable
-     :exclude-members: get_type, get_limits
+     :exclude-members: get_limits
 
   .. autoclass:: smt.utils.design_space.OrdinalVariable
-     :exclude-members: get_type, get_limits
+     :exclude-members: get_limits
 
   .. autoclass:: smt.utils.design_space.CategoricalVariable
-     :exclude-members: get_type, get_limits
+     :exclude-members: get_limits
 
   .. autoclass:: smt.utils.design_space.DesignSpace
      :members:
      :inherited-members:
-     :exclude-members: get_unfolded_num_bounds, fold_x, unfold_x, get_num_bounds, get_x_limits, get_x_types
+     :exclude-members: get_unfolded_num_bounds, fold_x, unfold_x, get_num_bounds, get_x_limits
 
 Example of sampling a mixed-discrete design space
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -292,9 +292,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0172906
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0003458
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png
