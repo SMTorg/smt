@@ -31,6 +31,9 @@ class DesignVariable:
     upper: Union[float, int]
     lower: Union[float, int]
 
+    def get_typename(self):
+        return self.__class__.__name__
+
     def get_limits(self) -> Union[list, tuple]:
         raise NotImplementedError
 
@@ -59,7 +62,7 @@ class FloatVariable(DesignVariable):
         return f"Float ({self.lower}, {self.upper})"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.lower}, {self.upper})"
+        return f"{self.get_typename()}({self.lower}, {self.upper})"
 
 
 class IntegerVariable(DesignVariable):
@@ -80,7 +83,7 @@ class IntegerVariable(DesignVariable):
         return f"Int ({self.lower}, {self.upper})"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.lower}, {self.upper})"
+        return f"{self.get_typename()}({self.lower}, {self.upper})"
 
 
 class OrdinalVariable(DesignVariable):
@@ -107,7 +110,7 @@ class OrdinalVariable(DesignVariable):
         return f"Ord {self.values}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.values})"
+        return f"{self.get_typename()}({self.values})"
 
 
 class CategoricalVariable(DesignVariable):
@@ -138,7 +141,7 @@ class CategoricalVariable(DesignVariable):
         return f"Cat {self.values}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.values})"
+        return f"{self.get_typename()}({self.values})"
 
 
 class BaseDesignSpace:
