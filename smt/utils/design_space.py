@@ -329,7 +329,7 @@ class BaseDesignSpace:
         return x, is_acting
 
     def get_x_limits(self) -> list:
-        """Returns the variable limit definitions in SMT style"""
+        """Returns the variable limit definitions in SMT < 2.0 style"""
         return [dv.get_limits() for dv in self.design_variables]
 
     def get_num_bounds(self):
@@ -572,8 +572,8 @@ class DesignSpace(BaseDesignSpace):
     Class for defining a (hierarchical) design space by defining design variables, and defining decreed variables
     (optional).
 
-    If needed, it is possible to get the legacy design space definition format using `get_x_limits()` and
-    `get_x_types()`. Numerical bounds can be requested
+    Numerical bounds can be requested using `get_num_bounds()`.
+    If needed, it is possible to get the legacy SMT < 2.0 `xlimits` format using `get_x_limits()`.
 
     Parameters
     ----------
@@ -583,6 +583,8 @@ class DesignSpace(BaseDesignSpace):
     Examples
     --------
     Instantiate the design space with all its design variables:
+
+    >>> print("toto")
     >>> from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
     >>> ds = DesignSpace([
     >>>     CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
@@ -593,10 +595,12 @@ class DesignSpace(BaseDesignSpace):
     >>> assert len(ds.design_variables) == 4
 
     You can define decreed variables (conditional activation):
+
     >>> ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')  # Activate x1 if x0 == A
 
     After defining everything correctly, you can then use the design space object to correct design vectors and get
     information about which design variables are acting:
+
     >>> x_corr, is_acting = ds.correct_get_acting(np.array([
     >>>     [0, 0, 2, .25],
     >>>     [1, 2, 1, .75],
@@ -611,13 +615,16 @@ class DesignSpace(BaseDesignSpace):
     >>> ]))
 
     It is also possible to randomly sample design vectors conforming to the constraints:
+
     >>> x_sampled, is_acting_sampled = ds.sample_valid_x(100)
 
     You can also instantiate a purely-continuous design space from bounds directly:
+
     >>> continuous_design_space = DesignSpace([(0, 1), (0, 2), (.5, 5.5)])
     >>> assert continuous_design_space.n_dv == 3
 
     If needed, it is possible to get the legacy design space definition format:
+
     >>> xlimits = ds.get_x_limits()
     >>> cont_bounds = ds.get_num_bounds()
     >>> unfolded_cont_bounds = ds.get_unfolded_num_bounds()
