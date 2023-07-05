@@ -698,8 +698,8 @@ class KrgBased(SurrogateModel):
         if self.options["use_het_noise"]:
             noise = self.optimal_noise
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
-            theta = tmp_var[0 : self.D.shape[1]]
-            noise = tmp_var[self.D.shape[1] :]
+            theta = tmp_var[0:-1]
+            noise = tmp_var[-1]
         if not (self.is_continuous):
             dx = self.D
             r = self._matrix_data_corr(
