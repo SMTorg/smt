@@ -295,14 +295,16 @@ class MixedIntegerContext(object):
     def design_space(self) -> BaseDesignSpace:
         return self._design_space
 
-    def build_sampling_method(self, *_, **__):
+    def build_sampling_method(self, *_, **kwargs):
         """
         Build MixedIntegerSamplingMethod from given SMT sampling method.
         """
         return_folded = self._work_in_folded_space
 
         def sample(n):
-            x, _ = self._design_space.sample_valid_x(n, unfolded=not return_folded)
+            x, _ = self._design_space.sample_valid_x(
+                n, unfolded=not return_folded, **kwargs
+            )
             return x
 
         return sample
