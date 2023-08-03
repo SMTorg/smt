@@ -176,7 +176,7 @@ class Test(unittest.TestCase):
         self.assertEqual(len(ds.design_variables), 4)
         self.assertTrue(np.all(~ds.is_conditionally_acting))
 
-        ds.sample_valid_x(3)
+        ds.sample_valid_x(3, random_state=42)
         x = np.array(
             [
                 [1, 0, 0, 0.834],
@@ -230,7 +230,9 @@ class Test(unittest.TestCase):
         )
         self.assertTrue(np.all(is_acting_corr))
 
-        x_unfolded, is_acting_unfolded = ds.sample_valid_x(3, unfolded=True)
+        x_unfolded, is_acting_unfolded = ds.sample_valid_x(
+            3, unfolded=True, random_state=42
+        )
         self.assertEqual(x_unfolded.shape, (3, 6))
 
         self.assertTrue(str(ds))
@@ -331,7 +333,7 @@ class Test(unittest.TestCase):
             )
         )
 
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
         assert x_sampled.shape == (100, 4)
         x_sampled[is_acting_sampled[:, 3], 3] = np.round(
             x_sampled[is_acting_sampled[:, 3], 3]
@@ -367,7 +369,7 @@ class Test(unittest.TestCase):
             decreed_var=3, meta_var=0, meta_value="A"
         )  # Activate x3 if x0 == A
 
-        self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10))
+        self.assertRaises(RuntimeError, lambda: ds.sample_valid_x(10, random_state=42))
 
 
 if __name__ == "__main__":
