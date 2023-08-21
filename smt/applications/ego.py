@@ -269,7 +269,7 @@ class EGO(SurrogateBasedApplication):
                 LHS,
                 criterion="ese",
                 random_state=self.options["random_state"],
-                new_sampler=True,
+                use_new_sampler=True,
             )
 
         else:
@@ -278,7 +278,7 @@ class EGO(SurrogateBasedApplication):
                 n,
                 criterion="ese",
                 random_state=self.options["random_state"],
-                new_sampler=True,
+                use_new_sampler=True,
             )[0]
             self.categorical_kernel = None
 
