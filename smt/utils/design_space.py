@@ -748,9 +748,9 @@ class DesignSpace(BaseDesignSpace):
 
         # Simplified implementation: sample design vectors in unfolded space
         x_limits_unfolded = self.get_unfolded_num_bounds()
-        if "random_state" in kwargs.keys():
+        if "random_state" in kwargs:
             self.seed = kwargs["random_state"]
-        if "use_new_sampler" in kwargs.keys() and kwargs["use_new_sampler"]:
+        if kwargs.get("use_new_sampler"):
             kwargs.pop("use_new_sampler", None)
             if self.use_new_sampler:
                 self.sampler = LHS(xlimits=x_limits_unfolded, **kwargs)
