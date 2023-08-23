@@ -46,7 +46,7 @@ class TestMixedInteger(unittest.TestCase):
         mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(KRG(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
+        sampling = mixint.build_sampling_method()
 
         fun = Sphere(ndim=3)
         xt = sampling(20)
@@ -85,7 +85,7 @@ class TestMixedInteger(unittest.TestCase):
 
         mixint = MixedIntegerContext(design_space)
         sm = mixint.build_surrogate_model(QP(print_prediction=False))
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
+        sampling = mixint.build_sampling_method()
 
         fun = Sphere(ndim=2)
         xt = sampling(10)
@@ -1309,7 +1309,7 @@ class TestMixedInteger(unittest.TestCase):
         sm = mixint.build_kriging_model(
             KRG(categorical_kernel=MixIntKernelType.GOWER, print_prediction=False)
         )
-        sampling = mixint.build_sampling_method(LHS, criterion="m")
+        sampling = mixint.build_sampling_method()
 
         fun = Sphere(ndim=3)
         xt = sampling(10)

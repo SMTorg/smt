@@ -247,7 +247,7 @@ class TestEGO(SMTestCase):
         )
         sm = KRG(design_space=design_space, print_global=False, n_start=25)
         mixint = MixedIntegerContext(design_space)
-        sampling = mixint.build_sampling_method(FullFactorial)
+        sampling = mixint.build_sampling_method()
         xdoe = sampling(10)
 
         ego = EGO(
@@ -891,6 +891,114 @@ class TestEGO(SMTestCase):
         )
 
         return ego, fun
+
+    def test_sampling_consistency(self):
+        def f_obj(X):
+            """
+            s01 objective
+
+            Parameters
+            ----------
+            point: array_like
+                point to evaluate
+            """
+            PI = 3.14159265358979323846
+            fail = False
+            x = X[:, 0]
+            # categorial variable
+            c = X[:, 1]
+            x = np.abs(x)
+            c1 = c == 0
+            c2 = c == 1
+            c3 = c == 2
+            c4 = c == 3
+            c5 = c == 4
+            c6 = c == 5
+            c7 = c == 6
+            c8 = c == 7
+            c9 = c == 8
+            c10 = c == 9
+            if np.size(c1) == (
+                np.sum(c1)
+                + np.sum(c2)
+                + np.sum(c3)
+                + np.sum(c4)
+                + np.sum(c5)
+                + np.sum(c6)
+                + np.sum(c7)
+                + np.sum(c8)
+                + np.sum(c9)
+                + np.sum(c10)
+            ):
+                y = (
+                    c1 * (np.cos(3.6 * PI * (x - 2)) + x - 1)
+                    + c2 * (2 * np.cos(1.1 * PI * np.exp(x)) - x / 2 + 2)
+                    + c3 * (np.cos(2 * PI * x) + x / 2)
+                    + c4 * (x * (np.cos(3.4 * PI * (x - 1)) - (x - 1) / 2))
+                    + c5 * (-0.5 * x * x)
+                    + c6
+                    * (
+                        2 * np.power(np.cos(0.25 * PI * np.exp(-np.power(x, 4))), 2)
+                        - x / 2
+                        + 1
+                    )
+                    + c7 * (x * (np.cos(3.4 * PI * x)) - x / 2 + 1)
+                    + c8 * (x * (-np.cos(7 * 0.5 * PI * x) - x / 2) + 2)
+                    + c9 * (-np.power(x, 5) * 0.5 + 1)
+                    + c10
+                    * (
+                        -np.power(np.cos(5 * PI * 0.5 * x), 2) * np.sqrt(x)
+                        - 0.5 * np.log(x + 0.5)
+                        - 1.3
+                    )
+                )
+            else:
+                print("type error")
+                print(X)
+                fail = True
+            return y
+
+        # To define the variables x^{quant} and x^{cat}
+        design_space = DesignSpace(
+            [
+                FloatVariable(0, 1),  # real
+                CategoricalVariable(
+                    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+                ),  # 10 possible choices
+            ]
+        )
+
+        # To define the initial DOE
+        random_state = 42  # seed value for the sampling
+        n_doe = 5  # initial doe size
+        sampling = MixedIntegerSamplingMethod(
+            LHS, design_space, criterion="ese", random_state=random_state
+        )
+        Xt = sampling(n_doe)
+
+        # To start the Bayesion optimization
+        n_iter = 2  # number of iterations
+        criterion = "EI"  # infill criterion
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=Xt,
+            surrogate=KRG(
+                design_space=design_space,
+                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                theta0=[1e-2],
+                n_start=15,
+                corr="squar_exp",
+                print_global=False,
+            ),
+            verbose=False,
+            enable_tunneling=False,
+            random_state=random_state,
+            n_start=15,
+        )
+        x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
+        self.assertAlmostEqual(np.sum(y_data), 2.03831406306514, delta=1e-4)
+        self.assertAlmostEqual(np.sum(x_data), 33.56885202767958, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()

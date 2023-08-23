@@ -266,19 +266,14 @@ class EGO(SurrogateBasedApplication):
                 work_in_folded_space=True,
             )
             self._sampling = self.mixint.build_sampling_method(
-                LHS,
-                criterion="ese",
                 random_state=self.options["random_state"],
-                use_new_sampler=True,
             )
 
         else:
             self.mixint = None
             self._sampling = lambda n: self.design_space.sample_valid_x(
                 n,
-                criterion="ese",
                 random_state=self.options["random_state"],
-                use_new_sampler=True,
             )[0]
             self.categorical_kernel = None
 
