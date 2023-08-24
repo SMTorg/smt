@@ -253,6 +253,84 @@ class KrgBased(SurrogateModel):
         if is_acting is not None:
             self.is_acting_points[name] = is_acting
 
+    def _correct_distances_cat_decreed(
+        self, D, is_acting, listcatdecreed, ij, is_acting_y=None, mode="CONT_RELAX"
+    ):
+        indjcat = -1
+        for j in listcatdecreed:
+            indjcat = indjcat + 1
+            if j:
+                indicat = -1
+                indices = 0
+                for v in range(len(self.design_space.design_variables)):
+                    if (
+                        self.design_space.design_variables[v].__class__.__name__
+                        == "CategoricalVariable"
+                    ):
+                        indicat = indicat + 1
+                        if indicat == indjcat:
+                            ia2 = np.zeros((len(ij), 2), dtype=bool)
+                            if is_acting_y is None:
+                                ia2 = (is_acting[:, self.cat_features][:, indjcat])[ij]
+                            else:
+                                ia2[:, 0] = (
+                                    is_acting[:, self.cat_features][:, indjcat]
+                                )[ij[:, 0]]
+                                ia2[:, 1] = (
+                                    is_acting_y[:, self.cat_features][:, indjcat]
+                                )[ij[:, 1]]
+
+                            act_inact = ia2[:, 0] ^ ia2[:, 1]
+                            act_act = ia2[:, 0] & ia2[:, 1]
+
+                            if mode == "CONT_RELAX":
+                                val_act = (
+                                    np.array([1] * self.n_levels[indjcat])
+                                    - self.X2_offset[
+                                        indices : indices + self.n_levels[indjcat]
+                                    ]
+                                ) / self.X2_scale[
+                                    indices : indices + self.n_levels[indjcat]
+                                ] - (
+                                    np.array([0] * self.n_levels[indjcat])
+                                    - self.X2_offset[
+                                        indices : indices + self.n_levels[indjcat]
+                                    ]
+                                ) / self.X2_scale[
+                                    indices : indices + self.n_levels[indjcat]
+                                ]
+                                D[:, indices : indices + self.n_levels[indjcat]][
+                                    act_inact
+                                ] = val_act
+                                D[:, indices : indices + self.n_levels[indjcat]][
+                                    act_act
+                                ] = (
+                                    np.sqrt(2)
+                                    * D[:, indices : indices + self.n_levels[indjcat]][
+                                        act_act
+                                    ]
+                                )
+                            elif mode == "GOWER":
+                                D[:, indices : indices + 1][act_inact] = (
+                                    self.n_levels[indjcat] * 0.5
+                                )
+                                D[:, indices : indices + 1][act_act] = (
+                                    np.sqrt(2) * D[:, indices : indices + 1][act_act]
+                                )
+
+                            else:
+                                raise ValueError(
+                                    "Continuous decreed kernel not implemented"
+                                )
+                        else:
+                            if mode == "CONT_RELAX":
+                                indices = indices + self.n_levels[indicat]
+                            elif mode == "GOWER":
+                                indices = indices + 1
+                    else:
+                        indices = indices + 1
+        return D
+
     def _new_train(self):
         # Sampling points X and y
         X = self.training_points[None][0][0]
@@ -273,7 +351,7 @@ class KrgBased(SurrogateModel):
         self.X_train = X
         self.is_acting_train = is_acting
         self._corr_params = None
-
+        _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         if not (self.is_continuous):
             D, self.ij, X = gower_componentwise_distances(
                 X=X,
@@ -281,6 +359,20 @@ class KrgBased(SurrogateModel):
                 design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
             )
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, design_space=self.design_space
+            )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                D = self._correct_distances_cat_decreed(
+                    D,
+                    is_acting,
+                    listcatdecreed,
+                    self.ij,
+                    mode="GOWER",
+                )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
                 (
@@ -292,10 +384,17 @@ class KrgBased(SurrogateModel):
                     _,
                 ) = standardization(X2, self.training_points[None][0][1])
                 D, _ = cross_distances(self.X2_norma)
-            self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, design_space=self.design_space
-            )
-            _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
+                self.Lij, self.n_levels = cross_levels(
+                    X=self.X_train, ij=self.ij, design_space=self.design_space
+                )
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    D = self._correct_distances_cat_decreed(
+                        D, is_acting, listcatdecreed, self.ij, mode="CONT_RELAX"
+                    )
+
         # Center and scale X and y
         (
             self.X_norma,
@@ -1162,7 +1261,7 @@ class KrgBased(SurrogateModel):
         if is_acting is None:
             x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
-
+        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
             dx = gower_componentwise_distances(
                 x,
@@ -1172,11 +1271,35 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                dx = self._correct_distances_cat_decreed(
+                    dx,
+                    is_acting,
+                    listcatdecreed,
+                    ij,
+                    is_acting_y=self.is_acting_train,
+                    mode="GOWER",
+                )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-            _, ij = cross_distances(x, self.X_train)
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+
+                if np.any(listcatdecreed):
+                    dx = self._correct_distances_cat_decreed(
+                        dx,
+                        is_acting,
+                        listcatdecreed,
+                        ij,
+                        is_acting_y=self.is_acting_train,
+                        mode="CONT_RELAX",
+                    )
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -1323,7 +1446,7 @@ class KrgBased(SurrogateModel):
             x, is_acting = self.design_space.correct_get_acting(x)
         n_eval, n_features_x = x.shape
         X_cont = x
-
+        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
             dx = gower_componentwise_distances(
                 x,
@@ -1333,11 +1456,35 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                dx = self._correct_distances_cat_decreed(
+                    dx,
+                    is_acting,
+                    listcatdecreed,
+                    ij,
+                    is_acting_y=self.is_acting_train,
+                    mode="GOWER",
+                )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-            _, ij = cross_distances(x, self.X_train)
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    dx = self._correct_distances_cat_decreed(
+                        dx,
+                        is_acting,
+                        listcatdecreed,
+                        ij,
+                        is_acting_y=self.is_acting_train,
+                        mode="CONT_RELAX",
+                    )
+
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )

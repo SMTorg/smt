@@ -997,8 +997,8 @@ class TestEGO(SMTestCase):
             n_start=15,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-        self.assertAlmostEqual(np.sum(y_data), 2.03831406306514, delta=1e-4)
-        self.assertAlmostEqual(np.sum(x_data), 33.56885202767958, delta=1e-4)
+        self.assertAlmostEqual(np.sum(y_data), 2.7639515433083854, delta=1e-4)
+        self.assertAlmostEqual(np.sum(x_data), 32.11001423996299, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()

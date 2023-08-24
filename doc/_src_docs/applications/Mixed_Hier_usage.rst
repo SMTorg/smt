@@ -88,6 +88,11 @@ The design space definition uses the framework of Audet et al. [2]_ to manage bo
 hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may
 affect the dimension of the problem and decide if some other decreed variables are acting or non-acting.
 
+Additionally, it is also possible to define value constraints that explicitly forbid two variables from having some
+values simultaneously. This can be useful for modeling incompatibility relationships: for example, engines can't be
+installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected. Note: this feature
+is only available if ConfigSpace has been installed: `pip install smt[cs]`
+
 The hierarchy relationships are specified after instantiating the design space:
 
 
@@ -120,6 +125,16 @@ The hierarchy relationships are specified after instantiating the design space:
   # Declare that x1 is acting if x0 == A
   ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
   
+  # Nested hierarchy is possible: activate x2 if x1 == C or D
+  # Note: only if ConfigSpace is installed! pip install smt[cs]
+  ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=["C", "D"])
+  
+  # It is also possible to explicitly forbid two values from occurring simultaneously
+  # Note: only if ConfigSpace is installed! pip install smt[cs]
+  ds.add_value_constraint(
+      var1=0, value1="A", var2=2, value2=[0, 1]
+  )  # Forbid x0 == A && x2 == 0 or 1
+  
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
   x_sampled, is_acting_sampled = ds.sample_valid_x(100)
@@ -129,6 +144,7 @@ The hierarchy relationships are specified after instantiating the design space:
       np.array(
           [
               [0, 0, 2, 0.25],
+              [0, 2, 1, 0.75],
               [1, 2, 1, 0.66],
           ]
       )
@@ -140,7 +156,18 @@ The hierarchy relationships are specified after instantiating the design space:
       == np.array(
           [
               [True, True, True, True],
-              [True, False, True, True],  # x1 is not acting if x0 != A
+              [
+                  True,
+                  True,
+                  False,
+                  True,
+              ],  # x2 is not acting if x1 != C or D (0 or 1)
+              [
+                  True,
+                  False,
+                  False,
+                  True,
+              ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
           ]
       )
   )
@@ -149,8 +176,9 @@ The hierarchy relationships are specified after instantiating the design space:
       == np.array(
           [
               [0, 0, 2, 0.25],
-              # x1 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-              [1, 0, 1, 0.66],
+              [0, 2, 0, 0.75],
+              # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+              [1, 0, 0, 0.66],  # x1 and x2 are imputed
           ]
       )
   )
@@ -292,9 +320,10 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0172906
+     Predicting - done. Time (sec):  0.0031278
      
-     Prediction time/pt. (sec) :  0.0003458
+     Prediction time/pt. (sec) :  0.0000626
+
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

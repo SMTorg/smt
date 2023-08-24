@@ -112,6 +112,9 @@ metadata = dict(
         "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
         ],
+        "cs": [  # pip install smt[cs]
+            "ConfigSpace~=0.6.1",
+        ],
     },
     python_requires=">=3.7",
     zip_safe=False,
