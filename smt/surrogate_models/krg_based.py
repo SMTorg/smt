@@ -507,8 +507,7 @@ class KrgBased(SurrogateModel):
         else:
             X_pls_space, _ = compute_X_cont(X, design_space)
         if cat_kernel_comps is not None or ncomp < 1e5:
-            ###Modifier la condition : if PLS cont
-            if self.pls_coeff_cont == []:
+            if np.size(self.pls_coeff_cont) == 0:
                 X, y = self._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = self.coeff_pls
             if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
@@ -1739,7 +1738,7 @@ class KrgBased(SurrogateModel):
                                     theta=best_optimal_theta
                                 )
                     # Optimization fail
-                    elif best_optimal_par == []:
+                    elif np.size(best_optimal_par) == 0:
                         print("Optimization failed. Try increasing the ``nugget``")
                         raise ve
                     # Break the while loop
