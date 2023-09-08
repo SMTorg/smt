@@ -265,7 +265,7 @@ class KrgBased(SurrogateModel):
             self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name not in ["Kriging", "MGP"]:
+        if self.name not in ["Kriging", "MGP", "SGP"]:
             if self.is_continuous:
                 X, y = self._compute_pls(X.copy(), y.copy())
 
@@ -763,6 +763,7 @@ class KrgBased(SurrogateModel):
             p = self.p
             q = self.q
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
+        self.sigma2 = sigma2
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
