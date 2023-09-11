@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import unittest
 
 from smt.surrogate_models import SGP
+from smt.utils.sm_test_case import SMTestCase
+from smt.utils import compute_rms_error
 
 
 def f_obj(x):
@@ -13,54 +15,45 @@ def f_obj(x):
     )
 
 
-class TestSGP(unittest.TestCase):
-    def test_1d(self):
-        dir = "D:\\rlafage/workspace/sparse_GPy_SMT/"
-        rng = np.random.RandomState(0)
+class TestSGP(SMTestCase):
+    def setUp(self):
+        rng = np.random.RandomState(1)
 
         # Generate training data
         N_train = 200
-        eta = [0.01]
-        gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta), size=(N_train, 1))
-        Xtrain = 2 * np.random.rand(N_train, 1) - 1
-        # Xtrain = np.load(dir + "xtrain.npy")
-        Ytrain = f_obj(Xtrain) + gaussian_noise
-        # Ytrain = np.load(dir + "ytrain.npy")
+        self.eta = [0.01]
+        gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(self.eta), size=(N_train, 1))
+        self.Xtrain = 2 * np.random.rand(N_train, 1) - 1
+        self.Ytrain = f_obj(self.Xtrain) + gaussian_noise
+
         # Generate test data (noise-free)
         N_test = 50
-        Xtest = 2 * np.random.rand(N_test, 1) - 1
-        # Xtest = np.load(dir + "xtest.npy")
-        Ytest = f_obj(Xtest).reshape(-1, 1)
+        self.Xtest = 2 * rng.rand(N_test, 1) - 1
+        self.Ytest = f_obj(self.Xtest).reshape(-1, 1)
 
-        sgp = SGP(noise0=eta, theta_bounds=[1e-6, 100], n_inducing=30)
-        sgp.set_training_values(Xtrain, Ytrain)
-        # sgp.set_inducing_inputs(Z=np.load(dir + "inducing.npy"))
+        # Pick inducing points at random
+        N_inducing = 30
+        self.Z = 2 * rng.rand(N_inducing, 1) - 1
+
+    def test_fitc(self):
+        # Assume we know the variance eta of our noisy input data
+        sgp = SGP(noise0=self.eta)
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
         sgp.train()
 
-        Ypred = sgp.predict_values(Xtest)
-        rmse = np.sqrt(np.mean((Ypred - Ytest) ** 2))
-        print("\nRMSE : %f" % rmse)
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.02, rtol=0.1)
 
-        # plot prediction
-        x = np.linspace(-1, 1, 201).reshape(-1, 1)
-        y = f_obj(x)
+    def test_vfe(self):
+        # Assume we know the variance eta of our noisy input data
+        sgp = SGP(noise0=self.eta, method="VFE")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
 
-        hat_y = sgp.predict_values(x)
-        var = sgp.predict_variances(x)
-        Z = sgp.Z
-        plt.figure(figsize=(14, 6))
-
-        plt.plot(x, y, "C1-", label="target function")
-        plt.scatter(Xtrain, Ytrain, marker="o", s=10, label="observed data")
-        plt.plot(x, hat_y, "k-", label="sparse GP")
-        plt.plot(x, hat_y - 3 * np.sqrt(var), "k--")
-        plt.plot(x, hat_y + 3 * np.sqrt(var), "k--", label="99% CI")
-        plt.plot(Z, -2.9 * np.ones_like(Z), "r|", mew=2, label="inducing points")
-        # plt.xlim([-1.1,1.1])
-        plt.ylim([-3, 3])
-        plt.legend(loc=0)
-        plt.show()
-
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.1)
 
 if __name__ == "__main__":
     unittest.main()

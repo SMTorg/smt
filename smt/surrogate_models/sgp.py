@@ -72,14 +72,15 @@ class SGP(KRG):
 
     def set_inducing_inputs(self, Z=None, normalize=False):
         """
-        Define number of inducing inputs or set the locations manually
+        Define number of inducing inputs or set the locations manually.
+        When Z is not specified then points are picked randomly amongst the inputs training set.
 
         Parameters
         ----------
         nz : int, optional
             Number of inducing inputs.
         Z : np.ndarray [M,ndim], optional
-            Incuding inputs.
+            Inducing inputs.
         normalize : When Z is given, whether values should be normalized
         """
         if Z is None:
