@@ -26,35 +26,62 @@ class SGP(KRG):
         declare = self.options.declare
         declare(
             "corr",
-            "squar_exp",
+            "squar_exp",  # gaussian kernel only
             values=("squar_exp"),
             desc="Correlation function type",
             types=(str),
         )
         declare(
             "poly",
-            "constant",
+            "constant",  # constant mean function
             values=("constant"),
             desc="Regression function type",
             types=(str),
         )
         declare(
-            "noise0",
-            [0.01],
-            desc="Gaussian noise on observed data",
+            "theta_bounds",
+            [1e-6, 1e2],  # upper bound increased compared to kriging-based one
             types=(list, np.ndarray),
+            desc="bounds for hyperparameters",
+        )
+        declare(
+            "noise0",
+            [1e-2],
+            desc="Gaussian noise on observed training data",
+            types=(list, np.ndarray),
+        )
+        declare(
+            "eval_noise",
+            True,
+            types=bool,
+            values=(True, False),
+            desc="Noise is always evaluated",
+        )
+        declare(
+            "nugget",
+            1e-8,  # increased compared to kriging-based one
+            types=(float),
+            desc="a jitter for numerical stability",
         )
         declare(
             "method",
             "FITC",
             values=("FITC", "VFE"),
-            desc="Method for sparse GP model",
+            desc="Method used by sparse GP model",
             types=(str),
         )
         declare("n_inducing", 10, desc="Number of inducing inputs", types=int)
+
+        supports = self.supports
+        supports["derivatives"] = False
+        supports["variances"] = True
+        supports["variance_derivatives"] = False
+        supports["x_hierarchy"] = False
+
         self.Z = None
         self.woodbury_data = {"vec": None, "inv": None}
         self.optimal_par = {}
+        self.optimal_noise = None
 
     def compute_K(self, A: np.ndarray, B: np.ndarray, theta, sigma2):
         """
@@ -114,9 +141,6 @@ class SGP(KRG):
         if self.Z is None:
             self.set_inducing_inputs()
 
-        # Has to evaluate the noise
-        self.options["eval_noise"] = True
-
         # make sure the latent function is scalars
         Y = self.training_points[None][0][1]
         _, output_dim = Y.shape
@@ -139,10 +163,13 @@ class SGP(KRG):
         Y = self.training_points[None][0][1]
         Z = self.Z
 
-        sigma2 = theta[-1]
-        theta = theta[0:-1]
+        if self.options["eval_noise"]:
+            sigma2 = theta[-1]
+            theta = theta[0:-1]
+        else:
+            sigma2 = self.options["noise0"]
 
-        nugget = 1e-8
+        nugget = self.options["nugget"]
 
         if self.options["method"] == "VFE":
             likelihood, w_vec, w_inv = self._vfe(X, Y, Z, theta, sigma2, nugget)
@@ -156,7 +183,7 @@ class SGP(KRG):
             "theta": theta,
             "sigma2": sigma2,
         }
-        # print(">>> lkh=", likelihood)
+        # print(">>>>>>> MLL=", likelihood)
         return likelihood, params
 
     def _fitc(self, X, Y, Z, theta, sigma2, nugget):
@@ -176,8 +203,11 @@ class SGP(KRG):
         Ui = linalg.inv(U)
         V = Ui @ Kmn
 
+        # Assumption on the gaussian noise on training outputs
+        eta2 = np.array(self.options["noise0"])
+
         # Compute diagonal correction: nu = Knn_diag - Qnn_diag + \eta^2
-        nu = Knn - np.sum(np.square(V), 0) + np.array(self.options["noise0"])
+        nu = Knn - np.sum(np.square(V), 0) + eta2
         # Compute beta, the effective noise precision
         beta = 1.0 / nu
 

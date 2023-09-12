@@ -763,7 +763,6 @@ class KrgBased(SurrogateModel):
             p = self.p
             q = self.q
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
-        self.sigma2 = sigma2
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)

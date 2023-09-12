@@ -1,0 +1,76 @@
+Sparse Gaussian Process (SGP)
+=============================
+
+Although the versatility of Gaussian Process regression models for learning complex data, their computational complexity, 
+which is :math:`\mathcal{O}(N^3)` with :math:`N` the number of training points, prevent their use to large datasets. 
+This complexity results from the inversion of the covariance matrix :math:`\mathbf{K}`. We must also highlight that the memory 
+cost of GPR models is :math:`\mathcal{O}(N^2)`, mainly due to the storage of the covariance matrix itself.
+
+To address these limitations, sparse GPs approximation methods have emerged as efficient alternatives. 
+Sparse GPs consider a set of inducing points to approximate the posterior Gaussian distribution with a low-rank representation,
+while the variational inference provides a framework for approximating the posterior distribution directly. 
+Thus, these methods enable accurate modeling of large datasets while preserving computational efficiency 
+(typically :math:`\mathcal{O}(NM^2)` time and :math:`\mathcal{O}(NM)` memory for some chosen :math:`M<N`). 
+
+See [1]_ for a detailed information and discussion on several approximation methods benefits and drawbacks.
+
+Implementation
+--------------
+
+In SMT the methods: Fully Independent Training Conditional (FITC) method and the Variational Free Energy (VFE) approximation
+are implemented inspired from inference methods developed in the GPy project [2]_
+
+In practice, the implementation rely on the expression of their respective negative marginal log
+likelihood (NMLL), which is minimised to train the methods. We have the following expressions:
+
+For FITC
+
+.. math :: 
+    \text{NMLL}_{\text{FITC}} = \frac{1}{2}\log\left(\text{det}\left(\tilde{\mathbf{Q}}_{NN} + \eta^2\mathbf{I}_N\right)\right) + \frac{1}{2}\mathbf{y}^\top\left(\tilde{\mathbf{Q}}_{NN} + \eta^2\mathbf{I}_N\right)^{-1}\mathbf{y} + \frac{N}{2}\log(2\pi)
+
+
+For VFE
+
+.. math :: 
+    \text{NMLL}_{\text{VFE}} = \frac{1}{2}\log\left(\text{det}\left(\mathbf{Q}_{NN} + \eta^2\mathbf{I}_N\right)\right) + \frac{1}{2}\mathbf{y}^\top\left(\mathbf{Q}_{NN} + \eta^2\mathbf{I}_N\right)^{-1}\mathbf{y} + \frac{1}{2\eta^2}\text{Tr}\left[\mathbf{K}_{NN} + \mathbf{Q}_{NN} \right] + \frac{N}{2}\log(2\pi)
+
+where
+
+.. math ::
+
+    \mathbf{K}_{NN} \approx \mathbf{Q}_{NN} = \mathbf{K}_{NM}\mathbf{K}_{MM}^{-1} \mathbf{K}f_{NM}^\top
+
+    \tilde{\mathbf{Q}}_{NN} = \mathbf{Q}_{NN} + \text{diag}\left[\mathbf{K}_{NN} - \mathbf{Q}_{NN}\right]
+
+and :math:`\eta^2` is the variance of the gaussian noise assumed on training data.
+
+Limitations
+-----------
+
+* Inducing points location can not be optimized.
+* Noise variance on observed training data can not be estimated.
+* Trend function is assumed to be zero.
+
+
+.. [1] Matthias Bauer, Mark van der Wilk, and Carl Edward Rasmussen. "Understanding Probabilistic Sparse Gaussian Process Approximations". In: Advances in Neural Information Processing Systems. Ed. by D. Lee et al. Vol. 29. Curran Associates, Inc., 2016
+
+.. [2] https://github.com/SheffieldML/GPy
+
+
+Usage
+-----
+
+Using FITC method
+^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_sgp_fitc , 80
+
+Using VFE method
+^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_sgp_vfe , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate_models , SGP , options

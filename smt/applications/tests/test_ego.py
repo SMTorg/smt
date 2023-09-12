@@ -1204,9 +1204,7 @@ class TestEGO(SMTestCase):
         )
         mixint = MixedIntegerContext(design_space)
         n_doe = 3
-        sampling = mixint.build_sampling_method(
-            LHS, criterion="ese", random_state=random_state
-        )
+        sampling = mixint.build_sampling_method(random_state=random_state)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
 
