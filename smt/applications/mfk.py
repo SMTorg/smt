@@ -17,14 +17,24 @@ from scipy.spatial.distance import cdist
 
 from sklearn.cross_decomposition import PLSRegression as pls
 
-from smt.surrogate_models.krg_based import KrgBased
+from smt.surrogate_models.krg_based import (
+    KrgBased,
+    MixIntKernelType,
+    )
 from smt.sampling_methods import LHS
 from smt.utils.kriging import (
     cross_distances,
     componentwise_distance,
     differences,
+    gower_componentwise_distances,
+    cross_levels,
+    compute_X_cont,
 )
 from smt.utils.misc import standardization
+from smt.applications.mixed_integer import unfold_with_enum_mask
+
+#Ajout Rémy
+from smt.surrogate_models.krg_based import compute_n_param
 
 
 class NestedLHS(object):
@@ -129,6 +139,11 @@ class MFK(KrgBased):
             desc="If True, the variance cotribution of lower fidelity levels are considered",
         )
         self.name = "MFK"
+        
+        # Ajout Rémy :
+        self.X2_norma = {}
+        self.X2_offset = {}
+        self.X2_scale = {}
 
     def _differences(self, X, Y):
         """
@@ -185,7 +200,7 @@ class MFK(KrgBased):
         self._new_train_init()
         theta0 = self.options["theta0"].copy()
         noise0 = self.options["noise0"].copy()
-
+        
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
             self.options["theta0"] = theta0
@@ -225,10 +240,21 @@ class MFK(KrgBased):
         self._check_param()
         X = self.X
         y = self.y
-
-        _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
-            np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
-        )
+        
+        # Ajout Rémy
+        if self.options["categorical_kernel"] is not None:
+            xt_cont, self.cat_features = compute_X_cont(np.concatenate(xt, axis=0), self.options["xspecs"].types)
+            _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
+                xt_cont , np.concatenate(yt, axis=0)
+            )
+        else:
+            _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
+                np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
+            )
+            self.cat_features = [False]*np.shape(np.concatenate(xt, axis=0))[1]
+        # _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
+            # np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
+        # )
 
         nlevel = self.nlvl
 
@@ -241,8 +267,23 @@ class MFK(KrgBased):
         self.optimal_rlf_value = nlevel * [0]
         self.optimal_par = nlevel * [{}]
         self.optimal_theta = nlevel * [0]
-        self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
+        
+        #Ajout Rémy
+        self.X_norma_all=[]
+        for x in X:
+            x_list_no_cat=[]
+            for j in range(x.shape[1]):
+                if(self.cat_features[j]==False):
+                    x_list_no_cat.append(np.atleast_2d(x[:,j]).T)
+            x_no_cat = np.concatenate(x_list_no_cat, axis=1)
+            self.X_norma_all.append((x_no_cat - self.X_offset) / self.X_scale)
+        # self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
+        
+        # Ajout Rémy
+        if self.options["categorical_kernel"] is not None:               
+            x2t = unfold_with_enum_mask(self.options["xspecs"].types, np.concatenate(xt, axis=0))
+            _, _, self.X2_offset, _, self.X2_scale, _ = standardization(x2t, np.concatenate(yt, axis=0))
 
     def _new_train_iteration(self, lvl):
         n_samples = self.nt_all
@@ -250,8 +291,8 @@ class MFK(KrgBased):
         self.options["theta0"] = self.options["theta0"][lvl, :]
 
         self.X_norma = self.X_norma_all[lvl]
-        self.y_norma = self.y_norma_all[lvl]
-
+        self.y_norma = self.y_norma_all[lvl]        
+        
         if self.options["eval_noise"]:
             if self.options["use_het_noise"]:
                 # hetGP works with unique design variables
@@ -286,8 +327,29 @@ class MFK(KrgBased):
             self.optimal_noise = self.options["noise0"] / self.y_std**2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
-        # Calculate matrix of distances D between samples
-        self.D_all[lvl] = cross_distances(self.X_norma)
+        #Ajout Rémy :
+        if self.options["categorical_kernel"] is None:
+            # Calculate matrix of distances D between samples
+            self.D_all[lvl] = cross_distances(self.X_norma)
+        else:
+            D_lvl, ij_lvl, X = gower_componentwise_distances(
+                # X=self.X_norma, 
+                X=self.X[lvl], 
+                xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+            )
+            self.Lij, self.n_levels = cross_levels(
+                # X=self.X_norma, ij=ij_lvl, xtypes=self.options["xspecs"].types
+                X=self.X[lvl], ij=ij_lvl, xtypes=self.options["xspecs"].types 
+            )
+            # _, self.cat_features = compute_X_cont(
+            #     self.X[lvl], self.options["xspecs"].types 
+            #     # self.X_norma, self.options["xspecs"].types 
+            # )
+            self.D_all[lvl] = D_lvl, ij_lvl
+        
+        # # Calculate matrix of distances D between samples
+        # self.D_all[lvl] = cross_distances(self.X_norma)
 
         # Regression matrix and parameters
         self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
@@ -297,18 +359,57 @@ class MFK(KrgBased):
         if lvl > 0:
             F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
             self.q_all[lvl] = F_rho.shape[1]
-            self.F_all[lvl] = np.hstack(
-                (
-                    F_rho
-                    * np.dot(
-                        self._predict_intermediate_values(
-                            self.X_norma, lvl, descale=False
+            #Ajout Rémy 
+            if self.options["categorical_kernel"] is None:
+                self.F_all[lvl] = np.hstack(
+                    (
+                        F_rho
+                        * np.dot(
+                            self._predict_intermediate_values(
+                                self.X_norma, lvl, descale=False 
+                            ),
+                            np.ones((1, self.q_all[lvl])),
                         ),
-                        np.ones((1, self.q_all[lvl])),
-                    ),
-                    self.F_all[lvl],
+                        self.F_all[lvl],
+                    )
                 )
-            )
+            else:
+               # self.F_all[lvl] = np.hstack(
+               #      (
+               #          F_rho
+               #          * np.dot(
+               #              self._predict_intermediate_values(
+               #                  self.X[lvl], lvl, descale=True 
+               #              ),
+               #              np.ones((1, self.q_all[lvl])),
+               #          ),
+               #          self.F_all[lvl],
+               #      )
+               #  ) 
+               self.F_all[lvl] = np.hstack(
+                    (
+                        F_rho
+                        * np.dot(
+                            self._predict_intermediate_values(
+                                self.X[lvl], lvl, descale=False 
+                            ),
+                            np.ones((1, self.q_all[lvl])),
+                        ),
+                        self.F_all[lvl],
+                    )
+                ) 
+            # self.F_all[lvl] = np.hstack(
+            #     (
+            #         F_rho
+            #         * np.dot(
+            #             self._predict_intermediate_values(
+            #                 self.X_norma, lvl, descale=False 
+            #             ),
+            #             np.ones((1, self.q_all[lvl])),
+            #         ),
+            #         self.F_all[lvl],
+            #     )
+            # )
         else:
             self.q_all[lvl] = 0
 
@@ -393,18 +494,97 @@ class MFK(KrgBased):
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, lvl))
-        if descale:
+        
+        # Ajout Rémy
+        # V2
+        if self.options["categorical_kernel"] is not None:
+            X_usc = X
+        if descale and self.options["categorical_kernel"] is None:
             X = (X - self.X_offset) / self.X_scale
-        f = self._regression_types[self.options["poly"]](X)
-        f0 = self._regression_types[self.options["poly"]](X)
-
-        dx = self._differences(X, Y=self.X_norma_all[0])
-        d = self._componentwise_distance(dx)
-
+        # V1
+        # # use descale == True if categorical_kernel == True
+        # if descale:
+        #     # ajout rémy :
+        #     X_usc = X
+        #     if self.options["categorical_kernel"] is None:
+        #         X = (X - self.X_offset) / self.X_scale
+        # V0 (original)
+        # if descale:
+        #     X = (X - self.X_offset) / self.X_scale
+        
+        # Ajout Rémy
+        if self.options["categorical_kernel"] is not None:
+            X_cont, _ = compute_X_cont(X_usc, self.options["xspecs"].types)
+            X_cont_norma = (X_cont - self.X_offset) / self.X_scale
+        else:
+            X_cont_norma = X
+        f = self._regression_types[self.options["poly"]](X_cont_norma)
+        f0 = self._regression_types[self.options["poly"]](X_cont_norma)   
+        # f = self._regression_types[self.options["poly"]](X)
+        # f0 = self._regression_types[self.options["poly"]](X)
+        
         beta = self.optimal_par[0]["beta"]
-        r_ = self._correlation_types[self.options["corr"]](
-            self.optimal_theta[0], d
-        ).reshape(n_eval, self.nt_all[0])
+        
+        #Ajout Rémy:
+        if self.options["categorical_kernel"] is not None:
+            dx = gower_componentwise_distances(
+                # X, 
+                X_usc, 
+                xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+                # y=np.copy(self.X_norma_all[0]), 
+                y=np.copy(self.X[0]), 
+            )
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                power=self.options["pow_exp_power"],
+                theta=None,
+                return_derivative=False,
+            )
+            # _, ij = cross_distances(X, self.X_norma_all[0]) 
+            _, ij = cross_distances(X_usc, self.X[0]) 
+            Lij, _ = cross_levels(
+                # X=X, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_norma_all[0] 
+                X=X_usc, ij=ij, xtypes=self.options["xspecs"].types, y=self.X[0] 
+            )
+            self.ij = ij
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X_usc)
+                # Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                # Xpred_norma = (Xpred - self.X2_offset[str(0)]) / self.X2_scale[str(0)]
+                # Get pairwise componentwise L1-distances to the input training set
+                dx = differences(Xpred_norma, Y=self.X2_norma[str(0)].copy())
+            r_ = self._matrix_data_corr(
+                corr=self.options["corr"],
+                xtypes=self.options["xspecs"].types,
+                power=self.options["pow_exp_power"],
+                theta=self.optimal_theta[0],
+                theta_bounds=self.options["theta_bounds"],
+                dx=dx,
+                Lij=Lij,
+                n_levels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+                x=X_usc, 
+                # x=X, 
+            ).reshape(n_eval, self.nt_all[0])
+            
+        else:
+            dx = self._differences(X, Y=self.X_norma_all[0])
+            d = self._componentwise_distance(dx)
+            r_ = self._correlation_types[self.options["corr"]](
+                self.optimal_theta[0], d
+            ).reshape(n_eval, self.nt_all[0])
+        
+        # dx = self._differences(X, Y=self.X_norma_all[0])
+        # d = self._componentwise_distance(dx)
+        # r_ = self._correlation_types[self.options["corr"]](
+            # self.optimal_theta[0], d
+        # ).reshape(n_eval, self.nt_all[0])
+        
         gamma = self.optimal_par[0]["gamma"]
 
         # Scaled predictor
@@ -412,12 +592,69 @@ class MFK(KrgBased):
 
         # Calculate recursively kriging mean and variance at level i
         for i in range(1, lvl):
-            g = self._regression_types[self.options["rho_regr"]](X)
-            dx = self._differences(X, Y=self.X_norma_all[i])
-            d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[i], d
-            ).reshape(n_eval, self.nt_all[i])
+            #Ajout Rémy
+            g = self._regression_types[self.options["rho_regr"]](X_cont_norma)
+            # g = self._regression_types[self.options["rho_regr"]](X)
+            
+            #Ajout Rémy:
+            if self.options["categorical_kernel"] is not None:
+                dx = gower_componentwise_distances(
+                    X_usc,
+                    # X,
+                    xspecs=self.options["xspecs"],
+                    hierarchical_kernel=self.options["hierarchical_kernel"],
+                    # y=np.copy(self.X_norma_all[i]),
+                    y=np.copy(self.X[i]),
+                )
+                d = componentwise_distance(
+                    dx,
+                    self.options["corr"],
+                    self.nx,
+                    power=self.options["pow_exp_power"],
+                    theta=None,
+                    return_derivative=False,
+                )
+                _, ij = cross_distances(X_usc, self.X[i]) 
+                # _, ij = cross_distances(X, self.X_norma_all[i]) 
+                Lij, _ = cross_levels(
+                    X=X_usc, ij=ij, xtypes=self.options["xspecs"].types, y=self.X[i] 
+                    # X=X, ij=ij, xtypes=self.options["xspecs"].types, y=self.X_norma_all[i] 
+                )
+                self.ij = ij
+                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X_usc)
+                    # Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                    # Xpred_norma = (Xpred - self.X2_offset[str(i)]) / self.X2_scale[str(i)]
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(Xpred_norma, Y=self.X2_norma[str(i)].copy())
+                r_ = self._matrix_data_corr(
+                    corr=self.options["corr"],
+                    xtypes=self.options["xspecs"].types,
+                    power=self.options["pow_exp_power"],
+                    theta=self.optimal_theta[i],
+                    theta_bounds=self.options["theta_bounds"],
+                    dx=dx,
+                    Lij=Lij,
+                    n_levels=self.n_levels,
+                    cat_features=self.cat_features,
+                    cat_kernel=self.options["categorical_kernel"],
+                    # x=X,
+                    x=X_usc,
+                ).reshape(n_eval, self.nt_all[i])
+                
+            else:
+                dx = self._differences(X, Y=self.X_norma_all[i])
+                d = self._componentwise_distance(dx)
+                r_ = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta[i], d
+                ).reshape(n_eval, self.nt_all[i])          
+            # dx = self._differences(X, Y=self.X_norma_all[i])
+            # d = self._componentwise_distance(dx)
+            # r_ = self._correlation_types[self.options["corr"]](
+            #     self.optimal_theta[i], d
+            # ).reshape(n_eval, self.nt_all[i])
+            
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
@@ -430,7 +667,7 @@ class MFK(KrgBased):
 
         return mu[:, -1].reshape((n_eval, 1))
 
-    def _predict_values(self, X, is_acting=None):
+    def _predict_values(self, X):
         """
         Evaluates the model at a set of points.
 
@@ -447,7 +684,7 @@ class MFK(KrgBased):
 
         return self._predict_intermediate_values(X, self.nlvl)
 
-    def _predict_variances(self, X: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(self, X):
         """
         Evaluates the model at a set of points.
 
@@ -483,25 +720,83 @@ class MFK(KrgBased):
         n_eval, n_features_X = X.shape
         #        if n_features_X != self.n_features:
         #            raise ValueError("Design must be an array of n_features columns.")
-        X = (X - self.X_offset) / self.X_scale
+        
+        # Ajout Rémy
+        if self.options["categorical_kernel"] is not None:
+            X_cont, _ = compute_X_cont(X, self.options["xspecs"].types)
+            X_cont_norma = (X_cont - self.X_offset) / self.X_scale
+        else:
+            X_cont_norma = (X - self.X_offset) / self.X_scale
+        # X = (X - self.X_offset) / self.X_scale
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
-        f = self._regression_types[self.options["poly"]](X)
-        f0 = self._regression_types[self.options["poly"]](X)
-        dx = self._differences(X, Y=self.X_norma_all[0])
-        d = self._componentwise_distance(dx)
-
+        
+        #Ajout rémy
+        f = self._regression_types[self.options["poly"]](X_cont_norma)
+        f0 = self._regression_types[self.options["poly"]](X_cont_norma)
+        # f = self._regression_types[self.options["poly"]](X)
+        # f0 = self._regression_types[self.options["poly"]](X)
+        
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]["C"]
 
         beta = self.optimal_par[0]["beta"]
         Ft = solve_triangular(C, F, lower=True)
-        # yt = solve_triangular(C, self.y_norma_all[0], lower=True)
-        r_ = self._correlation_types[self.options["corr"]](
-            self.optimal_theta[0], d
-        ).reshape(n_eval, self.nt_all[0])
+        
+        #Ajout Rémy:
+        if self.options["categorical_kernel"] is not None:
+            dx = gower_componentwise_distances(
+                X,
+                xspecs=self.options["xspecs"],
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+                y=np.copy(self.X[0]),
+            )
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                power=self.options["pow_exp_power"],
+                theta=None,
+                return_derivative=False,
+            )
+            _, ij = cross_distances(X, self.X[0])
+            Lij, _ = cross_levels(
+                X=X, ij=ij, xtypes=self.options["xspecs"].types, y=self.X[0]
+            )
+            self.ij = ij
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                # Get pairwise componentwise L1-distances to the input training set
+                dx = differences(Xpred_norma, Y=self.X2_norma[str(0)].copy())
+            r_ = self._matrix_data_corr(
+                corr=self.options["corr"],
+                xtypes=self.options["xspecs"].types,
+                power=self.options["pow_exp_power"],
+                theta=self.optimal_theta[0],
+                theta_bounds=self.options["theta_bounds"],
+                dx=dx,
+                Lij=Lij,
+                n_levels=self.n_levels,
+                cat_features=self.cat_features,
+                cat_kernel=self.options["categorical_kernel"],
+                x=X,
+            ).reshape(n_eval, self.nt_all[0])
+        else:
+            dx = self._differences(X_cont_norma, Y=self.X_norma_all[0])
+            # dx = self._differences(X, Y=self.X_norma_all[0])
+            d = self._componentwise_distance(dx)
+            r_ = self._correlation_types[self.options["corr"]](
+                self.optimal_theta[0], d
+            ).reshape(n_eval, self.nt_all[0])  
+        # dx = self._differences(X, Y=self.X_norma_all[0])
+        # d = self._componentwise_distance(dx)
+        # r_ = self._correlation_types[self.options["corr"]](
+        #     self.optimal_theta[0], d
+        # ).reshape(n_eval, self.nt_all[0])
+        
         gamma = self.optimal_par[0]["gamma"]
 
         # Scaled predictor
@@ -525,12 +820,61 @@ class MFK(KrgBased):
         for i in range(1, nlevel):
             F = self.F_all[i]
             C = self.optimal_par[i]["C"]
-            g = self._regression_types[self.options["rho_regr"]](X)
-            dx = self._differences(X, Y=self.X_norma_all[i])
-            d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[i], d
-            ).reshape(n_eval, self.nt_all[i])
+            g = self._regression_types[self.options["rho_regr"]](X_cont_norma)
+            # g = self._regression_types[self.options["rho_regr"]](X)
+            
+            #Ajout Rémy:
+            if self.options["categorical_kernel"] is not None:
+                dx = gower_componentwise_distances(
+                    X,
+                    xspecs=self.options["xspecs"],
+                    hierarchical_kernel=self.options["hierarchical_kernel"],
+                    y=np.copy(self.X[i]),
+                )
+                d = componentwise_distance(
+                    dx,
+                    self.options["corr"],
+                    self.nx,
+                    power=self.options["pow_exp_power"],
+                    theta=None,
+                    return_derivative=False,
+                )
+                _, ij = cross_distances(X, self.X[i])
+                Lij, _ = cross_levels(
+                    X=X, ij=ij, xtypes=self.options["xspecs"].types, y=self.X[i]
+                )
+                self.ij = ij
+                if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                    Xpred = unfold_with_enum_mask(self.options["xspecs"].types, X)
+                    Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                    # Get pairwise componentwise L1-distances to the input training set
+                    dx = differences(Xpred_norma, Y=self.X2_norma[str(i)].copy())
+                r_ = self._matrix_data_corr(
+                    corr=self.options["corr"],
+                    xtypes=self.options["xspecs"].types,
+                    power=self.options["pow_exp_power"],
+                    theta=self.optimal_theta[i],
+                    theta_bounds=self.options["theta_bounds"],
+                    dx=dx,
+                    Lij=Lij,
+                    n_levels=self.n_levels,
+                    cat_features=self.cat_features,
+                    cat_kernel=self.options["categorical_kernel"],
+                    x=X,
+                ).reshape(n_eval, self.nt_all[i])
+            else:
+                dx = self._differences(X_cont_norma, Y=self.X_norma_all[i])
+                # dx = self._differences(X, Y=self.X_norma_all[i])
+                d = self._componentwise_distance(dx)
+                r_ = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta[i], d
+                ).reshape(n_eval, self.nt_all[i])
+            # dx = self._differences(X, Y=self.X_norma_all[i])
+            # d = self._componentwise_distance(dx)
+            # r_ = self._correlation_types[self.options["corr"]](
+            #     self.optimal_theta[i], d
+            # ).reshape(n_eval, self.nt_all[i])
+            
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
@@ -674,7 +1018,7 @@ class MFK(KrgBased):
         """
         Overrides KrgBased implementation
         This function checks some parameters of the model.
-        """
+        """            
 
         if self.name in ["MFKPLS", "MFKPLSK"]:
             d = self.options["n_comp"]
@@ -694,29 +1038,74 @@ class MFK(KrgBased):
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
-
+        
+        #Ajout Rémy
+        n_param = d
+        if self.options["categorical_kernel"] in [
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.CONT_RELAX,
+        ]:
+            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+            mat_dim = (
+                self.options["cat_kernel_comps"]
+                if "cat_kernel_comps" in self.options
+                else None
+            )
+            n_param = compute_n_param(
+                self.options["xspecs"].types,
+                self.options["categorical_kernel"],
+                self.nx,
+                d,
+                n_comp,
+                mat_dim,
+            )
+        
         if isinstance(self.options["theta0"], np.ndarray):
-            if self.options["theta0"].shape != (self.nlvl, d):
+            if self.options["theta0"].shape != (self.nlvl, n_param):
                 raise ValueError(
                     "the dimensions of theta0 %s should coincide to the number of dim %s"
-                    % (self.options["theta0"].shape, (self.nlvl, d))
+                    % (self.options["theta0"].shape, (self.nlvl, n_param))
                 )
         else:
-            if len(self.options["theta0"]) != d:
+            if len(self.options["theta0"]) != n_param:
                 if len(self.options["theta0"]) == 1:
-                    self.options["theta0"] *= np.ones((self.nlvl, d))
+                    self.options["theta0"] *= np.ones((self.nlvl, n_param))
                 elif len(self.options["theta0"]) == self.nlvl:
                     self.options["theta0"] = np.array(self.options["theta0"]).reshape(
                         -1, 1
                     )
-                    self.options["theta0"] *= np.ones((1, d))
+                    self.options["theta0"] *= np.ones((1, n_param))
                 else:
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s) or levels of fidelity (%s)."
-                        % (len(self.options["theta0"]), d, self.nlvl)
+                        % (len(self.options["theta0"]), n_param, self.nlvl)
                     )
             else:
                 self.options["theta0"] *= np.ones((self.nlvl, 1))
+                
+        # if isinstance(self.options["theta0"], np.ndarray):
+        #     if self.options["theta0"].shape != (self.nlvl, d):
+        #         raise ValueError(
+        #             "the dimensions of theta0 %s should coincide to the number of dim %s"
+        #             % (self.options["theta0"].shape, (self.nlvl, d))
+        #         )
+        # else:
+        #     if len(self.options["theta0"]) != d:
+        #         if len(self.options["theta0"]) == 1:
+        #             self.options["theta0"] *= np.ones((self.nlvl, d))
+        #         elif len(self.options["theta0"]) == self.nlvl:
+        #             self.options["theta0"] = np.array(self.options["theta0"]).reshape(
+        #                 -1, 1
+        #             )
+        #             self.options["theta0"] *= np.ones((1, d))
+        #         else:
+        #             raise ValueError(
+        #                 "the length of theta0 (%s) should be equal to the number of dim (%s) or levels of fidelity (%s)."
+        #                 % (len(self.options["theta0"]), d, self.nlvl)
+        #             )
+        #     else:
+        #         self.options["theta0"] *= np.ones((self.nlvl, 1))
 
         if len(self.options["noise0"]) != self.nlvl:
             if len(self.options["noise0"]) == 1:
