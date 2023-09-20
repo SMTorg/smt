@@ -55,5 +55,6 @@ class TestSGP(SMTestCase):
         Ypred = sgp.predict_values(self.Xtest)
         self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.1)
 
+
 if __name__ == "__main__":
     unittest.main()
