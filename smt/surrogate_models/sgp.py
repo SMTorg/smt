@@ -83,20 +83,6 @@ class SGP(KRG):
         self.optimal_par = {}
         self.optimal_noise = None
 
-    def compute_K(self, A: np.ndarray, B: np.ndarray, theta, sigma2):
-        """
-        Compute the covariance matrix K between A and B
-        """
-        # Compute pairwise componentwise L1-distances between A and B
-        dx = differences(A, B)
-        d = self._componentwise_distance(dx)
-        # Compute the correlation vector r and matrix R
-        r = self._correlation_types[self.options["corr"]](theta, d)
-        R = r.reshape(A.shape[0], B.shape[0])
-        # Compute the covariance matrix K
-        K = sigma2 * R
-        return K
-
     def set_inducing_inputs(self, Z=None, normalize=False):
         """
         Define number of inducing inputs or set the locations manually.
@@ -137,6 +123,7 @@ class SGP(KRG):
                 self.normalize = False
             self.nz = Z.shape[0]
 
+    # overload kriging based implementation
     def _new_train(self):
         if self.Z is None:
             self.set_inducing_inputs()
@@ -154,11 +141,8 @@ class SGP(KRG):
 
         return super()._new_train()
 
-    # overload kriging based imlementation
+    # overload kriging based implementation
     def _reduced_likelihood_function(self, theta):
-        # print("variance=", theta[-1])
-        # print("lengthscale=", 1.0 / np.sqrt(2.0 * theta[0:-1]))
-        # print("theta=", theta[0:-1])
         X = self.training_points[None][0][0]
         Y = self.training_points[None][0][1]
         Z = self.Z
@@ -183,18 +167,34 @@ class SGP(KRG):
             "theta": theta,
             "sigma2": sigma2,
         }
-        # print(">>>>>>> MLL=", likelihood)
+
         return likelihood, params
 
+    def _compute_K(self, A: np.ndarray, B: np.ndarray, theta, sigma2):
+        """
+        Compute the covariance matrix K between A and B
+        """
+        # Compute pairwise componentwise L1-distances between A and B
+        dx = differences(A, B)
+        d = self._componentwise_distance(dx)
+        # Compute the correlation vector r and matrix R
+        r = self._correlation_types[self.options["corr"]](theta, d)
+        R = r.reshape(A.shape[0], B.shape[0])
+        # Compute the covariance matrix K
+        K = sigma2 * R
+        return K
+
     def _fitc(self, X, Y, Z, theta, sigma2, nugget):
-        """FITC method implementation.
+        """
+        FITC method implementation.
+
         See also https://github.com/SheffieldML/GPy/blob/9ec3e50e3b96a10db58175a206ed998ec5a8e3e3/GPy/inference/latent_function_inference/fitc.py
         """
 
         # Compute: diag(Knn), Kmm and Kmn
         Knn = np.full(self.nt, sigma2)
-        Kmm = self.compute_K(Z, Z, theta, sigma2) + np.eye(self.nz) * nugget
-        Kmn = self.compute_K(Z, X, theta, sigma2)
+        Kmm = self._compute_K(Z, Z, theta, sigma2) + np.eye(self.nz) * nugget
+        Kmn = self._compute_K(Z, X, theta, sigma2)
 
         # Compute (lower) Cholesky decomposition: Kmm = U U^T
         U = linalg.cholesky(Kmm, lower=True)
@@ -216,15 +216,9 @@ class SGP(KRG):
         L = linalg.cholesky(A, lower=True)
         Li = linalg.inv(L)
 
-        # back substitute to get b, P, v
+        # Compute a and b
         a = np.einsum("ij,i->ij", Y, beta)  # avoid reshape for mat-vec multiplication
         b = Li @ V @ a
-
-        # For prediction
-        LiUi = Li @ Ui
-        LiUiT = LiUi.T
-        woodbury_vec = LiUiT @ b
-        woodbury_inv = Ui.T @ Ui - LiUiT @ LiUi
 
         # Compute marginal log-likelihood
         likelihood = -0.5 * (
@@ -235,82 +229,90 @@ class SGP(KRG):
             - np.einsum("ij,ij->", b, b)
         )
 
+        # Store Woodbury vectors for prediction step
+        LiUi = Li @ Ui
+        LiUiT = LiUi.T
+        woodbury_vec = LiUiT @ b
+        woodbury_inv = Ui.T @ Ui - LiUiT @ LiUi
+
         return likelihood, woodbury_vec, woodbury_inv
 
     def _vfe(self, X, Y, Z, theta, sigma2, nugget):
-        """VFE method implementation.
+        """
+        VFE method implementation.
+
         See also https://github.com/SheffieldML/GPy/blob/9ec3e50e3b96a10db58175a206ed998ec5a8e3e3/GPy/inference/latent_function_inference/fitc.py
         """
 
-        # model constants
-        num_data, output_dim = Y.shape
-
         # Assume zero mean function
         mean = 0
-        # Assume Gaussian likelihood (precision is equivalent to beta in FITC)
-        precision = 1.0 / np.fmax(self.options["noise0"], nugget)
+        Y -= mean
 
-        # store some matrices
-        VVT_factor = precision * (Y - mean)
-        trYYT = np.einsum("ij,ij->", Y - mean, Y - mean)
+        # Compute: diag(Knn), Kmm and Kmn
+        Kmm = self._compute_K(Z, Z, theta, sigma2) + np.eye(self.nz) * nugget
+        Kmn = self._compute_K(Z, X, theta, sigma2)
 
-        # kernel computations, using BGPLVM notation (psi stats)
-        Kmm = self.compute_K(Z, Z, theta, sigma2) + np.eye(self.nz) * nugget
-        Lm = linalg.cholesky(Kmm, lower=True)
+        # Compute (lower) Cholesky decomposition: Kmm = U U^T
+        U = linalg.cholesky(Kmm, lower=True)
 
-        psi0 = np.full(self.nt, sigma2)
-        psi1 = self.compute_K(X, Z, theta, sigma2)
+        # Compute (upper) Cholesky decomposition: Qnn = V^T V
+        Ui = linalg.inv(U)
+        V = Ui @ Kmn
 
-        tmp = psi1 * (np.sqrt(precision))
-        LmInv = linalg.inv(Lm)
-        tmp = LmInv @ tmp.T
-        A = tmp @ tmp.T
+        # Compute beta, the effective noise precision
+        beta = 1.0 / np.fmax(self.options["noise0"], nugget)
 
+        # Compute A = beta * V @ V.T
+        A = beta * V @ V.T
+
+        # Compute (lower) Cholesky decomposition: B = I + A = L L^T
         B = np.eye(self.nz) + A
-        LB = linalg.cholesky(B, lower=True)
-        LBInv = linalg.inv(LB)
+        L = linalg.cholesky(B, lower=True)
+        Li = linalg.inv(L)
 
-        tmp = LmInv @ psi1.T
-        LBi_Lmi_psi1 = LBInv @ tmp
-        LBi_Lmi_psi1Vf = LBi_Lmi_psi1 @ VVT_factor
-        tmp = LBInv.T @ LBi_Lmi_psi1Vf
-        Cpsi1Vf = LmInv.T @ tmp
+        # Compute b
+        b = beta * Li @ V @ Y
 
-        delit = LBi_Lmi_psi1Vf @ LBi_Lmi_psi1Vf.T
-        data_fit = np.trace(delit)
-
-        beta = precision
-        lik_1 = (
-            -0.5 * num_data * output_dim * (np.log(2.0 * np.pi) - np.log(beta))
-            - 0.5 * beta * trYYT
+        # Compute log-marginal likelihood
+        likelihood = -0.5 * (
+            # self.nt * np.log(2.0 * np.pi)   # constant term ignored in reduced likelihood
+            -self.nt * np.log(beta)
+            + 2.0 * np.sum(np.log(np.diag(L)))
+            + beta * np.einsum("ij,ij->", Y, Y)
+            - b.T @ b
+            + self.nt * beta * sigma2
+            - np.trace(A)
         )
-        lik_2 = -0.5 * output_dim * (np.sum(beta * psi0) - np.trace(A))
-        lik_3 = -output_dim * (np.sum(np.log(np.diag(LB))))
-        lik_4 = 0.5 * data_fit
-        likelihood = lik_1 + lik_2 + lik_3 + lik_4
 
-        woodbury_vec = Cpsi1Vf
-
-        Bi = LBInv.T @ LBInv + np.eye(LBInv.shape[0])
-        woodbury_inv = LmInv.T @ Bi @ LmInv
+        # Store Woodbury vectors for prediction step
+        LiUi = Li @ Ui
+        Bi = np.eye(self.nz) + Li.T @ Li
+        woodbury_vec = LiUi.T @ b
+        woodbury_inv = Ui.T @ Bi @ Ui
 
         return likelihood, woodbury_vec, woodbury_inv
 
+    # overload kriging based implementation
     def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        Kx, _ = self._compute_KxKxx(x)
-        mu = Kx.T @ self.woodbury_data["vec"]
+        """
+        Evaluates the model at a set of points using the Woodbury vector.
+        """
+        Kx = self._compute_K(
+            x, self.Z, self.optimal_par["theta"], self.optimal_par["sigma2"]
+        )
+        mu = Kx @ self.woodbury_data["vec"]
         return mu
 
+    # overload kriging based implementation
     def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        Kx, Kxx = self._compute_KxKxx(x)
+        """
+        Evaluates the model at a set of points using the inverse Woodbury vector.
+        """
+        Kx = self._compute_K(
+            self.Z, x, self.optimal_par["theta"], self.optimal_par["sigma2"]
+        )
+        Kxx = np.full(x.shape[0], self.optimal_par["sigma2"])
         var = (Kxx - np.sum(np.dot(self.woodbury_data["inv"].T, Kx) * Kx, 0))[:, None]
         var = np.clip(var, 1e-15, np.inf)
         var += self.options["noise0"]
         return var
-
-    def _compute_KxKxx(self, x):
-        Kx = self.compute_K(
-            self.Z, x, self.optimal_par["theta"], self.optimal_par["sigma2"]
-        )
-        Kxx = np.full(x.shape[0], self.optimal_par["sigma2"])
-        return Kx, Kxx
