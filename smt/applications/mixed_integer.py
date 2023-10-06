@@ -134,7 +134,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         else:
             xt_apply = xt
 
-        super().set_training_values(xt_apply, yt)
+        super().set_training_values(xt_apply, yt, name)
         self._surrogate.set_training_values(xt_apply, yt, name)
 
     def update_training_values(self, yt, name=None):
@@ -147,10 +147,18 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     def predict_values(self, x: np.ndarray) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
         return self._surrogate.predict_values(x_corr)
-
+    
+    def _predict_intermediate_values(self, x: np.ndarray, lvl) -> np.ndarray:
+        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        return self._surrogate._predict_intermediate_values(x_corr, lvl)
+    
     def predict_variances(self, x: np.ndarray) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
         return self._surrogate.predict_variances(x_corr)
+    
+    def predict_variances_all_levels(self, x: np.ndarray) -> np.ndarray:
+        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        return self._surrogate.predict_variances_all_levels(x_corr)         
 
     def _get_x_for_surrogate_model(self, x):
         xp = ensure_2d_array(x, "xp")
@@ -237,8 +245,8 @@ class MixedIntegerKrigingModel(KrgBased):
             xt_apply, is_acting_apply = design_space.unfold_x(xt, is_acting)
         else:
             xt_apply, is_acting_apply = xt, is_acting
-
-        super().set_training_values(xt_apply, yt, is_acting=is_acting_apply)
+            
+        super().set_training_values(xt_apply, yt, name, is_acting=is_acting_apply)
         self._surrogate.set_training_values(
             xt_apply, yt, name, is_acting=is_acting_apply
         )
@@ -253,10 +261,18 @@ class MixedIntegerKrigingModel(KrgBased):
     def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
         return self._surrogate.predict_values(x_corr, is_acting=is_acting)
+    
+    def _predict_intermediate_values(self, x: np.ndarray, lvl, is_acting=None) -> np.ndarray:
+        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        return self._surrogate._predict_intermediate_values(x_corr, lvl, is_acting=is_acting)
 
     def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         x_corr, is_acting = self._get_x_for_surrogate_model(x)
         return self._surrogate.predict_variances(x_corr, is_acting=is_acting)
+    
+    def predict_variances_all_levels(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        return self._surrogate.predict_variances_all_levels(x_corr, is_acting=is_acting)  
 
     def _get_x_for_surrogate_model(self, x):
         xp = ensure_2d_array(x, "xp")
