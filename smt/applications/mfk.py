@@ -20,7 +20,7 @@ from sklearn.cross_decomposition import PLSRegression as pls
 from smt.surrogate_models.krg_based import (
     KrgBased,
     MixIntKernelType,
-    )
+)
 
 from smt.sampling_methods import LHS
 from smt.utils.kriging import (
@@ -36,6 +36,7 @@ from smt.utils.misc import standardization
 # from smt.utils.design_space import unfold_x
 
 from smt.surrogate_models.krg_based import compute_n_param
+
 
 class NestedLHS(object):
     def __init__(self, nlevel, xlimits, random_state=None):
@@ -139,7 +140,7 @@ class MFK(KrgBased):
             desc="If True, the variance cotribution of lower fidelity levels are considered",
         )
         self.name = "MFK"
-        
+
         self.X2_norma = {}
         self.X2_offset = {}
         self.X2_scale = {}
@@ -197,8 +198,7 @@ class MFK(KrgBased):
         Trains the Multi-Fidelity model
         """
         self._corr_params = None
-            
-            
+
         self._new_train_init()
         theta0 = self.options["theta0"].copy()
         noise0 = self.options["noise0"].copy()
@@ -242,17 +242,29 @@ class MFK(KrgBased):
         self._check_param()
         X = self.X
         y = self.y
-        
+
         if not (self.is_continuous):
-            _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
-                np.concatenate(xt, axis=0) , np.concatenate(yt, axis=0)
+            (
+                _,
+                _,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
+            _, self.cat_features = compute_X_cont(
+                np.concatenate(xt, axis=0), self.design_space
             )
-            _, self.cat_features = compute_X_cont(np.concatenate(xt, axis=0), self.design_space)
         else:
-            _, _, self.X_offset, self.y_mean, self.X_scale, self.y_std = standardization(
-                np.concatenate(xt, axis=0), np.concatenate(yt, axis=0)
-            )
-            self.cat_features = [False]*np.shape(np.concatenate(xt, axis=0))[1]
+            (
+                _,
+                _,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
+            self.cat_features = [False] * np.shape(np.concatenate(xt, axis=0))[1]
 
         nlevel = self.nlvl
 
@@ -268,17 +280,16 @@ class MFK(KrgBased):
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
-
         self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in X]
 
-        
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
-          
-        if not (self.is_continuous):              
+
+        if not (self.is_continuous):
             x2t, _ = self.design_space.unfold_x(np.concatenate(xt, axis=0))
-            _, _, self.X2_offset, _, self.X2_scale, _ = standardization(x2t, np.concatenate(yt, axis=0))
-            
-            
+            _, _, self.X2_offset, _, self.X2_scale, _ = standardization(
+                x2t, np.concatenate(yt, axis=0)
+            )
+
     def _new_train_iteration(self, lvl):
         n_samples = self.nt_all
         self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
@@ -309,7 +320,7 @@ class MFK(KrgBased):
                 self.optimal_noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
                 for i in range(self.nt_all[lvl]):
                     diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
-                    if np.sum(diff**2) != 0.0:
+                    if np.sum(diff ** 2) != 0.0:
                         self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
                 self.optimal_noise = self.optimal_noise / self.nt_reps
                 self.optimal_noise_all[lvl] = self.optimal_noise
@@ -318,25 +329,24 @@ class MFK(KrgBased):
                 self.X_norma_all[lvl] = self.X_norma
                 self.y_norma_all[lvl] = self.y_norma
         else:
-            self.optimal_noise = self.options["noise0"] / self.y_std**2
+            self.optimal_noise = self.options["noise0"] / self.y_std ** 2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
         # Calculate matrix of distances D between samples
-        if (self.is_continuous):
+        if self.is_continuous:
             self.D_all[lvl] = cross_distances(self.X_norma)
         else:
             _, is_acting = self.design_space.correct_get_acting(self.X[lvl])
             D_lvl, ij_lvl, X = gower_componentwise_distances(
-                X=self.X[lvl], 
-                x_is_acting = is_acting,
-                design_space = self.design_space,
+                X=self.X[lvl],
+                x_is_acting=is_acting,
+                design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
             )
             self.Lij, self.n_levels = cross_levels(
                 X=self.X[lvl], ij=ij_lvl, design_space=self.design_space
             )
             self.D_all[lvl] = D_lvl, ij_lvl
-        
 
         # Regression matrix and parameters
         self.F_all[lvl] = self._regression_types[self.options["poly"]](self.X_norma)
@@ -346,14 +356,14 @@ class MFK(KrgBased):
         if lvl > 0:
             F_rho = self._regression_types[self.options["rho_regr"]](self.X_norma)
             self.q_all[lvl] = F_rho.shape[1]
-            
-            if (self.is_continuous):
+
+            if self.is_continuous:
                 self.F_all[lvl] = np.hstack(
                     (
                         F_rho
                         * np.dot(
                             self._predict_intermediate_values(
-                                self.X_norma, lvl, descale=False 
+                                self.X_norma, lvl, descale=False
                             ),
                             np.ones((1, self.q_all[lvl])),
                         ),
@@ -361,20 +371,19 @@ class MFK(KrgBased):
                     )
                 )
             else:
-               self.F_all[lvl] = np.hstack(
+                self.F_all[lvl] = np.hstack(
                     (
                         F_rho
                         * np.dot(
                             self._predict_intermediate_values(
-                                self.X[lvl], lvl, descale=False 
+                                self.X[lvl], lvl, descale=False
                             ),
                             np.ones((1, self.q_all[lvl])),
                         ),
                         self.F_all[lvl],
                     )
-                ) 
+                )
 
-            
         else:
             self.q_all[lvl] = 0
 
@@ -459,7 +468,7 @@ class MFK(KrgBased):
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, lvl))
-        
+
         if not (self.is_continuous):
             X_usc = X
         if descale and self.is_continuous:
@@ -467,18 +476,18 @@ class MFK(KrgBased):
 
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
-        
+
         beta = self.optimal_par[0]["beta"]
         if not (self.is_continuous):
             _, x_is_acting = self.design_space.correct_get_acting(X_usc)
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             dx = gower_componentwise_distances(
-                X=X_usc, 
-                x_is_acting = x_is_acting,
+                X=X_usc,
+                x_is_acting=x_is_acting,
                 design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
-                y=np.copy(self.X[0]), 
-                y_is_acting = y_is_acting,
+                y=np.copy(self.X[0]),
+                y_is_acting=y_is_acting,
             )
             d = componentwise_distance(
                 dx,
@@ -488,9 +497,9 @@ class MFK(KrgBased):
                 theta=None,
                 return_derivative=False,
             )
-            _, ij = cross_distances(X_usc, self.X[0]) 
+            _, ij = cross_distances(X_usc, self.X[0])
             Lij, _ = cross_levels(
-                X=X_usc, ij=ij, design_space=self.design_space, y=self.X[0] 
+                X=X_usc, ij=ij, design_space=self.design_space, y=self.X[0]
             )
             self.ij = ij
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
@@ -509,16 +518,15 @@ class MFK(KrgBased):
                 n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
-                x=X_usc, 
-            ).reshape(n_eval, self.nt_all[0])            
+                x=X_usc,
+            ).reshape(n_eval, self.nt_all[0])
         else:
             dx = self._differences(X, Y=self.X_norma_all[0])
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[0], d
             ).reshape(n_eval, self.nt_all[0])
-            
-        
+
         gamma = self.optimal_par[0]["gamma"]
 
         # Scaled predictor
@@ -534,11 +542,11 @@ class MFK(KrgBased):
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 dx = gower_componentwise_distances(
                     X_usc,
-                    x_is_acting = x_is_acting,
+                    x_is_acting=x_is_acting,
                     design_space=self.design_space,
                     hierarchical_kernel=self.options["hierarchical_kernel"],
                     y=np.copy(self.X[i]),
-                    y_is_acting = y_is_acting,
+                    y_is_acting=y_is_acting,
                 )
                 d = componentwise_distance(
                     dx,
@@ -548,9 +556,9 @@ class MFK(KrgBased):
                     theta=None,
                     return_derivative=False,
                 )
-                _, ij = cross_distances(X_usc, self.X[i]) 
+                _, ij = cross_distances(X_usc, self.X[i])
                 Lij, _ = cross_levels(
-                    X=X_usc, ij=ij, design_space=self.design_space, y=self.X[i] 
+                    X=X_usc, ij=ij, design_space=self.design_space, y=self.X[i]
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
@@ -571,14 +579,14 @@ class MFK(KrgBased):
                     cat_kernel=self.options["categorical_kernel"],
                     x=X_usc,
                 ).reshape(n_eval, self.nt_all[i])
-                
+
             else:
                 dx = self._differences(X, Y=self.X_norma_all[i])
                 d = self._componentwise_distance(dx)
                 r_ = self._correlation_types[self.options["corr"]](
                     self.optimal_theta[i], d
-                ).reshape(n_eval, self.nt_all[i])          
-            
+                ).reshape(n_eval, self.nt_all[i])
+
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
             beta = self.optimal_par[i]["beta"]
             gamma = self.optimal_par[i]["gamma"]
@@ -625,7 +633,7 @@ class MFK(KrgBased):
         return self.predict_variances_all_levels(X)[0][:, -1]
 
     def predict_variances_all_levels(self, X, is_acting=None):
-    # def predict_variances_all_levels(self, X):
+        # def predict_variances_all_levels(self, X):
         """
         Evaluates the model at a set of points.
 
@@ -645,10 +653,8 @@ class MFK(KrgBased):
         n_eval, n_features_X = X.shape
         #        if n_features_X != self.n_features:
         #            raise ValueError("Design must be an array of n_features columns.")
-        
 
         X = (X - self.X_offset) / self.X_scale
-        
 
         # Calculate kriging mean and variance at level 0
         mu = np.zeros((n_eval, nlevel))
@@ -656,25 +662,23 @@ class MFK(KrgBased):
         f = self._regression_types[self.options["poly"]](X)
         f0 = self._regression_types[self.options["poly"]](X)
 
-
         # Get regression function and correlation
         F = self.F_all[0]
         C = self.optimal_par[0]["C"]
 
         beta = self.optimal_par[0]["beta"]
         Ft = solve_triangular(C, F, lower=True)
-        
 
         if not (self.is_continuous):
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             _, x_is_acting = self.design_space.correct_get_acting(X)
             dx = gower_componentwise_distances(
                 X,
-                x_is_acting = x_is_acting,
+                x_is_acting=x_is_acting,
                 design_space=self.design_space,
                 hierarchical_kernel=self.options["hierarchical_kernel"],
                 y=np.copy(self.X[0]),
-                y_is_acting = y_is_acting,
+                y_is_acting=y_is_acting,
             )
             d = componentwise_distance(
                 dx,
@@ -712,10 +716,8 @@ class MFK(KrgBased):
             d = self._componentwise_distance(dx)
             r_ = self._correlation_types[self.options["corr"]](
                 self.optimal_theta[0], d
-            ).reshape(n_eval, self.nt_all[0])  
+            ).reshape(n_eval, self.nt_all[0])
 
-
-        
         gamma = self.optimal_par[0]["gamma"]
 
         # Scaled predictor
@@ -727,12 +729,12 @@ class MFK(KrgBased):
         G = self.optimal_par[0]["G"]
 
         u_ = solve_triangular(G.T, f.T - np.dot(Ft.T, r_t), lower=True)
-        sigma2 = self.optimal_par[0]["sigma2"] / self.y_std**2
+        sigma2 = self.optimal_par[0]["sigma2"] / self.y_std ** 2
         MSE[:, 0] = sigma2 * (
             # 1 + self.optimal_noise_all[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
             1
-            - (r_t**2).sum(axis=0)
-            + (u_**2).sum(axis=0)
+            - (r_t ** 2).sum(axis=0)
+            + (u_ ** 2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -747,7 +749,7 @@ class MFK(KrgBased):
                 _, x_is_acting = self.design_space.correct_get_acting(X)
                 dx = gower_componentwise_distances(
                     X,
-                    x_is_acting = x_is_acting,
+                    x_is_acting=x_is_acting,
                     design_space=self.design_space,
                     hierarchical_kernel=self.options["hierarchical_kernel"],
                     y=np.copy(self.X[i]),
@@ -790,9 +792,7 @@ class MFK(KrgBased):
                 r_ = self._correlation_types[self.options["corr"]](
                     self.optimal_theta[i], d
                 ).reshape(n_eval, self.nt_all[i])
-                
 
-            
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
 
             Ft = solve_triangular(C, F, lower=True)
@@ -802,7 +802,7 @@ class MFK(KrgBased):
             beta = self.optimal_par[i]["beta"]
 
             # scaled predictor
-            sigma2 = self.optimal_par[i]["sigma2"] / self.y_std**2
+            sigma2 = self.optimal_par[i]["sigma2"] / self.y_std ** 2
             q = self.q_all[i]
             u_ = solve_triangular(G.T, f - np.dot(Ft.T, r_t), lower=True)
             sigma2_rho = np.dot(
@@ -820,21 +820,21 @@ class MFK(KrgBased):
                     # sigma2_rho * MSE[:, i - 1]
                     +Q_ / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
-                    * (1 - (r_t**2).sum(axis=0))
-                    + sigma2 * (u_**2).sum(axis=0)
+                    * (1 - (r_t ** 2).sum(axis=0))
+                    + sigma2 * (u_ ** 2).sum(axis=0)
                 )
             else:
                 MSE[:, i] = sigma2 * (
                     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
                     1
-                    - (r_t**2).sum(axis=0)
-                    + (u_**2).sum(axis=0)
+                    - (r_t ** 2).sum(axis=0)
+                    + (u_ ** 2).sum(axis=0)
                 )  # + sigma2_rho * MSE[:, i - 1]
             if self.options["propagate_uncertainty"]:
                 MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]
 
         # scaled predictor
-        MSE *= self.y_std**2
+        MSE *= self.y_std ** 2
 
         return MSE, sigma2_rhos
 
@@ -957,7 +957,6 @@ class MFK(KrgBased):
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
 
-
         n_param = d
         if self.options["categorical_kernel"] in [
             MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -970,7 +969,7 @@ class MFK(KrgBased):
                 if "cat_kernel_comps" in self.options
                 else None
             )
-            
+
             n_param = compute_n_param(
                 self.design_space,
                 self.options["categorical_kernel"],
@@ -978,7 +977,7 @@ class MFK(KrgBased):
                 n_comp,
                 mat_dim,
             )
-        
+
         if isinstance(self.options["theta0"], np.ndarray):
             if self.options["theta0"].shape != (self.nlvl, n_param):
                 raise ValueError(
@@ -1001,7 +1000,6 @@ class MFK(KrgBased):
                     )
             else:
                 self.options["theta0"] *= np.ones((self.nlvl, 1))
-        
 
         if len(self.options["noise0"]) != self.nlvl:
             if len(self.options["noise0"]) == 1:
