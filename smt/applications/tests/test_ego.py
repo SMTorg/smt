@@ -854,7 +854,7 @@ class TestEGO(SMTestCase):
                 assert kx is None
                 response = self.super._evaluate(x, kx)
                 sens = np.hstack(
-                    self.super._evaluate(x, ki) for ki in range(x.shape[1])
+                    [self.super._evaluate(x, ki) for ki in range(x.shape[1])]
                 )
                 return np.hstack((response, sens))
 
