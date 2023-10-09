@@ -958,25 +958,27 @@ class MFK(KrgBased):
                 )
 
         n_param = d
-        if self.options["categorical_kernel"] in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.HOMO_HSPHERE,
-            MixIntKernelType.CONT_RELAX,
-        ]:
-            n_comp = self.options["n_comp"] if "n_comp" in self.options else None
-            mat_dim = (
-                self.options["cat_kernel_comps"]
-                if "cat_kernel_comps" in self.options
-                else None
-            )
 
-            n_param = compute_n_param(
-                self.design_space,
-                self.options["categorical_kernel"],
-                d,
-                n_comp,
-                mat_dim,
-            )
+        if self.options["categorical_kernel"] is not None:
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                n_comp = self.options["n_comp"] if "n_comp" in self.options else None
+                mat_dim = (
+                    self.options["cat_kernel_comps"]
+                    if "cat_kernel_comps" in self.options
+                    else None
+                )
+
+                n_param = compute_n_param(
+                    self.design_space,
+                    self.options["categorical_kernel"],
+                    d,
+                    n_comp,
+                    mat_dim,
+                )
+            else:
+                raise ValueError(
+                    "Only the continuous relaxation kernel is available with multi-fidelity"
+                )
 
         if isinstance(self.options["theta0"], np.ndarray):
             if self.options["theta0"].shape != (self.nlvl, n_param):
