@@ -6,6 +6,7 @@ from .gekpls import GEKPLS
 from .kplsk import KPLSK
 from .genn import GENN
 from .mgp import MGP
+from .sgp import SGP
 
 from .krg_based import MixIntKernelType
 from smt.utils.design_space import (
