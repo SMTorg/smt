@@ -33,8 +33,6 @@ from smt.utils.kriging import (
 )
 from smt.utils.misc import standardization
 
-# from smt.utils.design_space import unfold_x
-
 from smt.surrogate_models.krg_based import compute_n_param
 
 
@@ -243,7 +241,17 @@ class MFK(KrgBased):
         X = self.X
         y = self.y
 
-        if not (self.is_continuous):
+        if self.is_continuous:
+            (
+                _,
+                _,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
+            self.cat_features = [False] * np.shape(np.concatenate(xt, axis=0))[1]
+        else:
             (
                 _,
                 _,
@@ -255,16 +263,6 @@ class MFK(KrgBased):
             _, self.cat_features = compute_X_cont(
                 np.concatenate(xt, axis=0), self.design_space
             )
-        else:
-            (
-                _,
-                _,
-                self.X_offset,
-                self.y_mean,
-                self.X_scale,
-                self.y_std,
-            ) = standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
-            self.cat_features = [False] * np.shape(np.concatenate(xt, axis=0))[1]
 
         nlevel = self.nlvl
 
@@ -478,7 +476,13 @@ class MFK(KrgBased):
         f0 = self._regression_types[self.options["poly"]](X)
 
         beta = self.optimal_par[0]["beta"]
-        if not (self.is_continuous):
+        if self.is_continuous:
+            dx = self._differences(X, Y=self.X_norma_all[0])
+            d = self._componentwise_distance(dx)
+            r_ = self._correlation_types[self.options["corr"]](
+                self.optimal_theta[0], d
+            ).reshape(n_eval, self.nt_all[0])
+        else:
             _, x_is_acting = self.design_space.correct_get_acting(X_usc)
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             dx = gower_componentwise_distances(
@@ -520,12 +524,6 @@ class MFK(KrgBased):
                 cat_kernel=self.options["categorical_kernel"],
                 x=X_usc,
             ).reshape(n_eval, self.nt_all[0])
-        else:
-            dx = self._differences(X, Y=self.X_norma_all[0])
-            d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[0], d
-            ).reshape(n_eval, self.nt_all[0])
 
         gamma = self.optimal_par[0]["gamma"]
 
@@ -537,7 +535,13 @@ class MFK(KrgBased):
 
             g = self._regression_types[self.options["rho_regr"]](X)
 
-            if not (self.is_continuous):
+            if self.is_continuous:
+                dx = self._differences(X, Y=self.X_norma_all[i])
+                d = self._componentwise_distance(dx)
+                r_ = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta[i], d
+                ).reshape(n_eval, self.nt_all[i])
+            else:
                 _, x_is_acting = self.design_space.correct_get_acting(X_usc)
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 dx = gower_componentwise_distances(
@@ -578,13 +582,6 @@ class MFK(KrgBased):
                     cat_features=self.cat_features,
                     cat_kernel=self.options["categorical_kernel"],
                     x=X_usc,
-                ).reshape(n_eval, self.nt_all[i])
-
-            else:
-                dx = self._differences(X, Y=self.X_norma_all[i])
-                d = self._componentwise_distance(dx)
-                r_ = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta[i], d
                 ).reshape(n_eval, self.nt_all[i])
 
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
@@ -669,7 +666,13 @@ class MFK(KrgBased):
         beta = self.optimal_par[0]["beta"]
         Ft = solve_triangular(C, F, lower=True)
 
-        if not (self.is_continuous):
+        if self.is_continuous:
+            dx = self._differences(X, Y=self.X_norma_all[0])
+            d = self._componentwise_distance(dx)
+            r_ = self._correlation_types[self.options["corr"]](
+                self.optimal_theta[0], d
+            ).reshape(n_eval, self.nt_all[0])
+        else:
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             _, x_is_acting = self.design_space.correct_get_acting(X)
             dx = gower_componentwise_distances(
@@ -711,12 +714,6 @@ class MFK(KrgBased):
                 cat_kernel=self.options["categorical_kernel"],
                 x=X,
             ).reshape(n_eval, self.nt_all[0])
-        else:
-            dx = self._differences(X, Y=self.X_norma_all[0])
-            d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[0], d
-            ).reshape(n_eval, self.nt_all[0])
 
         gamma = self.optimal_par[0]["gamma"]
 
@@ -744,7 +741,13 @@ class MFK(KrgBased):
 
             g = self._regression_types[self.options["rho_regr"]](X)
 
-            if not (self.is_continuous):
+            if self.is_continuous:
+                dx = self._differences(X, Y=self.X_norma_all[i])
+                d = self._componentwise_distance(dx)
+                r_ = self._correlation_types[self.options["corr"]](
+                    self.optimal_theta[i], d
+                ).reshape(n_eval, self.nt_all[i])
+            else:
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 _, x_is_acting = self.design_space.correct_get_acting(X)
                 dx = gower_componentwise_distances(
@@ -786,12 +789,7 @@ class MFK(KrgBased):
                     cat_kernel=self.options["categorical_kernel"],
                     x=X,
                 ).reshape(n_eval, self.nt_all[i])
-            else:
-                dx = self._differences(X, Y=self.X_norma_all[i])
-                d = self._componentwise_distance(dx)
-                r_ = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta[i], d
-                ).reshape(n_eval, self.nt_all[i])
+                
 
             f = np.vstack((g.T * mu[:, i - 1], f0.T))
 
