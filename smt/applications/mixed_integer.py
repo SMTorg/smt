@@ -79,7 +79,10 @@ class MixedIntegerSurrogateModel(SurrogateModel):
     """
 
     def __init__(
-        self, design_space, surrogate, input_in_folded_space=True,
+        self,
+        design_space,
+        surrogate,
+        input_in_folded_space=True,
     ):
         """
         Parameters
@@ -177,7 +180,9 @@ class MixedIntegerKrigingModel(KrgBased):
     """
 
     def __init__(
-        self, surrogate, input_in_folded_space=True,
+        self,
+        surrogate,
+        input_in_folded_space=True,
     ):
         """
         Parameters
@@ -330,7 +335,8 @@ class MixedIntegerContext(object):
         """
         surrogate.options["design_space"] = self._design_space
         return MixedIntegerKrigingModel(
-            surrogate=surrogate, input_in_folded_space=self._work_in_folded_space,
+            surrogate=surrogate,
+            input_in_folded_space=self._work_in_folded_space,
         )
 
     def build_surrogate_model(self, surrogate):

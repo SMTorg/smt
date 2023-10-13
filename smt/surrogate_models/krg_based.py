@@ -110,7 +110,10 @@ class KrgBased(SurrogateModel):
         declare(
             "hierarchical_kernel",
             MixHrcKernelType.ALG_KERNEL,
-            values=[MixHrcKernelType.ALG_KERNEL, MixHrcKernelType.ARC_KERNEL,],
+            values=[
+                MixHrcKernelType.ALG_KERNEL,
+                MixHrcKernelType.ARC_KERNEL,
+            ],
             desc="The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging",
         )
         declare(
@@ -307,9 +310,11 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
             # hetGP works with unique design variables when noise variance are not given
-            (self.X_norma, index_unique, nt_reps,) = np.unique(
-                self.X_norma, return_inverse=True, return_counts=True, axis=0
-            )
+            (
+                self.X_norma,
+                index_unique,
+                nt_reps,
+            ) = np.unique(self.X_norma, return_inverse=True, return_counts=True, axis=0)
             self.nt = self.X_norma.shape[0]
 
             # computing the mean of the output per unique design variable (see Binois et al., 2018)
@@ -320,7 +325,7 @@ class KrgBased(SurrogateModel):
             self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[index_unique == i] - y_norma_unique[i]
-                if np.sum(diff ** 2) != 0.0:
+                if np.sum(diff**2) != 0.0:
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
@@ -537,7 +542,12 @@ class KrgBased(SurrogateModel):
                 )
         else:
             d = componentwise_distance(
-                dx, corr, nx, power, theta=None, return_derivative=False,
+                dx,
+                corr,
+                nx,
+                power,
+                theta=None,
+                return_derivative=False,
             )
             if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
                 r = _correlation_types[corr](theta, d)
@@ -793,11 +803,11 @@ class KrgBased(SurrogateModel):
         if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
             p = self.p
             q = self.q
-        sigma2 = (rho ** 2.0).sum(axis=0) / (self.nt - p - q)
+        sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        par["sigma2"] = sigma2 * self.y_std ** 2.0
+        par["sigma2"] = sigma2 * self.y_std**2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
         par["C"] = C
@@ -919,7 +929,7 @@ class KrgBased(SurrogateModel):
                     - gamma.T.dot(dmu)
                     - np.dot(gamma.T, dR.dot(gamma))
                 )
-                * self.y_std ** 2.0
+                * self.y_std**2.0
             )
             dsigma_all.append(dsigma_2)
 
@@ -1096,7 +1106,7 @@ class KrgBased(SurrogateModel):
                 dsigma2detadomega = (
                     (1 / self.nt)
                     * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
-                    * self.y_std ** 2.0
+                    * self.y_std**2.0
                 )
 
                 # Compute Hessian
@@ -1419,7 +1429,7 @@ class KrgBased(SurrogateModel):
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
         A = self.optimal_par["sigma2"]
-        B = 1.0 - (rt ** 2.0).sum(axis=0) + (u ** 2.0).sum(axis=0)
+        B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
@@ -1543,14 +1553,14 @@ class KrgBased(SurrogateModel):
         else:
 
             def minus_reduced_likelihood_function(log10t):
-                return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
+                return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
 
             def grad_minus_reduced_likelihood_function(log10t):
                 log10t_2d = np.atleast_2d(log10t).T
                 res = (
                     -np.log(10.0)
-                    * (10.0 ** log10t_2d)
-                    * (self._reduced_likelihood_gradient(10.0 ** log10t_2d)[0])
+                    * (10.0**log10t_2d)
+                    * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
                 )
                 return res
 
@@ -1649,7 +1659,10 @@ class KrgBased(SurrogateModel):
                         [theta0, np.log10(np.array([self.noise0]).flatten())]
                     )
                     theta0_rand = np.concatenate(
-                        [theta0_rand, np.log10(np.array([self.noise0]).flatten()),]
+                        [
+                            theta0_rand,
+                            np.log10(np.array([self.noise0]).flatten()),
+                        ]
                     )
 
                     for i in range(len(self.noise0)):
@@ -1697,7 +1710,7 @@ class KrgBased(SurrogateModel):
                                 optimal_theta_res = optimal_theta_res_loop
 
                     elif self.options["hyper_opt"] == "TNC":
-                        theta_all_loops = 10 ** theta_all_loops
+                        theta_all_loops = 10**theta_all_loops
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                                 minus_reduced_likelihood_function,
@@ -1717,7 +1730,7 @@ class KrgBased(SurrogateModel):
                     optimal_theta = optimal_theta_res["x"]
 
                     if self.name not in ["MGP"]:
-                        optimal_theta = 10 ** optimal_theta
+                        optimal_theta = 10**optimal_theta
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -1796,7 +1809,7 @@ class KrgBased(SurrogateModel):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
 
@@ -1838,7 +1851,11 @@ class KrgBased(SurrogateModel):
 
         n_comp = self.options["n_comp"] if "n_comp" in self.options else None
         n_param = compute_n_param(
-            self.design_space, self.options["categorical_kernel"], d, n_comp, mat_dim,
+            self.design_space,
+            self.options["categorical_kernel"],
+            d,
+            n_comp,
+            mat_dim,
         )
 
         self.options["theta0"] *= np.ones(n_param)

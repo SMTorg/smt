@@ -51,7 +51,6 @@ from smt.utils.design_space import (
 
 
 class TestMFKmixed(unittest.TestCase):
-
     # useful functions (g and h)
     def g_ZDT(self, x):
         x0 = x[0]
@@ -400,7 +399,6 @@ class TestMFKmixed(unittest.TestCase):
         # ------------------------------------------------------------------------------
 
         for krg_method in KRG_METHODS:
-
             if "mfk" in krg_method:  # if multifi compute LF validation data
                 n_train_LF = 40  # training set size   IF MULTIFI
                 sampling = MixedIntegerSamplingMethod(LHS, ds, criterion="ese")
@@ -729,7 +727,6 @@ class TestMFKmixed(unittest.TestCase):
         # ------------------------------------------------------------------------------
 
         for krg_method in KRG_METHODS:
-
             if "mfk" in krg_method:  # if multifi compute LF validation data
                 n_train_LF = 40  # training set size   IF MULTIFI
                 sampling = MixedIntegerSamplingMethod(LHS, ds, criterion="ese")
