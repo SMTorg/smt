@@ -495,8 +495,16 @@ class KrgBased(SurrogateModel):
         ) = self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
 
         # Sampling points X and y
-        X = self.training_points[None][0][0]
-        y = self.training_points[None][0][1]
+        if "MFK" in self.name:
+            if self._lvl < self.nlvl - 1:
+                X = self.training_points[self._lvl][0][0]
+                y = self.training_points[self._lvl][0][1]
+            elif self._lvl == self.nlvl - 1:
+                X = self.training_points[None][0][0]
+                y = self.training_points[None][0][1]
+        else:
+            X = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             X_pls_space, _ = design_space.unfold_x(X)
@@ -701,6 +709,39 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[-1]
         if not (self.is_continuous):
             dx = self.D
+
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                if "MFK" in self.name:
+                    if (
+                        self._lvl == self.nlvl - 1
+                    ):  # highest fidelity identified by the key None
+                        X2, _ = self.design_space.unfold_x(
+                            self.training_points[None][0][0]
+                        )
+                        self.X2_norma[str(self._lvl)] = (
+                            X2 - self.X2_offset
+                        ) / self.X2_scale
+                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
+                    elif self._lvl < self.nlvl - 1:
+                        X2, _ = self.design_space.unfold_x(
+                            self.training_points[self._lvl][0][0]
+                        )
+                        self.X2_norma[str(self._lvl)] = (
+                            X2 - self.X2_offset
+                        ) / self.X2_scale
+                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
+                else:
+                    X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
+                    (
+                        self.X2_norma,
+                        _,
+                        self.X2_offset,
+                        _,
+                        self.X2_scale,
+                        _,
+                    ) = standardization(X2, self.training_points[None][0][1])
+                    dx, _ = cross_distances(self.X2_norma)
+
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1172,6 +1213,16 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
+
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                power=self.options["pow_exp_power"],
+                theta=None,
+                return_derivative=False,
+            )
+
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
