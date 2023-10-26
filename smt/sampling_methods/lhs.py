@@ -3,9 +3,9 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 
-LHS sampling; uses the pyDOE2 package.
+LHS sampling; uses the pyDOE3 package.
 """
-from pyDOE2 import lhs
+from pyDOE3 import lhs
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
 
