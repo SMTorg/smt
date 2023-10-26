@@ -2,7 +2,7 @@ Cython
 numpy
 scipy
 scikit-learn
-pyDOE2
+pyDOE3
 numba        # JIT compiler
 matplotlib   # used in examples and tests
 pytest       # tests runner
