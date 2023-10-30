@@ -20,6 +20,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_BUILD: cp38-* cp39-* cp310-* cp311-*
+          CI_SKIP: cp*-i686
 
       - uses: actions/upload-artifact@v3
         with:
