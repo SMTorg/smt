@@ -3,7 +3,7 @@ name: Build and upload to PyPI
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    tags: ['v*']
 
 jobs:
   build_wheels:
@@ -45,7 +45,6 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/download-artifact@v3
         with:
