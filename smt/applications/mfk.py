@@ -101,7 +101,7 @@ class NestedLHS(object):
 
         doe = []
         p0 = LHS(
-            xlimits=self.design_space.get_x_limits(),
+            xlimits=np.array(self.design_space.get_x_limits()),
             criterion="ese",
             random_state=self.random_state,
         )
@@ -113,7 +113,7 @@ class NestedLHS(object):
 
         for i in range(1, self.nlevel):
             p = LHS(
-                xlimits=self.design_space.get_x_limits(),
+                xlimits=np.array(self.design_space.get_x_limits()),
                 criterion="ese",
                 random_state=self.random_state,
             )
