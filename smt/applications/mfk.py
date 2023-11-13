@@ -58,15 +58,15 @@ class NestedLHS(object):
         """
         self.nlevel = nlevel
         self.random_state = random_state
-        if xlimits == None and design_space == None:
+        if xlimits is None and design_space is None:
             raise ValueError(
                 "Either xlimits or design_space should be specified to have bounds for the sampling."
             )
-        elif xlimits != None and design_space != None:
+        elif xlimits is not None and design_space is not None:
             raise ValueError(
                 "Use either design_space for mixed inputs or xlimits for continuous one. Please avoid overspecification."
             )
-        elif xlimits != None:
+        elif xlimits is not None:
             self.design_space = ensure_design_space(xlimits=xlimits)
         else:
             self.design_space = design_space
