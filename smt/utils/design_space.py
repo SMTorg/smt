@@ -953,7 +953,7 @@ class DesignSpace(BaseDesignSpace):
             # Get acting information and impute
             return self.correct_get_acting(x)
 
-    def _get_correct_config(self, vector: np.ndarray) -> "Configuration":
+    def _get_correct_config(self, vector: np.ndarray) -> Configuration:
         config = Configuration(self._cs, vector=vector)
 
         # Unfortunately we cannot directly ask which parameters SHOULD be active

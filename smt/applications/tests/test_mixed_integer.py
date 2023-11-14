@@ -238,14 +238,16 @@ class TestMixedInteger(unittest.TestCase):
         )
 
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 3.1]])
-        self.assertTrue(
-            np.all(
-                np.abs(
-                    np.array([[2.6, 0, 1, 0, 0, 1, 3]])
-                    - design_space.correct_get_acting(x)[0]
-                )
-                < 1e-9
-            )
+        np.testing.assert_allclose(
+            np.array([[2.6, 0, 1, 0, 0, 1, 3]]),
+            design_space.correct_get_acting(x)[0],
+            atol=1e-9,
+        )
+
+        np.testing.assert_allclose(
+            np.array([[2.6, 0, 1, 0, 0, 1, 3]]),
+            design_space.correct_get_acting(x)[0],
+            atol=1e-9,
         )
 
     def test_cast_to_discrete_values_with_smooth_rounding_ordinal_values(self):
@@ -259,14 +261,10 @@ class TestMixedInteger(unittest.TestCase):
             ]
         )
 
-        self.assertTrue(
-            np.all(
-                np.abs(
-                    np.array([[2.6, 0, 1, 0, 0, 1, 1]])
-                    - design_space.correct_get_acting(x)[0]
-                )
-                < 1e-9
-            )
+        np.testing.assert_allclose(
+            np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+            design_space.correct_get_acting(x)[0],
+            atol=1e-9,
         )
 
     def test_cast_to_discrete_values_with_hard_rounding_ordinal_values(self):
@@ -280,14 +278,10 @@ class TestMixedInteger(unittest.TestCase):
             ]
         )
 
-        self.assertTrue(
-            np.all(
-                np.abs(
-                    np.array([[2.6, 0, 1, 0, 0, 1, 1]])
-                    - design_space.correct_get_acting(x)[0]
-                )
-                < 1e-9
-            )
+        np.testing.assert_allclose(
+            np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+            design_space.correct_get_acting(x)[0],
+            atol=1e-9,
         )
 
     def test_cast_to_discrete_values_with_non_integer_ordinal_values(self):
@@ -300,15 +294,10 @@ class TestMixedInteger(unittest.TestCase):
                 OrdinalVariable(["0", "3.5"]),
             ]
         )
-
-        self.assertTrue(
-            np.all(
-                np.abs(
-                    np.array([[2.6, 0, 1, 0, 0, 1, 1]])
-                    - design_space.correct_get_acting(x)[0]
-                )
-                < 1e-9
-            )
+        np.testing.assert_allclose(
+            np.array([[2.6, 0, 1, 0, 0, 1, 1]]),
+            design_space.correct_get_acting(x)[0],
+            atol=1e-9,
         )
 
     def test_examples(self):

@@ -254,7 +254,13 @@ class KrgBased(SurrogateModel):
             self.is_acting_points[name] = is_acting
 
     def _correct_distances_cat_decreed(
-        self, D, is_acting, listcatdecreed, ij, is_acting_y=None, mode="CONT_RELAX"
+        self,
+        D,
+        is_acting,
+        listcatdecreed,
+        ij,
+        is_acting_y=None,
+        mixint_type=MixIntKernelType.CONT_RELAX,
     ):
         indjcat = -1
         for j in listcatdecreed:
@@ -263,9 +269,8 @@ class KrgBased(SurrogateModel):
                 indicat = -1
                 indices = 0
                 for v in range(len(self.design_space.design_variables)):
-                    if (
-                        self.design_space.design_variables[v].__class__.__name__
-                        == "CategoricalVariable"
+                    if isinstance(
+                        self.design_space.design_variables[v], CategoricalVariable
                     ):
                         indicat = indicat + 1
                         if indicat == indjcat:
@@ -283,7 +288,7 @@ class KrgBased(SurrogateModel):
                             act_inact = ia2[:, 0] ^ ia2[:, 1]
                             act_act = ia2[:, 0] & ia2[:, 1]
 
-                            if mode == "CONT_RELAX":
+                            if mixint_type == MixIntKernelType.CONT_RELAX:
                                 val_act = (
                                     np.array([1] * self.n_levels[indjcat])
                                     - self.X2_offset[
@@ -310,7 +315,7 @@ class KrgBased(SurrogateModel):
                                         act_act
                                     ]
                                 )
-                            elif mode == "GOWER":
+                            elif mixint_type == MixIntKernelType.GOWER:
                                 D[:, indices : indices + 1][act_inact] = (
                                     self.n_levels[indjcat] * 0.5
                                 )
@@ -323,9 +328,9 @@ class KrgBased(SurrogateModel):
                                     "Continuous decreed kernel not implemented"
                                 )
                         else:
-                            if mode == "CONT_RELAX":
+                            if mixint_type == MixIntKernelType.CONT_RELAX:
                                 indices = indices + self.n_levels[indicat]
-                            elif mode == "GOWER":
+                            elif mixint_type == MixIntKernelType.GOWER:
                                 indices = indices + 1
                     else:
                         indices = indices + 1
@@ -371,7 +376,7 @@ class KrgBased(SurrogateModel):
                     is_acting,
                     listcatdecreed,
                     self.ij,
-                    mode="GOWER",
+                    mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
@@ -392,7 +397,11 @@ class KrgBased(SurrogateModel):
                 ]
                 if np.any(listcatdecreed):
                     D = self._correct_distances_cat_decreed(
-                        D, is_acting, listcatdecreed, self.ij, mode="CONT_RELAX"
+                        D,
+                        is_acting,
+                        listcatdecreed,
+                        self.ij,
+                        mixint_type=MixIntKernelType.CONT_RELAX,
                     )
 
         # Center and scale X and y
@@ -1322,7 +1331,7 @@ class KrgBased(SurrogateModel):
                     listcatdecreed,
                     ij,
                     is_acting_y=self.is_acting_train,
-                    mode="GOWER",
+                    mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
@@ -1339,7 +1348,7 @@ class KrgBased(SurrogateModel):
                         listcatdecreed,
                         ij,
                         is_acting_y=self.is_acting_train,
-                        mode="CONT_RELAX",
+                        mixint_type=MixIntKernelType.CONT_RELAX,
                     )
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
@@ -1507,7 +1516,7 @@ class KrgBased(SurrogateModel):
                     listcatdecreed,
                     ij,
                     is_acting_y=self.is_acting_train,
-                    mode="GOWER",
+                    mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _ = self.design_space.unfold_x(x)
@@ -1523,7 +1532,7 @@ class KrgBased(SurrogateModel):
                         listcatdecreed,
                         ij,
                         is_acting_y=self.is_acting_train,
-                        mode="CONT_RELAX",
+                        mixint_type=MixIntKernelType.CONT_RELAX,
                     )
 
             Lij, _ = cross_levels(

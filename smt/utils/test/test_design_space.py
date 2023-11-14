@@ -158,32 +158,31 @@ class Test(unittest.TestCase):
             )
         )
         self.assertEqual(is_acting_unfolded.dtype, bool)
-        self.assertTrue(
-            np.all(
-                is_acting_unfolded
-                == [
-                    [True, True, True, False],
-                    [True, True, False, True],
-                    [False, False, True, True],
-                ]
-            )
+        np.testing.assert_allclose(
+            is_acting_unfolded,
+            [
+                [True, True, True, False],
+                [True, True, False, True],
+                [False, False, True, True],
+            ],
         )
 
         x_folded, is_acting_folded = ds.fold_x(x_unfolded, is_acting_unfolded)
-        self.assertTrue(np.all(x_folded == x))
-        self.assertTrue(np.all(is_acting_folded == is_acting))
+        np.testing.assert_array_equal(x_folded, x)
+        np.testing.assert_array_equal(is_acting_folded, is_acting)
 
         x_unfold_mask, is_act_unfold_mask = ds.unfold_x(
             x, is_acting, fold_mask=np.array([False] * 3)
         )
-        self.assertTrue(np.all(x_unfold_mask == x))
-        self.assertTrue(np.all(is_act_unfold_mask == is_acting))
+        np.testing.assert_array_equal(x_unfold_mask, x)
+        np.testing.assert_array_equal(is_act_unfold_mask, is_acting)
 
         x_fold_mask, is_act_fold_mask = ds.fold_x(
             x, is_acting, fold_mask=np.array([False] * 3)
         )
-        self.assertTrue(np.all(x_fold_mask == x))
-        self.assertTrue(np.all(is_act_fold_mask == is_acting))
+        np.testing.assert_array_equal(x_fold_mask, x)
+
+        np.testing.assert_array_equal(is_act_fold_mask, is_acting)
 
     def test_create_design_space(self):
         DesignSpace([FloatVariable(0, 1)])
@@ -207,20 +206,16 @@ class Test(unittest.TestCase):
         if HAS_CONFIG_SPACE:
             x, is_acting = ds.sample_valid_x(3, random_state=42)
             self.assertEqual(x.shape, (3, 4))
-            self.assertTrue(
-                np.all(
-                    np.abs(
-                        x
-                        - np.array(
-                            [
-                                [1.0, 0.0, -0.0, 0.83370861],
-                                [2.0, 0.0, -1.0, 0.64286682],
-                                [2.0, 0.0, -0.0, 1.15088847],
-                            ]
-                        )
-                    )
-                    < 1e-8
-                )
+            np.testing.assert_allclose(
+                x,
+                np.array(
+                    [
+                        [1.0, 0.0, -0.0, 0.83370861],
+                        [2.0, 0.0, -1.0, 0.64286682],
+                        [2.0, 0.0, -0.0, 1.15088847],
+                    ]
+                ),
+                atol=1e-8,
             )
         else:
             ds.sample_valid_x(3, random_state=42)
@@ -261,20 +256,16 @@ class Test(unittest.TestCase):
         )(3)
         x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally)
         x_corr, is_acting_corr = ds.fold_x(x_corr, is_acting_corr)
-        self.assertTrue(
-            np.all(
-                np.abs(
-                    x_corr
-                    - np.array(
-                        [
-                            [2.0, 0.0, -1.0, 1.34158548],
-                            [0.0, 1.0, -0.0, 0.55199817],
-                            [1.0, 1.0, 2.0, 1.15663662],
-                        ]
-                    )
-                )
-                < 1e-8
-            )
+        np.testing.assert_allclose(
+            x_corr,
+            np.array(
+                [
+                    [2.0, 0.0, -1.0, 1.34158548],
+                    [0.0, 1.0, -0.0, 0.55199817],
+                    [1.0, 1.0, 2.0, 1.15663662],
+                ]
+            ),
+            atol=1e-8,
         )
         self.assertTrue(np.all(is_acting_corr))
 
@@ -283,20 +274,16 @@ class Test(unittest.TestCase):
         )
         self.assertEqual(x_unfolded.shape, (3, 6))
         if HAS_CONFIG_SPACE:
-            self.assertTrue(
-                np.all(
-                    np.abs(
-                        x_unfolded
-                        - np.array(
-                            [
-                                [1.0, 0.0, 0.0, 0.0, 2.0, 1.11213215],
-                                [0.0, 1.0, 0.0, 1.0, -1.0, 1.09482857],
-                                [1.0, 0.0, 0.0, 1.0, -1.0, 0.75061044],
-                            ]
-                        )
-                    )
-                    < 1e-8
-                )
+            np.testing.assert_allclose(
+                x_unfolded,
+                np.array(
+                    [
+                        [1.0, 0.0, 0.0, 0.0, 2.0, 1.11213215],
+                        [0.0, 1.0, 0.0, 1.0, -1.0, 1.09482857],
+                        [1.0, 0.0, 0.0, 1.0, -1.0, 0.75061044],
+                    ]
+                ),
+                atol=1e-8,
             )
 
         self.assertTrue(str(ds))
@@ -370,55 +357,51 @@ class Test(unittest.TestCase):
         x, is_acting = ds.correct_get_acting(x_cartesian)
         _, is_unique = np.unique(x, axis=0, return_index=True)
         self.assertEqual(len(is_unique), 16)
-        self.assertTrue(
-            np.all(
-                x[is_unique, :]
-                == np.array(
-                    [
-                        [0, 0, 0, 0.25],
-                        [0, 0, 0, 0.75],
-                        [0, 0, 1, 0.25],
-                        [0, 0, 1, 0.75],
-                        [0, 1, 0, 0.25],
-                        [0, 1, 0, 0.75],
-                        [0, 1, 1, 0.25],
-                        [0, 1, 1, 0.75],
-                        [1, 0, 0, 0.5],
-                        [1, 0, 1, 0.5],
-                        [1, 1, 0, 0.5],
-                        [1, 1, 1, 0.5],
-                        [2, 0, 0, 0.5],
-                        [2, 0, 1, 0.5],
-                        [2, 1, 0, 0.5],
-                        [2, 1, 1, 0.5],
-                    ]
-                )
-            )
+        np.testing.assert_allclose(
+            x[is_unique, :],
+            np.array(
+                [
+                    [0, 0, 0, 0.25],
+                    [0, 0, 0, 0.75],
+                    [0, 0, 1, 0.25],
+                    [0, 0, 1, 0.75],
+                    [0, 1, 0, 0.25],
+                    [0, 1, 0, 0.75],
+                    [0, 1, 1, 0.25],
+                    [0, 1, 1, 0.75],
+                    [1, 0, 0, 0.5],
+                    [1, 0, 1, 0.5],
+                    [1, 1, 0, 0.5],
+                    [1, 1, 1, 0.5],
+                    [2, 0, 0, 0.5],
+                    [2, 0, 1, 0.5],
+                    [2, 1, 0, 0.5],
+                    [2, 1, 1, 0.5],
+                ]
+            ),
         )
-        self.assertTrue(
-            np.all(
-                is_acting[is_unique, :]
-                == np.array(
-                    [
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                    ]
-                )
-            )
+        np.testing.assert_allclose(
+            is_acting[is_unique, :],
+            np.array(
+                [
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                ]
+            ),
         )
 
         x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
@@ -469,51 +452,47 @@ class Test(unittest.TestCase):
         x, is_acting = ds.correct_get_acting(x_cartesian)
         _, is_unique = np.unique(x, axis=0, return_index=True)
         self.assertEqual(len(is_unique), 14)
-        self.assertTrue(
-            np.all(
-                x[is_unique, :]
-                == np.array(
-                    [
-                        [0, 0, 0, 0.25],
-                        [0, 0, 0, 0.75],
-                        [0, 0, 1, 0.25],
-                        [0, 0, 1, 0.75],
-                        [0, 1, 0, 0.25],
-                        [0, 1, 0, 0.75],
-                        [0, 1, 1, 0.25],
-                        [0, 1, 1, 0.75],
-                        [1, 0, 0, 0.5],
-                        [1, 0, 1, 0.5],
-                        [1, 1, 0, 0.5],
-                        [1, 1, 1, 0.5],
-                        [2, 0, 0, 0.5],
-                        [2, 0, 1, 0.5],
-                    ]
-                )
-            )
+        np.testing.assert_allclose(
+            x[is_unique, :],
+            np.array(
+                [
+                    [0, 0, 0, 0.25],
+                    [0, 0, 0, 0.75],
+                    [0, 0, 1, 0.25],
+                    [0, 0, 1, 0.75],
+                    [0, 1, 0, 0.25],
+                    [0, 1, 0, 0.75],
+                    [0, 1, 1, 0.25],
+                    [0, 1, 1, 0.75],
+                    [1, 0, 0, 0.5],
+                    [1, 0, 1, 0.5],
+                    [1, 1, 0, 0.5],
+                    [1, 1, 1, 0.5],
+                    [2, 0, 0, 0.5],
+                    [2, 0, 1, 0.5],
+                ]
+            ),
         )
-        self.assertTrue(
-            np.all(
-                is_acting[is_unique, :]
-                == np.array(
-                    [
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, True],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                        [True, True, True, False],
-                    ]
-                )
-            )
+        np.testing.assert_allclose(
+            is_acting[is_unique, :],
+            np.array(
+                [
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                    [True, True, True, False],
+                ]
+            ),
         )
 
         x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
