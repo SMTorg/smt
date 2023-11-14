@@ -390,8 +390,8 @@ class TestMFKmixed(unittest.TestCase):
         # HF training data:
         n_train_HF = 20  # training set size
         n_train_LF = 40
-        NLHS = NestedLHS(nlevel=2, design_space=ds)
-        xt_LF, xt_HF = NLHS(n_train_HF)
+        nlhs = NestedLHS(nlevel=2, design_space=ds)
+        xt_LF, xt_HF = nlhs(n_train_HF)
 
         y1t_HF = np.zeros(n_train_HF)  # obj 1
         y2t_HF = np.zeros(n_train_HF)  # obj 2

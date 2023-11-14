@@ -38,7 +38,7 @@ from smt.utils.design_space import ensure_design_space
 
 
 class NestedLHS(object):
-    def __init__(self, nlevel, xlimits=None, random_state=None, design_space=None):
+    def __init__(self, nlevel, xlimits=None, design_space=None, random_state=None):
         """
         Constructor where values of options can be passed in.
 
