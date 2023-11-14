@@ -105,7 +105,7 @@ metadata = dict(
     ],
     install_requires=[
         "scikit-learn",
-        "pyDOE2",
+        "pyDOE3",
         "scipy",
     ],
     extras_require={

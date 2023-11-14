@@ -14,7 +14,7 @@ from smt.surrogate_models.genn import GENN, load_smt_data
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from pyDOE2 import fullfact
+from pyDOE3 import fullfact
 
 SEED = 101
 

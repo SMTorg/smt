@@ -10,7 +10,7 @@ from copy import deepcopy
 import os
 from sklearn.cross_decomposition import PLSRegression as pls
 
-from pyDOE2 import bbdesign
+from pyDOE3 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
 

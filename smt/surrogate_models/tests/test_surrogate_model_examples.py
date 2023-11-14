@@ -620,6 +620,113 @@ class Test(unittest.TestCase):
         fig.subplots_adjust(top=0.74)
         plt.show()
 
+    def test_sgp_fitc(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import SGP
+
+        def f_obj(x):
+            import numpy as np
+
+            return (
+                np.sin(3 * np.pi * x)
+                + 0.3 * np.cos(9 * np.pi * x)
+                + 0.5 * np.sin(7 * np.pi * x)
+            )
+
+        # random generator for reproducibility
+        rng = np.random.RandomState(0)
+
+        # Generate training data
+        nt = 200
+        # Variance of the gaussian noise on our trainingg data
+        eta2 = [0.01]
+        gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
+        xt = 2 * rng.rand(nt, 1) - 1
+        yt = f_obj(xt) + gaussian_noise
+
+        # Pick inducing points randomly in training data
+        n_inducing = 30
+        random_idx = rng.permutation(nt)[:n_inducing]
+        Z = xt[random_idx].copy()
+
+        sgp = SGP(noise0=eta2)  # Assume here we have an idea of the variance eta2
+        sgp.set_training_values(xt, yt)
+        sgp.set_inducing_inputs(Z=Z)
+        # sgp.set_inducing_inputs()  # When Z not specified inducing points are picked randomly in traing data
+        sgp.train()
+
+        x = np.linspace(-1, 1, nt + 1).reshape(-1, 1)
+        y = f_obj(x)
+        hat_y = sgp.predict_values(x)
+        var = sgp.predict_variances(x)
+
+        # plot prediction
+        plt.figure(figsize=(14, 6))
+        plt.plot(x, y, "C1-", label="target function")
+        plt.scatter(xt, yt, marker="o", s=10, label="observed data")
+        plt.plot(x, hat_y, "k-", label="Sparse GP")
+        plt.plot(x, hat_y - 3 * np.sqrt(var), "k--")
+        plt.plot(x, hat_y + 3 * np.sqrt(var), "k--", label="99% CI")
+        plt.plot(Z, -2.9 * np.ones_like(Z), "r|", mew=2, label="inducing points")
+        plt.ylim([-3, 3])
+        plt.legend(loc=0)
+        plt.show()
+
+    def test_sgp_vfe(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import SGP
+
+        def f_obj(x):
+            import numpy as np
+
+            return (
+                np.sin(3 * np.pi * x)
+                + 0.3 * np.cos(9 * np.pi * x)
+                + 0.5 * np.sin(7 * np.pi * x)
+            )
+
+        # random generator for reproducibility
+        rng = np.random.RandomState(42)
+
+        # Generate training data
+        nt = 200
+        # Variance of the gaussian noise on our trainingg data
+        eta2 = [0.01]
+        gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
+        xt = 2 * rng.rand(nt, 1) - 1
+        yt = f_obj(xt) + gaussian_noise
+
+        # Pick inducing points randomly in training data
+        n_inducing = 30
+        random_idx = rng.permutation(nt)[:n_inducing]
+        Z = xt[random_idx].copy()
+
+        sgp = SGP(noise0=eta2, method="VFE")
+        sgp.set_training_values(xt, yt)
+        sgp.set_inducing_inputs(Z=Z)
+        sgp.train()
+
+        x = np.linspace(-1, 1, nt + 1).reshape(-1, 1)
+        y = f_obj(x)
+        hat_y = sgp.predict_values(x)
+        var = sgp.predict_variances(x)
+
+        # plot prediction
+        plt.figure(figsize=(14, 6))
+        plt.plot(x, y, "C1-", label="target function")
+        plt.scatter(xt, yt, marker="o", s=10, label="observed data")
+        plt.plot(x, hat_y, "k-", label="Sparse GP")
+        plt.plot(x, hat_y - 3 * np.sqrt(var), "k--")
+        plt.plot(x, hat_y + 3 * np.sqrt(var), "k--", label="99% CI")
+        plt.plot(Z, -2.9 * np.ones_like(Z), "r|", mew=2, label="inducing points")
+        plt.ylim([-3, 3])
+        plt.legend(loc=0)
+        plt.show()
+
 
 if __name__ == "__main__":
     unittest.main()

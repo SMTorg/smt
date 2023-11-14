@@ -854,7 +854,7 @@ class TestEGO(SMTestCase):
                 assert kx is None
                 response = self.super._evaluate(x, kx)
                 sens = np.hstack(
-                    self.super._evaluate(x, ki) for ki in range(x.shape[1])
+                    [self.super._evaluate(x, ki) for ki in range(x.shape[1])]
                 )
                 return np.hstack((response, sens))
 
@@ -1204,9 +1204,7 @@ class TestEGO(SMTestCase):
         )
         mixint = MixedIntegerContext(design_space)
         n_doe = 3
-        sampling = mixint.build_sampling_method(
-            LHS, criterion="ese", random_state=random_state
-        )
+        sampling = mixint.build_sampling_method(random_state=random_state)
         xdoe = sampling(n_doe)
         ydoe = function_test_mixed_integer(xdoe)
 
