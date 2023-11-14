@@ -101,25 +101,27 @@ class NestedLHS(object):
 
         doe = []
         p0 = LHS(
-            xlimits=np.array(self.design_space.get_x_limits()),
+            xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
             criterion="ese",
             random_state=self.random_state,
         )
         p0nt0 = p0(nt[0])
         if self.design_space:
             p0nt0, _ = self.design_space.correct_get_acting(p0nt0)
+            p0nt0, _ = self.design_space.fold_x(p0nt0)
 
         doe.append(p0nt0)
 
         for i in range(1, self.nlevel):
             p = LHS(
-                xlimits=np.array(self.design_space.get_x_limits()),
+                xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
                 criterion="ese",
                 random_state=self.random_state,
             )
             pnti = p(nt[i])
             if self.design_space:
                 pnti, _ = self.design_space.correct_get_acting(pnti)
+                pnti, _ = self.design_space.fold_x(pnti)
 
             doe.append(pnti)
 
