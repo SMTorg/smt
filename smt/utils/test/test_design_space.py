@@ -158,7 +158,7 @@ class Test(unittest.TestCase):
             )
         )
         self.assertEqual(is_acting_unfolded.dtype, bool)
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             is_acting_unfolded,
             [
                 [True, True, True, False],
@@ -380,7 +380,7 @@ class Test(unittest.TestCase):
                 ]
             ),
         )
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             is_acting[is_unique, :],
             np.array(
                 [
@@ -452,7 +452,7 @@ class Test(unittest.TestCase):
         x, is_acting = ds.correct_get_acting(x_cartesian)
         _, is_unique = np.unique(x, axis=0, return_index=True)
         self.assertEqual(len(is_unique), 14)
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             x[is_unique, :],
             np.array(
                 [
@@ -473,7 +473,7 @@ class Test(unittest.TestCase):
                 ]
             ),
         )
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             is_acting[is_unique, :],
             np.array(
                 [

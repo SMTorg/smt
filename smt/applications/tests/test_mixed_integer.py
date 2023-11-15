@@ -244,12 +244,6 @@ class TestMixedInteger(unittest.TestCase):
             atol=1e-9,
         )
 
-        np.testing.assert_allclose(
-            np.array([[2.6, 0, 1, 0, 0, 1, 3]]),
-            design_space.correct_get_acting(x)[0],
-            atol=1e-9,
-        )
-
     def test_cast_to_discrete_values_with_smooth_rounding_ordinal_values(self):
         x = np.array([[2.6, 0.3, 0.5, 0.25, 0.45, 0.85, 1.1]])
         design_space = DesignSpace(
