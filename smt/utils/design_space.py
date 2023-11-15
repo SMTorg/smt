@@ -9,6 +9,34 @@ from typing import List, Union, Tuple, Sequence, Optional
 
 from smt.sampling_methods import LHS
 
+try:
+    from ConfigSpace import (
+        ConfigurationSpace,
+        Configuration,
+        UniformIntegerHyperparameter,
+        UniformFloatHyperparameter,
+        CategoricalHyperparameter,
+        OrdinalHyperparameter,
+        EqualsCondition,
+        InCondition,
+        ForbiddenEqualsClause,
+        ForbiddenInClause,
+        ForbiddenAndConjunction,
+    )
+    from ConfigSpace.exceptions import ForbiddenValueError
+    from ConfigSpace.util import get_random_neighbor
+
+    HAS_CONFIG_SPACE = True
+
+except ImportError:
+    HAS_CONFIG_SPACE = False
+
+    class ConfigurationSpace:
+        pass
+
+    class UniformIntegerHyperparameter:
+        pass
+
 
 def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesignSpace":
     """Interface to turn legacy input formats into a DesignSpace"""
@@ -20,7 +48,7 @@ def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesign
         return DesignSpace(xlimits)
 
     if xt is not None:
-        return DesignSpace([[0, 1]] * xt.shape[1])
+        return DesignSpace([[np.min(xt) - 0.99, np.max(xt) + 1e-4]] * xt.shape[1])
 
     raise ValueError("Nothing defined that could be interpreted as a design space!")
 
@@ -321,6 +349,7 @@ class BaseDesignSpace:
         """
 
         # Sample from the design space
+
         x, is_acting = self._sample_valid_x(n, random_state=random_state)
 
         # Check conditionally-acting status
@@ -375,7 +404,10 @@ class BaseDesignSpace:
         return np.array(unfolded_x_limits).astype(float)
 
     def fold_x(
-        self, x: np.ndarray, is_acting: np.ndarray = None
+        self,
+        x: np.ndarray,
+        is_acting: np.ndarray = None,
+        fold_mask: np.ndarray = None,
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Fold x and optionally is_acting. Folding reverses the one-hot encoding of categorical variables applied by
@@ -387,6 +419,8 @@ class BaseDesignSpace:
            - Unfolded samples
         is_acting: np.ndarray [n, dim_unfolded]
            - Boolean matrix specifying for each unfolded variable whether it is acting or non-acting
+        fold_mask: np.ndarray [dim_folded]
+           - Mask specifying which design variables to apply folding for
 
         Returns
         -------
@@ -405,7 +439,9 @@ class BaseDesignSpace:
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
-            if isinstance(dv, CategoricalVariable):
+            if isinstance(dv, CategoricalVariable) and (
+                fold_mask is None or fold_mask[i]
+            ):
                 n_dim_cat = dv.n_values
 
                 # Categorical values are folded by reversed one-hot encoding:
@@ -429,7 +465,7 @@ class BaseDesignSpace:
         return x_folded, is_acting_folded
 
     def unfold_x(
-        self, x: np.ndarray, is_acting: np.ndarray = None
+        self, x: np.ndarray, is_acting: np.ndarray = None, fold_mask: np.ndarray = None
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Unfold x and optionally is_acting. Unfolding creates one extra dimension for each categorical variable using
@@ -441,6 +477,8 @@ class BaseDesignSpace:
            - Folded samples
         is_acting: np.ndarray [n, dim]
            - Boolean matrix specifying for each variable whether it is acting or non-acting
+        fold_mask: np.ndarray [dim_folded]
+           - Mask specifying which design variables to apply folding for
 
         Returns
         -------
@@ -460,7 +498,9 @@ class BaseDesignSpace:
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
-            if isinstance(dv, CategoricalVariable):
+            if isinstance(dv, CategoricalVariable) and (
+                fold_mask is None or fold_mask[i]
+            ):
                 n_dim_cat = dv.n_values
                 x_cat = x_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat]
 
@@ -484,6 +524,10 @@ class BaseDesignSpace:
                 if is_acting is not None:
                     is_acting_unfolded[:, i_x_unfold] = is_acting[:, i]
                 i_x_unfold += 1
+
+        x_unfolded = x_unfolded[:, :i_x_unfold]
+        if is_acting is not None:
+            is_acting_unfolded = is_acting_unfolded[:, :i_x_unfold]
 
         return x_unfolded, is_acting_unfolded
 
@@ -578,8 +622,8 @@ def raise_config_space():
 
 class DesignSpace(BaseDesignSpace):
     """
-    Class for defining a (hierarchical) design space by defining design variables, and defining decreed variables
-    (optional).
+    Class for defining a (hierarchical) design space by defining design variables, defining decreed variables
+    (optional), and adding value constraints (optional).
 
     Numerical bounds can be requested using `get_num_bounds()`.
     If needed, it is possible to get the legacy SMT < 2.0 `xlimits` format using `get_x_limits()`.
@@ -607,20 +651,28 @@ class DesignSpace(BaseDesignSpace):
 
     >>> ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')  # Activate x1 if x0 == A
 
+    Decreed variables can be chained (however no cycles and no "diamonds" are supported):
+    Note: only if ConfigSpace is installed! pip install smt[cs]
+    >>> ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=['C', 'D'])  # Activate x2 if x1 == C or D
+
+    If combinations of values between two variables are not allowed, this can be done using a value constraint:
+    Note: only if ConfigSpace is installed! pip install smt[cs]
+    >>> ds.add_value_constraint(var1=0, value1='A', var2=2, value2=[0, 1])  # Forbid x0 == A && x2 == 0 or 1
+
     After defining everything correctly, you can then use the design space object to correct design vectors and get
     information about which design variables are acting:
 
     >>> x_corr, is_acting = ds.correct_get_acting(np.array([
     >>>     [0, 0, 2, .25],
-    >>>     [1, 2, 1, .75],
+    >>>     [0, 2, 1, .75],
     >>> ]))
     >>> assert np.all(x_corr == np.array([
     >>>     [0, 0, 2, .25],
-    >>>     [1, 0, 1, .75],
+    >>>     [0, 2, 0, .75],
     >>> ]))
     >>> assert np.all(is_acting == np.array([
     >>>     [True, True, True, True],
-    >>>     [True, False, True, True],  # x1 is not acting if x0 != A
+    >>>     [True, True, False, True],  # x2 is not acting if x1 != C or D (0 or 1)
     >>> ]))
 
     It is also possible to randomly sample design vectors conforming to the constraints:
@@ -666,6 +718,30 @@ class DesignSpace(BaseDesignSpace):
                 converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
             design_variables = converted_dvs
 
+        self.seed = seed  # For testing
+
+        self._cs = None
+        if HAS_CONFIG_SPACE:
+            cs_vars = {}
+            for i, dv in enumerate(design_variables):
+                name = f"x{i}"
+                if isinstance(dv, FloatVariable):
+                    cs_vars[name] = UniformFloatHyperparameter(
+                        name, lower=dv.lower, upper=dv.upper
+                    )
+                elif isinstance(dv, IntegerVariable):
+                    cs_vars[name] = FixedIntegerParam(
+                        name, lower=dv.lower, upper=dv.upper
+                    )
+                elif isinstance(dv, OrdinalVariable):
+                    cs_vars[name] = OrdinalHyperparameter(name, sequence=dv.values)
+                elif isinstance(dv, CategoricalVariable):
+                    cs_vars[name] = CategoricalHyperparameter(name, choices=dv.values)
+                else:
+                    raise ValueError(f"Unknown variable type: {dv!r}")
+
+            self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
+
         self._meta_vars = (
             {}
         )  # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
@@ -689,33 +765,118 @@ class DesignSpace(BaseDesignSpace):
            - The value or list of values that the meta variable can have to activate the decreed var
         """
 
-        # Variables cannot be both meta and decreed at the same time
-        if self._is_decreed[meta_var]:
-            raise RuntimeError(
-                f"Variable cannot be both meta and decreed ({meta_var})!"
-            )
+        # ConfigSpace implementation
+        if self._cs is not None:
+            # Get associated parameters
+            decreed_param = self._get_param(decreed_var)
+            meta_param = self._get_param(meta_var)
 
-        # Variables can only be decreed by one meta var
-        if self._is_decreed[decreed_var]:
-            raise RuntimeError(f"Variable is already decreed: {decreed_var}")
+            # Add a condition that checks for equality (if single value given) or in-collection (if sequence given)
+            if isinstance(meta_value, Sequence):
+                condition = InCondition(decreed_param, meta_param, meta_value)
+            else:
+                condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
-        # Define meta-decreed relationship
-        if meta_var not in self._meta_vars:
-            self._meta_vars[meta_var] = {}
+            self._cs.add_condition(condition)
 
-        meta_var_obj = self.design_variables[meta_var]
-        for value in meta_value if isinstance(meta_value, Sequence) else [meta_value]:
-            encoded_value = value
-            if isinstance(meta_var_obj, (OrdinalVariable, CategoricalVariable)):
-                if value in meta_var_obj.values:
-                    encoded_value = meta_var_obj.values.index(value)
+        # Simplified implementation
+        else:
+            # Variables cannot be both meta and decreed at the same time
+            if self._is_decreed[meta_var]:
+                raise RuntimeError(
+                    f"Variable cannot be both meta and decreed ({meta_var})!"
+                )
 
-            if encoded_value not in self._meta_vars[meta_var]:
-                self._meta_vars[meta_var][encoded_value] = []
-            self._meta_vars[meta_var][encoded_value].append(decreed_var)
+            # Variables can only be decreed by one meta var
+            if self._is_decreed[decreed_var]:
+                raise RuntimeError(f"Variable is already decreed: {decreed_var}")
+
+            # Define meta-decreed relationship
+            if meta_var not in self._meta_vars:
+                self._meta_vars[meta_var] = {}
+
+            meta_var_obj = self.design_variables[meta_var]
+            for value in (
+                meta_value if isinstance(meta_value, Sequence) else [meta_value]
+            ):
+                encoded_value = value
+                if isinstance(meta_var_obj, (OrdinalVariable, CategoricalVariable)):
+                    if value in meta_var_obj.values:
+                        encoded_value = meta_var_obj.values.index(value)
+
+                if encoded_value not in self._meta_vars[meta_var]:
+                    self._meta_vars[meta_var][encoded_value] = []
+                self._meta_vars[meta_var][encoded_value].append(decreed_var)
 
         # Mark as decreed (conditionally acting)
         self._is_decreed[decreed_var] = True
+
+    def add_value_constraint(
+        self, var1: int, value1: VarValueType, var2: int, value2: VarValueType
+    ):
+        """
+        Define a constraint where two variables cannot have the given values at the same time.
+
+        Parameters
+        ----------
+        var1: int
+           - Index of the first variable
+        value1: int | str | list[int|str]
+           - Value or values that the first variable is checked against
+        var2: int
+           - Index of the second variable
+        value2: int | str | list[int|str]
+           - Value or values that the second variable is checked against
+        """
+        if self._cs is None:
+            raise_config_space()
+
+        # Get parameters
+        param1 = self._get_param(var1)
+        param2 = self._get_param(var2)
+
+        # Add forbidden clauses
+        if isinstance(value1, Sequence):
+            clause1 = ForbiddenInClause(param1, value1)
+        else:
+            clause1 = ForbiddenEqualsClause(param1, value1)
+
+        if isinstance(value2, Sequence):
+            clause2 = ForbiddenInClause(param2, value2)
+        else:
+            clause2 = ForbiddenEqualsClause(param2, value2)
+
+        constraint_clause = ForbiddenAndConjunction(clause1, clause2)
+        self._cs.add_forbidden_clause(constraint_clause)
+
+    def _get_param(self, idx):
+        try:
+            return self._cs.get_hyperparameter(f"x{idx}")
+        except KeyError:
+            raise KeyError(f"Variable not found: {idx}")
+
+    @property
+    def _cs_var_idx(self):
+        """
+        ConfigurationSpace applies topological sort when adding conditions, so compared to what we expect the order of
+        parameters might have changed.
+
+        This property contains the indices of the params in the ConfigurationSpace.
+        """
+        names = self._cs.get_hyperparameter_names()
+        return np.array(
+            [names.index(f"x{ix}") for ix in range(len(self.design_variables))]
+        )
+
+    @property
+    def _inv_cs_var_idx(self):
+        """
+        See _cs_var_idx. This function returns the opposite mapping: the positions of our design variables for each
+        param.
+        """
+        return np.array(
+            [int(param[1:]) for param in self._cs.get_hyperparameter_names()]
+        )
 
     def _is_conditionally_acting(self) -> np.ndarray:
         # Decreed variables are the conditionally acting variables
@@ -724,10 +885,24 @@ class DesignSpace(BaseDesignSpace):
     def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Correct and impute design vectors"""
 
+        if self._cs is not None:
+            # Normalize value according to what ConfigSpace expects
+            x = x.astype(float)
+            self._normalize_x(x)
+
+            # Get corrected Configuration objects by mapping our design vectors to the ordering of the ConfigurationSpace
+            inv_cs_var_idx = self._inv_cs_var_idx
+            configs = []
+            for xi in x:
+                configs.append(self._get_correct_config(xi[inv_cs_var_idx]))
+
+            # Convert Configuration objects to design vectors and get the is_active matrix
+            return self._configs_to_x(configs)
+
         # Simplified implementation
         # Correct discrete variables
         x_corr = x.copy()
-        self._normalize_x(x_corr)
+        self._normalize_x(x_corr, cs_normalize=False)
 
         # Determine which variables are acting
         is_acting = np.ones(x_corr.shape, dtype=bool)
@@ -748,21 +923,90 @@ class DesignSpace(BaseDesignSpace):
         self, n: int, random_state=None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Sample design vectors"""
-
         # Simplified implementation: sample design vectors in unfolded space
         x_limits_unfolded = self.get_unfolded_num_bounds()
-        if self.sampler is None:
-            self.sampler = LHS(
-                xlimits=x_limits_unfolded, random_state=random_state, criterion="ese"
-            )
-        x = self.sampler(n)
+        if self.seed is None:
+            self.seed = random_state
 
-        # Fold and cast to discrete
-        x, _ = self.fold_x(x)
-        self._normalize_x(x)
+        if self._cs is not None:
+            # Sample Configuration objects
+            self._cs.seed(self.seed)
+            if self.seed is not None:
+                self.seed += 1
+            configs = self._cs.sample_configuration(n)
+            if n == 1:
+                configs = [configs]
+            # Convert Configuration objects to design vectors and get the is_active matrix
+            return self._configs_to_x(configs)
 
-        # Get acting information and impute
-        return self.correct_get_acting(x)
+        else:
+            if self.sampler is None:
+                self.sampler = LHS(
+                    xlimits=x_limits_unfolded,
+                    random_state=random_state,
+                    criterion="ese",
+                )
+            x = self.sampler(n)
+            # Fold and cast to discrete
+            x, _ = self.fold_x(x)
+            self._normalize_x(x, cs_normalize=False)
+            # Get acting information and impute
+            return self.correct_get_acting(x)
+
+    def _get_correct_config(self, vector: np.ndarray) -> Configuration:
+        config = Configuration(self._cs, vector=vector)
+
+        # Unfortunately we cannot directly ask which parameters SHOULD be active
+        # https://github.com/automl/ConfigSpace/issues/253#issuecomment-1513216665
+        # Therefore, we temporarily fix it with a very dirty workaround: catch the error raised in check_configuration
+        # to find out which parameters should be inactive
+        while True:
+            try:
+                config.is_valid_configuration()
+                return config
+
+            except ValueError as e:
+                error_str = str(e)
+                if "Inactive hyperparameter" in error_str:
+                    # Deduce which parameter is inactive
+                    inactive_param_name = error_str.split("'")[1]
+                    param_idx = self._cs.get_idx_by_hyperparameter_name(
+                        inactive_param_name
+                    )
+
+                    # Modify the vector and create a new Configuration
+                    vector = config.get_array().copy()
+                    vector[param_idx] = np.nan
+                    config = Configuration(self._cs, vector=vector)
+
+                # At this point, the parameter active statuses are set correctly, so we only need to correct the
+                # configuration to one that does not violate the forbidden clauses
+                elif isinstance(e, ForbiddenValueError):
+                    return get_random_neighbor(config, seed=self.seed)
+
+                else:
+                    raise
+
+    def _configs_to_x(
+        self, configs: List["Configuration"]
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        x = np.zeros((len(configs), len(self.design_variables)))
+        is_acting = np.zeros(x.shape, dtype=bool)
+        if len(configs) == 0:
+            return x, is_acting
+
+        cs_var_idx = self._cs_var_idx
+        for i, config in enumerate(configs):
+            x[i, :] = config.get_array()[cs_var_idx]
+
+        # De-normalize continuous and integer variables
+        self._cs_denormalize_x(x)
+
+        # Set is_active flags and impute x
+        is_acting = np.isfinite(x)
+        self._impute_non_acting(x, is_acting)
+
+        return x, is_acting
 
     def _impute_non_acting(self, x: np.ndarray, is_acting: np.ndarray):
         for i, dv in enumerate(self.design_variables):
@@ -778,10 +1022,22 @@ class DesignSpace(BaseDesignSpace):
 
                 x[~is_acting[:, i], i] = lower
 
-    def _normalize_x(self, x: np.ndarray):
+    def _normalize_x(self, x: np.ndarray, cs_normalize=True):
         for i, dv in enumerate(self.design_variables):
-            if isinstance(dv, IntegerVariable):
+            if isinstance(dv, FloatVariable):
+                if cs_normalize:
+                    x[:, i] = np.clip(
+                        (x[:, i] - dv.lower) / (dv.upper - dv.lower + 1e-16), 0, 1
+                    )
+
+            elif isinstance(dv, IntegerVariable):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
+
+                if cs_normalize:
+                    # After rounding, normalize between 0 and 1, where 0 and 1 represent the stretched bounds
+                    x[:, i] = (x[:, i] - dv.lower + 0.49999) / (
+                        dv.upper - dv.lower + 0.9999
+                    )
 
             elif isinstance(dv, (OrdinalVariable, CategoricalVariable)):
                 # To ensure equal distribution of continuous values to discrete values, we first stretch-out the
@@ -789,9 +1045,53 @@ class DesignSpace(BaseDesignSpace):
                 # values at the limits get a large-enough share of the continuous values
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
 
+    def _cs_denormalize_x(self, x: np.ndarray):
+        for i, dv in enumerate(self.design_variables):
+            if isinstance(dv, FloatVariable):
+                x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
+
+            elif isinstance(dv, IntegerVariable):
+                # Integer values are normalized similarly to what is done in _round_equally_distributed
+                x[:, i] = np.round(
+                    x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
+                )
+
     def __str__(self):
         dvs = "\n".join([f"x{i}: {dv!s}" for i, dv in enumerate(self.design_variables)])
         return f"Design space:\n{dvs}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.design_variables!r})"
+
+
+class NoDefaultConfigurationSpace(ConfigurationSpace):
+    """ConfigurationSpace that supports no default configuration"""
+
+    def get_default_configuration(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _check_default_configuration(self, *args, **kwargs):
+        pass
+
+
+class FixedIntegerParam(UniformIntegerHyperparameter):
+    def get_neighbors(
+        self,
+        value: float,
+        rs: np.random.RandomState,
+        number: int = 4,
+        transform: bool = False,
+        std: float = 0.2,
+    ) -> List[int]:
+        # Temporary fix until https://github.com/automl/ConfigSpace/pull/313 is released
+        center = self._transform(value)
+        lower, upper = self.lower, self.upper
+        if upper - lower - 1 < number:
+            neighbors = sorted(set(range(lower, upper + 1)) - {center})
+            if transform:
+                return neighbors
+            return self._inverse_transform(np.asarray(neighbors)).tolist()
+
+        return super().get_neighbors(
+            value, rs, number=number, transform=transform, std=std
+        )

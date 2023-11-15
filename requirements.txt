@@ -8,3 +8,4 @@ matplotlib   # used in examples and tests
 pytest       # tests runner
 pytest-xdist # allows running parallel testing with pytest -n <num_workers>
 black        # check code format
+ConfigSpace~=0.6.1

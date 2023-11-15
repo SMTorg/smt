@@ -299,17 +299,11 @@ def gower_componentwise_distances(
     Y_cat = Z_cat[y_index,]
     x_cat_is_acting = z_cat_is_acting[x_index,]
     y_cat_is_acting = z_cat_is_acting[y_index,]
-
-    # To support categorical decreed variables, some extra math wizardry is needed
-    if np.any(cat_is_decreed) or np.any(~x_cat_is_acting) or np.any(~y_cat_is_acting):
-        raise ValueError(
-            "Decreed (conditionally-active) categorical variables are not supported yet!"
-        )
-
     # This is to normalize the numeric values between 0 and 1.
     Z_num = Z[:, ~cat_features]
     z_num_is_acting = z_is_acting[:, ~cat_features]
     num_is_decreed = is_decreed[~cat_features]
+    cat_is_decreed = is_decreed[cat_features]
     num_bounds = design_space.get_num_bounds()[~cat_features, :]
     if num_bounds.shape[0] > 0:
         Z_offset = num_bounds[:, 0]
@@ -321,6 +315,8 @@ def gower_componentwise_distances(
     x_num_is_acting = z_num_is_acting[x_index,]
     y_num_is_acting = z_num_is_acting[y_index,]
 
+    # x_cat_is_acting : activeness vector delta
+    # X_cat( not(x_cat_is_acting)) = 0 ###IMPUTED TO FIRST VALUE IN LIST (index 0)
     D_cat = compute_D_cat(X_cat, Y_cat, y)
     D_num, ij = compute_D_num(
         X_num,
