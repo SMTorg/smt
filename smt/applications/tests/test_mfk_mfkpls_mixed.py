@@ -27,6 +27,8 @@ from smt.applications.mixed_integer import (
     MixedIntegerSurrogateModel,
 )
 
+from smt.applications import NestedLHS
+
 from smt.sampling_methods import LHS
 
 from smt.surrogate_models import (
@@ -387,7 +389,9 @@ class TestMFKmixed(unittest.TestCase):
 
         # HF training data:
         n_train_HF = 20  # training set size
-        xt_HF, is_acting_t_HF = ds.sample_valid_x(n_train_HF)
+        n_train_LF = 40
+        nlhs = NestedLHS(nlevel=2, design_space=ds)
+        xt_LF, xt_HF = nlhs(n_train_HF)
 
         y1t_HF = np.zeros(n_train_HF)  # obj 1
         y2t_HF = np.zeros(n_train_HF)  # obj 2
@@ -400,12 +404,6 @@ class TestMFKmixed(unittest.TestCase):
 
         for krg_method in KRG_METHODS:
             if "mfk" in krg_method:  # if multifi compute LF validation data
-                n_train_LF = 40  # training set size   IF MULTIFI
-                sampling = MixedIntegerSamplingMethod(LHS, ds, criterion="ese")
-                xt_LF = np.concatenate(
-                    (xt_HF, sampling.expand_lhs(xt_HF, n_train_LF - n_train_HF)), axis=0
-                )
-
                 y1t_LF = np.zeros(n_train_LF)  # obj 1
                 y2t_LF = np.zeros(n_train_LF)  # obj 2
                 for i in range(n_train_LF):
