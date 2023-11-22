@@ -54,7 +54,7 @@ class SamplingMethod(metaclass=ABCMeta):
         """
         pass
 
-    def __call__(self, nt: int) -> np.ndarray:
+    def __call__(self, nt: int = None) -> np.ndarray:
         """
         Compute the requested number of sampling points.
 
@@ -73,7 +73,7 @@ class SamplingMethod(metaclass=ABCMeta):
         return self._compute(nt)
 
     @abstractmethod
-    def _compute(self, nt: int) -> np.ndarray:
+    def _compute(self, nt: int = None) -> np.ndarray:
         """
         Implemented by sampling methods to compute the requested number of sampling points.
 
@@ -98,7 +98,7 @@ class ScaledSamplingMethod(SamplingMethod):
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
     """
 
-    def __call__(self, nt: int) -> np.ndarray:
+    def __call__(self, nt: int = None) -> np.ndarray:
         """
         Compute the requested number of sampling points.
 
