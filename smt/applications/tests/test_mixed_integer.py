@@ -23,6 +23,8 @@ from smt.utils.design_space import (
     OrdinalVariable,
     CategoricalVariable,
 )
+import smt.utils.design_space as ds
+
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
@@ -300,7 +302,8 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_integer_context_example()
         self.run_hierarchical_variables_Goldstein()
         self.run_mixed_discrete_design_space_example()
-        self.run_hierarchical_design_space_example()
+        if ds.HAS_CONFIG_SPACE:
+            self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
         import numpy as np
