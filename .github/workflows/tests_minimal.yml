@@ -19,7 +19,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install numpy cython
+        pip install numpy cython 
+        pip install matplotlib   # required by GENN atm, to be fixed
         pip install -e .
 
     - name: Test with pytest
