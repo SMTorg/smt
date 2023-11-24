@@ -1,5 +1,9 @@
 """
-box_behnken sampling; uses the pyDOE3 package.
+Author: Antoine Averland <antoine.averland@onera.fr> and Rémi Lafage <remi.lafage@onera.fr>
+
+This package is distributed under New BSD license.
+
+pyDOE3 sampling methods
 """
 from pyDOE3 import doe_box_behnken
 from pyDOE3 import doe_gsd
@@ -11,26 +15,40 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 
 
 class PyDoeSamplingMethod(SamplingMethod):
+    """
+    Base class for pyDOE3 designs
+    See https://pydoe3.readthedocs.io/
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.nx = self.options["xlimits"].shape[0]
         self.levels = None
 
     def _compute(self, nt: int = None):
+        """
+        Get the array of the sampling method, create an array of indices with it.
+        Those indicies will be useful to indicate which value of the linspace to put in the final array.
+        Then create an array of the values of the linspace.
+        Run throught the indices array and put in the array "res" the values of the array "values" at the index given by the array indices".
+        """
         xlimits = self.options["xlimits"]
         levels = self.levels
 
+        # Retrieve indices from pyDOE3 design
         doe = self._compute_doe()
-        indices = np.array(doe, dtype=int)
-        print(indices)
+        indices = np.array(doe, dtype=int)  # create the indices array
 
+        # Compute scaled values for each x components
         values = np.zeros((self.nx, max(levels)))
         for i in range(self.nx):
             values[i, 0 : levels[i]] = np.linspace(
-                xlimits[i, 0], xlimits[i, 1], num=levels[i]
+                xlimits[i, 0],
+                xlimits[i, 1],
+                num=levels[i],
             )
-        print(values)
 
+        # Use indices to shape the result array and fill it with values
         res = np.zeros(doe.shape)
         i = 0
         for idx in indices:
@@ -41,25 +59,32 @@ class PyDoeSamplingMethod(SamplingMethod):
         return res
 
     def _compute_doe():
+        """Returns a matrix (nsamples, nx) of indices.
+        Each indices takes a value in [0, nlevels_i-1] where nlevels_i is
+        the number of levels of the ith component of x.
+        This method has to be overriden by subclasses"""
         raise NotImplementedError(
             "You have to implement DOE generation method _compute_doe()"
         )
 
 
 class BoxBehnken(PyDoeSamplingMethod):
+    """See https://pydoe3.readthedocs.io/en/latest/rsm.html#box-behnken"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.levels = [3] * self.nx  # for box behnken the number of levels is fixed
+
+        # Box Behnken design has 3 levels [-1, 0, 1]
+        self.levels = [3] * self.nx  # for
 
     def _compute_doe(self):
-        box_behnken_doe = (
-            doe_box_behnken.bbdesign(self.nx) + 1
-        )  # We have to increment the elements of doe_box_behnken to have the indices
-
-        return box_behnken_doe
+        # Increment Box Behnken levels to get indices [0, 1, 2]
+        return doe_box_behnken.bbdesign(self.nx) + 1
 
 
 class Gsd(PyDoeSamplingMethod):
+    """See https://pydoe3.readthedocs.io/en/latest/rsm.html#gsd"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -80,12 +105,13 @@ class Gsd(PyDoeSamplingMethod):
     def _compute_doe(self):
         levels = self.options["levels"]
         reduction = self.options["reduction"]
-        gsd_doe = doe_gsd.gsd(levels, reduction)
 
-        return gsd_doe
+        return doe_gsd.gsd(levels, reduction)
 
 
 class Factorial(PyDoeSamplingMethod):
+    """See https://pydoe3.readthedocs.io/en/latest/factorial.html#general-full-factorial"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -100,25 +126,22 @@ class Factorial(PyDoeSamplingMethod):
 
     def _compute_doe(self):
         levels = self.options["levels"]
-        factorial_doe = doe_factorial.fullfact(levels)
-
-        return factorial_doe
+        return doe_factorial.fullfact(levels)
 
 
 class PlackettBurman(PyDoeSamplingMethod):
+    """See https://pydoe3.readthedocs.io/en/latest/factorial.html#plackett-burman"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.levels = [2] * self.nx  # for plackett burman the number of levels is fixed
+
+        # Plackett Burman design has 2 levels [-1, 1]
+        self.levels = [2] * self.nx
 
     def _compute_doe(self):
-        plackett_burman_doe = doe_plackett_burman.pbdesign(self.nx)
-        ny = plackett_burman_doe.shape[1]
-        nb_rows = 4 * (
-            int(self.nx / 4) + 1
-        )  # calculate the correct number of rows (multiple of 4)
-        for i in range(nb_rows):
-            for j in range(ny):
-                if plackett_burman_doe[i, j] == -1:
-                    plackett_burman_doe[i, j] = 0
+        doe = doe_plackett_burman.pbdesign(self.nx)
 
-        return plackett_burman_doe
+        # Change -1 level to get indices [0, 1]
+        doe[doe < 0] = 0
+
+        return doe
