@@ -1057,7 +1057,10 @@ class TestEGO(SMTestCase):
         actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
         self.assertAlmostEqual(expected, actual)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 2 or NO_MATPLOTLIB, "too slow or matplotlib not installed")
+    @unittest.skipIf(
+        int(os.getenv("RUN_SLOW", 0)) < 2 or NO_MATPLOTLIB,
+        "too slow or matplotlib not installed",
+    )
     def test_examples(self):
         self.run_ego_example()
         self.run_ego_parallel_example()
