@@ -301,6 +301,7 @@ class TestMixedInteger(unittest.TestCase):
             atol=1e-9,
         )
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_examples(self):
         self.run_mixed_integer_lhs_example()
         self.run_mixed_integer_qp_example()
