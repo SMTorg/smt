@@ -1,10 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import unittest
 
 from smt.surrogate_models import SGP
 from smt.utils.sm_test_case import SMTestCase
-from smt.utils import compute_rms_error
 
 
 def f_obj(x):

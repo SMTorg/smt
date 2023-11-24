@@ -6,12 +6,11 @@ This package is distributed under New BSD license.
 
 import unittest
 import numpy as np
-import matplotlib.pyplot as plt
 
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils import compute_rms_error
-from smt.surrogate_models import RMTB, RMTC
+from smt.surrogate_models import RMTB
 
 
 def function_test_1d(x):
