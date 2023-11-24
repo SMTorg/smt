@@ -1,0 +1,31 @@
+name: Tests Minimal
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install numpy cython 
+        pip install matplotlib   # required by GENN atm, to be fixed
+        pip install -e .
+
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest smt
+
+

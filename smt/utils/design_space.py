@@ -31,6 +31,9 @@ try:
 except ImportError:
     HAS_CONFIG_SPACE = False
 
+    class Configuration:
+        pass
+
     class ConfigurationSpace:
         pass
 

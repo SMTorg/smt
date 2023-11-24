@@ -37,6 +37,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
+import smt.utils.design_space as ds
 
 
 # This implementation only works with Python > 3.3
@@ -892,7 +893,7 @@ class TestEGO(SMTestCase):
 
         return ego, fun
 
-    def test_sampling_consistency(self):
+    def test_ego_seeding(self):
         def f_obj(X):
             """
             s01 objective
@@ -997,8 +998,12 @@ class TestEGO(SMTestCase):
             n_start=15,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-        self.assertAlmostEqual(np.sum(y_data), 2.7639515433083854, delta=1e-4)
-        self.assertAlmostEqual(np.sum(x_data), 32.11001423996299, delta=1e-4)
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(y_data), 2.7639515433083854, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 32.11001423996299, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(y_data), 2.03831406306514, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 33.56885202767958, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
