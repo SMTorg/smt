@@ -2,9 +2,7 @@
 Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. Joseph Morlier
 """
 
-import os
 import numpy as np
-import csv
 
 from smt.examples.airfoil_parameters.learning_airfoil_parameters import (
     load_cd_training_data,

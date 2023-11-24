@@ -6,20 +6,27 @@ This package is distributed under New BSD license.
 
 import unittest
 
-import matplotlib
+try:
+    import matplotlib
 
-matplotlib.use("Agg")
+    matplotlib.use("Agg")
+
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
-    compiled_available = True
+    NO_COMPILED = False
 except:
-    compiled_available = False
+    NO_COMPILED = True
 
 
 class Test(unittest.TestCase):
-    @unittest.skipIf(not compiled_available, "C compilation failed")
+    @unittest.skipIf(
+        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
+    )
     def test_idw(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -44,7 +51,9 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(not compiled_available, "C compilation failed")
+    @unittest.skipIf(
+        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
+    )
     def test_rbf(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -69,7 +78,9 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(not compiled_available, "C compilation failed")
+    @unittest.skipIf(
+        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
+    )
     def test_rmtb(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -102,7 +113,9 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
-    @unittest.skipIf(not compiled_available, "C compilation failed")
+    @unittest.skipIf(
+        NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
+    )
     def test_rmtc(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -134,6 +147,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_ls(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -158,6 +172,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction"])
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_qp(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -184,6 +199,7 @@ class Test(unittest.TestCase):
         plt.legend()
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -224,6 +240,7 @@ class Test(unittest.TestCase):
 
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mixed_int_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -270,6 +287,7 @@ class Test(unittest.TestCase):
 
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mixed_gower_krg(self):
         from smt.surrogate_models import (
             MixIntKernelType,
@@ -340,6 +358,7 @@ class Test(unittest.TestCase):
         print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
         print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_kpls(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -382,6 +401,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_kplsk(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -424,6 +444,7 @@ class Test(unittest.TestCase):
         plt.legend(["Training data", "Prediction", "Confidence Interval 99%"])
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_gekpls(self):
         import numpy as np
         from mpl_toolkits.mplot3d import Axes3D
@@ -475,6 +496,7 @@ class Test(unittest.TestCase):
 
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_genn(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -541,6 +563,7 @@ class Test(unittest.TestCase):
         ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mgp(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -620,6 +643,7 @@ class Test(unittest.TestCase):
         fig.subplots_adjust(top=0.74)
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_sgp_fitc(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -674,6 +698,7 @@ class Test(unittest.TestCase):
         plt.legend(loc=0)
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_sgp_vfe(self):
         import numpy as np
         import matplotlib.pyplot as plt

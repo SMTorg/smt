@@ -5,16 +5,17 @@ Created on Mon May 07 14:20:11 2018
 @author: m.meliani
 """
 
-import matplotlib
-
-matplotlib.use("Agg")
-
 import unittest
 import numpy as np
 import unittest
-import inspect
 
-from collections import OrderedDict
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
@@ -130,8 +131,8 @@ class TestMFK(SMTestCase):
 
         if print_output:
             print(
-                "%8s %6s %18.9e %18.9e %18.9e %18.9e"
-                % (pname[:6], sname, t_error, e_error, e_error0, e_error1)
+                "%6s %18.9e %18.9e %18.9e %18.9e"
+                % ("MFK", t_error, e_error, e_error0, e_error1)
             )
 
         self.assert_error(e_error0, 0.0, 1e-1)

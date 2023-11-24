@@ -7,9 +7,14 @@ Created on Mon May 07 14:20:11 2018
 Adapted to new SMT version in march 2020 by Nathalie Bartoli
 """
 
-import matplotlib
 
-matplotlib.use("Agg")
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 import unittest
 import numpy as np
@@ -129,16 +134,8 @@ class TestMFKPLS(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
         e_error0 = compute_rms_error(sm, xe, dye[0], 0)
         e_error1 = compute_rms_error(sm, xe, dye[1], 1)
-
-        if print_output:
-            print(
-                "%8s %6s %18.9e %18.9e %18.9e %18.9e"
-                % (pname[:6], sname, t_error, e_error, e_error0, e_error1)
-            )
 
         self.assert_error(e_error0, 0.0, 1e-1)
         self.assert_error(e_error1, 0.0, 1e-1)

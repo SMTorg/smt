@@ -12,9 +12,15 @@ import os
 import unittest
 import numpy as np
 from sys import argv
-import matplotlib
 
-matplotlib.use("Agg")
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
+
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.utils.sm_test_case import SMTestCase
@@ -1051,7 +1057,10 @@ class TestEGO(SMTestCase):
         actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
         self.assertAlmostEqual(expected, actual)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 2, "too slow")
+    @unittest.skipIf(
+        int(os.getenv("RUN_SLOW", 0)) < 2 or NO_MATPLOTLIB,
+        "too slow or matplotlib not installed",
+    )
     def test_examples(self):
         self.run_ego_example()
         self.run_ego_parallel_example()
