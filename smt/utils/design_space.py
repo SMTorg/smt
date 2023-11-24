@@ -887,10 +887,9 @@ class DesignSpace(BaseDesignSpace):
 
     def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Correct and impute design vectors"""
-
+        x = x.astype(float)
         if self._cs is not None:
             # Normalize value according to what ConfigSpace expects
-            x = x.astype(float)
             self._normalize_x(x)
 
             # Get corrected Configuration objects by mapping our design vectors to the ordering of the ConfigurationSpace
