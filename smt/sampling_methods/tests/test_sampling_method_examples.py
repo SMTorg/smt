@@ -1,11 +1,16 @@
 import unittest
 
-import matplotlib
+try:
+    import matplotlib
 
-matplotlib.use("Agg")
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 
 class Test(unittest.TestCase):
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_random(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -25,6 +30,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_lhs(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -44,6 +50,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_full_factorial(self):
         import numpy as np
         import matplotlib.pyplot as plt

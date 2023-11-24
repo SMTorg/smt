@@ -8,23 +8,22 @@ Created on Fri Oct  6 14:47:08 2023
 
 import unittest
 import numpy as np
-import matplotlib
-import itertools
 
-matplotlib.use("Agg")
+try:
+    import matplotlib
 
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 import numpy.linalg as npl
-import matplotlib.pyplot as plt
 
 from smt.applications.mfkpls import MFKPLS
 from smt.applications.mfk import MFK
 
 from smt.applications.mixed_integer import (
-    MixedIntegerContext,
     MixedIntegerSamplingMethod,
-    MixedIntegerKrigingModel,
-    MixedIntegerSurrogateModel,
 )
 
 from smt.applications import NestedLHS
@@ -34,9 +33,7 @@ from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
     KPLS,
-    QP,
     MixIntKernelType,
-    MixHrcKernelType,
 )
 
 import warnings
@@ -47,7 +44,6 @@ from smt.utils.design_space import (
     DesignSpace,
     FloatVariable,
     IntegerVariable,
-    OrdinalVariable,
     CategoricalVariable,
 )
 
@@ -330,6 +326,8 @@ class TestMFKmixed(unittest.TestCase):
     ###############################################################################
 
     def run_mfk_mixed_example(self):
+        from matplotlib.pyplot import plt
+
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]
         # KRG_METHODS = ["kpls"]
@@ -654,6 +652,8 @@ class TestMFKmixed(unittest.TestCase):
                 # ------------------------------------------------------------------------------
 
     def run_mfkpls_mixed_example(self):
+        from matplotlib.pyplot import plt
+
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]
         # KRG_METHODS = ["kpls"]

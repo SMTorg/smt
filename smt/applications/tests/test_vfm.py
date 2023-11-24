@@ -5,9 +5,14 @@ This package is distributed under New BSD license.
 """
 
 import unittest
-import matplotlib
 
-matplotlib.use("Agg")
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 import numpy as np
 from scipy import linalg

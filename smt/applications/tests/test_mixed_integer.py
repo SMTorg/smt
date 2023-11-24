@@ -5,10 +5,15 @@ Created on Tue Oct 12 10:48:01 2021
 
 import unittest
 import numpy as np
-import matplotlib
 import itertools
 
-matplotlib.use("Agg")
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except:
+    NO_MATPLOTLIB = True
 
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
