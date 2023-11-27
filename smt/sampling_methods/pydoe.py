@@ -16,7 +16,7 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 
 class PyDoeSamplingMethod(SamplingMethod):
     """
-    Base class for pyDOE3 designs
+    Base class adapting pyDOE3 designs to SMT SamplingMethod interface
     See https://pydoe3.readthedocs.io/
     """
 
@@ -27,17 +27,15 @@ class PyDoeSamplingMethod(SamplingMethod):
 
     def _compute(self, nt: int = None):
         """
-        Get the array of the sampling method, create an array of indices with it.
-        Those indicies will be useful to indicate which value of the linspace to put in the final array.
-        Then create an array of the values of the linspace.
-        Run throught the indices array and put in the array "res" the values of the array "values" at the index given by the array indices".
+        Use pydoe3 design to produce [nsamples, nx] matrix
+        where nsamples depends on the pyDOE3 method and nx is the dimension of x.
+        Warning: In pyDOE3 design setting user requested number of points nt is not used
         """
         xlimits = self.options["xlimits"]
         levels = self.levels
 
         # Retrieve indices from pyDOE3 design
-        doe = self._compute_doe()
-        indices = np.array(doe, dtype=int)  # create the indices array
+        doe = np.array(self._compute_doe(), dtype=int)
 
         # Compute scaled values for each x components
         values = np.zeros((self.nx, max(levels)))
@@ -51,7 +49,7 @@ class PyDoeSamplingMethod(SamplingMethod):
         # Use indices to shape the result array and fill it with values
         res = np.zeros(doe.shape)
         i = 0
-        for idx in indices:
+        for idx in doe:
             for j in range(self.nx):
                 res[i, j] = values[j, idx[j]]
             i = i + 1
@@ -60,11 +58,12 @@ class PyDoeSamplingMethod(SamplingMethod):
 
     def _compute_doe():
         """Returns a matrix (nsamples, nx) of indices.
+
         Each indices takes a value in [0, nlevels_i-1] where nlevels_i is
         the number of levels of the ith component of x.
         This method has to be overriden by subclasses"""
         raise NotImplementedError(
-            "You have to implement DOE generation method _compute_doe()"
+            "You have to implement DOE computation method _compute_doe()"
         )
 
 
@@ -140,7 +139,6 @@ class PlackettBurman(PyDoeSamplingMethod):
 
     def _compute_doe(self):
         doe = doe_plackett_burman.pbdesign(self.nx)
-
         # Change -1 level to get indices [0, 1]
         doe[doe < 0] = 0
 
