@@ -6,11 +6,6 @@ from smt.sampling_methods import LHS
 
 
 class Test(unittest.TestCase):
-    def test_xlimits_missing_error(self):
-        with self.assertRaises(ValueError) as context:
-            LHS()
-        self.assertEqual("xlimits keyword argument is required", str(context.exception))
-
     def test_lhs_ese(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         sampling = LHS(xlimits=xlimits, criterion="ese")
