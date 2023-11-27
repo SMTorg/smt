@@ -56,14 +56,15 @@ class SamplingMethod(metaclass=ABCMeta):
 
     def __call__(self, nt: int = None) -> np.ndarray:
         """
-        Compute the requested number of sampling points.
+        Compute the samples.
+        Depending on the concrete sampling method the requested number of samples nt may not be enforced.
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
         Arguments
         ---------
         nt : int
-            Number of points requested.
+            Number of points hint.
 
         Returns
         -------
@@ -75,7 +76,8 @@ class SamplingMethod(metaclass=ABCMeta):
     @abstractmethod
     def _compute(self, nt: int = None) -> np.ndarray:
         """
-        Implemented by sampling methods to compute the requested number of sampling points.
+        Implemented by sampling methods to compute the samples.
+        Depending on the concrete sampling method the requested number of samples nt may not be enforced.
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
@@ -83,6 +85,7 @@ class SamplingMethod(metaclass=ABCMeta):
         ---------
         nt : int
             Number of points requested.
+            Depending on the concrete sampling method this requested number of samples may not be enforced.
 
         Returns
         -------
@@ -93,20 +96,25 @@ class SamplingMethod(metaclass=ABCMeta):
 
 
 class ScaledSamplingMethod(SamplingMethod):
-    """This class describes an sample method which generates samples in the unit hypercube.
+    """This class represents sample methods which generates samples in the unit hypercube [0, 1]^nx.
 
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
+    Implementation notes:
+        * When nt is None, it defaults to 2 * nx.
+        * xlimits is presence is checked. ValueError is raised if not specified.
     """
 
     def __call__(self, nt: int = None) -> np.ndarray:
         """
-        Compute the requested number of sampling points.
+        Compute the samples.
+        Depending on the concrete sampling method the requested number of samples nt may not be enforced.
+        When nt is None, it defaults to 2 * nx.
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
         Arguments
         ---------
-        nt : int
+        nt : int (optional, default 2*nx)
             Number of points requested.
 
         Returns
@@ -114,10 +122,13 @@ class ScaledSamplingMethod(SamplingMethod):
         ndarray[nt, nx]
             The sampling locations in the input space.
         """
+        xlimits = self.options["xlimits"]
+        if nt is None:
+            nt = 2 * self.options["xlimits"].shape[0]
         return _scale_to_xlimits(self._compute(nt), self.options["xlimits"])
 
     @abstractmethod
-    def _compute(self, nt: int) -> np.ndarray:
+    def _compute(self, nt: int = None) -> np.ndarray:
         """
         Implemented by sampling methods to compute the requested number of sampling points.
 
