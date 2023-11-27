@@ -15,8 +15,9 @@ class SamplingMethod(metaclass=ABCMeta):
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
+        xlimits keyword argument is required.
 
-        For the list of options, see the documentation for the problem being used.
+        For the list of options, see the documentation for the sampling method being used.
 
         Parameters
         ----------
@@ -37,6 +38,8 @@ class SamplingMethod(metaclass=ABCMeta):
         )
         self._initialize(**kwargs)
         self.options.update(kwargs)
+        if self.options["xlimits"] is None:
+            raise ValueError("xlimits keyword argument is required")
 
     def _initialize(self, **kwargs) -> None:
         """
@@ -124,8 +127,8 @@ class ScaledSamplingMethod(SamplingMethod):
         """
         xlimits = self.options["xlimits"]
         if nt is None:
-            nt = 2 * self.options["xlimits"].shape[0]
-        return _scale_to_xlimits(self._compute(nt), self.options["xlimits"])
+            nt = 2 * xlimits.shape[0]
+        return _scale_to_xlimits(self._compute(nt), xlimits)
 
     @abstractmethod
     def _compute(self, nt: int = None) -> np.ndarray:
