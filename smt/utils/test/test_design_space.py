@@ -422,7 +422,9 @@ class Test(unittest.TestCase):
         assert len(seen_x) == 16
         assert len(seen_is_acting) == 2
 
-    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_design_space_hierarchical_config_space(self):
         ds = DesignSpace(
             [
@@ -537,7 +539,9 @@ class Test(unittest.TestCase):
                     RuntimeError, lambda: ds.sample_valid_x(10, random_state=42)
                 )
 
-    @unittest.skipIf(not HAS_CONFIG_SPACE, "Hierarchy dependencies not installed")
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_restrictive_value_constraint(self):
         ds = DesignSpace(
             [
