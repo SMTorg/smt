@@ -70,6 +70,82 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_box_behnken(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.sampling_methods import BoxBehken
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = BoxBehken(xlimits=xlimits)
+
+        x = sampling()
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_plackett_burman(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.sampling_methods import PlackettBurman
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = PlackettBurman(xlimits=xlimits)
+
+        x = sampling()
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_factorial(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.sampling_methods import Factorial
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = Factorial(xlimits=xlimits, levels=[3, 6])
+
+        x = sampling()
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_factorial(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.sampling_methods import Gsd
+
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = Gsd(xlimits=xlimits, levels=[3, 6])
+
+        x = sampling()
+
+        print(x.shape)
+
+        plt.plot(x[:, 0], x[:, 1], "o")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
 
 if __name__ == "__main__":
     unittest.main()
