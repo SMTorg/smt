@@ -725,7 +725,7 @@ class TestMixedInteger(unittest.TestCase):
         assert pred_RMSE < 1e-7
         print("Pred_RMSE", pred_RMSE)
 
-        self._sm = sm  # ignore: just used for test
+        self._sm = sm  # to be ignored: just used for automated test
 
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
@@ -763,18 +763,7 @@ class TestMixedInteger(unittest.TestCase):
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
-    def test_hierarchical_design_space_example_CR_categorical_decreed(self):
-        import numpy as np
-        from smt.utils.design_space import (
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-            OrdinalVariable,
-            CategoricalVariable,
-        )
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
-
+    def test_hierarchical_design_space_example_all_categorical_decreed(self):
         ds = DesignSpace(
             [
                 CategoricalVariable(
@@ -853,328 +842,56 @@ class TestMixedInteger(unittest.TestCase):
             ),
         )
 
-        sm = MixedIntegerKrigingModel(
-            surrogate=KRG(
-                design_space=ds,
-                categorical_kernel=MixIntKernelType.CONT_RELAX,
-                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
-                theta0=[1e-2],
-                corr="abs_exp",
-                n_start=5,
-            ),
-        )
-        sm.set_training_values(Xt, Yt)
-        sm.train()
-        y_s = sm.predict_values(Xt)[:, 0]
-        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-
-        y_sv = sm.predict_variances(Xt)[:, 0]
-        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-
-        np.testing.assert_almost_equal(
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 1, 0.75],
-                        [1, 2, 1, 0.66],
-                        [0, 2, 1, 0.75],
-                    ]
-                )
-            )[:, 0],
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 2, 0.75],
-                        [1, 1, 2, 0.66],
-                        [0, 2, 0, 0.75],
-                    ]
-                )
-            )[:, 0],
-        )
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(np.array([[0, 0, 2, 0.25]]))
-                - sm.predict_values(np.array([[0, 0, 2, 0.8]]))
+        for mixint_kernel in [
+            MixIntKernelType.CONT_RELAX,
+            MixIntKernelType.GOWER,
+            MixIntKernelType.HOMO_HSPHERE,
+        ]:
+            sm = MixedIntegerKrigingModel(
+                surrogate=KRG(
+                    design_space=ds,
+                    categorical_kernel=mixint_kernel,
+                    hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
+                    theta0=[1e-2],
+                    corr="abs_exp",
+                    n_start=5,
+                ),
             )
-            > 1e-8
-        )
+            sm.set_training_values(Xt, Yt)
+            sm.train()
+            y_s = sm.predict_values(Xt)[:, 0]
+            pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
 
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_hierarchical_design_space_example_GD_categorical_decreed(self):
-        import numpy as np
-        from smt.utils.design_space import (
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-            OrdinalVariable,
-            CategoricalVariable,
-        )
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
+            y_sv = sm.predict_variances(Xt)[:, 0]
+            var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
-        ds = DesignSpace(
-            [
-                CategoricalVariable(
-                    ["A", "B"]
-                ),  # x0 categorical: A or B; order is not relevant
-                CategoricalVariable(
-                    ["C", "D", "E"]
-                ),  # x1 ordinal: C, D or E; order is relevant
-                CategoricalVariable(
-                    ["tata", "tutu", "toto"]
-                ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-                FloatVariable(0, 1),  # c3 continuous between 0 and 1
-            ]
-        )
-
-        # Declare that x1 is acting if x0 == A
-        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
-
-        # Nested hierarchy is possible: activate x2 if x1 == C or D
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=["C", "D"])
-
-        # It is also possible to explicitly forbid two values from occurring simultaneously
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        # ds.add_value_constraint(
-        #    var1=0, value1="A", var2=2, value2=["tata","tutu"]
-        # )  # Forbid x0 == A && x2 == 0 or 1
-
-        # Sample the design space
-        # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-        Xt, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-        rng = np.random.default_rng(42)
-        Yt = 4 * rng.random(100) - 2 + Xt[:, 0] + Xt[:, 1] - Xt[:, 2] - Xt[:, 3]
-        # Correct design vectors: round discrete variables, correct hierarchical variables
-        x_corr, is_acting = ds.correct_get_acting(
-            np.array(
-                [
-                    [0, 0, 2, 0.25],
-                    [0, 2, 1, 0.75],
-                    [1, 2, 1, 0.66],
-                ]
+            np.testing.assert_almost_equal(
+                sm.predict_values(
+                    np.array(
+                        [
+                            [0, 2, 1, 0.75],
+                            [1, 2, 1, 0.66],
+                            [0, 2, 1, 0.75],
+                        ]
+                    )
+                )[:, 0],
+                sm.predict_values(
+                    np.array(
+                        [
+                            [0, 2, 2, 0.75],
+                            [1, 1, 2, 0.66],
+                            [0, 2, 0, 0.75],
+                        ]
+                    )
+                )[:, 0],
             )
-        )
-
-        # Observe the hierarchical behavior:
-        np.testing.assert_array_equal(
-            is_acting,
-            np.array(
-                [
-                    [True, True, True, True],
-                    [
-                        True,
-                        True,
-                        False,
-                        True,
-                    ],  # x2 is not acting if x1 != C or D (0 or 1)
-                    [
-                        True,
-                        False,
-                        False,
-                        True,
-                    ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
-                ]
-            ),
-        )
-
-        np.testing.assert_almost_equal(
-            x_corr,
-            np.array(
-                [
-                    [0, 0, 2, 0.25],
-                    [0, 2, 0, 0.75],
-                    # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-                    [1, 0, 0, 0.66],  # x1 and x2 are imputed
-                ]
-            ),
-        )
-
-        sm = MixedIntegerKrigingModel(
-            surrogate=KRG(
-                design_space=ds,
-                categorical_kernel=MixIntKernelType.GOWER,
-                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
-                theta0=[1e-2],
-                corr="abs_exp",
-                n_start=5,
-            ),
-        )
-        sm.set_training_values(Xt, Yt)
-        sm.train()
-        y_s = sm.predict_values(Xt)[:, 0]
-        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-
-        y_sv = sm.predict_variances(Xt)[:, 0]
-        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-
-        np.testing.assert_almost_equal(
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 1, 0.75],
-                        [1, 2, 1, 0.66],
-                        [0, 2, 1, 0.75],
-                    ]
+            self.assertTrue(
+                np.linalg.norm(
+                    sm.predict_values(np.array([[0, 0, 2, 0.25]]))
+                    - sm.predict_values(np.array([[0, 0, 2, 0.8]]))
                 )
-            )[:, 0],
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 2, 0.75],
-                        [1, 1, 2, 0.66],
-                        [0, 2, 0, 0.75],
-                    ]
-                )
-            )[:, 0],
-        )
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(np.array([[0, 0, 2, 0.25]]))
-                - sm.predict_values(np.array([[0, 0, 2, 0.8]]))
+                > 1e-8
             )
-            > 1e-8
-        )
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_hierarchical_design_space_example_HH_categorical_decreed(self):
-        import numpy as np
-        from smt.utils.design_space import (
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-            OrdinalVariable,
-            CategoricalVariable,
-        )
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
-        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
-
-        ds = DesignSpace(
-            [
-                CategoricalVariable(
-                    ["A", "B"]
-                ),  # x0 categorical: A or B; order is not relevant
-                CategoricalVariable(
-                    ["C", "D", "E"]
-                ),  # x1 ordinal: C, D or E; order is relevant
-                CategoricalVariable(
-                    ["tata", "tutu", "toto"]
-                ),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
-                FloatVariable(0, 1),  # c3 continuous between 0 and 1
-            ]
-        )
-
-        # Declare that x1 is acting if x0 == A
-        ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value="A")
-
-        # Nested hierarchy is possible: activate x2 if x1 == C or D
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        ds.declare_decreed_var(decreed_var=2, meta_var=1, meta_value=["C", "D"])
-
-        # It is also possible to explicitly forbid two values from occurring simultaneously
-        # Note: only if ConfigSpace is installed! pip install smt[cs]
-        # ds.add_value_constraint(
-        #    var1=0, value1="A", var2=2, value2=["tata","tutu"]
-        # )  # Forbid x0 == A && x2 == 0 or 1
-
-        # Sample the design space
-        # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-        Xt, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-        rng = np.random.default_rng(42)
-        Yt = 4 * rng.random(100) - 2 + Xt[:, 0] + Xt[:, 1] - Xt[:, 2] - Xt[:, 3]
-        # Correct design vectors: round discrete variables, correct hierarchical variables
-        x_corr, is_acting = ds.correct_get_acting(
-            np.array(
-                [
-                    [0, 0, 2, 0.25],
-                    [0, 2, 1, 0.75],
-                    [1, 2, 1, 0.66],
-                ]
-            )
-        )
-
-        # Observe the hierarchical behavior:
-        np.testing.assert_array_equal(
-            is_acting,
-            np.array(
-                [
-                    [True, True, True, True],
-                    [
-                        True,
-                        True,
-                        False,
-                        True,
-                    ],  # x2 is not acting if x1 != C or D (0 or 1)
-                    [
-                        True,
-                        False,
-                        False,
-                        True,
-                    ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
-                ]
-            ),
-        )
-        np.testing.assert_almost_equal(
-            x_corr,
-            np.array(
-                [
-                    [0, 0, 2, 0.25],
-                    [0, 2, 0, 0.75],
-                    # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-                    [1, 0, 0, 0.66],  # x1 and x2 are imputed
-                ]
-            ),
-        )
-
-        sm = MixedIntegerKrigingModel(
-            surrogate=KRG(
-                design_space=ds,
-                categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
-                hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
-                theta0=[1e-2],
-                corr="abs_exp",
-                n_start=5,
-            ),
-        )
-        sm.set_training_values(Xt, Yt)
-        sm.train()
-        y_s = sm.predict_values(Xt)[:, 0]
-        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-
-        y_sv = sm.predict_variances(Xt)[:, 0]
-        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-
-        np.testing.assert_almost_equal(
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 1, 0.75],
-                        [1, 2, 1, 0.66],
-                        [0, 2, 1, 0.75],
-                    ]
-                )
-            )[:, 0],
-            sm.predict_values(
-                np.array(
-                    [
-                        [0, 2, 2, 0.75],
-                        [1, 1, 2, 0.66],
-                        [0, 2, 0, 0.75],
-                    ]
-                )
-            )[:, 0],
-        )
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(np.array([[0, 0, 2, 0.25]]))
-                - sm.predict_values(np.array([[0, 0, 2, 0.8]]))
-            )
-            > 1e-8
-        )
 
     def run_hierarchical_variables_Goldstein(self):
         import numpy as np
