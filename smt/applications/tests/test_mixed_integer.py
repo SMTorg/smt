@@ -28,6 +28,7 @@ from smt.utils.design_space import (
     IntegerVariable,
     OrdinalVariable,
     CategoricalVariable,
+    HAS_CONFIG_SPACE,
 )
 import smt.utils.design_space as ds
 
@@ -726,6 +727,9 @@ class TestMixedInteger(unittest.TestCase):
 
         self._sm = sm  # ignore: just used for test
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_hierarchical_design_space_example(self):
         self.run_hierarchical_design_space_example()
         np.testing.assert_almost_equal(
@@ -756,6 +760,9 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_hierarchical_design_space_example_CR_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
@@ -813,40 +820,37 @@ class TestMixedInteger(unittest.TestCase):
         )
 
         # Observe the hierarchical behavior:
-        self.assertTrue(
-            np.all(
-                is_acting
-                == np.array(
+        np.testing.assert_array_equal(
+            is_acting,
+            np.array(
+                [
+                    [True, True, True, True],
                     [
-                        [True, True, True, True],
-                        [
-                            True,
-                            True,
-                            False,
-                            True,
-                        ],  # x2 is not acting if x1 != C or D (0 or 1)
-                        [
-                            True,
-                            False,
-                            False,
-                            True,
-                        ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
-                    ]
-                )
-            )
+                        True,
+                        True,
+                        False,
+                        True,
+                    ],  # x2 is not acting if x1 != C or D (0 or 1)
+                    [
+                        True,
+                        False,
+                        False,
+                        True,
+                    ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
+                ]
+            ),
         )
-        self.assertTrue(
-            np.all(
-                x_corr
-                == np.array(
-                    [
-                        [0, 0, 2, 0.25],
-                        [0, 2, 0, 0.75],
-                        # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-                        [1, 0, 0, 0.66],  # x1 and x2 are imputed
-                    ]
-                )
-            )
+
+        np.testing.assert_array_equal(
+            x_corr,
+            np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    [0, 2, 0, 0.75],
+                    # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+                    [1, 0, 0, 0.66],  # x1 and x2 are imputed
+                ]
+            ),
         )
 
         sm = MixedIntegerKrigingModel(
@@ -867,28 +871,25 @@ class TestMixedInteger(unittest.TestCase):
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 1, 0.75],
-                            [1, 2, 1, 0.66],
-                            [0, 2, 1, 0.75],
-                        ]
-                    )
-                )[:, 0]
-                - sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 2, 0.75],
-                            [1, 1, 2, 0.66],
-                            [0, 2, 0, 0.75],
-                        ]
-                    )
-                )[:, 0]
-            )
-            < 1e-8
+        np.testing.assert_almost_equal(
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 1, 0.75],
+                        [1, 2, 1, 0.66],
+                        [0, 2, 1, 0.75],
+                    ]
+                )
+            )[:, 0],
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 2, 0.75],
+                        [1, 1, 2, 0.66],
+                        [0, 2, 0, 0.75],
+                    ]
+                )
+            )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
@@ -898,6 +899,9 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_hierarchical_design_space_example_GD_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
@@ -955,40 +959,37 @@ class TestMixedInteger(unittest.TestCase):
         )
 
         # Observe the hierarchical behavior:
-        self.assertTrue(
-            np.all(
-                is_acting
-                == np.array(
+        np.testing.assert_array_equal(
+            is_acting,
+            np.array(
+                [
+                    [True, True, True, True],
                     [
-                        [True, True, True, True],
-                        [
-                            True,
-                            True,
-                            False,
-                            True,
-                        ],  # x2 is not acting if x1 != C or D (0 or 1)
-                        [
-                            True,
-                            False,
-                            False,
-                            True,
-                        ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
-                    ]
-                )
-            )
+                        True,
+                        True,
+                        False,
+                        True,
+                    ],  # x2 is not acting if x1 != C or D (0 or 1)
+                    [
+                        True,
+                        False,
+                        False,
+                        True,
+                    ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
+                ]
+            ),
         )
-        self.assertTrue(
-            np.all(
-                x_corr
-                == np.array(
-                    [
-                        [0, 0, 2, 0.25],
-                        [0, 2, 0, 0.75],
-                        # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-                        [1, 0, 0, 0.66],  # x1 and x2 are imputed
-                    ]
-                )
-            )
+
+        np.testing.assert_almost_equal(
+            x_corr,
+            np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    [0, 2, 0, 0.75],
+                    # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+                    [1, 0, 0, 0.66],  # x1 and x2 are imputed
+                ]
+            ),
         )
 
         sm = MixedIntegerKrigingModel(
@@ -1009,28 +1010,25 @@ class TestMixedInteger(unittest.TestCase):
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 1, 0.75],
-                            [1, 2, 1, 0.66],
-                            [0, 2, 1, 0.75],
-                        ]
-                    )
-                )[:, 0]
-                - sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 2, 0.75],
-                            [1, 1, 2, 0.66],
-                            [0, 2, 0, 0.75],
-                        ]
-                    )
-                )[:, 0]
-            )
-            < 1e-8
+        np.testing.assert_almost_equal(
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 1, 0.75],
+                        [1, 2, 1, 0.66],
+                        [0, 2, 1, 0.75],
+                    ]
+                )
+            )[:, 0],
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 2, 0.75],
+                        [1, 1, 2, 0.66],
+                        [0, 2, 0, 0.75],
+                    ]
+                )
+            )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
@@ -1040,6 +1038,9 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_hierarchical_design_space_example_HH_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
@@ -1097,40 +1098,36 @@ class TestMixedInteger(unittest.TestCase):
         )
 
         # Observe the hierarchical behavior:
-        self.assertTrue(
-            np.all(
-                is_acting
-                == np.array(
+        np.testing.assert_array_equal(
+            is_acting,
+            np.array(
+                [
+                    [True, True, True, True],
                     [
-                        [True, True, True, True],
-                        [
-                            True,
-                            True,
-                            False,
-                            True,
-                        ],  # x2 is not acting if x1 != C or D (0 or 1)
-                        [
-                            True,
-                            False,
-                            False,
-                            True,
-                        ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
-                    ]
-                )
-            )
+                        True,
+                        True,
+                        False,
+                        True,
+                    ],  # x2 is not acting if x1 != C or D (0 or 1)
+                    [
+                        True,
+                        False,
+                        False,
+                        True,
+                    ],  # x1 is not acting if x0 != A, and x2 is not acting because x1 is not acting
+                ]
+            ),
         )
-        self.assertTrue(
-            np.all(
-                x_corr
-                == np.array(
-                    [
-                        [0, 0, 2, 0.25],
-                        [0, 2, 0, 0.75],
-                        # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
-                        [1, 0, 0, 0.66],  # x1 and x2 are imputed
-                    ]
-                )
-            )
+        np.testing.assert_almost_equal(
+            x_corr,
+            np.array(
+                [
+                    [0, 0, 2, 0.25],
+                    [0, 2, 0, 0.75],
+                    # x2 is not acting, so it is corrected ("imputed") to its non-acting value (0 for discrete vars)
+                    [1, 0, 0, 0.66],  # x1 and x2 are imputed
+                ]
+            ),
         )
 
         sm = MixedIntegerKrigingModel(
@@ -1151,28 +1148,25 @@ class TestMixedInteger(unittest.TestCase):
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 1, 0.75],
-                            [1, 2, 1, 0.66],
-                            [0, 2, 1, 0.75],
-                        ]
-                    )
-                )[:, 0]
-                - sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 2, 0.75],
-                            [1, 1, 2, 0.66],
-                            [0, 2, 0, 0.75],
-                        ]
-                    )
-                )[:, 0]
-            )
-            < 1e-8
+        np.testing.assert_almost_equal(
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 1, 0.75],
+                        [1, 2, 1, 0.66],
+                        [0, 2, 1, 0.75],
+                    ]
+                )
+            )[:, 0],
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 2, 0.75],
+                        [1, 1, 2, 0.66],
+                        [0, 2, 0, 0.75],
+                    ]
+                )
+            )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
@@ -1407,28 +1401,25 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(pred_RMSE < 1e-7)
         print("Pred_RMSE", pred_RMSE)
         self.assertTrue(var_RMSE < 1e-7)
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(
-                    np.array(
-                        [
-                            [0, -1, -2, 8, 0, 2, 0, 0],
-                            [1, -1, -2, 16, 1, 2, 1, 0],
-                            [2, -1, -2, 32, 2, 2, 1, -2],
-                        ]
-                    )
-                )[:, 0]
-                - sm.predict_values(
-                    np.array(
-                        [
-                            [0, -1, -2, 8, 0, 2, 10, 10],
-                            [1, -1, -2, 16, 1, 2, 1, 10],
-                            [2, -1, -2, 32, 2, 2, 1, -2],
-                        ]
-                    )
-                )[:, 0]
-            )
-            < 1e-8
+        np.testing.assert_almost_equal(
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, -1, -2, 8, 0, 2, 0, 0],
+                        [1, -1, -2, 16, 1, 2, 1, 0],
+                        [2, -1, -2, 32, 2, 2, 1, -2],
+                    ]
+                )
+            )[:, 0],
+            sm.predict_values(
+                np.array(
+                    [
+                        [0, -1, -2, 8, 0, 2, 10, 10],
+                        [1, -1, -2, 16, 1, 2, 1, 10],
+                        [2, -1, -2, 32, 2, 2, 1, -2],
+                    ]
+                )
+            )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
