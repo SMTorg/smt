@@ -720,40 +720,42 @@ class TestMixedInteger(unittest.TestCase):
 
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-        self.assertTrue(pred_RMSE < 1e-7)
+        assert pred_RMSE < 1e-7
         print("Pred_RMSE", pred_RMSE)
-        self.assertTrue(
-            np.linalg.norm(
-                sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 1, 0.75],
-                            [1, 2, 1, 0.66],
-                            [0, 2, 1, 0.75],
-                        ]
-                    )
-                )[:, 0]
-                - sm.predict_values(
-                    np.array(
-                        [
-                            [0, 2, 2, 0.75],
-                            [1, 1, 2, 0.66],
-                            [0, 2, 0, 0.75],
-                        ]
-                    )
-                )[:, 0]
-            )
-            < 1e-8
+
+        self._sm = sm  # ignore: just used for test
+
+    def test_hierarchical_design_space_example(self):
+        self.run_hierarchical_design_space_example()
+        np.testing.assert_almost_equal(
+            self._sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 1, 0.75],
+                        [1, 2, 1, 0.66],
+                        [0, 2, 1, 0.75],
+                    ]
+                )
+            )[:, 0],
+            self._sm.predict_values(
+                np.array(
+                    [
+                        [0, 2, 2, 0.75],
+                        [1, 1, 2, 0.66],
+                        [0, 2, 0, 0.75],
+                    ]
+                )
+            )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
-                sm.predict_values(np.array([[0, 0, 2, 0.25]]))
-                - sm.predict_values(np.array([[0, 0, 2, 0.8]]))
+                self._sm.predict_values(np.array([[0, 0, 2, 0.25]]))
+                - self._sm.predict_values(np.array([[0, 0, 2, 0.8]]))
             )
             > 1e-8
         )
 
-    def run_hierarchical_design_space_example_CR_categorical_decreed(self):
+    def test_hierarchical_design_space_example_CR_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
             DesignSpace,
@@ -895,7 +897,7 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
-    def run_hierarchical_design_space_example_GD_categorical_decreed(self):
+    def test_hierarchical_design_space_example_GD_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
             DesignSpace,
@@ -1037,7 +1039,7 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
-    def run_hierarchical_design_space_example_HH_categorical_decreed(self):
+    def test_hierarchical_design_space_example_HH_categorical_decreed(self):
         import numpy as np
         from smt.utils.design_space import (
             DesignSpace,
@@ -1344,6 +1346,7 @@ class TestMixedInteger(unittest.TestCase):
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_hierarchical_variables_NN(self):
         problem = HierarchicalNeuralNetwork()
         ds = problem.design_space
