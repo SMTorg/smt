@@ -23,7 +23,7 @@ try:
         ForbiddenInClause,
         ForbiddenAndConjunction,
     )
-    from ConfigSpace.exceptions import ForbiddenValueError
+    from ConfigSpace.exceptions import ForbiddenValueError, InactiveHyperparameter
     from ConfigSpace.util import get_random_neighbor
 
     HAS_CONFIG_SPACE = True
@@ -967,9 +967,9 @@ class DesignSpace(BaseDesignSpace):
                 config.is_valid_configuration()
                 return config
 
-            except ValueError as e:
+            except Exception as e:
                 error_str = str(e)
-                if "Inactive hyperparameter" in error_str:
+                if isinstance(e, InactiveHyperparameter):
                     # Deduce which parameter is inactive
                     inactive_param_name = error_str.split("'")[1]
                     param_idx = self._cs.get_idx_by_hyperparameter_name(
