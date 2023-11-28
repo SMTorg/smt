@@ -1,0 +1,84 @@
+pyDOE sampling methods (Box Behnken, Plackett-Burman, Factorial and Generalized Subset Designs)
+===============================================================================================
+
+pyDOE is a package for design of experiments [1]_. 
+The optimized LHS in SMT is build on top of pyDOE3 LHS implementation.
+
+Main design functions provided by pyDOE are made available behind an adapter base class `PyDoeSamplingMethod`
+which make them compliant with `SamplingMethod` base class interface.
+
+While historically sampling method interface requires to specify a number of points, pyDOE designs
+methods output a number of points which is only determined by the dimension of x and other method-specific options.
+
+The following designs are exposed:
+
+* Box Behnken design
+* Plackett-Burman design
+* Factorial design
+* Generalized Subset Design
+
+See pyDOE3 documentation [2]_
+
+References
+
+.. [1] https://github.com/relf/pyDOE3 
+
+.. [2] https://pydoe3.readthedocs.io/en/stable 
+
+
+Box Behnken sampling
+--------------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_box_behken , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , BoxBehnken , options
+
+
+Plackett-Burman sampling
+------------------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_plackett_burman , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , PlackettBurman , options
+
+
+Factorial sampling
+------------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_factorial , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , Factorial , options
+
+
+Generalized Subset sampling
+---------------------------
+
+Usage
+^^^^^
+
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_gsd , 80
+
+Options
+^^^^^^^
+
+.. embed-options-table :: smt.sampling_methods , Gsd , options
+
+
