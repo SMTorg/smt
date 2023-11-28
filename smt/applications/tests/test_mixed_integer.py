@@ -6,6 +6,7 @@ Created on Tue Oct 12 10:48:01 2021
 import unittest
 import numpy as np
 import itertools
+import os
 
 try:
     import matplotlib
