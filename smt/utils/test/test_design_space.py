@@ -201,7 +201,7 @@ class Test(unittest.TestCase):
         )
         self.assertEqual(len(ds.design_variables), 4)
         if HAS_CONFIG_SPACE:
-            self.assertEqual(len(ds._cs.get_hyperparameters()), 4)
+            self.assertEqual(len(list(ds._cs.values())), 4)
         self.assertTrue(np.all(~ds.is_conditionally_acting))
         if HAS_CONFIG_SPACE:
             x, is_acting = ds.sample_valid_x(3, random_state=42)
@@ -538,7 +538,25 @@ class Test(unittest.TestCase):
                 self.assertRaises(
                     RuntimeError, lambda: ds.sample_valid_x(10, random_state=42)
                 )
-
+    def test_check_conditionally_acting_2(self):
+      
+        for simulate_no_cs in [True, False]:
+            with simulate_no_config_space(simulate_no_cs):
+                ds = DesignSpace(
+                    [
+                        CategoricalVariable(["A", "B", "C"]),  # x0
+                        CategoricalVariable(["E", "F"]),  # x1
+                        IntegerVariable(0, 1),  # x2
+                        FloatVariable(0, 1),  # x3
+                    ],
+                    seed=42,
+                )
+                ds.declare_decreed_var(
+                    decreed_var=0, meta_var=1, meta_value="E"
+                )  # Activate x3 if x0 == A
+    
+                ds.sample_valid_x(10, random_state=42)
+                
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
@@ -549,7 +567,7 @@ class Test(unittest.TestCase):
                 IntegerVariable(0, 2),
             ]
         )
-        assert ds._cs.get_hyperparameters()[0].default_value == 1
+        assert list(ds._cs.values())[0].default_value == 1
 
         ds.add_value_constraint(var1=0, value1=1, var2=0, value2=1)
         ds.sample_valid_x(100, random_state=42)

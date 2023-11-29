@@ -1,5 +1,5 @@
 """
-Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
+Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>, Paul Saves <paul.saves@onera.fr>
 
 This package is distributed under New BSD license.
 """
@@ -23,7 +23,10 @@ try:
         ForbiddenInClause,
         ForbiddenAndConjunction,
     )
-    from ConfigSpace.exceptions import ForbiddenValueError, InactiveHyperparameter
+    from ConfigSpace.exceptions import (
+        ForbiddenValueError,
+        InactiveHyperparameterSetError,
+    )
     from ConfigSpace.util import get_random_neighbor
 
     HAS_CONFIG_SPACE = True
@@ -891,7 +894,6 @@ class DesignSpace(BaseDesignSpace):
         if self._cs is not None:
             # Normalize value according to what ConfigSpace expects
             self._normalize_x(x)
-
             # Get corrected Configuration objects by mapping our design vectors to the ordering of the ConfigurationSpace
             inv_cs_var_idx = self._inv_cs_var_idx
             configs = []
@@ -956,8 +958,8 @@ class DesignSpace(BaseDesignSpace):
             return self.correct_get_acting(x)
 
     def _get_correct_config(self, vector: np.ndarray) -> Configuration:
+        
         config = Configuration(self._cs, vector=vector)
-
         # Unfortunately we cannot directly ask which parameters SHOULD be active
         # https://github.com/automl/ConfigSpace/issues/253#issuecomment-1513216665
         # Therefore, we temporarily fix it with a very dirty workaround: catch the error raised in check_configuration
@@ -969,15 +971,16 @@ class DesignSpace(BaseDesignSpace):
 
             except Exception as e:
                 error_str = str(e)
-                if isinstance(e, InactiveHyperparameter):
+                if isinstance(e, InactiveHyperparameterSetError):
                     # Deduce which parameter is inactive
-                    inactive_param_name = error_str.split("'")[1]
+                    inactive_param_name = (error_str.split("\n")[1]).split(",")[0]
                     param_idx = self._cs.get_idx_by_hyperparameter_name(
                         inactive_param_name
-                    )
-
+                    )+1
                     # Modify the vector and create a new Configuration
                     vector = config.get_array().copy()
+                    while str(vector[param_idx]) =="nan" : 
+                        param_idx=param_idx+1
                     vector[param_idx] = np.nan
                     config = Configuration(self._cs, vector=vector)
 
