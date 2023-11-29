@@ -29,7 +29,12 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ## Mixed-Integer Gaussian Process and Bayesian Optimization to solve unconstrained problems with mixed variables (continuous, discrete, categorical)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger.ipynb)
+
+## Mixed-Integer Gaussian Process and Bayesian Optimization for Engineering application
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_Engineering_applications.ipynb)
+
 
 ## DesignSpace to variables (continuous, discrete, categorical, hierarchical)
 
