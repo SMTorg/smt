@@ -98,6 +98,7 @@ class Gsd(PyDoeSamplingMethod):
         self.options.declare(
             "reduction",
             types=int,
+            default=2,
             desc="Reduction factor (bigger than 1). Larger `reduction` means fewer experiments in the design and more possible complementary designs",
         )
 
