@@ -32,7 +32,7 @@ Box Behnken sampling
 Usage
 ^^^^^
 
-.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_box_behken , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_box_behnken , 80
 
 Options
 ^^^^^^^
@@ -46,7 +46,7 @@ Plackett-Burman sampling
 Usage
 ^^^^^
 
-.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_plackett_burman , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_plackett_burman , 80
 
 Options
 ^^^^^^^
@@ -60,7 +60,7 @@ Factorial sampling
 Usage
 ^^^^^
 
-.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_factorial , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_factorial , 80
 
 Options
 ^^^^^^^
@@ -74,7 +74,7 @@ Generalized Subset sampling
 Usage
 ^^^^^
 
-.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_gsd , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_gsd , 80
 
 Options
 ^^^^^^^
