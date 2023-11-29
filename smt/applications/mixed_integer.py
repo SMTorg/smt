@@ -42,7 +42,6 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             "MixedIntegerSamplingMethod has been deprecated, use DesignSpace.sample_valid_x instead!",
             category=DeprecationWarning,
         )
-
         self._design_space = design_space
         self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
@@ -50,7 +49,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         self._sampling_method = sampling_method_class(
             xlimits=self._unfolded_xlimits, **kwargs
         )
-        super().__init__()
+        super().__init__(xlimits=self._unfolded_xlimits)
 
     def _compute(self, nt):
         doe = self._sampling_method(nt)

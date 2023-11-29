@@ -21,7 +21,6 @@ To cite SMT 2.0: P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. 
 
 `SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes, ArXiv 2023 <https://arxiv.org/abs/2305.13998>`_. 
 
-
 .. code-block:: none
 
 	@article{SMT2ArXiv,

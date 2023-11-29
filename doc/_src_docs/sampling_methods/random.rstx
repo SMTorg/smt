@@ -6,7 +6,7 @@ This class creates random samples from a uniform distribution over the design sp
 Usage
 -----
 
-.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , test_random , 80
+.. embed-test-print-plot :: smt.sampling_methods.tests.test_sampling_method_examples , Test , run_random , 80
 
 Options
 -------
