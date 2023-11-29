@@ -1,13 +1,12 @@
-pyDOE sampling methods (Box Behnken, Plackett-Burman, Factorial and Generalized Subset Designs)
-===============================================================================================
+pyDOE sampling methods
+======================
 
-pyDOE is a package for design of experiments [1]_. 
-The optimized LHS in SMT is build on top of pyDOE3 LHS implementation.
+pyDOE is a package for design of experiments [1]_ (LHS implementation in SMT is based on pyDOE LHS). 
 
-Main design functions provided by pyDOE are made available behind an adapter base class `PyDoeSamplingMethod`
-which make them compliant with `SamplingMethod` base class interface.
+Main DOE functions provided by pyDOE are made available through an adapter base 
+class `PyDoeSamplingMethod` which makes them compliant with the `SamplingMethod` base class interface.
 
-While historically sampling method interface requires to specify a number of points, pyDOE designs
+While historically the sampling method interface of SMT requires to specify a number of points, pyDOE design
 methods output a number of points which is only determined by the dimension of x and other method-specific options.
 
 The following designs are exposed:

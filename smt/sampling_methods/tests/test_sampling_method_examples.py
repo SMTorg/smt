@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
         print(x.shape)
 
         ax = plt.axes(projection="3d")
-        ax.plot3D(x[:, 0], x[:, 1], x[:, 2], ".")
+        ax.plot3D(x[:, 0], x[:, 1], x[:, 2], "o")
 
         ax.set_xlabel("x0")
         ax.set_ylabel("x1")
@@ -99,16 +99,19 @@ class Test(unittest.TestCase):
 
         from smt.sampling_methods import PlackettBurman
 
-        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [-6.0, 1.0]])
         sampling = PlackettBurman(xlimits=xlimits)
 
         x = sampling()
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], "o")
-        plt.xlabel("x")
-        plt.ylabel("y")
+        ax = plt.axes(projection="3d")
+        ax.plot3D(x[:, 0], x[:, 1], x[:, 2], "o")
+
+        ax.set_xlabel("x0")
+        ax.set_ylabel("x1")
+        ax.set_zlabel("x2")
         plt.show()
 
     @staticmethod
@@ -118,16 +121,19 @@ class Test(unittest.TestCase):
 
         from smt.sampling_methods import Factorial
 
-        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-        sampling = Factorial(xlimits=xlimits, levels=[3, 6])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [-6.0, 1.0]])
+        sampling = Factorial(xlimits=xlimits, levels=[3, 6, 4])
 
         x = sampling()
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], "o")
-        plt.xlabel("x")
-        plt.ylabel("y")
+        ax = plt.axes(projection="3d")
+        ax.plot3D(x[:, 0], x[:, 1], x[:, 2], "o")
+
+        ax.set_xlabel("x0")
+        ax.set_ylabel("x1")
+        ax.set_zlabel("x2")
         plt.show()
 
     @staticmethod
@@ -137,16 +143,19 @@ class Test(unittest.TestCase):
 
         from smt.sampling_methods import Gsd
 
-        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-        sampling = Gsd(xlimits=xlimits, levels=[3, 6])
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [-6.0, 1.0]])
+        sampling = Gsd(xlimits=xlimits, levels=[3, 6, 4])
 
         x = sampling()
 
         print(x.shape)
 
-        plt.plot(x[:, 0], x[:, 1], "o")
-        plt.xlabel("x")
-        plt.ylabel("y")
+        ax = plt.axes(projection="3d")
+        ax.plot3D(x[:, 0], x[:, 1], x[:, 2], "o")
+
+        ax.set_xlabel("x0")
+        ax.set_ylabel("x1")
+        ax.set_zlabel("x2")
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
