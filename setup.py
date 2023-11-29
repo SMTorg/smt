@@ -1,9 +1,10 @@
 """
-Author: Dr. John T. Hwang <hwangjt@umich.edu>
-        Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
+Author: John T. Hwang <hwangjt@umich.edu>
+        Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Remi Lafage <remi.lafage@onera.fr>
         Lucas Alber <lucasd.alber@gmail.com>
-
+        Paul Saves <paul.saves@onera.fr>
+        
 This package is distributed under New BSD license.
 """
 from setuptools import setup, Extension
@@ -90,8 +91,8 @@ metadata = dict(
     version=__version__,
     description="The Surrogate Modeling Toolbox (SMT)",
     long_description=LONG_DESCRIPTION,
-    author="Mohamed Amine Bouhlel et al.",
-    author_email="mbouhlel@umich.edu",
+    author="Remi Lafage et al.",
+    author_email="remi.lafage@onera.fr",
     license="BSD-3",
     classifiers=[_f for _f in CLASSIFIERS.split("\n") if _f],
     packages=[
@@ -113,10 +114,10 @@ metadata = dict(
             "numba~=0.56.4",
         ],
         "cs": [  # pip install smt[cs]
-            "ConfigSpace~=0.6.1",
+            "ConfigSpace~=0.7.1",
         ],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo
