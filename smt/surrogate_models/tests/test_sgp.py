@@ -33,7 +33,7 @@ class TestSGP(SMTestCase):
         N_inducing = 30
         self.Z = 2 * rng.rand(N_inducing, 1) - 1
 
-    def test_fitc(self):
+    def test_fitc_with_noise0(self):
         # Assume we know the variance eta of our noisy input data
         sgp = SGP(noise0=self.eta)
         sgp.set_training_values(self.Xtrain, self.Ytrain)
@@ -43,7 +43,7 @@ class TestSGP(SMTestCase):
         Ypred = sgp.predict_values(self.Xtest)
         self.assert_error(Ypred, self.Ytest, atol=0.02, rtol=0.1)
 
-    def test_vfe(self):
+    def test_vfe_with_noise0(self):
         # Assume we know the variance eta of our noisy input data
         sgp = SGP(noise0=self.eta, method="VFE")
         sgp.set_training_values(self.Xtrain, self.Ytrain)
@@ -52,6 +52,28 @@ class TestSGP(SMTestCase):
 
         Ypred = sgp.predict_values(self.Xtest)
         self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.1)
+
+    def test_fitc_with_noise_eval(self):
+        # Assume we know the variance eta of our noisy input data
+        sgp = SGP()
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.02, rtol=0.1)
+        self.assertAlmostEqual(sgp.optimal_noise, self.eta[0], delta=5e-3)
+
+    def test_vfe_with_noise_eval(self):
+        # Assume we know the variance eta of our noisy input data
+        sgp = SGP(method="VFE")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.1)
+        self.assertAlmostEqual(sgp.optimal_noise, self.eta[0], delta=5e-3)
 
 
 if __name__ == "__main__":

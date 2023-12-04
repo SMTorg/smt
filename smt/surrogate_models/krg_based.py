@@ -466,6 +466,14 @@ class KrgBased(SurrogateModel):
         ) = self._optimize_hyperparam(D)
         if self.name in ["MGP"]:
             self._specific_train()
+        elif self.name in ["SGP"] and not self.options["use_het_noise"]:
+            if self.options["eval_noise"]:
+                self.optimal_noise = self.optimal_theta[-1]
+                self.optimal_sigma2 = self.optimal_theta[-2]
+                self.optimal_theta = self.optimal_theta[:-2]
+            else:
+                self.optimal_sigma2 = self.optimal_theta[-1]
+                self.optimal_theta = self.optimal_theta[:-1]
         else:
             if self.options["eval_noise"] and not self.options["use_het_noise"]:
                 self.optimal_noise = self.optimal_theta[-1]
@@ -1791,6 +1799,28 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
                 noise_bounds = self.options["noise_bounds"]
+
+                # SGP: GP variance is optimized too
+                offset = 0
+                if self.name in ["SGP"]:
+                    theta0_sigma2 = np.concatenate([theta0, np.log10(np.ones(1))])
+                    sigma2_bounds = np.log10(np.array([1e-12, np.inf]))
+                    constraints.append(
+                        lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
+                    )
+                    constraints.append(
+                        lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
+                    )
+                    bounds_hyp.append(sigma2_bounds)
+                    offset = 1
+                    theta0 = theta0_sigma2
+                    theta0_rand = np.concatenate(
+                        [
+                            theta0_rand,
+                            np.log10(np.array([1.0])),
+                        ]
+                    )
+
                 if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                     for i in range(len(self.noise0)):
@@ -1816,12 +1846,12 @@ class KrgBased(SurrogateModel):
                     for i in range(len(self.noise0)):
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[i + len(self.theta0)]
+                            lambda log10t: log10t[offset + i + len(self.theta0)]
                             - noise_bounds[0]
                         )
                         constraints.append(
                             lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.theta0)]
+                            - log10t[offset + i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(
