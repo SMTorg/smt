@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 import os
 import unittest
 import numpy as np
-from sys import argv
+from sys import argv, platform
 
 try:
     import matplotlib
@@ -1005,7 +1005,7 @@ class TestEGO(SMTestCase):
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
         if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            if os.platform.system() == "Linux":  # results differs wrt platform
+            if platform == "Linux":  # results differs wrt platform
                 self.assertAlmostEqual(np.sum(y_data), 1.0355815090110578, delta=1e-12)
                 self.assertAlmostEqual(np.sum(x_data), 38.23494224077761, delta=1e-12)
             else:
