@@ -191,6 +191,8 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
+        # Make internal optim multistart reproducible
+        self.random_state = np.random.RandomState(41)
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
@@ -1741,7 +1743,7 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    self.theta0[i] = np.random.rand()
+                    self.theta0[i] = self.random_state.rand()
                     self.theta0[i] = (
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
@@ -1770,7 +1772,7 @@ class KrgBased(SurrogateModel):
             else:
                 theta_bounds = self.options["theta_bounds"]
                 log10t_bounds = np.log10(theta_bounds)
-                theta0_rand = np.random.rand(len(self.theta0))
+                theta0_rand = self.random_state.rand(len(self.theta0))
                 theta0_rand = (
                     theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
                     + log10t_bounds[0]
@@ -1829,7 +1831,9 @@ class KrgBased(SurrogateModel):
 
                 if self.options["n_start"] > 1:
                     sampling = LHS(
-                        xlimits=theta_limits, criterion="maximin", random_state=41
+                        xlimits=theta_limits,
+                        criterion="maximin",
+                        random_state=self.random_state,
                     )
                     theta_lhs_loops = sampling(self.options["n_start"])
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
