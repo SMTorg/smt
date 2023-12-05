@@ -68,11 +68,9 @@ class Test(SMTestCase):
 
         sampling = LHS(xlimits=prob.xlimits, random_state=42)
 
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
