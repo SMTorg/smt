@@ -1805,7 +1805,7 @@ class KrgBased(SurrogateModel):
                 if self.name in ["SGP"]:
                     theta0_sigma2 = np.concatenate([theta0, np.log10(np.ones(1))])
                     sigma2_bounds = np.log10(
-                        np.array([1e-12, (3.*self.y_std[0]) ** 2])
+                        np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
                     )
                     constraints.append(
                         lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
