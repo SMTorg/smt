@@ -192,13 +192,12 @@ class KrgBased(SurrogateModel):
             "random_state",
             default=41,
             types=(type(None), int, np.random.RandomState),
-            desc="Numpy RandomState object or seed number which controls random draws",
+            desc="Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)",
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
-        # Make internal optim multistart reproducible
-        self.random_state = np.random.RandomState(41)
+
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True

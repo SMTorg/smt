@@ -48,7 +48,6 @@ Limitations
 -----------
 
 * Inducing points location can not be optimized.
-* Noise variance on observed training data can not be estimated.
 * Trend function is assumed to be zero.
 
 

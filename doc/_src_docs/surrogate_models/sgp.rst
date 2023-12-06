@@ -48,7 +48,6 @@ Limitations
 -----------
 
 * Inducing points location can not be optimized.
-* Noise variance on observed training data can not be estimated.
 * Trend function is assumed to be zero.
 
 
@@ -95,10 +94,10 @@ Using FITC method
   random_idx = rng.permutation(nt)[:n_inducing]
   Z = xt[random_idx].copy()
   
-  sgp = SGP(noise0=eta2)  # Assume here we have an idea of the variance eta2
+  sgp = SGP()
   sgp.set_training_values(xt, yt)
   sgp.set_inducing_inputs(Z=Z)
-  # sgp.set_inducing_inputs()  # When Z not specified inducing points are picked randomly in traing data
+  # sgp.set_inducing_inputs()  # When Z not specified n_inducing points are picked randomly in traing data
   sgp.train()
   
   x = np.linspace(-1, 1, nt + 1).reshape(-1, 1)
@@ -134,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2497931
+     Training - done. Time (sec):  0.4202719
   ___________________________________________________________________________
      
    Evaluation
@@ -175,7 +174,7 @@ Using VFE method
   
   # Generate training data
   nt = 200
-  # Variance of the gaussian noise on our trainingg data
+  # Variance of the gaussian noise on our training data
   eta2 = [0.01]
   gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
   xt = 2 * rng.rand(nt, 1) - 1
@@ -186,7 +185,7 @@ Using VFE method
   random_idx = rng.permutation(nt)[:n_inducing]
   Z = xt[random_idx].copy()
   
-  sgp = SGP(noise0=eta2, method="VFE")
+  sgp = SGP(method="VFE")
   sgp.set_training_values(xt, yt)
   sgp.set_inducing_inputs(Z=Z)
   sgp.train()
@@ -224,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1902514
+     Training - done. Time (sec):  0.2463465
   ___________________________________________________________________________
      
    Evaluation
@@ -305,7 +304,7 @@ Options
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
-     -  1e-08
+     -  2.220446049250313e-13
      -  None
      -  ['float']
      -  a jitter for numerical stability
@@ -359,6 +358,11 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  random_state
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws
   *  -  method
      -  FITC
      -  ['FITC', 'VFE']
