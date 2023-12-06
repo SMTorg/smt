@@ -188,6 +188,12 @@ class KrgBased(SurrogateModel):
             desc="definition of the (hierarchical) design space: "
             "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
+        self.options.declare(
+            "random_state",
+            default=41,
+            types=(type(None), int, np.random.RandomState),
+            desc="Numpy RandomState object or seed number which controls random draws",
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
@@ -199,6 +205,13 @@ class KrgBased(SurrogateModel):
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
+        if isinstance(self.options["random_state"], np.random.RandomState):
+            self.random_state = self.options["random_state"]
+        elif isinstance(self.options["random_state"], int):
+            self.random_state = np.random.RandomState(self.options["random_state"])
+        else:
+            self.random_state = np.random.RandomState()
+
         # initialize default power values
         if self.options["corr"] == "squar_exp":
             self.options["pow_exp_power"] = 2.0
@@ -1803,7 +1816,8 @@ class KrgBased(SurrogateModel):
                 # SGP: GP variance is optimized too
                 offset = 0
                 if self.name in ["SGP"]:
-                    theta0_sigma2 = np.concatenate([theta0, np.log10(np.ones(1))])
+                    sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
+                    theta0_sigma2 = np.concatenate([theta0, sigma2_0])
                     sigma2_bounds = np.log10(
                         np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
                     )
@@ -1816,12 +1830,7 @@ class KrgBased(SurrogateModel):
                     bounds_hyp.append(sigma2_bounds)
                     offset = 1
                     theta0 = theta0_sigma2
-                    theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([1.0])),
-                        ]
-                    )
+                    theta0_rand = np.concatenate([theta0_rand, sigma2_0])
 
                 if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
