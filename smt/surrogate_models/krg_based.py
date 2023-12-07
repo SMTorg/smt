@@ -188,17 +188,29 @@ class KrgBased(SurrogateModel):
             desc="definition of the (hierarchical) design space: "
             "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
+        self.options.declare(
+            "random_state",
+            default=41,
+            types=(type(None), int, np.random.RandomState),
+            desc="Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)",
+        )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
-        # Make internal optim multistart reproducible
-        self.random_state = np.random.RandomState(41)
+
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
+        if isinstance(self.options["random_state"], np.random.RandomState):
+            self.random_state = self.options["random_state"]
+        elif isinstance(self.options["random_state"], int):
+            self.random_state = np.random.RandomState(self.options["random_state"])
+        else:
+            self.random_state = np.random.RandomState()
+
         # initialize default power values
         if self.options["corr"] == "squar_exp":
             self.options["pow_exp_power"] = 2.0
@@ -466,6 +478,14 @@ class KrgBased(SurrogateModel):
         ) = self._optimize_hyperparam(D)
         if self.name in ["MGP"]:
             self._specific_train()
+        elif self.name in ["SGP"] and not self.options["use_het_noise"]:
+            if self.options["eval_noise"]:
+                self.optimal_noise = self.optimal_theta[-1]
+                self.optimal_sigma2 = self.optimal_theta[-2]
+                self.optimal_theta = self.optimal_theta[:-2]
+            else:
+                self.optimal_sigma2 = self.optimal_theta[-1]
+                self.optimal_theta = self.optimal_theta[:-1]
         else:
             if self.options["eval_noise"] and not self.options["use_het_noise"]:
                 self.optimal_noise = self.optimal_theta[-1]
@@ -1791,6 +1811,26 @@ class KrgBased(SurrogateModel):
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
                 noise_bounds = self.options["noise_bounds"]
+
+                # SGP: GP variance is optimized too
+                offset = 0
+                if self.name in ["SGP"]:
+                    sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
+                    theta0_sigma2 = np.concatenate([theta0, sigma2_0])
+                    sigma2_bounds = np.log10(
+                        np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
+                    )
+                    constraints.append(
+                        lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
+                    )
+                    constraints.append(
+                        lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
+                    )
+                    bounds_hyp.append(sigma2_bounds)
+                    offset = 1
+                    theta0 = theta0_sigma2
+                    theta0_rand = np.concatenate([theta0_rand, sigma2_0])
+
                 if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                     for i in range(len(self.noise0)):
@@ -1816,12 +1856,12 @@ class KrgBased(SurrogateModel):
                     for i in range(len(self.noise0)):
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[i + len(self.theta0)]
+                            lambda log10t: log10t[offset + i + len(self.theta0)]
                             - noise_bounds[0]
                         )
                         constraints.append(
                             lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.theta0)]
+                            - log10t[offset + i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(

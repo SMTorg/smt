@@ -675,10 +675,10 @@ class Test(unittest.TestCase):
         random_idx = rng.permutation(nt)[:n_inducing]
         Z = xt[random_idx].copy()
 
-        sgp = SGP(noise0=eta2)  # Assume here we have an idea of the variance eta2
+        sgp = SGP()
         sgp.set_training_values(xt, yt)
         sgp.set_inducing_inputs(Z=Z)
-        # sgp.set_inducing_inputs()  # When Z not specified inducing points are picked randomly in traing data
+        # sgp.set_inducing_inputs()  # When Z not specified n_inducing points are picked randomly in traing data
         sgp.train()
 
         x = np.linspace(-1, 1, nt + 1).reshape(-1, 1)
@@ -719,7 +719,7 @@ class Test(unittest.TestCase):
 
         # Generate training data
         nt = 200
-        # Variance of the gaussian noise on our trainingg data
+        # Variance of the gaussian noise on our training data
         eta2 = [0.01]
         gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
         xt = 2 * rng.rand(nt, 1) - 1
@@ -730,7 +730,7 @@ class Test(unittest.TestCase):
         random_idx = rng.permutation(nt)[:n_inducing]
         Z = xt[random_idx].copy()
 
-        sgp = SGP(noise0=eta2, method="VFE")
+        sgp = SGP(method="VFE")
         sgp.set_training_values(xt, yt)
         sgp.set_inducing_inputs(Z=Z)
         sgp.train()
