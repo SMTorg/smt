@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0514209
+     Training - done. Time (sec):  0.1207759
   ___________________________________________________________________________
      
    Evaluation
@@ -93,9 +93,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0023532
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000235
      
   ___________________________________________________________________________
      
@@ -104,9 +104,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.2847059
+     Predicting - done. Time (sec):  0.0003793
      
-     Prediction time/pt. (sec) :  0.0569412
+     Prediction time/pt. (sec) :  0.0000759
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -231,6 +231,11 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  random_state
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

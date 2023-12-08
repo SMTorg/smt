@@ -30,7 +30,7 @@ Usage
 
   (50, 2)
   
-.. figure:: random_Test_test_random.png
+.. figure:: random_Test_run_random.png
   :scale: 80 %
   :align: center
 

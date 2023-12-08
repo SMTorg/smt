@@ -106,9 +106,7 @@ Main
   Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. Joseph Morlier
   """
   
-  import os
   import numpy as np
-  import csv
   
   from smt.examples.airfoil_parameters.learning_airfoil_parameters import (
       load_cd_training_data,
@@ -183,7 +181,7 @@ Main
   
 ::
 
-  Drag coefficient prediction (cd):  0.01037206667688999
+  Drag coefficient prediction (cd):  0.00994422276224332
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %

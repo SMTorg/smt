@@ -14,7 +14,7 @@ The LHS method uses the pyDOE package (Design of Experiments for Python) [1]_. F
 
 The four first criteria are the same than in pyDOE (for more details, see [1]_). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [2]_).
 
-.. [1] https://pythonhosted.org/pyDOE/index.html
+.. [1] https://pydoe3.readthedocs.io/en/stable
 
 .. [2] Jin, R. and Chen, W. and Sudjianto, A. (2005), "An efficient algorithm for constructing optimal design of computer experiments." Journal of Statistical Planning and Inference, 134:268-287.
 
@@ -45,7 +45,7 @@ Usage
 
   (50, 2)
   
-.. figure:: lhs_Test_test_lhs.png
+.. figure:: lhs_Test_run_lhs.png
   :scale: 80 %
   :align: center
 

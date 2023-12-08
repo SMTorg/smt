@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.9541509
+     Training - done. Time (sec):  1.2014399
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -252,6 +252,11 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  random_state
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

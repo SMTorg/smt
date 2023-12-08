@@ -214,7 +214,9 @@ Usage
   
   n_iter = 6
   xlimits = np.array([[0.0, 25.0]])
-  design_space = DesignSpace(xlimits)
+  
+  random_state = 42  # for reproducibility
+  design_space = DesignSpace(xlimits, seed=random_state)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -225,6 +227,7 @@ Usage
       criterion=criterion,
       xdoe=xdoe,
       surrogate=KRG(design_space=design_space, print_global=False),
+      random_state=random_state,
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -279,6 +282,7 @@ Usage
           ],
       )
   plt.show()
+  # Check the optimal point is x_opt=18.9, y_opt =-15.1
   
 ::
 
@@ -313,7 +317,9 @@ Usage with parallel options
   n_parallel = 3
   n_start = 50
   xlimits = np.array([[0.0, 25.0]])
-  design_space = DesignSpace(xlimits)
+  
+  random_state = 42
+  design_space = DesignSpace(xlimits, seed=random_state)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -353,7 +359,7 @@ Usage with parallel options
       qEI=qEI,
       n_start=n_start,
       evaluator=ParallelEvaluator(),
-      random_state=42,
+      random_state=random_state,
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -483,13 +489,15 @@ Usage with mixed variable
       return y.reshape((-1, 1))
   
   n_iter = 15
+  random_state = 42
   design_space = DesignSpace(
       [
           FloatVariable(-5, 5),
           CategoricalVariable(["blue", "red", "green"]),
           CategoricalVariable(["square", "circle"]),
           IntegerVariable(0, 2),
-      ]
+      ],
+      seed=random_state,
   )
   
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -501,7 +509,7 @@ Usage with mixed variable
   )
   mixint = MixedIntegerContext(design_space)
   n_doe = 3
-  sampling = mixint.build_sampling_method(LHS, criterion="ese", random_state=42)
+  sampling = mixint.build_sampling_method(random_state=random_state)
   xdoe = sampling(n_doe)
   ydoe = function_test_mixed_integer(xdoe)
   
@@ -513,7 +521,7 @@ Usage with mixed variable
       surrogate=sm,
       qEI=qEI,
       n_parallel=2,
-      random_state=42,
+      random_state=random_state,
   )
   
   x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
@@ -538,7 +546,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
+  Minimum in x=[-4.88885885  2.          0.          0.        ] with f(x)=-14.7
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -594,7 +602,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000218041F7A60>
+     -  <smt.applications.ego.Evaluator object at 0x1541173bca30>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -624,7 +632,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000218041F79A0>
+     -  <smt.surrogate_models.krg.KRG object at 0x1541173bc8b0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly

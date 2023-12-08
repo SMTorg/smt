@@ -28,7 +28,7 @@ Usage
 
   (50, 2)
   
-.. figure:: full_factorial_Test_test_full_factorial.png
+.. figure:: full_factorial_Test_run_full_factorial.png
   :scale: 80 %
   :align: center
 
