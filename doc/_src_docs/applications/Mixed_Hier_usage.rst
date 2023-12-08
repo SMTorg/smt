@@ -62,7 +62,7 @@ The design space is then defined from a list of design variables and implements 
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-  x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+  x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
   
   # Correct design vectors: round discrete variables, correct hierarchical variables
   x_corr, is_acting = ds.correct_get_acting(
@@ -106,6 +106,8 @@ The hierarchy relationships are specified after instantiating the design space:
       OrdinalVariable,
       CategoricalVariable,
   )
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
   
   ds = DesignSpace(
       [
@@ -137,8 +139,9 @@ The hierarchy relationships are specified after instantiating the design space:
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-  x_sampled, is_acting_sampled = ds.sample_valid_x(100)
-  
+  Xt, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+  rng = np.random.default_rng(42)
+  Yt = 4 * rng.random(100) - 2 + Xt[:, 0] + Xt[:, 1] - Xt[:, 2] - Xt[:, 3]
   # Correct design vectors: round discrete variables, correct hierarchical variables
   x_corr, is_acting = ds.correct_get_acting(
       np.array(
@@ -182,6 +185,43 @@ The hierarchy relationships are specified after instantiating the design space:
           ]
       )
   )
+  
+  sm = MixedIntegerKrigingModel(
+      surrogate=KRG(
+          design_space=ds,
+          categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+          hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
+          theta0=[1e-2],
+          corr="abs_exp",
+          n_start=5,
+      ),
+  )
+  sm.set_training_values(Xt, Yt)
+  sm.train()
+  y_s = sm.predict_values(Xt)[:, 0]
+  pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+  
+  y_sv = sm.predict_variances(Xt)[:, 0]
+  var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+  assert pred_RMSE < 1e-7
+  print("Pred_RMSE", pred_RMSE)
+  
+  self._sm = sm  # to be ignored: just used for automated test
+  
+::
+
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.3058572
+     
+     Prediction time/pt. (sec) :  0.0030586
+     
+  Pred_RMSE 4.092408537263059e-13
   
 
 Design space and variable class references
@@ -232,8 +272,7 @@ Example of sampling a mixed-discrete design space
   )
   
   num = 40
-  x, x_is_acting = design_space.sample_valid_x(num)
-  
+  x, x_is_acting = design_space.sample_valid_x(num, random_state=42)
   cmap = colors.ListedColormap(cat_var.values)
   plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
   plt.show()
@@ -320,10 +359,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0031278
+     Predicting - done. Time (sec):  0.0124640
      
-     Prediction time/pt. (sec) :  0.0000626
-
+     Prediction time/pt. (sec) :  0.0002493
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

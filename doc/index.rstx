@@ -19,17 +19,18 @@ Cite us
 -------
 To cite SMT 2.0: P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins. 
 
-`SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes, ArXiv 2023 <https://arxiv.org/abs/2305.13998>`_. 
+`SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes, Advances in Engineering Software, 2024 <https://doi.org/10.1016/j.advengsoft.2023.103571>`_. 
 
 .. code-block:: none
 
-	@article{SMT2ArXiv,
-		Author = {P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins},
-		Journal = {ArXiv preprint},	
-		Title = {{SMT} 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes},
-		Publisher = {ArXiv},		
-		doi = {https://doi.org/10.48550/arXiv.2305.13998},
-		Year = {2023}}
+        @article{saves2023smt,
+                author = {P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins},
+                title = {{SMT 2.0: A} Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes},
+                journal = {Advances in Engineering Sofware},
+                year = {2024},
+                volume = {188}, 
+                pages = {103571},
+                doi = {https://doi.org/10.1016/j.advengsoft.2023.103571}}
 
 To cite SMT legacy: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage and J. Morlier and J. R. R. A. Martins.  
 

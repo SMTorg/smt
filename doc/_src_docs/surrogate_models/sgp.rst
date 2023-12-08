@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4202719
+     Training - done. Time (sec):  0.3536816
   ___________________________________________________________________________
      
    Evaluation
@@ -141,9 +141,9 @@ Using FITC method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0003643
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000018
      
   
 .. figure:: sgp_Test_test_sgp_fitc.png
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2463465
+     Training - done. Time (sec):  0.2997286
   ___________________________________________________________________________
      
    Evaluation
@@ -231,9 +231,9 @@ Using VFE method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0003641
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000018
      
   
 .. figure:: sgp_Test_test_sgp_vfe.png
@@ -362,7 +362,7 @@ Options
      -  41
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws
+     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
   *  -  method
      -  FITC
      -  ['FITC', 'VFE']

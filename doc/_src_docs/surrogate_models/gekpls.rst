@@ -98,7 +98,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1003289
+     Training - done. Time (sec):  0.1576357
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -222,6 +222,11 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  random_state
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  2
      -  None

@@ -136,7 +136,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0312955
+     Training - done. Time (sec):  0.0798278
   ___________________________________________________________________________
      
    Evaluation
@@ -144,9 +144,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0024059
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000241
      
   ___________________________________________________________________________
      
@@ -155,9 +155,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0003822
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000764
      
   
 .. figure:: krg_Test_test_krg.png
@@ -223,9 +223,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0089018
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000178
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -350,3 +350,8 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  random_state
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
