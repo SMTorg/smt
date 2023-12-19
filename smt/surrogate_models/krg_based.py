@@ -371,6 +371,7 @@ class KrgBased(SurrogateModel):
         self.is_acting_train = is_acting
         self._corr_params = None
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
+        D = None  # For SGP, D is not computed at all
         if not (self.is_continuous):
             D, self.ij, X = gower_componentwise_distances(
                 X=X,
@@ -451,14 +452,16 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
-        if self.is_continuous:
-            # Calculate matrix of distances D between samples
-            D, self.ij = cross_distances(self.X_norma)
 
-        if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
-            warnings.warn(
-                "Warning: multiple x input features have the same value (at least same row twice)."
-            )
+        if self.name not in ["SGP"]:
+            if self.is_continuous:
+                # Calculate matrix of distances D between samples
+                D, self.ij = cross_distances(self.X_norma)
+
+            if np.min(np.sum(np.abs(D), axis=1)) == 0.0:
+                warnings.warn(
+                    "Warning: multiple x input features have the same value (at least same row twice)."
+                )
 
         ####
         # Regression matrix and parameters
@@ -1692,6 +1695,7 @@ class KrgBased(SurrogateModel):
         D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
+           For SGP surrogate, D is not used
 
         Returns
         -------
@@ -1799,11 +1803,14 @@ class KrgBased(SurrogateModel):
                 )
                 theta0 = np.log10(self.theta0)
 
-            if not (self.is_continuous):
-                self.D = D
-            else:
-                ##from abs distance to kernel distance
-                self.D = self._componentwise_distance(D, opt=ii)
+            if self.name not in ["SGP"]:
+                if not (self.is_continuous):
+                    self.D = D
+                else:
+                    ##from abs distance to kernel distance
+                    self.D = self._componentwise_distance(D, opt=ii)
+            else:  # SGP case, D is not used
+                pass
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1856,11 +1863,11 @@ class KrgBased(SurrogateModel):
                     for i in range(len(self.noise0)):
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[offset + i + len(self.theta0)]
+                            lambda log10t, i=i: log10t[offset + i + len(self.theta0)]
                             - noise_bounds[0]
                         )
                         constraints.append(
-                            lambda log10t: noise_bounds[1]
+                            lambda log10t, i=i: noise_bounds[1]
                             - log10t[offset + i + len(self.theta0)]
                         )
                         bounds_hyp.append(noise_bounds)
