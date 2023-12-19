@@ -20,7 +20,7 @@ Implementation
 In SMT the methods: Fully Independent Training Conditional (FITC) method and the Variational Free Energy (VFE) approximation
 are implemented inspired from inference methods developed in the GPy project [2]_
 
-In practice, the implementation rely on the expression of their respective negative marginal log
+In practice, the implementation relies on the expression of their respective negative marginal log
 likelihood (NMLL), which is minimised to train the methods. We have the following expressions:
 
 For FITC
@@ -47,7 +47,7 @@ and :math:`\eta^2` is the variance of the gaussian noise assumed on training dat
 Limitations
 -----------
 
-* Inducing points location can not be optimized.
+* Inducing points location can not be optimized (a workaround is to provide inducing points as the centroids of k-means clusters over the training data).
 * Trend function is assumed to be zero.
 
 
