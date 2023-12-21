@@ -233,7 +233,7 @@ class SGP(KRG):
         beta = 1.0 / nu
 
         # Compute (lower) Cholesky decomposition: A = I + V diag(beta) V^T = L L^T
-        A = np.eye(self.nz) + V @ np.diag(beta) @ V.T
+        A = np.eye(self.nz) + V * beta @ V.T
         L = linalg.cholesky(A, lower=True)
         Li = linalg.inv(L)
 
