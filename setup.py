@@ -22,7 +22,7 @@ License :: OSI Approved :: BSD License
 Programming Language :: C++
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -43,6 +43,9 @@ gradient-enhanced modeling, prediction derivatives, and derivatives
 with respect to the training data. It also includes new surrogate models 
 that are not available elsewhere: kriging by partial-least squares reduction 
 and energy-minimizing spline interpolation.
+
+SMT 2.0 adds the capability to handle mixed-variable surrogate models 
+and hierarchical variables.
 """
 
 extra_compile_args = []

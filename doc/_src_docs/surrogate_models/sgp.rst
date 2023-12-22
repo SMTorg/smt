@@ -20,7 +20,7 @@ Implementation
 In SMT the methods: Fully Independent Training Conditional (FITC) method and the Variational Free Energy (VFE) approximation
 are implemented inspired from inference methods developed in the GPy project [2]_
 
-In practice, the implementation rely on the expression of their respective negative marginal log
+In practice, the implementation relies on the expression of their respective negative marginal log
 likelihood (NMLL), which is minimised to train the methods. We have the following expressions:
 
 For FITC
@@ -47,7 +47,7 @@ and :math:`\eta^2` is the variance of the gaussian noise assumed on training dat
 Limitations
 -----------
 
-* Inducing points location can not be optimized.
+* Inducing points location can not be optimized (a workaround is to provide inducing points as the centroids of k-means clusters over the training data).
 * Trend function is assumed to be zero.
 
 
@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3536816
+     Training - done. Time (sec):  0.3038011
   ___________________________________________________________________________
      
    Evaluation
@@ -141,9 +141,9 @@ Using FITC method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003643
+     Predicting - done. Time (sec):  0.0101464
      
-     Prediction time/pt. (sec) :  0.0000018
+     Prediction time/pt. (sec) :  0.0000505
      
   
 .. figure:: sgp_Test_test_sgp_fitc.png
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2997286
+     Training - done. Time (sec):  0.4349508
   ___________________________________________________________________________
      
    Evaluation
@@ -231,9 +231,9 @@ Using VFE method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003641
+     Predicting - done. Time (sec):  0.0020247
      
-     Prediction time/pt. (sec) :  0.0000018
+     Prediction time/pt. (sec) :  0.0000101
      
   
 .. figure:: sgp_Test_test_sgp_vfe.png
