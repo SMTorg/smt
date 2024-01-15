@@ -23,7 +23,7 @@ To cite SMT 2.0: P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. H. 
 
 .. code-block:: none
 
-        @article{saves2023smt,
+        @article{saves2024smt,
                 author = {P. Saves and R. Lafage and N. Bartoli and Y. Diouane and J. Bussemaker and T. Lefebvre and J. T. Hwang and J. Morlier and J. R. R. A. Martins},
                 title = {{SMT 2.0: A} Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes},
                 journal = {Advances in Engineering Sofware},
