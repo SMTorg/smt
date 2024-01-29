@@ -46,7 +46,7 @@ class Test(SMTestCase):
         n_comp_opt["Branin"] = 2
         n_comp_opt["Rosenbrock"] = 1
         n_comp_opt["sphere"] = 1
-        n_comp_opt["exp"] = 2
+        n_comp_opt["exp"] = 3
         n_comp_opt["tanh"] = 1
         n_comp_opt["cos"] = 2
 
