@@ -1,6 +1,7 @@
 """
 Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 """
+
 import unittest
 import itertools
 import contextlib

@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 pyDOE3 sampling methods
 """
+
 from pyDOE3 import doe_box_behnken
 from pyDOE3 import doe_gsd
 from pyDOE3 import doe_factorial

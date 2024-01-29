@@ -4,7 +4,6 @@ Author: Remi Lafage <<remi.lafage@onera.fr>>
 This package is distributed under New BSD license.
 """
 
-
 import unittest
 import numpy as np
 from smt.surrogate_models.krg_based import KrgBased

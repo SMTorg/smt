@@ -3,6 +3,7 @@ Author: P. Saves
 
 This package is distributed under New BSD license.
 """
+
 from smt.utils import misc
 import unittest
 import numpy as np
