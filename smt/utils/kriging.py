@@ -3,6 +3,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
+
 import warnings
 import numpy as np
 from enum import Enum

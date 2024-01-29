@@ -5,6 +5,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 Paul Saves : Mixed Integer
 """
+
 from typing import Optional
 import numpy as np
 from collections import defaultdict

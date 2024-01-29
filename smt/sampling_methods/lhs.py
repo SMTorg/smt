@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 LHS sampling; uses the pyDOE3 package.
 """
+
 from pyDOE3 import lhs
 from scipy.spatial.distance import pdist, cdist
 import numpy as np
@@ -290,12 +291,8 @@ class LHS(ScaledSamplingMethod):
 
         dist1 = cdist([X[i1, :]], X_)
         dist2 = cdist([X[i2, :]], X_)
-        d1 = np.sqrt(
-            dist1**2 + (X[i2, k] - X_[:, k]) ** 2 - (X[i1, k] - X_[:, k]) ** 2
-        )
-        d2 = np.sqrt(
-            dist2**2 - (X[i2, k] - X_[:, k]) ** 2 + (X[i1, k] - X_[:, k]) ** 2
-        )
+        d1 = np.sqrt(dist1**2 + (X[i2, k] - X_[:, k]) ** 2 - (X[i1, k] - X_[:, k]) ** 2)
+        d2 = np.sqrt(dist2**2 - (X[i2, k] - X_[:, k]) ** 2 + (X[i1, k] - X_[:, k]) ** 2)
 
         res = (
             PhiP_**p + (d1 ** (-p) - dist1 ** (-p) + d2 ** (-p) - dist2 ** (-p)).sum()

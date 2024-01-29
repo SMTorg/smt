@@ -4,6 +4,7 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 
 This package is distributed under New BSD license.
 """
+
 import numpy as np
 from scipy.sparse import csc_matrix
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -13,7 +14,6 @@ from smt.surrogate_models.idwclib import PyIDW
 
 
 class IDW(SurrogateModel):
-
     """
     Inverse distance weighting interpolant
     This model uses the inverse distance between the unknown and training

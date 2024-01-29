@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 
 Sphere function.
 """
+
 import numpy as np
 
 from smt.problems.problem import Problem

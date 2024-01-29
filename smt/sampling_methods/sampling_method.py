@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Base class for sampling algorithms.
 """
+
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import warnings

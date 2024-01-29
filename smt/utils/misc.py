@@ -3,6 +3,7 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 
 This package is distributed under New BSD license.
 """
+
 import sys
 import numpy as np
 from bisect import bisect_left
