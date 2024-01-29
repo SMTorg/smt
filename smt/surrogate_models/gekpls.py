@@ -32,6 +32,13 @@ class GEKPLS(KPLS):
             types=int,
             desc="Number of extra points per training point",
         )
+        declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=str,
+        )
         self.supports["training_derivatives"] = True
 
     def _check_param(self):

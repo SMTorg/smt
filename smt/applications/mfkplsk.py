@@ -26,6 +26,13 @@ class MFKPLSK(MFKPLS):
             desc="Correlation function type",
             types=(str),
         )
+        declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=str,
+        )
         self.name = "MFKPLSK"
 
     def _componentwise_distance(self, dx, opt=0):
