@@ -97,7 +97,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         """
         super().__init__()
         self._surrogate = surrogate
-
+        self._surrogate.options["hyper_opt"] = "Cobyla"
         if isinstance(self._surrogate, KrgBased):
             raise ValueError(
                 "Using MixedIntegerSurrogateModel integer model with "
@@ -109,7 +109,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         self._input_in_folded_space = input_in_folded_space
         self.supports = self._surrogate.supports
         self.options["print_global"] = False
-
+        self.options["hyper_opt"] = "Cobyla"
         if "poly" in self._surrogate.options:
             if self._surrogate.options["poly"] != "constant":
                 raise ValueError("constant regression must be used with mixed integer")
@@ -333,6 +333,7 @@ class MixedIntegerContext(object):
         Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
         surrogate.options["design_space"] = self._design_space
+        surrogate.options["hyper_opt"] = "Cobyla"
         return MixedIntegerKrigingModel(
             surrogate=surrogate,
             input_in_folded_space=self._work_in_folded_space,
