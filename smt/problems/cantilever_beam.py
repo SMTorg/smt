@@ -7,6 +7,7 @@ Cantilever beam problem from:
 Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
 Cheng, G. H., Younis, A., Hajikolaei, K. H., and Wang, G. G. Trust Region Based Mode Pursuing Sampling Method for Global Optimization of High Dimensional Design Problems. Journal of Mechanical Design, 137(2). 2015.
 """
+
 import numpy as np
 
 from smt.problems.problem import Problem
@@ -75,16 +76,10 @@ class CantileverBeam(Problem):
                 b = x[:, 3 * kelem + 0]
                 h = x[:, 3 * kelem + 1]
                 y[:, 0] += (
-                    -12.0
-                    / b**2
-                    / h**3
-                    * np.sum(x[:, 2 + 3 * kelem :: 3], axis=1) ** 3
+                    -12.0 / b**2 / h**3 * np.sum(x[:, 2 + 3 * kelem :: 3], axis=1) ** 3
                 )
                 y[:, 0] -= (
-                    -12.0
-                    / b**2
-                    / h**3
-                    * np.sum(x[:, 5 + 3 * kelem :: 3], axis=1) ** 3
+                    -12.0 / b**2 / h**3 * np.sum(x[:, 5 + 3 * kelem :: 3], axis=1) ** 3
                 )
 
             elif kx % 3 == 1:
@@ -101,10 +96,7 @@ class CantileverBeam(Problem):
                     b = x[:, 3 * ielem + 0]
                     h = x[:, 3 * ielem + 1]
                     y[:, 0] += (
-                        36.0
-                        / b
-                        / h**3
-                        * np.sum(x[:, 2 + 3 * ielem :: 3], axis=1) ** 2
+                        36.0 / b / h**3 * np.sum(x[:, 2 + 3 * ielem :: 3], axis=1) ** 2
                     )
                     if kelem > ielem:
                         y[:, 0] -= (

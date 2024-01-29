@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 N-dimensional Rosenbrock problem.
 """
+
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary

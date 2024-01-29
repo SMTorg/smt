@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Base class for benchmarking/test problems.
 """
+
 from typing import Optional
 import numpy as np
 

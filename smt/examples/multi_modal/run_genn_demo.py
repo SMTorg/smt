@@ -9,6 +9,7 @@ Author: Steven H. Berguin <steven.berguin@gtri.gatech.edu>
 
 This package is distributed under New BSD license.
 """
+
 from smt.surrogate_models.genn import GENN, load_smt_data
 
 import numpy as np

@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 TO DO:
 - define outputs['sol'] = self.sol
 """
+
 import numpy as np
 import scipy
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -15,7 +16,6 @@ from smt.utils.misc import standardization
 
 
 class QP(SurrogateModel):
-
     """
     Square polynomial approach
     """

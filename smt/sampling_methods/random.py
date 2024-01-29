@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Random sampling.
 """
+
 import numpy as np
 
 from smt.sampling_methods.sampling_method import ScaledSamplingMethod

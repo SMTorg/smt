@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 
 Mixture of Experts
 """
+
 # TODO : support for best number of clusters
 # TODO : implement verbosity 'print_global'
 # TODO : documentation

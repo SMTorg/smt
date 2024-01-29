@@ -3,6 +3,7 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
+
 import numpy as np
 from enum import Enum
 from scipy import linalg, optimize
