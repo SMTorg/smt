@@ -138,7 +138,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "hyper_opt",
-            "Cobyla",
+            "TNC",
             values=("Cobyla", "TNC"),
             desc="Optimiser for hyperparameters optimisation",
             types=str,
