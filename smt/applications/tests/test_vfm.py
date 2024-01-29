@@ -68,7 +68,12 @@ class TestVFM(SMTestCase):
         Bridge_candidate = "KRG"
         type_bridge = "Multiplicative"
         optionsLF = {}
-        optionsB = {"theta0": [1e-2] * ndim, "print_prediction": False, "deriv": False}
+        optionsB = {
+            "theta0": [1e-2] * ndim,
+            "print_prediction": False,
+            "deriv": False,
+            "hyper_opt": "Cobyla",
+        }
 
         # Construct low/high fidelity data and validation points
         sampling = LHS(xlimits=funLF.xlimits, criterion="m", random_state=42)
@@ -138,7 +143,12 @@ class TestVFM(SMTestCase):
         Bridge_candidate = "KRG"
         type_bridge = "Multiplicative"
         optionsLF = {}
-        optionsB = {"theta0": [1e-2] * ndim, "print_prediction": False, "deriv": False}
+        optionsB = {
+            "theta0": [1e-2] * ndim,
+            "print_prediction": False,
+            "deriv": False,
+            "hyper_opt": "Cobyla",
+        }
 
         # Construct low/high fidelity data and validation points
         sampling = LHS(xlimits=funLF.xlimits, criterion="m")
@@ -200,7 +210,9 @@ class TestVFM(SMTestCase):
             yp = M.predict_values(np.atleast_2d(xt[0]))
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
         self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=2e-2, rtol=3e-2)
-        self.assert_error(dyp, np.array([[0.07007729, 3.619421]]), atol=3e-1, rtol=1e-2)
+        self.assert_error(
+            dyp, np.array([[-3.11718627e-03, 3.19506239e00]]), atol=3e-1, rtol=1e-2
+        )
 
     def test_QP_KRG_additive(self):
         with Silence():
@@ -214,7 +226,7 @@ class TestVFM(SMTestCase):
 
         self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=1e-2, rtol=1e-2)
         self.assert_error(
-            dyp, np.array([[1.16130832e-03, 4.36712162e00]]), atol=3e-1, rtol=1e-2
+            dyp, np.array([[0.02596425, 4.70243162]]), atol=3e-1, rtol=1e-2
         )
 
     def test_KRG_KRG_mult(self):
@@ -228,7 +240,9 @@ class TestVFM(SMTestCase):
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
 
         self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=2e-2, rtol=3e-2)
-        self.assert_error(dyp, np.array([[0.07007729, 3.619421]]), atol=3e-1, rtol=1e-2)
+        self.assert_error(
+            dyp, np.array([[-3.11718627e-03, 3.19506239e00]]), atol=3e-1, rtol=1e-2
+        )
 
     def test_QP_KRG_mult(self):
         with Silence():

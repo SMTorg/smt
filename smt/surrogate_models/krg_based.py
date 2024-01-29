@@ -1016,7 +1016,7 @@ class KrgBased(SurrogateModel):
         gamma = par["gamma"]
         Q = par["Q"]
         G = par["G"]
-        sigma_2 = par["sigma2"]
+        sigma_2 = par["sigma2"] + self.options["nugget"]
 
         nb_theta = len(theta)
         grad_red = np.zeros(nb_theta)
