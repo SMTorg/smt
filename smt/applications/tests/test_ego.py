@@ -381,7 +381,6 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer(self):
         n_iter = 15
         n_doe = 5
-        random_state = 42
         design_space = DesignSpace(
             [
                 FloatVariable(-5, 5),
@@ -389,9 +388,12 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["large", "small"]),
                 OrdinalVariable([0, 2, 3]),
             ],
-            seed=random_state,
+            seed=42,
         )
-        xdoe, _ = design_space.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        xdoe = samp(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
@@ -400,7 +402,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             surrogate=KRG(design_space=design_space, print_global=False),
             enable_tunneling=False,
-            random_state=random_state,
+            random_state=design_space.seed,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -420,7 +422,10 @@ class TestEGO(SMTestCase):
             ],
             seed=random_state,
         )
-        xdoe, _ = design_space.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        xdoe = samp(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
@@ -435,7 +440,7 @@ class TestEGO(SMTestCase):
                 print_global=False,
             ),
             enable_tunneling=False,
-            random_state=random_state,
+            random_state=design_space.seed,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -694,8 +699,10 @@ class TestEGO(SMTestCase):
         ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
 
         n_doe = 25
-        ds.seed = random_state
-        Xt, x_is_active = ds.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        Xt, x_is_active = samp(n_doe, return_is_acting=True)
 
         n_iter = 10
         criterion = "EI"

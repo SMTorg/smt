@@ -43,6 +43,10 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             category=DeprecationWarning,
         )
         self._design_space = design_space
+        if "random_state" in kwargs:
+            self._design_space.seed = kwargs["random_state"]
+        else:
+            self._design_space.seed = 42
         self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
@@ -51,16 +55,20 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         )
         super().__init__(xlimits=self._unfolded_xlimits)
 
-    def _compute(self, nt):
-        doe = self._sampling_method(nt)
+    def _compute(self, nt, return_is_acting=False):
 
-        x_doe, _ = self._design_space.correct_get_acting(doe)
-        if self._output_in_folded_space:
-            x_doe, _ = self._design_space.fold_x(x_doe)
-        return x_doe
+        x_doe, is_acting = self._design_space.sample_valid_x(
+            nt,
+            unfolded=not self._output_in_folded_space,
+            random_state=self._design_space.seed,
+        )
+        if return_is_acting:
+            return x_doe, is_acting
+        else:
+            return x_doe
 
-    def __call__(self, nt):
-        return self._compute(nt)
+    def __call__(self, nt, return_is_acting=False):
+        return self._compute(nt, return_is_acting)
 
     def expand_lhs(self, x, nt, method="basic"):
         doe = self._sampling_method(nt)
