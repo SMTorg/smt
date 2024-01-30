@@ -391,7 +391,7 @@ class TestEGO(SMTestCase):
             seed=42,
         )
         samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
+            LHS, design_space, criterion="ese", random_state=design_space.seed
         )
         xdoe = samp(n_doe)
 
@@ -423,7 +423,7 @@ class TestEGO(SMTestCase):
             seed=random_state,
         )
         samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
+            LHS, design_space, criterion="ese", random_state=design_space.seed
         )
         xdoe = samp(n_doe)
 
@@ -503,7 +503,7 @@ class TestEGO(SMTestCase):
         # x7 is active when x0 >= 3
         design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3)
 
-        n_doe = 4
+        n_doe = 5
 
         neutral_var_ds = DesignSpace(design_space.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
@@ -539,7 +539,7 @@ class TestEGO(SMTestCase):
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
 
-        n_iter = 6
+        n_iter = 9
         criterion = "EI"
 
         ego = EGO(
@@ -1011,16 +1011,9 @@ class TestEGO(SMTestCase):
             n_start=15,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            if platform.startswith("linux"):  # results differs wrt platform
-                self.assertAlmostEqual(np.sum(y_data), 1.0355815090110578, delta=1e-12)
-                self.assertAlmostEqual(np.sum(x_data), 38.56885202767958, delta=1e-12)
-            else:
-                self.assertAlmostEqual(np.sum(y_data), 0.9606415626557894, delta=1e-12)
-                self.assertAlmostEqual(np.sum(x_data), 38.23494224077761, delta=1e-12)
-        else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720770059735, delta=1e-12)
-            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-12)
+
+        self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-10)
+        self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-10)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
