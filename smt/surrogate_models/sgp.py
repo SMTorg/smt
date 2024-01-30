@@ -51,6 +51,13 @@ class SGP(KRG):
             types=(list, np.ndarray),
         )
         declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=str,
+        )
+        declare(
             "eval_noise",
             True,  # for SGP evaluate noise by default
             types=bool,

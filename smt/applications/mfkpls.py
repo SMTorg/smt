@@ -34,6 +34,13 @@ class MFKPLS(MFK):
             desc="Correlation function type",
             types=(str),
         )
+        declare(
+            "hyper_opt",
+            "Cobyla",
+            values=("Cobyla"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=str,
+        )
         declare("n_comp", 1, types=int, desc="Number of principal components")
         self.name = "MFKPLS"
 
