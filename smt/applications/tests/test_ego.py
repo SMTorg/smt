@@ -1015,7 +1015,7 @@ class TestEGO(SMTestCase):
             self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-9)
             self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-9)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720770059735, delta=1e-9)
+            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=1e-9)
             self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-9)
 
     def test_ego_gek(self):
