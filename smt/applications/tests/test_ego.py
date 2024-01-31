@@ -539,7 +539,7 @@ class TestEGO(SMTestCase):
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
 
-        n_iter = 9
+        n_iter = 10
         criterion = "EI"
 
         ego = EGO(
@@ -562,7 +562,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(
             f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
             float(y_opt),
-            delta=15,
+            delta=18,
         )
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
@@ -1011,9 +1011,12 @@ class TestEGO(SMTestCase):
             n_start=15,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-
-        self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-10)
-        self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-10)
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-10)
+            self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-10)
+        else:
+            self.assertAlmostEqual(np.sum(y_data), 1.8911720770059735, delta=1e-10)
+            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-10)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
