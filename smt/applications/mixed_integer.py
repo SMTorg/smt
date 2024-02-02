@@ -44,9 +44,9 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         )
         self._design_space = design_space
         if "random_state" in kwargs:
-            self._design_space.seed = kwargs["random_state"]
-        elif self._design_space.seed is None:
-            self._design_space.seed = 42
+            self._design_space.random_state = kwargs["random_state"]
+        elif self._design_space.random_state is None:
+            self._design_space.random_state = 42
         self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
@@ -60,7 +60,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         x_doe, is_acting = self._design_space.sample_valid_x(
             nt,
             unfolded=not self._output_in_folded_space,
-            random_state=self._design_space.seed,
+            random_state=self._design_space.random_state,
         )
         if return_is_acting:
             return x_doe, is_acting
