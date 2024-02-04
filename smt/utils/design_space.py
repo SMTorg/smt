@@ -1002,7 +1002,7 @@ class DesignSpace(BaseDesignSpace):
                         seed = None
                         if isinstance(self.random_state, int):
                             seed = self.random_state
-                        elif isinstance(random_state, np.random.RandomState):
+                        elif isinstance(self.random_state, np.random.RandomState):
                             seed = self.random_state.get_state()[1][0]
                         self.seed = seed
 
