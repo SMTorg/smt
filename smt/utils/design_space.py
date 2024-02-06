@@ -925,7 +925,7 @@ class DesignSpace(BaseDesignSpace):
 
         return x_corr, is_acting
 
-    def _to_seed(random_state=None):
+    def _to_seed(self, random_state=None):
         seed = None
         if isinstance(random_state, int):
             seed = random_state
