@@ -196,6 +196,7 @@ class BaseDesignSpace:
         self._design_variables = design_variables
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
+        self.seed = None
 
     @property
     def design_variables(self) -> List[DesignVariable]:
@@ -947,7 +948,7 @@ class DesignSpace(BaseDesignSpace):
 
         if self._cs is not None:
             # Sample Configuration objects
-            if not (hasattr(self, "seed")):
+            if self.seed is None:
                 seed = self._to_seed(random_state)
                 self.seed = seed
             self._cs.seed(self.seed)
@@ -1002,7 +1003,7 @@ class DesignSpace(BaseDesignSpace):
                 # At this point, the parameter active statuses are set correctly, so we only need to correct the
                 # configuration to one that does not violate the forbidden clauses
                 elif isinstance(e, ForbiddenValueError):
-                    if not (hasattr(self, "seed")):
+                    if self.seed is None:
                         seed = self._to_seed(self.random_state)
                         self.seed = seed
 
