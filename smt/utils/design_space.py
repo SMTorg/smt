@@ -928,6 +928,14 @@ class DesignSpace(BaseDesignSpace):
 
         return x_corr, is_acting
 
+    def _to_seed(random_state=None):
+        seed = None
+        if isinstance(random_state, int):
+            seed = random_state
+        elif isinstance(random_state, np.random.RandomState):
+            seed = random_state.get_state()[1][0]
+        return seed
+
     def _sample_valid_x(
         self, n: int, random_state=None
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -940,11 +948,7 @@ class DesignSpace(BaseDesignSpace):
         if self._cs is not None:
             # Sample Configuration objects
             if not (hasattr(self, "seed")):
-                seed = None
-                if isinstance(random_state, int):
-                    seed = random_state
-                elif isinstance(random_state, np.random.RandomState):
-                    seed = random_state.get_state()[1][0]
+                seed = self._to_seed(random_state)
                 self.seed = seed
             self._cs.seed(self.seed)
             if self.seed is not None:
@@ -999,11 +1003,7 @@ class DesignSpace(BaseDesignSpace):
                 # configuration to one that does not violate the forbidden clauses
                 elif isinstance(e, ForbiddenValueError):
                     if not (hasattr(self, "seed")):
-                        seed = None
-                        if isinstance(self.random_state, int):
-                            seed = self.random_state
-                        elif isinstance(self.random_state, np.random.RandomState):
-                            seed = self.random_state.get_state()[1][0]
+                        seed = self._to_seed(self.random_state)
                         self.seed = seed
 
                     return get_random_neighbor(config, seed=self.seed)
