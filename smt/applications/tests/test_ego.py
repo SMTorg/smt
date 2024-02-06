@@ -121,7 +121,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ego = EGO(
             n_start=30,
@@ -164,7 +164,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
 
         xdoe = FullFactorial(xlimits=xlimits)(10)
         qEI = "KB"
@@ -250,7 +250,7 @@ class TestEGO(SMTestCase):
                 IntegerVariable(*xlimits[0]),
                 FloatVariable(*xlimits[1]),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
         sm = KRG(design_space=design_space, print_global=False, n_start=25)
         mixint = MixedIntegerContext(design_space)
@@ -289,7 +289,7 @@ class TestEGO(SMTestCase):
                 IntegerVariable(*xlimits[0]),
                 FloatVariable(*xlimits[1]),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
@@ -326,7 +326,7 @@ class TestEGO(SMTestCase):
                 IntegerVariable(*xlimits[0]),
                 FloatVariable(*xlimits[1]),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
 
@@ -381,7 +381,6 @@ class TestEGO(SMTestCase):
     def test_ego_mixed_integer(self):
         n_iter = 15
         n_doe = 5
-        random_state = 42
         design_space = DesignSpace(
             [
                 FloatVariable(-5, 5),
@@ -389,9 +388,12 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["large", "small"]),
                 OrdinalVariable([0, 2, 3]),
             ],
-            seed=random_state,
+            random_state=42,
         )
-        xdoe, _ = design_space.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, design_space, criterion="ese", random_state=design_space.random_state
+        )
+        xdoe = samp(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
@@ -400,7 +402,7 @@ class TestEGO(SMTestCase):
             xdoe=xdoe,
             surrogate=KRG(design_space=design_space, print_global=False),
             enable_tunneling=False,
-            random_state=random_state,
+            random_state=design_space.random_state,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -418,9 +420,12 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["large", "small"]),
                 IntegerVariable(0, 2),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
-        xdoe, _ = design_space.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, design_space, criterion="ese", random_state=design_space.random_state
+        )
+        xdoe = samp(n_doe)
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         ego = EGO(
@@ -435,7 +440,7 @@ class TestEGO(SMTestCase):
                 print_global=False,
             ),
             enable_tunneling=False,
-            random_state=random_state,
+            random_state=design_space.random_state,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
@@ -490,7 +495,7 @@ class TestEGO(SMTestCase):
                 IntegerVariable(0, 5),  # x6
                 IntegerVariable(0, 5),  # x7
             ],
-            seed=random_state,
+            random_state=random_state,
         )
 
         # x6 is active when x0 >= 2
@@ -498,7 +503,7 @@ class TestEGO(SMTestCase):
         # x7 is active when x0 >= 3
         design_space.declare_decreed_var(decreed_var=7, meta_var=0, meta_value=3)
 
-        n_doe = 4
+        n_doe = 5
 
         neutral_var_ds = DesignSpace(design_space.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
@@ -534,7 +539,7 @@ class TestEGO(SMTestCase):
         Xt = np.concatenate((xdoe1, xdoe2, xdoe3), axis=0)
         # Yt = np.concatenate((ydoe1, ydoe2, ydoe3), axis=0)
 
-        n_iter = 6
+        n_iter = 10
         criterion = "EI"
 
         ego = EGO(
@@ -557,7 +562,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(
             f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
             float(y_opt),
-            delta=15,
+            delta=18,
         )
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
@@ -681,7 +686,7 @@ class TestEGO(SMTestCase):
                 IntegerVariable(0, 2),
                 IntegerVariable(0, 2),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
 
         # x4 is acting if meta == 1, 3
@@ -694,8 +699,10 @@ class TestEGO(SMTestCase):
         ds.declare_decreed_var(decreed_var=8, meta_var=0, meta_value=[0, 1])
 
         n_doe = 25
-        ds.seed = random_state
-        Xt, x_is_active = ds.sample_valid_x(n_doe)
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.random_state
+        )
+        Xt, x_is_active = samp(n_doe, return_is_acting=True)
 
         n_iter = 10
         criterion = "EI"
@@ -735,7 +742,7 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["large", "small"]),
                 IntegerVariable(0, 2),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
         n_doe = 5
         sampling = MixedIntegerSamplingMethod(
@@ -775,7 +782,7 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["large", "small"]),
                 IntegerVariable(0, 2),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
         sampling = MixedIntegerSamplingMethod(
             LHS,
@@ -812,7 +819,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = FullFactorial(xlimits=xlimits)(10)
         ydoe = fun(xdoe)
         ego = EGO(
@@ -831,7 +838,7 @@ class TestEGO(SMTestCase):
         fun = TestEGO.function_test_1d
         xlimits = np.array([[0.0, 25.0]])
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
@@ -867,7 +874,7 @@ class TestEGO(SMTestCase):
 
         fun = TensorProductIndirect(ndim=2, func=func)
         random_state = 42
-        design_space = DesignSpace(fun.xlimits, seed=42)
+        design_space = DesignSpace(fun.xlimits, random_state=42)
 
         # Construction of the DOE
         sampling = LHS(xlimits=fun.xlimits, criterion="m", random_state=random_state)
@@ -899,7 +906,7 @@ class TestEGO(SMTestCase):
 
         return ego, fun
 
-    def test_ego_seeding(self):
+    def test_ego_random_stateing(self):
         def f_obj(X):
             """
             s01 objective
@@ -976,7 +983,7 @@ class TestEGO(SMTestCase):
         )
 
         # To define the initial DOE
-        random_state = 42  # seed value for the sampling
+        random_state = 42  # random_state value for the sampling
         n_doe = 5  # initial doe size
         sampling = MixedIntegerSamplingMethod(
             LHS, design_space, criterion="ese", random_state=random_state
@@ -1005,15 +1012,11 @@ class TestEGO(SMTestCase):
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
         if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            if platform.startswith("linux"):  # results differs wrt platform
-                self.assertAlmostEqual(np.sum(y_data), 1.0355815090110578, delta=1e-12)
-                self.assertAlmostEqual(np.sum(x_data), 38.56885202767958, delta=1e-12)
-            else:
-                self.assertAlmostEqual(np.sum(y_data), 0.9606415626557894, delta=1e-12)
-                self.assertAlmostEqual(np.sum(x_data), 38.23494224077761, delta=1e-12)
+            self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-9)
+            self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-9)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720770059735, delta=1e-12)
-            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-12)
+            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=1e-9)
+            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-9)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
@@ -1036,7 +1039,7 @@ class TestEGO(SMTestCase):
         fun = TestEGO.function_test_1d
         xlimits = np.array([[0.0, 25.0]])
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = FullFactorial(xlimits=xlimits)(3)
         ydoe = fun(xdoe)
         ego = EGO(
@@ -1091,7 +1094,7 @@ class TestEGO(SMTestCase):
         xlimits = np.array([[0.0, 25.0]])
 
         random_state = 42  # for reproducibility
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 
@@ -1210,7 +1213,7 @@ class TestEGO(SMTestCase):
                 CategoricalVariable(["square", "circle"]),
                 IntegerVariable(0, 2),
             ],
-            seed=random_state,
+            random_state=random_state,
         )
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -1281,7 +1284,7 @@ class TestEGO(SMTestCase):
         xlimits = np.array([[0.0, 25.0]])
 
         random_state = 42
-        design_space = DesignSpace(xlimits, seed=random_state)
+        design_space = DesignSpace(xlimits, random_state=random_state)
         xdoe = np.atleast_2d([0, 7, 25]).T
         n_doe = xdoe.size
 

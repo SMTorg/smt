@@ -198,7 +198,7 @@ class Test(unittest.TestCase):
                 IntegerVariable(-1, 2),
                 FloatVariable(0.5, 1.5),
             ],
-            seed=42,
+            random_state=42,
         )
         self.assertEqual(len(ds.design_variables), 4)
         if HAS_CONFIG_SPACE:
@@ -340,7 +340,7 @@ class Test(unittest.TestCase):
                 IntegerVariable(0, 1),  # x2
                 FloatVariable(0, 1),  # x3
             ],
-            seed=42,
+            random_state=42,
         )
         ds.declare_decreed_var(
             decreed_var=3, meta_var=0, meta_value="A"
@@ -434,7 +434,7 @@ class Test(unittest.TestCase):
                 IntegerVariable(0, 1),  # x2
                 FloatVariable(0, 1),  # x3
             ],
-            seed=42,
+            random_state=42,
         )
         ds.declare_decreed_var(
             decreed_var=3, meta_var=0, meta_value="A"
@@ -530,7 +530,7 @@ class Test(unittest.TestCase):
                         IntegerVariable(0, 1),  # x2
                         FloatVariable(0, 1),  # x3
                     ],
-                    seed=42,
+                    random_state=42,
                 )
                 ds.declare_decreed_var(
                     decreed_var=3, meta_var=0, meta_value="A"
@@ -550,7 +550,7 @@ class Test(unittest.TestCase):
                         IntegerVariable(0, 1),  # x2
                         FloatVariable(0, 1),  # x3
                     ],
-                    seed=42,
+                    random_state=42,
                 )
                 ds.declare_decreed_var(
                     decreed_var=0, meta_var=1, meta_value="E"

@@ -196,6 +196,7 @@ class BaseDesignSpace:
         self._design_variables = design_variables
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
+        self.seed = None
 
     @property
     def design_variables(self) -> List[DesignVariable]:
@@ -696,7 +697,9 @@ class DesignSpace(BaseDesignSpace):
     """
 
     def __init__(
-        self, design_variables: Union[List[DesignVariable], list, np.ndarray], seed=None
+        self,
+        design_variables: Union[List[DesignVariable], list, np.ndarray],
+        random_state=None,
     ):
         self.sampler = None
 
@@ -721,7 +724,7 @@ class DesignSpace(BaseDesignSpace):
                 converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
             design_variables = converted_dvs
 
-        self.seed = seed  # For testing
+        self.random_state = random_state  # For testing
 
         self._cs = None
         if HAS_CONFIG_SPACE:
@@ -742,6 +745,7 @@ class DesignSpace(BaseDesignSpace):
                     cs_vars[name] = CategoricalHyperparameter(name, choices=dv.values)
                 else:
                     raise ValueError(f"Unknown variable type: {dv!r}")
+            seed = self._to_seed(random_state)
 
             self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
 
@@ -921,17 +925,28 @@ class DesignSpace(BaseDesignSpace):
 
         return x_corr, is_acting
 
+    def _to_seed(self, random_state=None):
+        seed = None
+        if isinstance(random_state, int):
+            seed = random_state
+        elif isinstance(random_state, np.random.RandomState):
+            seed = random_state.get_state()[1][0]
+        return seed
+
     def _sample_valid_x(
         self, n: int, random_state=None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Sample design vectors"""
         # Simplified implementation: sample design vectors in unfolded space
         x_limits_unfolded = self.get_unfolded_num_bounds()
-        if self.seed is None:
-            self.seed = random_state
+        if self.random_state is None:
+            self.random_state = random_state
 
         if self._cs is not None:
             # Sample Configuration objects
+            if self.seed is None:
+                seed = self._to_seed(random_state)
+                self.seed = seed
             self._cs.seed(self.seed)
             if self.seed is not None:
                 self.seed += 1
@@ -984,6 +999,10 @@ class DesignSpace(BaseDesignSpace):
                 # At this point, the parameter active statuses are set correctly, so we only need to correct the
                 # configuration to one that does not violate the forbidden clauses
                 elif isinstance(e, ForbiddenValueError):
+                    if self.seed is None:
+                        seed = self._to_seed(self.random_state)
+                        self.seed = seed
+
                     return get_random_neighbor(config, seed=self.seed)
 
                 else:
