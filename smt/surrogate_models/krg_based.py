@@ -51,6 +51,7 @@ class MixIntKernelType(Enum):
     HOMO_HSPHERE = "HOMO_HSPHERE"
     CONT_RELAX = "CONT_RELAX"
     GOWER = "GOWER"
+    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
 class KrgBased(SurrogateModel):
@@ -105,6 +106,7 @@ class KrgBased(SurrogateModel):
                 MixIntKernelType.GOWER,
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
+                MixIntKernelType.COMPOUND_SYMMETRY,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
@@ -527,7 +529,12 @@ class KrgBased(SurrogateModel):
             ncomp = 1e5
 
         theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
+        theta_cat_features = np.ones((len(theta), len(n_levels)), dtype=bool)
+        if cat_kernel in [
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.HOMO_HSPHERE,
+        ]:
+            theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
         i = 0
         j = 0
         n_theta_cont = 0
@@ -545,6 +552,7 @@ class KrgBased(SurrogateModel):
             else:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
+                    theta_cat_features[j] = False
                     j += 1
                     n_theta_cont += 1
 
@@ -706,16 +714,35 @@ class KrgBased(SurrogateModel):
                 theta_cat_kernel[theta_cat_features[1]] *= 0.5 * np.pi / theta_bounds[1]
             elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
                 theta_cat_kernel[theta_cat_features[1]] *= 2.0 * np.pi / theta_bounds[1]
+            elif cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
+                theta_cat_kernel[theta_cat_features[1]] *= 2.0
+                theta_cat_kernel[theta_cat_features[1]] -= (
+                    theta_bounds[1] + theta_bounds[0]
+                )
+                theta_cat_kernel[theta_cat_features[1]] *= 1 / (
+                    1.000000000001 * theta_bounds[1]
+                )
 
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
-            T = matrix_data_corr_levels_cat_matrix(
-                i,
-                n_levels,
-                theta_cat,
-                theta_bounds,
-                is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
-            )
+            if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
+                T = np.zeros((n_levels[i], n_levels[i]))
+                for tij in range(n_levels[i]):
+                    for tji in range(n_levels[i]):
+                        if tij == tji:
+                            T[tij, tji] = 1
+                        else:
+                            T[tij, tji] = max(
+                                theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
+                            )
+            else:
+                T = matrix_data_corr_levels_cat_matrix(
+                    i,
+                    n_levels,
+                    theta_cat,
+                    theta_bounds,
+                    is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
+                )
 
             if cat_kernel_comps is not None:
                 # Sampling points X and y
@@ -777,6 +804,7 @@ class KrgBased(SurrogateModel):
                     in [
                         MixIntKernelType.EXP_HOMO_HSPHERE,
                         MixIntKernelType.HOMO_HSPHERE,
+                        MixIntKernelType.COMPOUND_SYMMETRY,
                     ],
                 )
 
@@ -2063,7 +2091,8 @@ class KrgBased(SurrogateModel):
         self.options["theta0"] *= np.ones(n_param)
 
         if len(self.options["theta0"]) != d and (
-            self.options["categorical_kernel"] == MixIntKernelType.GOWER
+            self.options["categorical_kernel"]
+            in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
             or self.is_continuous
         ):
             if len(self.options["theta0"]) == 1:
@@ -2143,7 +2172,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-    if cat_kernel == MixIntKernelType.GOWER:
+    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
         return n_param
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
