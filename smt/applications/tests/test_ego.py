@@ -1166,7 +1166,10 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.applications.mixed_integer import MixedIntegerContext
+        from smt.applications.mixed_integer import (
+            MixedIntegerContext,
+            MixedIntegerSamplingMethod,
+        )
         from smt.surrogate_models import MixIntKernelType
         from smt.utils.design_space import (
             DesignSpace,

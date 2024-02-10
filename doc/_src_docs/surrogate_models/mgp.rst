@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.1959300
+     Training - done. Time (sec):  0.8920083
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -189,7 +189,7 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
@@ -213,7 +213,7 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
+     -  TNC
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation

@@ -50,7 +50,12 @@ Usage
   Bridge_candidate = "KRG"
   type_bridge = "Multiplicative"
   optionsLF = {}
-  optionsB = {"theta0": [1e-2] * ndim, "print_prediction": False, "deriv": False}
+  optionsB = {
+      "theta0": [1e-2] * ndim,
+      "print_prediction": False,
+      "deriv": False,
+      "hyper_opt": "Cobyla",
+  }
   
   # Construct low/high fidelity data and validation points
   sampling = LHS(xlimits=funLF.xlimits, criterion="m")
@@ -118,7 +123,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3434765
+     Training - done. Time (sec):  0.3257585
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
   :scale: 80 %

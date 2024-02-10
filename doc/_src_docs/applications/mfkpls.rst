@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2456450
+     Training - done. Time (sec):  0.1955945
   ___________________________________________________________________________
      
    Evaluation
@@ -116,9 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005369
+     Predicting - done. Time (sec):  0.0007906
      
-     Prediction time/pt. (sec) :  0.0000053
+     Prediction time/pt. (sec) :  0.0000078
      
   ___________________________________________________________________________
      
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005672
+     Predicting - done. Time (sec):  0.0007710
      
-     Prediction time/pt. (sec) :  0.0000056
+     Prediction time/pt. (sec) :  0.0000076
      
   
 .. figure:: mfkpls_TestMFKPLS_run_mfkpls_example.png
@@ -191,7 +191,7 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
@@ -216,7 +216,7 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
-     -  ['Cobyla', 'TNC']
+     -  ['Cobyla']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
