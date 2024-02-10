@@ -35,6 +35,16 @@ Example of mixed integer Gower Distance model
 
 .. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_gower_example, 80	
 
+Mixed Integer Kriging with Compound Symmetry (CS)
+----------------------------------------------
+
+Compound Symmetry is similar to Gower Distance but allow to model negative correlations. Details can be found in [2]_ .
+
+Example of mixed integer Compound Symmetry model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_cs_example, 80	
+
 
 Mixed Integer Kriging with Homoscedastic Hypersphere (HH) 
 ---------------------------------------------------------
@@ -75,3 +85,5 @@ References
 ----------
 
 .. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
+
+.. [2] Pelamatti, J. "Mixed-variable Bayesian optimization: application to aerospace system design", PhD thesis, Université de Lille, Lille, 2020.

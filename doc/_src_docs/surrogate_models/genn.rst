@@ -53,21 +53,21 @@ Usage
   genn.options["alpha"] = 0.1  # learning rate that controls optimizer step size
   genn.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
   genn.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
-  genn.options[
-      "lambd"
-  ] = 0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
-  genn.options[
-      "gamma"
-  ] = 1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+  genn.options["lambd"] = (
+      0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
+  )
+  genn.options["gamma"] = (
+      1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+  )
   genn.options["deep"] = 2  # number of hidden layers
   genn.options["wide"] = 6  # number of nodes per hidden layer
-  genn.options[
-      "mini_batch_size"
-  ] = 64  # used to divide data into training batches (use for large data sets)
+  genn.options["mini_batch_size"] = (
+      64  # used to divide data into training batches (use for large data sets)
+  )
   genn.options["num_epochs"] = 20  # number of passes through data
-  genn.options[
-      "num_iterations"
-  ] = 100  # number of optimizer iterations per mini-batch
+  genn.options["num_iterations"] = (
+      100  # number of optimizer iterations per mini-batch
+  )
   genn.options["is_print"] = True  # print output (or not)
   load_smt_data(
       genn, xt, yt, dyt_dxt
@@ -107,27 +107,27 @@ Usage
    Training
      
      Training ...
-  epoch = 0, mini-batch = 0, avg cost = 15.902
-  epoch = 1, mini-batch = 0, avg cost =  0.821
-  epoch = 2, mini-batch = 0, avg cost =  0.677
-  epoch = 3, mini-batch = 0, avg cost =  0.645
-  epoch = 4, mini-batch = 0, avg cost =  0.627
-  epoch = 5, mini-batch = 0, avg cost =  0.620
-  epoch = 6, mini-batch = 0, avg cost =  0.614
-  epoch = 7, mini-batch = 0, avg cost =  0.609
-  epoch = 8, mini-batch = 0, avg cost =  0.604
+  epoch = 0, mini-batch = 0, avg cost = 15.913
+  epoch = 1, mini-batch = 0, avg cost =  0.776
+  epoch = 2, mini-batch = 0, avg cost =  0.664
+  epoch = 3, mini-batch = 0, avg cost =  0.646
+  epoch = 4, mini-batch = 0, avg cost =  0.632
+  epoch = 5, mini-batch = 0, avg cost =  0.623
+  epoch = 6, mini-batch = 0, avg cost =  0.617
+  epoch = 7, mini-batch = 0, avg cost =  0.610
+  epoch = 8, mini-batch = 0, avg cost =  0.605
   epoch = 9, mini-batch = 0, avg cost =  0.600
-  epoch = 10, mini-batch = 0, avg cost =  0.596
+  epoch = 10, mini-batch = 0, avg cost =  0.597
   epoch = 11, mini-batch = 0, avg cost =  0.593
-  epoch = 12, mini-batch = 0, avg cost =  0.589
-  epoch = 13, mini-batch = 0, avg cost =  0.587
-  epoch = 14, mini-batch = 0, avg cost =  0.583
+  epoch = 12, mini-batch = 0, avg cost =  0.590
+  epoch = 13, mini-batch = 0, avg cost =  0.586
+  epoch = 14, mini-batch = 0, avg cost =  0.584
   epoch = 15, mini-batch = 0, avg cost =  0.581
   epoch = 16, mini-batch = 0, avg cost =  0.580
   epoch = 17, mini-batch = 0, avg cost =  0.578
   epoch = 18, mini-batch = 0, avg cost =  0.576
-  epoch = 19, mini-batch = 0, avg cost =  0.573
-     Training - done. Time (sec):  5.3290997
+  epoch = 19, mini-batch = 0, avg cost =  0.574
+     Training - done. Time (sec):  5.6117277
   ___________________________________________________________________________
      
    Evaluation
@@ -135,9 +135,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005703
+     Predicting - done. Time (sec):  0.0006106
      
-     Prediction time/pt. (sec) :  0.0000009
+     Prediction time/pt. (sec) :  0.0000010
      
   
 .. figure:: genn_Test_test_genn.png

@@ -323,6 +323,8 @@ class TestMixedInteger(unittest.TestCase):
             FloatVariable,
             CategoricalVariable,
         )
+        from smt.sampling_methods import LHS
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         float_var = FloatVariable(0, 4)
         cat_var = CategoricalVariable(["blue", "red"])
@@ -381,7 +383,10 @@ class TestMixedInteger(unittest.TestCase):
     def run_mixed_integer_context_example(self):
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-        from smt.applications.mixed_integer import MixedIntegerContext
+        from smt.applications.mixed_integer import (
+            MixedIntegerContext,
+            MixedIntegerSamplingMethod,
+        )
         from smt.utils.design_space import (
             DesignSpace,
             FloatVariable,
@@ -594,6 +599,8 @@ class TestMixedInteger(unittest.TestCase):
             OrdinalVariable,
             CategoricalVariable,
         )
+        from smt.sampling_methods import LHS
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         ds = DesignSpace(
             [
@@ -638,8 +645,12 @@ class TestMixedInteger(unittest.TestCase):
             OrdinalVariable,
             CategoricalVariable,
         )
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
         from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
+        from smt.sampling_methods import LHS
 
         ds = DesignSpace(
             [
@@ -924,8 +935,12 @@ class TestMixedInteger(unittest.TestCase):
             IntegerVariable,
             FloatVariable,
         )
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
         from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
+        from smt.sampling_methods import LHS
 
         def f_hv(X):
             import numpy as np
@@ -1610,7 +1625,10 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
         from smt.utils.design_space import (
             DesignSpace,
             CategoricalVariable,
@@ -1733,12 +1751,146 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    def run_mixed_cs_example(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import KRG, MixIntKernelType
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
+        from smt.utils.design_space import (
+            DesignSpace,
+            CategoricalVariable,
+            FloatVariable,
+        )
+
+        xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
+        xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
+        xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
+
+        xt = np.concatenate((xt1, xt2, xt3), axis=0)
+        xt[:, 1] = xt[:, 1].astype(np.float64)
+        yt1 = np.array([0.0, 9.0, 16.0])
+        yt2 = np.array([0.0, -4, -13.0])
+        yt3 = np.array([-10, 3, 11.0])
+        yt = np.concatenate((yt1, yt2, yt3), axis=0)
+
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["Blue", "Red", "Green"]),
+                FloatVariable(0, 4),
+            ]
+        )
+
+        # Surrogate
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(
+                design_space=design_space,
+                categorical_kernel=MixIntKernelType.COMPOUND_SYMMETRY,
+                theta0=[1e-1],
+                corr="squar_exp",
+                n_start=20,
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        n = 100
+        x_cat1 = []
+        x_cat2 = []
+        x_cat3 = []
+
+        for i in range(n):
+            x_cat1.append(0)
+            x_cat2.append(1)
+            x_cat3.append(2)
+
+        x_cont = np.linspace(0.0, 4.0, n)
+        x1 = np.concatenate(
+            (np.asarray(x_cat1).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x2 = np.concatenate(
+            (np.asarray(x_cat2).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+        x3 = np.concatenate(
+            (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
+        )
+
+        y1 = sm.predict_values(x1)
+        y2 = sm.predict_values(x2)
+        y3 = sm.predict_values(x3)
+
+        # estimated variance
+        s2_1 = sm.predict_variances(x1)
+        s2_2 = sm.predict_variances(x2)
+        s2_3 = sm.predict_variances(x3)
+
+        fig, axs = plt.subplots(3, figsize=(8, 6))
+
+        axs[0].plot(xt1[:, 1].astype(np.float64), yt1, "o", linestyle="None")
+        axs[0].plot(x_cont, y1, color="Blue")
+        axs[0].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y1 - 3 * np.sqrt(s2_1)),
+            np.ravel(y1 + 3 * np.sqrt(s2_1)),
+            color="lightgrey",
+        )
+        axs[0].set_xlabel("x")
+        axs[0].set_ylabel("y")
+        axs[0].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[1].plot(
+            xt2[:, 1].astype(np.float64), yt2, marker="o", color="r", linestyle="None"
+        )
+        axs[1].plot(x_cont, y2, color="Red")
+        axs[1].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y2 - 3 * np.sqrt(s2_2)),
+            np.ravel(y2 + 3 * np.sqrt(s2_2)),
+            color="lightgrey",
+        )
+        axs[1].set_xlabel("x")
+        axs[1].set_ylabel("y")
+        axs[1].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        axs[2].plot(
+            xt3[:, 1].astype(np.float64), yt3, marker="o", color="r", linestyle="None"
+        )
+        axs[2].plot(x_cont, y3, color="Green")
+        axs[2].fill_between(
+            np.ravel(x_cont),
+            np.ravel(y3 - 3 * np.sqrt(s2_3)),
+            np.ravel(y3 + 3 * np.sqrt(s2_3)),
+            color="lightgrey",
+        )
+        axs[2].set_xlabel("x")
+        axs[2].set_ylabel("y")
+        axs[2].legend(
+            ["Training data", "Prediction", "Confidence Interval 99%"],
+            loc="upper left",
+            bbox_to_anchor=[0, 1],
+        )
+        plt.tight_layout()
+        plt.show()
+
     def run_mixed_homo_gaussian_example(self):
         import numpy as np
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
         from smt.utils.design_space import (
             DesignSpace,
             CategoricalVariable,
@@ -1866,7 +2018,10 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+            MixedIntegerSamplingMethod,
+        )
         from smt.utils.design_space import (
             DesignSpace,
             CategoricalVariable,

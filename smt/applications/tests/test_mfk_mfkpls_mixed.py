@@ -327,6 +327,7 @@ class TestMFKmixed(unittest.TestCase):
 
     def run_mfk_mixed_example(self):
         import matplotlib.pyplot as plt
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]
@@ -665,6 +666,7 @@ class TestMFKmixed(unittest.TestCase):
 
     def run_mfkpls_mixed_example(self):
         import matplotlib.pyplot as plt
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]

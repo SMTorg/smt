@@ -136,7 +136,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0798278
+     Training - done. Time (sec):  0.1418922
   ___________________________________________________________________________
      
    Evaluation
@@ -144,9 +144,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0024059
+     Predicting - done. Time (sec):  0.0025797
      
-     Prediction time/pt. (sec) :  0.0000241
+     Prediction time/pt. (sec) :  0.0000258
      
   ___________________________________________________________________________
      
@@ -155,9 +155,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003822
+     Predicting - done. Time (sec):  0.0004814
      
-     Prediction time/pt. (sec) :  0.0000764
+     Prediction time/pt. (sec) :  0.0000963
      
   
 .. figure:: krg_Test_test_krg.png
@@ -223,9 +223,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0089018
+     Predicting - done. Time (sec):  0.0096698
      
-     Prediction time/pt. (sec) :  0.0000178
+     Prediction time/pt. (sec) :  0.0000193
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -287,7 +287,7 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
@@ -311,7 +311,7 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
+     -  TNC
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation

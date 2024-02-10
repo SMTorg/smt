@@ -44,7 +44,8 @@ The design space is then defined from a list of design variables and implements 
       OrdinalVariable,
       CategoricalVariable,
   )
-  
+  from smt.sampling_methods import LHS
+  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   ds = DesignSpace(
       [
           CategoricalVariable(
@@ -62,7 +63,11 @@ The design space is then defined from a list of design variables and implements 
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-  x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+  ds.seed = 42
+  samp = MixedIntegerSamplingMethod(
+      LHS, ds, criterion="ese", random_state=ds.seed
+  )
+  x_sampled, is_acting_sampled = samp(100, return_is_acting=True)
   
   # Correct design vectors: round discrete variables, correct hierarchical variables
   x_corr, is_acting = ds.correct_get_acting(
@@ -106,8 +111,9 @@ The hierarchy relationships are specified after instantiating the design space:
       OrdinalVariable,
       CategoricalVariable,
   )
-  from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel, MixedIntegerSamplingMethod
   from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
+  from smt.sampling_methods import LHS
   
   ds = DesignSpace(
       [
@@ -139,7 +145,12 @@ The hierarchy relationships are specified after instantiating the design space:
   
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
-  Xt, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+  ds.seed = 42
+  samp = MixedIntegerSamplingMethod(
+      LHS, ds, criterion="ese", random_state=ds.seed
+  )
+  Xt, is_acting_sampled = samp(100, return_is_acting=True)
+  
   rng = np.random.default_rng(42)
   Yt = 4 * rng.random(100) - 2 + Xt[:, 0] + Xt[:, 1] - Xt[:, 2] - Xt[:, 3]
   # Correct design vectors: round discrete variables, correct hierarchical variables
@@ -217,9 +228,9 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.3058572
+     Predicting - done. Time (sec):  0.3314385
      
-     Prediction time/pt. (sec) :  0.0030586
+     Prediction time/pt. (sec) :  0.0033144
      
   Pred_RMSE 4.092408537263059e-13
   
@@ -260,7 +271,8 @@ Example of sampling a mixed-discrete design space
       FloatVariable,
       CategoricalVariable,
   )
-  
+  from smt.sampling_methods import LHS
+  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   float_var = FloatVariable(0, 4)
   cat_var = CategoricalVariable(["blue", "red"])
   
@@ -272,7 +284,12 @@ Example of sampling a mixed-discrete design space
   )
   
   num = 40
-  x, x_is_acting = design_space.sample_valid_x(num, random_state=42)
+  design_space.seed = 42
+  samp = MixedIntegerSamplingMethod(
+      LHS, design_space, criterion="ese", random_state=design_space.seed
+  )
+  x, x_is_acting = samp(num, return_is_acting=True)
+  
   cmap = colors.ListedColormap(cat_var.values)
   plt.scatter(x[:, 0], np.zeros(num), c=x[:, 1], cmap=cmap)
   plt.show()
@@ -302,7 +319,7 @@ Example of mixed integer context usage
 
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import MixedIntegerContext
+  from smt.applications.mixed_integer import MixedIntegerContext,MixedIntegerSamplingMethod 
   from smt.utils.design_space import (
       DesignSpace,
       FloatVariable,
@@ -359,9 +376,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0124640
+     Predicting - done. Time (sec):  0.0133548
      
-     Prediction time/pt. (sec) :  0.0002493
+     Prediction time/pt. (sec) :  0.0002671
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

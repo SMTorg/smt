@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0795786
+     Training - done. Time (sec):  0.1402104
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0025928
+     Predicting - done. Time (sec):  0.0025821
      
-     Prediction time/pt. (sec) :  0.0000259
+     Prediction time/pt. (sec) :  0.0000258
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003479
+     Predicting - done. Time (sec):  0.0004458
      
-     Prediction time/pt. (sec) :  0.0000696
+     Prediction time/pt. (sec) :  0.0000892
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  2.8484025
+     Training - done. Time (sec): 14.0136063
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,12 +168,12 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009630
+     Predicting - done. Time (sec):  0.0011318
      
-     Prediction time/pt. (sec) :  0.0009630
+     Prediction time/pt. (sec) :  0.0011318
      
-  [[139.58262186]]
-  [[212.52053124]]
+  [[139.34911523]]
+  [[212.53624102]]
   
 
 Options
@@ -231,7 +231,7 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
   *  -  hierarchical_kernel
@@ -255,7 +255,7 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
+     -  TNC
      -  ['Cobyla', 'TNC']
      -  ['str']
      -  Optimiser for hyperparameters optimisation
