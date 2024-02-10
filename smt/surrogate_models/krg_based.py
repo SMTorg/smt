@@ -435,6 +435,18 @@ class KrgBased(SurrogateModel):
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
+            X = self.training_points[None][0][0]
+            y = self.training_points[None][0][1]
+            # Center and scale X and y
+            (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(X, y)
+
             # hetGP works with unique design variables when noise variance are not given
             (
                 self.X_norma,
@@ -871,7 +883,6 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[-1]
         if not (self.is_continuous):
             dx = self.D
-
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 if "MFK" in self.name:
                     if (
@@ -920,7 +931,6 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
