@@ -2102,6 +2102,8 @@ class KrgBased(SurrogateModel):
                     "the length of theta0 (%s) should be equal to the number of dim (%s)."
                     % (len(self.options["theta0"]), d)
                 )
+        if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
+            self.options["hyper_opt"] = "Cobyla"
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:

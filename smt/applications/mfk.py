@@ -983,7 +983,8 @@ class MFK(KrgBased):
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
-
+        if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
+            self.options["hyper_opt"] = "Cobyla"
         n_param = d
 
         if self.options["categorical_kernel"] is not None:
