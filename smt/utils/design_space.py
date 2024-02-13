@@ -308,7 +308,7 @@ class BaseDesignSpace:
             if len(x.shape) == 2:
                 x_i = x[:, i_dv]
             elif len(x.shape) == 1:
-                x_i = x
+                x_i = x[i_dv]
             else:
                 raise ValueError("Expected either 1 or 2-dimensional matrix!")
 
