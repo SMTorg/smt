@@ -375,19 +375,19 @@ class KrgBased(SurrogateModel):
         self._corr_params = None
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         D = None  # For SGP, D is not computed at all
+        # Center and scale X and y
+        (
+            self.X_norma,
+            self.y_norma,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = standardization(X.copy(), y.copy())
+
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
         elif self.options["use_het_noise"]:
-            # Center and scale X and y
-            (
-                self.X_norma,
-                self.y_norma,
-                self.X_offset,
-                self.y_mean,
-                self.X_scale,
-                self.y_std,
-            ) = standardization(X.copy(), y.copy())
-
             # hetGP works with unique design variables when noise variance are not given
             (
                 self.X_norma,
@@ -456,15 +456,15 @@ class KrgBased(SurrogateModel):
                         mixint_type=MixIntKernelType.CONT_RELAX,
                     )
 
-        # Center and scale X_cont and y
-        (
-            self.X_norma,
-            self.y_norma,
-            self.X_offset,
-            self.y_mean,
-            self.X_scale,
-            self.y_std,
-        ) = standardization(X_cont.copy(), y.copy())
+                # Center and scale X_cont and y
+                (
+                    self.X_norma,
+                    self.y_norma,
+                    self.X_offset,
+                    self.y_mean,
+                    self.X_scale,
+                    self.y_std,
+                ) = standardization(X_cont.copy(), y.copy())
 
         if self.name not in ["SGP"]:
             if self.is_continuous:
