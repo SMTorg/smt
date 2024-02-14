@@ -456,15 +456,15 @@ class KrgBased(SurrogateModel):
                         mixint_type=MixIntKernelType.CONT_RELAX,
                     )
 
-                # Center and scale X_cont and y
-                (
-                    self.X_norma,
-                    self.y_norma,
-                    self.X_offset,
-                    self.y_mean,
-                    self.X_scale,
-                    self.y_std,
-                ) = standardization(X_cont.copy(), y.copy())
+            # Center and scale X_cont and y
+            (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(X_cont.copy(), y.copy())
 
         if self.name not in ["SGP"]:
             if self.is_continuous:
