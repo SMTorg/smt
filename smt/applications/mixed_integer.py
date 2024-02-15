@@ -204,6 +204,11 @@ class MixedIntegerKrigingModel(KrgBased):
                 + " is not supported. Please use MixedIntegerSurrogateModel instead."
             )
         self.options["design_space"] = self._surrogate.design_space
+        if surrogate.options["hyper_opt"] == "TNC":
+            warnings.warn(
+                "TNC not available yet for mixed integer handling. Switching to Cobyla"
+            )
+
         self._surrogate.options["hyper_opt"] = "Cobyla"
 
         self._input_in_folded_space = input_in_folded_space
@@ -340,6 +345,12 @@ class MixedIntegerContext(object):
         Build MixedIntegerKrigingModel from given SMT surrogate model.
         """
         surrogate.options["design_space"] = self._design_space
+
+        if surrogate.options["hyper_opt"] == "TNC":
+            warnings.warn(
+                "TNC not available yet for mixed integer handling. Switching to Cobyla"
+            )
+
         surrogate.options["hyper_opt"] = "Cobyla"
         return MixedIntegerKrigingModel(
             surrogate=surrogate,
