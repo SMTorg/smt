@@ -2104,6 +2104,9 @@ class KrgBased(SurrogateModel):
                 )
         if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
             self.options["hyper_opt"] = "Cobyla"
+            warnings.warn(
+                "TNC not available yet for noise handling. Switching to Cobyla"
+            )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:
