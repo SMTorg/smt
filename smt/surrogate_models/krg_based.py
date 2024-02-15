@@ -375,53 +375,6 @@ class KrgBased(SurrogateModel):
         self._corr_params = None
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         D = None  # For SGP, D is not computed at all
-        if not (self.is_continuous):
-            D, self.ij, X = gower_componentwise_distances(
-                X=X,
-                x_is_acting=is_acting,
-                design_space=self.design_space,
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-            )
-            self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, design_space=self.design_space
-            )
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                D = self._correct_distances_cat_decreed(
-                    D,
-                    is_acting,
-                    listcatdecreed,
-                    self.ij,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
-                (
-                    self.X2_norma,
-                    _,
-                    self.X2_offset,
-                    _,
-                    self.X2_scale,
-                    _,
-                ) = standardization(X2, self.training_points[None][0][1])
-                D, _ = cross_distances(self.X2_norma)
-                self.Lij, self.n_levels = cross_levels(
-                    X=self.X_train, ij=self.ij, design_space=self.design_space
-                )
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    D = self._correct_distances_cat_decreed(
-                        D,
-                        is_acting,
-                        listcatdecreed,
-                        self.ij,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
-
         # Center and scale X and y
         (
             self.X_norma,
@@ -430,7 +383,7 @@ class KrgBased(SurrogateModel):
             self.y_mean,
             self.X_scale,
             self.y_std,
-        ) = standardization(X, y)
+        ) = standardization(X.copy(), y.copy())
 
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
@@ -455,6 +408,63 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
+
+        if not (self.is_continuous):
+            D, self.ij, X_cont = gower_componentwise_distances(
+                X=X,
+                x_is_acting=is_acting,
+                design_space=self.design_space,
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+            )
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, design_space=self.design_space
+            )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                D = self._correct_distances_cat_decreed(
+                    D,
+                    is_acting,
+                    listcatdecreed,
+                    self.ij,
+                    mixint_type=MixIntKernelType.GOWER,
+                )
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                X2, _ = self.design_space.unfold_x(X)
+                (
+                    self.X2_norma,
+                    _,
+                    self.X2_offset,
+                    _,
+                    self.X2_scale,
+                    _,
+                ) = standardization(X2.copy(), y.copy())
+                D, _ = cross_distances(self.X2_norma)
+                self.Lij, self.n_levels = cross_levels(
+                    X=self.X_train, ij=self.ij, design_space=self.design_space
+                )
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    D = self._correct_distances_cat_decreed(
+                        D,
+                        is_acting,
+                        listcatdecreed,
+                        self.ij,
+                        mixint_type=MixIntKernelType.CONT_RELAX,
+                    )
+
+            # Center and scale X_cont and y
+            (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(X_cont.copy(), y.copy())
 
         if self.name not in ["SGP"]:
             if self.is_continuous:
@@ -871,7 +881,6 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[-1]
         if not (self.is_continuous):
             dx = self.D
-
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 if "MFK" in self.name:
                     if (
@@ -920,7 +929,6 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
