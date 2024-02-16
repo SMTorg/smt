@@ -326,7 +326,8 @@ class TestMFKmixed(unittest.TestCase):
     ###############################################################################
 
     def run_mfk_mixed_example(self):
-        from matplotlib.pyplot import plt
+        import matplotlib.pyplot as plt
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]
@@ -370,7 +371,11 @@ class TestMFKmixed(unittest.TestCase):
 
         # Validation data:
         n_valid = 100  # validation set size
-        x_valid, is_acting_valid = ds.sample_valid_x(n_valid)
+        ds.seed = 42
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        x_valid, is_acting_valid = samp(n_valid, return_is_acting=True)
 
         y1_valid = np.zeros(n_valid)  # obj 1
         y2_valid = np.zeros(n_valid)  # obj 2
@@ -477,6 +482,7 @@ class TestMFKmixed(unittest.TestCase):
                     print_prediction=False,
                     corr="squar_exp",
                     categorical_kernel=MixIntKernelType.CONT_RELAX,
+                    hyper_opt="Cobyla",
                 )
                 sm2 = MFK(
                     design_space=ds,
@@ -484,6 +490,7 @@ class TestMFKmixed(unittest.TestCase):
                     print_prediction=False,
                     corr="squar_exp",
                     categorical_kernel=MixIntKernelType.CONT_RELAX,
+                    hyper_opt="Cobyla",
                 )
 
                 # Set training data
@@ -507,6 +514,7 @@ class TestMFKmixed(unittest.TestCase):
                     print_prediction=False,
                     corr="squar_exp",
                     categorical_kernel=MixIntKernelType.CONT_RELAX,
+                    hyper_opt="Cobyla",
                 )
                 sm2 = MFKPLS(
                     n_comp=3,
@@ -515,6 +523,7 @@ class TestMFKmixed(unittest.TestCase):
                     print_prediction=False,
                     corr="squar_exp",
                     categorical_kernel=MixIntKernelType.CONT_RELAX,
+                    hyper_opt="Cobyla",
                 )
 
                 # Set training data
@@ -541,14 +550,18 @@ class TestMFKmixed(unittest.TestCase):
             y1_predict = np.ravel(sm1.predict_values(x_valid))
             if "mfk" in krg_method:
                 y1_predict_LF = np.ravel(sm1._predict_intermediate_values(x_valid, 1))
-                y1_var_predict_LF = np.ravel(sm1.predict_variances_all_levels(x_valid))
+                y1_var_predict_LF = np.ravel(
+                    sm1.predict_variances_all_levels(x_valid)[0]
+                )
             y1_var_predict = np.ravel(sm1.predict_variances(x_valid))
             y1_sd_predict = np.sqrt(y1_var_predict)
             # obj 2
             y2_predict = np.ravel(sm2.predict_values(x_valid))
             if "mfk" in krg_method:
                 y2_predict_LF = np.ravel(sm2._predict_intermediate_values(x_valid, 1))
-                y2_var_predict_LF = np.ravel(sm2.predict_variances_all_levels(x_valid))
+                y2_var_predict_LF = np.ravel(
+                    sm2.predict_variances_all_levels(x_valid)[0]
+                )
             y2_var_predict = np.ravel(sm2.predict_variances(x_valid))
             y2_sd_predict = np.sqrt(y2_var_predict)
 
@@ -652,7 +665,8 @@ class TestMFKmixed(unittest.TestCase):
                 # ------------------------------------------------------------------------------
 
     def run_mfkpls_mixed_example(self):
-        from matplotlib.pyplot import plt
+        import matplotlib.pyplot as plt
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         # KRG_METHODS = ["krg", "kpls", "mfk", "mfkpls"]
         # KRG_METHODS = ["krg"]
@@ -871,14 +885,18 @@ class TestMFKmixed(unittest.TestCase):
             y1_predict = np.ravel(sm1.predict_values(x_valid))
             if "mfk" in krg_method:
                 y1_predict_LF = np.ravel(sm1._predict_intermediate_values(x_valid, 1))
-                y1_var_predict_LF = np.ravel(sm1.predict_variances_all_levels(x_valid))
+                y1_var_predict_LF = np.ravel(
+                    sm1.predict_variances_all_levels(x_valid)[0]
+                )
             y1_var_predict = np.ravel(sm1.predict_variances(x_valid))
             y1_sd_predict = np.sqrt(y1_var_predict)
             # obj 2
             y2_predict = np.ravel(sm2.predict_values(x_valid))
             if "mfk" in krg_method:
                 y2_predict_LF = np.ravel(sm2._predict_intermediate_values(x_valid, 1))
-                y2_var_predict_LF = np.ravel(sm2.predict_variances_all_levels(x_valid))
+                y2_var_predict_LF = np.ravel(
+                    sm2.predict_variances_all_levels(x_valid)[0]
+                )
             y2_var_predict = np.ravel(sm2.predict_variances(x_valid))
             y2_sd_predict = np.sqrt(y2_var_predict)
 

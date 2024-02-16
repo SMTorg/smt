@@ -14,7 +14,10 @@ from scipy.optimize import minimize
 
 from smt.surrogate_models import KPLS, KRG, KPLSK, MGP, GEKPLS
 from smt.applications.application import SurrogateBasedApplication
-from smt.applications.mixed_integer import MixedIntegerContext
+from smt.applications.mixed_integer import (
+    MixedIntegerContext,
+    MixedIntegerSamplingMethod,
+)
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
@@ -271,10 +274,14 @@ class EGO(SurrogateBasedApplication):
 
         else:
             self.mixint = None
-            self._sampling = lambda n: self.design_space.sample_valid_x(
-                n,
+            sampling = MixedIntegerSamplingMethod(
+                LHS,
+                self.design_space,
+                criterion="ese",
                 random_state=self.options["random_state"],
-            )[0]
+            )
+            self._sampling = lambda n: sampling(n)
+
             self.categorical_kernel = None
 
         # Build DOE

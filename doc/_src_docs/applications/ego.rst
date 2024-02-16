@@ -216,7 +216,7 @@ Usage
   xlimits = np.array([[0.0, 25.0]])
   
   random_state = 42  # for reproducibility
-  design_space = DesignSpace(xlimits, seed=random_state)
+  design_space = DesignSpace(xlimits, random_state=random_state)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -319,7 +319,7 @@ Usage with parallel options
   xlimits = np.array([[0.0, 25.0]])
   
   random_state = 42
-  design_space = DesignSpace(xlimits, seed=random_state)
+  design_space = DesignSpace(xlimits, random_state=random_state)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -450,7 +450,10 @@ Usage with mixed variable
 
   import numpy as np
   from smt.applications import EGO
-  from smt.applications.mixed_integer import MixedIntegerContext
+  from smt.applications.mixed_integer import (
+      MixedIntegerContext,
+      MixedIntegerSamplingMethod,
+  )
   from smt.surrogate_models import MixIntKernelType
   from smt.utils.design_space import (
       DesignSpace,
@@ -497,7 +500,7 @@ Usage with mixed variable
           CategoricalVariable(["square", "circle"]),
           IntegerVariable(0, 2),
       ],
-      seed=random_state,
+      random_state=random_state,
   )
   
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -546,7 +549,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-4.88885885  2.          0.          0.        ] with f(x)=-14.7
+  Minimum in x=[-4.88913486  2.          0.          0.        ] with f(x)=-14.7
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -602,7 +605,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x1541173bca30>
+     -  <smt.applications.ego.Evaluator object at 0x14fe19fb4a30>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -632,7 +635,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x1541173bc8b0>
+     -  <smt.surrogate_models.krg.KRG object at 0x14fe19fb4e50>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly

@@ -9,7 +9,7 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 from copy import deepcopy
-
+import warnings
 import numpy as np
 from scipy.linalg import solve_triangular
 from scipy import linalg
@@ -983,7 +983,11 @@ class MFK(KrgBased):
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
-
+        if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
+            self.options["hyper_opt"] = "Cobyla"
+            warnings.warn(
+                "TNC not available yet for noise handling. Switching to Cobyla"
+            )
         n_param = d
 
         if self.options["categorical_kernel"] is not None:

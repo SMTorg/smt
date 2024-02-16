@@ -51,6 +51,7 @@ class MixIntKernelType(Enum):
     HOMO_HSPHERE = "HOMO_HSPHERE"
     CONT_RELAX = "CONT_RELAX"
     GOWER = "GOWER"
+    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
 class KrgBased(SurrogateModel):
@@ -105,6 +106,7 @@ class KrgBased(SurrogateModel):
                 MixIntKernelType.GOWER,
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
+                MixIntKernelType.COMPOUND_SYMMETRY,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
         )
@@ -373,53 +375,6 @@ class KrgBased(SurrogateModel):
         self._corr_params = None
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         D = None  # For SGP, D is not computed at all
-        if not (self.is_continuous):
-            D, self.ij, X = gower_componentwise_distances(
-                X=X,
-                x_is_acting=is_acting,
-                design_space=self.design_space,
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-            )
-            self.Lij, self.n_levels = cross_levels(
-                X=self.X_train, ij=self.ij, design_space=self.design_space
-            )
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                D = self._correct_distances_cat_decreed(
-                    D,
-                    is_acting,
-                    listcatdecreed,
-                    self.ij,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
-                (
-                    self.X2_norma,
-                    _,
-                    self.X2_offset,
-                    _,
-                    self.X2_scale,
-                    _,
-                ) = standardization(X2, self.training_points[None][0][1])
-                D, _ = cross_distances(self.X2_norma)
-                self.Lij, self.n_levels = cross_levels(
-                    X=self.X_train, ij=self.ij, design_space=self.design_space
-                )
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    D = self._correct_distances_cat_decreed(
-                        D,
-                        is_acting,
-                        listcatdecreed,
-                        self.ij,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
-
         # Center and scale X and y
         (
             self.X_norma,
@@ -428,7 +383,7 @@ class KrgBased(SurrogateModel):
             self.y_mean,
             self.X_scale,
             self.y_std,
-        ) = standardization(X, y)
+        ) = standardization(X.copy(), y.copy())
 
         if not self.options["eval_noise"]:
             self.optimal_noise = np.array(self.options["noise0"])
@@ -453,6 +408,63 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
+
+        if not (self.is_continuous):
+            D, self.ij, X_cont = gower_componentwise_distances(
+                X=X,
+                x_is_acting=is_acting,
+                design_space=self.design_space,
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+            )
+            self.Lij, self.n_levels = cross_levels(
+                X=self.X_train, ij=self.ij, design_space=self.design_space
+            )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                D = self._correct_distances_cat_decreed(
+                    D,
+                    is_acting,
+                    listcatdecreed,
+                    self.ij,
+                    mixint_type=MixIntKernelType.GOWER,
+                )
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                X2, _ = self.design_space.unfold_x(X)
+                (
+                    self.X2_norma,
+                    _,
+                    self.X2_offset,
+                    _,
+                    self.X2_scale,
+                    _,
+                ) = standardization(X2.copy(), y.copy())
+                D, _ = cross_distances(self.X2_norma)
+                self.Lij, self.n_levels = cross_levels(
+                    X=self.X_train, ij=self.ij, design_space=self.design_space
+                )
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    D = self._correct_distances_cat_decreed(
+                        D,
+                        is_acting,
+                        listcatdecreed,
+                        self.ij,
+                        mixint_type=MixIntKernelType.CONT_RELAX,
+                    )
+
+            # Center and scale X_cont and y
+            (
+                self.X_norma,
+                self.y_norma,
+                self.X_offset,
+                self.y_mean,
+                self.X_scale,
+                self.y_std,
+            ) = standardization(X_cont.copy(), y.copy())
 
         if self.name not in ["SGP"]:
             if self.is_continuous:
@@ -527,7 +539,12 @@ class KrgBased(SurrogateModel):
             ncomp = 1e5
 
         theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
+        theta_cat_features = np.ones((len(theta), len(n_levels)), dtype=bool)
+        if cat_kernel in [
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.HOMO_HSPHERE,
+        ]:
+            theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
         i = 0
         j = 0
         n_theta_cont = 0
@@ -545,6 +562,7 @@ class KrgBased(SurrogateModel):
             else:
                 if n_theta_cont < ncomp:
                     theta_cont_features[j] = True
+                    theta_cat_features[j] = False
                     j += 1
                     n_theta_cont += 1
 
@@ -706,16 +724,35 @@ class KrgBased(SurrogateModel):
                 theta_cat_kernel[theta_cat_features[1]] *= 0.5 * np.pi / theta_bounds[1]
             elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
                 theta_cat_kernel[theta_cat_features[1]] *= 2.0 * np.pi / theta_bounds[1]
+            elif cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
+                theta_cat_kernel[theta_cat_features[1]] *= 2.0
+                theta_cat_kernel[theta_cat_features[1]] -= (
+                    theta_bounds[1] + theta_bounds[0]
+                )
+                theta_cat_kernel[theta_cat_features[1]] *= 1 / (
+                    1.000000000001 * theta_bounds[1]
+                )
 
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
-            T = matrix_data_corr_levels_cat_matrix(
-                i,
-                n_levels,
-                theta_cat,
-                theta_bounds,
-                is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
-            )
+            if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
+                T = np.zeros((n_levels[i], n_levels[i]))
+                for tij in range(n_levels[i]):
+                    for tji in range(n_levels[i]):
+                        if tij == tji:
+                            T[tij, tji] = 1
+                        else:
+                            T[tij, tji] = max(
+                                theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
+                            )
+            else:
+                T = matrix_data_corr_levels_cat_matrix(
+                    i,
+                    n_levels,
+                    theta_cat,
+                    theta_bounds,
+                    is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
+                )
 
             if cat_kernel_comps is not None:
                 # Sampling points X and y
@@ -777,6 +814,7 @@ class KrgBased(SurrogateModel):
                     in [
                         MixIntKernelType.EXP_HOMO_HSPHERE,
                         MixIntKernelType.HOMO_HSPHERE,
+                        MixIntKernelType.COMPOUND_SYMMETRY,
                     ],
                 )
 
@@ -843,7 +881,6 @@ class KrgBased(SurrogateModel):
             noise = tmp_var[-1]
         if not (self.is_continuous):
             dx = self.D
-
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 if "MFK" in self.name:
                     if (
@@ -892,7 +929,6 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
@@ -2063,7 +2099,8 @@ class KrgBased(SurrogateModel):
         self.options["theta0"] *= np.ones(n_param)
 
         if len(self.options["theta0"]) != d and (
-            self.options["categorical_kernel"] == MixIntKernelType.GOWER
+            self.options["categorical_kernel"]
+            in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
             or self.is_continuous
         ):
             if len(self.options["theta0"]) == 1:
@@ -2073,6 +2110,11 @@ class KrgBased(SurrogateModel):
                     "the length of theta0 (%s) should be equal to the number of dim (%s)."
                     % (len(self.options["theta0"]), d)
                 )
+        if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
+            self.options["hyper_opt"] = "Cobyla"
+            warnings.warn(
+                "TNC not available yet for noise handling. Switching to Cobyla"
+            )
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:
@@ -2143,7 +2185,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
-    if cat_kernel == MixIntKernelType.GOWER:
+    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
         return n_param
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
