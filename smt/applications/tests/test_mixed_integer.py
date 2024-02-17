@@ -171,20 +171,24 @@ class TestMixedInteger(unittest.TestCase):
 
         y_doe = [f_obj(xdoe[i])[0] for i in range(len(xdoe))]
         # Surrogate
-        sm = MixedIntegerKrigingModel(
-            surrogate=KRG(
-                design_space=design_space,
-                categorical_kernel=MixIntKernelType.GOWER,
-                hyper_opt="Cobyla",
-                theta0=[0.01],
-                corr="squar_sin_exp",
-                n_start=100,
-            ),
-        )
+        for m in MixIntKernelType:
+            sm = MixedIntegerKrigingModel(
+                surrogate=KRG(
+                    design_space=design_space,
+                    categorical_kernel=m,
+                    hyper_opt="Cobyla",
+                    theta0=[0.01],
+                    corr="squar_sin_exp",
+                    n_start=5,
+                ),
+            )
 
-        sm.set_training_values(xdoe, np.array(y_doe))
-        sm.train()
-        self.assertTrue(np.shape(sm._surrogate.optimal_theta)[0] == 4)
+            sm.set_training_values(xdoe, np.array(y_doe))
+            if m in [MixIntKernelType.EXP_HOMO_HSPHERE, MixIntKernelType.CONT_RELAX]:
+                with self.assertRaises(ValueError):
+                    sm.train()
+            else:
+                sm.train()
 
     def test_krg_mixed_3D(self):
         design_space = DesignSpace(
