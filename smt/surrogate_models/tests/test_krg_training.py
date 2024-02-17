@@ -45,6 +45,7 @@ class Test(SMTestCase):
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]
         corr_def = [pow_exp, abs_exp, squar_exp, act_exp, matern32, matern52]
         power_val = {
@@ -54,6 +55,7 @@ class Test(SMTestCase):
             "act_exp": 1.0,
             "matern32": 1.0,
             "matern52": 1.0,
+            "squar_sin_exp": 1.0,
         }
 
         self.eps = eps
@@ -179,6 +181,7 @@ class Test(SMTestCase):
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
@@ -224,6 +227,7 @@ class Test(SMTestCase):
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "act_exp":
@@ -276,6 +280,7 @@ class Test(SMTestCase):
             "matern32",
             "matern52",
             "pow_exp",
+            "squar_sin_exp",
         ]:
             kr = KRG(print_global=False)
             kr.options["poly"] = "constant"

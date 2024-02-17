@@ -29,7 +29,14 @@ class Test(SMTestCase):
 
     def test_predictions(self):
         trends = ["constant", "linear"]
-        kernels = ["pow_exp", "squar_exp", "abs_exp", "matern32", "matern52"]
+        kernels = [
+            "pow_exp",
+            "squar_exp",
+            "abs_exp",
+            "matern32",
+            "matern52",
+            "squar_sin_exp",
+        ]
         powers = [1.0, 1.5, 2.0]
 
         for trend in trends:
