@@ -714,6 +714,18 @@ class KrgBased(SurrogateModel):
                 return r
             else:
                 d_cont = d[:, np.logical_not(cat_features)]
+        if self.options["corr"] == "squar_sin_exp":
+            if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
+                theta_cont_features[-len([self.design_space.is_cat_mask == True]) :] = (
+                    np.atleast_2d(
+                        np.array([True] * len([self.design_space.is_cat_mask == True]))
+                    ).T
+                )
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask == True]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask == True]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -2105,7 +2117,12 @@ class KrgBased(SurrogateModel):
         )
 
         if self.options["corr"] == "squar_sin_exp":
-            self.options["theta0"] *= np.ones(2 * n_param)
+            if self.options["categorical_kernel"] == MixIntKernelType.GOWER:
+                self.options["theta0"] *= np.ones(2 * n_param)
+            else:
+                n_param += len([self.design_space.is_cat_mask == True])
+                self.options["theta0"] *= np.ones(n_param)
+
         else:
             self.options["theta0"] *= np.ones(n_param)
         if (
