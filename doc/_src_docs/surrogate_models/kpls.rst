@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1402104
+     Training - done. Time (sec):  0.1393197
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0025821
+     Predicting - done. Time (sec):  0.0027955
      
-     Prediction time/pt. (sec) :  0.0000258
+     Prediction time/pt. (sec) :  0.0000280
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004458
+     Predicting - done. Time (sec):  0.0004513
      
-     Prediction time/pt. (sec) :  0.0000892
+     Prediction time/pt. (sec) :  0.0000903
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 14.0136063
+     Training - done. Time (sec): 13.8389244
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,9 +168,9 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0011318
+     Predicting - done. Time (sec):  0.0010622
      
-     Prediction time/pt. (sec) :  0.0011318
+     Prediction time/pt. (sec) :  0.0010622
      
   [[139.34911523]]
   [[212.53624102]]

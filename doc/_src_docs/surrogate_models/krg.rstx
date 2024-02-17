@@ -39,7 +39,13 @@ Matérn 3/2 correlation function:
 .. math ::
   \prod\limits_{l=1}^{nx} \left(1 + \sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right) \exp\left(-\sqrt{3}\theta_{l}\left|x_l^{(i)}-x_l^{(j)}\right|\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
   
-These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52' and 'matern32' in SMT.
+Exponential Squared Sine correlation function:
+
+.. math ::
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l_1 \left( \theta_l_2 \left( \sin \left( x_l^{(i)}-x_l^{(j)} \right)\right) \right)^{2}  \right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+
+These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52','matern32' and 'squar_sin_exp' in SMT.
 
 The deterministic term :math:`\sum\limits_{i=1}^k\beta_i f_i({\bf x})` can be replaced by a constant, a linear model, or a quadratic model.
 These three types are available in SMT.
