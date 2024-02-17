@@ -42,7 +42,7 @@ Matérn 3/2 correlation function:
 Exponential Squared Sine correlation function:
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l_1 \left( \theta_l_2 \left( \sin \left( x_l^{(i)}-x_l^{(j)} \right)\right) \right)^{2}  \right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_{l_1} \left( \theta_{l_2} \left( \sin \left( x_l^{(i)}-x_l^{(j)} \right)\right) \right)^{2}  \right),  \quad \forall\ \theta_l\in\mathbb{R}^+
 
 
 These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52','matern32' and 'squar_sin_exp' in SMT.
@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1382720
+     Training - done. Time (sec):  0.1433256
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0025766
+     Predicting - done. Time (sec):  0.0025897
      
-     Prediction time/pt. (sec) :  0.0000258
+     Prediction time/pt. (sec) :  0.0000259
      
   ___________________________________________________________________________
      
@@ -161,9 +161,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004661
+     Predicting - done. Time (sec):  0.0004776
      
-     Prediction time/pt. (sec) :  0.0000932
+     Prediction time/pt. (sec) :  0.0000955
      
   
 .. figure:: krg_Test_test_krg.png
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0095375
+     Predicting - done. Time (sec):  0.0096531
      
-     Prediction time/pt. (sec) :  0.0000191
+     Prediction time/pt. (sec) :  0.0000193
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png

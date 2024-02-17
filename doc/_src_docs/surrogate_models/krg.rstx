@@ -42,7 +42,7 @@ Matérn 3/2 correlation function:
 Exponential Squared Sine correlation function:
 
 .. math ::
-  \prod\limits_{l=1}^{nx}\exp\left(-\theta_l_1 \left( \theta_l_2 \left( \sin \left( x_l^{(i)}-x_l^{(j)} \right)\right) \right)^{2}  \right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+  \prod\limits_{l=1}^{nx}\exp\left(-\theta_{l_1} \left( \theta_{l_2} \left( \sin \left( x_l^{(i)}-x_l^{(j)} \right)\right) \right)^{2}  \right),  \quad \forall\ \theta_l\in\mathbb{R}^+
 
 
 These correlation functions are called by 'abs_exp' (exponential), 'squar_exp' (Gaussian), 'matern52','matern32' and 'squar_sin_exp' in SMT.
