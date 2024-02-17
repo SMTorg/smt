@@ -46,6 +46,7 @@ The design space is then defined from a list of design variables and implements 
   )
   from smt.sampling_methods import LHS
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  
   ds = DesignSpace(
       [
           CategoricalVariable(
@@ -111,7 +112,10 @@ The hierarchy relationships are specified after instantiating the design space:
       OrdinalVariable,
       CategoricalVariable,
   )
-  from smt.applications.mixed_integer import MixedIntegerKrigingModel, MixedIntegerSamplingMethod
+  from smt.applications.mixed_integer import (
+      MixedIntegerKrigingModel,
+      MixedIntegerSamplingMethod,
+  )
   from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
   from smt.sampling_methods import LHS
   
@@ -228,9 +232,9 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.3314385
+     Predicting - done. Time (sec):  0.3353465
      
-     Prediction time/pt. (sec) :  0.0033144
+     Prediction time/pt. (sec) :  0.0033535
      
   Pred_RMSE 4.092408537263059e-13
   
@@ -273,6 +277,7 @@ Example of sampling a mixed-discrete design space
   )
   from smt.sampling_methods import LHS
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  
   float_var = FloatVariable(0, 4)
   cat_var = CategoricalVariable(["blue", "red"])
   
@@ -319,7 +324,10 @@ Example of mixed integer context usage
 
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import MixedIntegerContext,MixedIntegerSamplingMethod 
+  from smt.applications.mixed_integer import (
+      MixedIntegerContext,
+      MixedIntegerSamplingMethod,
+  )
   from smt.utils.design_space import (
       DesignSpace,
       FloatVariable,
@@ -376,9 +384,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0133548
+     Predicting - done. Time (sec):  0.0130029
      
-     Prediction time/pt. (sec) :  0.0002671
+     Prediction time/pt. (sec) :  0.0002601
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png
