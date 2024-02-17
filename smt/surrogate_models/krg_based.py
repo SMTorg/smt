@@ -2117,7 +2117,10 @@ class KrgBased(SurrogateModel):
         )
 
         if self.options["corr"] == "squar_sin_exp":
-            if self.options["categorical_kernel"] == MixIntKernelType.GOWER:
+            if (
+                self.is_continuous
+                or self.options["categorical_kernel"] == MixIntKernelType.GOWER
+            ):
                 self.options["theta0"] *= np.ones(2 * n_param)
             else:
                 n_param += len([self.design_space.is_cat_mask == True])

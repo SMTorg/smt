@@ -9,6 +9,7 @@ import numpy as np
 from smt.surrogate_models import KRG
 from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
+import warnings
 
 
 class Test(SMTestCase):
@@ -70,7 +71,12 @@ class Test(SMTestCase):
 
                     # quality of the surrogate on validation points
                     Test._check_prediction_variances(self, sm)
-                    Test._check_prediction_derivatives(self, sm)
+                    if kernel == "squar_sin_exp":
+                        warnings.warn(
+                            "Spatial derivatives for squar_sin_exp  yet to implement!"
+                        )
+                    else:
+                        Test._check_prediction_derivatives(self, sm)
 
     @staticmethod
     def _check_prediction_variances(self, sm):
