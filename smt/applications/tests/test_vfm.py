@@ -17,7 +17,6 @@ except:
 import numpy as np
 from scipy import linalg
 from smt.utils.sm_test_case import SMTestCase
-from smt.utils import compute_rms_error
 from smt.utils.silence import Silence
 
 from smt.problems import WaterFlowLFidelity, WaterFlow
