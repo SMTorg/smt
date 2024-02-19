@@ -61,7 +61,7 @@ Example of mixed integer Polynomial (QP) surrogate
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000598
+     Predicting - done. Time (sec):  0.0000551
      
      Prediction time/pt. (sec) :  0.0000006
      
@@ -224,20 +224,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0083411
+     Predicting - done. Time (sec):  0.0078330
      
-     Prediction time/pt. (sec) :  0.0000834
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0082445
-     
-     Prediction time/pt. (sec) :  0.0000824
+     Prediction time/pt. (sec) :  0.0000783
      
   ___________________________________________________________________________
      
@@ -246,9 +235,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0082402
+     Predicting - done. Time (sec):  0.0078776
      
-     Prediction time/pt. (sec) :  0.0000824
+     Prediction time/pt. (sec) :  0.0000788
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0078387
+     
+     Prediction time/pt. (sec) :  0.0000784
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -412,20 +412,9 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0098972
+     Predicting - done. Time (sec):  0.0095315
      
-     Prediction time/pt. (sec) :  0.0000990
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0098805
-     
-     Prediction time/pt. (sec) :  0.0000988
+     Prediction time/pt. (sec) :  0.0000953
      
   ___________________________________________________________________________
      
@@ -434,9 +423,20 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099378
+     Predicting - done. Time (sec):  0.0095360
      
-     Prediction time/pt. (sec) :  0.0000994
+     Prediction time/pt. (sec) :  0.0000954
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0095096
+     
+     Prediction time/pt. (sec) :  0.0000951
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_cs_example.png
@@ -593,20 +593,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099890
+     Predicting - done. Time (sec):  0.0094757
      
-     Prediction time/pt. (sec) :  0.0000999
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0100174
-     
-     Prediction time/pt. (sec) :  0.0001002
+     Prediction time/pt. (sec) :  0.0000948
      
   ___________________________________________________________________________
      
@@ -615,9 +604,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0100038
+     Predicting - done. Time (sec):  0.0094945
      
-     Prediction time/pt. (sec) :  0.0001000
+     Prediction time/pt. (sec) :  0.0000949
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0095246
+     
+     Prediction time/pt. (sec) :  0.0000952
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -774,20 +774,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099664
+     Predicting - done. Time (sec):  0.0095108
      
-     Prediction time/pt. (sec) :  0.0000997
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0101118
-     
-     Prediction time/pt. (sec) :  0.0001011
+     Prediction time/pt. (sec) :  0.0000951
      
   ___________________________________________________________________________
      
@@ -796,9 +785,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0099428
+     Predicting - done. Time (sec):  0.0096247
      
-     Prediction time/pt. (sec) :  0.0000994
+     Prediction time/pt. (sec) :  0.0000962
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0095794
+     
+     Prediction time/pt. (sec) :  0.0000958
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -1000,9 +1000,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0084703
+     Predicting - done. Time (sec):  0.0085273
      
-     Prediction time/pt. (sec) :  0.0005647
+     Prediction time/pt. (sec) :  0.0005685
      
   
 

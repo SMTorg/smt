@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.9827604
+     Training - done. Time (sec):  0.9694319
   ___________________________________________________________________________
      
    Evaluation
@@ -111,20 +111,20 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007160
-     
-     Prediction time/pt. (sec) :  0.0000071
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 101
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0007083
+     Predicting - done. Time (sec):  0.0007062
      
      Prediction time/pt. (sec) :  0.0000070
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 101
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0007169
+     
+     Prediction time/pt. (sec) :  0.0000071
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png

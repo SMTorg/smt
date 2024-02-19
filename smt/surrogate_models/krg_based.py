@@ -18,6 +18,7 @@ from smt.utils.kriging import (
     quadratic,
     pow_exp,
     squar_exp,
+    squar_sin_exp,
     abs_exp,
     act_exp,
     cross_distances,
@@ -61,6 +62,7 @@ class KrgBased(SurrogateModel):
         "pow_exp": pow_exp,
         "abs_exp": abs_exp,
         "squar_exp": squar_exp,
+        "squar_sin_exp": squar_sin_exp,
         "act_exp": act_exp,
         "matern52": matern52,
         "matern32": matern32,
@@ -217,7 +219,12 @@ class KrgBased(SurrogateModel):
         # initialize default power values
         if self.options["corr"] == "squar_exp":
             self.options["pow_exp_power"] = 2.0
-        elif self.options["corr"] in ["abs_exp", "matern32", "matern52"]:
+        elif self.options["corr"] in [
+            "abs_exp",
+            "squar_sin_exp",
+            "matern32",
+            "matern52",
+        ]:
             self.options["pow_exp_power"] = 1.0
 
         # Check the pow_exp_power is >0 and <=2
@@ -631,6 +638,7 @@ class KrgBased(SurrogateModel):
             "pow_exp": pow_exp,
             "abs_exp": abs_exp,
             "squar_exp": squar_exp,
+            "squar_sin_exp": squar_sin_exp,
             "act_exp": act_exp,
             "matern52": matern52,
             "matern32": matern32,
@@ -706,6 +714,18 @@ class KrgBased(SurrogateModel):
                 return r
             else:
                 d_cont = d[:, np.logical_not(cat_features)]
+        if self.options["corr"] == "squar_sin_exp":
+            if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
+                theta_cont_features[-len([self.design_space.is_cat_mask == True]) :] = (
+                    np.atleast_2d(
+                        np.array([True] * len([self.design_space.is_cat_mask == True]))
+                    ).T
+                )
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask == True]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask == True]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -2096,7 +2116,33 @@ class KrgBased(SurrogateModel):
             mat_dim,
         )
 
-        self.options["theta0"] *= np.ones(n_param)
+        if self.options["corr"] == "squar_sin_exp":
+            if (
+                self.is_continuous
+                or self.options["categorical_kernel"] == MixIntKernelType.GOWER
+            ):
+                self.options["theta0"] *= np.ones(2 * n_param)
+            else:
+                n_param += len([self.design_space.is_cat_mask == True])
+                self.options["theta0"] *= np.ones(n_param)
+
+        else:
+            self.options["theta0"] *= np.ones(n_param)
+        if (
+            not (self.options["corr"] in ["squar_exp", "abs_exp", "pow_exp"])
+            and not (self.is_continuous)
+            and not (
+                self.options["categorical_kernel"]
+                in [
+                    MixIntKernelType.GOWER,
+                    MixIntKernelType.COMPOUND_SYMMETRY,
+                    MixIntKernelType.HOMO_HSPHERE,
+                ]
+            )
+        ):
+            raise ValueError(
+                "Categorical kernels should be matrix or exponential based."
+            )
 
         if len(self.options["theta0"]) != d and (
             self.options["categorical_kernel"]
@@ -2106,10 +2152,11 @@ class KrgBased(SurrogateModel):
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
-                raise ValueError(
-                    "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                    % (len(self.options["theta0"]), d)
-                )
+                if self.options["corr"] != "squar_sin_exp":
+                    raise ValueError(
+                        "the length of theta0 (%s) should be equal to the number of dim (%s)."
+                        % (len(self.options["theta0"]), d)
+                    )
         if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
             self.options["hyper_opt"] = "Cobyla"
             warnings.warn(
