@@ -391,7 +391,7 @@ class LHS(ScaledSamplingMethod):
             [
                 subspace_limits[i].append([intervals[i][ii], intervals[i][ii + 1]])
                 for ii in range(len(subspace_bool[i]))
-                if not (True in subspace_bool[i][ii])
+                if True not in subspace_bool[i][ii]
             ]
 
         # Sampling of the new subspace
