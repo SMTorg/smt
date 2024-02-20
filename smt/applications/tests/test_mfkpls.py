@@ -18,7 +18,6 @@ except:
 
 import unittest
 import numpy as np
-import unittest
 import inspect
 
 from collections import OrderedDict
@@ -144,7 +143,6 @@ class TestMFKPLS(SMTestCase):
     def run_mfkpls_example():
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.applications.mfk import MFK, NestedLHS
         from smt.applications.mfkpls import MFKPLS
 
         # low fidelity model

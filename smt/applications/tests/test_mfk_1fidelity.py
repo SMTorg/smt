@@ -8,7 +8,6 @@ except:
 
 import unittest
 import numpy as np
-import unittest
 
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS

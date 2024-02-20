@@ -7,7 +7,6 @@ Created on Mon May 07 14:20:11 2018
 
 import unittest
 import numpy as np
-import unittest
 
 try:
     import matplotlib

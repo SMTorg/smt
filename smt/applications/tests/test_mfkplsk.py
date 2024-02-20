@@ -16,7 +16,6 @@ except:
 
 import unittest
 import numpy as np
-import unittest
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
@@ -144,7 +143,6 @@ class TestMFKPLSK(SMTestCase):
     def run_mfkplsk_example():
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.applications.mfk import MFK, NestedLHS
         from smt.applications.mfkplsk import MFKPLSK
 
         # low fidelity modelk

@@ -122,7 +122,6 @@ class TestVFM(SMTestCase):
     def run_vfm_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
-        from scipy import linalg
 
         from smt.problems import WaterFlowLFidelity, WaterFlow
         from smt.sampling_methods import LHS
