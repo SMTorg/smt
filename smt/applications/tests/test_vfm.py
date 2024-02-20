@@ -123,7 +123,6 @@ class TestVFM(SMTestCase):
         import matplotlib.pyplot as plt
         import numpy as np
         from scipy import linalg
-        from smt.utils import compute_rms_error
 
         from smt.problems import WaterFlowLFidelity, WaterFlow
         from smt.sampling_methods import LHS
