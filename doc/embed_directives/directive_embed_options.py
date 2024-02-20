@@ -26,9 +26,9 @@ class DirectiveEmbedOptions(Directive):
             globals(),
         )
 
-        exec("obj = {}({})".format(class_name, params), globals())
+        exec("obj = {}({})".format(class_name, params), globals())  # noqa: F821
 
-        options = getattr(obj, attribute_name)
+        options = getattr(obj, attribute_name)  # noqa: F821
 
         outputs = []
         for option_name, option_data in options._declared_entries.items():

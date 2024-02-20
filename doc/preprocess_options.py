@@ -35,7 +35,7 @@ def process_options(root, file_name, iline, line):
     exec("from smt.{} import {}".format(type_, class_name), globals())
     exec("sm_class = {}".format(class_name), globals())
 
-    sm = sm_class()
+    sm = sm_class()  # noqa: F821
     options = sm.options
 
     outputs = []
