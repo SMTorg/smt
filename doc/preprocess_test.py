@@ -4,15 +4,13 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import os, sys
+import os
+import sys
 import inspect
 import importlib
 import contextlib
 
-try:
-    from StringIO import StringIO
-except:
-    from io import StringIO
+from io import StringIO
 
 import matplotlib
 
