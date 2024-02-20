@@ -4,16 +4,14 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import warnings
 import numpy as np
 from enum import Enum
-from copy import deepcopy
 import os
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from pyDOE3 import bbdesign
 from sklearn.metrics.pairwise import check_pairwise_arrays
-from smt.utils.design_space import BaseDesignSpace, CategoricalVariable
+from smt.utils.design_space import CategoricalVariable
 
 
 USE_NUMBA_JIT = int(os.getenv("USE_NUMBA_JIT", 0))
@@ -269,7 +267,7 @@ def gower_componentwise_distances(
     else:
         Y = y
         if y_is_acting is None:
-            raise ValueError(f"Expected y_is_acting because y is given")
+            raise ValueError("Expected y_is_acting because y is given")
 
     if not isinstance(X, np.ndarray):
         if not np.array_equal(X.columns, Y.columns):
@@ -279,7 +277,7 @@ def gower_componentwise_distances(
             raise TypeError("X and Y must have same y-dim!")
 
     if x_is_acting.shape != X.shape or y_is_acting.shape != Y.shape:
-        raise ValueError(f"is_acting matrices must have same shape as X!")
+        raise ValueError("is_acting matrices must have same shape as X!")
 
     x_n_rows, x_n_cols = X.shape
     y_n_rows, y_n_cols = Y.shape
