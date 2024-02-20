@@ -45,6 +45,7 @@ class Test(SMTestCase):
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]
         corr_def = [pow_exp, abs_exp, squar_exp, act_exp, matern32, matern52]
         power_val = {
@@ -54,6 +55,7 @@ class Test(SMTestCase):
             "act_exp": 1.0,
             "matern32": 1.0,
             "matern52": 1.0,
+            "squar_sin_exp": 1.0,
         }
 
         self.eps = eps
@@ -173,6 +175,7 @@ class Test(SMTestCase):
 
     def test_likelihood_derivatives(self):
         for corr_str in [
+            "squar_sin_exp",
             "pow_exp",
             "abs_exp",
             "squar_exp",
@@ -181,7 +184,10 @@ class Test(SMTestCase):
             "matern52",
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
-                if corr_str == "act_exp":
+                if corr_str == "squar_sin_exp":
+                    kr = KRG(print_global=False)
+                    theta = self.random.rand(4)
+                elif corr_str == "act_exp":
                     kr = MGP(print_global=False)
                     theta = self.random.rand(4)
                 else:
@@ -209,7 +215,6 @@ class Test(SMTestCase):
                     grad_norm_all.append(grad_red[i])
                     diff_norm_all.append(float(dred_dk))
                     ind_theta.append(r"$x_%d$" % i)
-
                 grad_norm_all = np.atleast_2d(grad_norm_all)
                 diff_norm_all = np.atleast_2d(diff_norm_all).T
                 self.assert_error(
@@ -224,9 +229,13 @@ class Test(SMTestCase):
             "act_exp",
             "matern32",
             "matern52",
+            #      "squar_sin_exp", # Yet to implement
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
-                if corr_str == "act_exp":
+                if corr_str == "squar_sin_exp":
+                    kr = KRG(print_global=False)
+                    theta = self.random.rand(4)
+                elif corr_str == "act_exp":
                     kr = MGP(print_global=False)
                     theta = self.random.rand(4)
                 else:
@@ -271,6 +280,7 @@ class Test(SMTestCase):
 
     def test_variance_derivatives(self):
         for corr_str in [
+            #  "squar_sin_exp", ### Yet to implement
             "abs_exp",
             "squar_exp",
             "matern32",

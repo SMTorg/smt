@@ -17,7 +17,7 @@ from smt.sampling_methods import LHS, FullFactorial
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-from smt.utils import compute_rms_error
+from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import (
     LS,
     QP,

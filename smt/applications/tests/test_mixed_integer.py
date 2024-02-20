@@ -43,6 +43,153 @@ from smt.surrogate_models import (
 
 
 class TestMixedInteger(unittest.TestCase):
+    def test_periodic_mixed(self):
+        # Objective function
+        def f_obj(X):
+            """
+            s01 objective
+
+            Parameters
+            ----------
+            point: array_like
+                point to evaluate
+            """
+            design_space = DesignSpace(
+                [
+                    FloatVariable(0.0, 1.0),
+                    CategoricalVariable(
+                        values=[
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7",
+                            "8",
+                            "9",
+                            "10",
+                            "11",
+                            "12",
+                            "13",
+                        ]
+                    ),
+                ]
+            )
+
+            PI = 3.14159265358979323846
+            fail = False
+            x = X[0]
+            #  caté 1
+            c = str(design_space.decode_values(X, i_dv=1)[1])
+            x = np.abs(x)
+            c1 = c == "1"
+            c2 = c == "2"
+            c3 = c == "3"
+            c4 = c == "4"
+            c5 = c == "5"
+            c6 = c == "6"
+            c7 = c == "7"
+            c8 = c == "8"
+            c9 = c == "9"
+            c10 = c == "10"
+            c11 = c == "11"
+            c12 = c == "12"
+            c13 = c == "13"
+
+            if np.size(c1) == (
+                np.sum(c1)
+                + np.sum(c2)
+                + np.sum(c3)
+                + np.sum(c4)
+                + np.sum(c5)
+                + np.sum(c6)
+                + np.sum(c7)
+                + np.sum(c8)
+                + np.sum(c9)
+                + np.sum(c10)
+                + np.sum(c11)
+                + np.sum(c12)
+                + np.sum(c13)
+            ):
+                u = (
+                    1 * c1
+                    + 2 * c2
+                    + 3 * c3
+                    + 4 * c4
+                    + 5 * c5
+                    + 6 * c6
+                    + 7 * c7
+                    + 8 * c8
+                    + 9 * c9
+                    + 10 * c10
+                    + 11 * c11
+                    + 12 * c12
+                    + 13 * c13
+                )
+                hu = (PI * (0.4 + u / 15)) * (c10 + c11 + c12 + c13) - u / 20
+                y = np.cos(3.5 * PI * x + hu)
+            else:
+                print("type error")
+                print(X)
+                fail = True
+            return (y, fail)
+
+        n_doe = 98
+
+        design_space = DesignSpace(
+            [
+                FloatVariable(0.0, 1.0),
+                CategoricalVariable(
+                    values=[
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                        "13",
+                    ]
+                ),
+            ]
+        )
+
+        sampling = MixedIntegerSamplingMethod(
+            LHS,
+            design_space,
+            criterion="ese",
+            random_state=42,
+            output_in_folded_space=True,
+        )
+        xdoe = sampling(n_doe)
+
+        y_doe = [f_obj(xdoe[i])[0] for i in range(len(xdoe))]
+        # Surrogate
+        for m in MixIntKernelType:
+            sm = MixedIntegerKrigingModel(
+                surrogate=KRG(
+                    design_space=design_space,
+                    categorical_kernel=m,
+                    hyper_opt="Cobyla",
+                    theta0=[0.01],
+                    corr="squar_sin_exp",
+                    n_start=5,
+                ),
+            )
+
+            sm.set_training_values(xdoe, np.array(y_doe))
+            if m in [MixIntKernelType.EXP_HOMO_HSPHERE, MixIntKernelType.CONT_RELAX]:
+                with self.assertRaises(ValueError):
+                    sm.train()
+            else:
+                sm.train()
+
     def test_krg_mixed_3D(self):
         design_space = DesignSpace(
             [

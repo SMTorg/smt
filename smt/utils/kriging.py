@@ -663,6 +663,103 @@ def pow_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     return r
 
 
+def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
+    """
+    Generative exponential autocorrelation model.
+
+    Parameters
+    ----------
+
+    theta : list[small_d * n_comp]
+        Hyperparameters of the correlation model
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        d_i otherwise
+    grad_ind : int, optional
+        Indice for which component the gradient dr/dtheta must be computed. The default is None.
+    hess_ind : int, optional
+        Indice for which component the hessian  d²r/d²(theta) must be computed. The default is None.
+    derivative_paramas : dict, optional
+        List of arguments mandatory to compute the gradient dr/dx. The default is None.
+
+    Raises
+    ------
+    Exception
+        Assure that theta is of the good length
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+         An array containing the values of the autocorrelation model.
+    """
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+    while i * nb_limit <= d.shape[0]:
+        theta_array = theta.reshape(1, len(theta))
+        r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+            -np.sum(
+                np.atleast_2d(theta_array[0][0 : int(len(theta) / 2)])
+                * np.sin(
+                    np.atleast_2d(theta_array[0][int(len(theta) / 2) : int(len(theta))])
+                    * d[i * nb_limit : (i + 1) * nb_limit, :]
+                )
+                ** 2,
+                axis=1,
+            )
+        )
+        i += 1
+
+        i = 0
+        if grad_ind is not None:
+            cut = int(len(theta) / 2)
+            if grad_ind < cut:
+                grad_ind2 = cut + grad_ind
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -np.sin(
+                            theta_array[0][grad_ind2]
+                            * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                        )
+                        ** 2
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+            else:
+                grad_ind2 = grad_ind - cut
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -theta_array[0][grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                        * np.sin(
+                            2
+                            * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                            * theta_array[0][grad_ind]
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+
+        i = 0
+        if hess_ind is not None:
+            cut = int(len(theta) / 2)
+            # if hess_ind == grad_ind :
+            # else :
+            raise ValueError(
+                "Second derivatives for ExpSinSquared not available yet (to implement)."
+            )
+
+        if derivative_params is not None:
+            dx = derivative_params["dx"]
+            dd = derivative_params["dd"]
+            raise ValueError(
+                "Spatial derivatives for ExpSinSquared not available yet (to implement)."
+            )
+        return r
+
+
 def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
     """
     Matern 5/2 correlation model.
@@ -1213,6 +1310,10 @@ def componentwise_distance(
             )
         if corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
+        if corr == "squar_sin_exp":
+            raise ValueError(
+                "Spatial derivatives for ExpSinSquared not available yet (to implement)."
+            )
         der = _comp_dist_derivative(D, power)
         D_corr = power * np.einsum("j,ij->ij", theta.T, der)
         return D_corr
