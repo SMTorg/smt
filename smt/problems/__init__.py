@@ -18,3 +18,26 @@ from .ndim_robot_arm import NdimRobotArm
 from .ndim_rosenbrock import NdimRosenbrock
 from .ndim_step_function import NdimStepFunction
 from .lp_norm import LpNorm
+
+__all__ = [
+    "Branin",
+    "CantileverBeam",
+    "Sphere",
+    "ReducedProblem",
+    "RobotArm",
+    "Rosenbrock",
+    "TensorProduct",
+    "TorsionVibration",
+    "WaterFlow",
+    "WaterFlowLFidelity",
+    "WeldedBeam",
+    "WingWeight",
+    "NdimCantileverBeam",
+    "MixedCantileverBeam",
+    "HierarchicalNeuralNetwork",
+    "HierarchicalGoldstein",
+    "NdimRobotArm",
+    "NdimRosenbrock",
+    "NdimStepFunction",
+    "LpNorm",
+]
