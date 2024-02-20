@@ -8,8 +8,6 @@ import numpy as np
 import scipy.sparse
 from numbers import Integral
 
-from smt.utils.linear_solvers import get_solver
-from smt.utils.line_search import get_line_search_class
 from smt.surrogate_models.rmts import RMTS
 
 from smt.surrogate_models.rmtsclib import PyRMTC

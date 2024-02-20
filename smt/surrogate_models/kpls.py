@@ -10,8 +10,6 @@ from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging import componentwise_distance_PLS
-import warnings
-import sys
 
 
 class KPLS(KrgBased):

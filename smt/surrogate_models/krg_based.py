@@ -2129,16 +2129,13 @@ class KrgBased(SurrogateModel):
         else:
             self.options["theta0"] *= np.ones(n_param)
         if (
-            not (self.options["corr"] in ["squar_exp", "abs_exp", "pow_exp"])
+            self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and not (
-                self.options["categorical_kernel"]
-                in [
+            and self.options["categorical_kernel"] not in [
                     MixIntKernelType.GOWER,
                     MixIntKernelType.COMPOUND_SYMMETRY,
                     MixIntKernelType.HOMO_HSPHERE,
                 ]
-            )
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."
@@ -2180,7 +2177,7 @@ class KrgBased(SurrogateModel):
                 )
 
         if self.supports["training_derivatives"]:
-            if not (1 in self.training_points[None]):
+            if 1 not in self.training_points[None]:
                 raise Exception("Derivative values are needed for using the GEK model.")
 
     def _check_F(self, n_samples_F, p):
