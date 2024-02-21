@@ -31,11 +31,10 @@ jobs:
         pip list
         pip install -e .
 
-    - name: Check format with black
+    - name: Check with ruff
       run: |
-        black --version
-        black --diff smt
-        black --check smt
+        ruff --version
+        ruff check
 
     - name: Test with pytest and coverage
       run: |
