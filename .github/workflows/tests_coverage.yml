@@ -34,7 +34,7 @@ jobs:
     - name: Check with ruff
       run: |
         ruff --version
-        ruff check
+        ruff check .
 
     - name: Test with pytest and coverage
       run: |
