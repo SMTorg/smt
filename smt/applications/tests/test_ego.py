@@ -917,7 +917,6 @@ class TestEGO(SMTestCase):
                 point to evaluate
             """
             PI = 3.14159265358979323846
-            fail = False
             x = X[:, 0]
             # categorial variable
             c = X[:, 1]
@@ -969,7 +968,6 @@ class TestEGO(SMTestCase):
             else:
                 print("type error")
                 print(X)
-                fail = True
             return y
 
         # To define the variables x^{quant} and x^{cat}
@@ -1252,12 +1250,12 @@ class TestEGO(SMTestCase):
         for k in range(n_iter):
             mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
         x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-        u = max(np.floor(max(mini)) + 1, -100)
-        l = max(np.floor(min(mini)) - 0.2, -10)
+        up = max(np.floor(max(mini)) + 1, -100)
+        lo = max(np.floor(min(mini)) - 0.2, -10)
         fig = plt.figure()
         axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         axes.plot(x_plot, mini, color="r")
-        axes.set_ylim([l, u])
+        axes.set_ylim([lo, up])
         plt.title("minimum convergence plot", loc="center")
         plt.xlabel("number of iterations")
         plt.ylabel("log of the difference w.r.t the best")

@@ -351,8 +351,8 @@ class Test(unittest.TestCase):
         sm.train()
 
         ## The model automatically choose a dimension of 3
-        l = sm.options["n_comp"]
-        print("\n The model automatically choose " + str(l) + " components.")
+        ncomp = sm.options["n_comp"]
+        print("\n The model automatically choose " + str(ncomp) + " components.")
 
         ## You can predict a 10-dimension point from the 3-dimensional model
         print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))

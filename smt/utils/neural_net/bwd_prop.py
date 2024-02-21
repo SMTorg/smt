@@ -209,10 +209,10 @@ def L_model_backward(AL, Y, AL_prime, Y_prime, caches, J_caches, lambd, gamma):
     dA, dA_prime = initialize_back_prop(AL, Y, AL_prime, Y_prime)
 
     # Loop over each layer
-    for l in reversed(range(L)):
+    for i in reversed(range(L)):
         # Get cache
-        cache = caches[l]
-        J_cache = J_caches[l]
+        cache = caches[i]
+        J_cache = J_caches[i]
 
         # Backprop step
         dA, dW, db, dA_prime = linear_activation_backward(
@@ -220,7 +220,7 @@ def L_model_backward(AL, Y, AL_prime, Y_prime, caches, J_caches, lambd, gamma):
         )
 
         # Store result
-        grads["W" + str(l + 1)] = dW
-        grads["b" + str(l + 1)] = db
+        grads["W" + str(i + 1)] = dW
+        grads["b" + str(i + 1)] = db
 
     return grads

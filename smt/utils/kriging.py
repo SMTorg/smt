@@ -155,10 +155,10 @@ def cross_levels(X, ij, design_space, y=None):
 def _cross_levels_mat(n_var, n, X_cat, ij):
     Lij = np.zeros((n_var, n, 2))
     for k in prange(n_var):
-        for l in prange(n):
-            i, j = ij[l]
-            Lij[k][l][0] = X_cat[i, k]
-            Lij[k][l][1] = X_cat[j, k]
+        for ll in prange(n):
+            i, j = ij[ll]
+            Lij[k][ll][0] = X_cat[i, k]
+            Lij[k][ll][1] = X_cat[j, k]
     return Lij
 
 
@@ -167,10 +167,10 @@ def _cross_levels_mat_y(n_var, n, X_cat, ij, y, cat_features):
     Lij = np.zeros((n_var, n, 2))
     y_cat = y[:, cat_features]
     for k in prange(n_var):
-        for l in prange(n):
-            i, j = ij[l]
-            Lij[k][l][0] = X_cat[i, k]
-            Lij[k][l][1] = y_cat[j, k]
+        for ll in prange(n):
+            i, j = ij[ll]
+            Lij[k][ll][0] = X_cat[i, k]
+            Lij[k][ll][1] = y_cat[j, k]
     return Lij
 
 
@@ -196,12 +196,12 @@ def cross_levels_homo_space(X, ij, y=None):
     dim = np.shape(X)[1]
     n, _ = ij.shape
     dx = np.zeros((n, dim))
-    for l in range(n):
-        i, j = ij[l]
+    for ll in range(n):
+        i, j = ij[ll]
         if y is None:
-            dx[l] = X[i] * X[j]
+            dx[ll] = X[i] * X[j]
         else:
-            dx[l] = X[i] * y[j]
+            dx[ll] = X[i] * y[j]
 
     return dx
 
@@ -289,20 +289,17 @@ def gower_componentwise_distances(
     Z = np.concatenate((X, Y))
     z_is_acting = np.concatenate((x_is_acting, y_is_acting))
     Z_cat = Z[:, cat_features]
-    z_cat_is_acting = z_is_acting[:, cat_features]
-    cat_is_decreed = is_decreed[cat_features]
 
     x_index = range(0, x_n_rows)
     y_index = range(x_n_rows, x_n_rows + y_n_rows)
     X_cat = Z_cat[x_index,]
     Y_cat = Z_cat[y_index,]
-    x_cat_is_acting = z_cat_is_acting[x_index,]
-    y_cat_is_acting = z_cat_is_acting[y_index,]
+
     # This is to normalize the numeric values between 0 and 1.
     Z_num = Z[:, ~cat_features]
     z_num_is_acting = z_is_acting[:, ~cat_features]
     num_is_decreed = is_decreed[~cat_features]
-    cat_is_decreed = is_decreed[cat_features]
+
     num_bounds = design_space.get_num_bounds()[~cat_features, :]
     if num_bounds.shape[0] > 0:
         Z_offset = num_bounds[:, 0]
@@ -691,7 +688,6 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
     """
 
     r = np.zeros((d.shape[0], 1))
-    n_components = d.shape[1]
 
     # Construct/split the correlation matrix
     i, nb_limit = 0, int(1e4)
@@ -752,8 +748,6 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
             )
 
         if derivative_params is not None:
-            dx = derivative_params["dx"]
-            dd = derivative_params["dd"]
             raise ValueError(
                 "Spatial derivatives for ExpSinSquared not available yet (to implement)."
             )
@@ -894,12 +888,12 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         for j in range(dx.shape[0]):
             for k in range(n_components):
                 coef = 1
-                for l in range(n_components):
-                    if l != k:
+                for ll in range(n_components):
+                    if ll != k:
                         coef = coef * (
                             1
-                            + np.sqrt(5) * abs_[j][l] * theta[l]
-                            + (5.0 / 3) * sqr[j][l] * theta[l] ** 2
+                            + np.sqrt(5) * abs_[j][ll] * theta[ll]
+                            + (5.0 / 3) * sqr[j][ll] * theta[ll] ** 2
                         )
                 dB[j][k] = (
                     np.sqrt(5) * theta[k] * der[j][k]
@@ -1038,9 +1032,9 @@ def matern32(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
         for j in range(dx.shape[0]):
             for k in range(n_components):
                 coef = 1
-                for l in range(n_components):
-                    if l != k:
-                        coef = coef * (1 + np.sqrt(3) * abs_[j][l] * theta[l])
+                for ll in range(n_components):
+                    if ll != k:
+                        coef = coef * (1 + np.sqrt(3) * abs_[j][ll] * theta[ll])
                 dB[j][k] = np.sqrt(3) * theta[k] * der[j][k] * coef
 
         for j in range(dx.shape[0]):
@@ -1430,8 +1424,8 @@ def componentwise_distance_PLS(
             D_corr = np.zeros(np.shape(D))
             for i, j in np.ndindex(D.shape):
                 coef = 0
-                for l in range(n_comp):
-                    coef = coef + theta[l] * coeff_pls[j][l] ** 2
+                for ll in range(n_comp):
+                    coef = coef + theta[ll] * coeff_pls[j][ll] ** 2
                 coef = 2 * coef
                 D_corr[i][j] = coef * D[i][j]
             return D_corr
@@ -1441,8 +1435,8 @@ def componentwise_distance_PLS(
             der = np.ones(np.shape(D))
             for i, j in np.ndindex(D.shape):
                 coef = 0
-                for l in range(n_comp):
-                    coef = coef + theta[l] * np.abs(coeff_pls[j][l]) ** power
+                for ll in range(n_comp):
+                    coef = coef + theta[ll] * np.abs(coeff_pls[j][ll]) ** power
                 coef = power * coef
                 D_corr[i][j] = coef * np.abs(D[i][j]) ** (power - 1) * der[i][j]
             return D_corr
@@ -1455,8 +1449,8 @@ def componentwise_distance_PLS(
                 if D[i][j] < 0:
                     der[i][j] = -1
                 coef = 0
-                for l in range(n_comp):
-                    coef = coef + theta[l] * np.abs(coeff_pls[j][l])
+                for ll in range(n_comp):
+                    coef = coef + theta[ll] * np.abs(coeff_pls[j][ll])
                 D_corr[i][j] = coef * der[i][j]
 
             return D_corr
@@ -1574,16 +1568,16 @@ def matrix_data_corr_levels_cat_matrix(
 
                 else:
                     L[j, k + j] = 1
-                    for l in range(j):
-                        L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, l])
+                    for ll in range(j):
+                        L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, ll])
 
             else:
                 if j == 0:
                     L[k + j, j] = np.cos(Theta_mat[k, 0])
                 else:
                     L[k + j, j] = np.cos(Theta_mat[k + j, j])
-                    for l in range(j):
-                        L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, l])
+                    for ll in range(j):
+                        L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, ll])
 
     T = np.dot(L, L.T)
 
@@ -1623,9 +1617,9 @@ def matrix_data_corr_levels_cat_mod_comps(
                 Theta_i_red = np.zeros(int((n_levels[i] - 1) * n_levels[i] / 2))
                 indmatvec = 0
                 for j in range(n_levels[i]):
-                    for l in range(n_levels[i]):
-                        if l > j:
-                            Theta_i_red[indmatvec] = T[j, l]
+                    for ll in range(n_levels[i]):
+                        if ll > j:
+                            Theta_i_red[indmatvec] = T[j, ll]
                             indmatvec += 1
                 kval_cat = 0
                 for indijk in range(len(Theta_i_red)):

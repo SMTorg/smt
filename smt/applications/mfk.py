@@ -131,13 +131,13 @@ class NestedLHS(object):
             for j in range(doe[i].shape[0]):
                 dj = np.sort(d[j, :])
                 k = dj[0]
-                l = (np.where(d[j, :] == k))[0][0]
+                ll = (np.where(d[j, :] == k))[0][0]
                 m = 0
-                while l in ind:
+                while ll in ind:
                     m = m + 1
                     k = dj[m]
-                    l = (np.where(d[j, :] == k))[0][0]
-                ind.append(l)
+                    ll = (np.where(d[j, :] == k))[0][0]
+                ind.append(ll)
 
             doe[i - 1] = np.delete(doe[i - 1], ind, axis=0)
             doe[i - 1] = np.vstack((doe[i - 1], doe[i]))

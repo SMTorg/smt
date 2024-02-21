@@ -2229,7 +2229,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             return n_param
         if mat_dim is not None:
-            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
+            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
     if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
         return n_param
     for i, dv in enumerate(design_space.design_variables):

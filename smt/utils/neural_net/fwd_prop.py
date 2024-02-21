@@ -88,12 +88,12 @@ def L_model_forward(X, parameters, activations):
     L = len(
         activations
     )  # number of layers in the network (doesn't include input layer)
-    for l in range(1, L + 1):
+    for ll in range(1, L + 1):
         A_prev = A
-        W = parameters["W" + str(l)]
-        b = parameters["b" + str(l)]
+        W = parameters["W" + str(ll)]
+        b = parameters["b" + str(ll)]
         A, cache = linear_activation_forward(
-            A_prev, W, b, activation=activations[l - 1]
+            A_prev, W, b, activation=activations[ll - 1]
         )
         caches.append(cache)
 
@@ -147,16 +147,16 @@ def L_grads_forward(X, parameters, activations):
         X = X.reshape(n_x, m)
 
     # Initialize Jacobian for layer 0 (one example)
-    I = np.eye(n_x, dtype=float)
+    Ident = np.eye(n_x, dtype=float)
 
     # Initialize Jacobian for layer 0 (all m examples)
-    J0 = np.repeat(I.reshape((n_x, n_x, 1)), m, axis=2)
+    J0 = np.repeat(Ident.reshape((n_x, n_x, 1)), m, axis=2)
 
     # Initialize Jacobian for last layer
     JL = np.zeros((n_y, n_x, m))
 
     # Initialize caches
-    for l in range(0, L):
+    for _ in range(0, L):
         J_caches.append([])
 
     # Loop over partials
@@ -166,15 +166,15 @@ def L_grads_forward(X, parameters, activations):
         A_prime_j = J0[:, j, :]
 
         # Loop over layers
-        for l in range(1, L + 1):
+        for i in range(1, L + 1):
             # Previous layer
             A_prev = A
             A_prime_j_prev = A_prime_j
 
             # Get parameters for this layer
-            W = parameters["W" + str(l)]
-            b = parameters["b" + str(l)]
-            activation = activations[l - 1]
+            W = parameters["W" + str(i)]
+            b = parameters["b" + str(i)]
+            activation = activations[i - 1]
 
             # Linear
             Z = np.dot(W, A_prev) + b
@@ -191,7 +191,7 @@ def L_grads_forward(X, parameters, activations):
             A_prime_j = G_prime * np.dot(W, A_prime_j_prev)
 
             # Store cache
-            J_caches[l - 1].append((j, Z_prime_j, A_prime_j_prev))
+            J_caches[i - 1].append((j, Z_prime_j, A_prime_j_prev))
 
         # Store partial
         JL[:, j, :] = A_prime_j

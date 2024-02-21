@@ -342,10 +342,10 @@ class EGO(SurrogateBasedApplication):
             cons = []
             for j in range(len(bounds)):
                 lower, upper = bounds[j]
-                l = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
-                u = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
-                cons.append(l)
-                cons.append(u)
+                lo = {"type": "ineq", "fun": lambda x, lb=lower, i=j: x[i] - lb}
+                up = {"type": "ineq", "fun": lambda x, ub=upper, i=j: ub - x[i]}
+                cons.append(lo)
+                cons.append(up)
             bounds = None
             options = {"maxiter": 300}
         else:

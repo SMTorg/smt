@@ -85,7 +85,7 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        l = sm.options["n_comp"]
+        ncomp = sm.options["n_comp"]
 
         t_error = compute_rms_error(sm)
         e_error = compute_rms_error(sm, xe, ye)
@@ -95,7 +95,7 @@ class Test(SMTestCase):
 
         self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
         self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
-        self.assertEqual(l, self.n_comp_opt[pname])
+        self.assertEqual(ncomp, self.n_comp_opt[pname])
 
     # --------------------------------------------------------------------
     # Function: sphere
