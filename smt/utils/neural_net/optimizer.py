@@ -321,8 +321,11 @@ def run_example(use_adam=True):  # pragma: no cover
     initial_guess["x2"] = np.array([-1.75]).reshape((1, 1))
 
     # Function handles to be pass
-    f = lambda x: rosenbrock(parameters=x)[0]
-    dfdx = lambda x: rosenbrock(parameters=x)[1]
+    def f(x):
+        return rosenbrock(parameters=x)[0]
+
+    def dfdx(x):
+        return rosenbrock(parameters=x)[1]
 
     # Learning rate
     alpha = 0.5

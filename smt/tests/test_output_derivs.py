@@ -15,14 +15,13 @@ from smt.problems import Sphere
 from smt.sampling_methods import FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-from smt.utils.misc import compute_rms_error
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
-    compiled_available = True
-except:
-    compiled_available = False
+    COMPILED_AVAILABLE = True
+except ImportError:
+    COMPILED_AVAILABLE = False
 
 
 print_output = False
@@ -37,7 +36,7 @@ class Test(SMTestCase):
         self.problem = Sphere(ndim=ndim)
 
         self.sms = sms = OrderedDict()
-        if compiled_available:
+        if COMPILED_AVAILABLE:
             sms["IDW"] = IDW()
             sms["RBF"] = RBF()
             sms["RMTB"] = RMTB(
@@ -104,19 +103,19 @@ class Test(SMTestCase):
 
         self.assert_error(jac_fd, jac_an, rtol=5e-2)
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_IDW(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RBF(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTB(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTC(self):
         self.run_test()
 

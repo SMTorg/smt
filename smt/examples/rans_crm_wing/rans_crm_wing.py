@@ -356,9 +356,8 @@ def plot_rans_crm_wing(xt, yt, limits, interp):
 
     nrow = 3
     ncol = 2
-
     plt.close()
-    fig, axs = plt.subplots(3, 2, figsize=(15, 15))
+    fig, axs = plt.subplots(nrow, ncol, figsize=(15, 15))
 
     # -----------------------------------------------------------------------------
 

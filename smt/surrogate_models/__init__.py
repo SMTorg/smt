@@ -18,10 +18,32 @@ from smt.utils.design_space import (
 )
 from smt.utils.kriging import MixHrcKernelType
 
+__all__ = [
+    "LS",
+    "QP",
+    "KRG",
+    "KPLS",
+    "GEKPLS",
+    "KPLSK",
+    "GENN",
+    "MGP",
+    "SGP",
+    "MixIntKernelType",
+    "DesignSpace",
+    "FloatVariable",
+    "IntegerVariable",
+    "OrdinalVariable",
+    "CategoricalVariable",
+    "MixHrcKernelType",
+]
+
 try:
     from .idw import IDW
     from .rbf import RBF
     from .rmtc import RMTC
     from .rmtb import RMTB
-except:
+
+    __all__ = __all__ + [IDW, RBF, RMTC, RMTB]
+
+except ImportError:
     pass

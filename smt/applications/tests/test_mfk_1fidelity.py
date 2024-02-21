@@ -3,12 +3,11 @@ try:
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 import unittest
 import numpy as np
-import unittest
 
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
@@ -93,8 +92,8 @@ class TestMFKOneFidelity(SMTestCase):
 
         # Query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

@@ -260,8 +260,11 @@ def run_example(is_gradient_enhancement=True):  # pragma: no cover
     import matplotlib.pyplot as plt
 
     # Test function
-    f = lambda x: x * np.sin(x)
-    df_dx = lambda x: np.sin(x) + x * np.cos(x)
+    def f(x):
+        return x * np.sin(x)
+
+    def df_dx(x):
+        return np.sin(x) + x * np.cos(x)
 
     # Domain
     lb = -np.pi

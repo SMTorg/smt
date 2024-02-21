@@ -13,15 +13,11 @@ try:
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 import unittest
 import numpy as np
-import unittest
-import inspect
-
-from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
@@ -29,8 +25,6 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils.misc import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.applications.mfk import MFK, NestedLHS
 from smt.applications.mfkpls import MFKPLS
 from copy import deepcopy
 
@@ -113,7 +107,7 @@ class TestMFKPLS(SMTestCase):
 
         np.random.seed(1)
         xe = sampling(self.ne)
-        ye = prob(xe)
+
         dye = {}
         for kx in range(prob.xlimits.shape[0]):
             dye[kx] = prob(xe, kx=kx)
@@ -144,7 +138,7 @@ class TestMFKPLS(SMTestCase):
     def run_mfkpls_example():
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.applications.mfk import MFK, NestedLHS
+        from smt.applications.mfk import NestedLHS
         from smt.applications.mfkpls import MFKPLS
 
         # low fidelity model
@@ -188,8 +182,8 @@ class TestMFKPLS(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

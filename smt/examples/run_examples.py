@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from scipy import linalg
 from smt.utils.misc import compute_rms_error
 
 from smt.problems import Sphere, NdimRobotArm
@@ -16,15 +15,15 @@ from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, DesignSpace
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
-    compiled_available = True
-except:
-    compiled_available = False
+    COMPILED_AVAILABLE = True
+except ImportError:
+    COMPILED_AVAILABLE = False
 
 try:
     import matplotlib.pyplot as plt
 
     plot_status = True
-except:
+except ImportError:
     plot_status = False
 
 ########### Initialization of the problem, construction of the training and validation points
@@ -69,11 +68,11 @@ y = t.predict_values(xtest)
 print("LS,  err: " + str(compute_rms_error(t, xtest, ytest)))
 
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -99,13 +98,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -121,11 +120,11 @@ t.train()
 y = t.predict_values(xtest)
 print("QP,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -151,13 +150,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -174,11 +173,11 @@ t.train()
 y = t.predict_values(xtest)
 print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -204,13 +203,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -230,11 +229,11 @@ t.train()
 y = t.predict_values(xtest)
 print("KPLS,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -259,13 +258,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -298,11 +297,11 @@ t.train()
 y = t.predict_values(xtest)
 print("KPLSK,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -328,13 +327,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -362,11 +361,11 @@ t.train()
 y = t.predict_values(xtest)
 print("GEKPLS1,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -392,13 +391,13 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
@@ -426,11 +425,11 @@ t.train()
 y = t.predict_values(xtest)
 print("GEKPLS2,  err: " + str(compute_rms_error(t, xtest, ytest)))
 if plot_status:
-    k, l = 0, 0
+    k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
-    axarr[k, l].plot(ytest, ytest, "-.")
-    axarr[k, l].plot(ytest, y, ".")
-    l += 1
+    axarr[k, m].plot(ytest, ytest, "-.")
+    axarr[k, m].plot(ytest, y, ".")
+    m += 1
     axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
     axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
     axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -456,17 +455,17 @@ for i in range(ndim):
     )
 
     if plot_status:
-        axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-        axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-        if l == 2:
-            l = 0
+        axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+        axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+        if m == 2:
+            m = 0
             k += 1
         else:
-            l += 1
+            m += 1
 
 if plot_status:
     plt.show()
-if compiled_available:
+if COMPILED_AVAILABLE:
     ########### The IDW model
 
     t = IDW(print_prediction=False)
@@ -497,11 +496,11 @@ if compiled_available:
     y = t.predict_values(xtest)
     print("RBF,  err: " + str(compute_rms_error(t, xtest, ytest)))
     if plot_status:
-        k, l = 0, 0
+        k, m = 0, 0
         f, axarr = plt.subplots(4, 3)
-        axarr[k, l].plot(ytest, ytest, "-.")
-        axarr[k, l].plot(ytest, y, ".")
-        l += 1
+        axarr[k, m].plot(ytest, ytest, "-.")
+        axarr[k, m].plot(ytest, y, ".")
+        m += 1
         axarr[3, 2].arrow(0.3, 0.3, 0.2, 0)
         axarr[3, 2].arrow(0.3, 0.3, 0.0, 0.4)
         axarr[3, 2].text(0.25, 0.4, r"$\hat{y}$")
@@ -526,13 +525,13 @@ if compiled_available:
         )
 
         if plot_status:
-            axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if l == 2:
-                l = 0
+            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+            if m == 2:
+                m = 0
                 k += 1
             else:
-                l += 1
+                m += 1
 
     if plot_status:
         plt.show()
@@ -580,11 +579,11 @@ if compiled_available:
     y = t.predict_values(xtest)
     print("RMTB,  err: " + str(compute_rms_error(t, xtest, ytest)))
     if plot_status:
-        k, l = 0, 0
+        k, m = 0, 0
         f, axarr = plt.subplots(3, 2)
-        axarr[k, l].plot(ytest, ytest, "-.")
-        axarr[k, l].plot(ytest, y, ".")
-        l += 1
+        axarr[k, m].plot(ytest, ytest, "-.")
+        axarr[k, m].plot(ytest, y, ".")
+        m += 1
         axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
         axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
         axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
@@ -612,13 +611,13 @@ if compiled_available:
         )
 
         if plot_status:
-            axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if l == 1:
-                l = 0
+            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+            if m == 1:
+                m = 0
                 k += 1
             else:
-                l += 1
+                m += 1
 
     if plot_status:
         plt.show()
@@ -642,11 +641,11 @@ if compiled_available:
     y = t.predict_values(xtest)
     print("RMTC,  err: " + str(compute_rms_error(t, xtest, ytest)))
     if plot_status:
-        k, l = 0, 0
+        k, m = 0, 0
         f, axarr = plt.subplots(3, 2)
-        axarr[k, l].plot(ytest, ytest, "-.")
-        axarr[k, l].plot(ytest, y, ".")
-        l += 1
+        axarr[k, m].plot(ytest, ytest, "-.")
+        axarr[k, m].plot(ytest, y, ".")
+        m += 1
         axarr[2, 0].arrow(0.3, 0.3, 0.2, 0)
         axarr[2, 0].arrow(0.3, 0.3, 0.0, 0.4)
         axarr[2, 0].text(0.25, 0.4, r"$\hat{y}$")
@@ -674,13 +673,13 @@ if compiled_available:
         )
 
         if plot_status:
-            axarr[k, l].plot(ydtest[:, i], ydtest[:, i], "-.")
-            axarr[k, l].plot(ydtest[:, i], yd_prediction[:, i], ".")
-            if l == 1:
-                l = 0
+            axarr[k, m].plot(ydtest[:, i], ydtest[:, i], "-.")
+            axarr[k, m].plot(ydtest[:, i], yd_prediction[:, i], ".")
+            if m == 1:
+                m = 0
                 k += 1
             else:
-                l += 1
+                m += 1
 
     if plot_status:
         plt.show()

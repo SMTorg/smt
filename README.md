@@ -4,7 +4,7 @@
 [![Tests](https://github.com/SMTOrg/smt/workflows/Tests/badge.svg)](https://github.com/SMTorg/smt/actions?query=workflow%3ATests)
 [![Coverage Status](https://coveralls.io/repos/github/SMTorg/smt/badge.svg?branch=master)](https://coveralls.io/github/SMTorg/smt?branch=master) 
 [![Documentation Status](https://readthedocs.org/projects/smt/badge/?version=latest)](https://smt.readthedocs.io/en/latest/?badge=latest)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 The surrogate modeling toolbox (SMT) is a Python package that contains a collection of surrogate modeling methods, sampling techniques, and benchmarking functions. This package provides a library of surrogate models that is simple to use and facilitates the implementation of additional methods.
 

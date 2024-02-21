@@ -7,8 +7,7 @@ This package is distributed under New BSD license.
 import unittest
 import numpy as np
 from smt.surrogate_models import KPLS
-from smt.problems import Sphere
-from smt.sampling_methods import FullFactorial, LHS
+from smt.sampling_methods import LHS
 
 
 class TestKPLS(unittest.TestCase):

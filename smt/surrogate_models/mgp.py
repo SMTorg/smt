@@ -190,7 +190,7 @@ class MGP(KrgBased):
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
         n = x.shape[0]
-        x2 = np.copy(x)
+        _x2 = np.copy(x)
         s2, _, _ = self._predict_mgp_variances_base(x)
         s2[s2 < 0.0] = 0.0
         return s2.reshape((n, self.ny))

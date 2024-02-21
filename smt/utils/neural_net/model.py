@@ -49,11 +49,11 @@ def initialize_parameters(layer_dims=None):
 
     # Parameters
     parameters = {}
-    for l in range(1, number_layers + 1):
-        parameters["W" + str(l)] = np.random.randn(
-            layer_dims[l], layer_dims[l - 1]
-        ) * np.sqrt(1.0 / layer_dims[l - 1])
-        parameters["b" + str(l)] = np.zeros((layer_dims[l], 1))
+    for i in range(1, number_layers + 1):
+        parameters["W" + str(i)] = np.random.randn(
+            layer_dims[i], layer_dims[i - 1]
+        ) * np.sqrt(1.0 / layer_dims[i - 1])
+        parameters["b" + str(i)] = np.zeros((layer_dims[i], 1))
 
     return parameters
 
@@ -265,7 +265,7 @@ class Model(object):
         for key, value in self._parameters.items():
             try:
                 print("{}: {}".format(key, str(value.tolist())))
-            except:
+            except AttributeError:
                 print("{}: {}".format(key, value))
 
     def print_training_history(self):

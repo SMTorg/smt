@@ -716,15 +716,15 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask == True]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask == True]))
-                    ).T
-                )
-                theta_cat_features[1][
-                    -len([self.design_space.is_cat_mask == True]) :
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
                 ] = np.atleast_2d(
-                    np.array([False] * len([self.design_space.is_cat_mask == True]))
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
                 ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
@@ -840,7 +840,7 @@ class KrgBased(SurrogateModel):
 
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
-                if old_n_comp == None:
+                if old_n_comp is None:
                     self.options._dict.pop("n_comp", None)
                 else:
                     self.options["n_comp"] = old_n_comp
@@ -2123,22 +2123,20 @@ class KrgBased(SurrogateModel):
             ):
                 self.options["theta0"] *= np.ones(2 * n_param)
             else:
-                n_param += len([self.design_space.is_cat_mask == True])
+                n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(n_param)
 
         else:
             self.options["theta0"] *= np.ones(n_param)
         if (
-            not (self.options["corr"] in ["squar_exp", "abs_exp", "pow_exp"])
+            self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and not (
-                self.options["categorical_kernel"]
-                in [
-                    MixIntKernelType.GOWER,
-                    MixIntKernelType.COMPOUND_SYMMETRY,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]
-            )
+            and self.options["categorical_kernel"]
+            not in [
+                MixIntKernelType.GOWER,
+                MixIntKernelType.COMPOUND_SYMMETRY,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."
@@ -2180,7 +2178,7 @@ class KrgBased(SurrogateModel):
                 )
 
         if self.supports["training_derivatives"]:
-            if not (1 in self.training_points[None]):
+            if 1 not in self.training_points[None]:
                 raise Exception("Derivative values are needed for using the GEK model.")
 
     def _check_F(self, n_samples_F, p):
@@ -2231,7 +2229,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             return n_param
         if mat_dim is not None:
-            return int(np.sum([l * (l - 1) / 2 for l in mat_dim]) + n_param)
+            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
     if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
         return n_param
     for i, dv in enumerate(design_space.design_variables):

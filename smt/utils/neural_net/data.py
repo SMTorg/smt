@@ -48,7 +48,9 @@ def load_csv(file=None, inputs=None, outputs=None, partials=None):
         if exists:
             headers = np.genfromtxt(file, delimiter=",", max_rows=1, dtype=str).tolist()
             data = np.genfromtxt(file, delimiter=",", skip_header=1)
-            index = lambda header: headers.index(header)
+
+            def index(header):
+                return headers.index(header)
         else:
             raise Exception("The file " + file + " does not exist")
 

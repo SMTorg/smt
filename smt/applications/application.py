@@ -10,13 +10,13 @@ from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, MGP
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
-    compiled_available = True
-except:
-    compiled_available = False
+    COMPILED_AVAILABLE = True
+except ImportError:
+    COMPILED_AVAILABLE = False
 
 
 class SurrogateBasedApplication:
-    if compiled_available:
+    if COMPILED_AVAILABLE:
         _surrogate_type = {
             "KRG": KRG,
             "LS": LS,

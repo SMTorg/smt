@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import scipy.sparse
 
 VALID_LINE_SEARCHES = ("backtracking", "bracketed", "quadratic", "cubic", "null")
 

@@ -197,7 +197,7 @@ class RBF(SurrogateModel):
 
     def _predict_output_derivatives(self, x):
         n = x.shape[0]
-        nt = self.nt
+        _nt = self.nt
         ny = self.training_points[None][0][1].shape[1]
         num = self.num
 

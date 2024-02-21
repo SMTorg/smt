@@ -5,7 +5,7 @@ try:
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 

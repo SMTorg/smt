@@ -13,18 +13,10 @@ Mixture of Experts
 import numpy as np
 import warnings
 
-OLD_SKLEARN = False
-try:  # scikit-learn < 0.20.0
-    from sklearn.mixture import GMM as GaussianMixture
-
-    OLD_SKLEARN = True
-except:
-    from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
 
-from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.utils.misc import compute_rms_error
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -246,7 +238,7 @@ class MOE(SurrogateBasedApplication):
 
         self.ndim = nx = x.shape[1]
         xt = self._training_values[:, 0:nx]
-        yt = self._training_values[:, nx : nx + 1]
+        _yt = self._training_values[:, nx : nx + 1]
         ct = self._training_values[:, nx + 1 :]
 
         # Clustering
@@ -647,10 +639,7 @@ class MOE(SurrogateBasedApplication):
         distribs = []
         dim = self.ndim
         means = self.cluster.means_
-        if OLD_SKLEARN:
-            cov = heaviside_factor * self.cluster.covars_
-        else:
-            cov = heaviside_factor * self.cluster.covariances_
+        cov = heaviside_factor * self.cluster.covariances_
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]

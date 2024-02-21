@@ -7,14 +7,13 @@ Created on Mon May 07 14:20:11 2018
 
 import unittest
 import numpy as np
-import unittest
 
 try:
     import matplotlib
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 from smt.problems import Sphere, TensorProduct
@@ -23,7 +22,6 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils.misc import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
 from smt.applications.mfk import MFK, NestedLHS
 from copy import deepcopy
 
@@ -183,8 +181,8 @@ class TestMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

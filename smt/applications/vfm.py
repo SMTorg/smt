@@ -9,8 +9,6 @@ additive and multiplicative
 
 import numpy as np
 
-from smt.utils.options_dictionary import OptionsDictionary
-from types import FunctionType
 from smt.applications.application import SurrogateBasedApplication
 
 
