@@ -36,12 +36,12 @@ Example of mixed integer Gower Distance model
 .. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_gower_example, 80	
 
 Mixed Integer Kriging with Compound Symmetry (CS)
-----------------------------------------------
+-------------------------------------------------
 
 Compound Symmetry is similar to Gower Distance but allow to model negative correlations. Details can be found in [2]_ .
 
 Example of mixed integer Compound Symmetry model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. embed-test-print-plot :: smt.applications.tests.test_mixed_integer , TestMixedInteger , run_mixed_cs_example, 80	
 

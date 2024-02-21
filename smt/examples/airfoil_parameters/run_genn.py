@@ -26,14 +26,14 @@ n_y = 1
 genn = GENN(
     layer_sizes=(
         n_x,  
-        12, 12,         
+        6, 6,         
         n_y,  
     ), 
     print_global=False,
 )
 
 # learning rate that controls optimizer step size
-genn.options["alpha"] = 0.05
+genn.options["alpha"] = 0.001
 # lambd = 0. = no regularization, lambd > 0 = regularization
 genn.options["lambd"] = 0.1
 # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement

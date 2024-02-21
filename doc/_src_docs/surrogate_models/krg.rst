@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0635521
+     Training - done. Time (sec):  0.0332270
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009611
+     Predicting - done. Time (sec):  0.0009360
      
-     Prediction time/pt. (sec) :  0.0000096
+     Prediction time/pt. (sec) :  0.0000094
      
   ___________________________________________________________________________
      
@@ -161,9 +161,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005858
+     Predicting - done. Time (sec):  0.0034339
      
-     Prediction time/pt. (sec) :  0.0001172
+     Prediction time/pt. (sec) :  0.0006868
      
   
 .. figure:: krg_Test_test_krg.png
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0091541
+     Predicting - done. Time (sec):  0.0036170
      
-     Prediction time/pt. (sec) :  0.0000183
+     Prediction time/pt. (sec) :  0.0000072
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png

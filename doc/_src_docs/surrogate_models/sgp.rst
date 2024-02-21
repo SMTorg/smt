@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1041799
+     Training - done. Time (sec):  0.1008530
   ___________________________________________________________________________
      
    Evaluation
@@ -141,7 +141,7 @@ Using FITC method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001061
+     Predicting - done. Time (sec):  0.0001070
      
      Prediction time/pt. (sec) :  0.0000005
      
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0870228
+     Training - done. Time (sec):  0.0886810
   ___________________________________________________________________________
      
    Evaluation
@@ -231,9 +231,9 @@ Using VFE method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001097
+     Predicting - done. Time (sec):  0.0001171
      
-     Prediction time/pt. (sec) :  0.0000005
+     Prediction time/pt. (sec) :  0.0000006
      
   
 .. figure:: sgp_Test_test_sgp_vfe.png

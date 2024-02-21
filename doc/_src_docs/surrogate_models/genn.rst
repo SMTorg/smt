@@ -5,7 +5,7 @@ Gradient-Enhanced Neural Networks (GENN) are fully connected multi-layer percept
 to predict partial derivatives accurately. This is accomplished by minimizing a modified version of the 
 Least Squares Estimator (LSE) that accounts for Jacobian prediction error. The main benefit of jacobian-enhancement 
 is better accuracy with fewer training points compared to standard fully connected neural nets. This surrogate model 
-relies on an upstream library called `jenn`_ with more details on the implementation. 
+relies on an upstream library called `jenn`_ where more details on the implementation can be found. 
 
 .. _jenn: https://pypi.org/project/jenn/
 

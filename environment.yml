@@ -10,6 +10,7 @@ dependencies:
   - pytest
   # docs
   - sphinx 
+  - numpydoc
   # runtime
   - pip: 
     - -r requirements.txt
