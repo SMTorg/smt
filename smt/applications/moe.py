@@ -641,10 +641,7 @@ class MOE(SurrogateBasedApplication):
         distribs = []
         dim = self.ndim
         means = self.cluster.means_
-        if OLD_SKLEARN:
-            cov = heaviside_factor * self.cluster.covars_
-        else:
-            cov = heaviside_factor * self.cluster.covariances_
+        cov = heaviside_factor * self.cluster.covariances_
         for k in range(self.n_clusters):
             meansk = means[k][0:dim]
             covk = cov[k][0:dim, 0:dim]
