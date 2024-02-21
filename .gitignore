@@ -25,3 +25,4 @@ smt/src/rmts/rmtsclib.cpp
 /venv
 /pip-wheel-metadata
 **/.ipynb_checkpoints
+**/.ruff_cache
