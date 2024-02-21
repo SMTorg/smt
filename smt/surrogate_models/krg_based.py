@@ -840,7 +840,7 @@ class KrgBased(SurrogateModel):
 
             r = np.multiply(r, r_cat)
             if cat_kernel_comps is not None:
-                if old_n_comp == None:
+                if old_n_comp is None:
                     self.options._dict.pop("n_comp", None)
                 else:
                     self.options["n_comp"] = old_n_comp

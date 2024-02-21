@@ -81,7 +81,7 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
 
     if xe is not None and ye is not None:
         ye = ye.reshape((xe.shape[0], 1))
-        if kx == None:
+        if kx is None:
             ye2 = sm.predict_values(xe)
         else:
             ye2 = sm.predict_derivatives(xe, kx)
@@ -98,7 +98,7 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
                 "There is no training point data available for kx %s" % kx2
             )
         xt, yt = sm.training_points[None][kx2]
-        if kx == None:
+        if kx is None:
             yt2 = sm.predict_values(xt)
         else:
             yt2 = sm.predict_derivatives(xt, kx)
