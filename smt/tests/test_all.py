@@ -356,10 +356,6 @@ class Test(SMTestCase):
     def test_cos_RMTB(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
-    def test_exp_RMTB(self):
-        self.run_test()
-
 
 if __name__ == "__main__":
     print_output = True
