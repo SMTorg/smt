@@ -190,13 +190,13 @@ class MFK(KrgBased):
         y : same as X
         """
 
-        if type(X) is not list:
+        if not isinstance(X, list):
             nlevel = 1
             X = [X]
         else:
             nlevel = len(X)
 
-        if type(y) is not list:
+        if not isinstance(y, list):
             y = [y]
 
         if len(X) != len(y):
