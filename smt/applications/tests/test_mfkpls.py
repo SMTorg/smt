@@ -112,7 +112,7 @@ class TestMFKPLS(SMTestCase):
 
         np.random.seed(1)
         xe = sampling(self.ne)
-        ye = prob(xe)
+
         dye = {}
         for kx in range(prob.xlimits.shape[0]):
             dye[kx] = prob(xe, kx=kx)
@@ -187,8 +187,8 @@ class TestMFKPLS(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

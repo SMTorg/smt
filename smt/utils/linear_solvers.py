@@ -50,7 +50,7 @@ def get_solver(solver):
         return solver
     elif solver == "null":
         return NullSolver()
-    elif solver == None:
+    elif solver is None:
         return None
 
 
@@ -487,7 +487,7 @@ class MultigridSolver(LinearSolver):
 
     def _smooth_and_interpolate(self, ind_level, ind_cycle, ind_y):
         mg_op = self.mg_ops[ind_level]
-        mtx = self.mg_mtx[ind_level]
+        _mtx = self.mg_mtx[ind_level]
         sol = self.mg_sol[ind_level]
         rhs = self.mg_rhs[ind_level]
         solver = self.mg_solvers[ind_level]
@@ -499,7 +499,7 @@ class MultigridSolver(LinearSolver):
         solver._solve(rhs, sol, ind_y)
 
     def _solve(self, rhs, sol=None, ind_y=0):
-        with self._active(self.options["print_solve"]) as printer:
+        with self._active(self.options["print_solve"]) as _printer:
             self.rhs = rhs
 
             if sol is None:

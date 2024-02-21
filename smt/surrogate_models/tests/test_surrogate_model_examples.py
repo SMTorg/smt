@@ -190,10 +190,10 @@ class Test(unittest.TestCase):
         x = np.linspace(0.0, 4.0, num)
         y = sm.predict_values(x)
 
-        t1, _ = plt.plot(xt, yt[:, 0], "o", "C0")
-        p1 = plt.plot(x, y[:, 0], "C0", label="Prediction 1")
-        t2, _ = plt.plot(xt, yt[:, 1], "o", "C1")
-        p2 = plt.plot(x, y[:, 1], "C1", label="Prediction 2")
+        plt.plot(xt, yt[:, 0], "o", "C0")
+        plt.plot(x, y[:, 0], "C0", label="Prediction 1")
+        plt.plot(xt, yt[:, 1], "o", "C1")
+        plt.plot(x, y[:, 1], "C1", label="Prediction 2")
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend()
@@ -219,8 +219,8 @@ class Test(unittest.TestCase):
         # estimated variance
         s2 = sm.predict_variances(x)
         # derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0)
-        fig, axs = plt.subplots(1)
+        _dydx = sm.predict_derivatives(xt, 0)
+        _, axs = plt.subplots(1)
 
         # add a plot with variance
         axs.plot(xt, yt, "o")
@@ -379,7 +379,7 @@ class Test(unittest.TestCase):
         # add a plot with variance
         s2 = sm.predict_variances(x)
         # to compute the derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0)
+        _dydx = sm.predict_derivatives(xt, 0)
 
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
@@ -421,7 +421,7 @@ class Test(unittest.TestCase):
         # estimated variance
         s2 = sm.predict_variances(x)
         # derivative according to the first variable
-        dydx = sm.predict_derivatives(xt, 0)
+        _dydx = sm.predict_derivatives(xt, 0)
 
         plt.plot(xt, yt, "o")
         plt.plot(x, y)
@@ -492,7 +492,7 @@ class Test(unittest.TestCase):
 
         fig = plt.figure()
         ax = fig.add_subplot(projection="3d")
-        surf = ax.plot_surface(X, Y, Z)
+        ax.plot_surface(X, Y, Z)
 
         plt.show()
 

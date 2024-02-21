@@ -131,8 +131,8 @@ class TestMFKPLSK(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
+        _t_error = compute_rms_error(sm)
+        _e_error = compute_rms_error(sm, xe, ye)
         e_error0 = compute_rms_error(sm, xe, dye[0], 0)
         e_error1 = compute_rms_error(sm, xe, dye[1], 1)
 
@@ -187,8 +187,8 @@ class TestMFKPLSK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

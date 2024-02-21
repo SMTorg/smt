@@ -229,7 +229,7 @@ class TestMixedInteger(unittest.TestCase):
 
         mixint = MixedIntegerContext(design_space)
         with self.assertRaises(ValueError):
-            sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
+            _sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
 
     def test_qp_mixed_2D_INT(self):
         design_space = DesignSpace(
@@ -897,7 +897,7 @@ class TestMixedInteger(unittest.TestCase):
         pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
 
         y_sv = sm.predict_variances(Xt)[:, 0]
-        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+        _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
         assert pred_RMSE < 1e-7
         print("Pred_RMSE", pred_RMSE)
 
@@ -1041,10 +1041,10 @@ class TestMixedInteger(unittest.TestCase):
             sm.set_training_values(Xt, Yt)
             sm.train()
             y_s = sm.predict_values(Xt)[:, 0]
-            pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+            _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
 
             y_sv = sm.predict_variances(Xt)[:, 0]
-            var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+            _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
             np.testing.assert_almost_equal(
                 sm.predict_values(
@@ -1243,10 +1243,10 @@ class TestMixedInteger(unittest.TestCase):
         sm.set_training_values(Xt, Yt, is_acting=Xt_is_acting)
         sm.train()
         y_s = sm.predict_values(Xt)[:, 0]
-        pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+        _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
 
         y_sv = sm.predict_variances(Xt)[:, 0]
-        var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+        _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_hierarchical_variables_NN(self):
@@ -1592,7 +1592,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
         # Surrogate
-        sm = surrogate = KPLS(
+        sm = KPLS(
             design_space=design_space,
             theta0=[1e-2],
             n_comp=1,
@@ -1613,8 +1613,8 @@ class TestMixedInteger(unittest.TestCase):
 
         i = 0
         i += 1
-        y = sm.predict_values(x_pred)
-        yvar = sm.predict_variances(x_pred)
+        _y = sm.predict_values(x_pred)
+        _yvar = sm.predict_variances(x_pred)
 
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
@@ -1653,8 +1653,8 @@ class TestMixedInteger(unittest.TestCase):
 
         i = 0
         i += 1
-        y = sm.predict_values(x_pred)
-        yvar = sm.predict_variances(x_pred)
+        _y = sm.predict_values(x_pred)
+        _yvar = sm.predict_variances(x_pred)
 
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
@@ -1694,8 +1694,8 @@ class TestMixedInteger(unittest.TestCase):
 
         i = 0
         i += 1
-        y = sm.predict_values(x_pred)
-        yvar = sm.predict_variances(x_pred)
+        _y = sm.predict_values(x_pred)
+        _yvar = sm.predict_variances(x_pred)
 
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)))) < 1e-6)
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_variances(xt) - 0)))) < 1e-6)
@@ -1759,14 +1759,14 @@ class TestMixedInteger(unittest.TestCase):
             (np.asarray(x_cat3).reshape(-1, 1), x_cont.reshape(-1, 1)), axis=1
         )
 
-        y1 = sm.predict_values(x1)
-        y2 = sm.predict_values(x2)
-        y3 = sm.predict_values(x3)
+        _y1 = sm.predict_values(x1)
+        _y2 = sm.predict_values(x2)
+        _y3 = sm.predict_values(x3)
 
         # estimated variance
-        s2_1 = sm.predict_variances(x1)
-        s2_2 = sm.predict_variances(x2)
-        s2_3 = sm.predict_variances(x3)
+        _s2_1 = sm.predict_variances(x1)
+        _s2_2 = sm.predict_variances(x2)
+        _s2_3 = sm.predict_variances(x3)
 
         self.assertEqual(
             np.array_equal(
@@ -1810,8 +1810,8 @@ class TestMixedInteger(unittest.TestCase):
             x1.append(np.array(element))
         x_pred = np.array(x1)
 
-        y = sm.predict_values(x_pred)
-        yvar = sm.predict_variances(x_pred)
+        _y = sm.predict_values(x_pred)
+        _yvar = sm.predict_variances(x_pred)
 
         # prediction are correct on known points
         self.assertTrue((np.abs(np.sum(np.array(sm.predict_values(xt) - yt)) < 1e-6)))

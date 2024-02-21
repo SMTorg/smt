@@ -182,8 +182,8 @@ class TestMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        mse = sm.predict_variances(x)
-        derivs = sm.predict_derivatives(x, kx=0)
+        _mse = sm.predict_variances(x)
+        _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 

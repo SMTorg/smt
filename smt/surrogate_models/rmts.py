@@ -149,7 +149,7 @@ class RMTS(SurrogateModel):
         # This computes the approximation terms for the training points.
         # We loop over kx: 0 is for values and kx>0 represents.
         # the 1-based index of the derivative given by the training point data.
-        num = self.num
+        _num = self.num
         xlimits = self.options["xlimits"]
 
         full_jac_dict = {}
@@ -251,7 +251,7 @@ class RMTS(SurrogateModel):
         return grad
 
     def _opt_dgrad_dyt(self, sol, p, yt_dict, kx):
-        full_hess = self.full_hess
+        _full_hess = self.full_hess
         full_jac_dict = self.full_jac_dict
 
         full_jac, full_jac_T, c = full_jac_dict[kx]
@@ -279,8 +279,8 @@ class RMTS(SurrogateModel):
         return hess
 
     def _opt_norm(self, sol, p, yt_dict):
-        full_hess = self.full_hess
-        full_jac_dict = self.full_jac_dict
+        _full_hess = self.full_hess
+        _full_jac_dict = self.full_jac_dict
 
         grad = self._opt_grad(sol, p, yt_dict)
         return np.linalg.norm(grad)
@@ -331,8 +331,11 @@ class RMTS(SurrogateModel):
                         with self.printer._timed_context("Solving linear system"):
                             solver._solve(rhs[:, ind_y], d_sol[:, ind_y], ind_y=ind_y)
 
-                        func = lambda x: self._opt_func(x, p, yt_dict)
-                        grad = lambda x: self._opt_grad(x, p, yt_dict)
+                        def func(x):
+                            return self._opt_func(x, p, yt_dict)
+
+                        def grad(x):
+                            return self._opt_grad(x, p, yt_dict)
 
                         # sol[:, ind_y] += d_sol[:, ind_y]
 
@@ -355,13 +358,13 @@ class RMTS(SurrogateModel):
         num = self.num
         options = self.options
 
-        solver = get_solver(options["solver"])
-        ls_class = get_line_search_class(options["line_search"])
+        _solver = get_solver(options["solver"])
+        _ls_class = get_line_search_class(options["line_search"])
 
         total_size = int(num["dof"])
-        rhs = np.zeros((total_size, num["y"]))
+        _rhs = np.zeros((total_size, num["y"]))
         sol = np.zeros((total_size, num["y"]))
-        d_sol = np.zeros((total_size, num["y"]))
+        _d_sol = np.zeros((total_size, num["y"]))
 
         with self.printer._timed_context(
             "Solving initial startup problem (n=%i)" % total_size
@@ -537,9 +540,9 @@ class RMTS(SurrogateModel):
     def _predict_output_derivatives(self, x):
         # dy_dyt = dy_dw * (dR_dw)^{-1} * dR_dyt
 
-        n = x.shape[0]
+        _n = x.shape[0]
         nw = self.mtx.shape[0]
-        nx = x.shape[1]
+        _nx = x.shape[1]
         ny = self.sol.shape[1]
 
         p = self.options["approx_order"]

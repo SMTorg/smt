@@ -331,7 +331,6 @@ class TestMOE(SMTestCase):
 
         nt1 = 11
         nt2 = 15
-        ne = 101
 
         # Training data
         X1 = np.linspace(0.001, 0.3, nt1).reshape(nt1, 1)
@@ -495,11 +494,6 @@ class TestMOE(SMTestCase):
         colors_ = list(colors.cnames.items())
         GMM = moe.cluster
         weight = GMM.weights_
-        mean = GMM.means_
-        if sklearn.__version__ < "0.20.0":
-            cov = GMM.covars_
-        else:
-            cov = GMM.covariances_
         prob_ = moe._proba_cluster(xt)
         sort = np.apply_along_axis(np.argmax, 1, prob_)
 

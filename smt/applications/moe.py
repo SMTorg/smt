@@ -240,7 +240,7 @@ class MOE(SurrogateBasedApplication):
 
         self.ndim = nx = x.shape[1]
         xt = self._training_values[:, 0:nx]
-        yt = self._training_values[:, nx : nx + 1]
+        _yt = self._training_values[:, nx : nx + 1]
         ct = self._training_values[:, nx + 1 :]
 
         # Clustering
