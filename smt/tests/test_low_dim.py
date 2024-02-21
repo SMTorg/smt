@@ -23,7 +23,7 @@ try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
     compiled_available = True
-except:
+except ImportError:
     compiled_available = False
 
 

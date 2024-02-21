@@ -12,14 +12,14 @@ try:
     matplotlib.use("Agg")
 
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     NO_COMPILED = False
-except:
+except ImportError:
     NO_COMPILED = True
 
 
@@ -525,21 +525,21 @@ class Test(unittest.TestCase):
         genn.options["alpha"] = 0.1  # learning rate that controls optimizer step size
         genn.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
         genn.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
-        genn.options["lambd"] = (
-            0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
-        )
-        genn.options["gamma"] = (
-            1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
-        )
+        genn.options[
+            "lambd"
+        ] = 0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
+        genn.options[
+            "gamma"
+        ] = 1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
         genn.options["deep"] = 2  # number of hidden layers
         genn.options["wide"] = 6  # number of nodes per hidden layer
-        genn.options["mini_batch_size"] = (
-            64  # used to divide data into training batches (use for large data sets)
-        )
+        genn.options[
+            "mini_batch_size"
+        ] = 64  # used to divide data into training batches (use for large data sets)
         genn.options["num_epochs"] = 20  # number of passes through data
-        genn.options["num_iterations"] = (
-            100  # number of optimizer iterations per mini-batch
-        )
+        genn.options[
+            "num_iterations"
+        ] = 100  # number of optimizer iterations per mini-batch
         genn.options["is_print"] = True  # print output (or not)
         load_smt_data(
             genn, xt, yt, dyt_dxt

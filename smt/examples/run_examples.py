@@ -17,14 +17,14 @@ try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
     compiled_available = True
-except:
+except ImportError:
     compiled_available = False
 
 try:
     import matplotlib.pyplot as plt
 
     plot_status = True
-except:
+except ImportError:
     plot_status = False
 
 ########### Initialization of the problem, construction of the training and validation points

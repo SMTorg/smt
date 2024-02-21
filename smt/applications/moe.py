@@ -13,13 +13,7 @@ Mixture of Experts
 import numpy as np
 import warnings
 
-OLD_SKLEARN = False
-try:  # scikit-learn < 0.20.0
-    from sklearn.mixture import GMM as GaussianMixture
-
-    OLD_SKLEARN = True
-except:
-    from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
 
 from smt.utils.options_dictionary import OptionsDictionary

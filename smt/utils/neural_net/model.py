@@ -265,7 +265,7 @@ class Model(object):
         for key, value in self._parameters.items():
             try:
                 print("{}: {}".format(key, str(value.tolist())))
-            except:
+            except AttributeError:
                 print("{}: {}".format(key, value))
 
     def print_training_history(self):

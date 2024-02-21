@@ -5,14 +5,14 @@ try:
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 try:
     from smt.surrogate_models import RMTB, RMTC
 
     NO_COMPILED = True
-except:
+except ImportError:
     NO_COMPILED = False
 
 
