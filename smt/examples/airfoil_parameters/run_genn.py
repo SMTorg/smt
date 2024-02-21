@@ -10,7 +10,7 @@ from smt.examples.airfoil_parameters.learning_airfoil_parameters import (
     plot_predictions,
 )
 from sklearn.model_selection import train_test_split
-from smt.surrogate_models.genn import GENN, load_smt_data
+from smt.surrogate_models.genn import GENN
 
 x, y, dy = load_cd_training_data()
 
@@ -18,18 +18,27 @@ x, y, dy = load_cd_training_data()
 x_train, x_test, y_train, y_test, dy_train, dy_test = train_test_split(
     x, y, dy, train_size=0.8
 )
+
 # building and training the GENN
-genn = GENN(print_global=False)
+n_x = x_train.shape[-1]
+n_y = 1 
+
+genn = GENN(
+    layer_sizes=(
+        n_x,  
+        12, 12,         
+        n_y,  
+    ), 
+    print_global=False,
+)
+
 # learning rate that controls optimizer step size
-genn.options["alpha"] = 0.001
+genn.options["alpha"] = 0.05
 # lambd = 0. = no regularization, lambd > 0 = regularization
 genn.options["lambd"] = 0.1
 # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
 genn.options["gamma"] = 1.0
 # number of hidden layers
-genn.options["deep"] = 2
-# number of nodes per hidden layer
-genn.options["wide"] = 6
 # used to divide data into training batches (use for large data sets)
 genn.options["mini_batch_size"] = 256
 # number of passes through data
@@ -37,9 +46,10 @@ genn.options["num_epochs"] = 5
 # number of optimizer iterations per mini-batch
 genn.options["num_iterations"] = 10
 # print output (or not)
-genn.options["is_print"] = False
+genn.options["is_print"] = True
 # convenience function to read in data that is in SMT format
-load_smt_data(genn, x_train, y_train, dy_train)
+
+genn.load_data(x_train, y_train, dy_train)
 
 genn.train()
 

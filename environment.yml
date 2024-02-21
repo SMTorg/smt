@@ -1,0 +1,17 @@
+channels:
+- conda-forge
+dependencies:
+  - python >=3.11,<3.12
+  # build
+  - pip 
+  # protyping
+  - jupyterlab >=3.6,<4.0.0a0
+  # test
+  - pytest
+  # docs
+  - sphinx 
+  # runtime
+  - pip: 
+    - -r requirements.txt
+    - git+https://github.com/hwangjt/sphinx_auto_embed.git
+    - -e . 

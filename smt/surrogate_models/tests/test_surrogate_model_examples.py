@@ -5,6 +5,7 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+import numpy as np 
 
 try:
     import matplotlib
@@ -16,7 +17,7 @@ except:
     NO_MATPLOTLIB = True
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC, GENN
 
     NO_COMPILED = False
 except:
@@ -497,71 +498,60 @@ class Test(unittest.TestCase):
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_genn(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from smt.surrogate_models.genn import GENN, load_smt_data
+    def test_genn(self, is_gradient_enhancement: bool = True):
+        """Test and demonstrate GENN using a 1D example"""
+
+        # Test function
+        f = lambda x: x * np.sin(x)
+        df_dx = lambda x: np.sin(x) + x * np.cos(x)
+
+        # Domain
+        lb = -np.pi
+        ub = np.pi
 
         # Training data
-        lower_bound = -np.pi
-        upper_bound = np.pi
-        number_of_training_points = 4
-        xt = np.linspace(lower_bound, upper_bound, number_of_training_points)
-        yt = xt * np.sin(xt)
-        dyt_dxt = np.sin(xt) + xt * np.cos(xt)
+        m = 4
+        xt = np.linspace(lb, ub, m)
+        yt = f(xt)
+        dyt_dxt = df_dx(xt)
 
         # Validation data
-        number_of_validation_points = 30
-        xv = np.linspace(lower_bound, upper_bound, number_of_validation_points)
-        yv = xv * np.sin(xv)
-        dyv_dxv = np.sin(xv) + xv * np.cos(xv)
+        xv = lb + np.random.rand(30, 1) * (ub - lb)
+        yv = f(xv)
+        dyv_dxv = df_dx(xv)
 
-        # Truth model
-        x = np.arange(lower_bound, upper_bound, 0.01)
-        y = x * np.sin(x)
+        # Instantiate
+        genn = GENN(layer_sizes=(1, 6, 6, 1))
 
-        # GENN
-        genn = GENN()
-        genn.options["alpha"] = 0.1  # learning rate that controls optimizer step size
-        genn.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
-        genn.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
-        genn.options["lambd"] = (
-            0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
-        )
-        genn.options["gamma"] = (
-            1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
-        )
-        genn.options["deep"] = 2  # number of hidden layers
-        genn.options["wide"] = 6  # number of nodes per hidden layer
-        genn.options["mini_batch_size"] = (
-            64  # used to divide data into training batches (use for large data sets)
-        )
-        genn.options["num_epochs"] = 20  # number of passes through data
-        genn.options["num_iterations"] = (
-            100  # number of optimizer iterations per mini-batch
-        )
-        genn.options["is_print"] = True  # print output (or not)
-        load_smt_data(
-            genn, xt, yt, dyt_dxt
-        )  # convenience function to read in data that is in SMT format
-        genn.train()  # API function to train model
-        genn.plot_training_history()  # non-API function to plot training history (to check convergence)
-        genn.goodness_of_fit(
-            xv, yv, dyv_dxv
-        )  # non-API function to check accuracy of regression
-        y_pred = genn.predict_values(
-            x
-        )  # API function to predict values at new (unseen) points
+        # Likely the only options a user will interact with
+        genn.options["alpha"] = 0.1
+        genn.options["lambd"] = 0.1
+        genn.options["gamma"] = int(is_gradient_enhancement)
+        genn.options["num_iterations"] = 200
+        genn.options["is_backtracking"] = True
+        genn.options["is_normalize"] = False
+        genn.options["is_print"] = False
 
-        # Plot
-        fig, ax = plt.subplots()
+        # Train 
+        genn.load_data(xt, yt, dyt_dxt)
+        genn.train()
+        
+        # Plot comparison
+        if genn.options["gamma"] == 1.0:
+            title = "with gradient enhancement"
+        else:
+            title = "without gradient enhancement"
+        x = np.arange(lb, ub, 0.01)
+        y = f(x)
+        y_pred = genn.predict_values(x)
+        fig, ax = matplotlib.pyplot.subplots()
         ax.plot(x, y_pred)
         ax.plot(x, y, "k--")
         ax.plot(xv, yv, "ro")
         ax.plot(xt, yt, "k+", mew=3, ms=10)
-        ax.set(xlabel="x", ylabel="y", title="GENN")
+        ax.set(xlabel="x", ylabel="y", title=title)
         ax.legend(["Predicted", "True", "Test", "Train"])
-        plt.show()
+        matplotlib.pyplot.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mgp(self):

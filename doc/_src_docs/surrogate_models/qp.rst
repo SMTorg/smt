@@ -69,7 +69,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0004237
+     Training - done. Time (sec):  0.0001688
   ___________________________________________________________________________
      
    Evaluation
@@ -77,9 +77,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000594
+     Predicting - done. Time (sec):  0.0000210
      
-     Prediction time/pt. (sec) :  0.0000006
+     Prediction time/pt. (sec) :  0.0000002
      
   
 .. figure:: qp_Test_test_qp.png

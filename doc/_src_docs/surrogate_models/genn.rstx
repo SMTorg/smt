@@ -1,25 +1,13 @@
 GENN
 ====
 
-Gradient-Enhanced Neural Networks (GENN) are fully connected multi-layer perceptrons, whose training process was modified to
-account for gradient information. Specifically, the parameters are learned by minimizing the Least Squares Estimator (LSE),
-modified to account for partial derivatives.  The theory behind the algorithm can be found `here`_,
-but suffice it to say that the model is trained in such a way so as to minimize not only the prediction error :math:`y - f(x)` of
-the response, but also the prediction error :math:`{dy}/{dx} - f'(x)` of the partial derivatives. The chief benefit of gradient-enhancement
-is better accuracy with fewer training points, compared to regular neural networks without gradient-enhancement. Note that GENN applies
-to regression (single-output or multi-output), but not classification since there is no gradient in that case. The implementation
-is fully vectorized and uses Adam optimization, mini-batch, and L2-norm regularization.
+Gradient-Enhanced Neural Networks (GENN) are fully connected multi-layer perceptrons, whose training process is modified 
+to predict partial derivatives accurately. This is accomplished by minimizing a modified version of the 
+Least Squares Estimator (LSE) that accounts for Jacobian prediction error. The main benefit of jacobian-enhancement 
+is better accuracy with fewer training points compared to standard fully connected neural nets. This surrogate model 
+relies on an upstream library called `jenn`_ with more details on the implementation. 
 
-.. _here: https://github.com/SMTorg/smt/blob/master/doc/_src_docs/surrogate_models/genn_theory.pdf
-
-Limitations
------------
-
-Gradient-enhanced methods only apply to the special use-case of computer aided design, where data is generated
-synthetically using physics-based computer models, responses are continuous, and their gradient is defined. Furthermore,
-gradient enhancement is only beneficial when the cost of obtaining the gradient is not excessive in the first place.
-This is often true in computer-aided design with the advent of adjoint design methods for example, but it is not always
-the case. The user should therefore carefully weight the benefit of gradient-enhanced methods depending on the application.
+.. _jenn: https://pypi.org/project/jenn/
 
 Usage
 -----
