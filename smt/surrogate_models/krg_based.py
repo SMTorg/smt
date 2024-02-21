@@ -716,15 +716,15 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask == True]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask == True]))
-                    ).T
-                )
-                theta_cat_features[1][
-                    -len([self.design_space.is_cat_mask == True]) :
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
                 ] = np.atleast_2d(
-                    np.array([False] * len([self.design_space.is_cat_mask == True]))
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
                 ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
@@ -2123,7 +2123,7 @@ class KrgBased(SurrogateModel):
             ):
                 self.options["theta0"] *= np.ones(2 * n_param)
             else:
-                n_param += len([self.design_space.is_cat_mask == True])
+                n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(n_param)
 
         else:
@@ -2131,11 +2131,12 @@ class KrgBased(SurrogateModel):
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and self.options["categorical_kernel"] not in [
-                    MixIntKernelType.GOWER,
-                    MixIntKernelType.COMPOUND_SYMMETRY,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]
+            and self.options["categorical_kernel"]
+            not in [
+                MixIntKernelType.GOWER,
+                MixIntKernelType.COMPOUND_SYMMETRY,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."

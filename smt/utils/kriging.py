@@ -717,11 +717,13 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
                 grad_ind2 = cut + grad_ind
                 while i * nb_limit <= d.shape[0]:
                     r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                        -np.sin(
-                            theta_array[0][grad_ind2]
-                            * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                        -(
+                            np.sin(
+                                theta_array[0][grad_ind2]
+                                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                            )
+                            ** 2
                         )
-                        ** 2
                         * r[i * nb_limit : (i + 1) * nb_limit, 0]
                     )
                     i += 1
@@ -1396,7 +1398,7 @@ def componentwise_distance_PLS(
 
     D_corr = np.zeros((D.shape[0], n_comp))
     i, nb_limit = 0, int(limit)
-    if return_derivative == False:
+    if not return_derivative:
         while True:
             if i * nb_limit > D_corr.shape[0]:
                 return D_corr
