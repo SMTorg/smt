@@ -23,9 +23,9 @@ from smt.applications import MFK
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
-    compiled_available = True
+    COMPILED_AVAILABLE = True
 except ImportError:
-    compiled_available = False
+    COMPILED_AVAILABLE = False
 
 
 print_output = False
@@ -41,7 +41,7 @@ class Test(SMTestCase):
         problems["sphere"] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
-        if compiled_available:
+        if COMPILED_AVAILABLE:
             sms["RBF"] = RBF()
             sms["RMTC"] = RMTC()
             sms["RMTB"] = RMTB()
@@ -106,15 +106,15 @@ class Test(SMTestCase):
     # --------------------------------------------------------------------
     # Function: sphere
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RBF(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RMTC(self):
         self.run_test()
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_sphere_RMTB(self):
         self.run_test()
 

@@ -16,9 +16,9 @@ from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, DesignSpace
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
 
-    compiled_available = True
+    COMPILED_AVAILABLE = True
 except ImportError:
-    compiled_available = False
+    COMPILED_AVAILABLE = False
 
 try:
     import matplotlib.pyplot as plt
@@ -466,7 +466,7 @@ for i in range(ndim):
 
 if plot_status:
     plt.show()
-if compiled_available:
+if COMPILED_AVAILABLE:
     ########### The IDW model
 
     t = IDW(print_prediction=False)
