@@ -21,8 +21,6 @@ from smt.applications.mixed_integer import (
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
-    FloatVariable,
-    CategoricalVariable,
 )
 from smt.sampling_methods import LHS
 

@@ -18,9 +18,6 @@ except ImportError:
 
 import unittest
 import numpy as np
-import inspect
-
-from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
@@ -28,8 +25,6 @@ from smt.sampling_methods import LHS, FullFactorial
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils.misc import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.applications.mfk import MFK
 from smt.applications.mfkpls import MFKPLS
 from copy import deepcopy
 

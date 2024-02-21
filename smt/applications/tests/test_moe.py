@@ -70,7 +70,6 @@ class TestMOE(SMTestCase):
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.predict_values(xe)
             plt.figure(1)
@@ -192,7 +191,6 @@ class TestMOE(SMTestCase):
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.predict_values(xe)
             plt.figure(1)
@@ -281,7 +279,6 @@ class TestMOE(SMTestCase):
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.analyse_results(x=xe, operation="predict_values")
             plt.figure(1)
@@ -454,10 +451,8 @@ class TestMOE(SMTestCase):
         from smt.problems import LpNorm
         from smt.sampling_methods import FullFactorial
 
-        import sklearn
         import matplotlib.pyplot as plt
         from matplotlib import colors
-        from mpl_toolkits.mplot3d import Axes3D
 
         ndim = 2
         nt = 200

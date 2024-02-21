@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 import os
 import unittest
 import numpy as np
-from sys import argv, platform
+from sys import argv
 
 try:
     import matplotlib

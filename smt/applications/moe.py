@@ -16,9 +16,7 @@ import warnings
 from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
 
-from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
-from smt.utils.misc import compute_rms_error
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
