@@ -4,8 +4,7 @@ Author: John Hwang <<hwangjt@umich.edu>>
 This package is distributed under New BSD license.
 """
 
-import unittest
-import numpy as np 
+import unittest 
 
 try:
     import matplotlib
@@ -17,7 +16,7 @@ except:
     NO_MATPLOTLIB = True
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC, GENN
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     NO_COMPILED = False
 except:
@@ -498,62 +497,6 @@ class Test(unittest.TestCase):
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_genn(self, is_gradient_enhancement: bool = True):
-        """Test and demonstrate GENN using a 1D example"""
-
-        # Test function
-        f = lambda x: x * np.sin(x)
-        df_dx = lambda x: np.sin(x) + x * np.cos(x)
-
-        # Domain
-        lb = -np.pi
-        ub = np.pi
-
-        # Training data
-        m = 4
-        xt = np.linspace(lb, ub, m)
-        yt = f(xt)
-        dyt_dxt = df_dx(xt)
-
-        # Validation data
-        xv = lb + np.random.rand(30, 1) * (ub - lb)
-        yv = f(xv)
-        dyv_dxv = df_dx(xv)
-
-        # Instantiate
-        genn = GENN(layer_sizes=(1, 6, 6, 1))
-
-        # Likely the only options a user will interact with
-        genn.options["alpha"] = 0.1
-        genn.options["lambd"] = 0.1
-        genn.options["gamma"] = int(is_gradient_enhancement)
-        genn.options["num_iterations"] = 200
-        genn.options["is_backtracking"] = True
-        genn.options["is_normalize"] = False
-        genn.options["is_print"] = False
-
-        # Train 
-        genn.load_data(xt, yt, dyt_dxt)
-        genn.train()
-        
-        # Plot comparison
-        if genn.options["gamma"] == 1.0:
-            title = "with gradient enhancement"
-        else:
-            title = "without gradient enhancement"
-        x = np.arange(lb, ub, 0.01)
-        y = f(x)
-        y_pred = genn.predict_values(x)
-        fig, ax = matplotlib.pyplot.subplots()
-        ax.plot(x, y_pred)
-        ax.plot(x, y, "k--")
-        ax.plot(xv, yv, "ro")
-        ax.plot(xt, yt, "k+", mew=3, ms=10)
-        ax.set(xlabel="x", ylabel="y", title=title)
-        ax.legend(["Predicted", "True", "Test", "Train"])
-        matplotlib.pyplot.show()
-
-    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mgp(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -740,6 +683,67 @@ class Test(unittest.TestCase):
         plt.plot(Z, -2.9 * np.ones_like(Z), "r|", mew=2, label="inducing points")
         plt.ylim([-3, 3])
         plt.legend(loc=0)
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_genn(self, is_gradient_enhancement: bool = True):
+        """Test and demonstrate GENN using a 1D example"""
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.surrogate_models import GENN
+
+        # Test function
+        f = lambda x: x * np.sin(x)
+        df_dx = lambda x: np.sin(x) + x * np.cos(x)
+
+        # Domain
+        lb = -np.pi
+        ub = np.pi
+
+        # Training data
+        m = 4
+        xt = np.linspace(lb, ub, m)
+        yt = f(xt)
+        dyt_dxt = df_dx(xt)
+
+        # Validation data
+        xv = lb + np.random.rand(30, 1) * (ub - lb)
+        yv = f(xv)
+        dyv_dxv = df_dx(xv)
+
+        # Instantiate
+        genn = GENN(layer_sizes=(1, 6, 6, 1))
+
+        # Likely the only options a user will interact with
+        genn.options["alpha"] = 0.1
+        genn.options["lambd"] = 0.1
+        genn.options["gamma"] = int(is_gradient_enhancement)
+        genn.options["num_iterations"] = 200
+        genn.options["is_backtracking"] = True
+        genn.options["is_normalize"] = False
+        genn.options["is_print"] = False
+
+        # Train 
+        genn.load_data(xt, yt, dyt_dxt)
+        genn.train()
+        
+        # Plot comparison
+        if genn.options["gamma"] == 1.0:
+            title = "with gradient enhancement"
+        else:
+            title = "without gradient enhancement"
+        x = np.arange(lb, ub, 0.01)
+        y = f(x)
+        y_pred = genn.predict_values(x)
+        fig, ax = plt.subplots()
+        ax.plot(x, y_pred)
+        ax.plot(x, y, "k--")
+        ax.plot(xv, yv, "ro")
+        ax.plot(xt, yt, "k+", mew=3, ms=10)
+        ax.set(xlabel="x", ylabel="y", title=title)
+        ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
 

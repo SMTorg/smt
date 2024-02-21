@@ -128,7 +128,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2599170
+     Training - done. Time (sec):  0.2501941
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %

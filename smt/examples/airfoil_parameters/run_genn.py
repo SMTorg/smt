@@ -33,22 +33,19 @@ genn = GENN(
 )
 
 # learning rate that controls optimizer step size
-genn.options["alpha"] = 0.001
+genn.options["alpha"] = 0.1
 # lambd = 0. = no regularization, lambd > 0 = regularization
-genn.options["lambd"] = 0.1
+genn.options["lambd"] = 0.01
 # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
 genn.options["gamma"] = 1.0
-# number of hidden layers
-# used to divide data into training batches (use for large data sets)
-genn.options["mini_batch_size"] = 256
-# number of passes through data
-genn.options["num_epochs"] = 5
 # number of optimizer iterations per mini-batch
-genn.options["num_iterations"] = 10
+genn.options["num_iterations"] = 100
 # print output (or not)
 genn.options["is_print"] = True
-# convenience function to read in data that is in SMT format
+# normalize training data to help convergence
+genn.options["is_normalize"] = True
 
+# convenience function to read in data that is in SMT format
 genn.load_data(x_train, y_train, dy_train)
 
 genn.train()
