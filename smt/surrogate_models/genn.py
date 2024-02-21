@@ -149,6 +149,12 @@ class GENN(SurrogateModel):
             desc="number of optimizer iterations per mini-batch",
         )
         self.options.declare(
+            "seed",
+            default=None,
+            types=int,
+            desc="random seed to control repeatability",
+        )
+        self.options.declare(
             "is_print", 
             default=False, 
             types=bool,
@@ -184,6 +190,7 @@ class GENN(SurrogateModel):
             max_iter=self.options["num_iterations"],
             is_backtracking=self.options["is_backtracking"],
             is_verbose=self.options["is_print"],
+            random_state=self.options["seed"],
         )
         self.model.fit(X, Y, J, **kwargs)
 
