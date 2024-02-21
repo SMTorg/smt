@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from scipy import linalg
 from smt.utils.misc import compute_rms_error
 
 from smt.problems import Sphere, NdimRobotArm

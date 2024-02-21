@@ -126,7 +126,6 @@ class TestMOE(SMTestCase):
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.predict_values(xe)
             plt.figure(1)
@@ -234,7 +233,6 @@ class TestMOE(SMTestCase):
 
         if TestMOE.plot:
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
 
             y = moe.predict_values(xe)
             plt.figure(1)

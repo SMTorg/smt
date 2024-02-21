@@ -9,7 +9,7 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 try:
-    from smt.surrogate_models import RMTB, RMTC
+    from smt.surrogate_models import RMTB, RMTC  # noqa: F401
 
     NO_COMPILED = True
 except ImportError:
@@ -22,11 +22,13 @@ class Test(unittest.TestCase):
         "C compilation failed or matplotlib not installed",
     )
     def test_rmtb(self):
-        from smt.examples.one_D_step import run_one_D_step_rmtb
+        # just check import
+        from smt.examples.one_D_step import run_one_D_step_rmtb  # noqa: F401
 
     @unittest.skipIf(
         NO_COMPILED or NO_MATPLOTLIB,
         "C compilation failed or matplotlib not installed",
     )
     def test_rmtc(self):
-        from smt.examples.one_D_step import run_one_D_step_rmtc
+        # just check import
+        from smt.examples.one_D_step import run_one_D_step_rmtc  # noqa: F401

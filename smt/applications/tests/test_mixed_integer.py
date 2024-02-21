@@ -530,10 +530,7 @@ class TestMixedInteger(unittest.TestCase):
     def run_mixed_integer_context_example(self):
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.applications.mixed_integer import MixedIntegerContext
         from smt.utils.design_space import (
             DesignSpace,
             FloatVariable,
@@ -1850,7 +1847,6 @@ class TestMixedInteger(unittest.TestCase):
         from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
-            MixedIntegerSamplingMethod,
         )
         from smt.utils.design_space import (
             DesignSpace,
@@ -1981,7 +1977,6 @@ class TestMixedInteger(unittest.TestCase):
         from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
-            MixedIntegerSamplingMethod,
         )
         from smt.utils.design_space import (
             DesignSpace,
@@ -2110,10 +2105,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.applications.mixed_integer import (
-            MixedIntegerKrigingModel,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.utils.design_space import (
             DesignSpace,
             CategoricalVariable,
@@ -2241,10 +2233,7 @@ class TestMixedInteger(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.applications.mixed_integer import (
-            MixedIntegerKrigingModel,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.utils.design_space import (
             DesignSpace,
             CategoricalVariable,

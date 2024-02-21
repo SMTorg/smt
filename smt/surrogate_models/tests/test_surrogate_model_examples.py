@@ -16,7 +16,7 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC  # noqa: F401
 
     NO_COMPILED = False
 except ImportError:
@@ -447,7 +447,6 @@ class Test(unittest.TestCase):
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_gekpls(self):
         import numpy as np
-        from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
 
         from smt.surrogate_models import GEKPLS, DesignSpace

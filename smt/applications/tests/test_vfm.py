@@ -15,7 +15,6 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 import numpy as np
-from scipy import linalg
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
@@ -27,7 +26,6 @@ from smt.utils.misc import compute_rms_error
 
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
-    plot_rans_crm_wing,
 )
 
 

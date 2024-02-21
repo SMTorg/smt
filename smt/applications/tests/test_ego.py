@@ -354,8 +354,6 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def function_test_mixed_integer(X):
-        import numpy as np
-
         # float
         x1 = X[:, 0]
         #  XType.ENUM 1
@@ -1164,10 +1162,7 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import MixIntKernelType
         from smt.utils.design_space import (
             DesignSpace,
@@ -1177,7 +1172,6 @@ class TestEGO(SMTestCase):
         )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-        from smt.sampling_methods import LHS
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.
