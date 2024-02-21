@@ -38,14 +38,14 @@ from smt.surrogate_models import (
 
 import warnings
 
-warnings.filterwarnings("ignore")
-
 from smt.utils.design_space import (
     DesignSpace,
     FloatVariable,
     IntegerVariable,
     CategoricalVariable,
 )
+
+warnings.filterwarnings("ignore")
 
 
 class TestMFKmixed(unittest.TestCase):

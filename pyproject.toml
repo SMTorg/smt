@@ -2,4 +2,4 @@
 requires = ["setuptools", "wheel", "numpy", "Cython"]
 
 [tool.ruff.lint]
-ignore = ["E402"]
+ignore = []

@@ -6,20 +6,11 @@ This package is distributed under New BSD license.
 
 import warnings
 
-warnings.filterwarnings("ignore")
-
 import os
 import unittest
 import numpy as np
 from sys import argv
 
-try:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    NO_MATPLOTLIB = False
-except ImportError:
-    NO_MATPLOTLIB = True
 
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
@@ -44,6 +35,16 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 import smt.utils.design_space as ds
+
+warnings.filterwarnings("ignore")
+
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except ImportError:
+    NO_MATPLOTLIB = True
 
 
 # This implementation only works with Python > 3.3
