@@ -1550,7 +1550,6 @@ def quadratic(x):
     return f
 
 
-@njit_use(parallel=True)
 def matrix_data_corr_levels_cat_matrix(
     i, n_levels, theta_cat, theta_bounds, is_ehh: bool
 ):
