@@ -3,10 +3,8 @@ import unittest
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
-from smt.surrogate_models import QP, KRG
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
-    plot_rans_crm_wing,
 )
 
 

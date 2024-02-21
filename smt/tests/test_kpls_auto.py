@@ -4,10 +4,8 @@ Author: Paul Saves
 This package is distributed under New BSD license.
 """
 
-import numpy as np
 import unittest
 import inspect
-from sys import platform
 
 from collections import OrderedDict
 

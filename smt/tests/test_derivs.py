@@ -21,7 +21,7 @@ from smt.utils.design_space import DesignSpace
 from smt.applications import MFK
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import RBF, RMTC, RMTB
 
     COMPILED_AVAILABLE = True
 except ImportError:

@@ -20,7 +20,7 @@ from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF
 
     COMPILED_AVAILABLE = True
 except ImportError:

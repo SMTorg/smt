@@ -13,7 +13,7 @@ import inspect
 from collections import OrderedDict
 
 from smt.problems import TensorProduct
-from smt.sampling_methods import LHS, FullFactorial
+from smt.sampling_methods import LHS
 
 from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
@@ -26,7 +26,6 @@ from smt.surrogate_models import (
     KPLSK,
     GEKPLS,
     GENN,
-    MGP,
     DesignSpace,
 )
 
