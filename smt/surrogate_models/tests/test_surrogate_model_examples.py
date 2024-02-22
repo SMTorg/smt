@@ -685,8 +685,8 @@ class Test(unittest.TestCase):
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_genn(self, is_gradient_enhancement: bool = True):
-        """Test and demonstrate GENN using a 1D example"""
+    def test_genn(self):
+        """Test and demonstrate GENN using a 1D example."""
 
         import matplotlib.pyplot as plt
         import numpy as np
@@ -714,14 +714,15 @@ class Test(unittest.TestCase):
 
         # Instantiate
         genn = GENN()
-        
+
         # Likely the only options a user will interact with
         genn.options["hidden_layer_sizes"] = [6, 6]
-        genn.options["alpha"] = 0.05
-        genn.options["lambd"] = 0.01
-        genn.options["gamma"] = int(is_gradient_enhancement)
-        genn.options["num_iterations"] = 200
-        
+        genn.options["alpha"] = 0.1
+        genn.options["lambd"] = 0.1
+        genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+        genn.options["num_iterations"] = 500
+        genn.options["is_backtracking"] = True
+
         # Train 
         genn.load_data(xt, yt, dyt_dxt)
         genn.train()
