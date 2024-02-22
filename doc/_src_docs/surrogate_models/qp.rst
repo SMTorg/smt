@@ -44,10 +44,10 @@ Usage
   x = np.linspace(0.0, 4.0, num)
   y = sm.predict_values(x)
   
-  t1, _ = plt.plot(xt, yt[:, 0], "o", "C0")
-  p1 = plt.plot(x, y[:, 0], "C0", label="Prediction 1")
-  t2, _ = plt.plot(xt, yt[:, 1], "o", "C1")
-  p2 = plt.plot(x, y[:, 1], "C1", label="Prediction 2")
+  plt.plot(xt, yt[:, 0], "o", "C0")
+  plt.plot(x, y[:, 0], "C0", label="Prediction 1")
+  plt.plot(xt, yt[:, 1], "o", "C1")
+  plt.plot(x, y[:, 1], "C1", label="Prediction 2")
   plt.xlabel("x")
   plt.ylabel("y")
   plt.legend()
@@ -69,7 +69,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001669
+     Training - done. Time (sec):  0.0001841
   ___________________________________________________________________________
      
    Evaluation
@@ -77,7 +77,7 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000193
+     Predicting - done. Time (sec):  0.0000181
      
      Prediction time/pt. (sec) :  0.0000002
      

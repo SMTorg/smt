@@ -69,8 +69,8 @@ Usage
   
   # query the outputs
   y = sm.predict_values(x)
-  mse = sm.predict_variances(x)
-  derivs = sm.predict_derivatives(x, kx=0)
+  _mse = sm.predict_variances(x)
+  _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4367268
+     Training - done. Time (sec):  0.4216812
   ___________________________________________________________________________
      
    Evaluation
@@ -111,9 +111,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0002241
+     Predicting - done. Time (sec):  0.0002019
      
-     Prediction time/pt. (sec) :  0.0000022
+     Prediction time/pt. (sec) :  0.0000020
      
   ___________________________________________________________________________
      
@@ -122,7 +122,7 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001743
+     Predicting - done. Time (sec):  0.0001731
      
      Prediction time/pt. (sec) :  0.0000017
      

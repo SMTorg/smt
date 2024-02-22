@@ -45,7 +45,7 @@ Usage
   # add a plot with variance
   s2 = sm.predict_variances(x)
   # to compute the derivative according to the first variable
-  dydx = sm.predict_derivatives(xt, 0)
+  _dydx = sm.predict_derivatives(xt, 0)
   
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0298822
+     Training - done. Time (sec):  0.0302367
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009840
+     Predicting - done. Time (sec):  0.0009689
      
-     Prediction time/pt. (sec) :  0.0000098
+     Prediction time/pt. (sec) :  0.0000097
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005052
+     Predicting - done. Time (sec):  0.0004971
      
-     Prediction time/pt. (sec) :  0.0001010
+     Prediction time/pt. (sec) :  0.0000994
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -135,8 +135,8 @@ Usage with an automatic number of components
   sm.train()
   
   ## The model automatically choose a dimension of 3
-  l = sm.options["n_comp"]
-  print("\n The model automatically choose " + str(l) + " components.")
+  ncomp = sm.options["n_comp"]
+  print("\n The model automatically choose " + str(ncomp) + " components.")
   
   ## You can predict a 10-dimension point from the 3-dimensional model
   print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
@@ -158,7 +158,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  4.5178952
+     Training - done. Time (sec):  4.5564551
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,9 +168,9 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003068
+     Predicting - done. Time (sec):  0.0002971
      
-     Prediction time/pt. (sec) :  0.0003068
+     Prediction time/pt. (sec) :  0.0002971
      
   [[139.34911621]]
   [[212.53624432]]

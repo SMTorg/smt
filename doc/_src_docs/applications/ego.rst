@@ -450,10 +450,7 @@ Usage with mixed variable
 
   import numpy as np
   from smt.applications import EGO
-  from smt.applications.mixed_integer import (
-      MixedIntegerContext,
-      MixedIntegerSamplingMethod,
-  )
+  from smt.applications.mixed_integer import MixedIntegerContext
   from smt.surrogate_models import MixIntKernelType
   from smt.utils.design_space import (
       DesignSpace,
@@ -463,7 +460,6 @@ Usage with mixed variable
   )
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
-  from smt.sampling_methods import LHS
   
   # Regarding the interface, the function to be optimized should handle
   # categorical values as index values in the enumeration type specification.
@@ -536,12 +532,12 @@ Usage with mixed variable
   for k in range(n_iter):
       mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
   x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-  u = max(np.floor(max(mini)) + 1, -100)
-  l = max(np.floor(min(mini)) - 0.2, -10)
+  up = max(np.floor(max(mini)) + 1, -100)
+  lo = max(np.floor(min(mini)) - 0.2, -10)
   fig = plt.figure()
   axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
   axes.plot(x_plot, mini, color="r")
-  axes.set_ylim([l, u])
+  axes.set_ylim([lo, up])
   plt.title("minimum convergence plot", loc="center")
   plt.xlabel("number of iterations")
   plt.ylabel("log of the difference w.r.t the best")
@@ -549,7 +545,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-4.88885885  2.          0.          0.        ] with f(x)=-14.7
+  Minimum in x=[-4.88912059  2.          0.          0.        ] with f(x)=-14.7
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -605,7 +601,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x2abe5c1d0>
+     -  <smt.applications.ego.Evaluator object at 0x17edd5e50>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -635,7 +631,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x2abe5d490>
+     -  <smt.surrogate_models.krg.KRG object at 0x17edd7890>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly

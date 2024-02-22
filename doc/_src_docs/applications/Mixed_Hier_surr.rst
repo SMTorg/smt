@@ -61,7 +61,7 @@ Example of mixed integer Polynomial (QP) surrogate
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000162
+     Predicting - done. Time (sec):  0.0000160
      
      Prediction time/pt. (sec) :  0.0000002
      
@@ -91,7 +91,6 @@ Example of mixed integer Gower Distance model
   from smt.surrogate_models import KRG, MixIntKernelType
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
-      MixedIntegerSamplingMethod,
   )
   from smt.utils.design_space import (
       DesignSpace,
@@ -224,20 +223,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0029662
+     Predicting - done. Time (sec):  0.0028279
      
-     Prediction time/pt. (sec) :  0.0000297
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0029068
-     
-     Prediction time/pt. (sec) :  0.0000291
+     Prediction time/pt. (sec) :  0.0000283
      
   ___________________________________________________________________________
      
@@ -246,9 +234,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0029440
+     Predicting - done. Time (sec):  0.0029562
      
-     Prediction time/pt. (sec) :  0.0000294
+     Prediction time/pt. (sec) :  0.0000296
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0028977
+     
+     Prediction time/pt. (sec) :  0.0000290
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -271,7 +270,6 @@ Example of mixed integer Compound Symmetry model
   from smt.surrogate_models import KRG, MixIntKernelType
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
-      MixedIntegerSamplingMethod,
   )
   from smt.utils.design_space import (
       DesignSpace,
@@ -412,20 +410,9 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0034580
+     Predicting - done. Time (sec):  0.0035977
      
-     Prediction time/pt. (sec) :  0.0000346
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0036581
-     
-     Prediction time/pt. (sec) :  0.0000366
+     Prediction time/pt. (sec) :  0.0000360
      
   ___________________________________________________________________________
      
@@ -434,9 +421,20 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0035532
+     Predicting - done. Time (sec):  0.0035148
      
-     Prediction time/pt. (sec) :  0.0000355
+     Prediction time/pt. (sec) :  0.0000351
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0034881
+     
+     Prediction time/pt. (sec) :  0.0000349
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_cs_example.png
@@ -458,10 +456,7 @@ Example of mixed integer Homoscedastic Hypersphere model
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import KRG, MixIntKernelType
-  from smt.applications.mixed_integer import (
-      MixedIntegerKrigingModel,
-      MixedIntegerSamplingMethod,
-  )
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
   from smt.utils.design_space import (
       DesignSpace,
       CategoricalVariable,
@@ -593,20 +588,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0035062
+     Predicting - done. Time (sec):  0.0035212
      
-     Prediction time/pt. (sec) :  0.0000351
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0034261
-     
-     Prediction time/pt. (sec) :  0.0000343
+     Prediction time/pt. (sec) :  0.0000352
      
   ___________________________________________________________________________
      
@@ -615,9 +599,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0034037
+     Predicting - done. Time (sec):  0.0034111
      
-     Prediction time/pt. (sec) :  0.0000340
+     Prediction time/pt. (sec) :  0.0000341
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0033910
+     
+     Prediction time/pt. (sec) :  0.0000339
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -639,10 +634,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import KRG, MixIntKernelType
-  from smt.applications.mixed_integer import (
-      MixedIntegerKrigingModel,
-      MixedIntegerSamplingMethod,
-  )
+  from smt.applications.mixed_integer import MixedIntegerKrigingModel
   from smt.utils.design_space import (
       DesignSpace,
       CategoricalVariable,
@@ -774,31 +766,31 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0034950
-     
-     Prediction time/pt. (sec) :  0.0000349
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0033770
-     
-     Prediction time/pt. (sec) :  0.0000338
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0033979
+     Predicting - done. Time (sec):  0.0034049
      
      Prediction time/pt. (sec) :  0.0000340
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0033259
+     
+     Prediction time/pt. (sec) :  0.0000333
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0033309
+     
+     Prediction time/pt. (sec) :  0.0000333
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -986,10 +978,10 @@ Example of mixed integer Kriging with hierarchical variables
   sm.set_training_values(Xt, Yt, is_acting=Xt_is_acting)
   sm.train()
   y_s = sm.predict_values(Xt)[:, 0]
-  pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
+  _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
   
   y_sv = sm.predict_variances(Xt)[:, 0]
-  var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+  _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
   
 ::
 
@@ -1000,9 +992,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0030160
+     Predicting - done. Time (sec):  0.0029519
      
-     Prediction time/pt. (sec) :  0.0002011
+     Prediction time/pt. (sec) :  0.0001968
      
   
 

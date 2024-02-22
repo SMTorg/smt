@@ -123,19 +123,10 @@ Main
       x, y, dy, train_size=0.8
   )
   
-  # building and training the GENN
-  n_x = x_train.shape[-1]
-  n_y = 1 
+  genn = GENN(print_global=False)
   
-  genn = GENN(
-      layer_sizes=(
-          n_x,  
-          6, 6,         
-          n_y,  
-      ), 
-      print_global=False,
-  )
-  
+  # number of nodes per hidden layer
+  genn.options["hidden_layer_sizes"] = [6, 6]
   # learning rate that controls optimizer step size
   genn.options["alpha"] = 0.1
   # lambd = 0. = no regularization, lambd > 0 = regularization
@@ -188,107 +179,107 @@ Main
   
 ::
 
-  epoch = 0, batch = 0, iter = 0, cost =  2.858
-  epoch = 0, batch = 0, iter = 1, cost =  2.345
-  epoch = 0, batch = 0, iter = 2, cost =  2.258
-  epoch = 0, batch = 0, iter = 3, cost =  2.159
-  epoch = 0, batch = 0, iter = 4, cost =  2.069
-  epoch = 0, batch = 0, iter = 5, cost =  1.967
-  epoch = 0, batch = 0, iter = 6, cost =  1.875
-  epoch = 0, batch = 0, iter = 7, cost =  1.759
-  epoch = 0, batch = 0, iter = 8, cost =  1.630
-  epoch = 0, batch = 0, iter = 9, cost =  1.435
-  epoch = 0, batch = 0, iter = 10, cost =  1.255
-  epoch = 0, batch = 0, iter = 11, cost =  1.349
-  epoch = 0, batch = 0, iter = 12, cost =  1.182
-  epoch = 0, batch = 0, iter = 13, cost =  1.077
-  epoch = 0, batch = 0, iter = 14, cost =  0.971
-  epoch = 0, batch = 0, iter = 15, cost =  0.967
-  epoch = 0, batch = 0, iter = 16, cost =  0.939
-  epoch = 0, batch = 0, iter = 17, cost =  0.697
-  epoch = 0, batch = 0, iter = 18, cost =  0.823
-  epoch = 0, batch = 0, iter = 19, cost =  0.768
-  epoch = 0, batch = 0, iter = 20, cost =  0.641
-  epoch = 0, batch = 0, iter = 21, cost =  0.687
-  epoch = 0, batch = 0, iter = 22, cost =  0.676
-  epoch = 0, batch = 0, iter = 23, cost =  0.556
-  epoch = 0, batch = 0, iter = 24, cost =  0.536
-  epoch = 0, batch = 0, iter = 25, cost =  0.434
-  epoch = 0, batch = 0, iter = 26, cost =  0.444
-  epoch = 0, batch = 0, iter = 27, cost =  0.391
-  epoch = 0, batch = 0, iter = 28, cost =  0.380
-  epoch = 0, batch = 0, iter = 29, cost =  0.372
-  epoch = 0, batch = 0, iter = 30, cost =  0.311
-  epoch = 0, batch = 0, iter = 31, cost =  0.290
-  epoch = 0, batch = 0, iter = 32, cost =  0.272
-  epoch = 0, batch = 0, iter = 33, cost =  0.279
-  epoch = 0, batch = 0, iter = 34, cost =  0.249
-  epoch = 0, batch = 0, iter = 35, cost =  0.238
-  epoch = 0, batch = 0, iter = 36, cost =  0.233
-  epoch = 0, batch = 0, iter = 37, cost =  0.233
-  epoch = 0, batch = 0, iter = 38, cost =  0.223
-  epoch = 0, batch = 0, iter = 39, cost =  0.215
-  epoch = 0, batch = 0, iter = 40, cost =  0.206
-  epoch = 0, batch = 0, iter = 41, cost =  0.201
-  epoch = 0, batch = 0, iter = 42, cost =  0.195
-  epoch = 0, batch = 0, iter = 43, cost =  0.202
-  epoch = 0, batch = 0, iter = 44, cost =  0.205
-  epoch = 0, batch = 0, iter = 45, cost =  0.204
-  epoch = 0, batch = 0, iter = 46, cost =  0.203
-  epoch = 0, batch = 0, iter = 47, cost =  0.226
-  epoch = 0, batch = 0, iter = 48, cost =  0.250
-  epoch = 0, batch = 0, iter = 49, cost =  0.182
-  epoch = 0, batch = 0, iter = 50, cost =  0.178
-  epoch = 0, batch = 0, iter = 51, cost =  0.163
-  epoch = 0, batch = 0, iter = 52, cost =  0.168
-  epoch = 0, batch = 0, iter = 53, cost =  0.174
-  epoch = 0, batch = 0, iter = 54, cost =  0.173
-  epoch = 0, batch = 0, iter = 55, cost =  0.202
-  epoch = 0, batch = 0, iter = 56, cost =  0.188
-  epoch = 0, batch = 0, iter = 57, cost =  0.207
-  epoch = 0, batch = 0, iter = 58, cost =  0.154
-  epoch = 0, batch = 0, iter = 59, cost =  0.151
-  epoch = 0, batch = 0, iter = 60, cost =  0.160
-  epoch = 0, batch = 0, iter = 61, cost =  0.159
-  epoch = 0, batch = 0, iter = 62, cost =  0.166
-  epoch = 0, batch = 0, iter = 63, cost =  0.163
-  epoch = 0, batch = 0, iter = 64, cost =  0.184
-  epoch = 0, batch = 0, iter = 65, cost =  0.187
-  epoch = 0, batch = 0, iter = 66, cost =  0.182
-  epoch = 0, batch = 0, iter = 67, cost =  0.194
-  epoch = 0, batch = 0, iter = 68, cost =  0.179
-  epoch = 0, batch = 0, iter = 69, cost =  0.173
-  epoch = 0, batch = 0, iter = 70, cost =  0.163
-  epoch = 0, batch = 0, iter = 71, cost =  0.154
-  epoch = 0, batch = 0, iter = 72, cost =  0.164
-  epoch = 0, batch = 0, iter = 73, cost =  0.168
-  epoch = 0, batch = 0, iter = 74, cost =  0.143
-  epoch = 0, batch = 0, iter = 75, cost =  0.150
-  epoch = 0, batch = 0, iter = 76, cost =  0.145
-  epoch = 0, batch = 0, iter = 77, cost =  0.129
-  epoch = 0, batch = 0, iter = 78, cost =  0.127
-  epoch = 0, batch = 0, iter = 79, cost =  0.120
-  epoch = 0, batch = 0, iter = 80, cost =  0.119
-  epoch = 0, batch = 0, iter = 81, cost =  0.121
-  epoch = 0, batch = 0, iter = 82, cost =  0.118
-  epoch = 0, batch = 0, iter = 83, cost =  0.122
-  epoch = 0, batch = 0, iter = 84, cost =  0.121
-  epoch = 0, batch = 0, iter = 85, cost =  0.113
-  epoch = 0, batch = 0, iter = 86, cost =  0.109
-  epoch = 0, batch = 0, iter = 87, cost =  0.105
-  epoch = 0, batch = 0, iter = 88, cost =  0.102
-  epoch = 0, batch = 0, iter = 89, cost =  0.101
-  epoch = 0, batch = 0, iter = 90, cost =  0.101
-  epoch = 0, batch = 0, iter = 91, cost =  0.099
-  epoch = 0, batch = 0, iter = 92, cost =  0.098
-  epoch = 0, batch = 0, iter = 93, cost =  0.101
-  epoch = 0, batch = 0, iter = 94, cost =  0.111
-  epoch = 0, batch = 0, iter = 95, cost =  0.150
-  epoch = 0, batch = 0, iter = 96, cost =  0.198
-  epoch = 0, batch = 0, iter = 97, cost =  0.313
-  epoch = 0, batch = 0, iter = 98, cost =  0.157
-  epoch = 0, batch = 0, iter = 99, cost =  0.236
-  Drag coefficient prediction (cd):  0.010507216839848385
+  epoch = 0, batch = 0, iter = 0, cost =  3.334
+  epoch = 0, batch = 0, iter = 1, cost =  2.556
+  epoch = 0, batch = 0, iter = 2, cost =  2.491
+  epoch = 0, batch = 0, iter = 3, cost =  2.384
+  epoch = 0, batch = 0, iter = 4, cost =  2.291
+  epoch = 0, batch = 0, iter = 5, cost =  2.238
+  epoch = 0, batch = 0, iter = 6, cost =  2.208
+  epoch = 0, batch = 0, iter = 7, cost =  2.169
+  epoch = 0, batch = 0, iter = 8, cost =  2.098
+  epoch = 0, batch = 0, iter = 9, cost =  2.016
+  epoch = 0, batch = 0, iter = 10, cost =  1.910
+  epoch = 0, batch = 0, iter = 11, cost =  1.777
+  epoch = 0, batch = 0, iter = 12, cost =  1.598
+  epoch = 0, batch = 0, iter = 13, cost =  1.376
+  epoch = 0, batch = 0, iter = 14, cost =  1.336
+  epoch = 0, batch = 0, iter = 15, cost =  1.325
+  epoch = 0, batch = 0, iter = 16, cost =  1.122
+  epoch = 0, batch = 0, iter = 17, cost =  0.956
+  epoch = 0, batch = 0, iter = 18, cost =  0.956
+  epoch = 0, batch = 0, iter = 19, cost =  0.835
+  epoch = 0, batch = 0, iter = 20, cost =  0.689
+  epoch = 0, batch = 0, iter = 21, cost =  0.640
+  epoch = 0, batch = 0, iter = 22, cost =  0.532
+  epoch = 0, batch = 0, iter = 23, cost =  0.537
+  epoch = 0, batch = 0, iter = 24, cost =  0.478
+  epoch = 0, batch = 0, iter = 25, cost =  0.416
+  epoch = 0, batch = 0, iter = 26, cost =  0.390
+  epoch = 0, batch = 0, iter = 27, cost =  0.385
+  epoch = 0, batch = 0, iter = 28, cost =  0.375
+  epoch = 0, batch = 0, iter = 29, cost =  0.337
+  epoch = 0, batch = 0, iter = 30, cost =  0.331
+  epoch = 0, batch = 0, iter = 31, cost =  0.307
+  epoch = 0, batch = 0, iter = 32, cost =  0.284
+  epoch = 0, batch = 0, iter = 33, cost =  0.278
+  epoch = 0, batch = 0, iter = 34, cost =  0.240
+  epoch = 0, batch = 0, iter = 35, cost =  0.233
+  epoch = 0, batch = 0, iter = 36, cost =  0.211
+  epoch = 0, batch = 0, iter = 37, cost =  0.213
+  epoch = 0, batch = 0, iter = 38, cost =  0.214
+  epoch = 0, batch = 0, iter = 39, cost =  0.210
+  epoch = 0, batch = 0, iter = 40, cost =  0.235
+  epoch = 0, batch = 0, iter = 41, cost =  0.206
+  epoch = 0, batch = 0, iter = 42, cost =  0.250
+  epoch = 0, batch = 0, iter = 43, cost =  0.233
+  epoch = 0, batch = 0, iter = 44, cost =  0.266
+  epoch = 0, batch = 0, iter = 45, cost =  0.202
+  epoch = 0, batch = 0, iter = 46, cost =  0.196
+  epoch = 0, batch = 0, iter = 47, cost =  0.176
+  epoch = 0, batch = 0, iter = 48, cost =  0.194
+  epoch = 0, batch = 0, iter = 49, cost =  0.201
+  epoch = 0, batch = 0, iter = 50, cost =  0.169
+  epoch = 0, batch = 0, iter = 51, cost =  0.161
+  epoch = 0, batch = 0, iter = 52, cost =  0.155
+  epoch = 0, batch = 0, iter = 53, cost =  0.164
+  epoch = 0, batch = 0, iter = 54, cost =  0.152
+  epoch = 0, batch = 0, iter = 55, cost =  0.150
+  epoch = 0, batch = 0, iter = 56, cost =  0.153
+  epoch = 0, batch = 0, iter = 57, cost =  0.135
+  epoch = 0, batch = 0, iter = 58, cost =  0.138
+  epoch = 0, batch = 0, iter = 59, cost =  0.133
+  epoch = 0, batch = 0, iter = 60, cost =  0.132
+  epoch = 0, batch = 0, iter = 61, cost =  0.144
+  epoch = 0, batch = 0, iter = 62, cost =  0.135
+  epoch = 0, batch = 0, iter = 63, cost =  0.149
+  epoch = 0, batch = 0, iter = 64, cost =  0.158
+  epoch = 0, batch = 0, iter = 65, cost =  0.180
+  epoch = 0, batch = 0, iter = 66, cost =  0.137
+  epoch = 0, batch = 0, iter = 67, cost =  0.133
+  epoch = 0, batch = 0, iter = 68, cost =  0.128
+  epoch = 0, batch = 0, iter = 69, cost =  0.134
+  epoch = 0, batch = 0, iter = 70, cost =  0.133
+  epoch = 0, batch = 0, iter = 71, cost =  0.136
+  epoch = 0, batch = 0, iter = 72, cost =  0.127
+  epoch = 0, batch = 0, iter = 73, cost =  0.125
+  epoch = 0, batch = 0, iter = 74, cost =  0.119
+  epoch = 0, batch = 0, iter = 75, cost =  0.109
+  epoch = 0, batch = 0, iter = 76, cost =  0.118
+  epoch = 0, batch = 0, iter = 77, cost =  0.110
+  epoch = 0, batch = 0, iter = 78, cost =  0.111
+  epoch = 0, batch = 0, iter = 79, cost =  0.122
+  epoch = 0, batch = 0, iter = 80, cost =  0.139
+  epoch = 0, batch = 0, iter = 81, cost =  0.146
+  epoch = 0, batch = 0, iter = 82, cost =  0.162
+  epoch = 0, batch = 0, iter = 83, cost =  0.115
+  epoch = 0, batch = 0, iter = 84, cost =  0.100
+  epoch = 0, batch = 0, iter = 85, cost =  0.102
+  epoch = 0, batch = 0, iter = 86, cost =  0.096
+  epoch = 0, batch = 0, iter = 87, cost =  0.098
+  epoch = 0, batch = 0, iter = 88, cost =  0.095
+  epoch = 0, batch = 0, iter = 89, cost =  0.096
+  epoch = 0, batch = 0, iter = 90, cost =  0.096
+  epoch = 0, batch = 0, iter = 91, cost =  0.100
+  epoch = 0, batch = 0, iter = 92, cost =  0.108
+  epoch = 0, batch = 0, iter = 93, cost =  0.131
+  epoch = 0, batch = 0, iter = 94, cost =  0.131
+  epoch = 0, batch = 0, iter = 95, cost =  0.226
+  epoch = 0, batch = 0, iter = 96, cost =  0.140
+  epoch = 0, batch = 0, iter = 97, cost =  0.166
+  epoch = 0, batch = 0, iter = 98, cost =  0.129
+  epoch = 0, batch = 0, iter = 99, cost =  0.105
+  Drag coefficient prediction (cd):  0.009698412540476492
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %

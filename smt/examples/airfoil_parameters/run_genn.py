@@ -19,19 +19,10 @@ x_train, x_test, y_train, y_test, dy_train, dy_test = train_test_split(
     x, y, dy, train_size=0.8
 )
 
-# building and training the GENN
-n_x = x_train.shape[-1]
-n_y = 1 
+genn = GENN(print_global=False)
 
-genn = GENN(
-    layer_sizes=(
-        n_x,  
-        6, 6,         
-        n_y,  
-    ), 
-    print_global=False,
-)
-
+# number of nodes per hidden layer
+genn.options["hidden_layer_sizes"] = [6, 6]
 # learning rate that controls optimizer step size
 genn.options["alpha"] = 0.1
 # lambd = 0. = no regularization, lambd > 0 = regularization

@@ -60,7 +60,7 @@ class Test(SMTestCase):
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
         sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
-        sms["GENN"] = GENN(layer_sizes=(3, 12, 12, 1))
+        sms["GENN"] = GENN()
         
         if COMPILED_AVAILABLE:
             sms["IDW"] = IDW()
@@ -118,7 +118,7 @@ class Test(SMTestCase):
 
         xt = sampling(self.nt)
         yt = prob(xt)
-        # print(prob(xt, kx=0).shape)
+        print(prob(xt, kx=0).shape)
         for i in range(self.ndim):
             yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
@@ -127,8 +127,7 @@ class Test(SMTestCase):
 
         sm0 = self.sms[sname]
 
-        options = {key: val for key, val in sm0.options._dict.items()}  
-        sm = sm0.__class__(**options)  
+        sm = sm0.__class__()  
 
         sm.options = sm0.options.clone()
         if sm.options.is_declared("design_space"):

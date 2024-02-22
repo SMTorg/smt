@@ -713,21 +713,19 @@ class Test(unittest.TestCase):
         dyv_dxv = df_dx(xv)
 
         # Instantiate
-        genn = GENN(layer_sizes=(1, 6, 6, 1))
-
+        genn = GENN()
+        
         # Likely the only options a user will interact with
-        genn.options["alpha"] = 0.1
-        genn.options["lambd"] = 0.1
+        genn.options["hidden_layer_sizes"] = [6, 6]
+        genn.options["alpha"] = 0.05
+        genn.options["lambd"] = 0.01
         genn.options["gamma"] = int(is_gradient_enhancement)
         genn.options["num_iterations"] = 200
-        genn.options["is_backtracking"] = True
-        genn.options["is_normalize"] = False
-        genn.options["is_print"] = False
-
+        
         # Train 
         genn.load_data(xt, yt, dyt_dxt)
         genn.train()
-        
+
         # Plot comparison
         if genn.options["gamma"] == 1.0:
             title = "with gradient enhancement"

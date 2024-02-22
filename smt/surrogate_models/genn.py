@@ -59,10 +59,6 @@ def _smt_to_genn(training_points: dict[dict]) -> tuple[np.ndarray, np.ndarray, n
 class GENN(SurrogateModel):
     """Gradient-Enhanced Neural Net."""
 
-    def __init__(self, layer_sizes: tuple[int] | list[int], **kwargs): 
-        kwargs = {"layer_sizes": layer_sizes, **kwargs}
-        super().__init__(**kwargs)
-
     def load_data(self, xt, yt, dyt_dxt=None):
         """Load all training data into surrogate model in one step.
 
@@ -96,9 +92,10 @@ class GENN(SurrogateModel):
         self.supports["training_derivatives"] = True
 
         self.options.declare(  
-            "layer_sizes", 
-            types=(tuple, list), 
-            desc="number of nodes per layer (including input and output layers)",
+            "hidden_layer_sizes", 
+            default=[12, 12],  
+            types=list, 
+            desc="number of nodes per hidden layer",
         )
         self.options.declare(
             "alpha", 
@@ -174,10 +171,22 @@ class GENN(SurrogateModel):
         )
 
     def _final_initialize(self):
-        self.model = NeuralNet(self.options["layer_sizes"])
+        inputs = [1]  # will be overwritten during training (dummy value)
+        output = [1]  # will be overwritten during training (dummy value)
+        hidden = self.options["hidden_layer_sizes"]
+        layer_sizes = inputs + hidden + output
+        self.model = NeuralNet(layer_sizes)
 
     def _train(self):
-        X, Y, J = _smt_to_genn(self.training_points)
+        X, Y, J = _smt_to_genn(self.training_points) 
+        n_x = X.shape[0]
+        n_y = Y.shape[0] 
+        inputs = [n_x]  # will be overwritten during training (dummy value)
+        output = [n_y]  # will be overwritten during training (dummy value)
+        hidden = self.options["hidden_layer_sizes"]
+        layer_sizes = [n_x] + hidden + [n_y]
+        self.model.parameters.layer_sizes = layer_sizes
+        self.model.parameters.initialize()
         kwargs = dict(
             is_normalize=self.options["is_normalize"],
             alpha=self.options["alpha"],
