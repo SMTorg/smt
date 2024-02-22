@@ -51,6 +51,7 @@ def load_csv(file=None, inputs=None, outputs=None, partials=None):
 
             def index(header):
                 return headers.index(header)
+
         else:
             raise Exception("The file " + file + " does not exist")
 

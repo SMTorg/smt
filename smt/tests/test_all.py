@@ -45,21 +45,21 @@ def genn():
     neural_net.options["alpha"] = 0.1  # learning rate that controls optimizer step size
     neural_net.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
     neural_net.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
-    neural_net.options[
-        "lambd"
-    ] = 0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
-    neural_net.options[
-        "gamma"
-    ] = 1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+    neural_net.options["lambd"] = (
+        0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
+    )
+    neural_net.options["gamma"] = (
+        1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
+    )
     neural_net.options["deep"] = 2  # number of hidden layers
     neural_net.options["wide"] = 12  # number of nodes per hidden layer
-    neural_net.options[
-        "mini_batch_size"
-    ] = 10000  # used to divide data into training batches (use for large data sets)
+    neural_net.options["mini_batch_size"] = (
+        10000  # used to divide data into training batches (use for large data sets)
+    )
     neural_net.options["num_epochs"] = 25  # number of passes through data
-    neural_net.options[
-        "num_iterations"
-    ] = 100  # number of optimizer iterations per mini-batch
+    neural_net.options["num_iterations"] = (
+        100  # number of optimizer iterations per mini-batch
+    )
     neural_net.options["is_print"] = True
     return neural_net
 
