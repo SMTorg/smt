@@ -4,8 +4,6 @@ Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
 This package is distributed under New BSD license.
 """
 
-import warnings
-
 import os
 import unittest
 import numpy as np
