@@ -102,7 +102,7 @@ class GENN(SurrogateModel):
         )
         self.options.declare(
             "alpha", 
-            default=0.1, 
+            default=0.05, 
             types=(int, float), 
             desc="optimizer learning rate",
         )
@@ -120,7 +120,7 @@ class GENN(SurrogateModel):
         )
         self.options.declare(
             "lambd", 
-            default=0.1, 
+            default=0.01, 
             types=(int, float), 
             desc="regularization coefficient",
         )
@@ -132,8 +132,8 @@ class GENN(SurrogateModel):
         )
         self.options.declare(
             "mini_batch_size",
-            default=1_000_000,  
-            types=int,  # note: jenn supports None, but options_dictionary throws an error if types=(None, int)
+            default=-1,  
+            types=int,  
             desc="split data into batches of specified size",
         )
         self.options.declare(
@@ -144,13 +144,13 @@ class GENN(SurrogateModel):
         )
         self.options.declare(
             "num_iterations",
-            default=100,
+            default=1000,
             types=int,
             desc="number of optimizer iterations per mini-batch",
         )
         self.options.declare(
             "seed",
-            default=None,
+            default=-1,
             types=int,
             desc="random seed to control repeatability",
         )
@@ -186,11 +186,11 @@ class GENN(SurrogateModel):
             beta1=self.options["beta1"],
             beta2=self.options["beta2"],
             epochs=self.options["num_epochs"],
-            batch_size=self.options["mini_batch_size"],
+            batch_size=None if self.options["mini_batch_size"] < 0 else self.options["mini_batch_size"],
             max_iter=self.options["num_iterations"],
             is_backtracking=self.options["is_backtracking"],
             is_verbose=self.options["is_print"],
-            random_state=self.options["seed"],
+            random_state=None if self.options["seed"] < 0 else self.options["seed"],
         )
         self.model.fit(X, Y, J, **kwargs)
 

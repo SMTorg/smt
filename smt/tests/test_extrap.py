@@ -6,11 +6,10 @@ This package is distributed under New BSD license.
 
 import numpy as np
 import unittest
-import inspect
 
 from collections import OrderedDict
 
-from smt.problems import Sphere, TensorProduct
+from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.utils.design_space import DesignSpace
 
@@ -18,11 +17,11 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import RMTC, RMTB
 
-    compiled_available = True
-except:
-    compiled_available = False
+    COMPILED_AVAILABLE = True
+except ImportError:
+    COMPILED_AVAILABLE = False
 
 
 print_output = False
@@ -38,7 +37,7 @@ class Test(SMTestCase):
         problems["sphere"] = Sphere(ndim=ndim)
 
         sms = OrderedDict()
-        if compiled_available:
+        if COMPILED_AVAILABLE:
             sms["RMTC"] = RMTC(num_elements=6, extrapolate=True)
             sms["RMTB"] = RMTB(order=4, num_ctrl_pts=10, extrapolate=True)
 
@@ -79,31 +78,31 @@ class Test(SMTestCase):
         if extrap_predict:
             sm.predict_values(x)
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTC(self):
         self.run_test("RMTC", False, False)
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTC_train(self):
         with self.assertRaises(Exception) as context:
             self.run_test("RMTC", True, False)
         self.assertEqual(str(context.exception), "Training points above max for 0")
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTC_predict(self):
         self.run_test("RMTC", False, True)
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTB(self):
         self.run_test("RMTB", False, False)
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTB_train(self):
         with self.assertRaises(Exception) as context:
             self.run_test("RMTB", True, False)
         self.assertEqual(str(context.exception), "Training points above max for 0")
 
-    @unittest.skipIf(not compiled_available, "Compiled Fortran libraries not available")
+    @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_RMTB_predict(self):
         self.run_test("RMTB", False, True)
 

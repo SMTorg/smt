@@ -9,7 +9,6 @@ import numpy as np
 
 from smt.surrogate_models import KRG
 from smt.utils.sm_test_case import SMTestCase
-from smt.utils.misc import compute_rms_error
 
 
 class Test(SMTestCase):

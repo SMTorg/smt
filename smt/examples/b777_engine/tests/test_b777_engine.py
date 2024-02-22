@@ -5,14 +5,14 @@ try:
 
     matplotlib.use("Agg")
     NO_MATPLOTLIB = False
-except:
+except ImportError:
     NO_MATPLOTLIB = True
 
 try:
-    from smt.surrogate_models import RMTB, RMTC
+    from smt.surrogate_models import RMTB, RMTC  # noqa: F401
 
     NO_COMPILED = True
-except:
+except ImportError:
     NO_COMPILED = False
 
 
@@ -22,14 +22,16 @@ class Test(unittest.TestCase):
         "C compilation failed or matplotlib not installed",
     )
     def test_rmtb(self):
-        from smt.examples.b777_engine import run_b777_engine_rmtb
+        # just check import
+        from smt.examples.b777_engine import run_b777_engine_rmtb  # noqa: F401
 
     @unittest.skipIf(
         NO_COMPILED or NO_MATPLOTLIB,
         "C compilation failed or matplotlib not installed",
     )
     def test_rmtc(self):
-        from smt.examples.b777_engine import run_b777_engine_rmtc
+        # just check import
+        from smt.examples.b777_engine import run_b777_engine_rmtc  # noqa: F401
 
 
 if __name__ == "__main__":

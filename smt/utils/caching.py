@@ -6,7 +6,7 @@ This package is distributed under New BSD license.
 
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 import hashlib
 import contextlib
@@ -37,7 +37,7 @@ def cached_operation(inputs_dict, data_dir, desc=""):
         with open(filename, "rb") as f:
             outputs_dict = pickle.load(f)
         load_successful = True
-    except:
+    except OSError:
         outputs_dict = {}
         load_successful = False
 
@@ -65,7 +65,8 @@ def _caching_checksum(obj):
     try:
         tmp = obj["self"].printer
         obj["self"].printer = None
-    except:
+    # FIXME: not sure which exception is raised, disable QA
+    except:  # noqa: E722
         pass
 
     self_pkl = pickle.dumps(obj)
@@ -73,7 +74,8 @@ def _caching_checksum(obj):
 
     try:
         obj["self"].printer = tmp
-    except:
+    # FIXME: not sure which exception is raised, disable QA
+    except:  # noqa: E722
         pass
 
     return checksum

@@ -96,7 +96,7 @@ class NestedLHS(object):
 
         if len(nt) != self.nlevel:
             raise ValueError("nt must be a list of nlevel elements")
-        if np.allclose(np.sort(nt)[::-1], nt) == False:
+        if not np.allclose(np.sort(nt)[::-1], nt):
             raise ValueError("nt must be a list of decreasing integers")
 
         doe = []
@@ -131,13 +131,13 @@ class NestedLHS(object):
             for j in range(doe[i].shape[0]):
                 dj = np.sort(d[j, :])
                 k = dj[0]
-                l = (np.where(d[j, :] == k))[0][0]
+                ll = (np.where(d[j, :] == k))[0][0]
                 m = 0
-                while l in ind:
+                while ll in ind:
                     m = m + 1
                     k = dj[m]
-                    l = (np.where(d[j, :] == k))[0][0]
-                ind.append(l)
+                    ll = (np.where(d[j, :] == k))[0][0]
+                ind.append(ll)
 
             doe[i - 1] = np.delete(doe[i - 1], ind, axis=0)
             doe[i - 1] = np.vstack((doe[i - 1], doe[i]))
@@ -190,13 +190,13 @@ class MFK(KrgBased):
         y : same as X
         """
 
-        if type(X) is not list:
+        if not isinstance(X, list):
             nlevel = 1
             X = [X]
         else:
             nlevel = len(X)
 
-        if type(y) is not list:
+        if not isinstance(y, list):
             y = [y]
 
         if len(X) != len(y):
@@ -759,9 +759,7 @@ class MFK(KrgBased):
         sigma2 = self.optimal_par[0]["sigma2"] / self.y_std**2
         MSE[:, 0] = sigma2 * (
             # 1 + self.optimal_noise_all[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-            1
-            - (r_t**2).sum(axis=0)
-            + (u_**2).sum(axis=0)
+            1 - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -845,7 +843,8 @@ class MFK(KrgBased):
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
                     # sigma2_rho * MSE[:, i - 1]
-                    +Q_ / (2 * (self.nt_all[i] - p - q))
+                    +Q_
+                    / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
                     * (1 - (r_t**2).sum(axis=0))
                     + sigma2 * (u_**2).sum(axis=0)
@@ -853,9 +852,7 @@ class MFK(KrgBased):
             else:
                 MSE[:, i] = sigma2 * (
                     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-                    1
-                    - (r_t**2).sum(axis=0)
-                    + (u_**2).sum(axis=0)
+                    1 - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0)
                 )  # + sigma2_rho * MSE[:, i - 1]
             if self.options["propagate_uncertainty"]:
                 MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]

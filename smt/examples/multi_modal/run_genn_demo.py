@@ -27,9 +27,13 @@ def get_practice_data(random=False):
     :param: random -- boolean, True = random sampling, False = full-factorial sampling
     :return: (X, Y, J) -- np arrays of shapes (n_x, m), (n_y, m), (n_y, n_x, m) where n_x = 2 and n_y = 1 and m = 15^2
     """
+
     # Response (N-dimensional Rastrigin)
-    f = lambda x: np.sum(x**2 - 10 * np.cos(2 * np.pi * x) + 10, axis=1)
-    df = lambda x, j: 2 * x[:, j] + 20 * np.pi * np.sin(2 * np.pi * x[:, j])
+    def f(x):
+        return np.sum(x**2 - 10 * np.cos(2 * np.pi * x) + 10, axis=1)
+
+    def df(x, j):
+        return 2 * x[:, j] + 20 * np.pi * np.sin(2 * np.pi * x[:, j])
 
     # Domain
     lb = -1.0  # minimum bound (same for all dimensions)
@@ -223,8 +227,11 @@ def run_demo_1D(is_gradient_enhancement=True):  # pragma: no cover
     """Test and demonstrate GENN using a 1D example"""
 
     # Test function
-    f = lambda x: x * np.sin(x)
-    df_dx = lambda x: np.sin(x) + x * np.cos(x)
+    def f(x):
+        return x * np.sin(x)
+
+    def df_dx(x):
+        return np.sin(x) + x * np.cos(x)
 
     # Domain
     lb = -np.pi

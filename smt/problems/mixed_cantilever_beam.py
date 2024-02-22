@@ -61,7 +61,7 @@ class MixedCantileverBeam(Problem):
         """
         P = self.options["P"]
         E = self.options["E"]
-        I = np.int64(x[:, 0]) - 1
+        I = np.int64(x[:, 0]) - 1  # noqa: E741
         L = x[:, 1]
         S = x[:, 2]
         Ival = np.array([self.listI[i] for i in I])

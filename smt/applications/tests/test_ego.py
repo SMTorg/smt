@@ -6,20 +6,11 @@ This package is distributed under New BSD license.
 
 import warnings
 
-warnings.filterwarnings("ignore")
-
 import os
 import unittest
 import numpy as np
-from sys import argv, platform
+from sys import argv
 
-try:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    NO_MATPLOTLIB = False
-except:
-    NO_MATPLOTLIB = True
 
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
@@ -44,6 +35,16 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 import smt.utils.design_space as ds
+
+warnings.filterwarnings("ignore")
+
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    NO_MATPLOTLIB = False
+except ImportError:
+    NO_MATPLOTLIB = True
 
 
 # This implementation only works with Python > 3.3
@@ -354,8 +355,6 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def function_test_mixed_integer(X):
-        import numpy as np
-
         # float
         x1 = X[:, 0]
         #  XType.ENUM 1
@@ -917,7 +916,6 @@ class TestEGO(SMTestCase):
                 point to evaluate
             """
             PI = 3.14159265358979323846
-            fail = False
             x = X[:, 0]
             # categorial variable
             c = X[:, 1]
@@ -969,7 +967,6 @@ class TestEGO(SMTestCase):
             else:
                 print("type error")
                 print(X)
-                fail = True
             return y
 
         # To define the variables x^{quant} and x^{cat}
@@ -1166,10 +1163,7 @@ class TestEGO(SMTestCase):
     def run_ego_mixed_integer_example():
         import numpy as np
         from smt.applications import EGO
-        from smt.applications.mixed_integer import (
-            MixedIntegerContext,
-            MixedIntegerSamplingMethod,
-        )
+        from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import MixIntKernelType
         from smt.utils.design_space import (
             DesignSpace,
@@ -1179,7 +1173,6 @@ class TestEGO(SMTestCase):
         )
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-        from smt.sampling_methods import LHS
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.
@@ -1252,12 +1245,12 @@ class TestEGO(SMTestCase):
         for k in range(n_iter):
             mini[k] = np.log(np.abs(np.min(y_data[0 : k + n_doe - 1]) - min_ref))
         x_plot = np.linspace(1, n_iter + 0.5, n_iter)
-        u = max(np.floor(max(mini)) + 1, -100)
-        l = max(np.floor(min(mini)) - 0.2, -10)
+        up = max(np.floor(max(mini)) + 1, -100)
+        lo = max(np.floor(min(mini)) - 0.2, -10)
         fig = plt.figure()
         axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         axes.plot(x_plot, mini, color="r")
-        axes.set_ylim([l, u])
+        axes.set_ylim([lo, up])
         plt.title("minimum convergence plot", loc="center")
         plt.xlabel("number of iterations")
         plt.ylabel("log of the difference w.r.t the best")

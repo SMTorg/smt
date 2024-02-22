@@ -45,7 +45,6 @@ class LpNorm(Problem):
         if kx is None:
             y[:, 0] = lp_norm
         else:
-            norm_p = np.linalg.norm(x, ord=p)
             y[:, 0] = np.sign(x[:, kx]) * (np.absolute(x[:, kx]) / lp_norm) ** (p - 1)
 
         return y
