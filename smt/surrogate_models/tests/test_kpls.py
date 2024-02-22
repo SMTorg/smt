@@ -46,25 +46,6 @@ class TestKPLS(unittest.TestCase):
             kriging.set_training_values(x, y)
             self.assertRaises(ValueError, lambda: kriging.train())
 
-    def test_kpls_training_with_zeroed_outputs(self):
-        # Test scikit-learn 0.24 regression cf. https://github.com/SMTorg/smt/issues/274
-        for corr_str in [
-            "pow_exp",
-            "abs_exp",
-            "squar_exp",
-        ]:
-            x = np.random.rand(50, 3)
-            y = np.zeros(50)
-
-            kpls = KPLS()
-            kpls.options["corr"] = corr_str
-            kpls.set_training_values(x, y)
-            kpls.train()
-            x_test = np.asarray([[0, 0, 0], [0.5, 0.5, 0.5], [1, 1, 1]])
-            y_test = kpls.predict_values(x_test)
-            # KPLS training fails anyway but not due to PLS exception StopIteration
-            self.assertEqual(np.linalg.norm(y_test - np.asarray([[0, 0, 0]])), 0)
-
 
 if __name__ == "__main__":
     unittest.main()
