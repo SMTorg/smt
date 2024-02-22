@@ -38,10 +38,6 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             specifying if doe output should be in folded space (enum indexes)
             or not (enum masks)
         """
-        warnings.warn(
-            "MixedIntegerSamplingMethod has been deprecated, use DesignSpace.sample_valid_x instead!",
-            category=DeprecationWarning,
-        )
         self._design_space = design_space
         if "random_state" in kwargs:
             self._design_space.random_state = kwargs["random_state"]
@@ -56,7 +52,6 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         super().__init__(xlimits=self._unfolded_xlimits)
 
     def _compute(self, nt, return_is_acting=False):
-
         x_doe, is_acting = self._design_space.sample_valid_x(
             nt,
             unfolded=not self._output_in_folded_space,
@@ -227,9 +222,9 @@ class MixedIntegerKrigingModel(KrgBased):
             )
             and self._surrogate.options["categorical_kernel"] is None
         ):
-            self._surrogate.options["categorical_kernel"] = (
-                MixIntKernelType.HOMO_HSPHERE
-            )
+            self._surrogate.options[
+                "categorical_kernel"
+            ] = MixIntKernelType.HOMO_HSPHERE
             warnings.warn(
                 "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
             )
