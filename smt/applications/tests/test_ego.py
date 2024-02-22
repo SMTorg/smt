@@ -817,7 +817,7 @@ class TestEGO(SMTestCase):
         criterion = "LCB"  #'EI' or 'SBO' or 'LCB'
         random_state = 42
         design_space = DesignSpace(xlimits, random_state=random_state)
-        xdoe = FullFactorial(xlimits=xlimits)(10)
+        xdoe = FullFactorial(xlimits=xlimits)(9)
         ydoe = fun(xdoe)
         ego = EGO(
             xdoe=xdoe,
@@ -1140,7 +1140,7 @@ class TestEGO(SMTestCase):
                 x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
             )
             lines = [true_fun, data, gp, un_gp, opt, ei]
-            fig.suptitle("EGO optimization of $f(x) = x \sin{x}$")
+            fig.suptitle("EGO optimization of $f(x) = x \\sin{x}$")
             fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
             ax.set_title("iteration {}".format(i + 1))
             fig.legend(
@@ -1377,7 +1377,7 @@ class TestEGO(SMTestCase):
                     x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
                 )
                 lines = [true_fun, data, gp, un_gp, opt, ei, virt_data]
-                fig.suptitle("EGOp optimization of $f(x) = x \sin{x}$")
+                fig.suptitle("EGOp optimization of $f(x) = x \\sin{x}$")
                 fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
                 ax.set_title("iteration {}.{}".format(i, p))
                 fig.legend(
