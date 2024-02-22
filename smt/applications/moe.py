@@ -11,15 +11,12 @@ Mixture of Experts
 # TODO : documentation
 
 import numpy as np
-import warnings
 
 from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models.surrogate_model import SurrogateModel
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 MOE_EXPERT_NAMES = [
     "KRG",

@@ -36,8 +36,6 @@ from smt.applications.mixed_integer import (
 )
 import smt.utils.design_space as ds
 
-warnings.filterwarnings("ignore")
-
 try:
     import matplotlib
 
