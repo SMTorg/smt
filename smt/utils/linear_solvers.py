@@ -263,21 +263,21 @@ class KrylovSolver(LinearSolver):
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
                     "atol": 0.0,
-                    "rtol": self.options["atol"],
+                    "tol": self.options["atol"],
                     "maxiter": self.options["ilimit"],
                 }
             elif self.options["solver"] == "bicgstab":
                 self.solver = scipy.sparse.linalg.bicgstab
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
-                    "rtol": self.options["atol"],
+                    "tol": self.options["atol"],
                     "maxiter": self.options["ilimit"],
                 }
             elif self.options["solver"] == "gmres":
                 self.solver = scipy.sparse.linalg.gmres
                 self.callback_func = self.callback._print_res
                 self.solver_kwargs = {
-                    "rtol": self.options["atol"],
+                    "tol": self.options["atol"],
                     "maxiter": self.options["ilimit"],
                     "restart": min(self.options["ilimit"], mtx.shape[0]),
                 }
@@ -299,6 +299,7 @@ class KrylovSolver(LinearSolver):
                 self.callback.rhs = rhs
 
                 self.callback._print_sol(sol)
+
                 tmp, _ = self.solver(
                     self.mtx,
                     rhs,
