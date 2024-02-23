@@ -1245,7 +1245,7 @@ class TestMixedInteger(unittest.TestCase):
         y_sv = sm.predict_variances(Xt)[:, 0]
         _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_hierarchical_variables_NN(self):
         problem = HierarchicalNeuralNetwork()
         ds = problem.design_space

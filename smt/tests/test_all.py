@@ -61,13 +61,15 @@ class Test(SMTestCase):
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = GENN(
             num_iterations=1000,
-            hidden_layer_sizes=[24,], 
+            hidden_layer_sizes=[
+                24,
+            ],
             alpha=1e-1,
-            lambd=1e-2, 
-            is_backtracking=True, 
-            is_normalize=True, 
+            lambd=1e-2,
+            is_backtracking=True,
+            is_normalize=True,
         )
-        
+
         if COMPILED_AVAILABLE:
             sms["IDW"] = IDW()
             sms["RBF"] = RBF()
@@ -133,7 +135,7 @@ class Test(SMTestCase):
 
         sm0 = self.sms[sname]
 
-        sm = sm0.__class__()  
+        sm = sm0.__class__()
 
         sm.options = sm0.options.clone()
         if sm.options.is_declared("design_space"):
@@ -207,7 +209,6 @@ class Test(SMTestCase):
     def test_exp_GEKPLS_TNC(self):
         self.run_test()
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_exp_GENN(self):
         self.run_test()
 
@@ -263,7 +264,6 @@ class Test(SMTestCase):
     def test_tanh_GEKPLS_TNC(self):
         self.run_test()
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_tanh_GENN(self):
         self.run_test()
 
@@ -319,7 +319,6 @@ class Test(SMTestCase):
     def test_cos_GEKPLS_TNC(self):
         self.run_test()
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_cos_GENN(self):
         self.run_test()
 

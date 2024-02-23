@@ -111,7 +111,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_rosenbrock_2D(self):
         n_iter = 50
         fun = Rosenbrock(ndim=2)
@@ -153,7 +153,7 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_rosenbrock_2D_parallel(self):
         n_iter = 20
         n_parallel = 5
@@ -203,7 +203,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.39, y_opt.item(), delta=0.8)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_branin_2D_parallel(self):
         n_iter = 10
         fun = Branin(ndim=2)
@@ -233,7 +233,7 @@ class TestEGO(SMTestCase):
         print("Branin=", x_opt)
         self.assertAlmostEqual(0.39, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_branin_2D_mixed_parallel(self):
         n_parallel = 5
         n_iter = 20
@@ -275,7 +275,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.494, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_branin_2D_mixed(self):
         n_iter = 20
         fun = Branin(ndim=2)
@@ -312,7 +312,7 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.494, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_branin_2D_mixed_tunnel(self):
         n_iter = 20
         fun = Branin(ndim=2)
@@ -372,7 +372,7 @@ class TestEGO(SMTestCase):
         )
         return y
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer(self):
         n_iter = 15
         n_doe = 5
@@ -403,7 +403,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
         n_iter = 15
         n_doe = 5
@@ -441,7 +441,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_NN(self):
         random_state = 42
 
@@ -560,7 +560,7 @@ class TestEGO(SMTestCase):
             delta=18,
         )
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_Goldstein(self):
         def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
             h = (
@@ -766,7 +766,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
         n_iter = 15
         random_state = 42
@@ -1060,7 +1060,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(expected, actual)
 
     @unittest.skipIf(
-        int(os.getenv("RUN_SLOW", 0)) < 2 or NO_MATPLOTLIB,
+        int(os.getenv("RUN_SLOW_TESTS", 0)) < 2 or NO_MATPLOTLIB,
         "too slow or matplotlib not installed",
     )
     def test_examples(self):
