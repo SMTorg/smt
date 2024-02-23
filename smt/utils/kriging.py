@@ -904,7 +904,7 @@ def matern52(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             for k in range(n_components):
                 dr[j][k] = (
                     -np.sqrt(5) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
-                )
+                ).item()
 
         return r, dr
 
@@ -1041,7 +1041,7 @@ def matern32(theta, d, grad_ind=None, hess_ind=None, derivative_params=None):
             for k in range(n_components):
                 dr[j][k] = (
                     -np.sqrt(3) * theta[k] * der[j][k] * r[j] + A[j][0] * dB[j][k]
-                )
+                ).item()
         return r, dr
 
     return r

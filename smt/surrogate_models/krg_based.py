@@ -1316,10 +1316,10 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i, 0] = self.nt / np.log(10) * dreddetadomega
+                hess[ind_0 + i, 0] = (self.nt / np.log(10) * dreddetadomega).item()
 
                 if self.name in ["MGP"] and eta == omega:
-                    hess[ind_0 + i, 0] += log_prior[eta]
+                    hess[ind_0 + i, 0] += log_prior[eta].item()
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par

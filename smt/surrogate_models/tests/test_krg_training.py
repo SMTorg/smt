@@ -213,7 +213,7 @@ class Test(SMTestCase):
                     dred_dk = (red_dk - red) / self.eps
 
                     grad_norm_all.append(grad_red[i])
-                    diff_norm_all.append(float(dred_dk))
+                    diff_norm_all.append(float(dred_dk.item()))
                     ind_theta.append(r"$x_%d$" % i)
                 grad_norm_all = np.atleast_2d(grad_norm_all)
                 diff_norm_all = np.atleast_2d(diff_norm_all).T
@@ -305,8 +305,8 @@ class Test(SMTestCase):
             for i in range(np.shape(x_valid)[0]):
                 l0 = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]), 0)[0]
                 l1 = kr.predict_variance_derivatives(np.atleast_2d(x_valid[i]), 1)[0]
-                y_jacob[0, i] = l0
-                y_jacob[1, i] = l1
+                y_jacob[0, i] = l0.item()
+                y_jacob[1, i] = l1.item()
 
             diff_g = (y_predicted[1] - y_predicted[2]) / (2 * e)
             diff_d = (y_predicted[3] - y_predicted[4]) / (2 * e)

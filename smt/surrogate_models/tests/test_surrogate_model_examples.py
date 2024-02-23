@@ -4,7 +4,7 @@ Author: John Hwang <<hwangjt@umich.edu>>
 This package is distributed under New BSD license.
 """
 
-import unittest 
+import unittest
 
 try:
     import matplotlib
@@ -487,7 +487,7 @@ class Test(unittest.TestCase):
             for j in range(X.shape[1]):
                 Z[i, j] = sm.predict_values(
                     np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
-                )
+                ).item()
 
         fig = plt.figure()
         ax = fig.add_subplot(projection="3d")
@@ -534,7 +534,7 @@ class Test(unittest.TestCase):
         emb = sm.embedding["C"]
 
         # Compute the smallest box containing all points of A
-        upper = np.sum(np.abs(emb), axis=0)
+        upper = np.sum(np.abs(emb), axis=0).item()
         lower = -upper
 
         # Test the model
@@ -692,12 +692,14 @@ class Test(unittest.TestCase):
         from smt.surrogate_models import GENN
 
         # Test function
-        def f(x): 
+        def f(x):
             import numpy as np  # need to repeat for sphinx_auto_embed
+
             return x * np.sin(x)
-        
-        def df_dx(x): 
+
+        def df_dx(x):
             import numpy as np  # need to repeat for sphinx_auto_embed
+
             return np.sin(x) + x * np.cos(x)
 
         # Domain
@@ -722,12 +724,14 @@ class Test(unittest.TestCase):
         genn.options["hidden_layer_sizes"] = [6, 6]
         genn.options["alpha"] = 0.1
         genn.options["lambd"] = 0.1
-        genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+        genn.options[
+            "gamma"
+        ] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
         genn.options["num_iterations"] = 1000
         genn.options["is_backtracking"] = True
-        genn.options["is_normalize"] = False  
-        
-        # Train 
+        genn.options["is_normalize"] = False
+
+        # Train
         genn.load_data(xt, yt, dyt_dxt)
         genn.train()
 
