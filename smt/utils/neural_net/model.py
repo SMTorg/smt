@@ -518,9 +518,9 @@ class Model(object):
         plt.xlabel("Absolute Prediction Error")
         plt.ylabel("Probability")
         plt.title(
-            "$\mu$="
+            "$\\mu$="
             + str(metrics["avg_error"])
-            + ", $\sigma=$"
+            + ", $\\sigma=$"
             + str(metrics["std_error"])
         )
         plt.grid(True)
