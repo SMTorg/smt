@@ -716,16 +716,16 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -1126,7 +1126,7 @@ class KrgBased(SurrogateModel):
             # Compute reduced log likelihood derivatives
             grad_red[i_der] = (
                 -self.nt / np.log(10) * (dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
-            )
+            ).item()
 
         par["dr"] = dr_all
         par["tr"] = tr_all
