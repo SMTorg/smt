@@ -86,8 +86,8 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
-        self.assertAlmostEqual(18.9, float(x_opt), delta=1)
-        self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
+        self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
+        self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
 
     def test_function_test_1d_parallel(self):
         n_iter = 3
@@ -108,8 +108,8 @@ class TestEGO(SMTestCase):
         )
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
 
-        self.assertAlmostEqual(18.9, float(x_opt), delta=1)
-        self.assertAlmostEqual(-15.1, float(y_opt), delta=1)
+        self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
+        self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_rosenbrock_2D(self):
@@ -131,7 +131,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.55))
-        self.assertAlmostEqual(0.0, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     def test_rosenbrock_2D_SBO(self):
         n_iter = 10
@@ -151,7 +151,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
-        self.assertAlmostEqual(0.0, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_rosenbrock_2D_parallel(self):
@@ -179,7 +179,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         print("Rosenbrock: ", x_opt)
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
-        self.assertAlmostEqual(0.0, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     def test_branin_2D(self):
         n_iter = 20
@@ -201,7 +201,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3.14, 2.275]], x_opt, rtol=0.25)
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.25)
         )
-        self.assertAlmostEqual(0.39, float(y_opt), delta=0.8)
+        self.assertAlmostEqual(0.39, y_opt.item(), delta=0.8)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_parallel(self):
@@ -231,7 +231,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[9.42, 2.475]], x_opt, rtol=0.5)
         )
         print("Branin=", x_opt)
-        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.39, y_opt.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed_parallel(self):
@@ -273,7 +273,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
-        self.assertAlmostEqual(0.494, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.494, y_opt.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed(self):
@@ -310,7 +310,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3, 2.275]], x_opt, rtol=0.2)
             or np.allclose([[9, 2.475]], x_opt, rtol=0.2)
         )
-        self.assertAlmostEqual(0.494, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.494, y_opt.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_branin_2D_mixed_tunnel(self):
@@ -347,7 +347,7 @@ class TestEGO(SMTestCase):
             or np.allclose([[3, 2.275]], x_opt, rtol=2)
             or np.allclose([[9, 2.475]], x_opt, rtol=2)
         )
-        self.assertAlmostEqual(0.494, float(y_opt), delta=2)
+        self.assertAlmostEqual(0.494, y_opt.item(), delta=2)
 
     @staticmethod
     def function_test_mixed_integer(X):
@@ -401,7 +401,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+        self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_gower_distance(self):
@@ -439,7 +439,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+        self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_NN(self):
@@ -556,7 +556,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
             f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
-            float(y_opt),
+            y_opt.item(),
             delta=18,
         )
 
@@ -723,7 +723,7 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
         self.assertAlmostEqual(
             9.022,
-            float(y_opt),
+            y_opt.item(),
             delta=25,
         )
 
@@ -764,7 +764,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+        self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
     def test_ego_mixed_integer_homo_gaussian_pls(self):
@@ -806,7 +806,7 @@ class TestEGO(SMTestCase):
         )
         _, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_mixed_integer)
 
-        self.assertAlmostEqual(-15, float(y_opt), delta=5)
+        self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
     def test_ydoe_option(self):
         n_iter = 15
@@ -822,12 +822,14 @@ class TestEGO(SMTestCase):
             ydoe=ydoe,
             n_iter=n_iter,
             criterion=criterion,
-            surrogate=KRG(design_space=design_space, print_global=False),
+            surrogate=KRG(
+                design_space=design_space, hyper_opt="Cobyla", print_global=False
+            ),
             random_state=random_state,
         )
         _, y_opt, _, _, _ = ego.optimize(fun=fun)
 
-        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+        self.assertAlmostEqual(0.39, y_opt.item(), delta=1)
 
     def test_find_best_point(self):
         fun = TestEGO.function_test_1d
@@ -848,7 +850,7 @@ class TestEGO(SMTestCase):
         )
         _, _, _, _, _ = ego.optimize(fun=fun)
         x, _ = ego._find_best_point(xdoe, ydoe, enable_tunneling=False)
-        self.assertAlmostEqual(6.5, float(x), delta=1)
+        self.assertAlmostEqual(6.5, x.item(), delta=1)
 
     @staticmethod
     def initialize_ego_gek(func="exp", criterion="LCB"):
@@ -1050,11 +1052,11 @@ class TestEGO(SMTestCase):
         ego.gpr.train()
         xtest = np.array([[10.0]])
         # test that default virtual point should be equal to 3sigma lower bound kriging interval
-        expected = float(
+        expected = (
             ego.gpr.predict_values(xtest)
             - 3 * np.sqrt(ego.gpr.predict_variances(xtest))
-        )
-        actual = float(ego._get_virtual_point(xtest, fun(xtest))[0])
+        ).item()
+        actual = ego._get_virtual_point(xtest, fun(xtest))[0].item()
         self.assertAlmostEqual(expected, actual)
 
     @unittest.skipIf(
@@ -1102,7 +1104,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
-        print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
+        print("Minimum in x={:.1f} with f(x)={:.1f}".format(x_opt.item(), y_opt.item()))
 
         x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
         y_plot = function_test_1d(x_plot)
@@ -1233,7 +1235,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
-        print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
+        print("Minimum in x={} with f(x)={:.1f}".format(x_opt, y_opt.item()))
         # print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
 
         min_ref = -15
@@ -1320,7 +1322,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
-        print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
+        print("Minimum in x={:.1f} with f(x)={:.1f}".format(x_opt.item(), y_opt.item()))
 
         x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
         y_plot = function_test_1d(x_plot)
