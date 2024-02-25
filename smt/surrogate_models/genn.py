@@ -10,9 +10,10 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 
 import numpy as np
 from jenn.model import NeuralNet
+from typing import Union 
 
 
-def _smt_to_genn(training_points: dict[dict]) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+def _smt_to_genn(training_points: dict[dict]) -> tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
     """Translate data structure from SMT to GENN.
 
     :param training_points: training data (as per SMT API)
@@ -91,12 +92,6 @@ class GENN(SurrogateModel):
         self.supports["derivatives"] = True
         self.supports["training_derivatives"] = True
 
-        self.options.declare(  
-            "hidden_layer_sizes", 
-            default=[12, 12],  
-            types=list, 
-            desc="number of nodes per hidden layer",
-        )
         self.options.declare(
             "alpha", 
             default=0.05, 
@@ -126,6 +121,12 @@ class GENN(SurrogateModel):
             default=1.0, 
             types=(int, float), 
             desc="gradient-enhancement coefficient",
+        )
+        self.options.declare(  
+            "hidden_layer_sizes", 
+            default=[12, 12],  
+            types=list, 
+            desc="number of nodes per hidden layer",
         )
         self.options.declare(
             "mini_batch_size",

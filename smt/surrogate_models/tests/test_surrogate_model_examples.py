@@ -686,16 +686,19 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_genn(self):
-        """Test and demonstrate GENN using a 1D example."""
-
-        import matplotlib.pyplot as plt
         import numpy as np
+        import matplotlib.pyplot as plt
 
         from smt.surrogate_models import GENN
 
         # Test function
-        f = lambda x: x * np.sin(x)
-        df_dx = lambda x: np.sin(x) + x * np.cos(x)
+        def f(x): 
+            import numpy as np  # need to repeat for sphinx_auto_embed
+            return x * np.sin(x)
+        
+        def df_dx(x): 
+            import numpy as np  # need to repeat for sphinx_auto_embed
+            return np.sin(x) + x * np.cos(x)
 
         # Domain
         lb = -np.pi

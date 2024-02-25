@@ -14,89 +14,94 @@ Usage
 
 .. code-block:: python
 
-   import matplotlib.pyplot as plt
-   import numpy as np
-
-   from smt.surrogate_models import GENN
-
-   # Test function
-   f = lambda x: x * np.sin(x)
-   df_dx = lambda x: np.sin(x) + x * np.cos(x)
-
-   # Domain
-   lb = -np.pi
-   ub = np.pi
-
-   # Training data
-   m = 4
-   xt = np.linspace(lb, ub, m)
-   yt = f(xt)
-   dyt_dxt = df_dx(xt)
-
-   # Validation data
-   xv = lb + np.random.rand(30, 1) * (ub - lb)
-   yv = f(xv)
-   dyv_dxv = df_dx(xv)
-
-   # Instantiate
-   genn = GENN()
-
-   # Likely the only options a user will interact with
-   genn.options["hidden_layer_sizes"] = [6, 6]
-   genn.options["alpha"] = 0.1
-   genn.options["lambd"] = 0.1
-   genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
-   genn.options["num_iterations"] = 500
-   genn.options["is_backtracking"] = True
-
-   # Train 
-   genn.load_data(xt, yt, dyt_dxt)
-   genn.train()
-
-   # Plot comparison
-   if genn.options["gamma"] == 1.0:
+  import numpy as np
+  import matplotlib.pyplot as plt
+  
+  from smt.surrogate_models import GENN
+  
+  # Test function
+  def f(x): 
+      import numpy as np  # need to repeat for sphinx_auto_embed
+      return x * np.sin(x)
+  
+  def df_dx(x): 
+      import numpy as np  # need to repeat for sphinx_auto_embed
+      return np.sin(x) + x * np.cos(x)
+  
+  # Domain
+  lb = -np.pi
+  ub = np.pi
+  
+  # Training data
+  m = 4
+  xt = np.linspace(lb, ub, m)
+  yt = f(xt)
+  dyt_dxt = df_dx(xt)
+  
+  # Validation data
+  xv = lb + np.random.rand(30, 1) * (ub - lb)
+  yv = f(xv)
+  dyv_dxv = df_dx(xv)
+  
+  # Instantiate
+  genn = GENN()
+  
+  # Likely the only options a user will interact with
+  genn.options["hidden_layer_sizes"] = [6, 6]
+  genn.options["alpha"] = 0.1
+  genn.options["lambd"] = 0.1
+  genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+  genn.options["num_iterations"] = 500
+  genn.options["is_backtracking"] = True
+  
+  # Train 
+  genn.load_data(xt, yt, dyt_dxt)
+  genn.train()
+  
+  # Plot comparison
+  if genn.options["gamma"] == 1.0:
       title = "with gradient enhancement"
-   else:
+  else:
       title = "without gradient enhancement"
-   x = np.arange(lb, ub, 0.01)
-   y = f(x)
-   y_pred = genn.predict_values(x)
-   fig, ax = plt.subplots()
-   ax.plot(x, y_pred)
-   ax.plot(x, y, "k--")
-   ax.plot(xv, yv, "ro")
-   ax.plot(xt, yt, "k+", mew=3, ms=10)
-   ax.set(xlabel="x", ylabel="y", title=title)
-   ax.legend(["Predicted", "True", "Test", "Train"])
-   plt.show()
+  x = np.arange(lb, ub, 0.01)
+  y = f(x)
+  y_pred = genn.predict_values(x)
+  fig, ax = plt.subplots()
+  ax.plot(x, y_pred)
+  ax.plot(x, y, "k--")
+  ax.plot(xv, yv, "ro")
+  ax.plot(xt, yt, "k+", mew=3, ms=10)
+  ax.set(xlabel="x", ylabel="y", title=title)
+  ax.legend(["Predicted", "True", "Test", "Train"])
+  plt.show()
   
 ::
 
-   ___________________________________________________________________________
-   
-                                   GENN
-___________________________________________________________________________
-   
- Problem size
-   
-      # training points.        : 4
-   
-___________________________________________________________________________
-   
- Training
-   
-   Training ...
-   Training - done. Time (sec):  0.2509859
-___________________________________________________________________________
-   
- Evaluation
-   
-      # eval points. : 629
-   
-   Predicting ...
-   Predicting - done. Time (sec):  0.0002019
-   
-   Prediction time/pt. (sec) :  0.0000003
+  ___________________________________________________________________________
+     
+                                     GENN
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 4
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.3032103
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 629
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0001469
+     
+     Prediction time/pt. (sec) :  0.0000002
      
   
 .. figure:: genn_Test_test_genn.png
@@ -169,7 +174,7 @@ Options
   *  -  hidden_layer_sizes
      -  [12, 12]
      -  None
-     -  ['int']
+     -  ['list']
      -  number of nodes per hidden layer
   *  -  mini_batch_size
      -  -1
@@ -177,22 +182,22 @@ Options
      -  ['int']
      -  split data into batches of specified size
   *  -  num_epochs
-     -  10
+     -  1
      -  None
      -  ['int']
      -  number of random passes through the data
   *  -  num_iterations
-     -  100
+     -  1000
      -  None
      -  ['int']
      -  number of optimizer iterations per mini-batch
   *  -  seed
-     -  None
+     -  -1
      -  None
      -  ['int']
      -  random seed to control repeatability
   *  -  is_print
-     -  True
+     -  False
      -  None
      -  ['bool']
      -  print progress (or not)

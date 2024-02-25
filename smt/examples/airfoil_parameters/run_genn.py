@@ -26,25 +26,26 @@ genn.options["hidden_layer_sizes"] = [6, 6]
 # learning rate that controls optimizer step size
 genn.options["alpha"] = 0.1
 # lambd = 0. = no regularization, lambd > 0 = regularization
-genn.options["lambd"] = 0.01
+genn.options["lambd"] = 0.1
 # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
 genn.options["gamma"] = 1.0
+# used to divide data into training batches (use for large data sets)
+genn.options["mini_batch_size"] = 256
+# number of passes through data
+genn.options["num_epochs"] = 5
 # number of optimizer iterations per mini-batch
-genn.options["num_iterations"] = 100
+genn.options["num_iterations"] = 10
 # print output (or not)
-genn.options["is_print"] = True
+genn.options["is_print"] = False
 # normalize training data to help convergence
 genn.options["is_normalize"] = True
+# number of optimizer iterations per mini-batch
+genn.options["is_backtracking"] = True
 
 # convenience function to read in data that is in SMT format
 genn.load_data(x_train, y_train, dy_train)
 
 genn.train()
-
-## non-API function to plot training history (to check convergence)
-# genn.plot_training_history()
-## non-API function to check accuracy of regression
-# genn.goodness_of_fit(x_test, y_test, dy_test)
 
 # API function to predict values at new (unseen) points
 y_pred = genn.predict_values(x_test)
