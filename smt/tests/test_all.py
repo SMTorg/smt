@@ -59,7 +59,14 @@ class Test(SMTestCase):
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
         sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
-        sms["GENN"] = GENN()
+        sms["GENN"] = GENN(
+            num_iterations=1000,
+            hidden_layer_sizes=[24,], 
+            alpha=1e-1,
+            lambd=1e-2, 
+            is_backtracking=True, 
+            is_normalize=True, 
+        )
         
         if COMPILED_AVAILABLE:
             sms["IDW"] = IDW()
@@ -156,10 +163,10 @@ class Test(SMTestCase):
         # Some test case tolerance relaxations wrt to global tolerance values
         if pname == "cos":
             self.assertLessEqual(e_error, self.e_errors[sname] + 1.6)
-        elif pname == "tanh" and sname in ["KPLS", "GENN", "RMTB"]:
+        elif pname == "tanh" and sname in ["KPLS", "RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.4)
         elif pname == "exp" and sname in ["GENN"]:
-            self.assertLessEqual(e_error, self.e_errors[sname] + 0.2)
+            self.assertLessEqual(e_error, 1e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
         else:
