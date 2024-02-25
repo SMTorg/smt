@@ -9,4 +9,4 @@ pytest       # tests runner
 pytest-xdist # allows running parallel testing with pytest -n <num_workers>
 ruff         # format and lint code
 ConfigSpace~=0.6.1
-jenn >= 1.0.1
+jenn >= 1.0.2
