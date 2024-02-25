@@ -105,13 +105,13 @@ metadata = dict(
         "smt.problems",
         "smt.sampling_methods",
         "smt.utils",
-        "smt.utils.neural_net",
         "smt.applications",
     ],
     install_requires=[
         "scikit-learn",
         "pyDOE3",
         "scipy",
+        "jenn", 
     ],
     extras_require={
         "numba": [  # pip install smt[numba]
