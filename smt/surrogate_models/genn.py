@@ -10,10 +10,14 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 
 import numpy as np
 from jenn.model import NeuralNet
-from typing import Union 
+from typing import Union, Dict, Tuple, List
 
 
-def _smt_to_genn(training_points: dict[dict]) -> tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
+# The missing type
+SMTrainingPoints = Dict[Union[int, None], Dict[int, List[np.ndarray]]]
+
+
+def _smt_to_genn(training_points: SMTrainingPoints) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
     """Translate data structure from SMT to GENN.
 
     :param training_points: training data (as per SMT API)
