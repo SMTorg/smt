@@ -713,7 +713,7 @@ class Test(unittest.TestCase):
         # Validation data
         xv = lb + np.random.rand(30, 1) * (ub - lb)
         yv = f(xv)
-        dyv_dxv = df_dx(xv)
+        # dyv_dxv = df_dx(xv)
 
         # Instantiate
         genn = GENN()

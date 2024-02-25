@@ -5,7 +5,6 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import os
 import numpy as np
 import unittest
 import inspect

@@ -182,8 +182,6 @@ class GENN(SurrogateModel):
         X, Y, J = _smt_to_genn(self.training_points) 
         n_x = X.shape[0]
         n_y = Y.shape[0] 
-        inputs = [n_x]  # will be overwritten during training (dummy value)
-        output = [n_y]  # will be overwritten during training (dummy value)
         hidden = self.options["hidden_layer_sizes"]
         layer_sizes = [n_x] + hidden + [n_y]
         self.model.parameters.layer_sizes = layer_sizes
