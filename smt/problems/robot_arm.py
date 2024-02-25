@@ -58,6 +58,9 @@ class RobotArm(Problem):
         y = np.zeros((ne, 1), complex)
         d_pos_x = np.zeros(ne, complex)
         d_pos_y = np.zeros(ne, complex)
+
+        # To remove warning: NaN can be ignored
+        np.seterr(invalid="ignore")
         if kx is None:
             y[:, 0] = (pos_x**2 + pos_y**2) ** 0.5
         else:

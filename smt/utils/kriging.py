@@ -1548,16 +1548,16 @@ def quadratic(x):
 def matrix_data_corr_levels_cat_matrix(
     i, n_levels, theta_cat, theta_bounds, is_ehh: bool
 ):
-    Theta_mat = np.zeros((n_levels[i], n_levels[i]))
+    Theta_mat = np.zeros((n_levels[i], n_levels[i]), dtype=np.float64)
     L = np.zeros((n_levels[i], n_levels[i]))
     v = 0
     for j in range(n_levels[i]):
         for k in range(n_levels[i] - j):
             if j == k + j:
-                Theta_mat[j, k + j] = 1
+                Theta_mat[j, k + j] = 1.0
             else:
-                Theta_mat[j, k + j] = theta_cat[v]
-                Theta_mat[k + j, j] = theta_cat[v]
+                Theta_mat[j, k + j] = theta_cat[v].item()
+                Theta_mat[k + j, j] = theta_cat[v].item()
                 v = v + 1
 
     for j in range(n_levels[i]):
