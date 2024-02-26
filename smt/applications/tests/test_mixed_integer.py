@@ -176,8 +176,8 @@ class TestMixedInteger(unittest.TestCase):
                 surrogate=KRG(
                     design_space=design_space,
                     categorical_kernel=m,
-                    hyper_opt="Cobyla",
                     theta0=[0.01],
+                    hyper_opt="Cobyla",
                     corr="squar_sin_exp",
                     n_start=5,
                 ),
@@ -201,7 +201,7 @@ class TestMixedInteger(unittest.TestCase):
 
         mixint = MixedIntegerContext(design_space)
 
-        sm = mixint.build_kriging_model(KRG(print_prediction=False))
+        sm = mixint.build_kriging_model(KRG(hyper_opt="Cobyla", print_prediction=False))
         sampling = mixint.build_sampling_method()
 
         fun = Sphere(ndim=3)
@@ -229,7 +229,9 @@ class TestMixedInteger(unittest.TestCase):
 
         mixint = MixedIntegerContext(design_space)
         with self.assertRaises(ValueError):
-            _sm = mixint.build_kriging_model(KRG(print_prediction=False, poly="linear"))
+            _sm = mixint.build_kriging_model(
+                KRG(hyper_opt="Cobyla", print_prediction=False, poly="linear")
+            )
 
     def test_qp_mixed_2D_INT(self):
         design_space = DesignSpace(
@@ -561,7 +563,7 @@ class TestMixedInteger(unittest.TestCase):
         yt = ftest(xt)
 
         # Surrogate
-        sm = mi_context.build_kriging_model(KRG())
+        sm = mi_context.build_kriging_model(KRG(hyper_opt="Cobyla"))
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -642,6 +644,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=ds,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ARC_KERNEL,
+                hyper_opt="Cobyla",
                 theta0=[1e-2],
                 corr="abs_exp",
                 n_start=10,
@@ -884,6 +887,7 @@ class TestMixedInteger(unittest.TestCase):
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 n_start=5,
             ),
@@ -1031,6 +1035,7 @@ class TestMixedInteger(unittest.TestCase):
                     categorical_kernel=mixint_kernel,
                     hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
                     theta0=[1e-2],
+                    hyper_opt="Cobyla",
                     corr="abs_exp",
                     n_start=5,
                 ),
@@ -1233,6 +1238,7 @@ class TestMixedInteger(unittest.TestCase):
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,  # ALG or ARC
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 n_start=5,
             ),
@@ -1291,6 +1297,7 @@ class TestMixedInteger(unittest.TestCase):
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 n_start=5,
             ),
@@ -1348,6 +1355,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 design_space=design_space,
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 categorical_kernel=MixIntKernelType.GOWER,
             ),
@@ -1390,6 +1398,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 design_space=design_space,
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 categorical_kernel=MixIntKernelType.COMPOUND_SYMMETRY,
             ),
@@ -1432,6 +1441,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 design_space=design_space,
                 theta0=[1e-2],
+                hyper_opt="Cobyla",
                 corr="abs_exp",
                 categorical_kernel=MixIntKernelType.GOWER,
             ),
@@ -1476,6 +1486,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 theta0=[1e-2],
                 categorical_kernel=MixIntKernelType.CONT_RELAX,
+                hyper_opt="Cobyla",
                 corr="abs_exp",
             ),
         )
@@ -1515,6 +1526,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 theta0=[1e-2],
                 corr="abs_exp",
+                hyper_opt="Cobyla",
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
             ),
         )
@@ -1554,6 +1566,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 theta0=[1e-2],
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
+                hyper_opt="Cobyla",
                 corr="abs_exp",
             ),
         )
@@ -1632,6 +1645,7 @@ class TestMixedInteger(unittest.TestCase):
             design_space=design_space,
             theta0=[1e-2],
             n_comp=2,
+            hyper_opt="Cobyla",
             corr="abs_exp",
             cat_kernel_comps=[3],
             categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -1675,6 +1689,7 @@ class TestMixedInteger(unittest.TestCase):
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 cat_kernel_comps=[3],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
             ),
         )
@@ -1792,6 +1807,7 @@ class TestMixedInteger(unittest.TestCase):
                 n_comp=1,
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
                 cat_kernel_comps=[3, 2],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
             ),
         )
@@ -1825,7 +1841,11 @@ class TestMixedInteger(unittest.TestCase):
         mixint = MixedIntegerContext(design_space)
 
         sm = mixint.build_kriging_model(
-            KRG(categorical_kernel=MixIntKernelType.GOWER, print_prediction=False)
+            KRG(
+                categorical_kernel=MixIntKernelType.GOWER,
+                print_prediction=False,
+                hyper_opt="Cobyla",
+            )
         )
         sampling = mixint.build_sampling_method()
 
@@ -1878,6 +1898,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 categorical_kernel=MixIntKernelType.GOWER,
                 theta0=[1e-1],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
                 n_start=20,
             ),
@@ -2008,6 +2029,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 categorical_kernel=MixIntKernelType.COMPOUND_SYMMETRY,
                 theta0=[1e-1],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
                 n_start=20,
             ),
@@ -2135,6 +2157,7 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KRG(
                 design_space=design_space,
                 theta0=[1e-1],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
                 n_start=20,
                 categorical_kernel=MixIntKernelType.EXP_HOMO_HSPHERE,
@@ -2264,6 +2287,7 @@ class TestMixedInteger(unittest.TestCase):
                 design_space=design_space,
                 categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
                 theta0=[1e-1],
+                hyper_opt="Cobyla",
                 corr="squar_exp",
                 n_start=20,
             ),
