@@ -1824,13 +1824,13 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                    warnings.warn(
+                        f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of [{theta_bounds[0]}, {theta_bounds[1]}]). A random initialisation is used instead."
+                    )
                     self.theta0[i] = self.random_state.rand()
                     self.theta0[i] = (
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
-                    )
-                    warnings.warn(
-                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
