@@ -843,6 +843,9 @@ class TestMFKmixed(unittest.TestCase):
                 plt.show()
                 # ------------------------------------------------------------------------------
 
+    # run scripts are used in documentation as documentation is not always rebuild
+    # make a test run by pytest to test the run scripts
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mfkpls_mixed(self):
         self.run_mfk_mixed_example()
         self.run_mfkpls_mixed_example()
