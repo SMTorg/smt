@@ -258,7 +258,7 @@ class Test(unittest.TestCase):
             ]
         )
         sm = MixedIntegerKrigingModel(
-            surrogate=KRG(design_space=design_space, theta0=[1e-2])
+            surrogate=KRG(design_space=design_space, theta0=[1e-2], hyper_opt="Cobyla")
         )
         sm.set_training_values(xt, yt)
         sm.train()
@@ -315,6 +315,7 @@ class Test(unittest.TestCase):
                 design_space=design_space,
                 theta0=[1e-2],
                 categorical_kernel=MixIntKernelType.GOWER,
+                hyper_opt="Cobyla",
             ),
         )
         sm.set_training_values(xt, yt)
