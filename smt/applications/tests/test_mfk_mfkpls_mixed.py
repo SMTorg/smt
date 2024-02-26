@@ -843,6 +843,10 @@ class TestMFKmixed(unittest.TestCase):
                 plt.show()
                 # ------------------------------------------------------------------------------
 
+    def test_mfkpls_mixed(self):
+        self.run_mfk_mixed_example()
+        self.run_mfkpls_mixed_example()
+
 
 if __name__ == "__main__":
     TestMFKmixed().run_mfk_mixed_example()
