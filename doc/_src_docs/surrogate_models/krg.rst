@@ -105,8 +105,8 @@ Example 1
   # estimated variance
   s2 = sm.predict_variances(x)
   # derivative according to the first variable
-  dydx = sm.predict_derivatives(xt, 0)
-  fig, axs = plt.subplots(1)
+  _dydx = sm.predict_derivatives(xt, 0)
+  _, axs = plt.subplots(1)
   
   # add a plot with variance
   axs.plot(xt, yt, "o")
@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1495888
+     Training - done. Time (sec):  0.0329800
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0031855
+     Predicting - done. Time (sec):  0.0009210
      
-     Prediction time/pt. (sec) :  0.0000319
+     Prediction time/pt. (sec) :  0.0000092
      
   ___________________________________________________________________________
      
@@ -161,9 +161,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004728
+     Predicting - done. Time (sec):  0.0001390
      
-     Prediction time/pt. (sec) :  0.0000946
+     Prediction time/pt. (sec) :  0.0000278
      
   
 .. figure:: krg_Test_test_krg.png
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0097091
+     Predicting - done. Time (sec):  0.0035858
      
-     Prediction time/pt. (sec) :  0.0000194
+     Prediction time/pt. (sec) :  0.0000072
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png

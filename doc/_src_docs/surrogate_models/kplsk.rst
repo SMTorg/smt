@@ -46,7 +46,7 @@ Usage
   # estimated variance
   s2 = sm.predict_variances(x)
   # derivative according to the first variable
-  dydx = sm.predict_derivatives(xt, 0)
+  _dydx = sm.predict_derivatives(xt, 0)
   
   plt.plot(xt, yt, "o")
   plt.plot(x, y)
@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2572036
+     Training - done. Time (sec):  0.2184792
   ___________________________________________________________________________
      
    Evaluation
@@ -93,9 +93,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0025406
+     Predicting - done. Time (sec):  0.0009468
      
-     Prediction time/pt. (sec) :  0.0000254
+     Prediction time/pt. (sec) :  0.0000095
      
   ___________________________________________________________________________
      
@@ -104,9 +104,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0004628
+     Predicting - done. Time (sec):  0.0001400
      
-     Prediction time/pt. (sec) :  0.0000926
+     Prediction time/pt. (sec) :  0.0000280
      
   
 .. figure:: kplsk_Test_test_kplsk.png

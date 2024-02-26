@@ -114,7 +114,7 @@ Main
       plot_predictions,
   )
   from sklearn.model_selection import train_test_split
-  from smt.surrogate_models.genn import GENN, load_smt_data
+  from smt.surrogate_models.genn import GENN
   
   x, y, dy = load_cd_training_data()
   
@@ -122,18 +122,17 @@ Main
   x_train, x_test, y_train, y_test, dy_train, dy_test = train_test_split(
       x, y, dy, train_size=0.8
   )
-  # building and training the GENN
+  
   genn = GENN(print_global=False)
+  
+  # number of nodes per hidden layer
+  genn.options["hidden_layer_sizes"] = [6, 6]
   # learning rate that controls optimizer step size
-  genn.options["alpha"] = 0.001
+  genn.options["alpha"] = 0.1
   # lambd = 0. = no regularization, lambd > 0 = regularization
   genn.options["lambd"] = 0.1
   # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
   genn.options["gamma"] = 1.0
-  # number of hidden layers
-  genn.options["deep"] = 2
-  # number of nodes per hidden layer
-  genn.options["wide"] = 6
   # used to divide data into training batches (use for large data sets)
   genn.options["mini_batch_size"] = 256
   # number of passes through data
@@ -142,15 +141,15 @@ Main
   genn.options["num_iterations"] = 10
   # print output (or not)
   genn.options["is_print"] = False
+  # normalize training data to help convergence
+  genn.options["is_normalize"] = True
+  # number of optimizer iterations per mini-batch
+  genn.options["is_backtracking"] = True
+  
   # convenience function to read in data that is in SMT format
-  load_smt_data(genn, x_train, y_train, dy_train)
+  genn.load_data(x_train, y_train, dy_train)
   
   genn.train()
-  
-  ## non-API function to plot training history (to check convergence)
-  # genn.plot_training_history()
-  ## non-API function to check accuracy of regression
-  # genn.goodness_of_fit(x_test, y_test, dy_test)
   
   # API function to predict values at new (unseen) points
   y_pred = genn.predict_values(x_test)
@@ -181,7 +180,7 @@ Main
   
 ::
 
-  Drag coefficient prediction (cd):  0.00994422276224332
+  Drag coefficient prediction (cd):  0.009881152860141375
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %

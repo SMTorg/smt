@@ -217,7 +217,7 @@ The hierarchy relationships are specified after instantiating the design space:
   pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
   
   y_sv = sm.predict_variances(Xt)[:, 0]
-  var_RMSE = np.linalg.norm(y_sv) / len(Yt)
+  _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
   assert pred_RMSE < 1e-7
   print("Pred_RMSE", pred_RMSE)
   
@@ -232,11 +232,11 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.3353465
+     Predicting - done. Time (sec):  0.1944790
      
-     Prediction time/pt. (sec) :  0.0033535
+     Prediction time/pt. (sec) :  0.0019448
      
-  Pred_RMSE 4.092408537263059e-13
+  Pred_RMSE 4.0385396515853436e-13
   
 
 Design space and variable class references
@@ -324,10 +324,7 @@ Example of mixed integer context usage
 
   import matplotlib.pyplot as plt
   from smt.surrogate_models import KRG
-  from smt.applications.mixed_integer import (
-      MixedIntegerContext,
-      MixedIntegerSamplingMethod,
-  )
+  from smt.applications.mixed_integer import MixedIntegerContext
   from smt.utils.design_space import (
       DesignSpace,
       FloatVariable,
@@ -384,9 +381,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0130029
+     Predicting - done. Time (sec):  0.0045240
      
-     Prediction time/pt. (sec) :  0.0002601
+     Prediction time/pt. (sec) :  0.0000905
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

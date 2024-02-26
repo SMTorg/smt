@@ -4,7 +4,7 @@ Author: John Hwang <<hwangjt@umich.edu>>
 This package is distributed under New BSD license.
 """
 
-import unittest
+import unittest 
 
 try:
     import matplotlib
@@ -496,73 +496,6 @@ class Test(unittest.TestCase):
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_genn(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from smt.surrogate_models.genn import GENN, load_smt_data
-
-        # Training data
-        lower_bound = -np.pi
-        upper_bound = np.pi
-        number_of_training_points = 4
-        xt = np.linspace(lower_bound, upper_bound, number_of_training_points)
-        yt = xt * np.sin(xt)
-        dyt_dxt = np.sin(xt) + xt * np.cos(xt)
-
-        # Validation data
-        number_of_validation_points = 30
-        xv = np.linspace(lower_bound, upper_bound, number_of_validation_points)
-        yv = xv * np.sin(xv)
-        dyv_dxv = np.sin(xv) + xv * np.cos(xv)
-
-        # Truth model
-        x = np.arange(lower_bound, upper_bound, 0.01)
-        y = x * np.sin(x)
-
-        # GENN
-        genn = GENN()
-        genn.options["alpha"] = 0.1  # learning rate that controls optimizer step size
-        genn.options["beta1"] = 0.9  # tuning parameter to control ADAM optimization
-        genn.options["beta2"] = 0.99  # tuning parameter to control ADAM optimization
-        genn.options["lambd"] = (
-            0.1  # lambd = 0. = no regularization, lambd > 0 = regularization
-        )
-        genn.options["gamma"] = (
-            1.0  # gamma = 0. = no grad-enhancement, gamma > 0 = grad-enhancement
-        )
-        genn.options["deep"] = 2  # number of hidden layers
-        genn.options["wide"] = 6  # number of nodes per hidden layer
-        genn.options["mini_batch_size"] = (
-            64  # used to divide data into training batches (use for large data sets)
-        )
-        genn.options["num_epochs"] = 20  # number of passes through data
-        genn.options["num_iterations"] = (
-            100  # number of optimizer iterations per mini-batch
-        )
-        genn.options["is_print"] = True  # print output (or not)
-        load_smt_data(
-            genn, xt, yt, dyt_dxt
-        )  # convenience function to read in data that is in SMT format
-        genn.train()  # API function to train model
-        genn.plot_training_history()  # non-API function to plot training history (to check convergence)
-        genn.goodness_of_fit(
-            xv, yv, dyv_dxv
-        )  # non-API function to check accuracy of regression
-        y_pred = genn.predict_values(
-            x
-        )  # API function to predict values at new (unseen) points
-
-        # Plot
-        fig, ax = plt.subplots()
-        ax.plot(x, y_pred)
-        ax.plot(x, y, "k--")
-        ax.plot(xv, yv, "ro")
-        ax.plot(xt, yt, "k+", mew=3, ms=10)
-        ax.set(xlabel="x", ylabel="y", title="GENN")
-        ax.legend(["Predicted", "True", "Test", "Train"])
-        plt.show()
-
-    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mgp(self):
         import numpy as np
         import matplotlib.pyplot as plt
@@ -749,6 +682,70 @@ class Test(unittest.TestCase):
         plt.plot(Z, -2.9 * np.ones_like(Z), "r|", mew=2, label="inducing points")
         plt.ylim([-3, 3])
         plt.legend(loc=0)
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_genn(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        from smt.surrogate_models import GENN
+
+        # Test function
+        def f(x): 
+            import numpy as np  # need to repeat for sphinx_auto_embed
+            return x * np.sin(x)
+        
+        def df_dx(x): 
+            import numpy as np  # need to repeat for sphinx_auto_embed
+            return np.sin(x) + x * np.cos(x)
+
+        # Domain
+        lb = -np.pi
+        ub = np.pi
+
+        # Training data
+        m = 4
+        xt = np.linspace(lb, ub, m)
+        yt = f(xt)
+        dyt_dxt = df_dx(xt)
+
+        # Validation data
+        xv = lb + np.random.rand(30, 1) * (ub - lb)
+        yv = f(xv)
+        # dyv_dxv = df_dx(xv)
+
+        # Instantiate
+        genn = GENN()
+
+        # Likely the only options a user will interact with
+        genn.options["hidden_layer_sizes"] = [6, 6]
+        genn.options["alpha"] = 0.1
+        genn.options["lambd"] = 0.1
+        genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+        genn.options["num_iterations"] = 1000
+        genn.options["is_backtracking"] = True
+        genn.options["is_normalize"] = False  
+        
+        # Train 
+        genn.load_data(xt, yt, dyt_dxt)
+        genn.train()
+
+        # Plot comparison
+        if genn.options["gamma"] == 1.0:
+            title = "with gradient enhancement"
+        else:
+            title = "without gradient enhancement"
+        x = np.arange(lb, ub, 0.01)
+        y = f(x)
+        y_pred = genn.predict_values(x)
+        fig, ax = plt.subplots()
+        ax.plot(x, y_pred)
+        ax.plot(x, y, "k--")
+        ax.plot(xv, yv, "ro")
+        ax.plot(xt, yt, "k+", mew=3, ms=10)
+        ax.set(xlabel="x", ylabel="y", title=title)
+        ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
 

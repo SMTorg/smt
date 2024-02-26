@@ -69,8 +69,8 @@ Usage
   
   # query the outputs
   y = sm.predict_values(x)
-  mse = sm.predict_variances(x)
-  derivs = sm.predict_derivatives(x, kx=0)
+  _mse = sm.predict_variances(x)
+  _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
@@ -103,7 +103,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.9694319
+     Training - done. Time (sec):  0.4344051
   ___________________________________________________________________________
      
    Evaluation
@@ -111,9 +111,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007062
+     Predicting - done. Time (sec):  0.0002229
      
-     Prediction time/pt. (sec) :  0.0000070
+     Prediction time/pt. (sec) :  0.0000022
      
   ___________________________________________________________________________
      
@@ -122,9 +122,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007169
+     Predicting - done. Time (sec):  0.0001872
      
-     Prediction time/pt. (sec) :  0.0000071
+     Prediction time/pt. (sec) :  0.0000019
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png

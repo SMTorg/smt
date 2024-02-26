@@ -30,7 +30,7 @@ Usage
 
   import numpy as np
   import matplotlib.pyplot as plt
-  from smt.applications.mfk import MFK, NestedLHS
+  from smt.applications.mfk import NestedLHS
   from smt.applications.mfkpls import MFKPLS
   
   # low fidelity model
@@ -74,8 +74,8 @@ Usage
   
   # query the outputs
   y = sm.predict_values(x)
-  mse = sm.predict_variances(x)
-  derivs = sm.predict_derivatives(x, kx=0)
+  _mse = sm.predict_variances(x)
+  _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
@@ -108,7 +108,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2026711
+     Training - done. Time (sec):  0.0448298
   ___________________________________________________________________________
      
    Evaluation
@@ -116,9 +116,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007112
+     Predicting - done. Time (sec):  0.0002019
      
-     Prediction time/pt. (sec) :  0.0000070
+     Prediction time/pt. (sec) :  0.0000020
      
   ___________________________________________________________________________
      
@@ -127,9 +127,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0007598
+     Predicting - done. Time (sec):  0.0002139
      
-     Prediction time/pt. (sec) :  0.0000075
+     Prediction time/pt. (sec) :  0.0000021
      
   
 .. figure:: mfkpls_TestMFKPLS_run_mfkpls_example.png

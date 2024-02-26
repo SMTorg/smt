@@ -33,7 +33,6 @@ Usage
 .. code-block:: python
 
   import numpy as np
-  from mpl_toolkits.mplot3d import Axes3D
   import matplotlib.pyplot as plt
   
   from smt.surrogate_models import GEKPLS, DesignSpace
@@ -78,7 +77,7 @@ Usage
   
   fig = plt.figure()
   ax = fig.add_subplot(projection="3d")
-  surf = ax.plot_surface(X, Y, Z)
+  ax.plot_surface(X, Y, Z)
   
   plt.show()
   
@@ -98,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1667199
+     Training - done. Time (sec):  0.0415080
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
