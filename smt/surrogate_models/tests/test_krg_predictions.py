@@ -72,7 +72,7 @@ class Test(SMTestCase):
                     # quality of the surrogate on validation points
                     Test._check_prediction_variances(self, sm)
                     if kernel == "squar_sin_exp":
-                        warnings.warn(
+                        print(
                             "Spatial derivatives for squar_sin_exp  yet to implement!"
                         )
                     else:
