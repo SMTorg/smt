@@ -24,6 +24,7 @@ from smt.surrogate_models import (
     KRG,
     KPLSK,
     GEKPLS,
+    GPX,
     GENN,
     DesignSpace,
 )
@@ -54,6 +55,7 @@ class Test(SMTestCase):
         sms = OrderedDict()
         sms["LS"] = LS()
         sms["QP"] = QP()
+        sms["GPX"] = GPX()
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
@@ -79,6 +81,7 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
+        t_errors["GPX"] = 1.2
         t_errors["KRG"] = 1.2
         t_errors["MFK"] = 1e0
         t_errors["KPLS"] = 1.2
@@ -95,6 +98,7 @@ class Test(SMTestCase):
         e_errors = {}
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
+        e_errors["GPX"] = 2e-2
         e_errors["KRG"] = 2e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
@@ -182,6 +186,9 @@ class Test(SMTestCase):
     def test_exp_QP(self):
         self.run_test()
 
+    def test_exp_GPX(self):
+        self.run_test()
+
     def test_exp_KRG_Cobyla(self):
         self.run_test()
 
@@ -237,6 +244,9 @@ class Test(SMTestCase):
     def test_tanh_QP(self):
         self.run_test()
 
+    def test_tanh_GPX(self):
+        self.run_test()
+
     def test_tanh_KRG_Cobyla(self):
         self.run_test()
 
@@ -290,6 +300,9 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_QP(self):
+        self.run_test()
+
+    def test_cos_GPX(self):
         self.run_test()
 
     def test_cos_KRG_Cobyla(self):
