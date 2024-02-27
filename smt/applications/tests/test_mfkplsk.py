@@ -203,6 +203,12 @@ class TestMFKPLSK(SMTestCase):
 
         plt.show()
 
+    # run scripts are used in documentation as documentation is not always rebuild
+    # make a test run by pytest to test the run scripts
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_run_mfkplsk_example(self):
+        self.run_mfkplsk_example()
+
 
 if __name__ == "__main__":
     unittest.main()

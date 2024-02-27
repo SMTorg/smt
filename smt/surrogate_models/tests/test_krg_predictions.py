@@ -9,7 +9,6 @@ import numpy as np
 from smt.surrogate_models import KRG
 from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
-import warnings
 
 
 class Test(SMTestCase):
@@ -72,7 +71,7 @@ class Test(SMTestCase):
                     # quality of the surrogate on validation points
                     Test._check_prediction_variances(self, sm)
                     if kernel == "squar_sin_exp":
-                        warnings.warn(
+                        print(
                             "Spatial derivatives for squar_sin_exp  yet to implement!"
                         )
                     else:
@@ -147,8 +146,8 @@ class Test(SMTestCase):
         # test predict values & variances vectorization
         all_vals1 = np.zeros((6, 2))
         for i, x in enumerate(x_valid):
-            all_vals1[i, 0] = sm.predict_values(np.atleast_2d(x))
-            all_vals1[i, 1] = sm.predict_variances(np.atleast_2d(x))
+            all_vals1[i, 0] = sm.predict_values(np.atleast_2d(x)).item()
+            all_vals1[i, 1] = sm.predict_variances(np.atleast_2d(x)).item()
         all_vals2x = sm.predict_values(np.atleast_2d(x_valid)).flatten()
         all_vals2y = sm.predict_variances(np.atleast_2d(x_valid)).flatten()
         total_error = np.sum(
@@ -162,8 +161,8 @@ class Test(SMTestCase):
         # test predict_derivatives vectorization
         all_vals1 = np.zeros((6, 2))
         for i, x in enumerate(x_valid):
-            all_vals1[i, 0] = sm.predict_derivatives(np.atleast_2d(x), 0)
-            all_vals1[i, 1] = sm.predict_derivatives(np.atleast_2d(x), 1)
+            all_vals1[i, 0] = sm.predict_derivatives(np.atleast_2d(x), 0).item()
+            all_vals1[i, 1] = sm.predict_derivatives(np.atleast_2d(x), 1).item()
         all_vals2x = sm.predict_derivatives(np.atleast_2d(x_valid), 0).flatten()
         all_vals2y = sm.predict_derivatives(np.atleast_2d(x_valid), 1).flatten()
         total_error = np.sum(
@@ -177,8 +176,12 @@ class Test(SMTestCase):
         # test predict_variance_derivatives vectorization
         all_vals1 = np.zeros((6, 2))
         for i, x in enumerate(x_valid):
-            all_vals1[i, 0] = sm.predict_variance_derivatives(np.atleast_2d(x), 0)
-            all_vals1[i, 1] = sm.predict_variance_derivatives(np.atleast_2d(x), 1)
+            all_vals1[i, 0] = sm.predict_variance_derivatives(
+                np.atleast_2d(x), 0
+            ).item()
+            all_vals1[i, 1] = sm.predict_variance_derivatives(
+                np.atleast_2d(x), 1
+            ).item()
         all_vals2x = sm.predict_variance_derivatives(
             np.atleast_2d(x_valid), 0
         ).flatten()

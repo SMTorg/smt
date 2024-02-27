@@ -273,7 +273,7 @@ def eig_grid(krg, x_grid, weights_grid):
     eig_vec = eig_vec[:, ind]
 
     crit = 1.0 - np.cumsum(eig_val) / eig_val.sum()
-    M = int(np.argwhere(crit > 10 ** (-8))[-1]) + 1
+    M = int(np.argwhere(crit > 10 ** (-8))[-1].item()) + 1
 
     return eig_val, eig_vec, M
 

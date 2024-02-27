@@ -716,16 +716,16 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -1126,7 +1126,7 @@ class KrgBased(SurrogateModel):
             # Compute reduced log likelihood derivatives
             grad_red[i_der] = (
                 -self.nt / np.log(10) * (dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
-            )
+            ).item()
 
         par["dr"] = dr_all
         par["tr"] = tr_all
@@ -1316,10 +1316,10 @@ class KrgBased(SurrogateModel):
                     / self.nt
                 )
 
-                hess[ind_0 + i, 0] = self.nt / np.log(10) * dreddetadomega
+                hess[ind_0 + i, 0] = (self.nt / np.log(10) * dreddetadomega).item()
 
                 if self.name in ["MGP"] and eta == omega:
-                    hess[ind_0 + i, 0] += log_prior[eta]
+                    hess[ind_0 + i, 0] += log_prior[eta].item()
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
@@ -1824,13 +1824,13 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                    warnings.warn(
+                        f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of [{theta_bounds[0]}, {theta_bounds[1]}]). A random initialisation is used instead."
+                    )
                     self.theta0[i] = self.random_state.rand()
                     self.theta0[i] = (
                         self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
                         + theta_bounds[0]
-                    )
-                    warnings.warn(
-                        "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
@@ -2155,11 +2155,13 @@ class KrgBased(SurrogateModel):
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
                         % (len(self.options["theta0"]), d)
                     )
-        if self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12:
-            self.options["hyper_opt"] = "Cobyla"
+        if (
+            self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12
+        ) and self.options["hyper_opt"] == "TNC":
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"
             )
+            self.options["hyper_opt"] = "Cobyla"
 
         if self.options["use_het_noise"] and not self.options["eval_noise"]:
             if len(self.options["noise0"]) != self.nt:

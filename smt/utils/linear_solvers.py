@@ -262,7 +262,7 @@ class KrylovSolver(LinearSolver):
                 self.solver = scipy.sparse.linalg.cg
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
-                    "atol": "legacy",
+                    "atol": 0.0,
                     "tol": self.options["atol"],
                     "maxiter": self.options["ilimit"],
                 }
@@ -299,7 +299,8 @@ class KrylovSolver(LinearSolver):
                 self.callback.rhs = rhs
 
                 self.callback._print_sol(sol)
-                tmp, info = self.solver(
+
+                tmp, _ = self.solver(
                     self.mtx,
                     rhs,
                     x0=sol,

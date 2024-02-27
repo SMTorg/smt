@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
         self.assertTrue(np.allclose(doe1, doe3))
         self.assertTrue(np.allclose(doe2, doe4))
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_expand_lhs(self):
         import numpy as np
 
