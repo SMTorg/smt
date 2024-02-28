@@ -98,7 +98,8 @@ class KrgBased(SurrogateModel):
             "pow_exp_power",
             1.9,
             types=(float),
-            desc="Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.",
+            desc="Power for the pow_exp kernel function (valid values in (0.0, 2.0]). \
+                This option is set automatically when corr option is squar, abs, or matern.",
         )
         declare(
             "categorical_kernel",
@@ -197,7 +198,8 @@ class KrgBased(SurrogateModel):
             "random_state",
             default=41,
             types=(type(None), int, np.random.RandomState),
-            desc="Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)",
+            desc="Numpy RandomState object or seed number which controls random draws \
+                for internal optim (set by default to get reproductibility)",
         )
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -1825,7 +1827,9 @@ class KrgBased(SurrogateModel):
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
                     warnings.warn(
-                        f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of [{theta_bounds[0]}, {theta_bounds[1]}]). A random initialisation is used instead."
+                        f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
+                            [{theta_bounds[0]}, {theta_bounds[1]}]). \
+                                A random initialisation is used instead."
                     )
                     self.theta0[i] = self.random_state.rand()
                     self.theta0[i] = (
@@ -2169,7 +2173,8 @@ class KrgBased(SurrogateModel):
                     self.options["noise0"] *= np.ones(self.nt)
                 else:
                     raise ValueError(
-                        "for the heteroscedastic case, the length of noise0 (%s) should be equal to the number of observations (%s)."
+                        "for the heteroscedastic case, the length of noise0 (%s) \
+                            should be equal to the number of observations (%s)."
                         % (len(self.options["noise0"]), self.nt)
                     )
         if not self.options["use_het_noise"]:

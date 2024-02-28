@@ -1,5 +1,5 @@
 """
-Author: Paul Saves 
+Author: Paul Saves
 
 This package is distributed under New BSD license.
 """

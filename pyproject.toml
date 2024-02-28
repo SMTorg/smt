@@ -2,7 +2,11 @@
 requires = ["setuptools", "wheel", "numpy", "Cython"]
 
 [tool.ruff.lint]
+select = ["E", "F", "W"]
 ignore = []
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:FigureCanvasAgg is non-interactive:UserWarning"]

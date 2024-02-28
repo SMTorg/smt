@@ -1,5 +1,5 @@
 """
-Authors: Nathalie Bartoli, Paul Saves 
+Authors: Nathalie Bartoli, Paul Saves
 
 This package is distributed under New BSD license.
 """

@@ -226,7 +226,8 @@ class MixedIntegerKrigingModel(KrgBased):
                 "categorical_kernel"
             ] = MixIntKernelType.HOMO_HSPHERE
             warnings.warn(
-                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. Switched to homoscedastic hypersphere kernel instead."
+                "Using MixedIntegerSurrogateModel integer model with Continuous Relaxation is not supported. \
+                    Switched to homoscedastic hypersphere kernel instead."
             )
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False

@@ -17,13 +17,15 @@ from typing import Union, Dict, Tuple, List
 SMTrainingPoints = Dict[Union[int, None], Dict[int, List[np.ndarray]]]
 
 
-def _smt_to_genn(training_points: SMTrainingPoints) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
+def _smt_to_genn(
+    training_points: SMTrainingPoints,
+) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
     """Translate data structure from SMT to GENN.
 
     :param training_points: training data (as per SMT API)
     :return: X, array of shape (n_x, m) where n_x = number of inputs, m = number of examples
     :return: Y, array of shape (n_y, m) where n_y = number of outputs
-    :return: J, array of shape (n_y, n_x, m) 
+    :return: J, array of shape (n_y, n_x, m)
     """
     # Retrieve training data from SMT training_points
     xt, yt = training_points[None][
@@ -37,7 +39,7 @@ def _smt_to_genn(training_points: SMTrainingPoints) -> Tuple[np.ndarray, np.ndar
     # Assign training data but transpose to match neural net implementation
     X = xt
     Y = yt
-    
+
     if len(training_points[None]) == 1:
         return X.T, Y.T, None
 
@@ -87,9 +89,9 @@ class GENN(SurrogateModel):
             dyt_dxt = dyt_dxt.reshape((m, n_x))
             for i in range(n_x):
                 self.set_training_derivatives(xt, dyt_dxt[:, i].reshape((m, 1)), i)
-    
-    @property 
-    def name(self) -> str: 
+
+    @property
+    def name(self) -> str:
         return "GENN"
 
     def _initialize(self):
@@ -97,51 +99,51 @@ class GENN(SurrogateModel):
         self.supports["training_derivatives"] = True
 
         self.options.declare(
-            "alpha", 
-            default=0.05, 
-            types=(int, float), 
+            "alpha",
+            default=0.05,
+            types=(int, float),
             desc="optimizer learning rate",
         )
         self.options.declare(
-            "beta1", 
-            default=0.9, 
-            types=(int, float), 
+            "beta1",
+            default=0.9,
+            types=(int, float),
             desc="Adam optimizer tuning parameter",
         )
         self.options.declare(
-            "beta2", 
-            default=0.99, 
-            types=(int, float), 
+            "beta2",
+            default=0.99,
+            types=(int, float),
             desc="Adam optimizer tuning parameter",
         )
         self.options.declare(
-            "lambd", 
-            default=0.01, 
-            types=(int, float), 
+            "lambd",
+            default=0.01,
+            types=(int, float),
             desc="regularization coefficient",
         )
         self.options.declare(
-            "gamma", 
-            default=1.0, 
-            types=(int, float), 
+            "gamma",
+            default=1.0,
+            types=(int, float),
             desc="gradient-enhancement coefficient",
         )
-        self.options.declare(  
-            "hidden_layer_sizes", 
-            default=[12, 12],  
-            types=list, 
+        self.options.declare(
+            "hidden_layer_sizes",
+            default=[12, 12],
+            types=list,
             desc="number of nodes per hidden layer",
         )
         self.options.declare(
             "mini_batch_size",
-            default=-1,  
-            types=int,  
+            default=-1,
+            types=int,
             desc="split data into batches of specified size",
         )
         self.options.declare(
-            "num_epochs", 
-            default=1, 
-            types=int, 
+            "num_epochs",
+            default=1,
+            types=int,
             desc="number of random passes through the data",
         )
         self.options.declare(
@@ -157,22 +159,22 @@ class GENN(SurrogateModel):
             desc="random seed to control repeatability",
         )
         self.options.declare(
-            "is_print", 
-            default=False, 
+            "is_print",
+            default=False,
             types=bool,
-              desc="print progress (or not)",
+            desc="print progress (or not)",
         )
         self.options.declare(
-            "is_normalize", 
-            default=False, 
+            "is_normalize",
+            default=False,
             types=bool,
-              desc="normalize training by mean and variance",
+            desc="normalize training by mean and variance",
         )
         self.options.declare(
-            "is_backtracking", 
-            default=False, 
+            "is_backtracking",
+            default=False,
             types=bool,
-              desc="refine step step during line search (fixed otherwise)",
+            desc="refine step step during line search (fixed otherwise)",
         )
 
     def _final_initialize(self):
@@ -183,9 +185,9 @@ class GENN(SurrogateModel):
         self.model = NeuralNet(layer_sizes)
 
     def _train(self):
-        X, Y, J = _smt_to_genn(self.training_points) 
+        X, Y, J = _smt_to_genn(self.training_points)
         n_x = X.shape[0]
-        n_y = Y.shape[0] 
+        n_y = Y.shape[0]
         hidden = self.options["hidden_layer_sizes"]
         layer_sizes = [n_x] + hidden + [n_y]
         self.model.parameters.layer_sizes = layer_sizes
@@ -198,7 +200,9 @@ class GENN(SurrogateModel):
             beta1=self.options["beta1"],
             beta2=self.options["beta2"],
             epochs=self.options["num_epochs"],
-            batch_size=None if self.options["mini_batch_size"] < 0 else self.options["mini_batch_size"],
+            batch_size=None
+            if self.options["mini_batch_size"] < 0
+            else self.options["mini_batch_size"],
             max_iter=self.options["num_iterations"],
             is_backtracking=self.options["is_backtracking"],
             is_verbose=self.options["is_print"],
@@ -211,4 +215,3 @@ class GENN(SurrogateModel):
 
     def _predict_derivatives(self, x, kx):
         return self.model.predict_partials(x.T)[:, kx, :].T
-

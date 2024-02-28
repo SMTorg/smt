@@ -517,9 +517,9 @@ class BaseDesignSpace:
 
                 # The is_acting matrix is simply repeated column-wise
                 if is_acting is not None:
-                    is_acting_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] = (
-                        np.tile(is_acting[:, [i]], (1, n_dim_cat))
-                    )
+                    is_acting_unfolded[
+                        :, i_x_unfold : i_x_unfold + n_dim_cat
+                    ] = np.tile(is_acting[:, [i]], (1, n_dim_cat))
 
                 i_x_unfold += n_dim_cat
 
@@ -641,8 +641,7 @@ class DesignSpace(BaseDesignSpace):
     --------
     Instantiate the design space with all its design variables:
 
-    >>> print("toto")
-    >>> from smt.utils.design_space import DesignSpace, FloatVariable, IntegerVariable, OrdinalVariable, CategoricalVariable
+    >>> from smt.utils.design_space import *
     >>> ds = DesignSpace([
     >>>     CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
     >>>     OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
@@ -749,9 +748,8 @@ class DesignSpace(BaseDesignSpace):
 
             self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
 
-        self._meta_vars = (
-            {}
-        )  # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
+        # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
+        self._meta_vars = {}
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
         super().__init__(design_variables)
@@ -896,7 +894,8 @@ class DesignSpace(BaseDesignSpace):
             # Normalize value according to what ConfigSpace expects
             self._normalize_x(x)
 
-            # Get corrected Configuration objects by mapping our design vectors to the ordering of the ConfigurationSpace
+            # Get corrected Configuration objects by mapping our design vectors
+            # to the ordering of the ConfigurationSpace
             inv_cs_var_idx = self._inv_cs_var_idx
             configs = []
             for xi in x:

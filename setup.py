@@ -4,7 +4,7 @@ Author: John T. Hwang <hwangjt@umich.edu>
         Remi Lafage <remi.lafage@onera.fr>
         Lucas Alber <lucasd.alber@gmail.com>
         Paul Saves <paul.saves@onera.fr>
-        
+
 This package is distributed under New BSD license.
 """
 
@@ -33,19 +33,19 @@ Operating System :: MacOS
 """
 
 LONG_DESCRIPTION = """
-The surrogate modeling toolbox (SMT) is a Python package that contains 
-a collection of surrogate modeling methods, sampling techniques, and 
-benchmarking functions. This package provides a library of surrogate 
-models that is simple to use and facilitates the implementation of additional methods. 
+The surrogate modeling toolbox (SMT) is a Python package that contains \
+a collection of surrogate modeling methods, sampling techniques, and \
+benchmarking functions. This package provides a library of surrogate \
+models that is simple to use and facilitates the implementation of additional methods. \
 
-SMT is different from existing surrogate modeling libraries because of 
-its emphasis on derivatives, including training derivatives used for 
-gradient-enhanced modeling, prediction derivatives, and derivatives 
-with respect to the training data. It also includes new surrogate models 
-that are not available elsewhere: kriging by partial-least squares reduction 
+SMT is different from existing surrogate modeling libraries because of \
+its emphasis on derivatives, including training derivatives used for \
+gradient-enhanced modeling, prediction derivatives, and derivatives \
+with respect to the training data. It also includes new surrogate models \
+that are not available elsewhere: kriging by partial-least squares reduction \
 and energy-minimizing spline interpolation.
 
-SMT 2.0 adds the capability to handle mixed-variable surrogate models 
+SMT 2.0 adds the capability to handle mixed-variable surrogate models \
 and hierarchical variables.
 """
 
@@ -111,7 +111,7 @@ metadata = dict(
         "scikit-learn",
         "pyDOE3",
         "scipy",
-        "jenn", 
+        "jenn",
     ],
     extras_require={
         "numba": [  # pip install smt[numba]
