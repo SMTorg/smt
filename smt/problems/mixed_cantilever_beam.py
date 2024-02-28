@@ -1,5 +1,5 @@
 """
-Author: P.Saves 
+Author: P.Saves
 This package is distributed under New BSD license.
 
 Cantilever beam problem from:

@@ -2,7 +2,7 @@
 """
 Created on Fri Jun 30 09:30:40 2023
 
-@author: hvalayer, rlafage 
+@author: hvalayer, rlafage
 
 This implementation in SMT is derived from FITC/VarDTC methods from
 Sparse GP implementations of GPy project. See https://github.com/SheffieldML/GPy

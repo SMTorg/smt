@@ -4,9 +4,9 @@ Created on Mon Apr 27 15:36:13 2020
 
 @author: Vincent Drouet and Nathalie Bartoli
 in order to validate the variance formula for multifidelity on the branin 2D function
-Comparisons are based  on the paper Le Gratiet et Cannamela 2015  :
-    
-Le Gratiet, L., & Cannamela, C. (2015). 
+Comparisons are based  on the paper Le Gratiet et Cannamela 2015 :
+
+Le Gratiet, L., & Cannamela, C. (2015).
 Cokriging-based sequential design strategies using fast cross-validation
 techniques for multi-fidelity computer codes. Technometrics, 57(3), 418-427.
 https://doi.org/10.1080/00401706.2014.928233
