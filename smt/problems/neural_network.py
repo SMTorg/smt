@@ -3,8 +3,9 @@ Author: P.Saves
 This package is distributed under New BSD license.
 
 Multi-Layer Perceptron problem from:
-C. Audet, E. Hall e-Hannan, and S. Le Digabel. A general mathematical framework for constrained mixed-variable blackbox optimization problems with meta and categorical variables. Operations Research Forum,499
-4:137, 2023.
+C. Audet, E. Hall e-Hannan, and S. Le Digabel. A general mathematical framework for
+constrained mixed-variable blackbox optimization problems with meta and categorical variables.
+Operations Research Forum,4994:137, 2023.
 """
 
 import numpy as np

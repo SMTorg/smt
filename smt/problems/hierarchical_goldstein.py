@@ -3,7 +3,8 @@ Author: P.Saves and J.H. Bussemaker
 This package is distributed under New BSD license.
 
 Cantilever beam problem from:
-P. Saves, Y. Diouane, N. Bartoli, T. Lefebvre, and J. Morlier. A mixed-categorical correlation kernel for gaussian process, 2022
+P. Saves, Y. Diouane, N. Bartoli, T. Lefebvre, and J. Morlier. A mixed-categorical correlation kernel
+for gaussian process, 2022
 """
 
 import numpy as np

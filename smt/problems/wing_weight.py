@@ -5,7 +5,10 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 
 Aircraft wing weight problem from:
-Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
+Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design:
+comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition.
+American Society of Mechanical Engineers. June, 2016.
+
 Forrester, A., Sobester, A., and Keane, A., 2008,
 Engineering Design Via Surrogate Modelling: A Practical Guide, John Wiley & Sons, United Kingdom.
 """

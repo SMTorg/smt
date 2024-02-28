@@ -64,7 +64,8 @@ class NestedLHS(object):
             )
         elif xlimits is not None and design_space is not None:
             raise ValueError(
-                "Use either design_space for mixed inputs or xlimits for continuous one. Please avoid overspecification."
+                "Use either design_space for mixed inputs or xlimits for continuous one. \
+                    Please avoid overspecification."
             )
         elif xlimits is not None:
             self.design_space = ensure_design_space(xlimits=xlimits)
@@ -243,7 +244,8 @@ class MFK(KrgBased):
         if self.name in ["MFKPLS", "MFKPLSK"]:
             _pls = pls(self.options["n_comp"])
 
-            # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception while sklearn 0.23 returns zeroed x_rotations
+            # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception
+            # while sklearn 0.23 returns zeroed x_rotations
             # For now the try/except below is a workaround to restore the 0.23 behaviour
             try:
                 # PLS is done on the highest fidelity identified by the key None
@@ -1027,7 +1029,8 @@ class MFK(KrgBased):
                     self.options["theta0"] *= np.ones((1, n_param))
                 else:
                     raise ValueError(
-                        "the length of theta0 (%s) should be equal to the number of dim (%s) or levels of fidelity (%s)."
+                        "the length of theta0 (%s) should be equal to the number of dim (%s) \
+                            or levels of fidelity (%s)."
                         % (len(self.options["theta0"]), n_param, self.nlvl)
                     )
             else:
@@ -1050,7 +1053,8 @@ class MFK(KrgBased):
                             self.options["noise0"][i] *= np.ones(self.nt_all[i])
                         else:
                             raise ValueError(
-                                "for the level of fidelity %s, the length of noise0 (%s) should be equal to the number of observations (%s)."
+                                "for the level of fidelity %s, the length of noise0 (%s) should be equal to \
+                                    the number of observations (%s)."
                                 % (i, len(self.options["noise0"][i]), self.nt_all[i])
                             )
             else:

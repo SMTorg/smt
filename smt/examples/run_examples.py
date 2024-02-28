@@ -82,7 +82,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the LS model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the LS model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -134,7 +135,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the QP model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the QP model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -187,7 +189,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the Kriging model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the Kriging model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -243,7 +246,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the KPLS model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the KPLS model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 # Prediction of the derivatives with regards to each direction space
@@ -311,7 +315,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the KPLSK model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the KPLSK model (from left to right then from top to bottom): \
+        validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -375,7 +380,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the GEKPLS1 model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the GEKPLS1 model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -439,7 +445,8 @@ if plot_status:
     plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
     plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
     plt.suptitle(
-        "Validation of the GEKPLS2 model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+        "Validation of the GEKPLS2 model (from left to right then from top to bottom): \
+            validation of the prediction model and the i-th prediction of the derivative---i=1:10"
     )
 
 
@@ -510,7 +517,8 @@ if COMPILED_AVAILABLE:
         plt.setp(axarr[3, 2].get_xticklabels(), visible=False)
         plt.setp(axarr[3, 2].get_yticklabels(), visible=False)
         plt.suptitle(
-            "Validation of the RBF model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:10"
+            "Validation of the RBF model (from left to right then from top to bottom): \
+                validation of the prediction model and the i-th prediction of the derivative---i=1:10"
         )
 
     # Prediction of the derivatives with regards to each direction space
@@ -596,7 +604,8 @@ if COMPILED_AVAILABLE:
         plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
         plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
         plt.suptitle(
-            "Validation of the RMTB model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:3"
+            "Validation of the RMTB model (from left to right then from top to bottom): \
+                validation of the prediction model and the i-th prediction of the derivative---i=1:3"
         )
 
     # Prediction of the derivatives with regards to each direction space
@@ -658,7 +667,8 @@ if COMPILED_AVAILABLE:
         plt.setp(axarr[2, 0].get_xticklabels(), visible=False)
         plt.setp(axarr[2, 0].get_yticklabels(), visible=False)
         plt.suptitle(
-            "Validation of the RMTC model (from left to right then from top to bottom): validation of the prediction model and the i-th prediction of the derivative---i=1:3"
+            "Validation of the RMTC model (from left to right then from top to bottom): \
+                validation of the prediction model and the i-th prediction of the derivative---i=1:3"
         )
 
     # Prediction of the derivatives with regards to each direction space

@@ -4,8 +4,14 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 
 Cantilever beam problem from:
-Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design: comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition. American Society of Mechanical Engineers. June, 2016.
-Cheng, G. H., Younis, A., Hajikolaei, K. H., and Wang, G. G. Trust Region Based Mode Pursuing Sampling Method for Global Optimization of High Dimensional Design Problems. Journal of Mechanical Design, 137(2). 2015.
+
+Liu, H., Xu, S., & Wang, X. Sampling strategies and metamodeling techniques for engineering design:
+comparison and application. In ASME Turbo Expo 2016: Turbomachinery Technical Conference and Exposition.
+American Society of Mechanical Engineers. June, 2016.
+
+Cheng, G. H., Younis, A., Hajikolaei, K. H., and Wang, G. G.
+Trust Region Based Mode Pursuing Sampling Method for Global Optimization of High Dimensional Design Problems.
+Journal of Mechanical Design, 137(2). 2015.
 """
 
 import numpy as np
