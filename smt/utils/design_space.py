@@ -838,6 +838,14 @@ class DesignSpace(BaseDesignSpace):
         if self._cs is None:
             raise_config_space()
 
+        if (
+            str(self._design_variables[var1])[:3] == "Ord"
+            or str(self._design_variables[var2])[:3] == "Ord"
+        ):
+            raise ValueError(
+                "Ordinal Variables are unfortunately not supporting constraints in ConfigSpace 0.6.1."
+            )
+
         # Get parameters
         param1 = self._get_param(var1)
         param2 = self._get_param(var2)
