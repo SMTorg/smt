@@ -823,7 +823,9 @@ class DesignSpace(BaseDesignSpace):
                     )
             else:
                 try:
-                    condition = EqualsCondition(decreed_param, meta_param, str(meta_value))
+                    condition = EqualsCondition(
+                        decreed_param, meta_param, str(meta_value)
+                    )
                 except ValueError:
                     condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
@@ -922,7 +924,7 @@ class DesignSpace(BaseDesignSpace):
                 clause2 = ForbiddenEqualsClause(param2, str(value2))
             except ValueError:
                 clause2 = ForbiddenEqualsClause(param2, value2)
-                  
+
         constraint_clause = ForbiddenAndConjunction(clause1, clause2)
         self._cs2.add_forbidden_clause(constraint_clause)
 
