@@ -822,7 +822,10 @@ class DesignSpace(BaseDesignSpace):
                         list(np.atleast_1d(np.array(meta_value, dtype=float))),
                     )
             else:
-                condition = EqualsCondition(decreed_param, meta_param, str(meta_value))
+                try:
+                    condition = EqualsCondition(decreed_param, meta_param, str(meta_value))
+                except ValueError:
+                    condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
             self._cs2.add_condition(condition)
 
@@ -915,8 +918,11 @@ class DesignSpace(BaseDesignSpace):
                     param2, list(np.atleast_1d(np.array(value2, dtype=float)))
                 )
         else:
-            clause2 = ForbiddenEqualsClause(param2, str(value2))
-
+            try:
+                clause2 = ForbiddenEqualsClause(param2, str(value2))
+            except ValueError:
+                clause2 = ForbiddenEqualsClause(param2, value2)
+                  
         constraint_clause = ForbiddenAndConjunction(clause1, clause2)
         self._cs2.add_forbidden_clause(constraint_clause)
 
