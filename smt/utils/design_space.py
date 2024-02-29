@@ -268,17 +268,16 @@ class BaseDesignSpace:
         # If needed, fold before correcting
         if x_is_unfolded:
             x, _ = self.fold_x(x)
- 
-        indi=0
-        for i in self.design_variables :
-            if not((isinstance(i,FloatVariable))):
-                x[:,indi] = np.int64(np.round(x[:,indi],0))
-            indi+=1
-            
+
+        indi = 0
+        for i in self.design_variables:
+            if not ((isinstance(i, FloatVariable))):
+                x[:, indi] = np.int64(np.round(x[:, indi], 0))
+            indi += 1
+
         # Correct and get the is_acting matrix
         x_corrected, is_acting = self._correct_get_acting(x)
-     
-                
+
         # Check conditionally-acting status
         if np.any(~is_acting[:, ~self.is_conditionally_acting]):
             raise RuntimeError("Unconditionally acting variables cannot be non-acting!")
@@ -450,9 +449,9 @@ class BaseDesignSpace:
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
-            if (
-                isinstance(dv, CategoricalVariable) 
-            ) and (fold_mask is None or fold_mask[i]):
+            if (isinstance(dv, CategoricalVariable)) and (
+                fold_mask is None or fold_mask[i]
+            ):
                 n_dim_cat = dv.n_values
 
                 # Categorical values are folded by reversed one-hot encoding:
@@ -810,13 +809,20 @@ class DesignSpace(BaseDesignSpace):
             meta_param = self._get_param2(meta_var)
             # Add a condition that checks for equality (if single value given) or in-collection (if sequence given)
             if isinstance(meta_value, Sequence):
-                try : 
-                    condition = InCondition(decreed_param, meta_param, list(np.atleast_1d(np.array(meta_value, dtype=str))))
-                except :
-                    condition = InCondition(decreed_param, meta_param, list(np.atleast_1d(np.array(meta_value, dtype=float))))
+                try:
+                    condition = InCondition(
+                        decreed_param,
+                        meta_param,
+                        list(np.atleast_1d(np.array(meta_value, dtype=str))),
+                    )
+                except:
+                    condition = InCondition(
+                        decreed_param,
+                        meta_param,
+                        list(np.atleast_1d(np.array(meta_value, dtype=float))),
+                    )
             else:
                 condition = EqualsCondition(decreed_param, meta_param, str(meta_value))
-
 
             self._cs2.add_condition(condition)
 
@@ -900,10 +906,14 @@ class DesignSpace(BaseDesignSpace):
             clause1 = ForbiddenEqualsClause(param1, str(value1))
 
         if isinstance(value2, Sequence):
-            try :
-                clause2 = ForbiddenInClause(param2, list(np.atleast_1d(np.array(value2, dtype=str))))
-            except : 
-                clause2 = ForbiddenInClause(param2, list(np.atleast_1d(np.array(value2, dtype=float))))
+            try:
+                clause2 = ForbiddenInClause(
+                    param2, list(np.atleast_1d(np.array(value2, dtype=str)))
+                )
+            except:
+                clause2 = ForbiddenInClause(
+                    param2, list(np.atleast_1d(np.array(value2, dtype=float)))
+                )
         else:
             clause2 = ForbiddenEqualsClause(param2, str(value2))
 
@@ -1155,7 +1165,9 @@ class DesignSpace(BaseDesignSpace):
                     )
 
     def _normalize_x_no_integer(self, x: np.ndarray, cs_normalize=True):
-        ordereddesign_variables = [self.design_variables[i] for i in self._inv_cs_var_idx]
+        ordereddesign_variables = [
+            self.design_variables[i] for i in self._inv_cs_var_idx
+        ]
         for i, dv in enumerate(ordereddesign_variables):
             if isinstance(dv, FloatVariable):
                 if cs_normalize:
@@ -1180,17 +1192,20 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = np.round(
                     x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
                 )
+
     def _cs_denormalize_x_ordered(self, x: np.ndarray):
-        ordereddesign_variables = [self.design_variables[i] for i in self._inv_cs_var_idx]
+        ordereddesign_variables = [
+            self.design_variables[i] for i in self._inv_cs_var_idx
+        ]
         for i, dv in enumerate(ordereddesign_variables):
-           if isinstance(dv, FloatVariable):
-               x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
-    
-           elif isinstance(dv, IntegerVariable):
-               # Integer values are normalized similarly to what is done in _round_equally_distributed
-               x[:, i] = np.round(
-                   x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
-               )
+            if isinstance(dv, FloatVariable):
+                x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
+
+            elif isinstance(dv, IntegerVariable):
+                # Integer values are normalized similarly to what is done in _round_equally_distributed
+                x[:, i] = np.round(
+                    x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
+                )
 
     def __str__(self):
         dvs = "\n".join([f"x{i}: {dv!s}" for i, dv in enumerate(self.design_variables)])

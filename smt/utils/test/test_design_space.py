@@ -194,7 +194,7 @@ class Test(unittest.TestCase):
         ds = DesignSpace(
             [
                 CategoricalVariable(["A", "B", "C"]),
-                OrdinalVariable(["0", "1"]),  ### todo
+                OrdinalVariable(["0", "1"]),
                 IntegerVariable(-1, 2),
                 FloatVariable(0.5, 1.5),
             ],

@@ -296,9 +296,9 @@ class MFK(KrgBased):
             _, self.cat_features = compute_X_cont(
                 np.concatenate(xt, axis=0), self.design_space
             )
-            self.X_offset[self.cat_features] *=0
-            self.X_scale[self.cat_features] *=0
-            self.X_scale[self.cat_features] +=1
+            self.X_offset[self.cat_features] *= 0
+            self.X_scale[self.cat_features] *= 0
+            self.X_scale[self.cat_features] += 1
 
         nlevel = self.nlvl
 
