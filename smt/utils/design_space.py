@@ -815,7 +815,7 @@ class DesignSpace(BaseDesignSpace):
                         meta_param,
                         list(np.atleast_1d(np.array(meta_value, dtype=str))),
                     )
-                except:
+                except ValueError:
                     condition = InCondition(
                         decreed_param,
                         meta_param,
@@ -910,7 +910,7 @@ class DesignSpace(BaseDesignSpace):
                 clause2 = ForbiddenInClause(
                     param2, list(np.atleast_1d(np.array(value2, dtype=str)))
                 )
-            except:
+            except ValueError:
                 clause2 = ForbiddenInClause(
                     param2, list(np.atleast_1d(np.array(value2, dtype=float)))
                 )
