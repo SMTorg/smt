@@ -200,9 +200,11 @@ class GENN(SurrogateModel):
             beta1=self.options["beta1"],
             beta2=self.options["beta2"],
             epochs=self.options["num_epochs"],
-            batch_size=None
-            if self.options["mini_batch_size"] < 0
-            else self.options["mini_batch_size"],
+            batch_size=(
+                None
+                if self.options["mini_batch_size"] < 0
+                else self.options["mini_batch_size"]
+            ),
             max_iter=self.options["num_iterations"],
             is_backtracking=self.options["is_backtracking"],
             is_verbose=self.options["is_print"],
