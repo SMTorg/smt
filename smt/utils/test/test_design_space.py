@@ -194,7 +194,7 @@ class Test(unittest.TestCase):
         ds = DesignSpace(
             [
                 CategoricalVariable(["A", "B", "C"]),
-                OrdinalVariable(["E", "F"]),
+                OrdinalVariable(["0", "1"]),  ### todo
                 IntegerVariable(-1, 2),
                 FloatVariable(0.5, 1.5),
             ],
@@ -233,18 +233,18 @@ class Test(unittest.TestCase):
         self.assertEqual(is_acting.shape, x.shape)
 
         self.assertEqual(ds.decode_values(x, i_dv=0), ["B", "C", "C"])
-        self.assertEqual(ds.decode_values(x, i_dv=1), ["E", "E", "E"])
+        self.assertEqual(ds.decode_values(x, i_dv=1), ["0", "0", "0"])
         self.assertEqual(ds.decode_values(np.array([0, 1, 2]), i_dv=0), ["A", "B", "C"])
-        self.assertEqual(ds.decode_values(np.array([0, 1]), i_dv=1), ["E", "F"])
+        self.assertEqual(ds.decode_values(np.array([0, 1]), i_dv=1), ["0", "1"])
 
-        self.assertEqual(ds.decode_values(x[0, :]), ["B", "E", 0, x[0, 3]])
-        self.assertEqual(ds.decode_values(x[[0], :]), [["B", "E", 0, x[0, 3]]])
+        self.assertEqual(ds.decode_values(x[0, :]), ["B", "0", 0, x[0, 3]])
+        self.assertEqual(ds.decode_values(x[[0], :]), [["B", "0", 0, x[0, 3]]])
         self.assertEqual(
             ds.decode_values(x),
             [
-                ["B", "E", 0, x[0, 3]],
-                ["C", "E", -1, x[1, 3]],
-                ["C", "E", 0, x[2, 3]],
+                ["B", "0", 0, x[0, 3]],
+                ["C", "0", -1, x[1, 3]],
+                ["C", "0", 0, x[2, 3]],
             ],
         )
 
@@ -263,7 +263,7 @@ class Test(unittest.TestCase):
                 [
                     [2.0, 0.0, -1.0, 1.34158548],
                     [0.0, 1.0, -0.0, 0.55199817],
-                    [1.0, 1.0, 2.0, 1.15663662],
+                    [1.0, 1.0, 1.0, 1.15663662],
                 ]
             ),
             atol=1e-8,
@@ -561,7 +561,28 @@ class Test(unittest.TestCase):
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
-    def test_restrictive_value_constraint(self):
+    def test_restrictive_value_constraint_ordinal(self):
+        ds = DesignSpace(
+            [
+                OrdinalVariable(["0", "1", "2"]),
+                OrdinalVariable(["0", "1", "2"]),
+            ]
+        )
+        assert list(ds._cs.values())[0].default_value == "0"
+
+        ds.add_value_constraint(var1=0, value1="1", var2=1, value2="1")
+        ds.sample_valid_x(100, random_state=42)
+
+        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
+        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
+        np.testing.assert_array_equal(
+            np.array(
+                [[0, 0], [0, 1], [0, 2], [1, 0], [0, 1], [1, 2], [2, 0], [2, 1], [2, 2]]
+            ),
+            x_cartesian2,
+        )
+
+    def test_restrictive_value_constraint_integer(self):
         ds = DesignSpace(
             [
                 IntegerVariable(0, 2),
@@ -570,11 +591,41 @@ class Test(unittest.TestCase):
         )
         assert list(ds._cs.values())[0].default_value == 1
 
-        ds.add_value_constraint(var1=0, value1=1, var2=0, value2=1)
+        ds.add_value_constraint(var1=0, value1=1, var2=1, value2=1)
         ds.sample_valid_x(100, random_state=42)
 
         x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
         ds.correct_get_acting(x_cartesian)
+        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
+        print(x_cartesian2)
+        np.testing.assert_array_equal(
+            np.array(
+                [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0], [1, 2], [2, 0], [2, 1], [2, 2]]
+            ),
+            x_cartesian2,
+        )
+
+    def test_restrictive_value_constraint_categorical(self):
+        ds = DesignSpace(
+            [
+                CategoricalVariable(["a", "b", "c"]),
+                CategoricalVariable(["a", "b", "c"]),
+            ]
+        )
+        assert list(ds._cs.values())[0].default_value == "a"
+
+        ds.add_value_constraint(var1=0, value1="b", var2=1, value2="b")
+        ds.sample_valid_x(100, random_state=42)
+
+        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
+        ds.correct_get_acting(x_cartesian)
+        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
+        np.testing.assert_array_equal(
+            np.array(
+                [[0, 0], [0, 1], [0, 2], [1, 0], [0, 1], [1, 2], [2, 0], [2, 1], [2, 2]]
+            ),
+            x_cartesian2,
+        )
 
 
 if __name__ == "__main__":

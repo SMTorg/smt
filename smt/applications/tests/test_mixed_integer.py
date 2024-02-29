@@ -1789,7 +1789,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_mixed_homo_gaussian_3D_ord_cate(self):
-        xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
+        xt = np.array([[0, 5,  0], [2, 4, 3], [4, -1, 2], [2, 0.5, 1]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         design_space = DesignSpace(
             [

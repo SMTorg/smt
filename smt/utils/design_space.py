@@ -268,10 +268,17 @@ class BaseDesignSpace:
         # If needed, fold before correcting
         if x_is_unfolded:
             x, _ = self.fold_x(x)
-
+ 
+        indi=0
+        for i in self.design_variables :
+            if not((isinstance(i,FloatVariable))):
+                x[:,indi] = np.int64(np.round(x[:,indi],0))
+            indi+=1
+            
         # Correct and get the is_acting matrix
         x_corrected, is_acting = self._correct_get_acting(x)
-
+     
+                
         # Check conditionally-acting status
         if np.any(~is_acting[:, ~self.is_conditionally_acting]):
             raise RuntimeError("Unconditionally acting variables cannot be non-acting!")
@@ -443,9 +450,9 @@ class BaseDesignSpace:
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
-            if isinstance(dv, CategoricalVariable) and (
-                fold_mask is None or fold_mask[i]
-            ):
+            if (
+                isinstance(dv, CategoricalVariable) 
+            ) and (fold_mask is None or fold_mask[i]):
                 n_dim_cat = dv.n_values
 
                 # Categorical values are folded by reversed one-hot encoding:
@@ -726,27 +733,43 @@ class DesignSpace(BaseDesignSpace):
         self.random_state = random_state  # For testing
 
         self._cs = None
+        self._cs2 = None
         if HAS_CONFIG_SPACE:
             cs_vars = {}
+            cs_vars2 = {}
+            self.isinteger = False
             for i, dv in enumerate(design_variables):
                 name = f"x{i}"
                 if isinstance(dv, FloatVariable):
                     cs_vars[name] = UniformFloatHyperparameter(
                         name, lower=dv.lower, upper=dv.upper
                     )
+                    cs_vars2[name] = UniformFloatHyperparameter(
+                        name, lower=dv.lower, upper=dv.upper
+                    )
                 elif isinstance(dv, IntegerVariable):
                     cs_vars[name] = FixedIntegerParam(
                         name, lower=dv.lower, upper=dv.upper
                     )
+                    listvalues = []
+                    for i in range(dv.upper - dv.lower + 1):
+                        listvalues.append(str(i + dv.lower))
+                    cs_vars2[name] = CategoricalHyperparameter(name, choices=listvalues)
+                    self.isinteger = True
                 elif isinstance(dv, OrdinalVariable):
                     cs_vars[name] = OrdinalHyperparameter(name, sequence=dv.values)
+                    cs_vars2[name] = CategoricalHyperparameter(name, choices=dv.values)
+
                 elif isinstance(dv, CategoricalVariable):
                     cs_vars[name] = CategoricalHyperparameter(name, choices=dv.values)
+                    cs_vars2[name] = CategoricalHyperparameter(name, choices=dv.values)
+
                 else:
                     raise ValueError(f"Unknown variable type: {dv!r}")
             seed = self._to_seed(random_state)
 
             self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
+            self._cs2 = NoDefaultConfigurationSpace(space=cs_vars2, seed=seed)
 
         # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
         self._meta_vars = {}
@@ -783,6 +806,19 @@ class DesignSpace(BaseDesignSpace):
                 condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
             self._cs.add_condition(condition)
+            decreed_param = self._get_param2(decreed_var)
+            meta_param = self._get_param2(meta_var)
+            # Add a condition that checks for equality (if single value given) or in-collection (if sequence given)
+            if isinstance(meta_value, Sequence):
+                try : 
+                    condition = InCondition(decreed_param, meta_param, list(np.atleast_1d(np.array(meta_value, dtype=str))))
+                except :
+                    condition = InCondition(decreed_param, meta_param, list(np.atleast_1d(np.array(meta_value, dtype=float))))
+            else:
+                condition = EqualsCondition(decreed_param, meta_param, str(meta_value))
+
+
+            self._cs2.add_condition(condition)
 
         # Simplified implementation
         else:
@@ -854,9 +890,35 @@ class DesignSpace(BaseDesignSpace):
         constraint_clause = ForbiddenAndConjunction(clause1, clause2)
         self._cs.add_forbidden_clause(constraint_clause)
 
+        # Get parameters
+        param1 = self._get_param2(var1)
+        param2 = self._get_param2(var2)
+        # Add forbidden clauses
+        if isinstance(value1, Sequence):
+            clause1 = ForbiddenInClause(param1, str(value1))
+        else:
+            clause1 = ForbiddenEqualsClause(param1, str(value1))
+
+        if isinstance(value2, Sequence):
+            try :
+                clause2 = ForbiddenInClause(param2, list(np.atleast_1d(np.array(value2, dtype=str))))
+            except : 
+                clause2 = ForbiddenInClause(param2, list(np.atleast_1d(np.array(value2, dtype=float))))
+        else:
+            clause2 = ForbiddenEqualsClause(param2, str(value2))
+
+        constraint_clause = ForbiddenAndConjunction(clause1, clause2)
+        self._cs2.add_forbidden_clause(constraint_clause)
+
     def _get_param(self, idx):
         try:
             return self._cs.get_hyperparameter(f"x{idx}")
+        except KeyError:
+            raise KeyError(f"Variable not found: {idx}")
+
+    def _get_param2(self, idx):
+        try:
+            return self._cs2.get_hyperparameter(f"x{idx}")
         except KeyError:
             raise KeyError(f"Variable not found: {idx}")
 
@@ -978,6 +1040,26 @@ class DesignSpace(BaseDesignSpace):
         # to find out which parameters should be inactive
         while True:
             try:
+                if self.isinteger:
+                    vector2 = np.copy(vector)
+                    self._cs_denormalize_x_ordered(np.atleast_2d(vector2))
+                    indvec = 0
+                    for hp in self._cs2:
+                        if (
+                            (str(self._cs.get_hyperparameter(hp)).split()[2])
+                            == "UniformInteger,"
+                            and (str(self._cs2.get_hyperparameter(hp)).split()[2][:3])
+                            == "Cat"
+                            and not (np.isnan(vector2[indvec]))
+                        ):
+                            vector2[indvec] = int(vector2[indvec]) - int(
+                                str(self._cs2.get_hyperparameter(hp)).split()[4][1:-1]
+                            )
+                        indvec += 1
+                    self._normalize_x_no_integer(np.atleast_2d(vector2))
+                    config2 = Configuration(self._cs2, vector=vector2)
+                    config2.is_valid_configuration()
+
                 config.is_valid_configuration()
                 return config
 
@@ -1001,9 +1083,22 @@ class DesignSpace(BaseDesignSpace):
                     if self.seed is None:
                         seed = self._to_seed(self.random_state)
                         self.seed = seed
+                    vector = config.get_array().copy()
+                    indvec = 0
+                    vector2 = np.copy(vector)
+                    for hp in self._cs2:
+                        if (
+                            str(self._cs2.get_hyperparameter(hp)).split()[2][:3]
+                        ) == "Cat" and not (np.isnan(vector2[indvec])):
 
-                    return get_random_neighbor(config, seed=self.seed)
+                            vector2[indvec] = int(vector2[indvec])
+                        indvec += 1
 
+                    config2 = Configuration(self._cs2, vector=vector2)
+                    config3 = get_random_neighbor(config2, seed=self.seed)
+                    vector3 = config3.get_array().copy()
+                    config4 = Configuration(self._cs, vector=vector3)
+                    return config4
                 else:
                     raise
 
@@ -1059,6 +1154,15 @@ class DesignSpace(BaseDesignSpace):
                         dv.upper - dv.lower + 0.9999
                     )
 
+    def _normalize_x_no_integer(self, x: np.ndarray, cs_normalize=True):
+        ordereddesign_variables = [self.design_variables[i] for i in self._inv_cs_var_idx]
+        for i, dv in enumerate(ordereddesign_variables):
+            if isinstance(dv, FloatVariable):
+                if cs_normalize:
+                    x[:, i] = np.clip(
+                        (x[:, i] - dv.lower) / (dv.upper - dv.lower + 1e-16), 0, 1
+                    )
+
             elif isinstance(dv, (OrdinalVariable, CategoricalVariable)):
                 # To ensure equal distribution of continuous values to discrete values, we first stretch-out the
                 # continuous values to extend to 0.5 beyond the integer limits and then round. This ensures that the
@@ -1066,6 +1170,7 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
 
     def _cs_denormalize_x(self, x: np.ndarray):
+
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
@@ -1075,6 +1180,17 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = np.round(
                     x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
                 )
+    def _cs_denormalize_x_ordered(self, x: np.ndarray):
+        ordereddesign_variables = [self.design_variables[i] for i in self._inv_cs_var_idx]
+        for i, dv in enumerate(ordereddesign_variables):
+           if isinstance(dv, FloatVariable):
+               x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
+    
+           elif isinstance(dv, IntegerVariable):
+               # Integer values are normalized similarly to what is done in _round_equally_distributed
+               x[:, i] = np.round(
+                   x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
+               )
 
     def __str__(self):
         dvs = "\n".join([f"x{i}: {dv!s}" for i, dv in enumerate(self.design_variables)])
