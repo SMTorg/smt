@@ -582,6 +582,9 @@ class Test(unittest.TestCase):
             x_cartesian2,
         )
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_restrictive_value_constraint_integer(self):
         ds = DesignSpace(
             [
@@ -597,7 +600,6 @@ class Test(unittest.TestCase):
         x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
         ds.correct_get_acting(x_cartesian)
         x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
-        print(x_cartesian2)
         np.testing.assert_array_equal(
             np.array(
                 [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0], [1, 2], [2, 0], [2, 1], [2, 2]]
@@ -605,6 +607,9 @@ class Test(unittest.TestCase):
             x_cartesian2,
         )
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_restrictive_value_constraint_categorical(self):
         ds = DesignSpace(
             [
