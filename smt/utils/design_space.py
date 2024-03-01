@@ -732,10 +732,10 @@ class DesignSpace(BaseDesignSpace):
         self.random_state = random_state  # For testing
 
         self._cs = None
-        self._cs2 = None
+        self._cs_cate = None
         if HAS_CONFIG_SPACE:
             cs_vars = {}
-            cs_vars2 = {}
+            cs_vars_cate = {}
             self.isinteger = False
             for i, dv in enumerate(design_variables):
                 name = f"x{i}"
@@ -743,7 +743,7 @@ class DesignSpace(BaseDesignSpace):
                     cs_vars[name] = UniformFloatHyperparameter(
                         name, lower=dv.lower, upper=dv.upper
                     )
-                    cs_vars2[name] = UniformFloatHyperparameter(
+                    cs_vars_cate[name] = UniformFloatHyperparameter(
                         name, lower=dv.lower, upper=dv.upper
                     )
                 elif isinstance(dv, IntegerVariable):
@@ -753,22 +753,30 @@ class DesignSpace(BaseDesignSpace):
                     listvalues = []
                     for i in range(int(dv.upper - dv.lower + 1)):
                         listvalues.append(str(int(i + dv.lower)))
-                    cs_vars2[name] = CategoricalHyperparameter(name, choices=listvalues)
+                    cs_vars_cate[name] = CategoricalHyperparameter(
+                        name, choices=listvalues
+                    )
                     self.isinteger = True
                 elif isinstance(dv, OrdinalVariable):
                     cs_vars[name] = OrdinalHyperparameter(name, sequence=dv.values)
-                    cs_vars2[name] = CategoricalHyperparameter(name, choices=dv.values)
+                    cs_vars_cate[name] = CategoricalHyperparameter(
+                        name, choices=dv.values
+                    )
 
                 elif isinstance(dv, CategoricalVariable):
                     cs_vars[name] = CategoricalHyperparameter(name, choices=dv.values)
-                    cs_vars2[name] = CategoricalHyperparameter(name, choices=dv.values)
+                    cs_vars_cate[name] = CategoricalHyperparameter(
+                        name, choices=dv.values
+                    )
 
                 else:
                     raise ValueError(f"Unknown variable type: {dv!r}")
             seed = self._to_seed(random_state)
 
             self._cs = NoDefaultConfigurationSpace(space=cs_vars, seed=seed)
-            self._cs2 = NoDefaultConfigurationSpace(space=cs_vars2, seed=seed)
+            ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+            ## ConfigSpace is malfunctioning
+            self._cs_cate = NoDefaultConfigurationSpace(space=cs_vars_cate, seed=seed)
 
         # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
         self._meta_vars = {}
@@ -804,6 +812,8 @@ class DesignSpace(BaseDesignSpace):
             else:
                 condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
+            ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+            ## ConfigSpace is malfunctioning
             self._cs.add_condition(condition)
             decreed_param = self._get_param2(decreed_var)
             meta_param = self._get_param2(meta_var)
@@ -829,7 +839,7 @@ class DesignSpace(BaseDesignSpace):
                 except ValueError:
                     condition = EqualsCondition(decreed_param, meta_param, meta_value)
 
-            self._cs2.add_condition(condition)
+            self._cs_cate.add_condition(condition)
 
         # Simplified implementation
         else:
@@ -901,6 +911,8 @@ class DesignSpace(BaseDesignSpace):
         constraint_clause = ForbiddenAndConjunction(clause1, clause2)
         self._cs.add_forbidden_clause(constraint_clause)
 
+        ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+        ## ConfigSpace is malfunctioning
         # Get parameters
         param1 = self._get_param2(var1)
         param2 = self._get_param2(var2)
@@ -926,7 +938,7 @@ class DesignSpace(BaseDesignSpace):
                 clause2 = ForbiddenEqualsClause(param2, value2)
 
         constraint_clause = ForbiddenAndConjunction(clause1, clause2)
-        self._cs2.add_forbidden_clause(constraint_clause)
+        self._cs_cate.add_forbidden_clause(constraint_clause)
 
     def _get_param(self, idx):
         try:
@@ -936,7 +948,7 @@ class DesignSpace(BaseDesignSpace):
 
     def _get_param2(self, idx):
         try:
-            return self._cs2.get_hyperparameter(f"x{idx}")
+            return self._cs_cate.get_hyperparameter(f"x{idx}")
         except KeyError:
             raise KeyError(f"Variable not found: {idx}")
 
@@ -1058,24 +1070,30 @@ class DesignSpace(BaseDesignSpace):
         # to find out which parameters should be inactive
         while True:
             try:
+                ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+                ## ConfigSpace is malfunctioning
                 if self.isinteger:
                     vector2 = np.copy(vector)
                     self._cs_denormalize_x_ordered(np.atleast_2d(vector2))
                     indvec = 0
-                    for hp in self._cs2:
+                    for hp in self._cs_cate:
                         if (
                             (str(self._cs.get_hyperparameter(hp)).split()[2])
                             == "UniformInteger,"
-                            and (str(self._cs2.get_hyperparameter(hp)).split()[2][:3])
+                            and (
+                                str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
+                            )
                             == "Cat"
                             and not (np.isnan(vector2[indvec]))
                         ):
                             vector2[indvec] = int(vector2[indvec]) - int(
-                                str(self._cs2.get_hyperparameter(hp)).split()[4][1:-1]
+                                str(self._cs_cate.get_hyperparameter(hp)).split()[4][
+                                    1:-1
+                                ]
                             )
                         indvec += 1
                     self._normalize_x_no_integer(np.atleast_2d(vector2))
-                    config2 = Configuration(self._cs2, vector=vector2)
+                    config2 = Configuration(self._cs_cate, vector=vector2)
                     config2.is_valid_configuration()
 
                 config.is_valid_configuration()
@@ -1104,15 +1122,17 @@ class DesignSpace(BaseDesignSpace):
                     vector = config.get_array().copy()
                     indvec = 0
                     vector2 = np.copy(vector)
-                    for hp in self._cs2:
+                    ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+                    ## ConfigSpace is malfunctioning
+                    for hp in self._cs_cate:
                         if (
-                            str(self._cs2.get_hyperparameter(hp)).split()[2][:3]
+                            str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
                         ) == "Cat" and not (np.isnan(vector2[indvec])):
 
                             vector2[indvec] = int(vector2[indvec])
                         indvec += 1
 
-                    config2 = Configuration(self._cs2, vector=vector2)
+                    config2 = Configuration(self._cs_cate, vector=vector2)
                     config3 = get_random_neighbor(config2, seed=self.seed)
                     vector3 = config3.get_array().copy()
                     config4 = Configuration(self._cs, vector=vector3)
