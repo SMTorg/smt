@@ -751,8 +751,8 @@ class DesignSpace(BaseDesignSpace):
                         name, lower=dv.lower, upper=dv.upper
                     )
                     listvalues = []
-                    for i in range(dv.upper - dv.lower + 1):
-                        listvalues.append(str(i + dv.lower))
+                    for i in range(int(dv.upper - dv.lower + 1)):
+                        listvalues.append(str(int(i + dv.lower)))
                     cs_vars2[name] = CategoricalHyperparameter(name, choices=listvalues)
                     self.isinteger = True
                 elif isinstance(dv, OrdinalVariable):
