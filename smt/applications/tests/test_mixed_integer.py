@@ -1316,26 +1316,26 @@ class TestMixedInteger(unittest.TestCase):
             sm.predict_values(
                 np.array(
                     [
-                        [0, -1, -2, 8, 0, 2, 0, 0],
-                        [1, -1, -2, 16, 1, 2, 1, 0],
-                        [2, -1, -2, 32, 2, 2, 1, -2],
+                        [0, -1, -2, 0, 0, 2, 0, 0],
+                        [1, -1, -2, 1, 1, 2, 1, 0],
+                        [2, -1, -2, 2, 2, 2, 1, -2],
                     ]
                 )
             )[:, 0],
             sm.predict_values(
                 np.array(
                     [
-                        [0, -1, -2, 8, 0, 2, 10, 10],
-                        [1, -1, -2, 16, 1, 2, 1, 10],
-                        [2, -1, -2, 32, 2, 2, 1, -2],
+                        [0, -1, -2, 0, 0, 2, 10, 10],
+                        [1, -1, -2, 1, 1, 2, 1, 10],
+                        [2, -1, -2, 2, 2, 2, 1, -2],
                     ]
                 )
             )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
-                sm.predict_values(np.array([[0, -1, -2, 8, 0, 2, 0, 0]]))
-                - sm.predict_values(np.array([[0, -1, -2, 8, 0, 12, 10, 10]]))
+                sm.predict_values(np.array([[0, -1, -2, 0, 0, 2, 0, 0]]))
+                - sm.predict_values(np.array([[0, -1, -2, 0, 0, 12, 10, 10]]))
             )
             > 1e-8
         )
