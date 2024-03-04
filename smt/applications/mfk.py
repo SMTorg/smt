@@ -296,6 +296,9 @@ class MFK(KrgBased):
             _, self.cat_features = compute_X_cont(
                 np.concatenate(xt, axis=0), self.design_space
             )
+            self.X_offset[self.cat_features] *= 0
+            self.X_scale[self.cat_features] *= 0
+            self.X_scale[self.cat_features] += 1
 
         nlevel = self.nlvl
 
@@ -761,7 +764,9 @@ class MFK(KrgBased):
         sigma2 = self.optimal_par[0]["sigma2"] / self.y_std**2
         MSE[:, 0] = sigma2 * (
             # 1 + self.optimal_noise_all[0] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-            1 - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0)
+            1
+            - (r_t**2).sum(axis=0)
+            + (u_**2).sum(axis=0)
         )
 
         # Calculate recursively kriging variance at level i
@@ -845,8 +850,7 @@ class MFK(KrgBased):
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
                     # sigma2_rho * MSE[:, i - 1]
-                    +Q_
-                    / (2 * (self.nt_all[i] - p - q))
+                    +Q_ / (2 * (self.nt_all[i] - p - q))
                     # * (1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0))
                     * (1 - (r_t**2).sum(axis=0))
                     + sigma2 * (u_**2).sum(axis=0)
@@ -854,7 +858,9 @@ class MFK(KrgBased):
             else:
                 MSE[:, i] = sigma2 * (
                     # 1 + self.optimal_noise_all[i] - (r_t ** 2).sum(axis=0) + (u_ ** 2).sum(axis=0)
-                    1 - (r_t**2).sum(axis=0) + (u_**2).sum(axis=0)
+                    1
+                    - (r_t**2).sum(axis=0)
+                    + (u_**2).sum(axis=0)
                 )  # + sigma2_rho * MSE[:, i - 1]
             if self.options["propagate_uncertainty"]:
                 MSE[:, i] = MSE[:, i] + sigma2_rho * MSE[:, i - 1]

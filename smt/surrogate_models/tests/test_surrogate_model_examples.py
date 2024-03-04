@@ -322,7 +322,7 @@ class Test(unittest.TestCase):
         sm.train()
 
         # DOE for validation
-        x = np.linspace(0, 5, 5)
+        x = np.linspace(0, 4, 5)
         y = sm.predict_values(x)
 
         plt.plot(xt, yt, "o", label="data")
@@ -725,9 +725,9 @@ class Test(unittest.TestCase):
         genn.options["hidden_layer_sizes"] = [6, 6]
         genn.options["alpha"] = 0.1
         genn.options["lambd"] = 0.1
-        genn.options[
-            "gamma"
-        ] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+        genn.options["gamma"] = (
+            1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+        )
         genn.options["num_iterations"] = 1000
         genn.options["is_backtracking"] = True
         genn.options["is_normalize"] = False

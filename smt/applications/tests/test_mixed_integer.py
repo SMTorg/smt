@@ -1316,26 +1316,26 @@ class TestMixedInteger(unittest.TestCase):
             sm.predict_values(
                 np.array(
                     [
-                        [0, -1, -2, 8, 0, 2, 0, 0],
-                        [1, -1, -2, 16, 1, 2, 1, 0],
-                        [2, -1, -2, 32, 2, 2, 1, -2],
+                        [0, -1, -2, 0, 0, 2, 0, 0],
+                        [1, -1, -2, 1, 1, 2, 1, 0],
+                        [2, -1, -2, 2, 2, 2, 1, -2],
                     ]
                 )
             )[:, 0],
             sm.predict_values(
                 np.array(
                     [
-                        [0, -1, -2, 8, 0, 2, 10, 10],
-                        [1, -1, -2, 16, 1, 2, 1, 10],
-                        [2, -1, -2, 32, 2, 2, 1, -2],
+                        [0, -1, -2, 0, 0, 2, 10, 10],
+                        [1, -1, -2, 1, 1, 2, 1, 10],
+                        [2, -1, -2, 2, 2, 2, 1, -2],
                     ]
                 )
             )[:, 0],
         )
         self.assertTrue(
             np.linalg.norm(
-                sm.predict_values(np.array([[0, -1, -2, 8, 0, 2, 0, 0]]))
-                - sm.predict_values(np.array([[0, -1, -2, 8, 0, 12, 10, 10]]))
+                sm.predict_values(np.array([[0, -1, -2, 0, 0, 2, 0, 0]]))
+                - sm.predict_values(np.array([[0, -1, -2, 0, 0, 12, 10, 10]]))
             )
             > 1e-8
         )
@@ -1789,7 +1789,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     def test_mixed_homo_gaussian_3D_ord_cate(self):
-        xt = np.array([[0.5, 0, 5], [2, 3, 4], [5, 2, -1], [-2, 4, 0.5]])
+        xt = np.array([[0, 5, 0], [2, 4, 3], [4, -1, 2], [2, 0.5, 1]])
         yt = np.array([[0.0], [3], [1.0], [1.5]])
         design_space = DesignSpace(
             [
