@@ -1,0 +1,43 @@
+GPX
+===
+
+`GPX` is a rewrite of Kriging (aka `KRG`) and `KPLS` models of SMT in Rust. 
+Actually `GPX` is a wrapper of the `Gpx` model from the `egobox` library which is adapted here to the surrogate models API of SMT.
+
+If you find the performances of the Python implementation (training/prediction time) not sufficient for your use case,
+you may want to give `GPX` a try.
+
+You will need to install the `egobox` extra dependency with the command: `pip install smt[gpx]`
+
+More information about the `egobox` library can be found in [1]_.
+
+Limitations
+-----------
+
+* wrt `KRG/KPLS`: `GPX` does not implement mixed integer or hierarchical variables, derivatives, noise handling or KRG sampling.
+
+* wrt `egobox::Gpx`: `GPX` does not give access to mixture of gaussian processes, does not give access to GP sampling
+
+
+See [2]_ for more information on `egobox::Gpx`.  
+
+
+Reference
+---------
+
+.. [1] `Lafage, R., (2022). egobox, a Rust toolbox for efficient global optimization. Journal of Open Source Software, 7(78), 4737, <https://doi.org/10.21105/joss.04737>`_
+
+.. [2] `Tutorial egobox::Gpx <https://github.com/relf/egobox/blob/cf7e50cb23b11fda9dd255c2b29178f6d51c3242/doc/Gpx_Tutorial.ipynb>`_
+
+Usage
+-----
+
+Example
+^^^^^^^
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_gpx , 80
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate_models , GPX , options
