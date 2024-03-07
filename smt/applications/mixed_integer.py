@@ -266,7 +266,7 @@ class MixedIntegerKrigingModel(KrgBased):
         self._surrogate._train()
 
     def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        x_corr, is_acting = self._get_x_for_surrogate_model(np.copy(x))
         return self._surrogate.predict_values(x_corr, is_acting=is_acting)
 
     def _predict_intermediate_values(
@@ -278,7 +278,7 @@ class MixedIntegerKrigingModel(KrgBased):
         )
 
     def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        x_corr, is_acting = self._get_x_for_surrogate_model(np.copy(x))
         return self._surrogate.predict_variances(x_corr, is_acting=is_acting)
 
     def predict_variances_all_levels(self, x: np.ndarray, is_acting=None) -> np.ndarray:
