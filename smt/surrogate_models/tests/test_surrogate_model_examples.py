@@ -286,36 +286,36 @@ class Test(unittest.TestCase):
         )
 
         plt.show()
-        
+
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_noisy_krg(self):
         import numpy as np
         import matplotlib.pyplot as plt
         from smt.surrogate_models import KRG
-   
+
         # defining the toy example
         def target_fun(x):
             import numpy as np
-   
+
             return np.cos(5 * x)
-   
+
         nobs = 50  # number of obsertvations
         np.random.seed(0)  # a seed for reproducibility
         xt = np.random.uniform(size=nobs)  # design points
-   
+
         # adding a random noise to observations
         yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
-   
+
         # training the model with the option eval_noise= True
         sm = KRG(eval_noise=True)
         sm.set_training_values(xt, yt)
         sm.train()
-   
+
         # predictions
         x = np.linspace(0, 1, 100).reshape(-1, 1)
         y = sm.predict_values(x)  # predictive mean
         var = sm.predict_variances(x)  # predictive variance
-   
+
         # plotting predictions +- 3 std confidence intervals
         plt.rcParams["figure.figsize"] = [8, 4]
         plt.fill_between(
@@ -332,7 +332,7 @@ class Test(unittest.TestCase):
         plt.legend(loc=0)
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
-        
+
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mixed_gower_krg(self):
         from smt.surrogate_models import (
