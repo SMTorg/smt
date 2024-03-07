@@ -14,21 +14,9 @@ More information about the `egobox` library can be found in [1]_.
 Limitations
 -----------
 
-wrt `KRG/KPLS`
-^^^^^^^^^^^^^^^^
+* wrt `KRG/KPLS`: `GPX` does not implement mixed integer or hierarchical variables, derivatives, noise handling or KRG sampling.
 
-* GPX does not handle mixed integer or hierarchical variables. 
-
-* GPX does not implement derivatives.
-
-* GPX does not implement noise handling.
-
-wrt `egobox::Gpx`
-^^^^^^^^^^^^^^^^^
-
-* GPX does not give access to mixture of gaussian processes capabilities
-
-* GPX does not give access to GP sampling
+* wrt `egobox::Gpx`: `GPX` does not give access to mixture of gaussian processes, does not give access to GP sampling
 
 
 See [2]_ for more information on `egobox::Gpx`.  
@@ -102,7 +90,7 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0037863
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -182,6 +170,11 @@ Options
      -  None
      -  ['int']
      -  Number of optimizer runs (multistart method)
+  *  -  kpls_dim
+     -  None
+     -  None
+     -  ['NoneType', 'int']
+     -  Number of PLS components used for dimension reduction
   *  -  seed
      -  42
      -  None

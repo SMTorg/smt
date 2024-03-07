@@ -65,7 +65,7 @@ class GPX(SurrogateModel):
         declare(
             "kpls_dim",
             None,
-            types=None | int,
+            types=(type(None), int),
             desc="Number of PLS components used for dimension reduction",
         )
         declare(
