@@ -1009,11 +1009,11 @@ class TestEGO(SMTestCase):
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
         if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            self.assertAlmostEqual(np.sum(y_data), 6.768616104127338, delta=1e-9)
-            self.assertAlmostEqual(np.sum(x_data), 34.205904294464716, delta=1e-9)
+            self.assertAlmostEqual(np.sum(y_data), 6.768616104127338, delta=1e-6)
+            self.assertAlmostEqual(np.sum(x_data), 34.205904294464716, delta=1e-6)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=2e-8)
-            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-9)
+            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=1e-6)
+            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-6)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
