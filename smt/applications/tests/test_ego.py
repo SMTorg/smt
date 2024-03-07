@@ -1404,5 +1404,4 @@ if __name__ == "__main__":
     if "--example" in argv:
         TestEGO.run_ego_mixed_integer_example()
         exit()
-    #  unittest.main()
-    TestEGO().test_ego_random_stateing()
+    unittest.main()
