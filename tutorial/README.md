@@ -8,7 +8,7 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ## Noisy Gaussian process
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_MFK_Noise.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_Noise.ipynb)
 
 ## Multi-Fidelity Gaussian Process
 
