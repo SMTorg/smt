@@ -3,7 +3,10 @@ from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:
     import egobox as egx
+
+    GPX_AVAILABLE = True
 except ImportError:
+    GPX_AVAILABLE = False
     print("Error: to use GPX you have to install dependencies: pip install smt['gpx']")
 
 REGRESSIONS = {
@@ -51,19 +54,19 @@ class GPX(SurrogateModel):
             "theta_bounds",
             [1e-6, 2e1],
             types=(list, np.ndarray),
-            desc="bounds for hyperparameters",
+            desc="Bounds for hyperparameters",
         )
         declare(
             "n_start",
             10,
             types=int,
-            desc="number of optimizer runs (multistart method)",
+            desc="Number of optimizer runs (multistart method)",
         )
         declare(
             "seed",
             default=42,
             types=int,
-            desc="Numpy RandomState object or seed number which controls random draws \
+            desc="Seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
 
