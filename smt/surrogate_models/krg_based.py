@@ -1781,6 +1781,10 @@ class KrgBased(SurrogateModel):
                 grad = -self._reduced_likelihood_gradient(theta)[0]
                 return grad
 
+            def hessian_minus_reduced_likelihood_function(theta):
+                hess = -self._reduced_likelihood_hessian(theta)[0]
+                return hess
+
         else:
 
             def minus_reduced_likelihood_function(log10t):
@@ -1792,6 +1796,15 @@ class KrgBased(SurrogateModel):
                     -np.log(10.0)
                     * (10.0**log10t_2d)
                     * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
+                )
+                return res
+
+            def hessian_minus_reduced_likelihood_function(log10t):
+                log10t_2d = np.atleast_2d(log10t).T
+                res = (
+                    -np.log(10.0)
+                    * (10.0**log10t_2d)
+                    * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
                 )
                 return res
 
@@ -1960,8 +1973,8 @@ class KrgBased(SurrogateModel):
                                 method="COBYLA",
                                 options={
                                     "rhobeg": _rhobeg,
-                                    "tol": 1e-4,
-                                    "maxiter": limit,
+                                    "tol": 1e-8,
+                                    "maxiter": 2.5* limit,
                                 },
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
@@ -1979,8 +1992,9 @@ class KrgBased(SurrogateModel):
                                 theta0_loop,
                                 method="TNC",
                                 jac=grad_minus_reduced_likelihood_function,
+                                hess=hessian_minus_reduced_likelihood_function,
                                 bounds=bounds_hyp,
-                                options={"maxfun": 2 * limit},
+                                options={"maxfun": limit},
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
