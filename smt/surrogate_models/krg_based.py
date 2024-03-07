@@ -1992,7 +1992,9 @@ class KrgBased(SurrogateModel):
                                 theta0_loop,
                                 method="TNC",
                                 jac=grad_minus_reduced_likelihood_function,
-                                hess=hessian_minus_reduced_likelihood_function,
+                                ###The hessian information is available but never used
+                                #
+                                ####hess=hessian_minus_reduced_likelihood_function,
                                 bounds=bounds_hyp,
                                 options={"maxfun": limit},
                             )
