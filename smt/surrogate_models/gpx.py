@@ -63,6 +63,12 @@ class GPX(SurrogateModel):
             desc="Number of optimizer runs (multistart method)",
         )
         declare(
+            "kpls_dim",
+            None,
+            types=None | int,
+            desc="Number of PLS components used for dimension reduction",
+        )
+        declare(
             "seed",
             default=42,
             types=int,
@@ -75,16 +81,19 @@ class GPX(SurrogateModel):
 
     def _train(self):
         xt, yt = self.training_points[None][0]
-        regr = REGRESSIONS[self.options["poly"]]
-        corr = CORRELATIONS[self.options["corr"]]
-        self.gpx = egx.Gpx.builder(
-            regr_spec=regr,
-            corr_spec=corr,
-            theta_init=np.array(self.options["theta0"]),
-            theta_bounds=np.array([self.options["theta_bounds"]]),
-            n_start=self.options["n_start"],
-            seed=self.options["seed"],
-        ).fit(xt, yt)
+        config = {
+            "regr_spec": REGRESSIONS[self.options["poly"]],
+            "corr_spec": CORRELATIONS[self.options["corr"]],
+            "theta_init": np.array(self.options["theta0"]),
+            "theta_bounds": np.array([self.options["theta_bounds"]]),
+            "n_start": self.options["n_start"],
+            "seed": self.options["seed"],
+        }
+        kpls_dim = self.options["kpls_dim"]
+        if kpls_dim:
+            config["kpls_dim"] = kpls_dim
+
+        self.gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
     def _predict_values(self, xt):
         y = self.gpx.predict_values(xt)
