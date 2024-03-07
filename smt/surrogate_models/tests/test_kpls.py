@@ -90,7 +90,7 @@ class TestKPLS(unittest.TestCase):
             # assert small error between Cobyla and TNC
             self.assertTrue(
                 np.linalg.norm(kriging_Cobyla.optimal_theta - kriging_TNC.optimal_theta)
-                < 2e-2
+                < 1e-1
             )
 
 

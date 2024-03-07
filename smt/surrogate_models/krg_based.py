@@ -1973,8 +1973,8 @@ class KrgBased(SurrogateModel):
                                 method="COBYLA",
                                 options={
                                     "rhobeg": _rhobeg,
-                                    "tol": 1e-5,
-                                    "maxiter": 2.5 * limit,
+                                    "tol": 1e-4,
+                                    "maxiter": limit,
                                 },
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
