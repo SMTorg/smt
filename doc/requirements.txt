@@ -5,6 +5,7 @@ scikit-learn
 pyDOE3
 numpydoc
 matplotlib
-ConfigSpace~=0.6.1
-jenn >= 1.0.2
+ConfigSpace ~= 0.6.1
+jenn >= 1.0.2, <2.0
+egobox ~= 0.16.0
 git+https://github.com/hwangjt/sphinx_auto_embed.git  # for doc generation 
