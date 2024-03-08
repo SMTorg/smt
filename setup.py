@@ -120,6 +120,7 @@ metadata = dict(
         "cs": [  # pip install smt[cs]
             "ConfigSpace~=0.6.1",
         ],
+        "gpx": ["egobox~=0.16"],  # pip install smt[gpx]
     },
     python_requires=">=3.8",
     zip_safe=False,

@@ -459,7 +459,11 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_integer_context_example()
         self.run_hierarchical_variables_Goldstein()
         self.run_mixed_discrete_design_space_example()
+        self.run_mixed_gower_example()
+        self.run_mixed_homo_gaussian_example()
+        self.run_mixed_homo_hyp_example()
         if ds.HAS_CONFIG_SPACE:
+            self.run_mixed_cs_example()
             self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
