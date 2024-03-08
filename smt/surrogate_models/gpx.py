@@ -1,25 +1,26 @@
 import numpy as np
+import warnings
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:
     import egobox as egx
 
     GPX_AVAILABLE = True
+
+    REGRESSIONS = {
+        "constant": egx.RegressionSpec.CONSTANT,
+        "linear": egx.RegressionSpec.LINEAR,
+        "quadratic": egx.RegressionSpec.QUADRATIC,
+    }
+    CORRELATIONS = {
+        "abs_exp": egx.CorrelationSpec.ABSOLUTE_EXPONENTIAL,
+        "squar_exp": egx.CorrelationSpec.SQUARED_EXPONENTIAL,
+        "matern32": egx.CorrelationSpec.MATERN32,
+        "matern52": egx.CorrelationSpec.MATERN52,
+    }
 except ImportError:
     GPX_AVAILABLE = False
-    print("Error: to use GPX you have to install dependencies: pip install smt['gpx']")
-
-REGRESSIONS = {
-    "constant": egx.RegressionSpec.CONSTANT,
-    "linear": egx.RegressionSpec.LINEAR,
-    "quadratic": egx.RegressionSpec.QUADRATIC,
-}
-CORRELATIONS = {
-    "abs_exp": egx.CorrelationSpec.ABSOLUTE_EXPONENTIAL,
-    "squar_exp": egx.CorrelationSpec.SQUARED_EXPONENTIAL,
-    "matern32": egx.CorrelationSpec.MATERN32,
-    "matern52": egx.CorrelationSpec.MATERN52,
-}
+    warnings.warn("To use GPX you have to install dependencies: pip install smt['gpx']")
 
 
 class GPX(SurrogateModel):
@@ -79,8 +80,11 @@ class GPX(SurrogateModel):
         supports = self.supports
         supports["variances"] = True
 
+        self._gpx = None
+
     def _train(self):
         xt, yt = self.training_points[None][0]
+
         config = {
             "regr_spec": REGRESSIONS[self.options["poly"]],
             "corr_spec": CORRELATIONS[self.options["corr"]],
@@ -93,12 +97,10 @@ class GPX(SurrogateModel):
         if kpls_dim:
             config["kpls_dim"] = kpls_dim
 
-        self.gpx = egx.Gpx.builder(**config).fit(xt, yt)
+        self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
     def _predict_values(self, xt):
-        y = self.gpx.predict_values(xt)
-        return y
+        return self._gpx.predict_values(xt)
 
     def _predict_variances(self, xt):
-        s2 = self.gpx.predict_variances(xt)
-        return s2
+        return self._gpx.predict_variances(xt)
