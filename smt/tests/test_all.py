@@ -28,6 +28,7 @@ from smt.surrogate_models import (
     GENN,
     DesignSpace,
 )
+from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTC, RMTB
@@ -186,9 +187,6 @@ class Test(SMTestCase):
     def test_exp_QP(self):
         self.run_test()
 
-    def test_exp_GPX(self):
-        self.run_test()
-
     def test_exp_KRG_Cobyla(self):
         self.run_test()
 
@@ -219,6 +217,10 @@ class Test(SMTestCase):
     def test_exp_GENN(self):
         self.run_test()
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_exp_GPX(self):
+        self.run_test()
+
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_exp_IDW(self):
         self.run_test()
@@ -242,9 +244,6 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_tanh_QP(self):
-        self.run_test()
-
-    def test_tanh_GPX(self):
         self.run_test()
 
     def test_tanh_KRG_Cobyla(self):
@@ -277,6 +276,10 @@ class Test(SMTestCase):
     def test_tanh_GENN(self):
         self.run_test()
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_tanh_GPX(self):
+        self.run_test()
+
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
@@ -300,9 +303,6 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_QP(self):
-        self.run_test()
-
-    def test_cos_GPX(self):
         self.run_test()
 
     def test_cos_KRG_Cobyla(self):
@@ -333,6 +333,10 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_GENN(self):
+        self.run_test()
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_cos_GPX(self):
         self.run_test()
 
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")

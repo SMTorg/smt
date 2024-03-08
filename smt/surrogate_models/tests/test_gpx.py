@@ -3,9 +3,11 @@ import numpy as np
 from smt.sampling_methods import LHS
 from smt.problems import Sphere
 from smt.surrogate_models import GPX
+from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 
 class TestGPX(unittest.TestCase):
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_gpx(self):
         ndim = 2
         num = 50
