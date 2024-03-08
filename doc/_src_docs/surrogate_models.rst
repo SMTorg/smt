@@ -16,6 +16,7 @@ SMT contains the surrogate modeling methods listed below.
    surrogate_models/kpls
    surrogate_models/kplsk
    surrogate_models/gekpls
+   surrogate_models/gpx
    surrogate_models/genn
    surrogate_models/mgp
    surrogate_models/sgp
@@ -67,13 +68,13 @@ Usage
      Training ...
         Initializing linear solver ...
            Performing LU fact. (5 x 5 mtx) ...
-           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000639
-        Initializing linear solver - done. Time (sec):  0.0000741
+           Performing LU fact. (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Initializing linear solver - done. Time (sec):  0.0000000
         Solving linear system (col. 0) ...
            Back solving (5 x 5 mtx) ...
-           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000219
-        Solving linear system (col. 0) - done. Time (sec):  0.0000288
-     Training - done. Time (sec):  0.0002680
+           Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
+        Solving linear system (col. 0) - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -81,9 +82,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000110
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000001
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: surrogate_models_Test_test_rbf.png
