@@ -1179,8 +1179,8 @@ class DesignSpace(BaseDesignSpace):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 if cs_normalize:
-                    dv.lower = min(np.min(x), dv.lower)
-                    dv.upper = max(np.max(x), dv.upper)
+                    dv.lower = min(np.min(x[:, i]), dv.lower)
+                    dv.upper = max(np.max(x[:, i]), dv.upper)
                     x[:, i] = np.clip(
                         (x[:, i] - dv.lower) / (dv.upper - dv.lower + 1e-16), 0, 1
                     )
