@@ -36,44 +36,51 @@ class Test(SMTestCase):
         y = sm.predict_values(xt)
         t_error = np.linalg.norm(y - yt) / np.linalg.norm(yt)
         self.assert_error(t_error, 0.0, 1e-2)
-        
+
     def test_predict_variance(self):
         # defining the training data
         xt = np.array([0.0, 1.0, 2.0, 2.5, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 1.1, 1.0])
 
         # defining the models
-        sm_noise_free = KRG() # noise-free Kriging model
-        sm_noise_fixed = KRG(noise0=[1e-1], print_global=False) # noisy Kriging model with fixed variance
-        sm_noise_estim = KRG(noise0=[1e-1], eval_noise=True,  noise_bounds=[1e-2, 1000.0], print_global=False) # noisy Kriging model with estimated variance
+        sm_noise_free = KRG()  # noise-free Kriging model
+        sm_noise_fixed = KRG(
+            noise0=[1e-1], print_global=False
+        )  # noisy Kriging model with fixed variance
+        sm_noise_estim = KRG(
+            noise0=[1e-1],
+            eval_noise=True,
+            noise_bounds=[1e-2, 1000.0],
+            print_global=False,
+        )  # noisy Kriging model with estimated variance
 
         # training the models
         sm_noise_free.set_training_values(xt, yt)
         sm_noise_free.train()
-        
+
         sm_noise_fixed.set_training_values(xt, yt)
         sm_noise_fixed.train()
 
         sm_noise_estim.set_training_values(xt, yt)
         sm_noise_estim.train()
-        
+
         # predictions at training points
         x = xt
 
-        # error message in case if test case got failed 
-        
+        # error message in case if test case got failed
+
         message = "Variance at training points must be different to 0!"
-        
-        
-        #the Variance (interpolation case without noise) must be =/ 0
-        var_noise_free = sm_noise_free.predict_variances(x) # predictive variance
+
+        # the Variance (interpolation case without noise) must be =/ 0
+        var_noise_free = sm_noise_free.predict_variances(x)  # predictive variance
         self.assert_error(np.linalg.norm(var_noise_free), 0.0, 1e-5)
-        
-        #the Variance (regression case with noise) must be =/ 0
-        var_noise_fixed = sm_noise_fixed.predict_variances(x) # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-5)        
-        var_noise_estim = sm_noise_estim.predict_variances(x) # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_estim) , 0.01135, 1e-5)
+
+        # the Variance (regression case with noise) must be =/ 0
+        var_noise_fixed = sm_noise_fixed.predict_variances(x)  # predictive variance
+        self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-5)
+        var_noise_estim = sm_noise_estim.predict_variances(x)  # predictive variance
+        self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-5)
+
 
 if __name__ == "__main__":
     unittest.main()
