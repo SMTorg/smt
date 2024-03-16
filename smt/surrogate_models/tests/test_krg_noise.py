@@ -69,8 +69,6 @@ class Test(SMTestCase):
 
         # error message in case if test case got failed
 
-        message = "Variance at training points must be different to 0!"
-
         # the Variance (interpolation case without noise) must be =/ 0
         var_noise_free = sm_noise_free.predict_variances(x)  # predictive variance
         self.assert_error(np.linalg.norm(var_noise_free), 0.0, 1e-5)
