@@ -105,6 +105,7 @@ class ScaledSamplingMethod(SamplingMethod):
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
 
     Implementation notes:
+
     * When nt is None, it defaults to 2 * nx.
     * xlimits is presence is checked. ValueError is raised if not specified.
     """
