@@ -45,7 +45,7 @@ try:
     from .rmtc import RMTC
     from .rmtb import RMTB
 
-    __all__ = __all__ + [IDW, RBF, RMTC, RMTB]
+    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB"]
 
 except ImportError:
     pass
