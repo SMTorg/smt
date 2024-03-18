@@ -405,13 +405,13 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Predict the derivation of the variance at a point
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         x : np.ndarray
             Input value for the prediction point.
 
-        Returns:
-        --------
+        Returns
+        -------
         derived_variance: np.ndarray
             The jacobian of the variance
         """
@@ -562,13 +562,13 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Implemented by surrogate models to predict the derivation of the variance at a point (optional).
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         x : np.ndarray
             Input value for the prediction point.
 
-        Returns:
-        --------
+        Returns
+        -------
         derived_variance: np.ndarray
             The jacobian of the variance
         """
