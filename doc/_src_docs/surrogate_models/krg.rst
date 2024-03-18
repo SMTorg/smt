@@ -366,7 +366,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'squar_sin_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
   *  -  pow_exp_power

@@ -17,7 +17,14 @@ class KRG(KrgBased):
         declare(
             "corr",
             "squar_exp",
-            values=("pow_exp", "abs_exp", "squar_exp", "matern52", "matern32"),
+            values=(
+                "pow_exp",
+                "abs_exp",
+                "squar_exp",
+                "squar_sin_exp",
+                "matern52",
+                "matern32",
+            ),
             desc="Correlation function type",
             types=(str),
         )
