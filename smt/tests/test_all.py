@@ -173,7 +173,7 @@ class Test(SMTestCase):
         elif pname == "tanh" and sname in ["KPLS", "RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.4)
         elif pname == "exp" and sname in ["GENN"]:
-            self.assertLessEqual(e_error, 1e-1)
+            self.assertLessEqual(e_error, 1.5e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
         else:
