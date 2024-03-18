@@ -244,7 +244,9 @@ class KrgBased(SurrogateModel):
             xt = xt[0][0]
 
         if self.options["design_space"] is None:
-            self.options["design_space"] = ensure_design_space(xt=xt)
+            self.options["design_space"] = ensure_design_space(
+                xt=xt, xlimits=self.options["xlimits"]
+            )
 
         elif not isinstance(self.options["design_space"], BaseDesignSpace):
             ds_input = self.options["design_space"]
