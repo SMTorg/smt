@@ -103,9 +103,10 @@ class ScaledSamplingMethod(SamplingMethod):
     """This class represents sample methods which generates samples in the unit hypercube [0, 1]^nx.
 
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
+
     Implementation notes:
-        * When nt is None, it defaults to 2 * nx.
-        * xlimits is presence is checked. ValueError is raised if not specified.
+    * When nt is None, it defaults to 2 * nx.
+    * xlimits is presence is checked. ValueError is raised if not specified.
     """
 
     def __call__(self, nt: int = None) -> np.ndarray:
