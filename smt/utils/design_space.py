@@ -271,7 +271,7 @@ class BaseDesignSpace:
 
         indi = 0
         for i in self.design_variables:
-            if not ((isinstance(i, FloatVariable))):
+            if not (isinstance(i, FloatVariable)):
                 x[:, indi] = np.int64(np.round(x[:, indi], 0))
             indi += 1
 
@@ -523,9 +523,9 @@ class BaseDesignSpace:
 
                 # The is_acting matrix is simply repeated column-wise
                 if is_acting is not None:
-                    is_acting_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] = (
-                        np.tile(is_acting[:, [i]], (1, n_dim_cat))
-                    )
+                    is_acting_unfolded[
+                        :, i_x_unfold : i_x_unfold + n_dim_cat
+                    ] = np.tile(is_acting[:, [i]], (1, n_dim_cat))
 
                 i_x_unfold += n_dim_cat
 
@@ -608,7 +608,7 @@ class BaseDesignSpace:
         Sample n design vectors and additionally return the is_acting matrix.
 
         Returns
-        ----------
+        -------
         x: np.ndarray [n, dim]
            - Valid design vectors
         is_acting: np.ndarray [n, dim]
@@ -1128,7 +1128,6 @@ class DesignSpace(BaseDesignSpace):
                         if (
                             str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
                         ) == "Cat" and not (np.isnan(vector2[indvec])):
-
                             vector2[indvec] = int(vector2[indvec])
                         indvec += 1
 
@@ -1212,7 +1211,6 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
 
     def _cs_denormalize_x(self, x: np.ndarray):
-
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower

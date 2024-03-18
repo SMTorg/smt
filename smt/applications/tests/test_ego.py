@@ -1217,6 +1217,7 @@ class TestEGO(SMTestCase):
         sm = KRG(
             design_space=design_space,
             categorical_kernel=MixIntKernelType.GOWER,
+            hyper_opt="Cobyla",
             print_global=False,
         )
         mixint = MixedIntegerContext(design_space)

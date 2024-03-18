@@ -20,6 +20,8 @@ Briefly explaining how mSANN generates the mode shapes of a given airfoil:
 #. Totally 16 input variables, two flow conditions of Mach number (0.3 to 0.6) and the angle of attack (2 degrees to 6 degrees) plus 14 shape coefficients.
 #. The output airfoil aerodynamic force coefficients and their respective gradients are computed using ADflow, which solves the RANS equations with a Spalart-Allmaras turbulence model.
 
+See also [3]_, [4]_, [5]_, [6]_ for more information.
+
 References
 ----------
 
