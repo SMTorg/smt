@@ -171,3 +171,8 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+# -- Options for numpydoc
+
+# Avoid WARNING: autosummary: stub file not found...
+numpydoc_class_members_toctree = False
