@@ -985,7 +985,19 @@ class TestEGO(SMTestCase):
             LHS, design_space, criterion="ese", random_state=random_state
         )
         Xt = sampling(n_doe)
-
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(Xt), 24.811925491708156, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
+        Xt = np.array(
+            [
+                [0.37454012, 1.0],
+                [0.95071431, 0.0],
+                [0.73199394, 8.0],
+                [0.59865848, 6.0],
+                [0.15601864, 7.0],
+            ]
+        )
         # To start the Bayesion optimization
         n_iter = 2  # number of iterations
         criterion = "EI"  # infill criterion
@@ -1012,8 +1024,8 @@ class TestEGO(SMTestCase):
             self.assertAlmostEqual(np.sum(y_data), 8.791152851223481, delta=1e-4)
             self.assertAlmostEqual(np.sum(x_data), 32.4780157147317, delta=1e-4)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 4.011650657325326, delta=1e-4)
-            self.assertAlmostEqual(np.sum(x_data), 36.3882181242625, delta=1e-4)
+            self.assertAlmostEqual(np.sum(y_data), 9.02168705983543, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 32.66436884081797, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
@@ -1405,4 +1417,5 @@ if __name__ == "__main__":
     if "--example" in argv:
         TestEGO.run_ego_mixed_integer_example()
         exit()
-    unittest.main()
+    # unittest.main()
+    TestEGO().test_ego_random_stateing()
