@@ -1471,9 +1471,6 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
-            r = self._correlation_types["squar_exp"](self.optimal_theta, d).reshape(
-                n_eval, self.nt
-            )
             y = np.zeros(n_eval)
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
