@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
+Author: Remi Lafage <remi.lafage@onera.fr> 
 This package is distributed under New BSD license.
 """
 
@@ -985,19 +985,31 @@ class TestEGO(SMTestCase):
             LHS, design_space, criterion="ese", random_state=random_state
         )
         Xt = sampling(n_doe)
-
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(Xt), 24.811925491708156, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
+        Xt = np.array(
+            [
+                [0.37454012, 1.0],
+                [0.95071431, 0.0],
+                [0.73199394, 8.0],
+                [0.59865848, 6.0],
+                [0.15601864, 7.0],
+            ]
+        )
         # To start the Bayesion optimization
         n_iter = 2  # number of iterations
-        criterion = "EI"  # infill criterion
+        criterion = "LCB"  # infill criterion
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
                 design_space=design_space,
-                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                categorical_kernel=MixIntKernelType.GOWER,
                 theta0=[1e-2],
-                n_start=15,
+                n_start=25,
                 corr="squar_exp",
                 hyper_opt="Cobyla",
                 print_global=False,
@@ -1005,15 +1017,15 @@ class TestEGO(SMTestCase):
             verbose=False,
             enable_tunneling=False,
             random_state=random_state,
-            n_start=15,
+            n_start=25,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
         if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            self.assertAlmostEqual(np.sum(y_data), 5.4385331120184475, delta=1e-3)
-            self.assertAlmostEqual(np.sum(x_data), 39.711522540205394, delta=1e-3)
+            self.assertAlmostEqual(np.sum(y_data), 8.846225704750577, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 41.811925504901374, delta=1e-4)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=1e-6)
-            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-6)
+            self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
