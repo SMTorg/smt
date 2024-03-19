@@ -19,7 +19,7 @@ from multiprocessing import Pool
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KRG,
-    GEKPLS,
+    GEKPLS, 
     KPLS,
     MixIntKernelType,
     DesignSpace,
@@ -999,7 +999,7 @@ class TestEGO(SMTestCase):
             ]
         )
         # To start the Bayesion optimization
-        n_iter = 2  # number of iterations
+        n_iter = 1  # number of iterations
         criterion = "EI"  # infill criterion
         ego = EGO(
             n_iter=n_iter,

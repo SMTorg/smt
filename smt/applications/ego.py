@@ -362,6 +362,7 @@ class EGO(SurrogateBasedApplication):
         while not success and n_optim <= n_max_optim:
             opt_all = []
             x_start = self._sampling(n_start)
+            print("XSTART",x_start)
             for ii in range(n_start):
                 try:
                     opt_all.append(
