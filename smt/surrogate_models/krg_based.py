@@ -964,6 +964,11 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
+        if linalg.svd(R, compute_uv=False)[-1] < 1.1 * nugget:
+            raise Exception(
+                "R is too ill conditioned. Poor combination "
+                "of regression model and observations."
+            )
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
@@ -1466,6 +1471,9 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
+            r = self._correlation_types["squar_exp"](self.optimal_theta, d).reshape(
+                n_eval, self.nt
+            )
             y = np.zeros(n_eval)
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
