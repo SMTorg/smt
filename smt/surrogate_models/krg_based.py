@@ -965,7 +965,7 @@ class KrgBased(SurrogateModel):
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
         if linalg.svd(R, compute_uv=False)[-1] < 1.1 * nugget:
-            raise Exception(
+            warnings.warn(
                 "R is too ill conditioned. Poor combination "
                 "of regression model and observations."
             )

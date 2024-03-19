@@ -49,7 +49,7 @@ class TestKrgBased(unittest.TestCase):
         sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.9999)
         sm.set_training_values(xt, yt)
 
-        self.assertRaises(Exception, sm.train)
+        self.assertWarns(UserWarning, sm.train)
 
     def test_less_almost_squar_exp(self):
         nobs = 50  # number of obsertvations
