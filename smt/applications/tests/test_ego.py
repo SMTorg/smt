@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Author: Remi Lafage <remi.lafage@onera.fr> 
+Author: Remi Lafage <remi.lafage@onera.fr>
 This package is distributed under New BSD license.
 """
 
