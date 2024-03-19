@@ -383,6 +383,7 @@ class EGO(SurrogateBasedApplication):
                     opt_all.append({"success": False})
 
             opt_all = np.asarray(opt_all)
+            print(opt_all)
             for opt_i in opt_all:
                 if (
                     opt_i["message"]
