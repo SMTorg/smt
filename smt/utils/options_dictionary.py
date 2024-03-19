@@ -82,14 +82,17 @@ class OptionsDictionary(object):
         types = self._declared_entries[name]["types"]
 
         if values is not None and types is not None:
-            assert value in values or isinstance(
-                value, types
-            ), "Option %s: value and type of %s are both invalid - " % (
-                name,
-                value,
-            ) + "value must be %s or type must be %s" % (
-                values,
-                types,
+            assert value in values or isinstance(value, types), (
+                "Option %s: value and type of %s are both invalid - "
+                % (
+                    name,
+                    value,
+                )
+                + "value must be %s or type must be %s"
+                % (
+                    values,
+                    types,
+                )
             )
         elif values is not None:
             assert value in values, "Option %s: value %s is invalid - must be %s" % (
@@ -98,9 +101,9 @@ class OptionsDictionary(object):
                 values,
             )
         elif types is not None:
-            assert isinstance(
-                value, types
-            ), "Option %s: type of %s is invalid - must be %s" % (name, value, types)
+            assert isinstance(value, types), (
+                "Option %s: type of %s is invalid - must be %s" % (name, value, types)
+            )
 
     def update(self, dict_):
         """
