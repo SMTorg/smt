@@ -9,7 +9,6 @@ import numpy as np
 from smt.surrogate_models.krg_based import KrgBased
 
 from smt.surrogate_models import KRG
-import openmdao.api as om
 
 
 # defining the toy example
@@ -60,51 +59,6 @@ class TestKrgBased(unittest.TestCase):
         yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
 
         # training the model with the option eval_noise= True
-        sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.999)
-        sm.set_training_values(xt, yt)
-        sm.train()
-
-        # predictions
-        x = np.linspace(0, 1, 500).reshape(-1, 1)
-        sm.predict_values(x)  # predictive mean
-        sm.predict_variances(x)  # predictive variance
-        sm.predict_derivatives(x, 0)  # predictive variance
-
-        class test_krg_derivs(om.ExplicitComponent):
-            def setup(self):
-                # Inputs
-                self.add_input("x", 0.0)
-                # Outputs
-                self.add_output("y", 0.0)
-
-                # Other dependencies
-                self.declare_partials(of="y", wrt=["x"])
-
-            def compute(self, inputs, outputs):
-                """Considering the entire rotor as a single disc that extracts
-                velocity uniformly from the incoming flow and converts it to
-                power."""
-
-                x = inputs["x"]
-                outputs["y"] = sm.predict_values(x)
-
-            def compute_partials(self, inputs, partials):
-                x = inputs["x"]
-                partials["y", "x"] = sm.predict_derivatives(x, 0)
-
-        p = om.Problem(model=om.Group())
-        ivc = p.model.add_subsystem("vars", om.IndepVarComp())
-        ivc.add_output("x", shape=1)
-        p.model.add_subsystem("test_krg_derivs", test_krg_derivs())
-        p.model.connect("vars.x", "test_krg_derivs.x")
-        p.setup(force_alloc_complex=True)
-        p.set_val("vars.x", val=1.0)
-        p.run_model()
-        cpd = p.check_partials(method="fd", compact_print=True, step=1.0e-7)
-        derivs = list((list((list(cpd.values())[0]).values())[0]).values())
-        self.assertTrue(abs(derivs[0] - derivs[1]) > 1000)
-
-        # training the model with the option eval_noise= True
         sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.99)
         sm.set_training_values(xt, yt)
         sm.train()
@@ -114,18 +68,13 @@ class TestKrgBased(unittest.TestCase):
         sm.predict_values(x)  # predictive mean
         sm.predict_variances(x)  # predictive variance
         sm.predict_derivatives(x, 0)  # predictive variance
-
-        p = om.Problem(model=om.Group())
-        ivc = p.model.add_subsystem("vars", om.IndepVarComp())
-        ivc.add_output("x", shape=1)
-        p.model.add_subsystem("test_krg_derivs", test_krg_derivs())
-        p.model.connect("vars.x", "test_krg_derivs.x")
-        p.setup(force_alloc_complex=True)
-        p.set_val("vars.x", val=1.0)
-        p.run_model()
-        cpd = p.check_partials(method="fd", compact_print=True, step=1.0e-7)
-        derivs = list((list((list(cpd.values())[0]).values())[0]).values())
-        self.assertTrue(abs(derivs[0] - derivs[1]) < 5e-2)
+        self.assertLess(
+            np.abs(
+                sm.predict_derivatives(x[20], 0)
+                - (sm.predict_values(x[20] + 1e-6) - sm.predict_values(x[20])) / 1e-6
+            ),
+            1e-2,
+        )
 
 
 if __name__ == "__main__":
