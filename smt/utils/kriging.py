@@ -4,15 +4,15 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-from enum import Enum
 import os
-from sklearn.cross_decomposition import PLSRegression as pls
+from enum import Enum
 
+import numpy as np
 from pyDOE3 import bbdesign
+from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
-from smt.utils.design_space import CategoricalVariable
 
+from smt.utils.design_space import CategoricalVariable
 
 USE_NUMBA_JIT = int(os.getenv("USE_NUMBA_JIT", 0))
 prange = range

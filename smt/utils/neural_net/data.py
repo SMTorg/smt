@@ -6,9 +6,10 @@ Author: Steven H. Berguin <steven.berguin@gtri.gatech.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import os
 import math
+import os
+
+import numpy as np
 
 
 def load_csv(file=None, inputs=None, outputs=None, partials=None):

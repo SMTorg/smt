@@ -5,10 +5,11 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+
 import numpy as np
-from smt.surrogate_models.krg_based import KrgBased
 
 from smt.surrogate_models import KRG
+from smt.surrogate_models.krg_based import KrgBased
 
 
 # defining the toy example

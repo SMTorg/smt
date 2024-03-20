@@ -3,13 +3,13 @@ Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. J
 """
 
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 from smt.examples.airfoil_parameters.learning_airfoil_parameters import (
     load_cd_training_data,
     load_NACA4412_modeshapes,
     plot_predictions,
 )
-from sklearn.model_selection import train_test_split
 from smt.surrogate_models.genn import GENN
 
 x, y, dy = load_cd_training_data()

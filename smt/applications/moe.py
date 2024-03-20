@@ -11,9 +11,8 @@ Mixture of Experts
 # TODO : documentation
 
 import numpy as np
-
-from sklearn.mixture import GaussianMixture
 from scipy.stats import multivariate_normal
+from sklearn.mixture import GaussianMixture
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models.surrogate_model import SurrogateModel

@@ -1,8 +1,8 @@
-from smt.surrogate_models import RMTB
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
     plot_rans_crm_wing,
 )
+from smt.surrogate_models import RMTB
 
 xt, yt, xlimits = get_rans_crm_wing()
 

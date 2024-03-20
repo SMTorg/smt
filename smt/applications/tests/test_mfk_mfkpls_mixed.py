@@ -7,6 +7,7 @@ Created on Fri Oct  6 14:47:08 2023
 """
 
 import unittest
+
 import numpy as np
 
 try:
@@ -19,28 +20,23 @@ except ImportError:
 
 import numpy.linalg as npl
 
-from smt.applications.mfkpls import MFKPLS
+from smt.applications import NestedLHS
 from smt.applications.mfk import MFK
-
+from smt.applications.mfkpls import MFKPLS
 from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
-
-from smt.applications import NestedLHS
-
 from smt.sampling_methods import LHS
-
 from smt.surrogate_models import (
-    KRG,
     KPLS,
+    KRG,
     MixIntKernelType,
 )
-
 from smt.utils.design_space import (
+    CategoricalVariable,
     DesignSpace,
     FloatVariable,
     IntegerVariable,
-    CategoricalVariable,
 )
 
 

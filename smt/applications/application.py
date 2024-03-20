@@ -4,11 +4,11 @@ Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>, R. Lafage
 This package is distributed under New BSD license.
 """
 
+from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, LS, MGP, QP
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, MGP
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     COMPILED_AVAILABLE = True
 except ImportError:

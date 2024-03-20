@@ -6,33 +6,32 @@ This package is distributed under New BSD license.
 
 import os
 import unittest
-import numpy as np
+from multiprocessing import Pool
 from sys import argv
 
+import numpy as np
 
+import smt.utils.design_space as ds
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
-from smt.utils.sm_test_case import SMTestCase
-from smt.problems import Branin, Rosenbrock
-from smt.sampling_methods import FullFactorial
-from multiprocessing import Pool
-from smt.sampling_methods import LHS
-from smt.surrogate_models import (
-    KRG,
-    GEKPLS,
-    KPLS,
-    MixIntKernelType,
-    DesignSpace,
-    OrdinalVariable,
-    FloatVariable,
-    CategoricalVariable,
-    IntegerVariable,
-)
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
-import smt.utils.design_space as ds
+from smt.problems import Branin, Rosenbrock
+from smt.sampling_methods import LHS, FullFactorial
+from smt.surrogate_models import (
+    GEKPLS,
+    KPLS,
+    KRG,
+    CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
+    IntegerVariable,
+    MixIntKernelType,
+    OrdinalVariable,
+)
+from smt.utils.sm_test_case import SMTestCase
 
 try:
     import matplotlib
@@ -1084,11 +1083,12 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.surrogate_models import KRG
         from smt.utils.design_space import DesignSpace
-        import matplotlib.pyplot as plt
 
         def function_test_1d(x):
             # function xsinx
@@ -1173,18 +1173,18 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_mixed_integer_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import MixIntKernelType
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
             IntegerVariable,
         )
-        import matplotlib.pyplot as plt
-        from smt.surrogate_models import KRG
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.
@@ -1271,12 +1271,12 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_parallel_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.applications.ego import Evaluator
         from smt.surrogate_models import KRG, DesignSpace
-
-        import matplotlib.pyplot as plt
 
         def function_test_1d(x):
             # function xsinx
@@ -1305,9 +1305,10 @@ class TestEGO(SMTestCase):
             def run(self, fun, x):
                 n_thread = 5
                 # Caveat: import are made here due to SMT documentation building process
-                import numpy as np
-                from sys import version_info
                 from multiprocessing.pool import ThreadPool
+                from sys import version_info
+
+                import numpy as np
 
                 if version_info.major == 2:
                     return fun(x)

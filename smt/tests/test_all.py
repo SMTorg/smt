@@ -5,33 +5,32 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import unittest
 import inspect
-
+import unittest
 from collections import OrderedDict
+
+import numpy as np
 
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
-
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
-from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import (
+    GEKPLS,
+    GENN,
+    GPX,
+    KPLS,
+    KPLSK,
+    KRG,
     LS,
     QP,
-    KPLS,
-    KRG,
-    KPLSK,
-    GEKPLS,
-    GPX,
-    GENN,
     DesignSpace,
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
+from smt.utils.misc import compute_rms_error
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     COMPILED_AVAILABLE = True
 except ImportError:

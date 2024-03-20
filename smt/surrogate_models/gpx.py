@@ -1,5 +1,7 @@
-import numpy as np
 import warnings
+
+import numpy as np
+
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:

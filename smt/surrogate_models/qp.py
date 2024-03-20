@@ -10,6 +10,7 @@ TO DO:
 
 import numpy as np
 import scipy
+
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
 from smt.utils.misc import standardization

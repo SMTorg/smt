@@ -7,6 +7,7 @@ Base class for sampling algorithms.
 """
 
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary

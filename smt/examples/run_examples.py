@@ -6,14 +6,14 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
+
+from smt.problems import NdimRobotArm, Sphere
+from smt.sampling_methods import LHS
+from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, LS, QP, DesignSpace
 from smt.utils.misc import compute_rms_error
 
-from smt.problems import Sphere, NdimRobotArm
-from smt.sampling_methods import LHS
-from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, DesignSpace
-
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     COMPILED_AVAILABLE = True
 except ImportError:

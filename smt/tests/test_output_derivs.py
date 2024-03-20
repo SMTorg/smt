@@ -4,20 +4,20 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import unittest
 import inspect
-
+import unittest
 from collections import OrderedDict
-from smt.utils.design_space import DesignSpace
+
+import numpy as np
 
 from smt.problems import Sphere
 from smt.sampling_methods import FullFactorial
-from smt.utils.sm_test_case import SMTestCase
+from smt.utils.design_space import DesignSpace
 from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     COMPILED_AVAILABLE = True
 except ImportError:

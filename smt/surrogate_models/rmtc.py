@@ -4,12 +4,12 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import scipy.sparse
 from numbers import Integral
 
-from smt.surrogate_models.rmts import RMTS
+import numpy as np
+import scipy.sparse
 
+from smt.surrogate_models.rmts import RMTS
 from smt.surrogate_models.rmtsclib import PyRMTC
 
 

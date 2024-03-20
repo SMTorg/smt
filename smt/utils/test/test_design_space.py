@@ -2,21 +2,23 @@
 Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 """
 
-import unittest
-import itertools
 import contextlib
+import itertools
+import unittest
+
 import numpy as np
+
+import smt.utils.design_space as ds
 from smt.sampling_methods import LHS
 from smt.utils.design_space import (
+    HAS_CONFIG_SPACE,
+    BaseDesignSpace,
+    CategoricalVariable,
+    DesignSpace,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
-    CategoricalVariable,
-    BaseDesignSpace,
-    DesignSpace,
-    HAS_CONFIG_SPACE,
 )
-import smt.utils.design_space as ds
 
 
 @contextlib.contextmanager

@@ -30,8 +30,8 @@ class Test(unittest.TestCase):
         NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
     )
     def test_idw(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import IDW
 
@@ -57,8 +57,8 @@ class Test(unittest.TestCase):
         NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
     )
     def test_rbf(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import RBF
 
@@ -84,8 +84,8 @@ class Test(unittest.TestCase):
         NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
     )
     def test_rmtb(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import RMTB
 
@@ -119,8 +119,8 @@ class Test(unittest.TestCase):
         NO_COMPILED or NO_MATPLOTLIB, "C compilation failed or no matplotlib"
     )
     def test_rmtc(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import RMTC
 
@@ -151,8 +151,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_ls(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import LS
 
@@ -176,8 +176,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_qp(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import QP
 
@@ -203,8 +203,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_krg(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import KRG
 
@@ -244,11 +244,11 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mixed_int_krg(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import KRG
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.surrogate_models import KRG
         from smt.utils.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 2.0, 3.0])
@@ -291,8 +291,9 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_noisy_krg(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
+
         from smt.surrogate_models import KRG
 
         # defining the toy example
@@ -337,17 +338,18 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mixed_gower_krg(self):
-        from smt.surrogate_models import (
-            MixIntKernelType,
-            KRG,
-            DesignSpace,
-            CategoricalVariable,
-        )
+        import matplotlib.pyplot as plt
+        import numpy as np
+
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
-        import matplotlib.pyplot as plt
-        import numpy as np
+        from smt.surrogate_models import (
+            KRG,
+            CategoricalVariable,
+            DesignSpace,
+            MixIntKernelType,
+        )
 
         xt = np.array([0, 3, 4])
         yt = np.array([0.0, 1.0, 1.5])
@@ -382,9 +384,10 @@ class Test(unittest.TestCase):
 
     def test_kpls_auto(self):
         import numpy as np
-        from smt.surrogate_models import KPLS
+
         from smt.problems import TensorProduct
         from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLS
 
         # The problem is the exponential problem with dimension 10
         ndim = 10
@@ -409,8 +412,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_kpls(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import KPLS
 
@@ -452,8 +455,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_kplsk(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import KPLSK
 
@@ -495,12 +498,12 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_gekpls(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import GEKPLS, DesignSpace
         from smt.problems import Sphere
         from smt.sampling_methods import LHS
+        from smt.surrogate_models import GEKPLS, DesignSpace
 
         # Construction of the DOE
         fun = Sphere(ndim=2)
@@ -548,8 +551,8 @@ class Test(unittest.TestCase):
         NO_MATPLOTLIB or not GPX_AVAILABLE, "Matplotlib or egobox not installed"
     )
     def test_gpx(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import GPX
 
@@ -587,10 +590,11 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_mgp(self):
-        import numpy as np
         import matplotlib.pyplot as plt
-        from smt.surrogate_models import MGP
+        import numpy as np
+
         from smt.sampling_methods import LHS
+        from smt.surrogate_models import MGP
 
         # Construction of the DOE
         dim = 3
@@ -667,8 +671,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_sgp_fitc(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import SGP
 
@@ -722,8 +726,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_sgp_vfe(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import SGP
 
@@ -776,8 +780,8 @@ class Test(unittest.TestCase):
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_genn(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.surrogate_models import GENN
 

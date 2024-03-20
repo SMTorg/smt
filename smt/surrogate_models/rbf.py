@@ -6,12 +6,11 @@ This package is distributed under New BSD license.
 
 import numpy as np
 from scipy.sparse import csc_matrix
-from smt.surrogate_models.surrogate_model import SurrogateModel
-
-from smt.utils.linear_solvers import get_solver
-from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.rbfclib import PyRBF
+from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.caching import cached_operation
+from smt.utils.linear_solvers import get_solver
 
 
 class RBF(SurrogateModel):

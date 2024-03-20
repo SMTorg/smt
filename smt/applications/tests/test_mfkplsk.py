@@ -16,16 +16,16 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 import unittest
+from copy import deepcopy
+
 import numpy as np
 
+from smt.applications.mfkplsk import MFKPLSK
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
-
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
 from smt.utils.misc import compute_rms_error
-from smt.applications.mfkplsk import MFKPLSK
-from copy import deepcopy
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 print_output = False
 
@@ -140,8 +140,9 @@ class TestMFKPLSK(SMTestCase):
 
     @staticmethod
     def run_mfkplsk_example():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
+
         from smt.applications.mfk import NestedLHS
         from smt.applications.mfkplsk import MFKPLSK
 

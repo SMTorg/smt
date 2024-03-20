@@ -6,9 +6,9 @@ This package is distributed under New BSD license.
 LHS sampling; uses the pyDOE3 package.
 """
 
-from pyDOE3 import lhs
-from scipy.spatial.distance import pdist, cdist
 import numpy as np
+from pyDOE3 import lhs
+from scipy.spatial.distance import cdist, pdist
 
 from smt.sampling_methods.sampling_method import ScaledSamplingMethod
 

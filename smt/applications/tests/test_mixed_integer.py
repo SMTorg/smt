@@ -3,10 +3,11 @@ Created on Tue Oct 12 10:48:01 2021
 @author: psaves
 """
 
-import unittest
-import numpy as np
 import itertools
 import os
+import unittest
+
+import numpy as np
 
 try:
     import matplotlib
@@ -16,29 +17,28 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
+import smt.utils.design_space as ds
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
-    MixedIntegerSamplingMethod,
     MixedIntegerKrigingModel,
+    MixedIntegerSamplingMethod,
 )
-from smt.problems import Sphere, HierarchicalGoldstein, HierarchicalNeuralNetwork
+from smt.problems import HierarchicalGoldstein, HierarchicalNeuralNetwork, Sphere
+from smt.sampling_methods import LHS
+from smt.surrogate_models import (
+    KPLS,
+    KRG,
+    QP,
+    MixHrcKernelType,
+    MixIntKernelType,
+)
 from smt.utils.design_space import (
+    HAS_CONFIG_SPACE,
+    CategoricalVariable,
     DesignSpace,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
-    CategoricalVariable,
-    HAS_CONFIG_SPACE,
-)
-import smt.utils.design_space as ds
-
-from smt.sampling_methods import LHS
-from smt.surrogate_models import (
-    KRG,
-    KPLS,
-    QP,
-    MixIntKernelType,
-    MixHrcKernelType,
 )
 
 
@@ -467,17 +467,17 @@ class TestMixedInteger(unittest.TestCase):
             self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
         from matplotlib import colors
 
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+        from smt.sampling_methods import LHS
         from smt.utils.design_space import (
+            CategoricalVariable,
             DesignSpace,
             FloatVariable,
-            CategoricalVariable,
         )
-        from smt.sampling_methods import LHS
-        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         float_var = FloatVariable(0, 4)
         cat_var = CategoricalVariable(["blue", "red"])
@@ -501,11 +501,11 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def run_mixed_integer_qp_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import QP
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
+        from smt.surrogate_models import QP
         from smt.utils.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
@@ -535,13 +535,14 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_mixed_integer_context_example(self):
         import matplotlib.pyplot as plt
-        from smt.surrogate_models import KRG
+
         from smt.applications.mixed_integer import MixedIntegerContext
+        from smt.surrogate_models import KRG
         from smt.utils.design_space import (
+            CategoricalVariable,
             DesignSpace,
             FloatVariable,
             IntegerVariable,
-            CategoricalVariable,
         )
 
         design_space = DesignSpace(
@@ -743,15 +744,16 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_mixed_discrete_design_space_example(self):
         import numpy as np
+
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+        from smt.sampling_methods import LHS
         from smt.utils.design_space import (
+            CategoricalVariable,
             DesignSpace,
             FloatVariable,
             IntegerVariable,
             OrdinalVariable,
-            CategoricalVariable,
         )
-        from smt.sampling_methods import LHS
-        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
 
         ds = DesignSpace(
             [
@@ -789,19 +791,20 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_hierarchical_design_space_example(self):
         import numpy as np
-        from smt.utils.design_space import (
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-            OrdinalVariable,
-            CategoricalVariable,
-        )
+
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
             MixedIntegerSamplingMethod,
         )
-        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
         from smt.sampling_methods import LHS
+        from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
+        from smt.utils.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            OrdinalVariable,
+        )
 
         ds = DesignSpace(
             [
@@ -1082,18 +1085,19 @@ class TestMixedInteger(unittest.TestCase):
 
     def run_hierarchical_variables_Goldstein(self):
         import numpy as np
-        from smt.utils.design_space import (
-            DesignSpace,
-            CategoricalVariable,
-            IntegerVariable,
-            FloatVariable,
-        )
+
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
             MixedIntegerSamplingMethod,
         )
-        from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
         from smt.sampling_methods import LHS
+        from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
+        from smt.utils.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+        )
 
         def f_hv(X):
             import numpy as np
@@ -1865,16 +1869,16 @@ class TestMixedInteger(unittest.TestCase):
         self.assertTrue(eq_check)
 
     def run_mixed_gower_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
         )
 
@@ -1996,16 +2000,16 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def run_mixed_cs_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
         )
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
         )
 
@@ -2127,14 +2131,14 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def run_mixed_homo_gaussian_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
         )
 
@@ -2256,14 +2260,14 @@ class TestMixedInteger(unittest.TestCase):
         plt.show()
 
     def run_mixed_homo_hyp_example(self):
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
         )
 

@@ -1,6 +1,7 @@
-import os
-import numpy as np
 import csv
+import os
+
+import numpy as np
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
 
