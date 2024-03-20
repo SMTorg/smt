@@ -13,15 +13,16 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 import unittest
-import numpy as np
 from sys import argv
 
+import numpy as np
+
 from smt.applications import MOE, MOESurrogateModel
-from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, LpNorm
-from smt.sampling_methods import FullFactorial, LHS
-from smt.utils.misc import compute_rms_error
+from smt.sampling_methods import LHS, FullFactorial
 from smt.surrogate_models import RMTB, RMTC
+from smt.utils.misc import compute_rms_error
+from smt.utils.sm_test_case import SMTestCase
 
 
 class TestMOE(SMTestCase):
@@ -389,10 +390,11 @@ class TestMOE(SMTestCase):
 
     @staticmethod
     def run_moe_example_1d():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import MOE
         from smt.sampling_methods import FullFactorial
-        import matplotlib.pyplot as plt
 
         nt = 35
 
@@ -444,13 +446,13 @@ class TestMOE(SMTestCase):
 
     @staticmethod
     def run_moe_example_2d():
+        import matplotlib.pyplot as plt
         import numpy as np
+        from matplotlib import colors
+
         from smt.applications import MOE
         from smt.problems import LpNorm
         from smt.sampling_methods import FullFactorial
-
-        import matplotlib.pyplot as plt
-        from matplotlib import colors
 
         ndim = 2
         nt = 200

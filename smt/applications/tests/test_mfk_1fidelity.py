@@ -7,15 +7,15 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 import unittest
+
 import numpy as np
 
+from smt.applications.mfk import MFK
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
-
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
 from smt.utils.misc import compute_rms_error
-from smt.applications.mfk import MFK
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 print_output = False
 
@@ -61,8 +61,9 @@ class TestMFKOneFidelity(SMTestCase):
 
     @staticmethod
     def run_mfk_example_1fidelity():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
+
         from smt.applications.mfk import MFK, NestedLHS
 
         # Consider only 1 fidelity level

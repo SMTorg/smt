@@ -4,20 +4,19 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import os
-import numpy as np
-import unittest
 import inspect
-
+import os
+import unittest
 from collections import OrderedDict
+
+import numpy as np
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS
-
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
+from smt.surrogate_models import KPLS, KRG, LS, QP
 from smt.utils.misc import compute_rms_error
-from smt.surrogate_models import LS, QP, KPLS, KRG
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 try:
     from smt.surrogate_models import IDW, RBF

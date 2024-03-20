@@ -4,30 +4,27 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
 import unittest
 
+import numpy as np
+
 from smt.problems import (
+    Branin,
     CantileverBeam,
-    Sphere,
+    LpNorm,
+    NdimCantileverBeam,
+    NdimRobotArm,
+    NdimRosenbrock,
+    NdimStepFunction,
     ReducedProblem,
     RobotArm,
     Rosenbrock,
-    Branin,
-    LpNorm,
-)
-from smt.problems import (
+    Sphere,
     TensorProduct,
     TorsionVibration,
     WaterFlow,
     WeldedBeam,
     WingWeight,
-)
-from smt.problems import (
-    NdimCantileverBeam,
-    NdimRobotArm,
-    NdimRosenbrock,
-    NdimStepFunction,
 )
 from smt.utils.sm_test_case import SMTestCase
 

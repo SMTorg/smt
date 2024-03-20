@@ -5,9 +5,11 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+
 import numpy as np
-from smt.surrogate_models import KRG
+
 from smt.sampling_methods import LHS
+from smt.surrogate_models import KRG
 
 
 class TestKRG(unittest.TestCase):

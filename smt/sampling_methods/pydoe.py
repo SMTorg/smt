@@ -6,11 +6,8 @@ This package is distributed under New BSD license.
 pyDOE3 sampling methods
 """
 
-from pyDOE3 import doe_box_behnken
-from pyDOE3 import doe_gsd
-from pyDOE3 import doe_factorial
-from pyDOE3 import doe_plackett_burman
 import numpy as np
+from pyDOE3 import doe_box_behnken, doe_factorial, doe_gsd, doe_plackett_burman
 
 from smt.sampling_methods.sampling_method import SamplingMethod
 

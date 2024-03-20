@@ -1,5 +1,6 @@
-import numpy as np
 import unittest
+
+import numpy as np
 
 from smt.surrogate_models import SGP
 from smt.utils.sm_test_case import SMTestCase

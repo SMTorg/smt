@@ -5,12 +5,13 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+
 import numpy as np
 
+from smt.surrogate_models import RMTB
+from smt.utils.misc import compute_rms_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-from smt.utils.misc import compute_rms_error
-from smt.surrogate_models import RMTB
 
 
 def function_test_1d(x):

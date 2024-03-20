@@ -1,5 +1,5 @@
-from smt.surrogate_models import RMTB
 from smt.examples.b777_engine.b777_engine import get_b777_engine, plot_b777_engine
+from smt.surrogate_models import RMTB
 
 xt, yt, dyt_dxt, xlimits = get_b777_engine()
 

@@ -1,11 +1,12 @@
-import numpy as np
 import unittest
 
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
+import numpy as np
+
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
 )
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 
 def setup_sm(sm_name, settings={}):

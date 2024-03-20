@@ -1,23 +1,23 @@
 from .branin import Branin
 from .cantilever_beam import CantileverBeam
-from .sphere import Sphere
+from .hierarchical_goldstein import HierarchicalGoldstein
+from .lp_norm import LpNorm
+from .mixed_cantilever_beam import MixedCantileverBeam
+from .ndim_cantilever_beam import NdimCantileverBeam
+from .ndim_robot_arm import NdimRobotArm
+from .ndim_rosenbrock import NdimRosenbrock
+from .ndim_step_function import NdimStepFunction
+from .neural_network import HierarchicalNeuralNetwork
 from .reduced_problem import ReducedProblem
 from .robot_arm import RobotArm
 from .rosenbrock import Rosenbrock
+from .sphere import Sphere
 from .tensor_product import TensorProduct
 from .torsion_vibration import TorsionVibration
 from .water_flow import WaterFlow
 from .water_flow_lfidelity import WaterFlowLFidelity
 from .welded_beam import WeldedBeam
 from .wing_weight import WingWeight
-from .ndim_cantilever_beam import NdimCantileverBeam
-from .mixed_cantilever_beam import MixedCantileverBeam
-from .neural_network import HierarchicalNeuralNetwork
-from .hierarchical_goldstein import HierarchicalGoldstein
-from .ndim_robot_arm import NdimRobotArm
-from .ndim_rosenbrock import NdimRosenbrock
-from .ndim_step_function import NdimStepFunction
-from .lp_norm import LpNorm
 
 __all__ = [
     "Branin",

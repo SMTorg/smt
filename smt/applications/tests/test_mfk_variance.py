@@ -12,11 +12,12 @@ techniques for multi-fidelity computer codes. Technometrics, 57(3), 418-427.
 https://doi.org/10.1080/00401706.2014.928233
 """
 
-import numpy as np
-from smt.applications.mfk import MFK, NestedLHS
-from smt.sampling_methods import LHS
 import unittest
 
+import numpy as np
+
+from smt.applications.mfk import MFK, NestedLHS
+from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
 
 print_output = True

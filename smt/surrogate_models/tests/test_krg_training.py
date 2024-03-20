@@ -6,23 +6,26 @@ Created on Mon Mar 23 15:20:29 2020
 @author: ninamoello
 """
 
-from __future__ import print_function, division
-import numpy as np
+from __future__ import division, print_function
+
 import unittest
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.kriging import (
-    pow_exp,
-    abs_exp,
-    squar_exp,
-    act_exp,
-    cross_distances,
-    componentwise_distance,
-    matern52,
-    matern32,
-)
-from smt.utils.misc import standardization
+
+import numpy as np
+
 from smt.sampling_methods.lhs import LHS
 from smt.surrogate_models import KRG, MGP
+from smt.utils.kriging import (
+    abs_exp,
+    act_exp,
+    componentwise_distance,
+    cross_distances,
+    matern32,
+    matern52,
+    pow_exp,
+    squar_exp,
+)
+from smt.utils.misc import standardization
+from smt.utils.sm_test_case import SMTestCase
 
 print_output = False
 
