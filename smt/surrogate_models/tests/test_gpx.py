@@ -35,6 +35,7 @@ class TestGPX(unittest.TestCase):
         gpx_var = gpx.predict_variances(xe)
         self.assertLessEqual(np.linalg.norm(gpx_var), 1e-3)
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_gpx_vs_krg(self):
         ndim = 3
         num = 30
