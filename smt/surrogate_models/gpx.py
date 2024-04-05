@@ -114,3 +114,13 @@ class GPX(SurrogateModel):
 
     def _predict_variance_derivatives(self, x, kx):
         return self._gpx.predict_var_derivatives(x)[:, kx : kx + 1]
+
+    def predict_gradients(self, x):
+        """Predict derivatives wrt to all x components
+        at n points given as [n, nx] matrix where nx is the dimension of x"""
+        return self._gpx.predict_derivatives(x)
+
+    def predict_variance_gradients(self, x):
+        """Predict variance derivatives wrt to all x components
+        at n points given as [n, nx] matrix where nx is the dimension of x"""
+        return self._gpx.predict_var_derivatives(x)
