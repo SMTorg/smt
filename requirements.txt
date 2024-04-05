@@ -11,4 +11,4 @@ pytest-cov   # allows to get coverage report
 ruff         # format and lint code
 ConfigSpace ~= 0.6.1
 jenn >= 1.0.2, <2.0
-egobox ~= 0.16.0
+egobox ~= 0.17.0
