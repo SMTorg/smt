@@ -80,7 +80,9 @@ class GPX(SurrogateModel):
         )
 
         supports = self.supports
+        supports["derivatives"] = True
         supports["variances"] = True
+        supports["variance_derivatives"] = True
 
         self._gpx = None
 
@@ -101,8 +103,14 @@ class GPX(SurrogateModel):
 
         self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
-    def _predict_values(self, xt):
-        return self._gpx.predict_values(xt)
+    def _predict_values(self, x):
+        return self._gpx.predict(x)
 
-    def _predict_variances(self, xt):
-        return self._gpx.predict_variances(xt)
+    def _predict_variances(self, x):
+        return self._gpx.predict_var(x)
+
+    def _predict_derivatives(self, x, kx):
+        return self._gpx.predict_derivatives(x)[:, kx : kx + 1]
+
+    def _predict_variance_derivatives(self, x, kx):
+        return self._gpx.predict_var_derivatives(x)[:, kx : kx + 1]
