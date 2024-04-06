@@ -37,6 +37,6 @@ jobs:
         pip install -e .
 
     - name: Test with pytest
-      run: pytest --durations=0 -n 4 smt
+      run: pytest --durations=0 -n auto smt
 
 

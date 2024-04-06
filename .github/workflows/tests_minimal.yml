@@ -25,6 +25,6 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-xdist
-        pytest -n 4 smt
+        pytest -n auto smt
 
 
