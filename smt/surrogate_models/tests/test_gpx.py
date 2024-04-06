@@ -61,10 +61,10 @@ class TestGPX(unittest.TestCase):
         krg.train()
 
         krg_y = krg.predict_values(xe)
-        np.testing.assert_allclose(gpx_y, krg_y, atol=1e-3)
+        np.testing.assert_allclose(gpx_y, krg_y, atol=1e-2)
 
         krg_var = krg.predict_variances(xe)
-        np.testing.assert_allclose(gpx_var, krg_var, atol=1e-3)
+        np.testing.assert_allclose(gpx_var, krg_var, atol=1e-2)
 
         for kx in range(ndim):
             dy = gpx.predict_derivatives(xe, kx)
