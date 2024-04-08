@@ -30,7 +30,7 @@ class GPX(SurrogateModel):
 
         if not GPX_AVAILABLE:
             raise RuntimeError(
-                "GPX not available. Please install GPX dependencies with: pip install smt['gpx']"
+                'GPX not available. Please install GPX dependencies with: pip install smt["gpx"]'
             )
 
         declare = self.options.declare
