@@ -8,7 +8,7 @@ from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging import componentwise_distance
 
 
-class POD_GP(KrgBased):
+class PODGP(KrgBased):
     name = "POD+GP"
 
     def _initialize(self):
