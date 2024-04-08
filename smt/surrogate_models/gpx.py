@@ -22,7 +22,6 @@ try:
     }
 except ImportError:
     GPX_AVAILABLE = False
-    warnings.warn("To use GPX you have to install dependencies: pip install smt['gpx']")
 
 
 class GPX(SurrogateModel):
@@ -30,6 +29,12 @@ class GPX(SurrogateModel):
 
     def _initialize(self):
         super(GPX, self)._initialize()
+
+        if not GPX_AVAILABLE:
+            warnings.error(
+                "To use GPX you have to install dependencies with: pip install smt['gpx']"
+            )
+
         declare = self.options.declare
 
         declare(
