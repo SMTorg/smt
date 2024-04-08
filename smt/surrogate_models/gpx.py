@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -31,8 +29,8 @@ class GPX(SurrogateModel):
         super(GPX, self)._initialize()
 
         if not GPX_AVAILABLE:
-            warnings.error(
-                "To use GPX you have to install dependencies with: pip install smt['gpx']"
+            raise RuntimeError(
+                "GPX not available. Please install GPX dependencies with: pip install smt['gpx']"
             )
 
         declare = self.options.declare
