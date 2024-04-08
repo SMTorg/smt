@@ -1846,7 +1846,7 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    if ii == 0 and self.name in ["KPLSK"]:
+                    if ii == 0 and "KPLSK" in self.name:
                         if self.theta0[i] - theta_bounds[1] > 0:
                             self.theta0[i] = theta_bounds[1] - 1e-10
                         else:
@@ -1962,7 +1962,7 @@ class KrgBased(SurrogateModel):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-                if ii == 1 or self.name not in ["KPLSK"]:
+                if ii == 1 or "KPLSK" in self.name:
                     if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,

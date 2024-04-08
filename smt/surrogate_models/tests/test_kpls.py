@@ -10,7 +10,6 @@ import numpy as np
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KPLS
-from pyDOE2.doe_lhs import lhs
 from smt.surrogate_models import KRG, KPLSK
 from smt.utils.misc import compute_rms_error
 import time
@@ -122,7 +121,12 @@ class TestKPLS(unittest.TestCase):
 
         # LHS training point generation
         n_train = 25
-        x_train = lhs(n_dim, n_train, criterion="centermaximin", iterations=5000)
+        sx = LHS(
+            xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_dim, axis=0),
+            criterion="m",
+            random_state=42,
+        )
+        x_train = sx(n_train)
         x_train = lb + (ub - lb) * x_train  # map generated samples to design space
         y_train = griewank(x_train)
         y_train = y_train.reshape((n_train, -1))  # reshape to 2D array
