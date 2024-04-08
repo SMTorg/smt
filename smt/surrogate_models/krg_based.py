@@ -1962,7 +1962,7 @@ class KrgBased(SurrogateModel):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-                if ii == 1 or not("KPLSK" in self.name):
+                if ii == 1 or "KPLSK" not in self.name:
                     if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,
