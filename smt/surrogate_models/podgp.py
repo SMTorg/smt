@@ -90,6 +90,7 @@ class PODGP(SurrogateModel):
             )
         self.database = dico["database"]
         self.n_snapshot = self.database.shape[1]
+        self.dim_snapshot = self.database.shape[0]
             
         self.svd.fit(self.database.T)
         self.U = self.svd.components_.T
@@ -99,6 +100,10 @@ class PODGP(SurrogateModel):
         if choice_svd == "tol":
             self.n_mods, self.EV_ratio = self.choice_n_mods_tol(EV_list)
         elif choice_svd == "n_mods":
+            if self.n_mods > self.n_snapshot:
+                raise ValueError(
+                    "the number of kept mods can't be superior to the number of data values (snapshots)"
+                )
             self.EV_ratio = sum(EV_list[:self.n_mods])/sum(EV_list)
             
         self.mean = np.atleast_2d(self.database.mean(axis=1)).T
@@ -173,14 +178,50 @@ class PODGP(SurrogateModel):
             self.sm_list[i].train()
         self.train_done = True
     
-    def predict_values(self, x):
+    def predict_values(self, xn):
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
             )
-        # mean_coeff_gp = np.zeros((_new,n_mods))
         
-        # for i in range(n_mods):
-        #     mu_i = sm_i.predict_values(x_new.T)
-        #     mean_coeff_gp[:,i] = mu_i[:,0]
-        #     mean_u_x_new_t = mean + np.dot(mean_coeff_gp, basis.T).T
+        self.dim_new = xn.shape[0]
+        
+        if self.dim_new != self.dim_snapshot:
+            raise ValueError(
+                f"the data values (snapshots) and the new values where to make a prediction must be the same size, {self.dim_new} != {self.dim_snapshot}"    
+            )
+        
+        self.n_new = xn.shape[1]
+        mean_coeff_gp = np.zeros((self.n_new, self.n_mods))
+        
+        for i in range(self.n_mods):
+            mu_i = self.sm_list[i].predict_values(xn.T)
+            mean_coeff_gp[:,i] = mu_i[:,0]
+        
+        mean_x_new = self.mean + np.dot(mean_coeff_gp, self.basis.T).T
+        
+        return mean_x_new
+    
+    def predict_variances(self, xn):
+        if not self.train_done:
+            raise RuntimeError(
+                "the model should have been trained before trying to make a prediction"    
+            )
+        
+        self.dim_new = xn.shape[0]
+        
+        if self.dim_new != self.dim_snapshot:
+            raise ValueError(
+                f"the data values (snapshots) and the new values where to make a prediction must be the same size, {self.dim_new} != {self.dim_snapshot}"    
+            )
+        
+        self.n_new = xn.shape[1]
+        mean_coeff_gp = np.zeros((self.n_new, self.n_mods))
+        
+        for i in range(self.n_mods):
+            mu_i = self.sm_list[i].predict_values(xn.T)
+            mean_coeff_gp[:,i] = mu_i[:,0]
+        
+        mean_x_new = self.mean + np.dot(mean_coeff_gp, self.basis.T).T
+        
+        return mean_x_new
