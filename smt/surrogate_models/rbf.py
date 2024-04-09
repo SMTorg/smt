@@ -159,6 +159,7 @@ class RBF(SurrogateModel):
         y : np.ndarray
             Evaluation point output variable values
         """
+        print("passé par là")
         n = x.shape[0]
         num = self.num
 

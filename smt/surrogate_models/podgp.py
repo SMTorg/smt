@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 from typing import Optional
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.surrogate_models import KRG
-from smt.utils.kriging import componentwise_distance
 from sklearn.decomposition import PCA
 import numpy as np
 import warnings
@@ -18,19 +17,13 @@ class PODGP(SurrogateModel):
 
     def _initialize(self):
         super()._initialize()
-        self.basis = np.array([])
-        self.coeff = np.array([])
-        self.sm_list = []
-        self.KRG_options = []
-        self.x_train = np.array([])
-        self.database = np.array([])
-        self.n_mods = 0
-        self.tol = 0
-        self.svd = PCA(svd_solver = 'randomized')
-        # self.azerty = kwargs
+        self.random_state = None
+    
+    def set_up_dico(self):
         
-        # print(self.azerty.items())
+        return {}
         
+    
     def _predict_derivatives(x, kx):
         return None
         
@@ -49,33 +42,145 @@ class PODGP(SurrogateModel):
     def _set_training_derivatives(self, xt: np.ndarray, dyt_dxt: np.ndarray, kx: int, name: Optional[str] = None):
         return None
     
-    def _set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
-        return None
+    
     
     def _train():
         return None
+    
+    def choice_n_mods_tol(self, EV_list):
+        tol = self.tol
+        
+        sum_tot = sum(EV_list)
+        sum_ = 0
+        for i in range(len(EV_list)):
+            sum_ += EV_list[i]
+            EV_ratio = sum_/sum_tot
+            if sum_/sum_tot >= tol:
+                return i+1, EV_ratio
 
     def POD(self, **kwargs):
         dico = kwargs
         choice_svd = None
-        self.database = kwargs['database']
+        
+        if "random_state" in dico.keys():
+            self.random_state = dico["random_state"]
+        self.svd = PCA(svd_solver = 'randomized', random_state = self.random_state)
+        
         if "n_mods" in dico.keys():
-            self.n_mods = kwargs["n_mods"]
-            choic_svd = "mod"
-        if "tol_svd" in dico.keys():
+            self.n_mods = dico["n_mods"]
+            choice_svd = "mod"
+            
+        if "tol" in dico.keys():
             if choice_svd != None:
                 raise ValueError(
-                    "svd can't use both arguments n_mods and tol_svd at the same time."
+                    "pod can't use both arguments 'n_mods' and 'tol' at the same time"
                 )
-            self.tol_svd = kwargs["tol_svd"]
-            choic_svd = "mod"
-        
+            else:
+                self.tol = dico["tol"]
+                choice_svd = "tol"
+                
+        if choice_svd == None:
+            raise ValueError(
+                "either one of the arguments 'n_mods' and 'tol' must be specified"
+            )
+            
+        if "database" not in dico.keys():
+            raise ValueError(
+                "'database' argument must be specified"
+            )
+        self.database = dico["database"]
+        self.n_snapshot = self.database.shape[1]
             
         self.svd.fit(self.database.T)
+        self.U = self.svd.components_.T
+        self.S = self.svd.singular_values_
+        EV_list = self.svd.explained_variance_
         
-        U = self.svd.components_.T
-        S = self.svd.singular_values_
+        if choice_svd == "tol":
+            self.n_mods, self.EV_ratio = self.choice_n_mods_tol(EV_list)
+        elif choice_svd == "n_mods":
+            self.EV_ratio = sum(EV_list[:self.n_mods])/sum(EV_list)
+            
+        self.mean = np.atleast_2d(self.database.mean(axis=1)).T
+        self.basis = np.array(self.U[:, :self.n_mods])
+        self.coeff = np.dot(self.basis.T, self.database - self.mean).T
+        self.pod_done = True
+        self.training_values_set = False
         
+        self.sm_list = []
+        for i in range(self.n_mods):
+            self.sm_list.append(KRG(print_global = False))
         
-    def GP(self, **kwargs):
-        dico = kwargs
+    def get_left_basis(self):
+        return self.U
+    
+    def get_singular_values(self):
+        return self.S
+
+    def get_ev_ratio(self):
+        return self.EV_ratio
+    
+    def get_n_mods(self):
+        return self.n_mods
+                
+    def set_GP_options(self, GP_options_list):
+        
+        if not(self.pod_done):
+            raise RuntimeError(
+                "'POD' method must have been succesfully executed before trying the 'GP' method"    
+            )
+        if len(GP_options_list) == 1:
+            mod_options = "global"
+        elif len(GP_options_list) != self.n_mods:
+            raise ValueError(
+                f"expected GP_options_list of size n_mods = {self.n_mods}, but got {len(GP_options_list)} instead"
+            )
+        else:
+            mod_options = "local"
+        
+        for i in range(self.n_mods):
+            if mod_options == 'local':
+                index = i
+            elif mod_options == 'global':
+                index = 0
+            for key in GP_options_list[index].keys():
+                self.sm_list[i].options[key] = GP_options_list[index][key]    
+            
+    def set_training_values(self, xt, name=None):
+        if not(self.pod_done):
+            raise RuntimeError(
+                "'POD' method must have been succesfully executed before trying the 'GP' method"    
+            )
+        self.n_train = xt.shape[1]
+        if self.n_train != self.n_snapshot:
+            raise ValueError(
+                f"there must be the same amount of train values than data values (snapshots), {self.n_train} != {self.n_snapshot}"    
+            )
+        
+        for i in range(self.n_mods):
+            self.sm_list[i].set_training_values(xt.T, self.coeff[:, i])
+            
+        self.training_values_set = True
+        self.train_done = False
+    
+    def train(self):
+        if not self.training_values_set:
+            raise RuntimeError(
+                "the training values should have been set before trying to train the model"    
+            )
+       
+        for i in range(self.n_mods):
+            self.sm_list[i].train()
+        self.train_done = True
+    
+    def predict_values(self, x):
+        if not self.train_done:
+            raise RuntimeError(
+                "the model should have been trained before trying to make a prediction"    
+            )
+        # mean_coeff_gp = np.zeros((_new,n_mods))
+        
+        # for i in range(n_mods):
+        #     mu_i = sm_i.predict_values(x_new.T)
+        #     mean_coeff_gp[:,i] = mu_i[:,0]
+        #     mean_u_x_new_t = mean + np.dot(mean_coeff_gp, basis.T).T
