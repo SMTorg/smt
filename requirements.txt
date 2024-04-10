@@ -3,12 +3,12 @@ numpy
 scipy
 scikit-learn
 pyDOE3
-numba        # JIT compiler
-matplotlib   # used in examples and tests
-pytest       # tests runner
-pytest-xdist # allows running parallel testing with pytest -n <num_workers>
-pytest-cov   # allows to get coverage report
-ruff         # format and lint code
+numba           # JIT compiler
+matplotlib      # used in examples and tests
+pytest ~= 8.0.1 # tests runner
+pytest-xdist    # allows running parallel testing with pytest -n <num_workers>
+pytest-cov      # allows to get coverage report
+ruff            # format and lint code
 ConfigSpace ~= 0.6.1
 jenn >= 1.0.2, <2.0
-egobox ~= 0.16.0
+egobox ~= 0.18.0

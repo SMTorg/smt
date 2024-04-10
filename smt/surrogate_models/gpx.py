@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -22,7 +20,6 @@ try:
     }
 except ImportError:
     GPX_AVAILABLE = False
-    warnings.warn("To use GPX you have to install dependencies: pip install smt['gpx']")
 
 
 class GPX(SurrogateModel):
@@ -30,6 +27,12 @@ class GPX(SurrogateModel):
 
     def _initialize(self):
         super(GPX, self)._initialize()
+
+        if not GPX_AVAILABLE:
+            raise RuntimeError(
+                'GPX not available. Please install GPX dependencies with: pip install smt["gpx"]'
+            )
+
         declare = self.options.declare
 
         declare(
@@ -80,7 +83,9 @@ class GPX(SurrogateModel):
         )
 
         supports = self.supports
+        supports["derivatives"] = True
         supports["variances"] = True
+        supports["variance_derivatives"] = True
 
         self._gpx = None
 
@@ -101,8 +106,27 @@ class GPX(SurrogateModel):
 
         self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
-    def _predict_values(self, xt):
-        return self._gpx.predict_values(xt)
+    def _predict_values(self, x):
+        return self._gpx.predict(x)
 
-    def _predict_variances(self, xt):
-        return self._gpx.predict_variances(xt)
+    def _predict_variances(self, x):
+        return self._gpx.predict_var(x)
+
+    def _predict_derivatives(self, x, kx):
+        return self._gpx.predict_gradients(x)[:, kx : kx + 1]
+
+    def _predict_variance_derivatives(self, x, kx):
+        return self._gpx.predict_var_gradients(x)[:, kx : kx + 1]
+
+    def predict_gradients(self, x):
+        """Predict derivatives wrt to all x components (eg the gradient)
+        at n points given as [n, nx] matrix where nx is the dimension of x.
+        Returns all gradients at the given x points as a [n, nx] matrix
+        """
+        return self._gpx.predict_gradients(x)
+
+    def predict_variance_gradients(self, x):
+        """Predict variance derivatives wrt to all x components (eg the variance gradient)
+        at n points given as [n, nx] matrix where nx is the dimension of x.
+        Returns all variance gradients at the given x points as a [n, nx] matrix"""
+        return self._gpx.predict_var_gradients(x)
