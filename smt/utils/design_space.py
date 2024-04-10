@@ -922,6 +922,8 @@ class DesignSpace(BaseDesignSpace):
                 else:
                     constraint_clause = ForbiddenLessThanRelation(param2, param1)
                     self._cs.add_forbidden_clause(constraint_clause)
+            else :
+                raise ValueError("Bad definition of DesignSpace.")
 
         ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
         ## ConfigSpace is malfunctioning
