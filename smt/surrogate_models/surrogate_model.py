@@ -102,7 +102,7 @@ class SurrogateModel(metaclass=ABCMeta):
     def name(self):
         pass
 
-    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name=None) -> None:
+    def set_training_values(self, xt: np.ndarray, yt: np.ndarray, name = None) -> None:
         """
         Set training data (values).
 
@@ -247,7 +247,10 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Train the model
         """
-        n_exact = self.training_points[None][0][0].shape[0]
+        if self.name in ["POD+GP"]:
+            n_exact = self.sm_list[0].training_points[None][0][0].shape[0]    
+        else:
+            n_exact = self.training_points[None][0][0].shape[0]
 
         self.printer.active = self.options["print_global"]
         self.printer._line_break()
