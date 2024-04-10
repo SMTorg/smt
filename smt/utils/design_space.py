@@ -23,6 +23,7 @@ try:
         OrdinalHyperparameter,
         UniformFloatHyperparameter,
         UniformIntegerHyperparameter,
+        ForbiddenLessThanRelation,
     )
     from ConfigSpace.exceptions import ForbiddenValueError
     from ConfigSpace.util import get_random_neighbor
@@ -897,20 +898,28 @@ class DesignSpace(BaseDesignSpace):
         # Get parameters
         param1 = self._get_param(var1)
         param2 = self._get_param(var2)
-
-        # Add forbidden clauses
-        if isinstance(value1, Sequence):
-            clause1 = ForbiddenInClause(param1, value1)
-        else:
-            clause1 = ForbiddenEqualsClause(param1, value1)
-
-        if isinstance(value2, Sequence):
-            clause2 = ForbiddenInClause(param2, value2)
-        else:
-            clause2 = ForbiddenEqualsClause(param2, value2)
-
-        constraint_clause = ForbiddenAndConjunction(clause1, clause2)
-        self._cs.add_forbidden_clause(constraint_clause)
+        if not(isinstance(param1, UniformFloatHyperparameter)) and not(isinstance(param2, UniformFloatHyperparameter)) :
+            # Add forbidden clauses
+            if isinstance(value1, Sequence):
+                clause1 = ForbiddenInClause(param1, value1)
+            else:
+                clause1 = ForbiddenEqualsClause(param1, value1)
+    
+            if isinstance(value2, Sequence):
+                clause2 = ForbiddenInClause(param2, value2)
+            else:
+                clause2 = ForbiddenEqualsClause(param2, value2)
+    
+            constraint_clause = ForbiddenAndConjunction(clause1, clause2)
+            self._cs.add_forbidden_clause(constraint_clause)
+        else : 
+            if value1 in [">","<"] and value2 in [">","<"] and value1 != value2 :
+                if value1 == "<" : 
+                    constraint_clause = ForbiddenLessThanRelation(param1, param2)
+                    self._cs.add_forbidden_clause(constraint_clause)
+                else :
+                    constraint_clause = ForbiddenLessThanRelation(param2, param1)
+                    self._cs.add_forbidden_clause(constraint_clause)
 
         ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
         ## ConfigSpace is malfunctioning
@@ -918,28 +927,29 @@ class DesignSpace(BaseDesignSpace):
         param1 = self._get_param2(var1)
         param2 = self._get_param2(var2)
         # Add forbidden clauses
-        if isinstance(value1, Sequence):
-            clause1 = ForbiddenInClause(param1, str(value1))
-        else:
-            clause1 = ForbiddenEqualsClause(param1, str(value1))
-
-        if isinstance(value2, Sequence):
-            try:
-                clause2 = ForbiddenInClause(
-                    param2, list(np.atleast_1d(np.array(value2, dtype=str)))
-                )
-            except ValueError:
-                clause2 = ForbiddenInClause(
-                    param2, list(np.atleast_1d(np.array(value2, dtype=float)))
-                )
-        else:
-            try:
-                clause2 = ForbiddenEqualsClause(param2, str(value2))
-            except ValueError:
-                clause2 = ForbiddenEqualsClause(param2, value2)
-
-        constraint_clause = ForbiddenAndConjunction(clause1, clause2)
-        self._cs_cate.add_forbidden_clause(constraint_clause)
+        if not(isinstance(param1, UniformFloatHyperparameter)) and not(isinstance(param2, UniformFloatHyperparameter)) :
+            if isinstance(value1, Sequence):
+                clause1 = ForbiddenInClause(param1, str(value1))
+            else:
+                clause1 = ForbiddenEqualsClause(param1, str(value1))
+    
+            if isinstance(value2, Sequence):
+                try:
+                    clause2 = ForbiddenInClause(
+                        param2, list(np.atleast_1d(np.array(value2, dtype=str)))
+                    )
+                except ValueError:
+                    clause2 = ForbiddenInClause(
+                        param2, list(np.atleast_1d(np.array(value2, dtype=float)))
+                    )
+            else:
+                try:
+                    clause2 = ForbiddenEqualsClause(param2, str(value2))
+                except ValueError:
+                    clause2 = ForbiddenEqualsClause(param2, value2)
+    
+            constraint_clause = ForbiddenAndConjunction(clause1, clause2)
+            self._cs_cate.add_forbidden_clause(constraint_clause)
 
     def _get_param(self, idx):
         try:
