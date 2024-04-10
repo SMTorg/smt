@@ -4,50 +4,67 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
+#------------------------------------------Imports------------------------------------------
+from sklearn.decomposition import PCA
 from typing import Optional
+import numpy as np
+
+
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.surrogate_models import KRG
-from sklearn.decomposition import PCA
-import numpy as np
+
 import warnings
 
 
 class PODGP(SurrogateModel):
+    """
+    Class for Proper Orthogonal Decomposition and Gaussian Processes (POD+GP) based surrogate model.
+
+    Attributes
+    ----------
+    options : OptionsDictionary
+        Dictionary of options. Options values can be set on this attribute directly
+        or they can be passed in as keyword arguments during instantiation.
+    supports : dict
+        Dictionary containing information about what this surrogate model supports.
+
+    Examples
+    --------
+    >>> from smt.surrogate_models import RBF
+    >>> sm = RBF(print_training=False)
+    >>> sm.options['print_prediction'] = False
+    """
+    
     name = "POD+GP"
 
     def _initialize(self):
+        """
+        Description
+        """
         super()._initialize()
+        supports = self.supports
+        
         self.random_state = None
-    
-    def set_up_dico(self):
         
-        return {}
-        
+        supports["variances"] = True
+        supports["derivatives"] = True
     
-    def _predict_derivatives(x, kx):
-        return None
-        
-    def _predict_output_derivatives(x):
-        return None
-        
-    def _predict_values(x):
-        return None
-    
-    def _predict_variance_derivatives(x, kx):
-        return None	
-    
-    def _predict_variances(x):
-        return None
-    
-    def _set_training_derivatives(self, xt: np.ndarray, dyt_dxt: np.ndarray, kx: int, name: Optional[str] = None):
-        return None
-    
-    
-    
-    def _train():
-        return None
-    
-    def choice_n_mods_tol(self, EV_list):
+    def choice_n_mods_tol(self, EV_list: np.ndarray):
+        """
+        Calculates the required number of kept mods to explain the wanted ratio of variance 'tol'.
+
+        Parameters
+        ----------
+        EV_list : np.ndarray[nt, nx] ?
+            Description
+
+        Returns
+        -------
+        n_mods : int
+            Description
+        ev_ratio : float
+            Description
+        """
         tol = self.tol
         
         sum_tot = sum(EV_list)
@@ -59,6 +76,17 @@ class PODGP(SurrogateModel):
                 return i+1, EV_ratio
 
     def POD(self, **kwargs):
+        #kwargs ou argument normaux ?
+        """
+        Performs the POD 
+
+        Parameters
+        ----------
+        EV_list : np.ndarray[nt, nx] ?
+            Description
+
+        
+        """
         dico = kwargs
         choice_svd = None
         
@@ -90,7 +118,8 @@ class PODGP(SurrogateModel):
             )
         self.database = dico["database"]
         self.n_snapshot = self.database.shape[1]
-        self.dim_snapshot = self.database.shape[0]
+        self.dim_data = self.database.shape[0]
+        self.ny = self.dim_data
             
         self.svd.fit(self.database.T)
         self.U = self.svd.components_.T
@@ -117,18 +146,58 @@ class PODGP(SurrogateModel):
             self.sm_list.append(KRG(print_global = False))
         
     def get_left_basis(self):
+        """
+        Getter for the left_basis of the POD.
+
+        Returns
+        -------
+        left_basis : np.ndarray[nx, nt]
+            Description
+        """
         return self.U
     
     def get_singular_values(self):
+        """
+        Getter for the left_basis of the POD.
+
+        Returns
+        -------
+        left_basis : np.ndarray[nx, nt]
+            Description
+        """
         return self.S
 
     def get_ev_ratio(self):
+        """
+        Getter for the left_basis of the POD.
+
+        Returns
+        -------
+        left_basis : np.ndarray[nx, nt]
+            Description
+        """
         return self.EV_ratio
     
     def get_n_mods(self):
+        """
+        Getter for the left_basis of the POD.
+
+        Returns
+        -------
+        left_basis : np.ndarray[nx, nt]
+            Description
+        """
         return self.n_mods
                 
     def set_GP_options(self, GP_options_list):
+        """
+        Calculates the required number of kept mods to explain the wanted ratio of variance 'tol'.
+
+        Parameters
+        ----------
+        GP_options_list : list[dict]
+            Description
+        """
         
         if not(self.pod_done):
             raise RuntimeError(
@@ -152,11 +221,24 @@ class PODGP(SurrogateModel):
                 self.sm_list[i].options[key] = GP_options_list[index][key]    
             
     def set_training_values(self, xt, name=None):
+        """
+        Calculates the required number of kept mods to explain the wanted ratio of variance 'tol'.
+
+        Parameters
+        ----------
+        xt : list[dict]
+            Description
+        name : 
+        """
+        
+        xt = xt.T
         if not(self.pod_done):
             raise RuntimeError(
                 "'POD' method must have been succesfully executed before trying the 'GP' method"    
             )
         self.n_train = xt.shape[1]
+        self.dim_snapshot = xt.shape[0]
+        self.nx = self.dim_snapshot
         if self.n_train != self.n_snapshot:
             raise ValueError(
                 f"there must be the same amount of train values than data values (snapshots), {self.n_train} != {self.n_snapshot}"    
@@ -169,6 +251,10 @@ class PODGP(SurrogateModel):
         self.train_done = False
     
     def train(self):
+        """
+        Performs the training of the model. 
+        """
+        
         if not self.training_values_set:
             raise RuntimeError(
                 "the training values should have been set before trying to train the model"    
@@ -177,8 +263,21 @@ class PODGP(SurrogateModel):
         for i in range(self.n_mods):
             self.sm_list[i].train()
         self.train_done = True
+        
+    def get_gp_coef(self):
+        """
+        Getter for the left_basis of the POD.
+
+        Returns
+        -------
+        left_basis : np.ndarray[nx, nt]
+            Description
+        """
+        
+        return self.sm_list
     
-    def predict_values(self, xn):
+    def _predict_values(self, xn):
+        xn = xn.T
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
@@ -202,7 +301,8 @@ class PODGP(SurrogateModel):
         
         return mean_x_new
     
-    def predict_variances(self, xn):
+    def _predict_variances(self, xn):
+        xn = xn.T
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
@@ -216,12 +316,43 @@ class PODGP(SurrogateModel):
             )
         
         self.n_new = xn.shape[1]
-        mean_coeff_gp = np.zeros((self.n_new, self.n_mods))
+        var_coeff_gp = np.zeros((self.n_new, self.n_mods))
         
         for i in range(self.n_mods):
-            mu_i = self.sm_list[i].predict_values(xn.T)
-            mean_coeff_gp[:,i] = mu_i[:,0]
+            sigma_i_square = self.sm_list[i].predict_variances(xn.T)
+            var_coeff_gp[:,i] = sigma_i_square[:,0]
         
-        mean_x_new = self.mean + np.dot(mean_coeff_gp, self.basis.T).T
+        var_x_new = np.dot(var_coeff_gp, (self.basis**2).T).T
         
-        return mean_x_new
+        return var_x_new
+    
+    def _predict_derivatives(self, xn, kx):
+        xn = xn.T
+        d = kx
+        if not self.train_done:
+            raise RuntimeError(
+                "the model should have been trained before trying to make a prediction"    
+            )
+        
+        self.dim_new = xn.shape[0]
+        
+        if self.dim_new != self.dim_snapshot:
+            raise ValueError(
+                f"the data values (snapshots) and the new values where to make a prediction must be the same size, {self.dim_new} != {self.dim_snapshot}"    
+            )
+        
+        if kx >= self.dim_snapshot:
+            raise ValueError(
+                "the number of the desired derivatives must correspond to an existing dimension of the data"    
+            )
+        
+        self.n_new = xn.shape[1]
+        deriv_coeff_gp = np.zeros((self.n_new, self.n_mods))
+        
+        for i in range(self.n_mods):
+            deriv_coeff_gp[:,i] = self.sm_list[i].predict_derivatives(xn.T, d)[:,0]
+        
+        deriv_x_new = np.zeros((self.dim_data, self.n_new, self.dim_snapshot))
+        deriv_x_new = np.dot(deriv_coeff_gp, self.basis.T).T
+        
+        return deriv_x_new

@@ -287,7 +287,6 @@ class SurrogateModel(metaclass=ABCMeta):
         y : np.ndarray[nt, ny]
             Output values at the prediction points.
         """
-        print("ah non passé plutôt par là")
         x = ensure_2d_array(x, "x")
         self._check_xdim(x)
 
