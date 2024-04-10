@@ -898,26 +898,28 @@ class DesignSpace(BaseDesignSpace):
         # Get parameters
         param1 = self._get_param(var1)
         param2 = self._get_param(var2)
-        if not(isinstance(param1, UniformFloatHyperparameter)) and not(isinstance(param2, UniformFloatHyperparameter)) :
+        if not (isinstance(param1, UniformFloatHyperparameter)) and not (
+            isinstance(param2, UniformFloatHyperparameter)
+        ):
             # Add forbidden clauses
             if isinstance(value1, Sequence):
                 clause1 = ForbiddenInClause(param1, value1)
             else:
                 clause1 = ForbiddenEqualsClause(param1, value1)
-    
+
             if isinstance(value2, Sequence):
                 clause2 = ForbiddenInClause(param2, value2)
             else:
                 clause2 = ForbiddenEqualsClause(param2, value2)
-    
+
             constraint_clause = ForbiddenAndConjunction(clause1, clause2)
             self._cs.add_forbidden_clause(constraint_clause)
-        else : 
-            if value1 in [">","<"] and value2 in [">","<"] and value1 != value2 :
-                if value1 == "<" : 
+        else:
+            if value1 in [">", "<"] and value2 in [">", "<"] and value1 != value2:
+                if value1 == "<":
                     constraint_clause = ForbiddenLessThanRelation(param1, param2)
                     self._cs.add_forbidden_clause(constraint_clause)
-                else :
+                else:
                     constraint_clause = ForbiddenLessThanRelation(param2, param1)
                     self._cs.add_forbidden_clause(constraint_clause)
 
@@ -927,12 +929,14 @@ class DesignSpace(BaseDesignSpace):
         param1 = self._get_param2(var1)
         param2 = self._get_param2(var2)
         # Add forbidden clauses
-        if not(isinstance(param1, UniformFloatHyperparameter)) and not(isinstance(param2, UniformFloatHyperparameter)) :
+        if not (isinstance(param1, UniformFloatHyperparameter)) and not (
+            isinstance(param2, UniformFloatHyperparameter)
+        ):
             if isinstance(value1, Sequence):
                 clause1 = ForbiddenInClause(param1, str(value1))
             else:
                 clause1 = ForbiddenEqualsClause(param1, str(value1))
-    
+
             if isinstance(value2, Sequence):
                 try:
                     clause2 = ForbiddenInClause(
@@ -947,7 +951,7 @@ class DesignSpace(BaseDesignSpace):
                     clause2 = ForbiddenEqualsClause(param2, str(value2))
                 except ValueError:
                     clause2 = ForbiddenEqualsClause(param2, value2)
-    
+
             constraint_clause = ForbiddenAndConjunction(clause1, clause2)
             self._cs_cate.add_forbidden_clause(constraint_clause)
 

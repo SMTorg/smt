@@ -519,115 +519,29 @@ class Test(unittest.TestCase):
         assert len(seen_is_acting) == 2
 
     def test_design_space_continuous(self):
-       ds = DesignSpace(
-           [
-               FloatVariable(0, 1),  # x0
-               FloatVariable(0, 1),  # x1
-               FloatVariable(0, 1),  # x2
-           ],
-           random_state=42,
-       )
-       ds.add_value_constraint(var1=0, value1="<", var2=1, value2=">")  # Prevent x0 < x1
-       ds.add_value_constraint(var1=1, value1="<", var2=2, value2=">")  # Prevent x0 < x1
+        ds = DesignSpace(
+            [
+                FloatVariable(0, 1),  # x0
+                FloatVariable(0, 1),  # x1
+                FloatVariable(0, 1),  # x2
+            ],
+            random_state=42,
+        )
+        ds.add_value_constraint(
+            var1=0, value1="<", var2=1, value2=">"
+        )  # Prevent x0 < x1
+        ds.add_value_constraint(
+            var1=1, value1="<", var2=2, value2=">"
+        )  # Prevent x0 < x1
 
-
-       # correct_get_acting
-       x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-       self.assertTrue(np.min(x_sampled[:,0]-x_sampled[:,1])>0 )
-       self.assertTrue(np.min(x_sampled[:,1]-x_sampled[:,2])>0 )
+        # correct_get_acting
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+        self.assertTrue(np.min(x_sampled[:, 0] - x_sampled[:, 1]) > 0)
+        self.assertTrue(np.min(x_sampled[:, 1] - x_sampled[:, 2]) > 0)
 
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
-    def test_design_space_hierarchical_config_space(self):
-        ds = DesignSpace(
-            [
-                CategoricalVariable(["A", "B", "C"]),  # x0
-                CategoricalVariable(["E", "F"]),  # x1
-                IntegerVariable(0, 1),  # x2
-                FloatVariable(0, 1),  # x3
-            ],
-            random_state=42,
-        )
-        ds.declare_decreed_var(
-            decreed_var=3, meta_var=0, meta_value="A"
-        )  # Activate x3 if x0 == A
-        ds.add_value_constraint(
-            var1=0, value1="C", var2=1, value2="F"
-        )  # Prevent a == C and b == F
-
-        x_cartesian = np.array(
-            list(itertools.product([0, 1, 2], [0, 1], [0, 1], [0.25, 0.75]))
-        )
-        self.assertEqual(x_cartesian.shape, (24, 4))
-
-        self.assertTrue(
-            np.all(ds.is_conditionally_acting == [False, False, False, True])
-        )
-
-        x, is_acting = ds.correct_get_acting(x_cartesian)
-        _, is_unique = np.unique(x, axis=0, return_index=True)
-        self.assertEqual(len(is_unique), 14)
-        np.testing.assert_array_equal(
-            x[is_unique, :],
-            np.array(
-                [
-                    [0, 0, 0, 0.25],
-                    [0, 0, 0, 0.75],
-                    [0, 0, 1, 0.25],
-                    [0, 0, 1, 0.75],
-                    [0, 1, 0, 0.25],
-                    [0, 1, 0, 0.75],
-                    [0, 1, 1, 0.25],
-                    [0, 1, 1, 0.75],
-                    [1, 0, 0, 0.5],
-                    [1, 0, 1, 0.5],
-                    [1, 1, 0, 0.5],
-                    [1, 1, 1, 0.5],
-                    [2, 0, 0, 0.5],
-                    [2, 0, 1, 0.5],
-                ]
-            ),
-        )
-        np.testing.assert_array_equal(
-            is_acting[is_unique, :],
-            np.array(
-                [
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                ]
-            ),
-        )
-
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-        assert x_sampled.shape == (100, 4)
-        x_sampled[is_acting_sampled[:, 3], 3] = np.round(
-            x_sampled[is_acting_sampled[:, 3], 3]
-        )
-
-        x_corr, is_acting_corr = ds.correct_get_acting(x_sampled)
-        self.assertTrue(np.all(x_corr == x_sampled))
-        self.assertTrue(np.all(is_acting_corr == is_acting_sampled))
-
-        seen_x = set()
-        seen_is_acting = set()
-        for i, xi in enumerate(x_sampled):
-            seen_x.add(tuple(xi))
-            seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        assert len(seen_x) == 14
-        assert len(seen_is_acting) == 2
     def test_check_conditionally_acting(self):
         class WrongDesignSpace(DesignSpace):
             def _is_conditionally_acting(self) -> np.ndarray:
