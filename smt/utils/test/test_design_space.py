@@ -518,6 +518,9 @@ class Test(unittest.TestCase):
         assert len(seen_x) == 14
         assert len(seen_is_acting) == 2
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_design_space_continuous(self):
         ds = DesignSpace(
             [
