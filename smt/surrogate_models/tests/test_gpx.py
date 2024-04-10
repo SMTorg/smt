@@ -4,7 +4,7 @@ import numpy as np
 
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GPX
+from smt.surrogate_models import GPX, KRG
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 
@@ -12,7 +12,7 @@ class TestGPX(unittest.TestCase):
     @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_gpx(self):
         ndim = 2
-        num = 50
+        num = 20
         problem = Sphere(ndim=ndim)
         xlimits = problem.xlimits
         sampling = LHS(xlimits=xlimits, criterion="ese")
@@ -20,19 +20,60 @@ class TestGPX(unittest.TestCase):
         xt = sampling(num)
         yt = problem(xt)
 
-        sm = GPX()
-        sm.set_training_values(xt, yt)
-        sm.train()
+        gpx = GPX(print_global=False, seed=42)
+        gpx.set_training_values(xt, yt)
+        gpx.train()
 
         xe = sampling(10)
         ye = problem(xe)
 
-        ytest = sm.predict_values(xe)
-        e_error = np.linalg.norm(ytest - ye) / np.linalg.norm(ye)
-        self.assertLessEqual(e_error, 2e-2)
+        # Prediction should be pretty good
+        gpx_y = gpx.predict_values(xe)
+        e_error = np.linalg.norm(gpx_y - ye) / np.linalg.norm(ye)
+        self.assertLessEqual(e_error, 1e-3)
 
-        vars = sm.predict_variances(xt)
-        self.assertLessEqual(np.linalg.norm(vars), 1e-6)
+        gpx_var = gpx.predict_variances(xe)
+        self.assertLessEqual(np.linalg.norm(gpx_var), 1e-3)
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_gpx_vs_krg(self):
+        ndim = 3
+        num = 30
+        problem = Sphere(ndim=ndim)
+        xlimits = problem.xlimits
+        sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+
+        xt = sampling(num)
+        yt = problem(xt)
+
+        gpx = GPX(print_global=False, seed=42)
+        gpx.set_training_values(xt, yt)
+        gpx.train()
+
+        xe = sampling(10)
+
+        gpx_y = gpx.predict_values(xe)
+        gpx_var = gpx.predict_variances(xe)
+
+        # Compare against KRG
+        krg = KRG(print_global=False)
+        krg.set_training_values(xt, yt)
+        krg.train()
+
+        krg_y = krg.predict_values(xe)
+        np.testing.assert_allclose(gpx_y, krg_y, atol=1e-2)
+
+        krg_var = krg.predict_variances(xe)
+        np.testing.assert_allclose(gpx_var, krg_var, atol=1e-2)
+
+        for kx in range(ndim):
+            dy = gpx.predict_derivatives(xe, kx)
+            krg_dy = krg.predict_derivatives(xe, kx)
+            np.testing.assert_allclose(dy, krg_dy, atol=1e-3)
+
+            dvar = gpx.predict_variance_derivatives(xe, kx)
+            krg_dvar = krg.predict_variance_derivatives(xe, kx)
+            np.testing.assert_allclose(dvar, krg_dvar, atol=1e-3)
 
 
 if __name__ == "__main__":
