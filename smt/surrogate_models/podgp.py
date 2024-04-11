@@ -1,7 +1,5 @@
 """
 Author: Hugo Reimeringer <@>
-
-This package is distributed under New BSD license.
 """
 
 #------------------------------------------Imports------------------------------------------
@@ -11,9 +9,7 @@ import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.surrogate_models import KRG
-
-import warnings
-
+from smt.utils.checks import ensure_2d_array
 
 class PODGP(SurrogateModel):
     """
@@ -30,9 +26,9 @@ class PODGP(SurrogateModel):
     sm_list : list[SurrogateModel]
         List containing the kriging models used.
     training_values_set : bool
-        Indicates if the training values have been set.
+        Indicates if the training values have already been set.
     train_done : bool
-        Indicates if the training has been performed.
+        Indicates if the training has been performed yet.
 
     Example
     --------
@@ -91,7 +87,7 @@ class PODGP(SurrogateModel):
 
         Parameters
         ----------
-        database : np.ndarray[ny, nt]
+        database : np.ndarray[nt, ny]
             Snapshot matrix. Each column correspond to a snapshot.
         tol : float
             Desired tolerance for the pod (if n_mods not set).
@@ -101,7 +97,7 @@ class PODGP(SurrogateModel):
             Numpy RandomState object or seed number which controls random draws for internal optim. (optional)
         """
         choice_svd = None
-
+        
         svd = PCA(svd_solver = 'randomized', random_state = random_state)
         
         if n_mods != None:
@@ -120,27 +116,31 @@ class PODGP(SurrogateModel):
             raise ValueError(
                 "either one of the arguments 'n_mods' and 'tol' must be specified"
             )
+        
+        database = ensure_2d_array(database, "database")
+        
+        self.n_snapshot = database.shape[0]
+        self.ny = database.shape[1]
             
-        self.n_snapshot = database.shape[1]
-        self.ny = database.shape[0]
-            
-        svd.fit(database.T)
+        svd.fit(database)
         self.left_basis = svd.components_.T
         self.singular_values = svd.singular_values_
         EV_list = svd.explained_variance_
         
         if choice_svd == "tol":
             self.n_mods, self.EV_ratio = PODGP.choice_n_mods_tol(EV_list, tol)
-        elif choice_svd == "n_mods":
+        else:
             if self.n_mods > self.n_snapshot:
                 raise ValueError(
                     "the number of kept mods can't be superior to the number of data values (snapshots)"
                 )
-            self.EV_ratio = sum(EV_list[:self.n_mods])/sum(EV_list)
+            self.EV_ratio = sum(EV_list[:self.n_mods])/sum(EV_list)*100
             
-        self.mean = np.atleast_2d(database.mean(axis=1)).T
+        self.mean = np.atleast_2d(database.T.mean(axis=1)).T
         self.basis = np.array(self.left_basis[:, :self.n_mods])
-        self.coeff = np.dot(self.basis.T, database - self.mean).T
+        print(self.basis.shape)
+        self.coeff = np.dot(self.basis.T, database.T - self.mean).T
+        print(self.coeff.shape)
         
         self.training_values_set = False
         self.train_done = False
@@ -247,6 +247,8 @@ class PODGP(SurrogateModel):
             This is only used in special situations (e.g., multi-fidelity applications).
         """
         
+        xt = ensure_2d_array(xt, "xt")
+        
         if self.sm_list == None:
             raise RuntimeError(
                 "'POD' method must have been succesfully executed before trying to set the training values."    
@@ -304,7 +306,6 @@ class PODGP(SurrogateModel):
         yn : np.ndarray
             Output values at the prediction points.
         """
-        
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
@@ -326,7 +327,7 @@ class PODGP(SurrogateModel):
         
         y = self.mean + np.dot(mean_coeff_gp, self.basis.T).T
         
-        return y
+        return y.T
     
     def _predict_variances(self, xn) -> np.ndarray:
         """
@@ -342,6 +343,7 @@ class PODGP(SurrogateModel):
         s2 : np.ndarray[nt, ny]
             Variances.
         """
+        
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
@@ -363,7 +365,7 @@ class PODGP(SurrogateModel):
         
         s2 = np.dot(var_coeff_gp, (self.basis**2).T).T
         
-        return s2
+        return s2.T
     
     def _predict_derivatives(self, xn, kx) -> np.ndarray:
         """
@@ -382,6 +384,7 @@ class PODGP(SurrogateModel):
             Derivatives.
         """
         d = kx
+        
         if not self.train_done:
             raise RuntimeError(
                 "the model should have been trained before trying to make a prediction"    
@@ -407,4 +410,4 @@ class PODGP(SurrogateModel):
         
         dy_dx = np.dot(deriv_coeff_gp, self.basis.T).T
         
-        return dy_dx
+        return dy_dx.T
