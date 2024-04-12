@@ -95,6 +95,10 @@ class PODGP(SurrogateModel):
             Desired number of kept mod for the pod (if tol not set).
         random_state : int
             Numpy RandomState object or seed number which controls random draws for internal optim. (optional)
+        
+        Example
+        ----------
+        sm.POD(database, tol = 0.99)
         """
         choice_svd = None
         
@@ -138,9 +142,7 @@ class PODGP(SurrogateModel):
             
         self.mean = np.atleast_2d(database.T.mean(axis=1)).T
         self.basis = np.array(self.left_basis[:, :self.n_mods])
-        print(self.basis.shape)
         self.coeff = np.dot(self.basis.T, database.T - self.mean).T
-        print(self.coeff.shape)
         
         self.training_values_set = False
         self.train_done = False
