@@ -1,5 +1,6 @@
 import os
 import unittest
+
 import numpy as np
 
 from smt.sampling_methods import LHS

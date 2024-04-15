@@ -8,10 +8,10 @@ N-dimensional Rosenbrock problem.
 
 import numpy as np
 
-from smt.utils.options_dictionary import OptionsDictionary
 from smt.problems.problem import Problem
 from smt.problems.reduced_problem import ReducedProblem
 from smt.problems.rosenbrock import Rosenbrock
+from smt.utils.options_dictionary import OptionsDictionary
 
 
 class NdimRosenbrock(Problem):

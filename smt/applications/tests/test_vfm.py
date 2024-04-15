@@ -15,18 +15,16 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 import numpy as np
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
 
-from smt.problems import WaterFlowLFidelity, WaterFlow
-from smt.sampling_methods import LHS
 from smt.applications import VFM
-from smt.utils.misc import compute_rms_error
-
-
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
 )
+from smt.problems import WaterFlow, WaterFlowLFidelity
+from smt.sampling_methods import LHS
+from smt.utils.misc import compute_rms_error
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 
 def setupCRM(LF_candidate="QP", Bridge_candidate="KRG", type_bridge="Additive"):
@@ -121,9 +119,9 @@ class TestVFM(SMTestCase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        from smt.problems import WaterFlowLFidelity, WaterFlow
-        from smt.sampling_methods import LHS
         from smt.applications import VFM
+        from smt.problems import WaterFlow, WaterFlowLFidelity
+        from smt.sampling_methods import LHS
 
         # Problem set up
         ndim = 8

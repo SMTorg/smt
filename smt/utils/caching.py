@@ -8,8 +8,8 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import hashlib
 import contextlib
+import hashlib
 
 
 @contextlib.contextmanager

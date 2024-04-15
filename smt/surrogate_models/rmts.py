@@ -4,14 +4,15 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import scipy.sparse
 from numbers import Integral
 
-from smt.utils.linear_solvers import get_solver, LinearSolver, VALID_SOLVERS
-from smt.utils.line_search import get_line_search_class, LineSearch, VALID_LINE_SEARCHES
-from smt.utils.caching import cached_operation
+import numpy as np
+import scipy.sparse
+
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.caching import cached_operation
+from smt.utils.line_search import VALID_LINE_SEARCHES, LineSearch, get_line_search_class
+from smt.utils.linear_solvers import VALID_SOLVERS, LinearSolver, get_solver
 
 
 class RMTS(SurrogateModel):

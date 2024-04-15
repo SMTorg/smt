@@ -1,5 +1,6 @@
-import numpy as np
 import os
+
+import numpy as np
 
 
 def get_b777_engine():
@@ -18,8 +19,8 @@ def get_b777_engine():
 
 
 def plot_b777_engine(xt, yt, limits, interp):
-    import numpy as np
     import matplotlib
+    import numpy as np
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt

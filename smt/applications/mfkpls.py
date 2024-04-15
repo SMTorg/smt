@@ -10,7 +10,6 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 import numpy as np
-
 from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
 

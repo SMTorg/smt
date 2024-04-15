@@ -4,17 +4,19 @@ Author: Remi Lafage <remi.lafage@onera.fr>
 This package is distributed under New BSD license.
 """
 
+import warnings
+
 import numpy as np
-from smt.surrogate_models.surrogate_model import SurrogateModel
+
 from smt.sampling_methods.sampling_method import SamplingMethod
-from smt.utils.checks import ensure_2d_array
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
+from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.checks import ensure_2d_array
 from smt.utils.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,
 )
-import warnings
 
 
 class MixedIntegerSamplingMethod(SamplingMethod):
@@ -266,7 +268,7 @@ class MixedIntegerKrigingModel(KrgBased):
         self._surrogate._train()
 
     def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        x_corr, is_acting = self._get_x_for_surrogate_model(np.copy(x))
         return self._surrogate.predict_values(x_corr, is_acting=is_acting)
 
     def _predict_intermediate_values(
@@ -278,7 +280,7 @@ class MixedIntegerKrigingModel(KrgBased):
         )
 
     def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
-        x_corr, is_acting = self._get_x_for_surrogate_model(x)
+        x_corr, is_acting = self._get_x_for_surrogate_model(np.copy(x))
         return self._surrogate.predict_variances(x_corr, is_acting=is_acting)
 
     def predict_variances_all_levels(self, x: np.ndarray, is_acting=None) -> np.ndarray:

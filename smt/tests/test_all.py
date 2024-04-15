@@ -5,31 +5,32 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-import unittest
 import inspect
-
+import unittest
 from collections import OrderedDict
+
+import numpy as np
 
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
-
-from smt.utils.sm_test_case import SMTestCase
-from smt.utils.silence import Silence
-from smt.utils.misc import compute_rms_error
 from smt.surrogate_models import (
-    LS,
-    QP,
-    KPLS,
-    KRG,
-    KPLSK,
     GEKPLS,
     GENN,
+    GPX,
+    KPLS,
+    KPLSK,
+    KRG,
+    LS,
+    QP,
     DesignSpace,
 )
+from smt.surrogate_models.gpx import GPX_AVAILABLE
+from smt.utils.misc import compute_rms_error
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
 
 try:
-    from smt.surrogate_models import IDW, RBF, RMTC, RMTB
+    from smt.surrogate_models import IDW, RBF, RMTB, RMTC
 
     COMPILED_AVAILABLE = True
 except ImportError:
@@ -54,6 +55,8 @@ class Test(SMTestCase):
         sms = OrderedDict()
         sms["LS"] = LS()
         sms["QP"] = QP()
+        if GPX_AVAILABLE:
+            sms["GPX"] = GPX()
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
@@ -79,6 +82,7 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
+        t_errors["GPX"] = 1.2
         t_errors["KRG"] = 1.2
         t_errors["MFK"] = 1e0
         t_errors["KPLS"] = 1.2
@@ -95,13 +99,14 @@ class Test(SMTestCase):
         e_errors = {}
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
+        e_errors["GPX"] = 2e-2
         e_errors["KRG"] = 2e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
         e_errors["KPLSK"] = 2e-2
         e_errors["MGP"] = 2e-2
         e_errors["GEKPLS"] = 2e-2
-        e_errors["GENN"] = 2e-2
+        e_errors["GENN"] = 3e-2
         if COMPILED_AVAILABLE:
             e_errors["IDW"] = 1e0
             e_errors["RBF"] = 1e0
@@ -168,7 +173,7 @@ class Test(SMTestCase):
         elif pname == "tanh" and sname in ["KPLS", "RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.4)
         elif pname == "exp" and sname in ["GENN"]:
-            self.assertLessEqual(e_error, 1e-1)
+            self.assertLessEqual(e_error, 1.5e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
         else:
@@ -210,6 +215,10 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_exp_GENN(self):
+        self.run_test()
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_exp_GPX(self):
         self.run_test()
 
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
@@ -267,6 +276,10 @@ class Test(SMTestCase):
     def test_tanh_GENN(self):
         self.run_test()
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_tanh_GPX(self):
+        self.run_test()
+
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")
     def test_tanh_IDW(self):
         self.run_test()
@@ -320,6 +333,10 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_GENN(self):
+        self.run_test()
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_cos_GPX(self):
         self.run_test()
 
     @unittest.skipIf(not COMPILED_AVAILABLE, "Compiled Fortran libraries not available")

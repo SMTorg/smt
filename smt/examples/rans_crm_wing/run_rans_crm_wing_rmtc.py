@@ -1,8 +1,8 @@
-from smt.surrogate_models import RMTC
 from smt.examples.rans_crm_wing.rans_crm_wing import (
     get_rans_crm_wing,
     plot_rans_crm_wing,
 )
+from smt.surrogate_models import RMTC
 
 xt, yt, xlimits = get_rans_crm_wing()
 

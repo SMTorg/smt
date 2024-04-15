@@ -8,33 +8,31 @@ order 1 (AR1)
 Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
-from copy import deepcopy
 import warnings
-import numpy as np
-from scipy.linalg import solve_triangular
-from scipy import linalg
-from scipy.spatial.distance import cdist
+from copy import deepcopy
 
+import numpy as np
+from scipy import linalg
+from scipy.linalg import solve_triangular
+from scipy.spatial.distance import cdist
 from sklearn.cross_decomposition import PLSRegression as pls
 
+from smt.sampling_methods import LHS
 from smt.surrogate_models.krg_based import (
     KrgBased,
     MixIntKernelType,
+    compute_n_param,
 )
-
-from smt.sampling_methods import LHS
+from smt.utils.design_space import ensure_design_space
 from smt.utils.kriging import (
-    cross_distances,
     componentwise_distance,
+    compute_X_cont,
+    cross_distances,
+    cross_levels,
     differences,
     gower_componentwise_distances,
-    cross_levels,
-    compute_X_cont,
 )
 from smt.utils.misc import standardization
-
-from smt.surrogate_models.krg_based import compute_n_param
-from smt.utils.design_space import ensure_design_space
 
 
 class NestedLHS(object):

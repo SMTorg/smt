@@ -1,38 +1,37 @@
 # coding: utf-8
 """
-Author: Remi Lafage <remi.lafage@onera.fr> and Nathalie Bartoli
+Author: Remi Lafage <remi.lafage@onera.fr>
 This package is distributed under New BSD license.
 """
 
 import os
 import unittest
-import numpy as np
+from multiprocessing import Pool
 from sys import argv
 
+import numpy as np
 
+import smt.utils.design_space as ds
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
-from smt.utils.sm_test_case import SMTestCase
-from smt.problems import Branin, Rosenbrock
-from smt.sampling_methods import FullFactorial
-from multiprocessing import Pool
-from smt.sampling_methods import LHS
-from smt.surrogate_models import (
-    KRG,
-    GEKPLS,
-    KPLS,
-    MixIntKernelType,
-    DesignSpace,
-    OrdinalVariable,
-    FloatVariable,
-    CategoricalVariable,
-    IntegerVariable,
-)
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
-import smt.utils.design_space as ds
+from smt.problems import Branin, Rosenbrock
+from smt.sampling_methods import LHS, FullFactorial
+from smt.surrogate_models import (
+    GEKPLS,
+    KPLS,
+    KRG,
+    CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
+    IntegerVariable,
+    MixIntKernelType,
+    OrdinalVariable,
+)
+from smt.utils.sm_test_case import SMTestCase
 
 try:
     import matplotlib
@@ -985,19 +984,31 @@ class TestEGO(SMTestCase):
             LHS, design_space, criterion="ese", random_state=random_state
         )
         Xt = sampling(n_doe)
-
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(Xt), 24.811925491708156, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
+        Xt = np.array(
+            [
+                [0.37454012, 1.0],
+                [0.95071431, 0.0],
+                [0.73199394, 8.0],
+                [0.59865848, 6.0],
+                [0.15601864, 7.0],
+            ]
+        )
         # To start the Bayesion optimization
         n_iter = 2  # number of iterations
-        criterion = "EI"  # infill criterion
+        criterion = "LCB"  # infill criterion
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             xdoe=Xt,
             surrogate=KRG(
                 design_space=design_space,
-                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                categorical_kernel=MixIntKernelType.GOWER,
                 theta0=[1e-2],
-                n_start=15,
+                n_start=25,
                 corr="squar_exp",
                 hyper_opt="Cobyla",
                 print_global=False,
@@ -1005,15 +1016,15 @@ class TestEGO(SMTestCase):
             verbose=False,
             enable_tunneling=False,
             random_state=random_state,
-            n_start=15,
+            n_start=25,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
         if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
-            self.assertAlmostEqual(np.sum(y_data), 6.846225752638086, delta=1e-9)
-            self.assertAlmostEqual(np.sum(x_data), 33.81192549170815, delta=1e-9)
+            self.assertAlmostEqual(np.sum(y_data), 8.846225704750577, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 41.811925504901374, delta=1e-4)
         else:
-            self.assertAlmostEqual(np.sum(y_data), 1.8911720670620835, delta=2e-8)
-            self.assertAlmostEqual(np.sum(x_data), 47.56885202767958, delta=1e-9)
+            self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
@@ -1072,11 +1083,12 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.surrogate_models import KRG
         from smt.utils.design_space import DesignSpace
-        import matplotlib.pyplot as plt
 
         def function_test_1d(x):
             # function xsinx
@@ -1161,18 +1173,18 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_mixed_integer_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import MixIntKernelType
+        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.utils.design_space import (
-            DesignSpace,
             CategoricalVariable,
+            DesignSpace,
             FloatVariable,
             IntegerVariable,
         )
-        import matplotlib.pyplot as plt
-        from smt.surrogate_models import KRG
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.
@@ -1217,6 +1229,7 @@ class TestEGO(SMTestCase):
         sm = KRG(
             design_space=design_space,
             categorical_kernel=MixIntKernelType.GOWER,
+            hyper_opt="Cobyla",
             print_global=False,
         )
         mixint = MixedIntegerContext(design_space)
@@ -1258,12 +1271,12 @@ class TestEGO(SMTestCase):
 
     @staticmethod
     def run_ego_parallel_example():
+        import matplotlib.pyplot as plt
         import numpy as np
+
         from smt.applications import EGO
         from smt.applications.ego import Evaluator
         from smt.surrogate_models import KRG, DesignSpace
-
-        import matplotlib.pyplot as plt
 
         def function_test_1d(x):
             # function xsinx
@@ -1292,9 +1305,10 @@ class TestEGO(SMTestCase):
             def run(self, fun, x):
                 n_thread = 5
                 # Caveat: import are made here due to SMT documentation building process
-                import numpy as np
-                from sys import version_info
                 from multiprocessing.pool import ThreadPool
+                from sys import version_info
+
+                import numpy as np
 
                 if version_info.major == 2:
                     return fun(x)

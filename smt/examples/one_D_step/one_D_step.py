@@ -65,8 +65,8 @@ def get_one_d_step():
 
 
 def plot_one_d_step(xt, yt, limits, interp):
-    import numpy as np
     import matplotlib
+    import numpy as np
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt

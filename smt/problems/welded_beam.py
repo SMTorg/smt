@@ -15,6 +15,7 @@ Computer methods in applied mechanics and engineering, 186(2), pp. 311-338. 2000
 
 import numpy as np
 from scipy.misc import derivative
+
 from smt.problems.problem import Problem
 
 

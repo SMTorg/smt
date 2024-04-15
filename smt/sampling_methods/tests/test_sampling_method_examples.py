@@ -12,8 +12,8 @@ except ImportError:
 class Test(unittest.TestCase):
     @staticmethod
     def run_random():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import Random
 
@@ -32,8 +32,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_lhs():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import LHS
 
@@ -52,8 +52,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_full_factorial():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import FullFactorial
 
@@ -72,8 +72,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_box_behnken():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import BoxBehnken
 
@@ -94,8 +94,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_plackett_burman():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import PlackettBurman
 
@@ -116,8 +116,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_factorial():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import Factorial
 
@@ -138,8 +138,8 @@ class Test(unittest.TestCase):
 
     @staticmethod
     def run_gsd():
-        import numpy as np
         import matplotlib.pyplot as plt
+        import numpy as np
 
         from smt.sampling_methods import Gsd
 

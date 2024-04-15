@@ -244,7 +244,9 @@ class KrgBased(SurrogateModel):
             xt = xt[0][0]
 
         if self.options["design_space"] is None:
-            self.options["design_space"] = ensure_design_space(xt=xt)
+            self.options["design_space"] = ensure_design_space(
+                xt=xt, xlimits=self.options["xlimits"]
+            )
 
         elif not isinstance(self.options["design_space"], BaseDesignSpace):
             ds_input = self.options["design_space"]
@@ -962,6 +964,11 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
+        if linalg.svd(R, compute_uv=False)[-1] < 1.1 * nugget:
+            warnings.warn(
+                "R is too ill conditioned. Poor combination "
+                "of regression model and observations."
+            )
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
@@ -1660,6 +1667,8 @@ class KrgBased(SurrogateModel):
         )
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
+        # machine precision: force to zero!
+        B[B<1e-12]=0
         MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
@@ -1781,6 +1790,10 @@ class KrgBased(SurrogateModel):
                 grad = -self._reduced_likelihood_gradient(theta)[0]
                 return grad
 
+            def hessian_minus_reduced_likelihood_function(theta):
+                hess = -self._reduced_likelihood_hessian(theta)[0]
+                return hess
+
         else:
 
             def minus_reduced_likelihood_function(log10t):
@@ -1795,26 +1808,35 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
-        limit, _rhobeg = max(10 * len(self.options["theta0"]), 25), 0.5
+            def hessian_minus_reduced_likelihood_function(log10t):
+                log10t_2d = np.atleast_2d(log10t).T
+                res = (
+                    -np.log(10.0)
+                    * (10.0**log10t_2d)
+                    * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
+                )
+                return res
+
+        limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
         else:
             n_iter = 0
 
-        for ii in range(n_iter, -1, -1):
-            (
-                best_optimal_theta,
-                best_optimal_rlf_value,
-                best_optimal_par,
-                constraints,
-            ) = (
-                [],
-                [],
-                [],
-                [],
-            )
+        (
+            best_optimal_theta,
+            best_optimal_rlf_value,
+            best_optimal_par,
+            constraints,
+        ) = (
+            [],
+            [],
+            [],
+            [],
+        )
 
+        for ii in range(n_iter, -1, -1):
             bounds_hyp = []
 
             self.theta0 = deepcopy(self.options["theta0"])
@@ -1826,16 +1848,22 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    warnings.warn(
-                        f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
-                            [{theta_bounds[0]}, {theta_bounds[1]}]). \
-                                A random initialisation is used instead."
-                    )
-                    self.theta0[i] = self.random_state.rand()
-                    self.theta0[i] = (
-                        self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
-                        + theta_bounds[0]
-                    )
+                    if ii == 0 and "KPLSK" in self.name:
+                        if self.theta0[i] - theta_bounds[1] > 0:
+                            self.theta0[i] = theta_bounds[1] - 1e-10
+                        else:
+                            self.theta0[i] = theta_bounds[0] + 1e-10
+                    else:
+                        warnings.warn(
+                            f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
+                                [{theta_bounds[0]}, {theta_bounds[1]}]). \
+                                    A random initialisation is used instead."
+                        )
+                        self.theta0[i] = self.random_state.rand()
+                        self.theta0[i] = (
+                            self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
+                            + theta_bounds[0]
+                        )
 
                 if self.name in ["MGP"]:  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
@@ -1936,15 +1964,15 @@ class KrgBased(SurrogateModel):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-
-                if self.options["n_start"] > 1:
-                    sampling = LHS(
-                        xlimits=theta_limits,
-                        criterion="maximin",
-                        random_state=self.random_state,
-                    )
-                    theta_lhs_loops = sampling(self.options["n_start"])
-                    theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+                if ii == 1 or "KPLSK" not in self.name:
+                    if self.options["n_start"] > 1:
+                        sampling = LHS(
+                            xlimits=theta_limits,
+                            criterion="maximin",
+                            random_state=self.random_state,
+                        )
+                        theta_lhs_loops = sampling(self.options["n_start"])
+                        theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
                 optimal_theta_res = {"fun": float("inf")}
                 optimal_theta_res_loop = None
@@ -1979,8 +2007,11 @@ class KrgBased(SurrogateModel):
                                 theta0_loop,
                                 method="TNC",
                                 jac=grad_minus_reduced_likelihood_function,
+                                ###The hessian information is available but never used
+                                #
+                                ####hess=hessian_minus_reduced_likelihood_function,
                                 bounds=bounds_hyp,
-                                options={"maxfun": 2 * limit},
+                                options={"maxfun": limit},
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop

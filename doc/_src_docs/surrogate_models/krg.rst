@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0329800
+     Training - done. Time (sec):  0.1566455
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009210
+     Predicting - done. Time (sec):  0.0029492
      
-     Prediction time/pt. (sec) :  0.0000092
+     Prediction time/pt. (sec) :  0.0000295
      
   ___________________________________________________________________________
      
@@ -161,9 +161,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001390
+     Predicting - done. Time (sec):  0.0005305
      
-     Prediction time/pt. (sec) :  0.0000278
+     Prediction time/pt. (sec) :  0.0001061
      
   
 .. figure:: krg_Test_test_krg.png
@@ -191,7 +191,7 @@ Example 2 with mixed variables
       ]
   )
   sm = MixedIntegerKrigingModel(
-      surrogate=KRG(design_space=design_space, theta0=[1e-2])
+      surrogate=KRG(design_space=design_space, theta0=[1e-2], hyper_opt="Cobyla")
   )
   sm.set_training_values(xt, yt)
   sm.train()
@@ -229,14 +229,97 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0035858
+     Predicting - done. Time (sec):  0.0096734
      
-     Prediction time/pt. (sec) :  0.0000072
+     Prediction time/pt. (sec) :  0.0000193
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
   :scale: 80 %
   :align: center
+
+Example 3 with noisy data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from smt.surrogate_models import KRG
+  
+  # defining the toy example
+  def target_fun(x):
+      import numpy as np
+  
+      return np.cos(5 * x)
+  
+  nobs = 50  # number of obsertvations
+  np.random.seed(0)  # a seed for reproducibility
+  xt = np.random.uniform(size=nobs)  # design points
+  
+  # adding a random noise to observations
+  yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
+  
+  # training the model with the option eval_noise= True
+  sm = KRG(eval_noise=True)
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  # predictions
+  x = np.linspace(0, 1, 100).reshape(-1, 1)
+  y = sm.predict_values(x)  # predictive mean
+  var = sm.predict_variances(x)  # predictive variance
+  
+  # plotting predictions +- 3 std confidence intervals
+  plt.rcParams["figure.figsize"] = [8, 4]
+  plt.fill_between(
+      np.ravel(x),
+      np.ravel(y - 3 * np.sqrt(var)),
+      np.ravel(y + 3 * np.sqrt(var)),
+      alpha=0.2,
+      label="Confidence Interval 99%",
+  )
+  plt.scatter(xt, yt, label="Training noisy data")
+  plt.plot(x, y, label="Prediction")
+  plt.plot(x, target_fun(x), label="target function")
+  plt.title("Kriging model with noisy observations")
+  plt.legend(loc=0)
+  plt.xlabel(r"$x$")
+  plt.ylabel(r"$y$")
+  
+::
+
+  ___________________________________________________________________________
+     
+                                    Kriging
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 50
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.3628881
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0112629
+     
+     Prediction time/pt. (sec) :  0.0001126
+     
+  
+.. figure:: krg_Test_test_noisy_krg.png
+  :scale: 80 %
+  :align: center
+
 
 Options
 -------
@@ -283,14 +366,14 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'squar_sin_exp', 'matern52', 'matern32']
      -  ['str']
      -  Correlation function type
   *  -  pow_exp_power
      -  1.9
      -  None
      -  ['float']
-     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
      -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
@@ -360,4 +443,4 @@ Options
      -  41
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
+     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)

@@ -5,6 +5,7 @@ from .podgp import PODGP
 from .kpls import KPLS
 from .gekpls import GEKPLS
 from .kplsk import KPLSK
+from .gpx import GPX
 from .genn import GENN
 from .mgp import MGP
 from .sgp import SGP
@@ -27,6 +28,7 @@ __all__ = [
     "KPLS",
     "GEKPLS",
     "KPLSK",
+    "GPX",
     "GENN",
     "MGP",
     "SGP",
@@ -45,7 +47,7 @@ try:
     from .rmtc import RMTC
     from .rmtb import RMTB
 
-    __all__ = __all__ + [IDW, RBF, RMTC, RMTB]
+    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB"]
 
 except ImportError:
     pass

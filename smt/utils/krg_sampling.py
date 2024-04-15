@@ -4,8 +4,9 @@ Some parts are copied from KrgBased SMT class
 """
 
 import numpy as np
-from smt.utils.kriging import differences
 from scipy import linalg
+
+from smt.utils.kriging import differences
 
 
 def covariance_matrix(krg, X, conditioned=True):

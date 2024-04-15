@@ -6,10 +6,10 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils.caching import cached_operation
 
 from smt.surrogate_models.idwclib import PyIDW
+from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.caching import cached_operation
 
 
 class IDW(SurrogateModel):

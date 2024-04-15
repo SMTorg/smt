@@ -4,24 +4,25 @@ Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 This package is distributed under New BSD license.
 """
 
+from typing import List, Optional, Sequence, Tuple, Union
+
 import numpy as np
-from typing import List, Union, Tuple, Sequence, Optional
 
 from smt.sampling_methods import LHS
 
 try:
     from ConfigSpace import (
-        ConfigurationSpace,
-        Configuration,
-        UniformIntegerHyperparameter,
-        UniformFloatHyperparameter,
         CategoricalHyperparameter,
-        OrdinalHyperparameter,
+        Configuration,
+        ConfigurationSpace,
         EqualsCondition,
-        InCondition,
+        ForbiddenAndConjunction,
         ForbiddenEqualsClause,
         ForbiddenInClause,
-        ForbiddenAndConjunction,
+        InCondition,
+        OrdinalHyperparameter,
+        UniformFloatHyperparameter,
+        UniformIntegerHyperparameter,
     )
     from ConfigSpace.exceptions import ForbiddenValueError
     from ConfigSpace.util import get_random_neighbor
@@ -608,7 +609,7 @@ class BaseDesignSpace:
         Sample n design vectors and additionally return the is_acting matrix.
 
         Returns
-        ----------
+        -------
         x: np.ndarray [n, dim]
            - Valid design vectors
         is_acting: np.ndarray [n, dim]
@@ -1178,6 +1179,8 @@ class DesignSpace(BaseDesignSpace):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 if cs_normalize:
+                    dv.lower = min(np.min(x[:, i]), dv.lower)
+                    dv.upper = max(np.max(x[:, i]), dv.upper)
                     x[:, i] = np.clip(
                         (x[:, i] - dv.lower) / (dv.upper - dv.lower + 1e-16), 0, 1
                     )

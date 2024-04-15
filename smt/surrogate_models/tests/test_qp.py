@@ -5,10 +5,11 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+
 import numpy as np
 
-from smt.surrogate_models import QP
 from smt.examples.rans_crm_wing.rans_crm_wing import get_rans_crm_wing
+from smt.surrogate_models import QP
 
 
 class TestQP(unittest.TestCase):

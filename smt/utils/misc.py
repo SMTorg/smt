@@ -5,8 +5,9 @@ This package is distributed under New BSD license.
 """
 
 import sys
-import numpy as np
 from bisect import bisect_left
+
+import numpy as np
 
 
 def standardization(X, y):

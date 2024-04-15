@@ -7,6 +7,7 @@ Base class for sampling algorithms.
 """
 
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from smt.utils.options_dictionary import OptionsDictionary
@@ -65,8 +66,8 @@ class SamplingMethod(metaclass=ABCMeta):
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         nt : int
             Number of points hint.
 
@@ -85,8 +86,8 @@ class SamplingMethod(metaclass=ABCMeta):
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         nt : int
             Number of points requested.
             Depending on the concrete sampling method this requested number of samples may not be enforced.
@@ -103,9 +104,11 @@ class ScaledSamplingMethod(SamplingMethod):
     """This class represents sample methods which generates samples in the unit hypercube [0, 1]^nx.
 
     The __call__ method does scale the generated samples accordingly to the defined xlimits.
+
     Implementation notes:
-        * When nt is None, it defaults to 2 * nx.
-        * xlimits is presence is checked. ValueError is raised if not specified.
+
+    * When nt is None, it defaults to 2 * nx.
+    * xlimits is presence is checked. ValueError is raised if not specified.
     """
 
     def __call__(self, nt: int = None) -> np.ndarray:
@@ -116,8 +119,8 @@ class ScaledSamplingMethod(SamplingMethod):
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         nt : int (optional, default 2*nx)
             Number of points requested.
 
@@ -138,8 +141,8 @@ class ScaledSamplingMethod(SamplingMethod):
 
         The number of dimensions (nx) is determined based on `xlimits.shape[0]`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         nt : int
             Number of points requested.
 

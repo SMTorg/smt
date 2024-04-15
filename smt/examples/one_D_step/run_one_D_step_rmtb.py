@@ -1,5 +1,5 @@
-from smt.surrogate_models import RMTB
 from smt.examples.one_D_step.one_D_step import get_one_d_step, plot_one_d_step
+from smt.surrogate_models import RMTB
 
 xt, yt, xlimits = get_one_d_step()
 
