@@ -324,9 +324,9 @@ class PODGP(SurrogateModel):
             mu_i = self.sm_list[i].predict_values(xn)
             mean_coeff_gp[:,i] = mu_i[:,0]
         
-        y = self.mean + np.dot(mean_coeff_gp, self.basis.T).T
+        y = self.mean.T + np.dot(mean_coeff_gp, self.basis.T)
         
-        return y.T
+        return y
     
     def _predict_variances(self, xn) -> np.ndarray:
         """
@@ -362,9 +362,9 @@ class PODGP(SurrogateModel):
             sigma_i_square = self.sm_list[i].predict_variances(xn)
             var_coeff_gp[:,i] = sigma_i_square[:,0]
         
-        s2 = np.dot(var_coeff_gp, (self.basis**2).T).T
+        s2 = np.dot(var_coeff_gp, (self.basis**2).T)
         
-        return s2.T
+        return s2
     
     def _predict_derivatives(self, xn, kx) -> np.ndarray:
         """
@@ -402,6 +402,6 @@ class PODGP(SurrogateModel):
         for i in range(self.n_mods):
             deriv_coeff_gp[:,i] = self.sm_list[i].predict_derivatives(xn, d)[:,0]
         
-        dy_dx = np.dot(deriv_coeff_gp, self.basis.T).T
+        dy_dx = np.dot(deriv_coeff_gp, self.basis.T)
         
-        return dy_dx.T
+        return dy_dx
