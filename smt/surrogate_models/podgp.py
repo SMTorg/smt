@@ -1,11 +1,9 @@
 """
-Author: Hugo Reimeringer <@>
+Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
-#------------------------------------------Imports------------------------------------------
 from sklearn.decomposition import PCA
 import numpy as np
-
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.surrogate_models import KRG
@@ -260,7 +258,7 @@ class PODGP(SurrogateModel):
         
         if self.nt != self.n_snapshot:
             raise ValueError(
-                f"there must be the same amount of train values than data values (snapshots), but here {self.nt} != {self.n_snapshot}"    
+                f"there must be the same amount of train values than data values (snapshots), but here {self.nt} != {self.n_snapshot}."    
             )
         
         for i in range(self.n_mods):
@@ -291,7 +289,6 @@ class PODGP(SurrogateModel):
         sm_list : np.ndarray[n_mods]
             List of the kriging models used for the POD coefficients.
         """
-        
         return self.sm_list
     
     def _predict_values(self, xn) -> np.ndarray:
@@ -397,11 +394,6 @@ class PODGP(SurrogateModel):
         if dim_new != self.nx:
             raise ValueError(
                 f"the data values (snapshots) and the new values where to make a prediction must be the same size, {self.dim_new} != {self.nx}"    
-            )
-        
-        if kx >= self.nx:
-            raise ValueError(
-                "the number of the desired derivatives must correspond to an existing dimension of the data"    
             )
         
         n_new = xn.shape[0]
