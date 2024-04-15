@@ -12,7 +12,7 @@ from smt.utils.checks import ensure_2d_array
 
 class PODGP(SurrogateModel):
     """
-    Class for Proper Orthogonal Decomposition and Gaussian Processes (POD+GP) based surrogate model.
+    Class for Proper Orthogonal Decomposition and Gaussian Processes (PODGP) based surrogate model.
 
     Attributes
     ----------
@@ -36,7 +36,7 @@ class PODGP(SurrogateModel):
     >>> sm.options['print_prediction'] = False
     """
 
-    name = "POD+GP"
+    name = "PODGP"
 
     def _initialize(self) -> None:
         super()._initialize()

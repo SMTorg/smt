@@ -376,7 +376,7 @@ class KrgBased(SurrogateModel):
             self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name not in ["POD+GP", "Kriging", "MGP", "SGP"]:
+        if self.name not in ["PODGP", "Kriging", "MGP", "SGP"]:
             if self.is_continuous:
                 X, y = self._compute_pls(X.copy(), y.copy())
 

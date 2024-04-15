@@ -247,7 +247,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Train the model
         """
-        if self.name in ["POD+GP"]:
+        if self.name in ["PODGP"]:
             n_exact = self.sm_list[0].training_points[None][0][0].shape[0]
         else:
             n_exact = self.training_points[None][0][0].shape[0]
