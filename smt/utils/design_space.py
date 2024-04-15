@@ -271,7 +271,7 @@ class BaseDesignSpace:
 
         indi = 0
         for i in self.design_variables:
-            if not ((isinstance(i, FloatVariable))):
+            if not (isinstance(i, FloatVariable)):
                 x[:, indi] = np.int64(np.round(x[:, indi], 0))
             indi += 1
 
@@ -1128,7 +1128,6 @@ class DesignSpace(BaseDesignSpace):
                         if (
                             str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
                         ) == "Cat" and not (np.isnan(vector2[indvec])):
-
                             vector2[indvec] = int(vector2[indvec])
                         indvec += 1
 
@@ -1210,7 +1209,6 @@ class DesignSpace(BaseDesignSpace):
                 x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
 
     def _cs_denormalize_x(self, x: np.ndarray):
-
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower

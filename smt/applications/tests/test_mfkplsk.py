@@ -6,6 +6,7 @@ Created on Mon May 07 14:20:11 2018
 
 Adapted to new SMT version in march 2020 by Nathalie Bartoli
 """
+
 try:
     import matplotlib
 

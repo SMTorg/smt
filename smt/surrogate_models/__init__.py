@@ -20,7 +20,7 @@ from smt.utils.design_space import (
 from smt.utils.kriging import MixHrcKernelType
 
 __all__ = [
-    "PODGP"
+    "PODGP",
     "LS",
     "QP",
     "KRG",
