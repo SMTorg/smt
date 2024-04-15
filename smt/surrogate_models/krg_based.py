@@ -1668,7 +1668,7 @@ class KrgBased(SurrogateModel):
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         # machine precision: force to zero!
-        B[B<1e-12]=0
+        B[B < 1e-12] = 0
         MSE = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!

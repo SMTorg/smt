@@ -95,9 +95,11 @@ hierarchical variables. We distinguish dimensional (or meta) variables which are
 affect the dimension of the problem and decide if some other decreed variables are acting or non-acting.
 
 Additionally, it is also possible to define value constraints that explicitly forbid two variables from having some
-values simultaneously. This can be useful for modeling incompatibility relationships: for example, engines can't be
+values simultaneously or for a continuous variable to be greater than another. 
+This can be useful for modeling incompatibility relationships: for example, engines can't be 
 installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected. Note: this feature
 is only available if ConfigSpace has been installed: `pip install smt[cs]`
+
 
 The hierarchy relationships are specified after instantiating the design space:
 

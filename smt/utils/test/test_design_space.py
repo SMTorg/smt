@@ -518,6 +518,52 @@ class Test(unittest.TestCase):
         assert len(seen_x) == 14
         assert len(seen_is_acting) == 2
 
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
+    def test_design_space_continuous(self):
+        ds = DesignSpace(
+            [
+                FloatVariable(0, 1),  # x0
+                FloatVariable(0, 1),  # x1
+                FloatVariable(0, 1),  # x2
+            ],
+            random_state=42,
+        )
+        ds.add_value_constraint(
+            var1=0, value1="<", var2=1, value2=">"
+        )  # Prevent x0 < x1
+        ds.add_value_constraint(
+            var1=1, value1="<", var2=2, value2=">"
+        )  # Prevent x0 < x1
+
+        # correct_get_acting
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+        self.assertTrue(np.min(x_sampled[:, 0] - x_sampled[:, 1]) > 0)
+        self.assertTrue(np.min(x_sampled[:, 1] - x_sampled[:, 2]) > 0)
+        ds = DesignSpace(
+            [
+                IntegerVariable(0, 2),  # x0
+                FloatVariable(0, 2),  # x1
+                IntegerVariable(0, 2),  # x2
+            ],
+            random_state=42,
+        )
+        ds.add_value_constraint(
+            var1=0, value1="<", var2=1, value2=">"
+        )  # Prevent x0 < x1
+        ds.add_value_constraint(
+            var1=1, value1="<", var2=2, value2=">"
+        )  # Prevent x0 < x1
+
+        # correct_get_acting
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+        self.assertTrue(np.min(x_sampled[:, 0] - x_sampled[:, 1]) > 0)
+        self.assertTrue(np.min(x_sampled[:, 1] - x_sampled[:, 2]) > 0)
+
+    @unittest.skipIf(
+        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    )
     def test_check_conditionally_acting(self):
         class WrongDesignSpace(DesignSpace):
             def _is_conditionally_acting(self) -> np.ndarray:
