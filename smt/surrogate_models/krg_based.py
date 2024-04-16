@@ -720,16 +720,16 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -1399,11 +1399,11 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if is_acting is None:
-            x, is_acting = self.design_space.correct_get_acting(x)
-        n_eval, n_features_x = x.shape
-        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
+            if is_acting is None:
+                x, is_acting = self.design_space.correct_get_acting(x)
+            n_eval, n_features_x = x.shape
+            _, ij = cross_distances(x, self.X_train)
             dx = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
@@ -1463,6 +1463,8 @@ class KrgBased(SurrogateModel):
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
+            n_eval, n_features_x = x.shape
+            _, ij = cross_distances(x, self.X_train)
             X_cont = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
             dx = differences(X_cont, Y=self.X_norma.copy())
