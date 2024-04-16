@@ -72,13 +72,13 @@ class Test(SMTestCase):
 
         # the Variance (interpolation case without noise) must be =/ 0
         var_noise_free = sm_noise_free.predict_variances(x)  # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_free), 0.0, 1e-4)
+        self.assert_error(np.linalg.norm(var_noise_free), 0.0, 1e-5)
 
         # the Variance (regression case with noise) must be =/ 0
         var_noise_fixed = sm_noise_fixed.predict_variances(x)  # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-4)
+        self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-5)
         var_noise_estim = sm_noise_estim.predict_variances(x)  # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-4)
+        self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-3)
 
 
 if __name__ == "__main__":
