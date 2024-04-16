@@ -199,6 +199,7 @@ class BaseDesignSpace:
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
         self.seed = None
+        self.has_valcons_ord_int = False
 
     @property
     def design_variables(self) -> List[DesignVariable]:
@@ -894,10 +895,16 @@ class DesignSpace(BaseDesignSpace):
         """
         if self._cs is None:
             raise_config_space()
-
         # Get parameters
         param1 = self._get_param(var1)
         param2 = self._get_param(var2)
+        if (
+            isinstance(param1, UniformIntegerHyperparameter)
+            or isinstance(param2, UniformIntegerHyperparameter)
+            or isinstance(param1, OrdinalHyperparameter)
+            or isinstance(param2, OrdinalHyperparameter)
+        ):
+            self.has_valcons_ord_int = True
         if not (isinstance(param1, UniformFloatHyperparameter)) and not (
             isinstance(param2, UniformFloatHyperparameter)
         ):
@@ -1136,23 +1143,26 @@ class DesignSpace(BaseDesignSpace):
                     if self.seed is None:
                         seed = self._to_seed(self.random_state)
                         self.seed = seed
-                    vector = config.get_array().copy()
-                    indvec = 0
-                    vector2 = np.copy(vector)
-                    ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
-                    ## ConfigSpace is malfunctioning
-                    for hp in self._cs_cate:
-                        if (
-                            str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
-                        ) == "Cat" and not (np.isnan(vector2[indvec])):
-                            vector2[indvec] = int(vector2[indvec])
-                        indvec += 1
+                    if not (self.has_valcons_ord_int):
+                        return get_random_neighbor(config, seed=self.seed)
+                    else:
+                        vector = config.get_array().copy()
+                        indvec = 0
+                        vector2 = np.copy(vector)
+                        ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
+                        ## ConfigSpace is malfunctioning
+                        for hp in self._cs_cate:
+                            if (
+                                str(self._cs_cate.get_hyperparameter(hp)).split()[2][:3]
+                            ) == "Cat" and not (np.isnan(vector2[indvec])):
+                                vector2[indvec] = int(vector2[indvec])
+                            indvec += 1
 
-                    config2 = Configuration(self._cs_cate, vector=vector2)
-                    config3 = get_random_neighbor(config2, seed=self.seed)
-                    vector3 = config3.get_array().copy()
-                    config4 = Configuration(self._cs, vector=vector3)
-                    return config4
+                        config2 = Configuration(self._cs_cate, vector=vector2)
+                        config3 = get_random_neighbor(config2, seed=self.seed)
+                        vector3 = config3.get_array().copy()
+                        config4 = Configuration(self._cs, vector=vector3)
+                        return config4
                 else:
                     raise
 
