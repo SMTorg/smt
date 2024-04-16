@@ -370,7 +370,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
-        if is_acting is None:
+        if is_acting is None and not self.is_continuous:
             X, is_acting = self.design_space.correct_get_acting(X)
             self.training_points[None][0][0] = X
             self.is_acting_points[None] = is_acting
@@ -1585,12 +1585,12 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable MSE
         """
         # Initialization
-        if is_acting is None:
-            x, is_acting = self.design_space.correct_get_acting(x)
-        n_eval, n_features_x = x.shape
-        X_cont = x
-        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
+            if is_acting is None:
+                x, is_acting = self.design_space.correct_get_acting(x)
+            n_eval, n_features_x = x.shape
+            X_cont = x
+            _, ij = cross_distances(x, self.X_train)
             dx = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
@@ -1649,6 +1649,8 @@ class KrgBased(SurrogateModel):
             X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
+            n_eval, n_features_x = x.shape
+            _, ij = cross_distances(x, self.X_train)
             x = (x - self.X_offset) / self.X_scale
             X_cont = np.copy(x)
             # Get pairwise componentwise L1-distances to the input training set
