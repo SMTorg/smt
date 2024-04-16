@@ -1096,7 +1096,7 @@ class DesignSpace(BaseDesignSpace):
             try:
                 ## Fix to make constraints work correctly with either IntegerVariable or OrdinalVariable
                 ## ConfigSpace is malfunctioning
-                if self.isinteger:
+                if self.isinteger and self.has_valcons_ord_int:
                     vector2 = np.copy(vector)
                     self._cs_denormalize_x_ordered(np.atleast_2d(vector2))
                     indvec = 0
