@@ -720,16 +720,16 @@ class KrgBased(SurrogateModel):
                 d_cont = d[:, np.logical_not(cat_features)]
         if self.options["corr"] == "squar_sin_exp":
             if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
+                theta_cont_features[
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([True] * len([self.design_space.is_cat_mask]))
+                ).T
+                theta_cat_features[1][
+                    -len([self.design_space.is_cat_mask]) :
+                ] = np.atleast_2d(
+                    np.array([False] * len([self.design_space.is_cat_mask]))
+                ).T
 
         theta_cont = theta[theta_cont_features[:, 0]]
         r_cont = _correlation_types[corr](theta_cont, d_cont)
@@ -1347,12 +1347,46 @@ class KrgBased(SurrogateModel):
                 y=np.copy(self.X_train),
                 y_is_acting=self.is_acting_train,
             )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                dx = self._correct_distances_cat_decreed(
+                    dx,
+                    is_acting,
+                    listcatdecreed,
+                    ij,
+                    is_acting_y=self.is_acting_train,
+                    mixint_type=MixIntKernelType.GOWER,
+                )
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    dx = self._correct_distances_cat_decreed(
+                        dx,
+                        is_acting,
+                        listcatdecreed,
+                        ij,
+                        is_acting_y=self.is_acting_train,
+                        mixint_type=MixIntKernelType.CONT_RELAX,
+                    )
+
+            Lij, _ = cross_levels(
+                X=x, ij=ij, design_space=self.design_space, y=self.X_train
+            )
+            self.ij = ij
         else:
             n_eval, _ = x.shape
             X_cont = (np.copy(x) - self.X_offset) / self.X_scale
             dx = differences(X_cont, Y=self.X_norma.copy())
             ij = 0
-            return x, is_acting, n_eval, ij, dx
+            Lij = 0
+        return x, is_acting, n_eval, ij, Lij, dx
 
     def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
@@ -1421,40 +1455,8 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         if not (self.is_continuous):
-            x, is_acting, n_eval, ij, dx = self._predict_init(x, is_acting)
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                dx = self._correct_distances_cat_decreed(
-                    dx,
-                    is_acting,
-                    listcatdecreed,
-                    ij,
-                    is_acting_y=self.is_acting_train,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
-                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
+            x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
 
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
-            Lij, _ = cross_levels(
-                X=x, ij=ij, design_space=self.design_space, y=self.X_train
-            )
-            self.ij = ij
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1472,7 +1474,7 @@ class KrgBased(SurrogateModel):
             X_cont, _ = compute_X_cont(x, self.design_space)
 
         else:
-            _, _, n_eval, _, dx = self._predict_init(x, is_acting)
+            _, _, n_eval, _, _, dx = self._predict_init(x, is_acting)
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
@@ -1593,41 +1595,9 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         if not (self.is_continuous):
-            x, is_acting, n_eval, ij, dx = self._predict_init(x, is_acting)
+            x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
             X_cont = x
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                dx = self._correct_distances_cat_decreed(
-                    dx,
-                    is_acting,
-                    listcatdecreed,
-                    ij,
-                    is_acting_y=self.is_acting_train,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
-                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
 
-            Lij, _ = cross_levels(
-                X=x, ij=ij, design_space=self.design_space, y=self.X_train
-            )
-            self.ij = ij
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1644,7 +1614,7 @@ class KrgBased(SurrogateModel):
 
             X_cont, _ = compute_X_cont(x, self.design_space)
         else:
-            _, _, n_eval, _, dx = self._predict_init(x, is_acting)
+            _, _, n_eval, _, _, dx = self._predict_init(x, is_acting)
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function

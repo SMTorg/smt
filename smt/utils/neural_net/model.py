@@ -221,9 +221,9 @@ class Model(object):
 
                 # Compute average cost and print output
                 avg_cost = np.mean(optimizer.cost_history).squeeze()
-                self._training_history["epoch_" + str(e)]["batch_" + str(b)] = (
-                    optimizer.cost_history
-                )
+                self._training_history["epoch_" + str(e)][
+                    "batch_" + str(b)
+                ] = optimizer.cost_history
 
                 if not silent:
                     print(
