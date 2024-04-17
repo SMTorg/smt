@@ -1402,7 +1402,7 @@ class KrgBased(SurrogateModel):
         if not (self.is_continuous):
             if is_acting is None:
                 x, is_acting = self.design_space.correct_get_acting(x)
-            n_eval, n_features_x = x.shape
+            n_eval, _ = x.shape
             _, ij = cross_distances(x, self.X_train)
             dx = gower_componentwise_distances(
                 x,
@@ -1463,8 +1463,7 @@ class KrgBased(SurrogateModel):
             X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
-            n_eval, n_features_x = x.shape
-            _, ij = cross_distances(x, self.X_train)
+            n_eval, _ = x.shape
             X_cont = (x - self.X_offset) / self.X_scale
             # Get pairwise componentwise L1-distances to the input training set
             dx = differences(X_cont, Y=self.X_norma.copy())
@@ -1499,7 +1498,7 @@ class KrgBased(SurrogateModel):
             Derivative values.
         """
         # Initialization
-        n_eval, n_features_x = x.shape
+        n_eval, _ = x.shape
 
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
@@ -1588,7 +1587,7 @@ class KrgBased(SurrogateModel):
         if not (self.is_continuous):
             if is_acting is None:
                 x, is_acting = self.design_space.correct_get_acting(x)
-            n_eval, n_features_x = x.shape
+            n_eval, _ = x.shape
             X_cont = x
             _, ij = cross_distances(x, self.X_train)
             dx = gower_componentwise_distances(
@@ -1649,8 +1648,7 @@ class KrgBased(SurrogateModel):
             X_cont, _ = compute_X_cont(x, self.design_space)
             X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
-            n_eval, n_features_x = x.shape
-            _, ij = cross_distances(x, self.X_train)
+            n_eval, _ = x.shape
             x = (x - self.X_offset) / self.X_scale
             X_cont = np.copy(x)
             # Get pairwise componentwise L1-distances to the input training set
@@ -1696,7 +1694,7 @@ class KrgBased(SurrogateModel):
         """
 
         # Initialization
-        n_eval, n_features_x = x.shape
+        n_eval, _ = x.shape
         x = (x - self.X_offset) / self.X_scale
         theta = self.optimal_theta
         # Get pairwise componentwise L1-distances to the input training set
