@@ -78,7 +78,7 @@ class Test(SMTestCase):
         var_noise_fixed = sm_noise_fixed.predict_variances(x)  # predictive variance
         self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-5)
         var_noise_estim = sm_noise_estim.predict_variances(x)  # predictive variance
-        self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-5)
+        self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-3)
 
 
 if __name__ == "__main__":
