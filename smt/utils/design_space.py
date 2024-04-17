@@ -526,9 +526,9 @@ class BaseDesignSpace:
 
                 # The is_acting matrix is simply repeated column-wise
                 if is_acting is not None:
-                    is_acting_unfolded[
-                        :, i_x_unfold : i_x_unfold + n_dim_cat
-                    ] = np.tile(is_acting[:, [i]], (1, n_dim_cat))
+                    is_acting_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] = (
+                        np.tile(is_acting[:, [i]], (1, n_dim_cat))
+                    )
 
                 i_x_unfold += n_dim_cat
 
