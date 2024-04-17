@@ -1593,7 +1593,7 @@ class KrgBased(SurrogateModel):
         """
         # Initialization
         if not (self.is_continuous):
-            x, is_acting, n_eval, ij, dx = self._predict_mixed_int_init(x, is_acting)
+            x, is_acting, n_eval, ij, dx = self._predict_init(x, is_acting)
             X_cont = x
             listcatdecreed = self.design_space.is_conditionally_acting[
                 self.cat_features
