@@ -47,6 +47,7 @@ class PODGP(SurrogateModel):
         self.singular_values = None
         self.training_values_set = False
         self.train_done = False
+        self.sm_list = None
 
         supports["variances"] = True
         supports["derivatives"] = True
@@ -272,7 +273,22 @@ class PODGP(SurrogateModel):
             self.training_points[name][i] = [xt, self.coeff[:, i]]
         self.training_values_set = True
 
-    def _train(self) -> None:
+    def train(self) -> None:
+        """
+        Performs the training of the model.
+        """
+        if not self.training_values_set:
+            raise RuntimeError(
+                "the training values should have been set before trying to train the model"
+            )
+
+        for i in range(self.n_mods):
+            super().train(self.sm_list[i])
+        self.train_done = True
+
+        return None
+
+    def __train(self) -> None:
         """
         Performs the training of the model.
         """
