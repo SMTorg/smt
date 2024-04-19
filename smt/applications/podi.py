@@ -35,9 +35,8 @@ class PODI(SurrogateBasedApplication):
 
     Example
     --------
-    >>> from smt.surrogate_models import PODI
-    >>> sm = PODI(print_training=False)
-    >>> sm.options['print_prediction'] = False
+    >>> from smt.applications import PODI
+    >>> sm = PODI()
     """
 
     name = "PODI"
@@ -210,7 +209,7 @@ class PODI(SurrogateBasedApplication):
         return self.n_modes
 
     def set_interp_options(
-        self, interp_type: str = "KRG", interp_options_list: list = None
+        self, interp_type: str = "KRG", interp_options_list: list = [{}]
     ) -> None:
         """
         Set the options for the interpolation surrogate models used.
@@ -337,20 +336,6 @@ class PODI(SurrogateBasedApplication):
             interp_coeff.train()
 
         self.train_done = True
-
-    # def _train(self) -> None:
-    #     """
-    #     Performs the training of the model.
-    #     """
-
-    #     if not self.training_values_set:
-    #         raise RuntimeError(
-    #             "the training values should have been set before trying to train the model"
-    #         )
-
-    #     for i in range(self.n_modes):
-    #         self.interp_coeff[i].train()
-    #     self.train_done = True
 
     def get_interp_coef(self) -> np.ndarray:
         """
