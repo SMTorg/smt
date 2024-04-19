@@ -4,6 +4,7 @@ from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
+from .podi import PODI
 
 __all__ = [
     "VFM",

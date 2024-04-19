@@ -226,7 +226,8 @@ class PODI(SurrogateBasedApplication):
             The k-th dictionnary corresponds to the options of the k-th interpolation model.
             If the options are common to all surogate models, only a single dictionnary is required in the list.
             The available options can be found in the documentation of the corresponding surrogate models.
-
+            By default, the print_global options are set to 'False'.
+            
         Example
         --------
         >>> interp_type = "KRG"
@@ -243,7 +244,7 @@ class PODI(SurrogateBasedApplication):
 
         if interp_type not in PODI_available_models.keys():
             raise ValueError(
-                f"the surrogate model type should be one of the following : {' '.join(self.available_models_name)}"
+                f"the surrogate model type should be one of the following : {', '.join(self.available_models_name)}"
             )
 
         if interp_options_list is None:
@@ -267,11 +268,13 @@ class PODI(SurrogateBasedApplication):
             elif mode_options == "global":
                 index = 0
 
-            sm_i = PODI_available_models[interp_type](print_global=False)
+            sm_i = PODI_available_models[interp_type]()
+            sm_i.options["print_global"] = False
 
             for key in interp_options_list[index].keys():
                 sm_i.options[key] = interp_options_list[index][key]
-                self.interp_coeff.append(sm_i)
+            
+            self.interp_coeff.append(sm_i)
 
         self.interp_options_set = True
         self.training_values_set = False
@@ -310,7 +313,6 @@ class PODI(SurrogateBasedApplication):
 
         for i in range(self.n_modes):
             self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
-            self.training_points[name][i] = [xt, self.coeff[:, i]]
 
         self.training_values_set = True
 
@@ -361,7 +363,7 @@ class PODI(SurrogateBasedApplication):
         """
         return self.interp_coeff
 
-    def _predict_values(self, xn) -> np.ndarray:
+    def predict_values(self, xn) -> np.ndarray:
         """
         Predict the output values at a set of points.
 
@@ -377,7 +379,7 @@ class PODI(SurrogateBasedApplication):
         """
         if not self.train_done:
             raise RuntimeError(
-                "the model should have been trained before trying to make a prediction"
+                "the model should have been trained before trying to make a prediction."
             )
 
         self.dim_new = xn.shape[1]
@@ -391,14 +393,14 @@ class PODI(SurrogateBasedApplication):
         mean_coeff_interp = np.zeros((self.n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            mu_i = self.sm_list[i].predict_values(xn)
+            mu_i = self.interp_coeff[i].predict_values(xn)
             mean_coeff_interp[:, i] = mu_i[:, 0]
 
         y = self.mean.T + np.dot(mean_coeff_interp, self.basis.T)
 
         return y
 
-    def _predict_variances(self, xn) -> np.ndarray:
+    def predict_variances(self, xn) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -429,14 +431,14 @@ class PODI(SurrogateBasedApplication):
         var_coeff_interp = np.zeros((self.n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            sigma_i_square = self.sm_list[i].predict_variances(xn)
+            sigma_i_square = self.interp_coeff[i].predict_variances(xn)
             var_coeff_interp[:, i] = sigma_i_square[:, 0]
 
         s2 = np.dot(var_coeff_interp, (self.basis**2).T)
 
         return s2
 
-    def _predict_derivatives(self, xn, kx) -> np.ndarray:
+    def predict_derivatives(self, xn, kx) -> np.ndarray:
         """
         Predict the dy_dx derivatives at a set of points.
 
@@ -470,7 +472,7 @@ class PODI(SurrogateBasedApplication):
         deriv_coeff_interp = np.zeros((n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[:, i] = self.sm_list[i].predict_derivatives(xn, d)[:, 0]
+            deriv_coeff_interp[:, i] = self.interp_coeff[i].predict_derivatives(xn, d)[:, 0]
 
         dy_dx = np.dot(deriv_coeff_interp, self.basis.T)
 

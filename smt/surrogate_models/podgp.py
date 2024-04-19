@@ -273,22 +273,22 @@ class PODGP(SurrogateModel):
             self.training_points[name][i] = [xt, self.coeff[:, i]]
         self.training_values_set = True
 
-    def train(self) -> None:
-        """
-        Performs the training of the model.
-        """
-        if not self.training_values_set:
-            raise RuntimeError(
-                "the training values should have been set before trying to train the model"
-            )
+    # def train(self) -> None:
+    #     """
+    #     Performs the training of the model.
+    #     """
+    #     if not self.training_values_set:
+    #         raise RuntimeError(
+    #             "the training values should have been set before trying to train the model"
+    #         )
 
-        for i in range(self.n_mods):
-            super().train(self.sm_list[i])
-        self.train_done = True
+    #     for i in range(self.n_mods):
+    #         super().train(self.sm_list[i])
+    #     self.train_done = True
 
-        return None
+    #     return None
 
-    def __train(self) -> None:
+    def _train(self) -> None:
         """
         Performs the training of the model.
         """
