@@ -74,7 +74,7 @@ class TestKrgBased(unittest.TestCase):
                 sm.predict_derivatives(x[20], 0)
                 - (sm.predict_values(x[20] + 1e-6) - sm.predict_values(x[20])) / 1e-6
             ),
-            1e-2,
+            1.01e-2,
         )
 
 

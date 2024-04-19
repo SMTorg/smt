@@ -370,7 +370,7 @@ class KrgBased(SurrogateModel):
         y = self.training_points[None][0][1]
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
-        if is_acting is None:
+        if is_acting is None and not self.is_continuous:
             X, is_acting = self.design_space.correct_get_acting(X)
             self.training_points[None][0][0] = X
             self.is_acting_points[None] = is_acting
@@ -1333,6 +1333,61 @@ class KrgBased(SurrogateModel):
             par["Rinv_dmu"] = Rinv_dmudomega_all
         return hess, hess_ij, par
 
+    def _predict_init(self, x, is_acting):
+        if not (self.is_continuous):
+            if is_acting is None:
+                x, is_acting = self.design_space.correct_get_acting(x)
+            n_eval, _ = x.shape
+            _, ij = cross_distances(x, self.X_train)
+            dx = gower_componentwise_distances(
+                x,
+                x_is_acting=is_acting,
+                design_space=self.design_space,
+                hierarchical_kernel=self.options["hierarchical_kernel"],
+                y=np.copy(self.X_train),
+                y_is_acting=self.is_acting_train,
+            )
+            listcatdecreed = self.design_space.is_conditionally_acting[
+                self.cat_features
+            ]
+            if np.any(listcatdecreed):
+                dx = self._correct_distances_cat_decreed(
+                    dx,
+                    is_acting,
+                    listcatdecreed,
+                    ij,
+                    is_acting_y=self.is_acting_train,
+                    mixint_type=MixIntKernelType.GOWER,
+                )
+            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
+                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
+                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                listcatdecreed = self.design_space.is_conditionally_acting[
+                    self.cat_features
+                ]
+                if np.any(listcatdecreed):
+                    dx = self._correct_distances_cat_decreed(
+                        dx,
+                        is_acting,
+                        listcatdecreed,
+                        ij,
+                        is_acting_y=self.is_acting_train,
+                        mixint_type=MixIntKernelType.CONT_RELAX,
+                    )
+
+            Lij, _ = cross_levels(
+                X=x, ij=ij, design_space=self.design_space, y=self.X_train
+            )
+            self.ij = ij
+        else:
+            n_eval, _ = x.shape
+            X_cont = (np.copy(x) - self.X_offset) / self.X_scale
+            dx = differences(X_cont, Y=self.X_norma.copy())
+            ij = 0
+            Lij = 0
+        return x, is_acting, n_eval, ij, Lij, dx
+
     def predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
         Predict the output values at a set of points.
@@ -1399,52 +1454,9 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable values
         """
         # Initialization
-        if is_acting is None:
-            x, is_acting = self.design_space.correct_get_acting(x)
-        n_eval, n_features_x = x.shape
-        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
-            dx = gower_componentwise_distances(
-                x,
-                x_is_acting=is_acting,
-                design_space=self.design_space,
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-                y=np.copy(self.X_train),
-                y_is_acting=self.is_acting_train,
-            )
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                dx = self._correct_distances_cat_decreed(
-                    dx,
-                    is_acting,
-                    listcatdecreed,
-                    ij,
-                    is_acting_y=self.is_acting_train,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
-                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
+            x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
 
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
-            Lij, _ = cross_levels(
-                X=x, ij=ij, design_space=self.design_space, y=self.X_train
-            )
-            self.ij = ij
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1460,18 +1472,17 @@ class KrgBased(SurrogateModel):
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
-            X_cont = (X_cont - self.X_offset) / self.X_scale
 
         else:
-            X_cont = (x - self.X_offset) / self.X_scale
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(X_cont, Y=self.X_norma.copy())
+            _, _, n_eval, _, _, dx = self._predict_init(x, is_acting)
+            X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
+        X_cont = (X_cont - self.X_offset) / self.X_scale
         # Compute the regression function
         f = self._regression_types[self.options["poly"]](X_cont)
         # Scaled predictor
@@ -1497,7 +1508,7 @@ class KrgBased(SurrogateModel):
             Derivative values.
         """
         # Initialization
-        n_eval, n_features_x = x.shape
+        n_eval, _ = x.shape
 
         x = (x - self.X_offset) / self.X_scale
         # Get pairwise componentwise L1-distances to the input training set
@@ -1583,53 +1594,10 @@ class KrgBased(SurrogateModel):
             Evaluation point output variable MSE
         """
         # Initialization
-        if is_acting is None:
-            x, is_acting = self.design_space.correct_get_acting(x)
-        n_eval, n_features_x = x.shape
-        X_cont = x
-        _, ij = cross_distances(x, self.X_train)
         if not (self.is_continuous):
-            dx = gower_componentwise_distances(
-                x,
-                x_is_acting=is_acting,
-                design_space=self.design_space,
-                hierarchical_kernel=self.options["hierarchical_kernel"],
-                y=np.copy(self.X_train),
-                y_is_acting=self.is_acting_train,
-            )
-            listcatdecreed = self.design_space.is_conditionally_acting[
-                self.cat_features
-            ]
-            if np.any(listcatdecreed):
-                dx = self._correct_distances_cat_decreed(
-                    dx,
-                    is_acting,
-                    listcatdecreed,
-                    ij,
-                    is_acting_y=self.is_acting_train,
-                    mixint_type=MixIntKernelType.GOWER,
-                )
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
-                Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
+            x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
+            X_cont = x
 
-            Lij, _ = cross_levels(
-                X=x, ij=ij, design_space=self.design_space, y=self.X_train
-            )
-            self.ij = ij
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1645,18 +1613,15 @@ class KrgBased(SurrogateModel):
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
-            X_cont = (X_cont - self.X_offset) / self.X_scale
         else:
-            x = (x - self.X_offset) / self.X_scale
+            _, _, n_eval, _, _, dx = self._predict_init(x, is_acting)
             X_cont = np.copy(x)
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = differences(x, Y=self.X_norma.copy())
             d = self._componentwise_distance(dx)
             # Compute the correlation function
             r = self._correlation_types[self.options["corr"]](
                 self.optimal_theta, d
             ).reshape(n_eval, self.nt)
-
+        X_cont = (X_cont - self.X_offset) / self.X_scale
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
@@ -1692,7 +1657,7 @@ class KrgBased(SurrogateModel):
         """
 
         # Initialization
-        n_eval, n_features_x = x.shape
+        n_eval, _ = x.shape
         x = (x - self.X_offset) / self.X_scale
         theta = self.optimal_theta
         # Get pairwise componentwise L1-distances to the input training set
