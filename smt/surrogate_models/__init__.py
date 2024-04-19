@@ -1,7 +1,6 @@
 from .ls import LS
 from .qp import QP
 from .krg import KRG
-from .podgp import PODGP
 from .kpls import KPLS
 from .gekpls import GEKPLS
 from .kplsk import KPLSK
@@ -21,7 +20,6 @@ from smt.utils.design_space import (
 from smt.utils.kriging import MixHrcKernelType
 
 __all__ = [
-    "PODGP",
     "LS",
     "QP",
     "KRG",
