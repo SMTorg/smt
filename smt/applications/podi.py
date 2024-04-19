@@ -6,10 +6,14 @@ from sklearn.decomposition import PCA
 import numpy as np
 
 from smt.applications.application import SurrogateBasedApplication
-from smt.surrogate_models import KRG
+from smt.surrogate_models import KRG, KPLS, KPLSK
 from smt.utils.checks import ensure_2d_array
 
-PODI_available_models = {"KRG": lambda: KRG()}
+PODI_available_models = {
+    "KRG": lambda: KRG(),
+    "KPLS": lambda: KPLS(),
+    "KPLSK": lambda: KPLSK(),
+}
 
 # merge set_training_values and train into fit ?
 
@@ -139,7 +143,7 @@ class PODI(SurrogateBasedApplication):
         self.ny = database.shape[1]
 
         svd.fit(database)
-        self.left_basis = svd.components_.T
+        self.left_basis = svd.components_
         self.singular_values = svd.singular_values_
         EV_list = svd.explained_variance_
 
@@ -152,9 +156,9 @@ class PODI(SurrogateBasedApplication):
                 )
             self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list) * 100
 
-        self.mean = np.atleast_2d(database.T.mean(axis=1)).T
-        self.basis = np.array(self.left_basis[:, : self.n_modes])
-        self.coeff = np.dot(self.basis.T, database.T - self.mean).T
+        self.mean = np.atleast_2d(database.mean(axis=0))
+        self.basis = self.left_basis[: self.n_modes]
+        self.coeff = np.dot(database - self.mean, self.basis.T)
 
         # self.interp_coeff = []
         # for i in range(self.n_modes):
@@ -208,6 +212,16 @@ class PODI(SurrogateBasedApplication):
         """
         return self.n_modes
 
+    def get_svd(self):
+        """
+        Getter for the svd object.
+
+        Returns
+        -------
+        svd
+        """
+        return self.svd
+
     def set_interp_options(
         self, interp_type: str = "KRG", interp_options_list: list = [{}]
     ) -> None:
@@ -226,7 +240,7 @@ class PODI(SurrogateBasedApplication):
             If the options are common to all surogate models, only a single dictionnary is required in the list.
             The available options can be found in the documentation of the corresponding surrogate models.
             By default, the print_global options are set to 'False'.
-            
+
         Example
         --------
         >>> interp_type = "KRG"
@@ -272,7 +286,7 @@ class PODI(SurrogateBasedApplication):
 
             for key in interp_options_list[index].keys():
                 sm_i.options[key] = interp_options_list[index][key]
-            
+
             self.interp_coeff.append(sm_i)
 
         self.interp_options_set = True
@@ -381,7 +395,7 @@ class PODI(SurrogateBasedApplication):
             mu_i = self.interp_coeff[i].predict_values(xn)
             mean_coeff_interp[:, i] = mu_i[:, 0]
 
-        y = self.mean.T + np.dot(mean_coeff_interp, self.basis.T)
+        y = self.mean + np.dot(mean_coeff_interp, self.basis)
 
         return y
 
@@ -419,7 +433,7 @@ class PODI(SurrogateBasedApplication):
             sigma_i_square = self.interp_coeff[i].predict_variances(xn)
             var_coeff_interp[:, i] = sigma_i_square[:, 0]
 
-        s2 = np.dot(var_coeff_interp, (self.basis**2).T)
+        s2 = np.dot(var_coeff_interp, (self.basis**2))
 
         return s2
 
@@ -457,8 +471,10 @@ class PODI(SurrogateBasedApplication):
         deriv_coeff_interp = np.zeros((n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[:, i] = self.interp_coeff[i].predict_derivatives(xn, d)[:, 0]
+            deriv_coeff_interp[:, i] = self.interp_coeff[i].predict_derivatives(xn, d)[
+                :, 0
+            ]
 
-        dy_dx = np.dot(deriv_coeff_interp, self.basis.T)
+        dy_dx = np.dot(deriv_coeff_interp, self.basis)
 
         return dy_dx
