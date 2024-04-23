@@ -10,17 +10,14 @@ from smt.surrogate_models import KRG, KPLS, KPLSK
 from smt.utils.checks import ensure_2d_array
 
 PODI_available_models = {
-    "KRG": lambda: KRG(),
-    "KPLS": lambda: KPLS(),
-    "KPLSK": lambda: KPLSK(),
+    "KRG": KRG,
+    "KPLS": KPLS,
+    "KPLSK": KPLSK,
 }
-
-# merge set_training_values and train into fit ?
-
 
 class PODI(SurrogateBasedApplication):
     """
-    Class for Proper Orthogonal Decomposition and Interpolation surrogate models based.
+    Class for Proper Orthogonal Decomposition and Interpolation (PODI) surrogate models based.
 
     Attributes
     ----------
@@ -30,8 +27,12 @@ class PODI(SurrogateBasedApplication):
         Left basis of the POD.
     singular_values : np.ndarray
         Singular values of the POD
-    interp_list : list[SurrogateModel]
+    interp_coeff : list[SurrogateModel]
         List containing the kriging models used.
+    pod_computed : bool
+        Indicates if the pod has already been computed.
+    interp_options_set : bool
+        Indicates if the interpolation's options have already been set.
     training_values_set : bool
         Indicates if the training values have already been set.
     train_done : bool
@@ -64,7 +65,7 @@ class PODI(SurrogateBasedApplication):
         self.interp_coeff = None
 
     @staticmethod
-    def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> (int, float):
+    def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> tuple[int, float]:
         """
         Calculates the required number of kept modes to explain the intended ratio of variance.
 
@@ -252,7 +253,7 @@ class PODI(SurrogateBasedApplication):
 
         if not self.pod_computed:
             raise RuntimeError(
-                "'POD' method must have been succesfully executed before trying to set the interpolation options."
+                "'compute_pod' method must have been succesfully executed before trying to set the models options."
             )
 
         if interp_type not in PODI_available_models.keys():
@@ -281,8 +282,7 @@ class PODI(SurrogateBasedApplication):
             elif mode_options == "global":
                 index = 0
 
-            sm_i = PODI_available_models[interp_type]()
-            sm_i.options["print_global"] = False
+            sm_i = PODI_available_models[interp_type](print_global=False)
 
             for key in interp_options_list[index].keys():
                 sm_i.options[key] = interp_options_list[index][key]
@@ -309,7 +309,7 @@ class PODI(SurrogateBasedApplication):
 
         if not self.pod_computed:
             raise RuntimeError(
-                "'POD' method must have been succesfully executed before trying to set the training values."
+                "'compute_pod' method must have been succesfully executed before trying to set the training values."
             )
         if not self.interp_options_set:
             raise RuntimeError(
@@ -335,7 +335,7 @@ class PODI(SurrogateBasedApplication):
         """
         if not self.pod_computed:
             raise RuntimeError(
-                "'POD' method must have been succesfully executed before trying to train the models."
+                "'compute_pod' method must have been succesfully executed before trying to train the models."
             )
         if not self.interp_options_set:
             raise RuntimeError(
