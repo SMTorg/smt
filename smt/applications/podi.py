@@ -15,6 +15,7 @@ PODI_available_models = {
     "KPLSK": KPLSK,
 }
 
+
 class PODI(SurrogateBasedApplication):
     """
     Class for Proper Orthogonal Decomposition and Interpolation (PODI) surrogate models based.
@@ -65,7 +66,7 @@ class PODI(SurrogateBasedApplication):
         self.interp_coeff = None
 
     @staticmethod
-    def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> tuple[int, float]:
+    def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> int:
         """
         Calculates the required number of kept modes to explain the intended ratio of variance.
 
@@ -74,14 +75,12 @@ class PODI(SurrogateBasedApplication):
         EV_list : np.ndarray
             List of the explained variance of each mode in the POD.
         tol : float
-            Desired tolerance for the POD.
+            Desired tolerance for the POD. It is expected to be in ]0, 1].
 
         Returns
         -------
         n_modes : int
             Kept modes according to the tolerance.
-        EV_ratio : float
-            Actual ratio of explained variance.
         """
 
         sum_tot = sum(EV_list)
@@ -89,8 +88,8 @@ class PODI(SurrogateBasedApplication):
         for i in range(len(EV_list)):
             sum_ += EV_list[i]
             EV_ratio = sum_ / sum_tot
-            if sum_ / sum_tot >= tol:
-                return i + 1, EV_ratio
+            if EV_ratio >= tol:
+                return i + 1
 
     def compute_pod(
         self,
@@ -149,21 +148,17 @@ class PODI(SurrogateBasedApplication):
         EV_list = svd.explained_variance_
 
         if choice_svd == "tol":
-            self.n_modes, self.EV_ratio = PODI.choice_n_modes_tol(EV_list, tol)
+            self.n_modes = PODI.choice_n_modes_tol(EV_list, tol)
         else:
             if self.n_modes > self.n_snapshot:
                 raise ValueError(
                     "the number of kept modes can't be superior to the number of data values (snapshots)"
                 )
-            self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list) * 100
+        self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
         self.mean = np.atleast_2d(database.mean(axis=0))
         self.basis = self.left_basis[: self.n_modes]
         self.coeff = np.dot(database - self.mean, self.basis.T)
-
-        # self.interp_coeff = []
-        # for i in range(self.n_modes):
-        #     self.interp_coeff.append(KRG(print_global=False))
 
         self.pod_computed = True
         self.interp_options_set = False
