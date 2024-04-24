@@ -311,6 +311,7 @@ class Test(SMTestCase):
         np.testing.assert_allclose(norm_residue[:n_modes], np.zeros(n_modes), atol=1e-6)
 
     def test_set_training_train(self):
+        """Tests the set_training_values and train methods."""
         sm = PODI()
 
         try:
