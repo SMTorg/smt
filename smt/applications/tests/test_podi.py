@@ -134,7 +134,55 @@ class Test(SMTestCase):
         sm.compute_pod(self.database, tol=1)
         sm.set_interp_options("KRG")
         sm.set_training_values(self.xt)
+
+        for predict_method in [sm.predict_values, sm.predict_variances]:
+            try:
+                predict_method(self.xn)
+            except RuntimeError:
+                pass
+            else:
+                raise RuntimeError(
+                    f"It should not be possible to call {predict_method.__name__} before the training."
+                )
+
+        try:
+            sm.predict_derivatives(self.xn, 0)
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to execute predict_derivatives before training the model."
+            )
+
         sm.train()
+
+        for predict_method in [sm.predict_values, sm.predict_variances]:
+            try:
+                predict_method(np.array([[1, 1]]))
+            except ValueError:
+                pass
+            else:
+                raise RuntimeError(
+                    "It should not be possible to predict values with incorrect dimension."
+                )
+
+        try:
+            sm.predict_derivatives(np.array([[1, 1]]), 0)
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to predict derivatives with incorrect dimension."
+            )
+
+        try:
+            sm.predict_derivatives(self.xn, self.xn.shape[1] + 1)
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to predict derivatives with incorrect dimension."
+            )
 
         var_xt = sm.predict_variances(self.xt)
 
@@ -159,8 +207,37 @@ class Test(SMTestCase):
         """Tests the method that sets the interpolations options settings."""
 
         sm = PODI()
-        sm.compute_pod(self.database, n_modes=5)
-        options = [
+
+        try:
+            sm.set_interp_options()
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to call 'set_interp_options' before 'compute_pod'."
+            )
+
+        sm.compute_pod(self.database, n_modes=2)
+
+        try:
+            sm.set_interp_options("non existing surrogate model")
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to initialize an unavailable surrogate model."
+            )
+
+        try:
+            sm.set_interp_options("KRG", [{}, {}, {}])
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to use a non-valid size for the list of options."
+            )
+
+        options_global = [
             {
                 "poly": "quadratic",
                 "corr": "matern32",
@@ -168,17 +245,52 @@ class Test(SMTestCase):
                 "theta0": [1e-1],
             }
         ]
-        sm.set_interp_options("KRG", options)
+        sm.set_interp_options("KRG", options_global)
 
         sm_list = sm.get_interp_coef()
         for interp_coeff in sm_list:
-            for key in options[0].keys():
-                assert interp_coeff.options[key] == options[0][key]
+            for key in options_global[0].keys():
+                assert interp_coeff.options[key] == options_global[0][key]
+
+        options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
+        sm.set_interp_options("KRG", options_local)
+
+        sm_list = sm.get_interp_coef()
+        for i, interp_coeff in enumerate(sm_list):
+            for key in options_local[i].keys():
+                assert interp_coeff.options[key] == options_local[i][key]
 
     def test_pod(self):
         """Tests the computing of the pod."""
 
         sm = PODI()
+
+        try:
+            sm.compute_pod(self.database)
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to execute compute_pod without tol or n_modes argument."
+            )
+
+        try:
+            sm.compute_pod(self.database, tol=0.1, n_modes=1)
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to execute compute_pod with both tol and n_modes arguments."
+            )
+
+        try:
+            sm.compute_pod(self.database, n_modes=self.nt + 1)
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to execute compute_pod with more mods than data values."
+            )
 
         sm.compute_pod(self.database, tol=1)
         assert sm.get_ev_ratio() == 1
@@ -197,6 +309,47 @@ class Test(SMTestCase):
 
         norm_residue = Test.check_projection(self.basis_original, basis_pod)
         np.testing.assert_allclose(norm_residue[:n_modes], np.zeros(n_modes), atol=1e-6)
+
+    def test_set_training_train(self):
+        sm = PODI()
+
+        try:
+            sm.set_training_values(self.xt)
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to set training values before computing the pod."
+            )
+
+        try:
+            sm.train()
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to train the model before computing the pod."
+            )
+
+        sm.compute_pod(self.database, n_modes=1)
+
+        try:
+            sm.set_training_values(self.xt[1:])
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to set training values with incorrect size."
+            )
+
+        try:
+            sm.train()
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError(
+                "It should not be possible to train the model before setting train values."
+            )
 
 
 if __name__ == "__main__":

@@ -68,7 +68,7 @@ class PODI(SurrogateBasedApplication):
     @staticmethod
     def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> int:
         """
-        Calculates the required number of kept modes to explain the intended ratio of variance.
+        Calculates the required number of kept modes to explain at least the intended ratio of variance.
 
         Parameters
         ----------
@@ -85,11 +85,12 @@ class PODI(SurrogateBasedApplication):
 
         sum_tot = sum(EV_list)
         sum_ = 0
-        for i in range(len(EV_list)):
-            sum_ += EV_list[i]
+        for i, ev in enumerate(EV_list):
+            sum_ += ev
             EV_ratio = sum_ / sum_tot
             if EV_ratio >= tol:
                 return i + 1
+        return len(EV_list)
 
     def compute_pod(
         self,
@@ -208,21 +209,12 @@ class PODI(SurrogateBasedApplication):
         """
         return self.n_modes
 
-    def get_svd(self):
-        """
-        Getter for the svd object.
-
-        Returns
-        -------
-        svd
-        """
-        return self.svd
-
     def set_interp_options(
-        self, interp_type: str = "KRG", interp_options_list: list = [{}]
+        self, interp_type: str = "KRG", interp_options: list = [{}]
     ) -> None:
         """
         Set the options for the interpolation surrogate models used.
+        Only required if a model different than KRG is used or if non-default options are desired for the models.
 
         Parameters
         ----------
@@ -230,7 +222,7 @@ class PODI(SurrogateBasedApplication):
             Name of the type of surrogate model that will be used for the whole set.
             By default, the Kriging model is used (KRG).
 
-        interp_options_list : list[dict]
+        interp_options : list[dict]
             List containing dictionnaries for the options.
             The k-th dictionnary corresponds to the options of the k-th interpolation model.
             If the options are common to all surogate models, only a single dictionnary is required in the list.
@@ -242,8 +234,8 @@ class PODI(SurrogateBasedApplication):
         >>> interp_type = "KRG"
         >>> dict1 = {'corr' : 'matern52', 'theta0' : [1e-2]}
         >>> dict2 = {'poly' : 'quadratic'}
-        >>> interp_options_list = [dict1, dict2]
-        >>> sm.set_interp_options(interp_type, interp_options_list)
+        >>> interp_options = [dict1, dict2]
+        >>> sm.set_interp_options(interp_type, interp_options)
         """
 
         if not self.pod_computed:
@@ -256,18 +248,13 @@ class PODI(SurrogateBasedApplication):
                 f"the surrogate model type should be one of the following : {', '.join(self.available_models_name)}"
             )
 
-        if interp_options_list is None:
-            raise ValueError(
-                "the interp_options_list should be indicated when executing 'set_interp_options' method."
-            )
-
-        if len(interp_options_list) == self.n_modes:
+        if len(interp_options) == self.n_modes:
             mode_options = "local"
-        elif len(interp_options_list) == 1:
+        elif len(interp_options) == 1:
             mode_options = "global"
         else:
             raise ValueError(
-                f"expected interp_options_list of size {self.n_modes} or 1, but got {len(interp_options_list)}."
+                f"expected interp_options of size {self.n_modes} or 1, but got {len(interp_options)}."
             )
 
         self.interp_coeff = []
@@ -279,8 +266,8 @@ class PODI(SurrogateBasedApplication):
 
             sm_i = PODI_available_models[interp_type](print_global=False)
 
-            for key in interp_options_list[index].keys():
-                sm_i.options[key] = interp_options_list[index][key]
+            for key in interp_options[index].keys():
+                sm_i.options[key] = interp_options[index][key]
 
             self.interp_coeff.append(sm_i)
 
@@ -290,6 +277,7 @@ class PODI(SurrogateBasedApplication):
     def set_training_values(self, xt: np.ndarray, name: str = None) -> None:
         """
         Set training data (values).
+        If the models' options are still not set, default values are used for the initialization.
 
         Parameters
         ----------
@@ -307,9 +295,12 @@ class PODI(SurrogateBasedApplication):
                 "'compute_pod' method must have been succesfully executed before trying to set the training values."
             )
         if not self.interp_options_set:
-            raise RuntimeError(
-                "the surrogate models' options should have been set before trying to set the training values."
-            )
+            self.interp_coeff = []
+            for i in range(self.n_modes):
+                sm_i = PODI_available_models["KRG"](print_global=False)
+
+                self.interp_coeff.append(sm_i)
+            self.interp_options_set = True
 
         self.nt = xt.shape[0]
         self.nx = xt.shape[1]
@@ -332,10 +323,7 @@ class PODI(SurrogateBasedApplication):
             raise RuntimeError(
                 "'compute_pod' method must have been succesfully executed before trying to train the models."
             )
-        if not self.interp_options_set:
-            raise RuntimeError(
-                "the surrogate models' options should have been successfully set before trying to train the models."
-            )
+
         if not self.training_values_set:
             raise RuntimeError(
                 "the training values should have been set before trying to train the models."
@@ -380,7 +368,7 @@ class PODI(SurrogateBasedApplication):
 
         if self.dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
             )
 
         self.n_new = xn.shape[0]
@@ -418,7 +406,7 @@ class PODI(SurrogateBasedApplication):
 
         if dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
             )
 
         self.n_new = xn.shape[0]
@@ -457,9 +445,14 @@ class PODI(SurrogateBasedApplication):
 
         dim_new = xn.shape[1]
 
+        if d >= dim_new:
+            raise ValueError(
+                "the desired derivative kx should correspond to a dimension of the data, here kx is out of bounds."
+            )
+
         if dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
             )
 
         n_new = xn.shape[0]
