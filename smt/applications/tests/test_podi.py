@@ -221,7 +221,7 @@ class Test(SMTestCase):
         sm_list = sm.get_interp_coef()
         for i, interp_coeff in enumerate(sm_list):
             for key in options_local[i].keys():
-                self.assertEqual(interp_coeff.options[key], options_global[i][key])
+                self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
     def test_pod(self):
         """Tests the computing of the pod."""
