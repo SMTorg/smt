@@ -137,25 +137,25 @@ class Test(SMTestCase):
 
         for predict_method in [sm.predict_values, sm.predict_variances]:
             error_msg = f"It should not be possible to call {predict_method.__name__} before the training."
-            with self.assertRaises(RuntimeError, msg = error_msg):
+            with self.assertRaises(RuntimeError, msg=error_msg):
                 predict_method(self.xn)
 
         error_msg = "It should not be possible to execute predict_derivatives before training the model."
-        with self.assertRaises(RuntimeError, msg = error_msg):
+        with self.assertRaises(RuntimeError, msg=error_msg):
             sm.predict_derivatives(self.xn, 0)
 
         sm.train()
 
         error_msg = "It should not be possible to make a prediction with incorrect dimension input."
         for predict_method in [sm.predict_values, sm.predict_variances]:
-            with self.assertRaises(ValueError, msg = error_msg):
+            with self.assertRaises(ValueError, msg=error_msg):
                 predict_method(np.array([[1, 1]]))
 
-        with self.assertRaises(ValueError, msg = error_msg):
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.predict_derivatives(np.array([[1, 1]]), 0)
 
         error_msg = "It should not be possible to predict a derivative out of the input's dimensions."
-        with self.assertRaises(ValueError, msg = error_msg):
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.predict_derivatives(self.xn, self.xn.shape[1] + 1)
 
         var_xt = sm.predict_variances(self.xt)
@@ -181,19 +181,23 @@ class Test(SMTestCase):
         """Tests the method that sets the interpolations options settings."""
 
         sm = PODI()
-        
+
         error_msg = "It should not be possible to call 'set_interp_options' before 'compute_pod'."
-        with self.assertRaises(RuntimeError, msg = error_msg):
+        with self.assertRaises(RuntimeError, msg=error_msg):
             sm.set_interp_options()
 
         sm.compute_pod(self.database, n_modes=2)
 
-        error_msg = "It should not be possible to initialize an unavailable surrogate model."
-        with self.assertRaises(ValueError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to initialize an unavailable surrogate model."
+        )
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.set_interp_options("non existing surrogate model")
 
-        error_msg = "It should not be possible to use a non-valid size for the list of options."
-        with self.assertRaises(ValueError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to use a non-valid size for the list of options."
+        )
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.set_interp_options("KRG", [{}, {}, {}])
 
         options_global = [
@@ -225,15 +229,15 @@ class Test(SMTestCase):
         sm = PODI()
 
         error_msg = "It should not be possible to execute compute_pod without tol or n_modes argument."
-        with self.assertRaises(ValueError, msg = error_msg):
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.compute_pod(self.database)
 
         error_msg = "It should not be possible to execute compute_pod with both tol and n_modes arguments."
-        with self.assertRaises(ValueError, msg = error_msg):
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.compute_pod(self.database, tol=0.1, n_modes=1)
 
         error_msg = "It should not be possible to execute compute_pod with more mods than data values."
-        with self.assertRaises(ValueError, msg = error_msg):
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.compute_pod(self.database, n_modes=self.nt + 1)
 
         sm.compute_pod(self.database, tol=1)
@@ -258,23 +262,32 @@ class Test(SMTestCase):
         """Tests the set_training_values and train methods."""
         sm = PODI()
 
-        error_msg = "It should not be possible to set training values before computing the pod."
-        with self.assertRaises(RuntimeError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to set training values before computing the pod."
+        )
+        with self.assertRaises(RuntimeError, msg=error_msg):
             sm.set_training_values(self.xt)
 
-        error_msg = "It should not be possible to train the model before computing the pod."
-        with self.assertRaises(RuntimeError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to train the model before computing the pod."
+        )
+        with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
         sm.compute_pod(self.database, n_modes=1)
 
-        error_msg = "It should not be possible to set training values with incorrect size."
-        with self.assertRaises(ValueError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to set training values with incorrect size."
+        )
+        with self.assertRaises(ValueError, msg=error_msg):
             sm.set_training_values(self.xt[1:])
 
-        error_msg = "It should not be possible to train the model before setting train values."
-        with self.assertRaises(RuntimeError, msg = error_msg):
+        error_msg = (
+            "It should not be possible to train the model before setting train values."
+        )
+        with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
+
 
 if __name__ == "__main__":
     unittest.main()
