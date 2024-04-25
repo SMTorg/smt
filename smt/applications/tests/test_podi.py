@@ -30,9 +30,10 @@ class Test(SMTestCase):
     def setUp(self):
         """Sets up the test case for the tests."""
 
+        self.seed = 42
         self.nt = 40
         xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits)
+        sampling = LHS(xlimits=xlimits, random_state=self.seed)
         self.xt = sampling(self.nt)
 
         self.ny = 100
@@ -131,7 +132,7 @@ class Test(SMTestCase):
 
         sm = PODI()
 
-        sm.compute_pod(self.database, tol=1)
+        sm.compute_pod(self.database, tol=1, seed=self.seed)
         sm.set_interp_options("KRG")
         sm.set_training_values(self.xt)
 
@@ -186,7 +187,7 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.set_interp_options()
 
-        sm.compute_pod(self.database, n_modes=2)
+        sm.compute_pod(self.database, n_modes=2, seed=self.seed)
 
         error_msg = (
             "It should not be possible to initialize an unavailable surrogate model."
@@ -230,17 +231,17 @@ class Test(SMTestCase):
 
         error_msg = "It should not be possible to execute compute_pod without tol or n_modes argument."
         with self.assertRaises(ValueError, msg=error_msg):
-            sm.compute_pod(self.database)
+            sm.compute_pod(self.database, seed=self.seed)
 
         error_msg = "It should not be possible to execute compute_pod with both tol and n_modes arguments."
         with self.assertRaises(ValueError, msg=error_msg):
-            sm.compute_pod(self.database, tol=0.1, n_modes=1)
+            sm.compute_pod(self.database, tol=0.1, n_modes=1, seed=self.seed)
 
         error_msg = "It should not be possible to execute compute_pod with more mods than data values."
         with self.assertRaises(ValueError, msg=error_msg):
-            sm.compute_pod(self.database, n_modes=self.nt + 1)
+            sm.compute_pod(self.database, n_modes=self.nt + 1, seed=self.seed)
 
-        sm.compute_pod(self.database, tol=1)
+        sm.compute_pod(self.database, tol=1, seed=self.seed)
         self.assertEqual(sm.get_ev_ratio(), 1)
 
         n_modes = sm.get_n_modes()
@@ -274,7 +275,7 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
-        sm.compute_pod(self.database, n_modes=1)
+        sm.compute_pod(self.database, n_modes=1, seed=self.seed)
 
         error_msg = (
             "It should not be possible to set training values with incorrect size."

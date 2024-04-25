@@ -97,7 +97,7 @@ class PODI(SurrogateBasedApplication):
         database: np.ndarray,
         tol: float = None,
         n_modes: int = None,
-        random_state: int = None,
+        seed: int = None,
     ) -> None:
         """
         Performs the POD
@@ -110,16 +110,16 @@ class PODI(SurrogateBasedApplication):
             Desired tolerance for the pod (if n_modes not set).
         n_modes : int
             Desired number of kept modes for the pod (if tol not set).
-        random_state : int
-            Numpy RandomState object or seed number which controls random draws for internal optim. (optional)
+        seed : int
+            seed number which controls random draws for internal optim. (optional)
 
         Example
         ----------
-        sm.compute_pod(database, tol = 0.99)
+        >>> sm.compute_pod(database, tol = 0.99)
         """
         choice_svd = None
 
-        svd = PCA(svd_solver="randomized", random_state=random_state)
+        svd = PCA(svd_solver="randomized", random_state=seed)
 
         if n_modes is not None:
             self.n_modes = n_modes
@@ -168,6 +168,7 @@ class PODI(SurrogateBasedApplication):
     def get_left_basis(self) -> np.ndarray:
         """
         Getter for the left basis of the POD.
+        It represents the directions of maximum variance in the data.
 
         Returns
         -------
