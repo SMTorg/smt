@@ -160,15 +160,15 @@ class Test(SMTestCase):
 
         var_xt = sm.predict_variances(self.xt)
 
-        np.testing.assert_allclose(var_xt, np.zeros(var_xt.shape), atol=1e-6)##############
+        np.testing.assert_allclose(var_xt, np.zeros(var_xt.shape), atol=1e-6)
 
         mean_xn = sm.predict_values(self.xn)
         var_xn = sm.predict_variances(self.xn)
         deriv_xn = sm.predict_derivatives(self.xn, 0)
 
-        assert mean_xn.shape == (self.nn, self.ny)
-        assert var_xn.shape == (self.nn, self.ny)
-        assert deriv_xn.shape == (self.nn, self.ny)
+        self.assertEqual(mean_xn.shape, (self.nn, self.ny))
+        self.assertEqual(var_xn.shape, (self.nn, self.ny))
+        self.assertEqual(deriv_xn.shape, (self.nn, self.ny))
 
         mean_xv = sm.predict_values(self.xv)
 
@@ -209,7 +209,7 @@ class Test(SMTestCase):
         sm_list = sm.get_interp_coef()
         for interp_coeff in sm_list:
             for key in options_global[0].keys():
-                assert interp_coeff.options[key] == options_global[0][key]
+                self.assertEqual(interp_coeff.options[key], options_global[0][key])
 
         options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
         sm.set_interp_options("KRG", options_local)
@@ -217,7 +217,7 @@ class Test(SMTestCase):
         sm_list = sm.get_interp_coef()
         for i, interp_coeff in enumerate(sm_list):
             for key in options_local[i].keys():
-                assert interp_coeff.options[key] == options_local[i][key]
+                self.assertEqual(interp_coeff.options[key], options_global[i][key])
 
     def test_pod(self):
         """Tests the computing of the pod."""
@@ -237,16 +237,16 @@ class Test(SMTestCase):
             sm.compute_pod(self.database, n_modes=self.nt + 1)
 
         sm.compute_pod(self.database, tol=1)
-        assert sm.get_ev_ratio() == 1
+        self.assertEqual(sm.get_ev_ratio(), 1)
 
         n_modes = sm.get_n_modes()
-        assert n_modes <= self.n_modes_test
+        self.assertLessEqual(n_modes, self.n_modes_test)
 
         basis_pod = sm.get_left_basis()
-        assert basis_pod.shape == (self.nt, self.ny)
+        self.assertEqual(basis_pod.shape, (self.nt, self.ny))
 
         singular_values = sm.get_singular_values()
-        assert len(singular_values) == self.nt
+        self.assertEqual(len(singular_values), self.nt)
         np.testing.assert_allclose(
             singular_values[n_modes:], np.zeros(self.nt - n_modes), atol=1e-6
         )
