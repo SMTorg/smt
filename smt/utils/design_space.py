@@ -939,7 +939,7 @@ class DesignSpace(BaseDesignSpace):
             isinstance(param2, UniformFloatHyperparameter)
         ):
             if isinstance(value1, Sequence):
-                clause1 = ForbiddenInClause(param1, str(value1))
+                clause1 = ForbiddenInClause(param1, list(np.atleast_1d(np.array(value1, dtype=str))))
             else:
                 clause1 = ForbiddenEqualsClause(param1, str(value1))
 
