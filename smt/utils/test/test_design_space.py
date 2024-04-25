@@ -431,7 +431,7 @@ class Test(unittest.TestCase):
     def test_design_space_hierarchical_config_space(self):
         ds = DesignSpace(
             [
-                CategoricalVariable(["A", "B", "C"]),  # x0
+                CategoricalVariable(["A", "B", "Cc"]),  # x0
                 CategoricalVariable(["E", "F"]),  # x1
                 IntegerVariable(0, 1),  # x2
                 FloatVariable(0, 1),  # x3
@@ -442,7 +442,7 @@ class Test(unittest.TestCase):
             decreed_var=3, meta_var=0, meta_value="A"
         )  # Activate x3 if x0 == A
         ds.add_value_constraint(
-            var1=0, value1="C", var2=1, value2="F"
+            var1=0, value1=["Cc"], var2=1, value2="F"
         )  # Prevent a == C and b == F
 
         x_cartesian = np.array(
