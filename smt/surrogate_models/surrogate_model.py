@@ -247,6 +247,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Train the model
         """
+
         n_exact = self.training_points[None][0][0].shape[0]
 
         self.printer.active = self.options["print_global"]
