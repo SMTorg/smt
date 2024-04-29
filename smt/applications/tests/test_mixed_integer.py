@@ -834,6 +834,11 @@ class TestMixedInteger(unittest.TestCase):
             var1=0, value1="A", var2=2, value2=[0, 1]
         )  # Forbid x0 == A && x2 == 0 or 1
 
+        # For quantitative variables, it is possible to specify order relation
+        ds.add_value_constraint(
+            var1=2, value1="<", var2=3, value2=">"
+        )  # Prevent x2 < x3
+
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         ds.seed = 42

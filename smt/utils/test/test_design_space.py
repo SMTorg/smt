@@ -535,7 +535,7 @@ class Test(unittest.TestCase):
         )  # Prevent x0 < x1
         ds.add_value_constraint(
             var1=1, value1="<", var2=2, value2=">"
-        )  # Prevent x0 < x1
+        )  # Prevent x1 < x2
 
         # correct_get_acting
         x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
