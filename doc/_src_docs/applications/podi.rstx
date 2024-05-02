@@ -1,23 +1,60 @@
 Proper Orthogonal Decomposition + Interpolation (PODI)
-========================
+======================================================
 
-PODI is an application that is able predict vectorial measures.
-SMT PODI combines kriging based surrogate models implemented in SMT to perform that prediction.
+PODI is an application that is able to predict vectorial measures.
+It combines Proper Orthogonal Decomposition and kriging based surrogate models to perform the prediction.
 
-The PODI method mainly consists on two parts:
-#. The Proper Orthogonal Decomposition (POD)
-#. The Interpolation of surrogate models
+Context
+-------
+
+We consider a problem in which the estimation of a measure :math:`u` is desired along a mesh of :math:`p` points.
+We call snapshot the data containing the values of :math:`u` in a specific configuration of the problem.
+The i-th configuration is represented by :math:`x_i`. Here we consider N snapshots.
+
+These snapshots are gathered in a database called the snapshot matrix :
+
+.. math ::
+	S=
+	\begin{bmatrix}
+		\u( \mathbf{x}_1)_1 & \dots & \u( \mathbf{x}_N)_1 \\
+		\vdots & \ddots & \vdots \\
+		\u( \mathbf{x}_1)_p & \dots & \u( \mathbf{x}_N)_p \\
+	\end{bmatrix}
+	\in \mathbb{R}^{p \times N}
+
+Each column of the matrix corresponds to a snapshot, while each row correspond to a point of the problem's mesh.
 
 Proper Orthogonal Decomposition (POD)
---------------------
+-------------------------------------
 
-Considering a measure :math:`u` which is a vector of dimension, the POD is this decomposition :
+The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition :
 
-. math ::
+.. math ::
 	\begin{equation}\label{e:pod}
-	u({\mathbf x})=u_{0} + \sum_{i=1}^{M} \alpha_{i}(\mathbf x)\phi_{i}
+	u({\bf x})=u_{0} + \sum_{i=1}^{M} \alpha_{i}(\bf x)\phi_{i}
 	\end{equation}
 
-In this equation, :math:`u` is decomposed as a sum of :math:`M` modes.
-The term :math:`u_{0}` corresponds to a mean value of :math:`u`
-Each mode :math:`i` is defined by a coefficient :math:`\alpha_{i}` and  a vector
+where
+:math:`u` is decomposed as a sum of :math:`M` modes.
+:math:`u_{0}` corresponds to the mean value of :math:`u`.
+Each mode :math:`i` is defined by a coefficient :math:`\alpha_{i}` (scalar) and  a vector :math:`\phi_{i}` of dimension :math:`p`.
+
+To perform this decomposition, the Singular Values Decomposition (SVD) of the snapshot matrix is used :
+
+.. math ::
+	\begin{equation}\label{e:svd}
+	M=U\sigma{V}^{T}
+	\end{equation}
+
+
+The PCA will analyse the snapshot matrix S and compute the principal axes in feature space called singular vectors.
+These axes represents the differents modes of :math:`u`, in other words the directions of maximum variance in the data.
+Each singular vector is associated to a singular value
+
+Predictions with surrogate models
+---------------------------------
+
+Kriging based models are used to predict the coefficients :math:`\alpha_{i}` at new input value.
+
+Usage
+-----
