@@ -10,6 +10,10 @@ from scipy import special
 from smt.sampling_methods import LHS
 from smt.applications import PODI
 
+import warnings
+
+warnings.simplefilter("ignore")
+
 
 def cos_coeff(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
@@ -64,7 +68,7 @@ class Test(SMTestCase):
                 Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
             """
 
-            u0 = np.zeros((1, self.ny))
+            u0 = np.zeros((self.ny, 1))
 
             alpha = np.zeros((x.shape[0], self.n_modes_test))
             for i in range(self.n_modes_test):
@@ -75,13 +79,13 @@ class Test(SMTestCase):
                 V_init[:, i] = Legendre(i, self.t)
 
             V = Test.gram_schmidt(V_init.T).T
-            database = u0 + np.dot(alpha, V.T)
-            self.basis_original = V.T
+            database = u0 + np.dot(V, alpha.T)
+            self.basis_original = V
 
             return database
 
         self.full_database = pb_1d(self.x)
-        self.database = self.full_database[: self.nt]
+        self.database = self.full_database[:, : self.nt]
 
     @staticmethod
     def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
@@ -118,13 +122,13 @@ class Test(SMTestCase):
             norm of the left residue
         """
 
-        norm_residue = np.zeros(len(basis_pod))
+        norm_residue = np.zeros(basis_pod.shape[1])
 
-        projection = np.dot(basis_pod, basis_original.T).dot(basis_original)
+        projection = basis_original.dot(np.dot(basis_original.T, basis_pod))
 
-        for i in range(len(projection)):
-            proj = projection[i]
-            norm_residue[i] = np.linalg.norm(basis_pod[i] - proj)
+        for i in range(projection.shape[1]):
+            proj = projection[:, i]
+            norm_residue[i] = np.linalg.norm(basis_pod[:, i] - proj)
         return norm_residue
 
     def test_predict(self):
@@ -167,14 +171,14 @@ class Test(SMTestCase):
         var_xn = sm.predict_variances(self.xn)
         deriv_xn = sm.predict_derivatives(self.xn, 0)
 
-        self.assertEqual(mean_xn.shape, (self.nn, self.ny))
-        self.assertEqual(var_xn.shape, (self.nn, self.ny))
-        self.assertEqual(deriv_xn.shape, (self.nn, self.ny))
+        self.assertEqual(mean_xn.shape, (self.ny, self.nn))
+        self.assertEqual(var_xn.shape, (self.ny, self.nn))
+        self.assertEqual(deriv_xn.shape, (self.ny, self.nn))
 
         mean_xv = sm.predict_values(self.xv)
 
-        diff = self.full_database[self.nt :] - mean_xv
-        rms_error = [np.sqrt(np.mean(diff[i] ** 2)) for i in range(diff.shape[0])]
+        diff = self.full_database[:, self.nt :] - mean_xv
+        rms_error = [np.sqrt(np.mean(diff[:, i] ** 2)) for i in range(diff.shape[1])]
 
         np.testing.assert_allclose(rms_error, np.zeros(self.nv), atol=1e-2)
 
@@ -238,6 +242,7 @@ class Test(SMTestCase):
             sm.compute_pod(self.database, tol=0.1, n_modes=1, seed=self.seed)
 
         error_msg = "It should not be possible to execute compute_pod with more mods than data values."
+
         with self.assertRaises(ValueError, msg=error_msg):
             sm.compute_pod(self.database, n_modes=self.nt + 1, seed=self.seed)
 
@@ -247,8 +252,9 @@ class Test(SMTestCase):
         n_modes = sm.get_n_modes()
         self.assertLessEqual(n_modes, self.n_modes_test)
 
-        basis_pod = sm.get_left_basis()
-        self.assertEqual(basis_pod.shape, (self.nt, self.ny))
+        basis_pod = sm.get_singular_vectors()
+
+        self.assertEqual(basis_pod.shape, (self.ny, self.nt))
 
         singular_values = sm.get_singular_values()
         self.assertEqual(len(singular_values), self.nt)
@@ -289,6 +295,99 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
+    @staticmethod
+    def run_podi_example_1d():
+        import numpy as np
+        from smt.sampling_methods import LHS
+        from smt.applications import PODI
+        import matplotlib.pyplot as plt
+
+        light_pink = np.array((250, 233, 232)) / 255
+
+        ny = 100
+        interval = np.linspace(-1, 1, ny)
+        n_modes_test = 10
+
+        def function_test_1d(x: np.ndarray) -> np.ndarray:
+            u0 = np.zeros((ny, 1))
+
+            alpha = np.zeros((x.shape[0], n_modes_test))
+            for i in range(n_modes_test):
+                alpha[:, i] = cos_coeff(i, x)
+
+            V_init = np.zeros((ny, n_modes_test))
+            for i in range(n_modes_test):
+                V_init[:, i] = Legendre(i, interval)
+
+            V = Test.gram_schmidt(V_init.T).T
+            database = u0 + np.dot(V, alpha.T)
+
+            return database
+
+        seed = 42
+        nt = 40
+        xlimits = np.array([[0, 4]])
+        sampling = LHS(xlimits=xlimits, random_state=seed)
+        xt = sampling(nt)
+
+        nv = 400
+        xv = sampling(nv)
+
+        x = np.concatenate((xt, xv))
+        dbtrue = function_test_1d(x)
+
+        # Training data
+        dbt = dbtrue[:, :nt]
+
+        podi = PODI()
+        podi.compute_pod(dbt, tol=0.9999, seed=seed)
+        podi.set_training_values(xt)
+        podi.train()
+
+        values = podi.predict_values(x)
+        variances = podi.predict_variances(x)
+
+        i = nt + nv // 2
+
+        diff = dbtrue[:, i] - values[:, i]
+        rms_error = np.sqrt(np.mean(diff**2))
+        plt.figure(figsize=(15, 10))
+        plt.fill_between(
+            np.ravel(np.linspace(-1, 1, ny)),
+            np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
+            np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
+            color=light_pink,
+            label="confiance interval (99%)",
+        )
+        plt.scatter(
+            interval,
+            values[:, i],
+            color="r",
+            marker="x",
+            s=35,
+            alpha=1.0,
+            label="prediction (mean)",
+        )
+        plt.scatter(
+            interval,
+            dbtrue[:, i],
+            color="b",
+            marker="*",
+            s=15,
+            alpha=1.0,
+            label="reference",
+        )
+        plt.plot([], [], color="w", label="error = " + str(round(rms_error, 9)))
+
+        ax = plt.gca()
+        ax.axes.xaxis.set_visible(False)
+
+        plt.ylabel("u(x = " + str(x[i, 0])[:4] + ")", fontsize=16)
+        plt.title("Estimation of u at x = " + str(x[i, 0])[:4], fontsize=18)
+        plt.legend(fontsize=16)
+        plt.show()
+
 
 if __name__ == "__main__":
+    # Test.run_podi_example_1d()
     unittest.main()

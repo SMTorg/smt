@@ -24,8 +24,8 @@ class PODI(SurrogateBasedApplication):
     ----------
     n_modes : int
         Number of kept modes during the POD.
-    left_basis : np.ndarray
-        Left basis of the POD.
+    singular_vectors : np.ndarray
+        singular vectors of the POD.
     singular_values : np.ndarray
         Singular values of the POD
     interp_coeff : list[SurrogateModel]
@@ -55,7 +55,7 @@ class PODI(SurrogateBasedApplication):
             self.available_models_name.append(key)
 
         self.n_modes = None
-        self.left_basis = None
+        self.singular_vectors = None
         self.singular_values = None
 
         self.pod_computed = False
@@ -104,8 +104,8 @@ class PODI(SurrogateBasedApplication):
 
         Parameters
         ----------
-        database : np.ndarray[nt, ny]
-            Snapshot matrix. Each row correspond to a snapshot.
+        database : np.ndarray[ny, nt]
+            Snapshot matrix. Each column corresponds to a snapshot.
         tol : float
             Desired tolerance for the pod (if n_modes not set).
         n_modes : int
@@ -140,11 +140,11 @@ class PODI(SurrogateBasedApplication):
 
         database = ensure_2d_array(database, "database")
 
-        self.n_snapshot = database.shape[0]
-        self.ny = database.shape[1]
+        self.n_snapshot = database.shape[1]
+        self.ny = database.shape[0]
 
-        svd.fit(database)
-        self.left_basis = svd.components_
+        svd.fit(database.T)
+        self.singular_vectors = svd.components_.T
         self.singular_values = svd.singular_values_
         EV_list = svd.explained_variance_
 
@@ -157,25 +157,25 @@ class PODI(SurrogateBasedApplication):
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
-        self.mean = np.atleast_2d(database.mean(axis=0))
-        self.basis = self.left_basis[: self.n_modes]
-        self.coeff = np.dot(database - self.mean, self.basis.T)
+        self.mean = np.atleast_2d(database.mean(axis=1)).T
+        self.basis = self.singular_vectors[:, : self.n_modes]
+        self.coeff = np.dot(database.T - self.mean.T, self.basis)
 
         self.pod_computed = True
         self.interp_options_set = False
         self.training_values_set = False
 
-    def get_left_basis(self) -> np.ndarray:
+    def get_singular_vectors(self) -> np.ndarray:
         """
-        Getter for the left basis of the POD.
+        Getter for the singular vectors of the POD.
         It represents the directions of maximum variance in the data.
 
         Returns
         -------
-        left_basis : np.ndarray
-            Left basis of the POD.
+        singular_vectors : np.ndarray
+            singular vectors of the POD.
         """
-        return self.left_basis
+        return self.singular_vectors
 
     def get_singular_values(self) -> np.ndarray:
         """
@@ -275,7 +275,7 @@ class PODI(SurrogateBasedApplication):
         self.interp_options_set = True
         self.training_values_set = False
 
-    def set_training_values(self, xt: np.ndarray, name: str = None) -> None:
+    def set_training_values(self, xt: np.ndarray) -> None:
         """
         Set training data (values).
         If the models' options are still not set, default values are used for the initialization.
@@ -284,9 +284,6 @@ class PODI(SurrogateBasedApplication):
         ----------
         xt : np.ndarray[nt, nx]
             The input values for the nt training points.
-        name : str
-            An optional label for the group of training points being set.
-            This is only used in special situations (e.g., multi-fidelity applications).
         """
 
         xt = ensure_2d_array(xt, "xt")
@@ -373,13 +370,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        mean_coeff_interp = np.zeros((self.n_new, self.n_modes))
+        mean_coeff_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
             mu_i = self.interp_coeff[i].predict_values(xn)
-            mean_coeff_interp[:, i] = mu_i[:, 0]
+            mean_coeff_interp[i] = mu_i[:, 0]
 
-        y = self.mean + np.dot(mean_coeff_interp, self.basis)
+        y = self.mean + np.dot(self.basis, mean_coeff_interp)
 
         return y
 
@@ -411,13 +408,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        var_coeff_interp = np.zeros((self.n_new, self.n_modes))
+        var_coeff_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
             sigma_i_square = self.interp_coeff[i].predict_variances(xn)
-            var_coeff_interp[:, i] = sigma_i_square[:, 0]
+            var_coeff_interp[i] = sigma_i_square[:, 0]
 
-        s2 = np.dot(var_coeff_interp, (self.basis**2))
+        s2 = np.dot((self.basis**2), var_coeff_interp)
 
         return s2
 
@@ -456,14 +453,14 @@ class PODI(SurrogateBasedApplication):
                 f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
             )
 
-        n_new = xn.shape[0]
-        deriv_coeff_interp = np.zeros((n_new, self.n_modes))
+        self.n_new = xn.shape[0]
+        deriv_coeff_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[:, i] = self.interp_coeff[i].predict_derivatives(xn, d)[
+            deriv_coeff_interp[i] = self.interp_coeff[i].predict_derivatives(xn, d)[
                 :, 0
             ]
 
-        dy_dx = np.dot(deriv_coeff_interp, self.basis)
+        dy_dx = np.dot(self.basis, deriv_coeff_interp)
 
         return dy_dx
