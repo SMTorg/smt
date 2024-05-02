@@ -1,0 +1,23 @@
+Proper Orthogonal Decomposition + Interpolation (PODI)
+========================
+
+PODI is an application that is able predict vectorial measures.
+SMT PODI combines kriging based surrogate models implemented in SMT to perform that prediction.
+
+The PODI method mainly consists on two parts:
+#. The Proper Orthogonal Decomposition (POD)
+#. The Interpolation of surrogate models
+
+Proper Orthogonal Decomposition (POD)
+--------------------
+
+Considering a measure :math:`u` which is a vector of dimension, the POD is this decomposition :
+
+. math ::
+	\begin{equation}\label{e:pod}
+	u({\mathbf x})=u_{0} + \sum_{i=1}^{M} \alpha_{i}(\mathbf x)\phi_{i}
+	\end{equation}
+
+In this equation, :math:`u` is decomposed as a sum of :math:`M` modes.
+The term :math:`u_{0}` corresponds to a mean value of :math:`u`
+Each mode :math:`i` is defined by a coefficient :math:`\alpha_{i}` and  a vector
