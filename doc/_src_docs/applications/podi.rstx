@@ -1,28 +1,28 @@
 Proper Orthogonal Decomposition + Interpolation (PODI)
 ======================================================
 
-PODI is an application that is able to predict vectorial measures.
-It combines Proper Orthogonal Decomposition and kriging based surrogate models to perform the prediction.
+PODI is an application used to predict vectorial measures.
+It combines Proper Orthogonal Decomposition and kriging based surrogate models to perform the estimation.
 
 Context
 -------
 
 We consider a problem in which the estimation of a measure :math:`u` is desired along a mesh of :math:`p` points.
-We call snapshot the data containing the values of :math:`u` in a specific configuration of the problem.
-The i-th configuration is represented by :math:`x_i`. Here we consider N snapshots.
+'Snapshot' is the data containing the values of :math:`u` in a specific configuration of the problem.
+The k-th configuration is represented by :math:`x_k`. Here we consider N snapshots.
 
 These snapshots are gathered in a database called the snapshot matrix :
 
 .. math ::
 	S=
 	\begin{bmatrix}
-		\u( \mathbf{x}_1)_1 & \dots & \u( \mathbf{x}_N)_1 \\
+		u( \mathbf{x}_1)_1 & \dots & u( \mathbf{x}_N)_1 \\
 		\vdots & \ddots & \vdots \\
-		\u( \mathbf{x}_1)_p & \dots & \u( \mathbf{x}_N)_p \\
+		u( \mathbf{x}_1)_p & \dots & u( \mathbf{x}_N)_p \\
 	\end{bmatrix}
 	\in \mathbb{R}^{p \times N}
 
-Each column of the matrix corresponds to a snapshot, while each row correspond to a point of the problem's mesh.
+Each column of the matrix corresponds to a snapshot, while each row corresponds to a point of the problem's mesh.
 
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
@@ -31,30 +31,126 @@ The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomp
 
 .. math ::
 	\begin{equation}\label{e:pod}
-	u({\bf x})=u_{0} + \sum_{i=1}^{M} \alpha_{i}(\bf x)\phi_{i}
+	u({\mathbf x})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x)\phi_i
+	\end{equation}
+
+:math:`u` is decomposed as a sum of :math:`M` modes and :math:`u_0` corresponds to the mean value of :math:`u`.
+
+Each mode :math:`i` is defined by a coefficient :math:`\alpha_i` (scalar) and  a vector :math:`\phi_{i}` of dimension :math:`p`.
+
+The :math:`\phi_i` vectors are orthogonals and form the POD basis. The POD basis is 'local' if it depends of :math:`x` and 'global' if not.
+In this case, it is a global basis.
+
+We can also define the matricial POD equation :
+
+.. math ::
+	\begin{equation}\label{e:matrixPOD}
+	S=U_0+\Phi A
 	\end{equation}
 
 where
-:math:`u` is decomposed as a sum of :math:`M` modes.
-:math:`u_{0}` corresponds to the mean value of :math:`u`.
-Each mode :math:`i` is defined by a coefficient :math:`\alpha_{i}` (scalar) and  a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-To perform this decomposition, the Singular Values Decomposition (SVD) of the snapshot matrix is used :
+.. math ::
+	A=
+	\begin{bmatrix}
+		\alpha_1( \mathbf{x}_1) & \dots & \alpha_1( \mathbf{x}_N) \\
+		\vdots & \ddots & \vdots \\
+		\alpha_M( \mathbf{x}_1) & \dots & \alpha_M( \mathbf{x}_N) \\
+	\end{bmatrix}
+	, \Phi=
+	\begin{bmatrix}
+		(\phi_1)_1 & \dots & (\phi_M)_1 \\
+		\vdots & \ddots & \vdots \\
+		(\phi_1)_p & \dots & (\phi_M)_p \\
+	\end{bmatrix}
+
+and :math:`U_0` is composed of :math:`u_0` vector on each column.
+
+Singular Values Decomposition (SVD)
+-------------------------------------
+To perform the POD, the SVD of the snapshot matrix S is used :
 
 .. math ::
 	\begin{equation}\label{e:svd}
-	M=U\sigma{V}^{T}
+	S=U\Sigma{V}^{T}
 	\end{equation}
 
+The matrices :math:`U` and :math:`{V}^{T}` are orthogonals and contain the singular vectors.
+These vectors are the directions of maximum variance in the data and are ranked by decreasing order of importance.
+This importance is represented by the values of the :math:`\Sigma` matrix : on its diagonal, there are the singular values, positive number ranked by decreasing value.
+Each singular value :math:`\sigma_i` is associated to a singular vector and quantify its importance in the dataset.
 
-The PCA will analyse the snapshot matrix S and compute the principal axes in feature space called singular vectors.
-These axes represents the differents modes of :math:`u`, in other words the directions of maximum variance in the data.
-Each singular vector is associated to a singular value
+Each singular vector corresponds to a mod of :math:`u`. The number of available mods is limited by the number of snapshots :
 
-Predictions with surrogate models
+.. math ::
+	\begin{equation}\label{e:M<=N}
+	M \le N
+	\end{equation}
+
+It is needed to filter the mods that represents most of the data structure and determine the number of mods that should be kept.
+To do this, we use the explained variance. If :math:`m` modes are kept, their explained variance is :
+
+.. math ::
+	\begin{equation}\label{e:ev_m}
+	EV_m=\frac{\sum_{i=1}^{m} \sigma_i}{\sum_{i=1}^{N} \sigma_i}
+	\end{equation}
+
+The number of kept modes is defined by a tolerance :math:`\eta \in ]0,1]` :
+
+.. math ::
+	\begin{equation}\label{e:M_def}
+	M=min\{m \in [\![1,N]\!]: EV_m \ge \eta\}
+	\end{equation}
+
+The first :math:`M` singular vectors of the :math:`U` matrix corresponds to the :math:`\phi_i` vectors in the POD.
+
+The coefficients :math:`\alpha_i` can be deduced :
+
+.. math ::
+	\begin{equation}\label{e:A}
+	A={\Phi}^{T}(S-U_0)
+	\end{equation}
+
+Use of Surrogate models
 ---------------------------------
 
-Kriging based models are used to predict the coefficients :math:`\alpha_{i}` at new input value.
+To compute the values of :math:`u` at a new value :math:`x_*`, the :math:`\alpha_i(x_*)` are needed.
+
+To estimate them, kriging based surrogate models are used :
+
+
+.. math ::
+	x=(x_1,\dots,x_k,\dots,x_N)
+	\longrightarrow
+	\begin{cases}
+		\alpha_1(x) \longrightarrow \text{model 1} \\
+		\vdots \\
+		\alpha_i(x) \longrightarrow \text{model i} \\
+		\vdots \\
+		\alpha_M(x) \longrightarrow \text{model M} \\
+	\end{cases}
+
+For each kept mode i, we use a surrogate model that is trained with the inputs :math:`x_k` and output :math:`\alpha_i(x)`.
+
+These models are able to compute an estimation denoted :math:`\hat\alpha_i(x_*)` for each mode :
+
+.. math ::
+	\hat\alpha_i(x_*) \hookrightarrow \mathcal{N}(\mu_i(x_*),\sigma_i^{2}(x_*))
+
+The mean and variance of :math:`u(x_*)` can be deduced :
+
+.. math ::
+	\begin{cases}
+		\mathbb{E}[u(x_*)]=u_0+\sum_{i=1}^{M} \mu_i(x_*)\phi_i \\
+		\mathbb{V}[u(x_*)]=\sum_{i=1}^{M} \sigma_i^{2}(x_*)\phi_i^{2}
+	\end{cases}
+
+NB : These equations take in consideration that :
+
+- the POD basis is global : the :math:`\phi_i` are independents of x.
+
+- the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(x_*)`.
+
 
 Usage
 -----
