@@ -704,7 +704,7 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
             )
         )
         i += 1
-    kernel = r.copy()
+        kernel = r.copy()
 
     i = 0
     if grad_ind is not None:
@@ -823,6 +823,51 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
 
                 i += 1
         i = 0
+        if hess_ind is not None:
+            cut = int(len(theta) / 2)
+            if grad_ind < cut and hess_ind < cut:
+
+                grad_ind2 = cut + grad_ind
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -(
+                            np.sin(
+                                theta_array[0][grad_ind2]
+                                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                            )
+                            ** 2
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+            elif grad_ind > cut and hess_ind > cut:
+                grad_ind2 = grad_ind - cut
+                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                    -2
+                    * theta_array[0][grad_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2] ** 2
+                    * np.cos(
+                        2
+                        * theta_array[0][grad_ind]
+                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                    )
+                    * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
+                    - theta_array[0][grad_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                    * np.sin(
+                        2
+                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                        * theta_array[0][grad_ind]
+                    )
+                    * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                )
+            else :
+                
+            # if hess_ind == grad_ind :
+            # else :
+            raise ValueError(
+                "Second derivatives for ExpSinSquared not available yet (to implement)."
+            )
 
     if derivative_params is not None:
         raise ValueError(
