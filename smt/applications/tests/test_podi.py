@@ -15,7 +15,7 @@ import warnings
 warnings.simplefilter("ignore")
 
 
-def cos_coeff(i: int, x: np.ndarray):
+def cos_coef(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
     a = 2 * i // 2 - 1
@@ -72,7 +72,7 @@ class Test(SMTestCase):
 
             alpha = np.zeros((x.shape[0], self.n_modes_test))
             for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coeff(i, x)
+                alpha[:, i] = cos_coef(i, x)
 
             V_init = np.zeros((self.ny, self.n_modes_test))
             for i in range(self.n_modes_test):
@@ -216,17 +216,17 @@ class Test(SMTestCase):
         sm.set_interp_options("KRG", options_global)
 
         sm_list = sm.get_interp_coef()
-        for interp_coeff in sm_list:
+        for interp_coef in sm_list:
             for key in options_global[0].keys():
-                self.assertEqual(interp_coeff.options[key], options_global[0][key])
+                self.assertEqual(interp_coef.options[key], options_global[0][key])
 
         options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
         sm.set_interp_options("KRG", options_local)
 
         sm_list = sm.get_interp_coef()
-        for i, interp_coeff in enumerate(sm_list):
+        for i, interp_coef in enumerate(sm_list):
             for key in options_local[i].keys():
-                self.assertEqual(interp_coeff.options[key], options_local[i][key])
+                self.assertEqual(interp_coef.options[key], options_local[i][key])
 
     def test_pod(self):
         """Tests the computing of the pod."""
@@ -305,7 +305,7 @@ class Test(SMTestCase):
         light_pink = np.array((250, 233, 232)) / 255
 
         ny = 100
-        interval = np.linspace(-1, 1, ny)
+        mesh = np.linspace(-1, 1, ny)
         n_modes_test = 10
 
         def function_test_1d(x: np.ndarray) -> np.ndarray:
@@ -313,11 +313,11 @@ class Test(SMTestCase):
 
             alpha = np.zeros((x.shape[0], n_modes_test))
             for i in range(n_modes_test):
-                alpha[:, i] = cos_coeff(i, x)
+                alpha[:, i] = cos_coef(i, x)
 
             V_init = np.zeros((ny, n_modes_test))
             for i in range(n_modes_test):
-                V_init[:, i] = Legendre(i, interval)
+                V_init[:, i] = Legendre(i, mesh)
 
             V = Test.gram_schmidt(V_init.T).T
             database = u0 + np.dot(V, alpha.T)
@@ -360,7 +360,7 @@ class Test(SMTestCase):
             label="confiance interval (99%)",
         )
         plt.scatter(
-            interval,
+            mesh,
             values[:, i],
             color="r",
             marker="x",
@@ -369,7 +369,7 @@ class Test(SMTestCase):
             label="prediction (mean)",
         )
         plt.scatter(
-            interval,
+            mesh,
             dbtrue[:, i],
             color="b",
             marker="*",
@@ -389,5 +389,5 @@ class Test(SMTestCase):
 
 
 if __name__ == "__main__":
-    # Test.run_podi_example_1d()
+    #Test.run_podi_example_1d()
     unittest.main()

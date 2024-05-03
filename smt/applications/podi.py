@@ -25,19 +25,11 @@ class PODI(SurrogateBasedApplication):
     n_modes : int
         Number of kept modes during the POD.
     singular_vectors : np.ndarray
-        singular vectors of the POD.
+        Singular vectors of the POD.
     singular_values : np.ndarray
         Singular values of the POD
-    interp_coeff : list[SurrogateModel]
-        List containing the kriging models used.
-    pod_computed : bool
-        Indicates if the pod has already been computed.
-    interp_options_set : bool
-        Indicates if the interpolation's options have already been set.
-    training_values_set : bool
-        Indicates if the training values have already been set.
-    train_done : bool
-        Indicates if the training has been performed yet.
+    interp_coef : list[SurrogateModel]
+        List containing the surrogate models used.
 
     Example
     --------
@@ -63,7 +55,7 @@ class PODI(SurrogateBasedApplication):
         self.training_values_set = False
         self.train_done = False
 
-        self.interp_coeff = None
+        self.interp_coef = None
 
     @staticmethod
     def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> int:
@@ -100,7 +92,7 @@ class PODI(SurrogateBasedApplication):
         seed: int = None,
     ) -> None:
         """
-        Performs the POD
+        Performs the POD.
 
         Parameters
         ----------
@@ -159,7 +151,7 @@ class PODI(SurrogateBasedApplication):
 
         self.mean = np.atleast_2d(database.mean(axis=1)).T
         self.basis = self.singular_vectors[:, : self.n_modes]
-        self.coeff = np.dot(database.T - self.mean.T, self.basis)
+        self.coef = np.dot(database.T - self.mean.T, self.basis)
 
         self.pod_computed = True
         self.interp_options_set = False
@@ -258,7 +250,7 @@ class PODI(SurrogateBasedApplication):
                 f"expected interp_options of size {self.n_modes} or 1, but got {len(interp_options)}."
             )
 
-        self.interp_coeff = []
+        self.interp_coef = []
         for i in range(self.n_modes):
             if mode_options == "local":
                 index = i
@@ -270,7 +262,7 @@ class PODI(SurrogateBasedApplication):
             for key in interp_options[index].keys():
                 sm_i.options[key] = interp_options[index][key]
 
-            self.interp_coeff.append(sm_i)
+            self.interp_coef.append(sm_i)
 
         self.interp_options_set = True
         self.training_values_set = False
@@ -293,11 +285,11 @@ class PODI(SurrogateBasedApplication):
                 "'compute_pod' method must have been succesfully executed before trying to set the training values."
             )
         if not self.interp_options_set:
-            self.interp_coeff = []
+            self.interp_coef = []
             for i in range(self.n_modes):
                 sm_i = PODI_available_models["KRG"](print_global=False)
 
-                self.interp_coeff.append(sm_i)
+                self.interp_coef.append(sm_i)
             self.interp_options_set = True
 
         self.nt = xt.shape[0]
@@ -309,7 +301,7 @@ class PODI(SurrogateBasedApplication):
             )
 
         for i in range(self.n_modes):
-            self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
+            self.interp_coef[i].set_training_values(xt, self.coef[:, i])
 
         self.training_values_set = True
 
@@ -327,8 +319,8 @@ class PODI(SurrogateBasedApplication):
                 "the training values should have been set before trying to train the models."
             )
 
-        for interp_coeff in self.interp_coeff:
-            interp_coeff.train()
+        for interp_coef in self.interp_coef:
+            interp_coef.train()
 
         self.train_done = True
 
@@ -338,10 +330,10 @@ class PODI(SurrogateBasedApplication):
 
         Returns
         -------
-        interp_coeff : np.ndarray[n_modes]
+        interp_coef : np.ndarray[n_modes]
             List of the kriging models used for the POD coefficients.
         """
-        return self.interp_coeff
+        return self.interp_coef
 
     def predict_values(self, xn) -> np.ndarray:
         """
@@ -370,13 +362,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        mean_coeff_interp = np.zeros((self.n_modes, self.n_new))
+        mean_coef_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            mu_i = self.interp_coeff[i].predict_values(xn)
-            mean_coeff_interp[i] = mu_i[:, 0]
+            mu_i = self.interp_coef[i].predict_values(xn)
+            mean_coef_interp[i] = mu_i[:, 0]
 
-        y = self.mean + np.dot(self.basis, mean_coeff_interp)
+        y = self.mean + np.dot(self.basis, mean_coef_interp)
 
         return y
 
@@ -408,13 +400,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        var_coeff_interp = np.zeros((self.n_modes, self.n_new))
+        var_coef_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            sigma_i_square = self.interp_coeff[i].predict_variances(xn)
-            var_coeff_interp[i] = sigma_i_square[:, 0]
+            sigma_i_square = self.interp_coef[i].predict_variances(xn)
+            var_coef_interp[i] = sigma_i_square[:, 0]
 
-        s2 = np.dot((self.basis**2), var_coeff_interp)
+        s2 = np.dot((self.basis**2), var_coef_interp)
 
         return s2
 
@@ -454,13 +446,11 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        deriv_coeff_interp = np.zeros((self.n_modes, self.n_new))
+        deriv_coef_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[i] = self.interp_coeff[i].predict_derivatives(xn, d)[
-                :, 0
-            ]
+            deriv_coef_interp[i] = self.interp_coef[i].predict_derivatives(xn, d)[:, 0]
 
-        dy_dx = np.dot(self.basis, deriv_coeff_interp)
+        dy_dx = np.dot(self.basis, deriv_coef_interp)
 
         return dy_dx
