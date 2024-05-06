@@ -18,7 +18,7 @@ warnings.simplefilter("ignore")
 def cos_coef(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
-    a = 2 * i // 2 - 1
+    a = 2 * i % 2 - 1
     return a * x[:, 0] * np.cos(i * x[:, 0])
 
 
@@ -308,7 +308,33 @@ class Test(SMTestCase):
         mesh = np.linspace(-1, 1, ny)
         n_modes_test = 10
 
-        def function_test_1d(x: np.ndarray) -> np.ndarray:
+        def function_test_1d(x, mesh, n_modes_test, ny):
+            import numpy as np  # Note: only required by SMT doc testing toolchain
+
+            def cos_coef(i: int, x: np.ndarray):
+                a = 2 * i % 2 - 1
+                return a * x[:, 0] * np.cos(i * x[:, 0])
+
+            def Legendre(i: int, mesh: np.ndarray):
+                from scipy import special
+
+                return special.legendre(i)(mesh)
+
+            def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
+                """To perform the  Gram-Schmidt's algorithm."""
+
+                basis = np.zeros_like(input_array)
+                for i in range(len(input_array)):
+                    basis[i] = input_array[i]
+                    for j in range(i):
+                        basis[i] -= (
+                            np.dot(input_array[i], basis[j])
+                            / np.dot(basis[j], basis[j])
+                            * basis[j]
+                        )
+                    basis[i] /= np.linalg.norm(basis[i])
+                return basis
+
             u0 = np.zeros((ny, 1))
 
             alpha = np.zeros((x.shape[0], n_modes_test))
@@ -319,7 +345,7 @@ class Test(SMTestCase):
             for i in range(n_modes_test):
                 V_init[:, i] = Legendre(i, mesh)
 
-            V = Test.gram_schmidt(V_init.T).T
+            V = gram_schmidt(V_init.T).T
             database = u0 + np.dot(V, alpha.T)
 
             return database
@@ -334,7 +360,7 @@ class Test(SMTestCase):
         xv = sampling(nv)
 
         x = np.concatenate((xt, xv))
-        dbtrue = function_test_1d(x)
+        dbtrue = function_test_1d(x, mesh, n_modes_test, ny)
 
         # Training data
         dbt = dbtrue[:, :nt]
