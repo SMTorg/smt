@@ -9,9 +9,9 @@ Context
 
 We consider a problem in which the estimation of a measure :math:`u` is desired along a mesh of :math:`p` points.
 The data containing the values of :math:`u` in a specific configuration of the problem is called a :math:`snapshot`.
-With :math:`k \in [\![1,N]\!]`, the :math:`k`-th configuration caracteristics is represented by :math:`\mathbf{x}_k`.
+With :math:`k \in [\![1,N]\!]`, the caracteristics of the :math:`k`-th configuration are represented by :math:`\mathbf{x}_k`.
 
-The :math:`N` snapshots are gathered in a database called the :math:`snapshot matrix` :
+The :math:`N` snapshots are gathered in a database called the :math:`\text{snapshot matrix}` :
 
 .. math ::
 	S=
@@ -34,11 +34,11 @@ The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomp
 	u({\mathbf x})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x)\phi_i
 	\end{equation}
 
-* :math:`u` is decomposed as a sum of :math:`M` modes and :math:`u_0` corresponds to the mean value of :math:`u`.
+* :math:`u` is decomposed as a sum of :math:`\text{M modes}` and :math:`u_0` corresponds to the mean value of :math:`u`.
 
-* Each :math:`mode i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
+* each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-* The :math:`\phi_i` vectors are orthogonals and form the :math:`POD basis`. The POD basis is 'global' here because it doesn't depend of :math:`\mathbf{x}`.
+* the :math:`\phi_i` vectors are orthogonals and form the :math:`\text{POD basis}`. The POD basis is 'global' here because it doesn't depend of :math:`\mathbf{x}`.
 
 We can also define the matricial POD equation :
 
@@ -74,7 +74,7 @@ To perform the POD, the SVD of the snapshot matrix :math:`S` is used :
 	S=U\Sigma{V}^{T}
 	\end{equation}
 
-The :math:`U` and :math:`{V}^{T}` matrices are orthogonals and contain the :math:`singular vectors`.
+The :math:`U` and :math:`{V}^{T}` matrices are orthogonals and contain the :math:`\text{singular vectors}`.
 These vectors are the directions of maximum variance in the data and are ranked by decreasing order of importance.
 Each vector corresponds to a mode of :math:`u`. The total number of available modes is limited by the number of snapshots :
 
@@ -85,7 +85,7 @@ Each vector corresponds to a mode of :math:`u`. The total number of available mo
 
 The importance of each mode is represented by the diagonal values of the :math:`\Sigma` matrix. They are called :math:`singular values \sigma_i` and are positive numbers ranked by decreasing value.
 It is then needed to filter the modes to keep those that represent most of the data structure.
-To do this, we use the :mat:`explained variance`. It represents the data variance that we keep when filtering the modes.
+To do this, we use the :math:`\text{explained variance}`. It represents the data variance that we keep when filtering the modes.
 
 If :math:`m` modes are kept, their explained variance :math:`EV_m` is :
 
@@ -114,7 +114,7 @@ Use of Surrogate models
 
 To compute :math:`u` at a new value :math:`\mathbf{x}_*`, the values of :math:`\alpha_i(\mathbf{x}_*)` at each mode :math:`i` are needed.
 
-To estimate them, :math:`kriging` based :math:`surrogate models` are used :
+To estimate them, :math:`kriging` based :math:`\text{surrogate models}` are used :
 
 
 .. math ::
@@ -130,7 +130,7 @@ To estimate them, :math:`kriging` based :math:`surrogate models` are used :
 
 For each kept mode :math:`i`, we use a surrogate model that is trained with the inputs :math:`\mathbf{x}_k` and outputs :math:`\alpha_i(\mathbf{x})`.
 
-These models are able to compute an estimation denoted :math:`\hat\alpha_i(\mathbf{x}_*)`. It follows a normal law :
+These models are able to compute an estimation denoted :math:`\hat\alpha_i(\mathbf{x}_*)`. It is normally distributed :
 
 .. math ::
 	\hat\alpha_i(\mathbf{x}_*) \hookrightarrow \mathcal{N}(\mu_i(\mathbf{x}_*),\sigma_i^{2}(\mathbf{x}_*))
