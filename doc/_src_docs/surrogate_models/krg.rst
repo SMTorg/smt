@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0929787
+     Training - done. Time (sec):  0.0948014
   ___________________________________________________________________________
      
    Evaluation
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0107799
+     Predicting - done. Time (sec):  0.0100489
      
-     Prediction time/pt. (sec) :  0.0000216
+     Prediction time/pt. (sec) :  0.0000201
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -304,7 +304,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2965639
+     Training - done. Time (sec):  0.3007534
   ___________________________________________________________________________
      
    Evaluation

@@ -501,21 +501,21 @@ RMTB
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0082870
+           Computing energy terms - done. Time (sec):  0.0104129
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0082870
+        Pre-computing matrices - done. Time (sec):  0.0104129
         Solving for degrees of freedom ...
            Solving initial startup problem (n=400) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 9.429150220e-02 1.114942861e-02
                  Iteration (num., iy, grad. norm, func.) :   0   0 2.984735241e-08 1.793055991e-10
-              Solving for output 0 - done. Time (sec):  0.0124674
+              Solving for output 0 - done. Time (sec):  0.0023789
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.955493282e+00 4.799845498e+00
                  Iteration (num., iy, grad. norm, func.) :   0   1 8.972452140e-07 4.567718425e-08
-              Solving for output 1 - done. Time (sec):  0.0107718
-           Solving initial startup problem (n=400) - done. Time (sec):  0.0232391
+              Solving for output 1 - done. Time (sec):  0.0080297
+           Solving initial startup problem (n=400) - done. Time (sec):  0.0104086
            Solving nonlinear problem (n=400) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 6.652507490e-09 1.793038784e-10
@@ -535,7 +535,7 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  13   0 1.026910429e-12 6.255701028e-12
                  Iteration (num., iy, grad. norm, func.) :  14   0 1.584455272e-12 6.255682352e-12
                  Iteration (num., iy, grad. norm, func.) :  15   0 3.772463044e-13 6.255651149e-12
-              Solving for output 0 - done. Time (sec):  0.1081240
+              Solving for output 0 - done. Time (sec):  0.1086307
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 9.728856644e-08 4.567640473e-08
                  Iteration (num., iy, grad. norm, func.) :   0   1 9.337495225e-08 4.538210157e-08
@@ -568,10 +568,10 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  27   1 1.615904818e-12 2.713451132e-10
                  Iteration (num., iy, grad. norm, func.) :  28   1 1.430058429e-12 2.713450210e-10
                  Iteration (num., iy, grad. norm, func.) :  29   1 8.733556585e-13 2.713449614e-10
-              Solving for output 1 - done. Time (sec):  0.2082610
-           Solving nonlinear problem (n=400) - done. Time (sec):  0.3163850
-        Solving for degrees of freedom - done. Time (sec):  0.3396242
-     Training - done. Time (sec):  0.3479111
+              Solving for output 1 - done. Time (sec):  0.2051463
+           Solving nonlinear problem (n=400) - done. Time (sec):  0.3137770
+        Solving for degrees of freedom - done. Time (sec):  0.3241856
+     Training - done. Time (sec):  0.3345985
   ___________________________________________________________________________
      
    Evaluation
@@ -579,20 +579,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009983
      
-     Prediction time/pt. (sec) :  0.0000000
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000020
      
   ___________________________________________________________________________
      
@@ -601,31 +590,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0019944
      
-     Prediction time/pt. (sec) :  0.0000000
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000040
      
   ___________________________________________________________________________
      
@@ -656,9 +623,42 @@ RMTB
         # eval points. : 500
      
      Predicting ...
+     Predicting - done. Time (sec):  0.0009987
+     
+     Prediction time/pt. (sec) :  0.0000020
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
      Predicting - done. Time (sec):  0.0000000
      
      Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0010002
+     
+     Prediction time/pt. (sec) :  0.0000020
      
   ___________________________________________________________________________
      
@@ -689,9 +689,9 @@ RMTB
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0080228
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000160
      
   ___________________________________________________________________________
      
@@ -733,9 +733,9 @@ RMTB
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0164015
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000066
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -744,9 +744,9 @@ RMTB
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0035279
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000014
      
   
 .. figure:: rans_crm_wing.png
@@ -792,25 +792,25 @@ RMTC
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000000
+           Computing dof2coeff - done. Time (sec):  0.0156207
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0156231
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0156231
+        Pre-computing matrices - done. Time (sec):  0.0156207
         Solving for degrees of freedom ...
            Solving initial startup problem (n=1764) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.279175539e-01 1.114942861e-02
                  Iteration (num., iy, grad. norm, func.) :   0   0 3.676209532e-06 2.207093656e-08
-              Solving for output 0 - done. Time (sec):  0.0221834
+              Solving for output 0 - done. Time (sec):  0.0219674
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 2.653045755e+00 4.799845498e+00
                  Iteration (num., iy, grad. norm, func.) :   0   1 5.931882707e-05 6.501854582e-06
-              Solving for output 1 - done. Time (sec):  0.0121794
-           Solving initial startup problem (n=1764) - done. Time (sec):  0.0343628
+              Solving for output 1 - done. Time (sec):  0.0159695
+           Solving initial startup problem (n=1764) - done. Time (sec):  0.0379369
            Solving nonlinear problem (n=1764) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 8.720952301e-07 2.206099886e-08
@@ -881,7 +881,7 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  64   0 1.904781413e-12 2.864924172e-10
                  Iteration (num., iy, grad. norm, func.) :  65   0 3.311811443e-12 2.864924162e-10
                  Iteration (num., iy, grad. norm, func.) :  66   0 4.109786374e-13 2.864924155e-10
-              Solving for output 0 - done. Time (sec):  1.3481777
+              Solving for output 0 - done. Time (sec):  1.2458506
               Solving for output 1 ...
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.433843609e-05 6.499190122e-06
                  Iteration (num., iy, grad. norm, func.) :   0   1 1.433915036e-05 6.252291412e-06
@@ -963,10 +963,10 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  76   1 1.039726926e-12 1.446355915e-08
                  Iteration (num., iy, grad. norm, func.) :  77   1 1.656395559e-12 1.446355915e-08
                  Iteration (num., iy, grad. norm, func.) :  78   1 9.864571633e-13 1.446355915e-08
-              Solving for output 1 - done. Time (sec):  1.4198456
-           Solving nonlinear problem (n=1764) - done. Time (sec):  2.7680233
-        Solving for degrees of freedom - done. Time (sec):  2.8023860
-     Training - done. Time (sec):  2.8180091
+              Solving for output 1 - done. Time (sec):  1.4746695
+           Solving nonlinear problem (n=1764) - done. Time (sec):  2.7205200
+        Solving for degrees of freedom - done. Time (sec):  2.7584569
+     Training - done. Time (sec):  2.7740777
   ___________________________________________________________________________
      
    Evaluation
@@ -1018,17 +1018,6 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0084338
-     
-     Prediction time/pt. (sec) :  0.0000169
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 500
-     
-     Predicting ...
      Predicting - done. Time (sec):  0.0000000
      
      Prediction time/pt. (sec) :  0.0000000
@@ -1073,9 +1062,20 @@ RMTC
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0024049
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000048
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 500
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -1128,9 +1128,9 @@ RMTC
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0024056
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -1139,9 +1139,9 @@ RMTC
         # eval points. : 2500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0084064
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000034
      
   
 .. figure:: rans_crm_wing.png

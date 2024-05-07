@@ -47,7 +47,7 @@ We can also define the matricial POD equation :
 	S=U_0+\Phi A
 	\end{equation}
 
-where
+where :math:`U_0` is composed of the :math:`u_0` vector on each column,
 
 .. math ::
 	A=
@@ -56,14 +56,12 @@ where
 		\vdots & \ddots & \vdots \\
 		\alpha_M( \mathbf{x}_1) & \dots & \alpha_M( \mathbf{x}_N) \\
 	\end{bmatrix}
-	, \Phi=
+	\text{, } \Phi=
 	\begin{bmatrix}
 		(\phi_1)_1 & \dots & (\phi_M)_1 \\
 		\vdots & \ddots & \vdots \\
 		(\phi_1)_p & \dots & (\phi_M)_p \\
 	\end{bmatrix}
-
-and :math:`U_0` is composed of the :math:`u_0` vector on each column.
 
 Singular Values Decomposition (SVD)
 -------------------------------------
