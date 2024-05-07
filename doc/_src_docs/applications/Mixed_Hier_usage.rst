@@ -241,9 +241,9 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.3076108
+     Predicting - done. Time (sec):  0.3100872
      
-     Prediction time/pt. (sec) :  0.0030761
+     Prediction time/pt. (sec) :  0.0031009
      
   Pred_RMSE 4.052163509443859e-13
   
@@ -391,9 +391,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0108099
+     Predicting - done. Time (sec):  0.0108268
      
-     Prediction time/pt. (sec) :  0.0002162
+     Prediction time/pt. (sec) :  0.0002165
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

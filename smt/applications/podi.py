@@ -31,7 +31,7 @@ class PODI(SurrogateBasedApplication):
     interp_coef : list[SurrogateModel]
         List containing the surrogate models used.
 
-    Example
+    Examples
     --------
     >>> from smt.applications import PODI
     >>> sm = PODI()
@@ -105,7 +105,7 @@ class PODI(SurrogateBasedApplication):
         seed : int
             seed number which controls random draws for internal optim. (optional)
 
-        Example
+        Examples
         ----------
         >>> sm.compute_pod(database, tol = 0.99)
         """
@@ -222,7 +222,7 @@ class PODI(SurrogateBasedApplication):
             The available options can be found in the documentation of the corresponding surrogate models.
             By default, the print_global options are set to 'False'.
 
-        Example
+        Examples
         --------
         >>> interp_type = "KRG"
         >>> dict1 = {'corr' : 'matern52', 'theta0' : [1e-2]}

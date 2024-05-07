@@ -97,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2012997
+     Training - done. Time (sec):  0.2010155
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
