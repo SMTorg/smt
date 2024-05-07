@@ -24,12 +24,20 @@ class PODI(SurrogateBasedApplication):
     ----------
     n_modes : int
         Number of kept modes during the POD.
-    singular_vectors : np.ndarray
-        Singular vectors of the POD.
+    left_basis : np.ndarray
+        Left basis of the POD.
     singular_values : np.ndarray
-        Singular values of the POD.
-    interp_coef : list[SurrogateModel]
-        List containing the surrogate models used.
+        Singular values of the POD
+    interp_coeff : list[SurrogateModel]
+        List containing the kriging models used.
+    pod_computed : bool
+        Indicates if the pod has already been computed.
+    interp_options_set : bool
+        Indicates if the interpolation's options have already been set.
+    training_values_set : bool
+        Indicates if the training values have already been set.
+    train_done : bool
+        Indicates if the training has been performed yet.
 
     Example
     --------
@@ -47,7 +55,7 @@ class PODI(SurrogateBasedApplication):
             self.available_models_name.append(key)
 
         self.n_modes = None
-        self.singular_vectors = None
+        self.left_basis = None
         self.singular_values = None
 
         self.pod_computed = False
@@ -55,12 +63,12 @@ class PODI(SurrogateBasedApplication):
         self.training_values_set = False
         self.train_done = False
 
-        self.interp_coef = None
+        self.interp_coeff = None
 
     @staticmethod
     def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> int:
         """
-        Static method calculating the required number of kept modes to explain at least the intended ratio of variance.
+        Calculates the required number of kept modes to explain at least the intended ratio of variance.
 
         Parameters
         ----------
@@ -92,12 +100,12 @@ class PODI(SurrogateBasedApplication):
         seed: int = None,
     ) -> None:
         """
-        Performs the POD.
+        Performs the POD
 
         Parameters
         ----------
-        database : np.ndarray[ny, nt]
-            Snapshot matrix. Each column corresponds to a snapshot.
+        database : np.ndarray[nt, ny]
+            Snapshot matrix. Each row correspond to a snapshot.
         tol : float
             Desired tolerance for the pod (if n_modes not set).
         n_modes : int
@@ -132,11 +140,11 @@ class PODI(SurrogateBasedApplication):
 
         database = ensure_2d_array(database, "database")
 
-        self.n_snapshot = database.shape[1]
-        self.ny = database.shape[0]
+        self.n_snapshot = database.shape[0]
+        self.ny = database.shape[1]
 
-        svd.fit(database.T)
-        self.singular_vectors = svd.components_.T
+        svd.fit(database)
+        self.left_basis = svd.components_
         self.singular_values = svd.singular_values_
         EV_list = svd.explained_variance_
 
@@ -149,25 +157,25 @@ class PODI(SurrogateBasedApplication):
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
-        self.mean = np.atleast_2d(database.mean(axis=1)).T
-        self.basis = self.singular_vectors[:, : self.n_modes]
-        self.coef = np.dot(database.T - self.mean.T, self.basis)
+        self.mean = np.atleast_2d(database.mean(axis=0))
+        self.basis = self.left_basis[: self.n_modes]
+        self.coeff = np.dot(database - self.mean, self.basis.T)
 
         self.pod_computed = True
         self.interp_options_set = False
         self.training_values_set = False
 
-    def get_singular_vectors(self) -> np.ndarray:
+    def get_left_basis(self) -> np.ndarray:
         """
-        Getter for the singular vectors of the POD.
+        Getter for the left basis of the POD.
         It represents the directions of maximum variance in the data.
 
         Returns
         -------
-        singular_vectors : np.ndarray
-            singular vectors of the POD.
+        left_basis : np.ndarray
+            Left basis of the POD.
         """
-        return self.singular_vectors
+        return self.left_basis
 
     def get_singular_values(self) -> np.ndarray:
         """
@@ -250,7 +258,7 @@ class PODI(SurrogateBasedApplication):
                 f"expected interp_options of size {self.n_modes} or 1, but got {len(interp_options)}."
             )
 
-        self.interp_coef = []
+        self.interp_coeff = []
         for i in range(self.n_modes):
             if mode_options == "local":
                 index = i
@@ -262,12 +270,12 @@ class PODI(SurrogateBasedApplication):
             for key in interp_options[index].keys():
                 sm_i.options[key] = interp_options[index][key]
 
-            self.interp_coef.append(sm_i)
+            self.interp_coeff.append(sm_i)
 
         self.interp_options_set = True
         self.training_values_set = False
 
-    def set_training_values(self, xt: np.ndarray) -> None:
+    def set_training_values(self, xt: np.ndarray, name: str = None) -> None:
         """
         Set training data (values).
         If the models' options are still not set, default values are used for the initialization.
@@ -276,6 +284,9 @@ class PODI(SurrogateBasedApplication):
         ----------
         xt : np.ndarray[nt, nx]
             The input values for the nt training points.
+        name : str
+            An optional label for the group of training points being set.
+            This is only used in special situations (e.g., multi-fidelity applications).
         """
 
         xt = ensure_2d_array(xt, "xt")
@@ -285,11 +296,11 @@ class PODI(SurrogateBasedApplication):
                 "'compute_pod' method must have been succesfully executed before trying to set the training values."
             )
         if not self.interp_options_set:
-            self.interp_coef = []
+            self.interp_coeff = []
             for i in range(self.n_modes):
                 sm_i = PODI_available_models["KRG"](print_global=False)
 
-                self.interp_coef.append(sm_i)
+                self.interp_coeff.append(sm_i)
             self.interp_options_set = True
 
         self.nt = xt.shape[0]
@@ -301,7 +312,7 @@ class PODI(SurrogateBasedApplication):
             )
 
         for i in range(self.n_modes):
-            self.interp_coef[i].set_training_values(xt, self.coef[:, i])
+            self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
 
         self.training_values_set = True
 
@@ -319,8 +330,8 @@ class PODI(SurrogateBasedApplication):
                 "the training values should have been set before trying to train the models."
             )
 
-        for interp_coef in self.interp_coef:
-            interp_coef.train()
+        for interp_coeff in self.interp_coeff:
+            interp_coeff.train()
 
         self.train_done = True
 
@@ -330,10 +341,10 @@ class PODI(SurrogateBasedApplication):
 
         Returns
         -------
-        interp_coef : np.ndarray[n_modes]
+        interp_coeff : np.ndarray[n_modes]
             List of the kriging models used for the POD coefficients.
         """
-        return self.interp_coef
+        return self.interp_coeff
 
     def predict_values(self, xn) -> np.ndarray:
         """
@@ -362,13 +373,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        mean_coef_interp = np.zeros((self.n_modes, self.n_new))
+        mean_coeff_interp = np.zeros((self.n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            mu_i = self.interp_coef[i].predict_values(xn)
-            mean_coef_interp[i] = mu_i[:, 0]
+            mu_i = self.interp_coeff[i].predict_values(xn)
+            mean_coeff_interp[:, i] = mu_i[:, 0]
 
-        y = self.mean + np.dot(self.basis, mean_coef_interp)
+        y = self.mean + np.dot(mean_coeff_interp, self.basis)
 
         return y
 
@@ -400,13 +411,13 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.n_new = xn.shape[0]
-        var_coef_interp = np.zeros((self.n_modes, self.n_new))
+        var_coeff_interp = np.zeros((self.n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            sigma_i_square = self.interp_coef[i].predict_variances(xn)
-            var_coef_interp[i] = sigma_i_square[:, 0]
+            sigma_i_square = self.interp_coeff[i].predict_variances(xn)
+            var_coeff_interp[:, i] = sigma_i_square[:, 0]
 
-        s2 = np.dot((self.basis**2), var_coef_interp)
+        s2 = np.dot(var_coeff_interp, (self.basis**2))
 
         return s2
 
@@ -445,12 +456,14 @@ class PODI(SurrogateBasedApplication):
                 f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
             )
 
-        self.n_new = xn.shape[0]
-        deriv_coef_interp = np.zeros((self.n_modes, self.n_new))
+        n_new = xn.shape[0]
+        deriv_coeff_interp = np.zeros((n_new, self.n_modes))
 
         for i in range(self.n_modes):
-            deriv_coef_interp[i] = self.interp_coef[i].predict_derivatives(xn, d)[:, 0]
+            deriv_coeff_interp[:, i] = self.interp_coeff[i].predict_derivatives(xn, d)[
+                :, 0
+            ]
 
-        dy_dx = np.dot(self.basis, deriv_coef_interp)
+        dy_dx = np.dot(deriv_coeff_interp, self.basis)
 
         return dy_dx

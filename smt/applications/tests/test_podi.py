@@ -11,10 +11,10 @@ from smt.sampling_methods import LHS
 from smt.applications import PODI
 
 
-def cos_coef(i: int, x: np.ndarray):
+def cos_coeff(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
-    a = 2 * i % 2 - 1
+    a = 2 * i // 2 - 1
     return a * x[:, 0] * np.cos(i * x[:, 0])
 
 
@@ -64,24 +64,24 @@ class Test(SMTestCase):
                 Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
             """
 
-            u0 = np.zeros((self.ny, 1))
+            u0 = np.zeros((1, self.ny))
 
             alpha = np.zeros((x.shape[0], self.n_modes_test))
             for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coef(i, x)
+                alpha[:, i] = cos_coeff(i, x)
 
             V_init = np.zeros((self.ny, self.n_modes_test))
             for i in range(self.n_modes_test):
                 V_init[:, i] = Legendre(i, self.t)
 
             V = Test.gram_schmidt(V_init.T).T
-            database = u0 + np.dot(V, alpha.T)
-            self.basis_original = V
+            database = u0 + np.dot(alpha, V.T)
+            self.basis_original = V.T
 
             return database
 
         self.full_database = pb_1d(self.x)
-        self.database = self.full_database[:, : self.nt]
+        self.database = self.full_database[: self.nt]
 
     @staticmethod
     def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
@@ -118,13 +118,13 @@ class Test(SMTestCase):
             norm of the left residue
         """
 
-        norm_residue = np.zeros(basis_pod.shape[1])
+        norm_residue = np.zeros(len(basis_pod))
 
-        projection = basis_original.dot(np.dot(basis_original.T, basis_pod))
+        projection = np.dot(basis_pod, basis_original.T).dot(basis_original)
 
-        for i in range(projection.shape[1]):
-            proj = projection[:, i]
-            norm_residue[i] = np.linalg.norm(basis_pod[:, i] - proj)
+        for i in range(len(projection)):
+            proj = projection[i]
+            norm_residue[i] = np.linalg.norm(basis_pod[i] - proj)
         return norm_residue
 
     def test_predict(self):
@@ -167,14 +167,14 @@ class Test(SMTestCase):
         var_xn = sm.predict_variances(self.xn)
         deriv_xn = sm.predict_derivatives(self.xn, 0)
 
-        self.assertEqual(mean_xn.shape, (self.ny, self.nn))
-        self.assertEqual(var_xn.shape, (self.ny, self.nn))
-        self.assertEqual(deriv_xn.shape, (self.ny, self.nn))
+        self.assertEqual(mean_xn.shape, (self.nn, self.ny))
+        self.assertEqual(var_xn.shape, (self.nn, self.ny))
+        self.assertEqual(deriv_xn.shape, (self.nn, self.ny))
 
         mean_xv = sm.predict_values(self.xv)
 
-        diff = self.full_database[:, self.nt :] - mean_xv
-        rms_error = [np.sqrt(np.mean(diff[:, i] ** 2)) for i in range(diff.shape[1])]
+        diff = self.full_database[self.nt :] - mean_xv
+        rms_error = [np.sqrt(np.mean(diff[i] ** 2)) for i in range(diff.shape[0])]
 
         np.testing.assert_allclose(rms_error, np.zeros(self.nv), atol=1e-2)
 
@@ -212,17 +212,17 @@ class Test(SMTestCase):
         sm.set_interp_options("KRG", options_global)
 
         sm_list = sm.get_interp_coef()
-        for interp_coef in sm_list:
+        for interp_coeff in sm_list:
             for key in options_global[0].keys():
-                self.assertEqual(interp_coef.options[key], options_global[0][key])
+                self.assertEqual(interp_coeff.options[key], options_global[0][key])
 
         options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
         sm.set_interp_options("KRG", options_local)
 
         sm_list = sm.get_interp_coef()
-        for i, interp_coef in enumerate(sm_list):
+        for i, interp_coeff in enumerate(sm_list):
             for key in options_local[i].keys():
-                self.assertEqual(interp_coef.options[key], options_local[i][key])
+                self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
     def test_pod(self):
         """Tests the computing of the pod."""
@@ -247,9 +247,8 @@ class Test(SMTestCase):
         n_modes = sm.get_n_modes()
         self.assertLessEqual(n_modes, self.n_modes_test)
 
-        basis_pod = sm.get_singular_vectors()
-
-        self.assertEqual(basis_pod.shape, (self.ny, self.nt))
+        basis_pod = sm.get_left_basis()
+        self.assertEqual(basis_pod.shape, (self.nt, self.ny))
 
         singular_values = sm.get_singular_values()
         self.assertEqual(len(singular_values), self.nt)
@@ -290,125 +289,6 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
-    @staticmethod
-    def run_podi_example_1d():
-        import numpy as np
-        from smt.sampling_methods import LHS
-        from smt.applications import PODI
-        import matplotlib.pyplot as plt
-
-        light_pink = np.array((250, 233, 232)) / 255
-
-        ny = 100
-        mesh = np.linspace(-1, 1, ny)
-        n_modes_test = 10
-
-        def function_test_1d(x, mesh, n_modes_test, ny):
-            import numpy as np  # Note: only required by SMT doc testing toolchain
-
-            def cos_coef(i: int, x: np.ndarray):
-                a = 2 * i % 2 - 1
-                return a * x[:, 0] * np.cos(i * x[:, 0])
-
-            def Legendre(i: int, mesh: np.ndarray):
-                from scipy import special
-
-                return special.legendre(i)(mesh)
-
-            def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
-                """To perform the  Gram-Schmidt's algorithm."""
-
-                basis = np.zeros_like(input_array)
-                for i in range(len(input_array)):
-                    basis[i] = input_array[i]
-                    for j in range(i):
-                        basis[i] -= (
-                            np.dot(input_array[i], basis[j])
-                            / np.dot(basis[j], basis[j])
-                            * basis[j]
-                        )
-                    basis[i] /= np.linalg.norm(basis[i])
-                return basis
-
-            u0 = np.zeros((ny, 1))
-
-            alpha = np.zeros((x.shape[0], n_modes_test))
-            for i in range(n_modes_test):
-                alpha[:, i] = cos_coef(i, x)
-
-            V_init = np.zeros((ny, n_modes_test))
-            for i in range(n_modes_test):
-                V_init[:, i] = Legendre(i, mesh)
-
-            V = gram_schmidt(V_init.T).T
-            database = u0 + np.dot(V, alpha.T)
-
-            return database
-
-        seed = 42
-        nt = 40
-        xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=seed)
-        xt = sampling(nt)
-
-        nv = 400
-        xv = sampling(nv)
-
-        x = np.concatenate((xt, xv))
-        dbtrue = function_test_1d(x, mesh, n_modes_test, ny)
-
-        # Training data
-        dbt = dbtrue[:, :nt]
-
-        podi = PODI()
-        podi.compute_pod(dbt, tol=0.9999, seed=seed)
-        podi.set_training_values(xt)
-        podi.train()
-
-        values = podi.predict_values(x)
-        variances = podi.predict_variances(x)
-
-        i = nt + nv // 2
-
-        diff = dbtrue[:, i] - values[:, i]
-        rms_error = np.sqrt(np.mean(diff**2))
-        plt.figure(figsize=(8, 5))
-        plt.fill_between(
-            np.ravel(np.linspace(-1, 1, ny)),
-            np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
-            np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
-            color=light_pink,
-            label="confiance interval (99%)",
-        )
-        plt.scatter(
-            mesh,
-            values[:, i],
-            color="r",
-            marker="x",
-            s=15,
-            alpha=1.0,
-            label="prediction (mean)",
-        )
-        plt.scatter(
-            mesh,
-            dbtrue[:, i],
-            color="b",
-            marker="*",
-            s=5,
-            alpha=1.0,
-            label="reference",
-        )
-        plt.plot([], [], color="w", label="error = " + str(round(rms_error, 9)))
-
-        ax = plt.gca()
-        ax.axes.xaxis.set_visible(False)
-
-        plt.ylabel("u(x = " + str(x[i, 0])[:4] + ")")
-        plt.title("Estimation of u at x = " + str(x[i, 0])[:4])
-        plt.legend()
-        plt.show()
-
 
 if __name__ == "__main__":
-    # Test.run_podi_example_1d()
     unittest.main()
