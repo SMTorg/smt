@@ -27,7 +27,7 @@ class PODI(SurrogateBasedApplication):
     singular_vectors : np.ndarray
         Singular vectors of the POD.
     singular_values : np.ndarray
-        Singular values of the POD
+        Singular values of the POD.
     interp_coef : list[SurrogateModel]
         List containing the surrogate models used.
 
@@ -60,7 +60,7 @@ class PODI(SurrogateBasedApplication):
     @staticmethod
     def choice_n_modes_tol(EV_list: np.ndarray, tol: float) -> int:
         """
-        Calculates the required number of kept modes to explain at least the intended ratio of variance.
+        Static method calculating the required number of kept modes to explain at least the intended ratio of variance.
 
         Parameters
         ----------

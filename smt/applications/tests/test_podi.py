@@ -377,7 +377,7 @@ class Test(SMTestCase):
 
         diff = dbtrue[:, i] - values[:, i]
         rms_error = np.sqrt(np.mean(diff**2))
-        plt.figure(figsize=(15, 10))
+        plt.figure(figsize=(8, 5))
         plt.fill_between(
             np.ravel(np.linspace(-1, 1, ny)),
             np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
