@@ -10,11 +10,6 @@ from scipy import special
 from smt.sampling_methods import LHS
 from smt.applications import PODI
 
-import warnings
-
-warnings.simplefilter("ignore")
-
-
 def cos_coef(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
@@ -242,7 +237,6 @@ class Test(SMTestCase):
             sm.compute_pod(self.database, tol=0.1, n_modes=1, seed=self.seed)
 
         error_msg = "It should not be possible to execute compute_pod with more mods than data values."
-
         with self.assertRaises(ValueError, msg=error_msg):
             sm.compute_pod(self.database, n_modes=self.nt + 1, seed=self.seed)
 
@@ -415,5 +409,5 @@ class Test(SMTestCase):
 
 
 if __name__ == "__main__":
-    Test.run_podi_example_1d()
+    #Test.run_podi_example_1d()
     unittest.main()
