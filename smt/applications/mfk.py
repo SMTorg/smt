@@ -983,9 +983,11 @@ class MFK(KrgBased):
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
-        if (
-            self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12
-        ) and self.options["hyper_opt"] == "TNC":
+        # noise0 may be a list of noise values for various fi levels with various length
+        max_noise = np.max([np.max(row) for row in self.options["noise0"]])
+        if (self.options["eval_noise"] or max_noise > 1e-12) and self.options[
+            "hyper_opt"
+        ] == "TNC":
             self.options["hyper_opt"] = "Cobyla"
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"
