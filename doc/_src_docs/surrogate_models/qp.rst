@@ -28,8 +28,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import QP
   
@@ -69,7 +69,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0001769
+     Training - done. Time (sec):  0.0009975
   ___________________________________________________________________________
      
    Evaluation
@@ -77,9 +77,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000210
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000002
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: qp_Test_test_qp.png

@@ -10,6 +10,7 @@ from scipy import special
 from smt.sampling_methods import LHS
 from smt.applications import PODI
 
+
 def cos_coef(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
@@ -409,5 +410,5 @@ class Test(SMTestCase):
 
 
 if __name__ == "__main__":
-    #Test.run_podi_example_1d()
+    # Test.run_podi_example_1d()
     unittest.main()

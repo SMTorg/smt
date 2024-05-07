@@ -26,8 +26,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import KPLS
   
@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0330791
+     Training - done. Time (sec):  0.1236727
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0009289
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000093
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001299
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000260
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -117,9 +117,10 @@ Usage with an automatic number of components
 .. code-block:: python
 
   import numpy as np
-  from smt.surrogate_models import KPLS
+  
   from smt.problems import TensorProduct
   from smt.sampling_methods import LHS
+  from smt.surrogate_models import KPLS
   
   # The problem is the exponential problem with dimension 10
   ndim = 10
@@ -158,7 +159,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec):  5.2932000
+     Training - done. Time (sec): 12.3463280
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -168,12 +169,12 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0003631
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0003631
+     Prediction time/pt. (sec) :  0.0000000
      
-  [[139.34911621]]
-  [[212.53624432]]
+  [[20.59910277]]
+  [[1075.83008026]]
   
 
 Options
@@ -228,7 +229,7 @@ Options
      -  1.9
      -  None
      -  ['float']
-     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
      -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
@@ -298,7 +299,7 @@ Options
      -  41
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
+     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

@@ -166,10 +166,10 @@ RMTB
                  Iteration (num., iy, grad. norm, func.) :  17   0 6.756594233e-16 8.453271528e-15
                  Iteration (num., iy, grad. norm, func.) :  18   0 2.143825648e-16 8.453270718e-15
                  Iteration (num., iy, grad. norm, func.) :  19   0 7.115441072e-17 8.453270419e-15
-              Solving for output 0 - done. Time (sec):  0.1163900
-           Solving nonlinear problem (n=100) - done. Time (sec):  0.1163900
-        Solving for degrees of freedom - done. Time (sec):  0.1163900
-     Training - done. Time (sec):  0.1163900
+              Solving for output 0 - done. Time (sec):  0.1163926
+           Solving nonlinear problem (n=100) - done. Time (sec):  0.1163926
+        Solving for degrees of freedom - done. Time (sec):  0.1163926
+     Training - done. Time (sec):  0.1163926
   ___________________________________________________________________________
      
    Evaluation
@@ -227,21 +227,21 @@ RMTC
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0009973
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
            Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0009971
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0009973
-        Pre-computing matrices - done. Time (sec):  0.0029917
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=82) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.470849329e-01 8.436300000e-03
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.672771647e-10 2.493685484e-14
-              Solving for output 0 - done. Time (sec):  0.0049872
-           Solving initial startup problem (n=82) - done. Time (sec):  0.0049872
+              Solving for output 0 - done. Time (sec):  0.0159724
+           Solving initial startup problem (n=82) - done. Time (sec):  0.0159724
            Solving nonlinear problem (n=82) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 7.484144240e-12 2.493684372e-14
@@ -258,10 +258,10 @@ RMTC
                  Iteration (num., iy, grad. norm, func.) :  10   0 3.525949088e-15 1.108940914e-14
                  Iteration (num., iy, grad. norm, func.) :  11   0 4.977597964e-16 1.108940364e-14
                  Iteration (num., iy, grad. norm, func.) :  12   0 4.328767946e-17 1.108940341e-14
-              Solving for output 0 - done. Time (sec):  0.0645921
-           Solving nonlinear problem (n=82) - done. Time (sec):  0.0645921
-        Solving for degrees of freedom - done. Time (sec):  0.0695794
-     Training - done. Time (sec):  0.0725710
+              Solving for output 0 - done. Time (sec):  0.0633402
+           Solving nonlinear problem (n=82) - done. Time (sec):  0.0633402
+        Solving for degrees of freedom - done. Time (sec):  0.0793126
+     Training - done. Time (sec):  0.0803227
   ___________________________________________________________________________
      
    Evaluation
