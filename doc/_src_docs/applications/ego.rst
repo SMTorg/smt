@@ -197,11 +197,12 @@ Usage
 
 .. code-block:: python
 
+  import matplotlib.pyplot as plt
   import numpy as np
+  
   from smt.applications import EGO
   from smt.surrogate_models import KRG
   from smt.utils.design_space import DesignSpace
-  import matplotlib.pyplot as plt
   
   def function_test_1d(x):
       # function xsinx
@@ -231,7 +232,7 @@ Usage
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
-  print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
+  print("Minimum in x={:.1f} with f(x)={:.1f}".format(x_opt.item(), y_opt.item()))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
   y_plot = function_test_1d(x_plot)
@@ -267,7 +268,7 @@ Usage
           x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
       )
       lines = [true_fun, data, gp, un_gp, opt, ei]
-      fig.suptitle("EGO optimization of $f(x) = x \sin{x}$")
+      fig.suptitle("EGO optimization of $f(x) = x \\sin{x}$")
       fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
       ax.set_title("iteration {}".format(i + 1))
       fig.legend(
@@ -297,12 +298,12 @@ Usage with parallel options
 
 .. code-block:: python
 
+  import matplotlib.pyplot as plt
   import numpy as np
+  
   from smt.applications import EGO
   from smt.applications.ego import Evaluator
   from smt.surrogate_models import KRG, DesignSpace
-  
-  import matplotlib.pyplot as plt
   
   def function_test_1d(x):
       # function xsinx
@@ -331,9 +332,10 @@ Usage with parallel options
       def run(self, fun, x):
           n_thread = 5
           # Caveat: import are made here due to SMT documentation building process
-          import numpy as np
-          from sys import version_info
           from multiprocessing.pool import ThreadPool
+          from sys import version_info
+  
+          import numpy as np
   
           if version_info.major == 2:
               return fun(x)
@@ -363,7 +365,7 @@ Usage with parallel options
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
-  print("Minimum in x={:.1f} with f(x)={:.1f}".format(float(x_opt), float(y_opt)))
+  print("Minimum in x={:.1f} with f(x)={:.1f}".format(x_opt.item(), y_opt.item()))
   
   x_plot = np.atleast_2d(np.linspace(0, 25, 100)).T
   y_plot = function_test_1d(x_plot)
@@ -418,7 +420,7 @@ Usage with parallel options
               x_plot.T[0], sig_plus.T[0], sig_moins.T[0], alpha=0.3, color="g"
           )
           lines = [true_fun, data, gp, un_gp, opt, ei, virt_data]
-          fig.suptitle("EGOp optimization of $f(x) = x \sin{x}$")
+          fig.suptitle("EGOp optimization of $f(x) = x \\sin{x}$")
           fig.subplots_adjust(hspace=0.4, wspace=0.4, top=0.8)
           ax.set_title("iteration {}.{}".format(i, p))
           fig.legend(
@@ -448,18 +450,18 @@ Usage with mixed variable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
 
+  import matplotlib.pyplot as plt
   import numpy as np
+  
   from smt.applications import EGO
   from smt.applications.mixed_integer import MixedIntegerContext
-  from smt.surrogate_models import MixIntKernelType
+  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.utils.design_space import (
-      DesignSpace,
       CategoricalVariable,
+      DesignSpace,
       FloatVariable,
       IntegerVariable,
   )
-  import matplotlib.pyplot as plt
-  from smt.surrogate_models import KRG
   
   # Regarding the interface, the function to be optimized should handle
   # categorical values as index values in the enumeration type specification.
@@ -504,6 +506,7 @@ Usage with mixed variable
   sm = KRG(
       design_space=design_space,
       categorical_kernel=MixIntKernelType.GOWER,
+      hyper_opt="Cobyla",
       print_global=False,
   )
   mixint = MixedIntegerContext(design_space)
@@ -524,7 +527,7 @@ Usage with mixed variable
   )
   
   x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
-  print("Minimum in x={} with f(x)={:.1f}".format(x_opt, float(y_opt)))
+  print("Minimum in x={} with f(x)={:.1f}".format(x_opt, y_opt.item()))
   # print("Minimum in typed x={}".format(ego.mixint.cast_to_mixed_integer(x_opt)))
   
   min_ref = -15
@@ -545,7 +548,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-4.88885884  2.          0.          0.        ] with f(x)=-14.7
+  Minimum in x=[-5.  2.  0.  1.] with f(x)=-14.0
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -601,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x16ad0f070>
+     -  <smt.applications.ego.Evaluator object at 0x000001588AC2F710>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -631,7 +634,7 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x16e33b550>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001588AC76610>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
      -  SMT kriging-based surrogate model used internaly

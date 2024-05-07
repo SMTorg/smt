@@ -33,8 +33,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.sampling_methods import BoxBehnken
   
@@ -89,8 +89,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.sampling_methods import PlackettBurman
   
@@ -145,8 +145,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.sampling_methods import Factorial
   
@@ -206,8 +206,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.sampling_methods import Gsd
   
@@ -261,6 +261,6 @@ Options
      -  2
      -  None
      -  ['int']
-     -  Reduction factor (bigger than 1). Larger `reduction` means fewer experiments in the design and more possible complementary designs
+     -  Reduction factor (bigger than 1). Larger `reduction` means fewer experiments                   in the design and more possible complementary designs
 
 

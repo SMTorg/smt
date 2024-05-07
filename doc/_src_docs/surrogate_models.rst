@@ -27,8 +27,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import RBF
   
@@ -74,7 +74,7 @@ Usage
            Back solving (5 x 5 mtx) ...
            Back solving (5 x 5 mtx) - done. Time (sec):  0.0000000
         Solving linear system (col. 0) - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0084076
   ___________________________________________________________________________
      
    Evaluation

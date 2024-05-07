@@ -32,12 +32,12 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
-  from smt.surrogate_models import GEKPLS, DesignSpace
   from smt.problems import Sphere
   from smt.sampling_methods import LHS
+  from smt.surrogate_models import GEKPLS, DesignSpace
   
   # Construction of the DOE
   fun = Sphere(ndim=2)
@@ -73,7 +73,7 @@ Usage
       for j in range(X.shape[1]):
           Z[i, j] = sm.predict_values(
               np.hstack((X[i, j], Y[i, j])).reshape((1, 2))
-          )
+          ).item()
   
   fig = plt.figure()
   ax = fig.add_subplot(projection="3d")
@@ -97,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0415080
+     Training - done. Time (sec):  0.1909716
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -155,7 +155,7 @@ Options
      -  1.9
      -  None
      -  ['float']
-     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
      -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
@@ -225,7 +225,7 @@ Options
      -  41
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
+     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  2
      -  None

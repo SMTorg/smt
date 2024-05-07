@@ -37,15 +37,16 @@ The design space is then defined from a list of design variables and implements 
 .. code-block:: python
 
   import numpy as np
+  
+  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  from smt.sampling_methods import LHS
   from smt.utils.design_space import (
+      CategoricalVariable,
       DesignSpace,
       FloatVariable,
       IntegerVariable,
       OrdinalVariable,
-      CategoricalVariable,
   )
-  from smt.sampling_methods import LHS
-  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   
   ds = DesignSpace(
       [
@@ -100,26 +101,26 @@ This can be useful for modeling incompatibility relationships: for example, engi
 installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected. Note: this feature
 is only available if ConfigSpace has been installed: `pip install smt[cs]`
 
-
 The hierarchy relationships are specified after instantiating the design space:
 
 
 .. code-block:: python
 
   import numpy as np
-  from smt.utils.design_space import (
-      DesignSpace,
-      FloatVariable,
-      IntegerVariable,
-      OrdinalVariable,
-      CategoricalVariable,
-  )
+  
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
       MixedIntegerSamplingMethod,
   )
-  from smt.surrogate_models import MixIntKernelType, MixHrcKernelType, KRG
   from smt.sampling_methods import LHS
+  from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
+  from smt.utils.design_space import (
+      CategoricalVariable,
+      DesignSpace,
+      FloatVariable,
+      IntegerVariable,
+      OrdinalVariable,
+  )
   
   ds = DesignSpace(
       [
@@ -209,6 +210,7 @@ The hierarchy relationships are specified after instantiating the design space:
           categorical_kernel=MixIntKernelType.HOMO_HSPHERE,
           hierarchical_kernel=MixHrcKernelType.ALG_KERNEL,
           theta0=[1e-2],
+          hyper_opt="Cobyla",
           corr="abs_exp",
           n_start=5,
       ),
@@ -234,11 +236,11 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.1944790
+     Predicting - done. Time (sec):  0.2908564
      
-     Prediction time/pt. (sec) :  0.0019448
+     Prediction time/pt. (sec) :  0.0029086
      
-  Pred_RMSE 4.0385396515853436e-13
+  Pred_RMSE 4.052163509443859e-13
   
 
 Design space and variable class references
@@ -268,17 +270,17 @@ Example of sampling a mixed-discrete design space
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   from matplotlib import colors
   
+  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  from smt.sampling_methods import LHS
   from smt.utils.design_space import (
+      CategoricalVariable,
       DesignSpace,
       FloatVariable,
-      CategoricalVariable,
   )
-  from smt.sampling_methods import LHS
-  from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   
   float_var = FloatVariable(0, 4)
   cat_var = CategoricalVariable(["blue", "red"])
@@ -325,13 +327,14 @@ Example of mixed integer context usage
 .. code-block:: python
 
   import matplotlib.pyplot as plt
-  from smt.surrogate_models import KRG
+  
   from smt.applications.mixed_integer import MixedIntegerContext
+  from smt.surrogate_models import KRG
   from smt.utils.design_space import (
+      CategoricalVariable,
       DesignSpace,
       FloatVariable,
       IntegerVariable,
-      CategoricalVariable,
   )
   
   design_space = DesignSpace(
@@ -357,7 +360,7 @@ Example of mixed integer context usage
   yt = ftest(xt)
   
   # Surrogate
-  sm = mi_context.build_kriging_model(KRG())
+  sm = mi_context.build_kriging_model(KRG(hyper_opt="Cobyla"))
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -383,9 +386,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0045240
+     Predicting - done. Time (sec):  0.0108113
      
-     Prediction time/pt. (sec) :  0.0000905
+     Prediction time/pt. (sec) :  0.0002162
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

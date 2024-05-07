@@ -14,18 +14,20 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import GENN
   
   # Test function
-  def f(x): 
+  def f(x):
       import numpy as np  # need to repeat for sphinx_auto_embed
+  
       return x * np.sin(x)
   
-  def df_dx(x): 
+  def df_dx(x):
       import numpy as np  # need to repeat for sphinx_auto_embed
+  
       return np.sin(x) + x * np.cos(x)
   
   # Domain
@@ -41,7 +43,7 @@ Usage
   # Validation data
   xv = lb + np.random.rand(30, 1) * (ub - lb)
   yv = f(xv)
-  dyv_dxv = df_dx(xv)
+  # dyv_dxv = df_dx(xv)
   
   # Instantiate
   genn = GENN()
@@ -50,11 +52,14 @@ Usage
   genn.options["hidden_layer_sizes"] = [6, 6]
   genn.options["alpha"] = 0.1
   genn.options["lambd"] = 0.1
-  genn.options["gamma"] = 1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
-  genn.options["num_iterations"] = 500
+  genn.options["gamma"] = (
+      1.0  # 1 = gradient-enhanced on, 0 = gradient-enhanced off
+  )
+  genn.options["num_iterations"] = 1000
   genn.options["is_backtracking"] = True
+  genn.options["is_normalize"] = False
   
-  # Train 
+  # Train
   genn.load_data(xt, yt, dyt_dxt)
   genn.train()
   
@@ -91,7 +96,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3032103
+     Training - done. Time (sec):  1.5998368
   ___________________________________________________________________________
      
    Evaluation
@@ -99,9 +104,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0001469
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000002
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: genn_Test_test_genn.png
