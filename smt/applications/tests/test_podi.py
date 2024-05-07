@@ -390,7 +390,7 @@ class Test(SMTestCase):
             values[:, i],
             color="r",
             marker="x",
-            s=35,
+            s=15,
             alpha=1.0,
             label="prediction (mean)",
         )
@@ -399,7 +399,7 @@ class Test(SMTestCase):
             dbtrue[:, i],
             color="b",
             marker="*",
-            s=15,
+            s=5,
             alpha=1.0,
             label="reference",
         )
@@ -408,12 +408,12 @@ class Test(SMTestCase):
         ax = plt.gca()
         ax.axes.xaxis.set_visible(False)
 
-        plt.ylabel("u(x = " + str(x[i, 0])[:4] + ")", fontsize=16)
-        plt.title("Estimation of u at x = " + str(x[i, 0])[:4], fontsize=18)
-        plt.legend(fontsize=16)
+        plt.ylabel("u(x = " + str(x[i, 0])[:4] + ")")
+        plt.title("Estimation of u at x = " + str(x[i, 0])[:4])
+        plt.legend()
         plt.show()
 
 
 if __name__ == "__main__":
-    # Test.run_podi_example_1d()
+    Test.run_podi_example_1d()
     unittest.main()
