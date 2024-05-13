@@ -52,7 +52,9 @@ These are given by:
 
 .. math ::
 
-  \phi( \mathbf{x}_i , \mathbf{x}_j ) = \exp \left( \frac{|| \mathbf{x}_i - \mathbf{x}_j ||_2 ^ 2}{d0^2} \right)
+  \phi( \mathbf{x}_i , \mathbf{x}_j ) = \exp \left(- \frac{|| \mathbf{x}_i - \mathbf{x}_j ||_2 ^ 2}{d_0^2} \right)
+
+where :math:`d_0` is a scaling parameter.
 
 Usage
 -----

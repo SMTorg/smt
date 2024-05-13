@@ -15,8 +15,9 @@ Usage
 .. code-block:: python
 
   import matplotlib.pyplot as plt
-  from smt.problems import HierarchicalNeuralNetwork
+  
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  from smt.problems import HierarchicalNeuralNetwork
   from smt.sampling_methods import LHS
   
   problem = HierarchicalNeuralNetwork()
