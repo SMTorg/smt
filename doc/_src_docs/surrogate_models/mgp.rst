@@ -34,10 +34,11 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
-  from smt.surrogate_models import MGP
+  import numpy as np
+  
   from smt.sampling_methods import LHS
+  from smt.surrogate_models import MGP
   
   # Construction of the DOE
   dim = 3
@@ -71,7 +72,7 @@ Usage
   emb = sm.embedding["C"]
   
   # Compute the smallest box containing all points of A
-  upper = np.sum(np.abs(emb), axis=0)
+  upper = np.sum(np.abs(emb), axis=0).item()
   lower = -upper
   
   # Test the model
@@ -128,7 +129,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2665081
+     Training - done. Time (sec):  0.5683582
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -186,7 +187,7 @@ Options
      -  1.9
      -  None
      -  ['float']
-     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]), This option is set automatically when corr option is squar, abs, or matern.
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
      -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
@@ -256,7 +257,7 @@ Options
      -  41
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws for internal optim (set by default to get reproductibility)
+     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

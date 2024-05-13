@@ -87,8 +87,8 @@ Example 1
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import KRG
   
@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1566455
+     Training - done. Time (sec):  0.1158748
   ___________________________________________________________________________
      
    Evaluation
@@ -150,9 +150,9 @@ Example 1
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0029492
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000295
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -161,9 +161,9 @@ Example 1
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005305
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001061
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_krg.png
@@ -175,11 +175,11 @@ Example 2 with mixed variables
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
-  from smt.surrogate_models import KRG
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.surrogate_models import KRG
   from smt.utils.design_space import DesignSpace, IntegerVariable
   
   xt = np.array([0.0, 2.0, 3.0])
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0096734
+     Predicting - done. Time (sec):  0.0206537
      
-     Prediction time/pt. (sec) :  0.0000193
+     Prediction time/pt. (sec) :  0.0000413
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -243,8 +243,9 @@ Example 3 with noisy data
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
+  
   from smt.surrogate_models import KRG
   
   # defining the toy example
@@ -261,7 +262,7 @@ Example 3 with noisy data
   yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
   
   # training the model with the option eval_noise= True
-  sm = KRG(eval_noise=True)
+  sm = KRG(eval_noise=True, hyper_opt="Cobyla")
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -303,7 +304,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3628881
+     Training - done. Time (sec):  0.3472505
   ___________________________________________________________________________
      
    Evaluation
@@ -311,9 +312,9 @@ Example 3 with noisy data
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0112629
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001126
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_noisy_krg.png

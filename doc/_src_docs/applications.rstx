@@ -16,6 +16,7 @@ Three methods are available:
    applications/mfkpls
    applications/mfkplsk
    applications/ego
+   applications/podi
 
 
 The intent is to provide applications of surrogate models in higher level methods.

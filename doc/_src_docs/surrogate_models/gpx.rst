@@ -37,8 +37,8 @@ Example
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import GPX
   
@@ -90,7 +90,7 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0085671
+     Training - done. Time (sec):  0.0020244
   ___________________________________________________________________________
      
    Evaluation

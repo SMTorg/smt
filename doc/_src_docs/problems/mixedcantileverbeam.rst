@@ -12,6 +12,7 @@ Usage
 .. code-block:: python
 
   import matplotlib.pyplot as plt
+  
   from smt.problems import MixedCantileverBeam
   
   problem = MixedCantileverBeam()
