@@ -11,7 +11,7 @@ We consider a problem in which the estimation of a measure :math:`u` is desired 
 The data containing the values of :math:`u` in a specific configuration of the problem is called a **snapshot**.
 With :math:`k \in [\![1,N]\!]`, the caracteristics of the :math:`k`-th configuration are represented by :math:`\mathbf{x}_k`.
 
-The :math:`N` snapshots are gathered in a database called the **snapshot matrix** :
+The :math:`N` snapshots are gathered in a database called the **snapshot matrix**:
 
 .. math ::
 	S=
@@ -27,7 +27,7 @@ Each column of the matrix corresponds to a snapshot, while each row corresponds 
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
 
-The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition :
+The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition:
 
 .. math ::
 	\begin{equation}\label{e:pod}
@@ -38,9 +38,9 @@ The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomp
 
 * each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-* the :math:`\phi_i` vectors are orthogonals and form the **POD basis**. The POD basis is **global** here because it doesn't depend of :math:`\mathbf{x}`.
+* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**. The POD basis is **global** here because it doesn't depend of :math:`\mathbf{x}`.
 
-We can also define the matricial POD equation :
+We can also define the matricial POD equation:
 
 .. math ::
 	\begin{equation}\label{e:matrixPOD}
@@ -65,42 +65,42 @@ where :math:`U_0` is composed of the :math:`u_0` vector on each column,
 
 Singular Values Decomposition (SVD)
 -------------------------------------
-To perform the POD, the SVD of the snapshot matrix :math:`S` is used :
+To perform the POD, the SVD of the snapshot matrix :math:`S` is used:
 
 .. math ::
 	\begin{equation}\label{e:svd}
 	S=U\Sigma{V}^{T}
 	\end{equation}
 
-The :math:`U` and :math:`{V}^{T}` matrices are orthogonals and contain the **singular vectors**.
+The :math:`(p \times p)` :math:`U` and :math:`(N \times N)` :math:`{V}^{T}` matrices are orthogonal and contain the **singular vectors**.
 These vectors are the directions of maximum variance in the data and are ranked by decreasing order of importance.
-Each vector corresponds to a mode of :math:`u`. The total number of available modes is limited by the number of snapshots :
+Each vector corresponds to a mode of :math:`u`. The total number of available modes is limited by the number of snapshots:
 
 .. math ::
 	\begin{equation}\label{e:M<=N}
 	M \le N
 	\end{equation}
 
-The importance of each mode is represented by the diagonal values of the :math:`\Sigma` matrix. They are known as the *singular values* :math:`\sigma_i` and are positive numbers ranked by decreasing value.
+The importance of each mode is represented by the diagonal values of the :math:`(p \times N)` :math:`\Sigma` matrix. They are known as the *singular values* :math:`\sigma_i` and are positive numbers ranked by decreasing value.
 It is then needed to filter the modes to keep those that represent most of the data structure.
 To do this, we use the **explained variance**. It represents the data variance that we keep when filtering the modes.
 
-If :math:`m` modes are kept, their explained variance :math:`EV_m` is :
+If :math:`m` modes are kept, their explained variance :math:`EV_m` is:
 
 .. math ::
 	\begin{equation}\label{e:ev_m}
 	EV_m=\frac{\sum_{i=1}^{m} \sigma_i}{\sum_{i=1}^{N} \sigma_i}
 	\end{equation}
 
-The number of kept modes is defined by a tolerance :math:`\eta \in ]0,1]` that represents the minimum variance we desire to explain during the SVD :
+The number of kept modes is defined by a tolerance :math:`\eta \in ]0,1]` that represents the minimum variance we desire to explain during the SVD:
 
 .. math ::
 	\begin{equation}\label{e:M_def}
-	M=min\{m \in [\![1,N]\!]: EV_m \ge \eta\}
+	M = \min\{m \in [\![1,N]\!]: EV_m \ge \eta\}
 	\end{equation}
 
 Then, the first :math:`M` singular vectors of the :math:`U` matrix correspond to the :math:`\phi_i` vectors in the POD.
-The :math:`\alpha_i` coefficients of the :math:`A` matrix can be deduced :
+The :math:`\alpha_i` coefficients of the :math:`A` matrix can be deduced:
 
 .. math ::
 	\begin{equation}\label{e:A}
@@ -112,7 +112,7 @@ Use of Surrogate models
 
 To compute :math:`u` at a new value :math:`\mathbf{x}_*`, the values of :math:`\alpha_i(\mathbf{x}_*)` at each mode :math:`i` are needed.
 
-To estimate them, **kriging based surrogate models** are used :
+To estimate them, **kriging based surrogate models** are used:
 
 
 .. math ::
@@ -126,14 +126,14 @@ To estimate them, **kriging based surrogate models** are used :
 		\alpha_M(\mathbf{x}) \longrightarrow \text{model M} \\
 	\end{cases}
 
-For each kept mode :math:`i`, we use a surrogate model that is trained with the inputs :math:`\mathbf{x}_k` and outputs :math:`\alpha_i(\mathbf{x})`.
+For each kept mode :math:`i`, we use a surrogate model that is trained with the inputs :math:`\mathbf{x}_k` and outputs :math:`\alpha_i(\mathbf{x}_k)`.
 
-These models are able to compute an estimation denoted :math:`\hat\alpha_i(\mathbf{x}_*)`. It is normally distributed :
+These models are able to compute an estimation denoted :math:`\hat\alpha_i(\mathbf{x}_*)`. It is normally distributed:
 
 .. math ::
 	\hat\alpha_i(\mathbf{x}_*) \hookrightarrow \mathcal{N}(\mu_i(\mathbf{x}_*),\sigma_i^{2}(\mathbf{x}_*))
 
-The mean and variance of :math:`u(\mathbf{x}_*)` can be deduced :
+The mean and variance of :math:`u(\mathbf{x}_*)` can be deduced:
 
 .. math ::
 	\begin{cases}
@@ -141,9 +141,9 @@ The mean and variance of :math:`u(\mathbf{x}_*)` can be deduced :
 		\mathbb{V}[u(\mathbf{x}_*)]=\sum_{i=1}^{M} \sigma_i^{2}(\mathbf{x}_*)\phi_i^{2}
 	\end{cases}
 
-NB : These equations take in consideration that :
+NB: These equations take in consideration that:
 
-- the POD basis is global : the :math:`\phi_i` are independents of :math:`\mathbf{x}`.
+- the POD basis is global: the :math:`\phi_i` are independent of :math:`\mathbf{x}`.
 
 - the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(\mathbf{x}_*)`.
 
