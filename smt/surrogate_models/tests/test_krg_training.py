@@ -226,6 +226,7 @@ class Test(SMTestCase):
 
     def test_likelihood_hessian(self):
         for corr_str in [
+            "squar_sin_exp",
             "pow_exp",
             "abs_exp",
             "squar_exp",
@@ -283,7 +284,7 @@ class Test(SMTestCase):
 
     def test_variance_derivatives(self):
         for corr_str in [
-            #  "squar_sin_exp", ### Yet to implement
+            "squar_sin_exp", ### Yet to implement
             "abs_exp",
             "squar_exp",
             "matern32",
