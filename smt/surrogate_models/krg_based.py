@@ -1664,9 +1664,12 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        dd = self._componentwise_distance(
-            dx, theta=self.optimal_theta, return_derivative=True
-        )
+        if self.options["corr"]=="squar_sin_exp":
+            dd=0
+        else :
+            dd = self._componentwise_distance(
+                dx, theta=self.optimal_theta, return_derivative=True
+            )
         derivative_dic = {"dx": dx, "dd": dd}
 
         sigma2 = self.optimal_par["sigma2"]

@@ -724,14 +724,14 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
                 )
                 i += 1
         else:
-            grad_ind2 = grad_ind - cut
+            hess_ind2 = grad_ind - cut
             while i * nb_limit <= d.shape[0]:
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    -theta_array[0][grad_ind2]
-                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                    -theta_array[0][hess_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                     * np.sin(
                         2
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                         * theta_array[0][grad_ind]
                     )
                     * r[i * nb_limit : (i + 1) * nb_limit, 0]
@@ -743,72 +743,91 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
         cut = int(len(theta) / 2)
         if grad_ind < cut and hess_ind < cut:
 
-            grad_ind2 = cut + grad_ind
+            hess_ind2 = cut + hess_ind
             while i * nb_limit <= d.shape[0]:
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
                     -(
                         np.sin(
-                            theta_array[0][grad_ind2]
-                            * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                            theta_array[0][hess_ind2]
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
                         )
                         ** 2
                     )
                     * r[i * nb_limit : (i + 1) * nb_limit, 0]
                 )
                 i += 1
-        elif grad_ind > cut and hess_ind > cut:
-            grad_ind2 = grad_ind - cut
+        elif grad_ind >= cut and hess_ind >= cut:
+            hess_ind2 = hess_ind - cut
             while i * nb_limit <= d.shape[0]:
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
                     -2
-                    * theta_array[0][grad_ind2]
-                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2] ** 2
+                    * theta_array[0][hess_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2] ** 2
                     * np.cos(
                         2
                         * theta_array[0][grad_ind]
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                     )
                     * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
-                    - theta_array[0][grad_ind2]
-                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                    - theta_array[0][hess_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                     * np.sin(
                         2
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
-                        * theta_array[0][grad_ind]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                        * theta_array[0][hess_ind]
                     )
                     * r[i * nb_limit : (i + 1) * nb_limit, 0]
                 )
                 i += 1
-        else:
-            if grad_ind < cut:
-                grad_ind_inter = grad_ind
-                grad_ind2 = grad_ind + cut
-            else:
-                grad_ind2 = grad_ind
-                grad_ind_inter = grad_ind - cut
-            while i * nb_limit <= d.shape[0]:
-                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    -d[i * nb_limit : (i + 1) * nb_limit, grad_ind_inter]
-                    * np.sin(
+        elif grad_ind<cut and hess_ind>=cut:
+                hess_ind2=hess_ind-cut
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] =(
+                    -d[i * nb_limit : (i + 1) * nb_limit,hess_ind2]*np.sin(
                         2
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind_inter]
-                        * theta_array[0][grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                        * theta_array[0][hess_ind]
                     )
                     * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
-                    + theta_array[0][grad_ind_inter]
-                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind_inter]
+                    + theta_array[0][hess_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                     * np.sin(
                         2
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind_inter]
-                        * theta_array[0][grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                        * theta_array[0][hess_ind]
                     )
-                    * np.sin(
-                        theta_array[0][grad_ind2]
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind_inter]
-                    )
-                    ** 2
-                    * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
-                )
+                    *
+        # else:
+        #     if hess_ind < cut:
+        #         hess_ind2 = hess_ind+cut
+        #         hess_ind_inter = hess_ind
+                
+        #     else:
+        #         hess_ind_inter = hess_ind - cut
+        #         hess_ind2 = hess_ind
+        #     while i * nb_limit <= d.shape[0]:
+        #         r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+        #             -d[i * nb_limit : (i + 1) * nb_limit, hess_ind_inter]
+        #             * np.sin(
+        #                 2
+        #                 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind_inter]
+        #                 * theta_array[0][hess_ind2]
+        #             )
+        #             * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
+        #             + theta_array[0][hess_ind_inter]
+        #             * d[i * nb_limit : (i + 1) * nb_limit, hess_ind_inter]
+        #             * np.sin(
+        #                 2
+        #                 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind_inter]
+        #                 * theta_array[0][hess_ind2]
+        #             )
+        #             * np.sin(
+        #                 theta_array[0][hess_ind2]
+        #                 * d[i * nb_limit : (i + 1) * nb_limit, hess_ind_inter]
+        #             )
+        #             ** 2
+        #             * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
+        #         )
                 i += 1
 
         # if hess_ind == grad_ind :
@@ -819,8 +838,9 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
     i = 0
 
     if derivative_params is not None:
-        dr = np.empty(dx.shape)
+        cut = int(len(theta) / 2)
         dx = derivative_params["dx"]
+        dr = np.empty(dx.shape)
         for j in range(dx.shape[0]):
             for k in range(dx.shape[1]):
                 dr[j, k] = (
