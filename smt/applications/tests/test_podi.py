@@ -302,6 +302,7 @@ class Test(SMTestCase):
         p = 100
         y = np.linspace(-1, 1, p)
         n_modes_test = 10
+
         def function_test_1d(x, y, n_modes_test, p):
             import numpy as np  # Note: only required by SMT doc testing toolchain
 
@@ -369,8 +370,8 @@ class Test(SMTestCase):
         values = podi.predict_values(x)
         variances = podi.predict_variances(x)
 
-        #Choosing a value from the test inputs
-        i = nt + nv//2
+        # Choosing a value from the validation inputs
+        i = nt + nv // 2
 
         diff = dbtrue[:, i] - values[:, i]
         rms_error = np.sqrt(np.mean(diff**2))
