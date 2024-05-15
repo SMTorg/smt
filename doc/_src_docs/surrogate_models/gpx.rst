@@ -90,7 +90,7 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0020244
+     Training - done. Time (sec):  0.1080489
   ___________________________________________________________________________
      
    Evaluation
@@ -98,9 +98,9 @@ Example
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0159764
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001598
      
   
 .. figure:: gpx_Test_test_gpx.png

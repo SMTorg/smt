@@ -9,7 +9,7 @@ Context
 
 We consider a problem in which the estimation of a vectorial output :math:`u\in\mathbb{R}^p` is desired.
 This vector depends of an input variable :math:`\mathbf{x}=(\mathbf{x_1},\dots,\mathbf{x_N})\in\mathbb{R}^N` representing the caracteristics of :math:`N` configurations of the problem.
-With :math:`k \in [\![1,N]\!]`, :math:`u(\mathbf{x_k})` corresponds to the values of the output at a specific configuration. It is called a **snapshot**.
+With :math:`k \in [\![1,N]\!]`, :math:`u(\mathbf{x_k})` corresponds to the output values of the output at a specific configuration. It is called a **snapshot**.
 
 The :math:`N` snapshots are gathered in a database called the **snapshot matrix**:
 
@@ -142,7 +142,7 @@ The mean and variance of :math:`u(\mathbf{x}_*)` can be deduced:
 		u'(\mathbf{x}_*)=\sum_{i=1}^{M} \alpha_i'(\mathbf{x}_*)\phi_i
 	\end{cases}
 
-NB: These equations take in consideration that:
+NB: The variance equation takes in consideration that:
 
 - the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(\mathbf{x}_*)`.
 

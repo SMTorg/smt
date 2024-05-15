@@ -156,15 +156,15 @@ Usage (RMTB)
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.549745600e+00 2.530000000e+00
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.246458141e-15 4.463939441e-16
-              Solving for output 0 - done. Time (sec):  0.0156238
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0156238
+              Solving for output 0 - done. Time (sec):  0.0156209
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0156209
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.530702323e-15 4.463939441e-16
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
-        Solving for degrees of freedom - done. Time (sec):  0.0156238
-     Training - done. Time (sec):  0.0156238
+        Solving for degrees of freedom - done. Time (sec):  0.0156209
+     Training - done. Time (sec):  0.0156209
   ___________________________________________________________________________
      
    Evaluation
@@ -236,12 +236,12 @@ Usage (RMTC)
            Computing dof2coeff ...
            Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0000000
+           Initializing Hessian - done. Time (sec):  0.0156207
            Computing energy terms ...
            Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
            Computing approximation terms - done. Time (sec):  0.0000000
-        Pre-computing matrices - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0156207
         Solving for degrees of freedom ...
            Solving initial startup problem (n=42) ...
               Solving for output 0 ...
@@ -255,7 +255,7 @@ Usage (RMTC)
               Solving for output 0 - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=42) - done. Time (sec):  0.0000000
         Solving for degrees of freedom - done. Time (sec):  0.0000000
-     Training - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0156207
   ___________________________________________________________________________
      
    Evaluation
