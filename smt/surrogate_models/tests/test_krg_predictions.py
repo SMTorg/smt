@@ -114,7 +114,6 @@ class Test(SMTestCase):
             ]
         )
         total_error = np.sum(pred_errors**2)
-
         np.testing.assert_allclose(total_error, 0, atol=5e-3)
 
         y_predicted = sm.predict_values(x_valid)
