@@ -96,7 +96,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.7235396
+     Training - done. Time (sec):  1.6223984
   ___________________________________________________________________________
      
    Evaluation
@@ -104,9 +104,9 @@ Usage
         # eval points. : 629
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0000615
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000001
      
   
 .. figure:: genn_Test_test_genn.png

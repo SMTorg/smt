@@ -299,21 +299,21 @@ class Test(SMTestCase):
 
         light_pink = np.array((250, 233, 232)) / 255
 
-        ny = 100
-        mesh = np.linspace(-1, 1, ny)
+        p = 100
+        y = np.linspace(-1, 1, p)
         n_modes_test = 10
 
-        def function_test_1d(x, mesh, n_modes_test, ny):
+        def function_test_1d(x, y, n_modes_test, p):
             import numpy as np  # Note: only required by SMT doc testing toolchain
 
             def cos_coef(i: int, x: np.ndarray):
                 a = 2 * i % 2 - 1
                 return a * x[:, 0] * np.cos(i * x[:, 0])
 
-            def Legendre(i: int, mesh: np.ndarray):
+            def Legendre(i: int, y: np.ndarray):
                 from scipy import special
 
-                return special.legendre(i)(mesh)
+                return special.legendre(i)(y)
 
             def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
                 """To perform the  Gram-Schmidt's algorithm."""
@@ -330,58 +330,62 @@ class Test(SMTestCase):
                     basis[i] /= np.linalg.norm(basis[i])
                 return basis
 
-            u0 = np.zeros((ny, 1))
+            u0 = np.zeros((p, 1))
 
             alpha = np.zeros((x.shape[0], n_modes_test))
             for i in range(n_modes_test):
                 alpha[:, i] = cos_coef(i, x)
 
-            V_init = np.zeros((ny, n_modes_test))
+            V_init = np.zeros((p, n_modes_test))
             for i in range(n_modes_test):
-                V_init[:, i] = Legendre(i, mesh)
+                V_init[:, i] = Legendre(i, y)
 
             V = gram_schmidt(V_init.T).T
             database = u0 + np.dot(V, alpha.T)
 
             return database
 
-        seed = 42
-        nt = 40
+        seed_sampling = 42
         xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=seed)
+        sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+
+        nt = 40
         xt = sampling(nt)
 
         nv = 400
         xv = sampling(nv)
 
         x = np.concatenate((xt, xv))
-        dbtrue = function_test_1d(x, mesh, n_modes_test, ny)
+        dbtrue = function_test_1d(x, y, n_modes_test, p)
 
         # Training data
         dbt = dbtrue[:, :nt]
 
         podi = PODI()
-        podi.compute_pod(dbt, tol=0.9999, seed=seed)
+        seed_pod = 42
+        podi.compute_pod(dbt, tol=0.9999, seed=seed_pod)
         podi.set_training_values(xt)
         podi.train()
 
         values = podi.predict_values(x)
         variances = podi.predict_variances(x)
 
+        # Choosing a value from the validation inputs
         i = nt + nv // 2
 
         diff = dbtrue[:, i] - values[:, i]
         rms_error = np.sqrt(np.mean(diff**2))
         plt.figure(figsize=(8, 5))
+        light_pink = np.array((250, 233, 232)) / 255
         plt.fill_between(
-            np.ravel(np.linspace(-1, 1, ny)),
+            np.ravel(y),
             np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
             np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
             color=light_pink,
             label="confiance interval (99%)",
         )
         plt.scatter(
-            mesh,
+            y,
             values[:, i],
             color="r",
             marker="x",
@@ -390,7 +394,7 @@ class Test(SMTestCase):
             label="prediction (mean)",
         )
         plt.scatter(
-            mesh,
+            y,
             dbtrue[:, i],
             color="b",
             marker="*",
