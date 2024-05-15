@@ -305,12 +305,12 @@ class Test(SMTestCase):
 
     def test_variance_derivatives(self):
         for corr_str in [
-            # "squar_sin_exp", ### Yet to implement
             "abs_exp",
             "squar_exp",
             "matern32",
             "matern52",
             "pow_exp",
+           # "squar_sin_exp",
         ]:
             kr = KRG(print_global=False)
             kr.options["poly"] = "constant"

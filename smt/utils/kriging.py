@@ -829,6 +829,7 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
         cut = int(len(theta) / 2)
         dx = derivative_params["dx"]
         dr = np.empty(dx.shape)
+        print("dx shape=",dx.shape,"theta shape=",theta_array.shape,"kernel shape = ",kernel.shape)
         for j in range(dx.shape[0]):
             for k in range(dx.shape[1]):
                 dr[j, k] = (
