@@ -1381,10 +1381,10 @@ def componentwise_distance(
             )
         if corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
-        # if corr == "squar_sin_exp":
-        #     raise ValueError(
-        #         "Spatial derivatives for ExpSinSquared not available yet (to implement)."
-        #     )
+        if corr == "squar_sin_exp":
+            raise ValueError(
+                "Spatial derivatives for ExpSinSquared not available yet (to implement)."
+            )
         der = _comp_dist_derivative(D, power)
         D_corr = power * np.einsum("j,ij->ij", theta.T, der)
         return D_corr
