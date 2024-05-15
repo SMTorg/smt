@@ -1,15 +1,15 @@
 Proper Orthogonal Decomposition + Interpolation (PODI)
 ======================================================
 
-PODI is an application used to predict vectorial measures.
+PODI is an application used to predict vectorial outputs.
 It combines Proper Orthogonal Decomposition (POD) and kriging based surrogate models to perform the estimations.
 
 Context
 -------
 
-We consider a problem in which the estimation of a measure :math:`u` is desired along a mesh of :math:`p` points.
-The data containing the values of :math:`u` in a specific configuration of the problem is called a **snapshot**.
-With :math:`k \in [\![1,N]\!]`, the caracteristics of the :math:`k`-th configuration are represented by :math:`\mathbf{x}_k`.
+We consider a problem in which the estimation of a vectorial output :math:`u\in\mathbb{R}^p` is desired.
+This vector depends of an input variable :math:`\mathbf{x}=(\mathbf{x_1},\dots,\mathbf{x_N})\in\mathbb{R}^N` representing the caracteristics of :math:`N` configurations of the problem.
+With :math:`k \in [\![1,N]\!]`, :math:`u(\mathbf{x_k})` corresponds to the values of the output at a specific configuration. It is called a **snapshot**.
 
 The :math:`N` snapshots are gathered in a database called the **snapshot matrix**:
 
@@ -22,12 +22,12 @@ The :math:`N` snapshots are gathered in a database called the **snapshot matrix*
 	\end{bmatrix}
 	\in \mathbb{R}^{p \times N}
 
-Each column of the matrix corresponds to a snapshot, while each row corresponds to a point of the problem's mesh.
+Each column of the matrix corresponds to a snapshot :math:`u(\mathbf{x_k})`.
 
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
 
-The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition:
+The vectorial output :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition:
 
 .. math ::
 	\begin{equation}\label{e:pod}
@@ -36,9 +36,9 @@ The measure :math:`u` is a vector of dimension :math:`p`. Its POD is this decomp
 
 * :math:`u` is decomposed as a sum of :math:`M` modes and :math:`u_0` corresponds to the mean value of :math:`u`.
 
-* each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
+* each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**. The POD basis is **global** here because it doesn't depend of :math:`\mathbf{x}`.
+* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**.
 
 We can also define the matricial POD equation:
 
@@ -81,9 +81,9 @@ Each vector corresponds to a mode of :math:`u`. The total number of available mo
 	M \le N
 	\end{equation}
 
-The importance of each mode is represented by the diagonal values of the :math:`(p \times N)` :math:`\Sigma` matrix. They are known as the *singular values* :math:`\sigma_i` and are positive numbers ranked by decreasing value.
+The importance of each mode is represented by the diagonal values of the :math:`(p \times N)` :math:`\Sigma` matrix. They are known as the **singular values** :math:`\sigma_i` and are positive numbers ranked by decreasing value.
 It is then needed to filter the modes to keep those that represent most of the data structure.
-To do this, we use the **explained variance**. It represents the data variance that we keep when filtering the modes.
+To do this, we use the **explained variance** (EV). It represents the data variance that we keep when filtering the modes.
 
 If :math:`m` modes are kept, their explained variance :math:`EV_m` is:
 
@@ -138,12 +138,11 @@ The mean and variance of :math:`u(\mathbf{x}_*)` can be deduced:
 .. math ::
 	\begin{cases}
 		\mathbb{E}[u(\mathbf{x}_*)]=u_0+\sum_{i=1}^{M} \mu_i(\mathbf{x}_*)\phi_i \\
-		\mathbb{V}[u(\mathbf{x}_*)]=\sum_{i=1}^{M} \sigma_i^{2}(\mathbf{x}_*)\phi_i^{2}
+		\mathbb{V}[u(\mathbf{x}_*)]=\sum_{i=1}^{M} \sigma_i^{2}(\mathbf{x}_*)\phi_i^{2} \\
+		u'(\mathbf{x}_*)=\sum_{i=1}^{M} \alpha_i'(\mathbf{x}_*)\phi_i
 	\end{cases}
 
 NB: These equations take in consideration that:
-
-- the POD basis is global: the :math:`\phi_i` are independent of :math:`\mathbf{x}`.
 
 - the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(\mathbf{x}_*)`.
 
