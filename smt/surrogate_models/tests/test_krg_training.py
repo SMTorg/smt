@@ -23,7 +23,7 @@ from smt.utils.kriging import (
     matern52,
     pow_exp,
     squar_exp,
-    squar_sin_exp,
+    squar_sin_exp
 )
 from smt.utils.misc import standardization
 from smt.utils.sm_test_case import SMTestCase
@@ -51,15 +51,7 @@ class Test(SMTestCase):
             "matern52",
             "squar_sin_exp",
         ]
-        corr_def = [
-            pow_exp,
-            abs_exp,
-            squar_exp,
-            act_exp,
-            matern32,
-            matern52,
-            squar_sin_exp,
-        ]
+        corr_def = [pow_exp, abs_exp, squar_exp, act_exp, matern32, matern52, squar_sin_exp]
         power_val = {
             "pow_exp": 1.9,
             "abs_exp": 1.0,
@@ -344,5 +336,5 @@ class Test(SMTestCase):
 
 if __name__ == "__main__":
     print_output = True
-   # unittest.main()
-    Test().test_likelihood_hessian()
+    unittest.main()
+    #Test().test_likelihood_hessian()
