@@ -712,8 +712,7 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
         if (
             hess_ind is not None and grad_ind >= cut and hess_ind < cut
         ):  # trick to use the symetry of the hessian when the hessian is asked
-            grad_ind = grad_ind - cut
-            hess_ind = hess_ind + cut
+            grad_ind, hess_ind = hess_ind, grad_ind
 
         if grad_ind < cut:
             grad_ind2 = cut + grad_ind
@@ -822,7 +821,7 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
                         )
                         * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
                     )
-            
+
                 i += 1
         i = 0
 
