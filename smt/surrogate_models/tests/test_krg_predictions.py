@@ -30,7 +30,7 @@ class Test(SMTestCase):
         self.yt = pb(self.xt)
 
     def test_predictions(self):
-        trends = ["constant", "linear"]
+        trends = ["constant","linear"]
         kernels = [
             "pow_exp",
             "squar_exp",
