@@ -133,7 +133,7 @@ These models are able to compute an estimation denoted :math:`\hat\alpha_i(\math
 .. math ::
 	\hat\alpha_i(\mathbf{x}_*) \hookrightarrow \mathcal{N}(\mu_i(\mathbf{x}_*),\sigma_i^{2}(\mathbf{x}_*))
 
-The mean, variance and derivative of :mat:`u(\mathbf{x}_*)` can be deduced:
+The mean, variance and derivative of :math:`u(\mathbf{x}_*)` can be deduced:
 
 .. math ::
 	\begin{cases}
