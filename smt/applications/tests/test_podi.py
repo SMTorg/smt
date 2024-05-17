@@ -11,7 +11,7 @@ from smt.sampling_methods import LHS
 from smt.applications import PODI
 
 
-def cos_coef(i: int, x: np.ndarray):
+def cos_coeff(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
     a = 2 * i % 2 - 1
@@ -68,7 +68,7 @@ class Test(SMTestCase):
 
             alpha = np.zeros((x.shape[0], self.n_modes_test))
             for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coef(i, x)
+                alpha[:, i] = cos_coeff(i, x)
 
             V_init = np.zeros((self.ny, self.n_modes_test))
             for i in range(self.n_modes_test):
@@ -211,18 +211,18 @@ class Test(SMTestCase):
         ]
         sm.set_interp_options("KRG", options_global)
 
-        sm_list = sm.get_interp_coef()
-        for interp_coef in sm_list:
+        sm_list = sm.get_interp_coeff()
+        for interp_coeff in sm_list:
             for key in options_global[0].keys():
-                self.assertEqual(interp_coef.options[key], options_global[0][key])
+                self.assertEqual(interp_coeff.options[key], options_global[0][key])
 
         options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
         sm.set_interp_options("KRG", options_local)
 
-        sm_list = sm.get_interp_coef()
-        for i, interp_coef in enumerate(sm_list):
+        sm_list = sm.get_interp_coeff()
+        for i, interp_coeff in enumerate(sm_list):
             for key in options_local[i].keys():
-                self.assertEqual(interp_coef.options[key], options_local[i][key])
+                self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
     def test_pod(self):
         """Tests the computing of the pod."""
@@ -299,21 +299,21 @@ class Test(SMTestCase):
 
         light_pink = np.array((250, 233, 232)) / 255
 
-        ny = 100
-        mesh = np.linspace(-1, 1, ny)
+        p = 100
+        y = np.linspace(-1, 1, p)
         n_modes_test = 10
 
-        def function_test_1d(x, mesh, n_modes_test, ny):
+        def function_test_1d(x, y, n_modes_test, p):
             import numpy as np  # Note: only required by SMT doc testing toolchain
 
-            def cos_coef(i: int, x: np.ndarray):
+            def cos_coeff(i: int, x: np.ndarray):
                 a = 2 * i % 2 - 1
                 return a * x[:, 0] * np.cos(i * x[:, 0])
 
-            def Legendre(i: int, mesh: np.ndarray):
+            def Legendre(i: int, y: np.ndarray):
                 from scipy import special
 
-                return special.legendre(i)(mesh)
+                return special.legendre(i)(y)
 
             def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
                 """To perform the  Gram-Schmidt's algorithm."""
@@ -330,58 +330,65 @@ class Test(SMTestCase):
                     basis[i] /= np.linalg.norm(basis[i])
                 return basis
 
-            u0 = np.zeros((ny, 1))
+            u0 = np.zeros((p, 1))
 
             alpha = np.zeros((x.shape[0], n_modes_test))
             for i in range(n_modes_test):
-                alpha[:, i] = cos_coef(i, x)
+                alpha[:, i] = cos_coeff(i, x)
 
-            V_init = np.zeros((ny, n_modes_test))
+            V_init = np.zeros((p, n_modes_test))
             for i in range(n_modes_test):
-                V_init[:, i] = Legendre(i, mesh)
+                V_init[:, i] = Legendre(i, y)
 
             V = gram_schmidt(V_init.T).T
             database = u0 + np.dot(V, alpha.T)
 
             return database
 
-        seed = 42
-        nt = 40
+        seed_sampling = 42
         xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=seed)
+        sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+
+        nt = 40
         xt = sampling(nt)
 
         nv = 400
         xv = sampling(nv)
 
         x = np.concatenate((xt, xv))
-        dbtrue = function_test_1d(x, mesh, n_modes_test, ny)
+        dbfull = function_test_1d(x, y, n_modes_test, p)
 
         # Training data
-        dbt = dbtrue[:, :nt]
+        dbt = dbfull[:, :nt]
+
+        # Validation data
+        dbv = dbfull[:, nt:]
 
         podi = PODI()
-        podi.compute_pod(dbt, tol=0.9999, seed=seed)
+        seed_pod = 42
+        podi.compute_pod(dbt, tol=0.9999, seed=seed_pod)
         podi.set_training_values(xt)
         podi.train()
 
-        values = podi.predict_values(x)
-        variances = podi.predict_variances(x)
+        values = podi.predict_values(xv)
+        variances = podi.predict_variances(xv)
 
-        i = nt + nv // 2
+        # Choosing a value from the validation inputs
+        i = nv // 2
 
-        diff = dbtrue[:, i] - values[:, i]
+        diff = dbv[:, i] - values[:, i]
         rms_error = np.sqrt(np.mean(diff**2))
         plt.figure(figsize=(8, 5))
+        light_pink = np.array((250, 233, 232)) / 255
         plt.fill_between(
-            np.ravel(np.linspace(-1, 1, ny)),
+            np.ravel(y),
             np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
             np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
             color=light_pink,
             label="confiance interval (99%)",
         )
         plt.scatter(
-            mesh,
+            y,
             values[:, i],
             color="r",
             marker="x",
@@ -390,8 +397,8 @@ class Test(SMTestCase):
             label="prediction (mean)",
         )
         plt.scatter(
-            mesh,
-            dbtrue[:, i],
+            y,
+            dbv[:, i],
             color="b",
             marker="*",
             s=5,
@@ -403,8 +410,8 @@ class Test(SMTestCase):
         ax = plt.gca()
         ax.axes.xaxis.set_visible(False)
 
-        plt.ylabel("u(x = " + str(x[i, 0])[:4] + ")")
-        plt.title("Estimation of u at x = " + str(x[i, 0])[:4])
+        plt.ylabel("u(x = " + str(xv[i, 0])[:4] + ")")
+        plt.title("Estimation of u at x = " + str(xv[i, 0])[:4])
         plt.legend()
         plt.show()
 

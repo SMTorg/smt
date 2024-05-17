@@ -32,6 +32,10 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_EGO_application.ipynb)
 
+## Proper Orthogonal Decomposition and Interpolation
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_PODI_tutorial.ipynb)
+
 ## Mixed-integer and mixed-hierarchical surrogate models
 
 ### Specific notebook associated to the SMT 2.0 Journal Paper (submitted) with a focus on mixed integer and mixed hierarchical surrogate models (continuous, discrete, categorical)
