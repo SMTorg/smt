@@ -1515,6 +1515,7 @@ class KrgBased(SurrogateModel):
 
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
+
         dd = self._componentwise_distance(
             dx, theta=self.optimal_theta, return_derivative=True
         )
