@@ -4,7 +4,7 @@ from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
-from .podi import PODI
+from .podi import PODI, MatrixInterpolation
 
 __all__ = [
     "VFM",
@@ -17,4 +17,5 @@ __all__ = [
     "EGO",
     "Evaluator",
     "PODI",
+    "MatrixInterpolation"
 ]
