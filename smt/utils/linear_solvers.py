@@ -264,24 +264,44 @@ class KrylovSolver(LinearSolver):
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
                     "atol": 0.0,
-                    "tol": self.options["atol"],
+                    "rtol": self.options["atol"],
                     "maxiter": self.options["ilimit"],
                 }
             elif self.options["solver"] == "bicgstab":
                 self.solver = scipy.sparse.linalg.bicgstab
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
-                    "tol": self.options["atol"],
+                    "rtol": self.options["rtol"],
                     "maxiter": self.options["ilimit"],
                 }
             elif self.options["solver"] == "gmres":
                 self.solver = scipy.sparse.linalg.gmres
                 self.callback_func = self.callback._print_res
                 self.solver_kwargs = {
-                    "tol": self.options["atol"],
+                    "rtol": self.options["rtol"],
                     "maxiter": self.options["ilimit"],
                     "restart": min(self.options["ilimit"], mtx.shape[0]),
                 }
+            self._patch_when_scipy_lessthan_v111()
+
+    def _patch_when_scipy_lessthan_v111(self):
+        """
+        From scipy 1.11.0 release notes
+        The tol argument of scipy.sparse.linalg.{bcg,bicstab,cg,cgs,gcrotmk,gmres,lgmres,minres,qmr,tfqmr}
+        is now deprecated in favour of rtol and will be removed in SciPy 1.14.
+        Furthermore, the default value of atol for these functions is due to change to 0.0 in SciPy 1.14.
+        """
+        import scipy
+
+        scipy_version = scipy.__version__
+        version_tuple = tuple(map(int, scipy_version.split(".")))
+        is_greater_than_1_11 = version_tuple[0] > 1 or (
+            version_tuple[0] == 1 and version_tuple[1] >= 11
+        )
+
+        if not is_greater_than_1_11:
+            self.solver_kwargs["tol"] = self.solver_kwargs["rtol"]
+            del self.solver_kwargs["rtol"]
 
     def _solve(self, rhs, sol=None, ind_y=0):
         with self._active(self.options["print_solve"]) as printer:
