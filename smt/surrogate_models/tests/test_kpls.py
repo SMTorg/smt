@@ -156,12 +156,11 @@ class TestKPLS(unittest.TestCase):
 
             # y_pred = model.predict_values(x_test)
             error = compute_rms_error(model, x_test, y_test)
-            print(model, error)
             rms.append(error)
         self.assertTrue((rms[0] <= rms[1]) and (rms[1] <= rms[2]))
         self.assertTrue((times[0] >= times[1]) and (times[1] >= times[2]))
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    TestKPLS().test_optim_kplsk()
+    unittest.main()
+ 
