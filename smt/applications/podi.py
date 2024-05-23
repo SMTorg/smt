@@ -813,7 +813,9 @@ class PODI(SurrogateBasedApplication):
         nn = xn.shape[0]
         pod = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices)
     
-        pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = input_matrices[:, :,0])
+        Y0_frechet, b = pod.compute_Frechet_mean(P0 = input_matrices[:,:,0])
+
+        pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
         Yi = pod.interp_POD_basis(xn)
         
         yi = np.squeeze(Yi, axis = 1)
@@ -844,7 +846,6 @@ class PODI(SurrogateBasedApplication):
             )
         elif pod_type == "local":
             self.n_modes = interpolated_basis.shape[1] #############  vérifier nombre de modes
-            print(self.n_modes)
             self.basis = interpolated_basis
         else:
             raise ValueError(
@@ -1000,7 +1001,6 @@ class PODI(SurrogateBasedApplication):
                 f"there must be the same amount of train values than data values, {self.nt} != {self.n_snapshot}."
             )
         for i in range(self.n_modes):
-            print(self.coeff.shape)
             self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
 
         self.training_values_set = True
