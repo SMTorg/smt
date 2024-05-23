@@ -120,7 +120,7 @@ class TestKPLS(unittest.TestCase):
         n_dim = 100
 
         # LHS training point generation
-        n_train = 30
+        n_train = 50
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_dim, axis=0),
             criterion="m",
@@ -141,9 +141,9 @@ class TestKPLS(unittest.TestCase):
         # Surrogate model definition
         n_pls = 2
         models = [
-            KRG(n_start=20, hyper_opt="Cobyla"),
-            KPLSK(n_comp=n_pls, n_start=20, hyper_opt="Cobyla"),
-            KPLS(n_comp=n_pls, n_start=20, hyper_opt="Cobyla"),
+            KRG(n_start=25, hyper_opt="Cobyla"),
+            KPLSK(n_comp=n_pls, n_start=25, hyper_opt="Cobyla"),
+            KPLS(n_comp=n_pls, n_start=25, hyper_opt="Cobyla"),
         ]
         rms = []
         times = []
