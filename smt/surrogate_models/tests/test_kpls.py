@@ -117,7 +117,7 @@ class TestKPLS(unittest.TestCase):
 
         lb = -5
         ub = 5
-        n_dim = 100
+        n_dim = 80
 
         # LHS training point generation
         n_train = 50
@@ -139,7 +139,7 @@ class TestKPLS(unittest.TestCase):
         y_test = y_test.reshape((n_test, -1))  # reshape to 2D array
 
         # Surrogate model definition
-        n_pls = 2
+        n_pls = 1
         models = [
             KRG(n_start=25, hyper_opt="Cobyla"),
             KPLSK(n_comp=n_pls, n_start=25, hyper_opt="Cobyla"),
