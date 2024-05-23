@@ -18,11 +18,10 @@ PODI_available_models = {
     "KPLSK": KPLSK,
 }
 
-
-class MatrixInterpolation:
+class MatrixInterpolation():
     """
     Class that computes a GP interpolation of POD bases.
-
+    
     Construction:\n
     Inputs:
     --------------------------------------------
@@ -33,7 +32,7 @@ class MatrixInterpolation:
         Database of the POD bases to interpolate.
         n_DoF = number of degree of freedom, n_modes = number of modes of the POD bases, n_DoE = DoE size
     """
-
+    
     def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None):
         self.mu_train = DoE_mu
         self.bases = DoE_bases
@@ -45,18 +44,18 @@ class MatrixInterpolation:
         if type(self.snapshots) != type(None):
             self.n_t = self.snapshots.shape[1]
         self.U_ref = U_ref
-
+    
     def exponential_mapping(self, Y0, Ti):
         """
         Function that computes the exponential mapping of the Grassmann manifold at point Y0.
-
+    
         Parameters
         ----------
         Y0 : np.ndarray[n_DoF, n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
         Ti : np.ndarray[n_DoF, n_modes]
             A vector in the tangent plane of Gr(n_DoF,n_modes) at Y0.
-
+    
         Returns
         -------
         Yi : np.ndarray [..,n_DoF,n_modes]
@@ -75,18 +74,18 @@ class MatrixInterpolation:
         vt = np.transpose(v, (0, 1, 3, 2))
         Yi = Y0 @ (vt @ coss) + u @ sins
         return Yi
-
+    
     def logarithmic_mapping(self, Y0, Yi):
         """
         Function that computes the logarithmic mapping of the Grassmann manifold at point Y0.
-
+    
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes)
         Yi: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes)
-
+    
         Returns
         -------
         Ti: np.ndarray[n_DoF,n_modes]
@@ -99,16 +98,16 @@ class MatrixInterpolation:
         arctans = np.eye(Y0.shape[1]) * np.arctan(s)
         Ti = np.dot(u, np.dot(arctans, v))
         return Ti
-
+    
     def log_DoE(self, Y0):
         """
         Function that computes the logarithmic mapping of the DoE at a given point Y0.
-
+    
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
-
+    
         Returns
         -------
         T_train: np.ndarray[n_DoF,n_modes,n_DoE]
@@ -118,13 +117,13 @@ class MatrixInterpolation:
         for i in range(self.n_DoE):
             T_train[:, :, i] = self.logarithmic_mapping(Y0, self.bases[:, :, i])
         return T_train
-
+    
     def compute_Frechet_mean(
         self, P0, itermax=20, epsilon=1e-6, alpha_0=1e-3, optimal_step=True
     ):
         """
         Function that computes the Frechet mean of the set DoE_bases.
-
+    
         Parameters
         ----------
         P0: np.ndarray[n_DoF,n_modes]
@@ -150,7 +149,7 @@ class MatrixInterpolation:
                 delta_P_temp = self.log_DoE(P_i_temp[0, 0])
                 delta_P_temp_norm = np.linalg.norm(delta_P_temp, axis=(0, 1)) ** 2
                 return delta_P_temp_norm.sum()
-
+    
         i = 0
         obj_fun = []
         while it < itermax and cv > epsilon:
@@ -163,7 +162,7 @@ class MatrixInterpolation:
                 step = res["x"]
             else:
                 step = alpha_0
-
+    
             delta_P = step * delta_P
             P_i = self.exponential_mapping(
                 P0[np.newaxis, np.newaxis, :, :], delta_P[np.newaxis, np.newaxis, :, :]
@@ -177,7 +176,7 @@ class MatrixInterpolation:
             it += 1
         P_star = P_i
         return P_star, obj_fun
-
+    
     def compute_tangent_plane_basis_and_DoE_coordinates(
         self, Y0, epsilon=1e-3, compute_GP=True
     ):
@@ -185,7 +184,7 @@ class MatrixInterpolation:
         Function that computes a basis of a subspace of the tangent plane at Y0
         It is done from a set of vector that belong to this tangent plane,
         and the coefficients of the tangent vectors in this basis.
-
+    
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
@@ -195,7 +194,7 @@ class MatrixInterpolation:
             $$\frac{\\sum_i=1^{n_B} s_i}{\\sum_i=1^{n_DoE} s_i}>1-epsilon
         compute_GP: bool (default=True)
             Computes the GP approximation of each coefficient
-
+    
         Returns
         -------
         Basis: np.ndarray[n_DoF*n_modes,n_B]
@@ -215,7 +214,7 @@ class MatrixInterpolation:
         self.Z_mean = Z.mean(axis=1)
         Z_centered = (Z.T - self.Z_mean).T
         # svd of the Z matrix:
-
+    
         u, s, v = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
         print(
@@ -230,27 +229,27 @@ class MatrixInterpolation:
                 "WARNING: the dimension of the tangent plane's subspace is equal to the DoE size."
             )
             print("Consider increasing the DoE.")
-
+    
         # truncature
         self.Basis = u[:, : self.n_B]
-
+    
         # projection to get the coefficients in this basis
         self.alpha = np.dot(self.Basis.T, Z_centered)
-        # if compute_GP:
-        #    GP = self.compute_GP(self.alpha)
+        if compute_GP:
+            GP = self.compute_GP(self.alpha)
         return self.Basis, self.alpha, self.Z_mean
-
+    
     def compute_GP(self, alpha, kernel="matern52"):
         """
         Function that computes the GP interpolation functions of each alpha coefficients.
-
+    
         Parameters
         ----------
         alpha: np.ndarray[n_B,n_modes]
             Set of generalized coefficients expressing the tangent vectors in a subspace of the tangent plane.
         kernel: str
             Choice of the kernel of the GPs see SMT documentation.
-
+    
         Returns
         -------
         GPs: list
@@ -268,18 +267,18 @@ class MatrixInterpolation:
             gp.train()
             self.GP.append(gp)
         return self.GP
-
+    
     def pred_coeff(self, mu, compute_var=False):
         """
         Function that interpolates the coefficients of the tangent vector at n_new parametric points mu.
-
+    
         Parameters
         ----------
         mu: np.ndarray[n_new,n_mu]
             Parametric points where the interpolation should be provided.
         compute_var: bool (default=False)
             Computes the variance of the interpolation.
-
+    
         Returns
         -------
         coeff: np.ndarray[n_B,n_new]
@@ -298,13 +297,13 @@ class MatrixInterpolation:
             for i in range(self.n_B):
                 var[i] = self.GP[i].predict_variances(mu)[:, 0]
             return coeff, var
-
+    
     def interp_POD_basis(
         self, mu, compute_realizations=False, n_real=1, fixed_xi=False, xi=None
     ):
         """
         Function that computes the interpolation of the POD basis at n_new parametric points mu.
-
+    
         Parameters
         ----------
         mu: np.ndarray[n_new,n_mu]
@@ -313,7 +312,7 @@ class MatrixInterpolation:
             Compute n_real random realizations of the interpolation.
         n_real: float
             Number of random realizations.
-
+    
         Returns
         -------
         Basis: np.ndarray[n_mu,n_real,n_DoF,n_modes]
@@ -335,7 +334,7 @@ class MatrixInterpolation:
             Ti[ind] = 0.0
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
-
+    
             return Yi
         elif compute_realizations:
             if n_new != 1:
@@ -366,20 +365,20 @@ class MatrixInterpolation:
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
             return Yi[:, -1, :, :], Yi[:, :-1, :, :]
-
+    
     def GP_GC(self, Yi, separate_variables=True, DoE=None):
         """
         Function that computes the GP interpolation of the generalized coordinates (GC) on a given basis.
-
+    
         Parameters
         ----------
         Yi: np.ndarray[n_DOF,n_modes]
-
+    
         separate_variables: bool (default=True)
             Either to interpolate the GC by a separation of variables approach or not.
         DoE: np.ndarray
             If separate_variables is set to False, DoE to use to learn the GP of the GC.
-
+    
         Returns
         -------
         GP_GC: list
@@ -420,9 +419,9 @@ class MatrixInterpolation:
                     gp.train()
                     gp_coeff.append(gp)
                 self.GP_coeff.append(gp_coeff)
-
+    
             return self.GP_coeff, self.Bases_coeff, self.Mean_coeff
-
+    
         elif not (separate_variables):
             self.GP_coeff = []
             for i in range(self.n_modes):
@@ -437,23 +436,23 @@ class MatrixInterpolation:
                 gp_coeff.append(gp)
                 self.GP_coeff.append(gp_coeff)
             return self.GP_coeff
-
+    
     def approx_NI_cst_basis(self, Yi, mu, realizations=False, n_real=None):
         """
         Computes the approximation of the response by non intrusive approach.
         Uncertainty quantification can be performed with respect to the GC interpolation.
-
+    
         Parameters
         ----------
         Yi: np.ndarray[n_DOF,n_modes]
-
+    
         mu: np.ndarray[1,n_mu]
             Parametric points where the interpolation should be provided.
         realizations: bool (default=False)
             Computes n_real random realizations of the interpolation.
         n_real: int
             If realizations is set to True, number of samples to draw.
-
+    
         Returns
         -------
         Approx: np.ndarray
@@ -479,7 +478,7 @@ class MatrixInterpolation:
                     coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
                         self.Bases_coeff[i], gamma_hat_real
                     )
-
+    
                 U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
                 U_approx_MC.append(U_approx_hat)
             U_approx_MC = np.array(U_approx_MC)
@@ -489,7 +488,7 @@ class MatrixInterpolation:
             for i in range(self.n_modes):
                 for j in range(self.n_DoE):
                     gamma_hat[i, j] = self.GP_coeff[i][j].predict_values(mu)[0]
-
+    
             coeff_hat = np.zeros((self.n_modes, self.n_t))
             for i in range(self.n_modes):
                 gamma_hat_real = np.zeros((self.n_DoE,))
@@ -498,11 +497,11 @@ class MatrixInterpolation:
                 coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
                     self.Bases_coeff[i], gamma_hat_real
                 )
-
+    
             U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
-
+    
             return U_approx_hat
-
+    
     def approx_NI(
         self,
         mu,
@@ -516,7 +515,7 @@ class MatrixInterpolation:
         """
         Computes a GP interpolation of both the basis and the GC.
         Interpolation uncertainty for both the basis and te GC can be evaluated by Monte Carlo sampling.
-
+    
         Parameters
         ----------
         mu: np.ndarray[1,n_mu]
@@ -529,9 +528,9 @@ class MatrixInterpolation:
             If UQ_basis is set to True, size of the Monte Carlo sample for the basis.
         n_real_GC: int
             If UQ_GC is set to True, size of the Monte Carlo sample for the GC.
-
+    
         WARNING : if UQ_basis set to True and UQ_GC set to True, the MC sample size is n_real_basis*n_real_GC.
-
+    
         Returns
         -------
         """
@@ -592,11 +591,11 @@ class MatrixInterpolation:
                 Yi[0, 0], mu, realizations=True, n_real=n_real_GC
             )
             return approx, approx_MC
-
+    
     def interp_POD_basis_RBF(self, mu, Y0, epsilon=1.0):
         """
         Function that computes the interpolation of the POD basis at a new parametric point mu by RBF.
-
+    
         Parameters
         ----------
         mu: np.ndarray[1,n_mu]
@@ -605,7 +604,7 @@ class MatrixInterpolation:
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
         epsilon : float
             Correlation lenght of the gaussian kernel.
-
+    
         Returns
         -------
         Basis: np.ndarray[n_DoF,n_modes]
@@ -623,18 +622,18 @@ class MatrixInterpolation:
         T_train = self.log_DoE(Y0)
         # interpolation
         T_new = np.sum(T_train * w, axis=2)
-
+    
         # exponential mapping
         Yi = self.exponential_mapping(Y0, T_new[np.newaxis, np.newaxis, :, :])
         return Yi[0, 0]
-
+    
     def _gaussian_kernel(self, r, epsilon=1.0):
         return np.exp(-((r / epsilon) ** 2))
-
+    
     def interp_POD_basis_IDW(self, mu, P0, p=2, epsilon=1e-3, itermax=100):
         """
         Function that computes the interpolation of the POD basis at a new parametric point mu by IDW.
-
+    
         Parameters
         -----------
         mu: np.ndarray[1,n_mu]
@@ -643,7 +642,7 @@ class MatrixInterpolation:
             Initial guess.
         p: float
             The inverse distance is defined as a function of d(mu,mu_i)**p
-
+    
         Returns
         -------
         Y_i: np.ndarray[n_DoF,n_modes]
@@ -673,9 +672,8 @@ class MatrixInterpolation:
             Yi = self.exponential_mapping(P0, T_new[np.newaxis, np.newaxis, :, :])[0, 0]
             P0 = Yi
             n_iter += 1
-
+    
         return Yi, l_res, n_iter
-
 
 class PODI(SurrogateBasedApplication):
     """
@@ -813,19 +811,17 @@ class PODI(SurrogateBasedApplication):
     @staticmethod
     def interp_matrices(xt, input_matrices, xn):
         nn = xn.shape[0]
-        pod = MatrixInterpolation(DoE_mu=xt, Doe_bases=input_matrices)
+        pod = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices)
+    
+        pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = input_matrices[:, :,0])
+        Yi = pod.interp_POD_basis(xn)
+        
+        yi = np.squeeze(Yi, axis = 1)
+        interpolated_bases = []
+        for i in range(50):
+            interpolated_bases.append(yi[i,:,:])
 
-        Y0 = input_matrices[0]
-
-        pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0=Y0)
-        yi = pod.interp_POD_basis(xn)
-
-        Yi = np.squeeze(yi, axis=1)
-        output_matrices = []
-        for i in range(nn):
-            output_matrices.append(Yi[i, :, :])
-
-        return output_matrices
+        return interpolated_bases
 
     def compute_pod(
         self,
@@ -847,7 +843,8 @@ class PODI(SurrogateBasedApplication):
                 database=database, tol=tol, n_modes=n_modes, seed=seed
             )
         elif pod_type == "local":
-            self.n_modes = interpolated_basis.shape[1]
+            self.n_modes = interpolated_basis.shape[1] #############  vérifier nombre de modes
+            print(self.n_modes)
             self.basis = interpolated_basis
         else:
             raise ValueError(
@@ -1003,6 +1000,7 @@ class PODI(SurrogateBasedApplication):
                 f"there must be the same amount of train values than data values, {self.nt} != {self.n_snapshot}."
             )
         for i in range(self.n_modes):
+            print(self.coeff.shape)
             self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
 
         self.training_values_set = True
@@ -1022,6 +1020,7 @@ class PODI(SurrogateBasedApplication):
             )
 
         for interp_coeff in self.interp_coeff:
+            print("trained")
             interp_coeff.train()
 
         self.train_done = True
