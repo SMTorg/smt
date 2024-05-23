@@ -264,7 +264,7 @@ class KrylovSolver(LinearSolver):
                 self.callback_func = self.callback._print_sol
                 self.solver_kwargs = {
                     "atol": 0.0,
-                    "rtol": self.options["atol"],
+                    "rtol": self.options["rtol"],
                     "maxiter": self.options["ilimit"],
                 }
             elif self.options["solver"] == "bicgstab":
