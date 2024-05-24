@@ -339,7 +339,7 @@ class MatrixInterpolation():
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
     
-            return self.Basis, Yi
+            return Yi
         elif compute_realizations:
             if n_new != 1:
                 print(
@@ -816,13 +816,12 @@ class PODI(SurrogateBasedApplication):
     @staticmethod
     def interp_matrices(xt, input_matrices, xn):
         nn = xn.shape[0]
-        pod = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices)
+        interp = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices)
     
-        Y0_frechet, b = pod.compute_Frechet_mean(P0 = input_matrices[:,:,0])
+        Y0_frechet, b = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
 
-        pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
-        full_basis, Yi = pod.interp_POD_basis(xn)
-        PODI.compute_projection_error(basis = full_basis, print_values = True)
+        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
+        Yi = interp.interp_POD_basis(xn)
         
         yi = np.squeeze(Yi, axis = 1)
         interpolated_bases = []
@@ -853,6 +852,7 @@ class PODI(SurrogateBasedApplication):
         elif pod_type == "local":
             self.n_modes = interpolated_basis.shape[1] #############  vérifier nombre de modes
             self.basis = interpolated_basis
+            PODI.compute_projection_error(basis = interpolated_basis, print_values = True)
         else:
             raise ValueError(
                 f"the pod type should be 'global' or 'local', not {pod_type}."
@@ -878,8 +878,8 @@ class PODI(SurrogateBasedApplication):
                 rms_proj_list.append(rms_proj)
                 if rms_proj > 1e-3:
                     warnings.warn("A projection of a vector from the POD basis is incorrect.")
-            #if print_values:
-            #    print(rms_proj_list)
+            if print_values:
+                print(rms_proj_list)
             
 
 
