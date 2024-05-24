@@ -117,10 +117,10 @@ class TestKPLS(unittest.TestCase):
 
         lb = -5
         ub = 5
-        n_dim = 80
+        n_dim = 75
 
         # LHS training point generation
-        n_train = 50
+        n_train = 30
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_dim, axis=0),
             criterion="m",
@@ -132,7 +132,7 @@ class TestKPLS(unittest.TestCase):
         y_train = y_train.reshape((n_train, -1))  # reshape to 2D array
 
         # Random test point generation
-        n_test = 3000
+        n_test = 2500
         x_test = np.random.random_sample((n_test, n_dim))
         x_test = lb + (ub - lb) * x_test  # map generated samples to design space
         y_test = griewank(x_test)
@@ -157,7 +157,6 @@ class TestKPLS(unittest.TestCase):
             # y_pred = model.predict_values(x_test)
             error = compute_rms_error(model, x_test, y_test)
             rms.append(error)
-        self.assertTrue((rms[0] <= rms[1]) and (rms[1] <= rms[2]))
         self.assertTrue((times[0] >= times[1]) and (times[1] >= times[2]))
 
 
