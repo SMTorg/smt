@@ -18,7 +18,7 @@ private:
   void find_interval(int ix, int num, double x, int * index, double * xbar);
   int * nelem_list;
   int * nterm_list;
-  int nelem, nterm;
+  long nelem, nterm;
 };
 
 #endif
