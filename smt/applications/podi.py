@@ -2,11 +2,15 @@
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
+import warnings
+
 import scipy.optimize as opt
 from sklearn.utils.extmath import randomized_svd
 
 from sklearn.decomposition import PCA
 import numpy as np
+
+from sklearn.model_selection import train_test_split
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models import KRG, KPLS, KPLSK
@@ -335,7 +339,7 @@ class MatrixInterpolation():
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
     
-            return Yi
+            return self.Basis, Yi
         elif compute_realizations:
             if n_new != 1:
                 print(
@@ -795,6 +799,7 @@ class PODI(SurrogateBasedApplication):
         svd.fit(database.T)
         self.singular_vectors = svd.components_.T
         self.singular_values = svd.singular_values_
+        PODI.compute_projection_error(basis = self.singular_vectors, print_values = True)
         EV_list = svd.explained_variance_
 
         if choice_svd == "tol":
@@ -816,11 +821,12 @@ class PODI(SurrogateBasedApplication):
         Y0_frechet, b = pod.compute_Frechet_mean(P0 = input_matrices[:,:,0])
 
         pod.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
-        Yi = pod.interp_POD_basis(xn)
+        full_basis, Yi = pod.interp_POD_basis(xn)
+        PODI.compute_projection_error(basis = full_basis, print_values = True)
         
         yi = np.squeeze(Yi, axis = 1)
         interpolated_bases = []
-        for i in range(50):
+        for i in range(nn):
             interpolated_bases.append(yi[i,:,:])
 
         return interpolated_bases
@@ -851,12 +857,31 @@ class PODI(SurrogateBasedApplication):
             raise ValueError(
                 f"the pod type should be 'global' or 'local', not {pod_type}."
             )
+        #PODI.compute_projection_error(basis = self.basis, print_values = True)
+
         self.coeff = np.dot(database.T - self.mean.T, self.basis)
         self.pod_type = pod_type
 
         self.pod_computed = True
         self.interp_options_set = False
         self.training_values_set = False
+    
+    @staticmethod
+    def compute_projection_error(basis, test_ratio = 0.1, seed = 42, print_values = False):
+        #print(basis.shape)
+        if basis.shape[1] > 1:
+            basis_train, basis_test = train_test_split(basis.T, test_size = test_ratio, random_state = seed)
+            rms_proj_list = []
+            for vector in basis_test:
+                proj = np.dot(vector, basis_train.T)
+                rms_proj = np.sqrt(np.mean(proj**2))
+                rms_proj_list.append(rms_proj)
+                if rms_proj > 1e-3:
+                    warnings.warn("A projection of a vector from the POD basis is incorrect.")
+            #if print_values:
+            #    print(rms_proj_list)
+            
+
 
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -1020,7 +1045,6 @@ class PODI(SurrogateBasedApplication):
             )
 
         for interp_coeff in self.interp_coeff:
-            print("trained")
             interp_coeff.train()
 
         self.train_done = True

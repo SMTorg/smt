@@ -4,6 +4,7 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 
 import unittest
 from smt.utils.sm_test_case import SMTestCase
+from sklearn.decomposition import PCA
 
 import numpy as np
 from scipy import special
@@ -17,6 +18,10 @@ def cos_coeff(i: int, x: np.ndarray):
     a = 2 * i % 2 - 1
     return a * x[:, 0] * np.cos(i * x[:, 0])
 
+def cos_coeff_nd(i: int, x: np.ndarray):
+    """Generates the i-th coefficient for the multi dimensions problem."""
+    a = 2 * i % 2 - 1
+    return a * sum(x.T) * np.cos(i * sum(x.T))
 
 def Legendre(i: int, t: np.ndarray):
     """Generates the i-th Legendre's polynom and returns its values at input values."""
@@ -29,27 +34,7 @@ class Test(SMTestCase):
 
     def setUp(self):
         """Sets up the test case for the tests."""
-
-        self.seed = 42
-        self.nt = 40
-        xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=self.seed)
-        self.xt = sampling(self.nt)
-
-        self.ny = 100
-        self.t = np.linspace(-1, 1, self.ny)
-
-        self.n_modes_test = 10
-
-        self.nn = 15
-        self.xn = sampling(self.nn)
-
-        self.nv = 10 * self.nt
-        self.xv = sampling(self.nv)
-
-        self.x = np.concatenate((self.xt, self.xv))
-
-        def pb_1d(x: np.ndarray) -> np.ndarray:
+        def pb_1d() -> np.ndarray:
             """
             Constructs the one-dimension problem
 
@@ -63,12 +48,27 @@ class Test(SMTestCase):
             database : np.ndarray
                 Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
             """
-
+            self.seed = 42
+            
+            self.ny = 100
+            self.t = np.linspace(-1, 1, self.ny)
+            self.n_modes_test = 10
+            
+            xlimits = np.array([[0, 4]])
+            sampling = LHS(xlimits=xlimits, random_state=self.seed)
+            self.nt = 40
+            self.xt = sampling(self.nt)
+            self.nn = 15
+            self.xn = sampling(self.nn)
+            self.nv = 10 * self.nt
+            self.xv = sampling(self.nv)
+            self.x = np.concatenate((self.xt, self.xv))
+            
             u0 = np.zeros((self.ny, 1))
 
-            alpha = np.zeros((x.shape[0], self.n_modes_test))
+            alpha = np.zeros((self.x.shape[0], self.n_modes_test))
             for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coeff(i, x)
+                alpha[:, i] = cos_coeff(i, self.x)
 
             V_init = np.zeros((self.ny, self.n_modes_test))
             for i in range(self.n_modes_test):
@@ -78,10 +78,91 @@ class Test(SMTestCase):
             database = u0 + np.dot(V, alpha.T)
             self.basis_original = V
 
-            return database
+            return database, database[:, :self.nt]
+        
+        def pb_nd_local() -> np.ndarray:
+            """
+            Constructs the one-dimension problem
 
-        self.full_database = pb_1d(self.x)
-        self.database = self.full_database[:, : self.nt]
+            Parameters
+            ----------
+            x : np.ndarray
+                Array containing the snapshot values : each row corresponds to a specific snapshot.
+
+            Returns
+            -------
+            database : np.ndarray
+                Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
+            """
+            self.seed = 42
+            
+            self.ny = 100
+            self.t = np.linspace(-1, 1, self.ny)
+            self.n_modes_test = 10
+            
+            xlimits = [[0, 1], [0, 1]]
+            sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
+            sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed+1)
+            
+
+            self.nt1 = 10
+            self.nt2 = 10
+            self.nt = self.nt1*self.nt2
+            self.xt1 = sampling_x1(self.nt1)
+            self.xt2 = sampling_x2(self.nt)
+            self.xt = np.zeros((self.nt,2))
+            self.xt[:,1] = self.xt2[:,0]
+            for i, elt in enumerate(self.xt1):
+                self.xt[i*self.nt2 : (i+1)*self.nt2, 0] = elt
+            
+            sampling_new = LHS(xlimits = np.array(xlimits), random_state = self.seed)
+
+            self.nn = 15
+            self.xn = sampling_new(self.nn)
+            self.nv = 10 * self.nt
+            self.xv = sampling_new(self.nv)
+            self.x = np.concatenate((self.xt, self.xv))
+            
+            u0 = np.zeros((self.ny, 1))
+
+            alpha = np.zeros((self.x.shape[0], self.n_modes_test))
+            for i in range(self.n_modes_test):
+                alpha[:, i] = cos_coeff_nd(i, self.x)
+
+            V_init = np.zeros((self.ny, self.n_modes_test))
+            for i in range(self.n_modes_test):
+                V_init[:, i] = Legendre(i, self.t)
+
+            V = Test.gram_schmidt(V_init.T).T
+            database = u0 + np.dot(V, alpha.T)
+            self.basis_original = V
+
+            db_loc_list = []
+            pod_loc_list = []
+            n_modes_max = 0
+            for i in range(self.nt1):
+                db_loc = database[:, i*self.nt2 : (i+1)*self.nt2]
+                db_loc_list.append(db_loc)
+                svd = PCA(svd_solver="randomized", random_state=i)
+                svd.fit(db_loc.T)
+                ev_list = svd.explained_variance_ratio_
+                singular_vectors = svd.components_.T
+                
+                n_modes = PODI.choice_n_modes_tol(ev_list, tol = 0.9999)
+                n_modes_max = max(n_modes_max, n_modes)
+                local_basis = singular_vectors[:, :]
+                pod_loc_list.append(local_basis)
+
+            for i in range(self.nt1):
+                pod_loc_list[i] = pod_loc_list[i][:, :n_modes_max]
+            
+            DoE_bases = np.zeros((self.ny, n_modes_max, self.nt1))
+            for i, basis in enumerate(pod_loc_list):
+                DoE_bases[:,:,i] = basis
+
+            return database, database[:, :self.nt]
+
+        self.full_database, self.database = pb_nd_local()
 
     @staticmethod
     def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
@@ -150,10 +231,10 @@ class Test(SMTestCase):
         error_msg = "It should not be possible to make a prediction with incorrect dimension input."
         for predict_method in [sm.predict_values, sm.predict_variances]:
             with self.assertRaises(ValueError, msg=error_msg):
-                predict_method(np.array([[1, 1]]))
+                predict_method(np.ones((1, self.xn.shape[1] + 1)))
 
         with self.assertRaises(ValueError, msg=error_msg):
-            sm.predict_derivatives(np.array([[1, 1]]), 0)
+            sm.predict_derivatives(np.ones((1, self.xn.shape[1] + 1)), 0)
 
         error_msg = "It should not be possible to predict a derivative out of the input's dimensions."
         with self.assertRaises(ValueError, msg=error_msg):
@@ -289,6 +370,9 @@ class Test(SMTestCase):
         )
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
+    
+    def test_local(self):
+        return None
 
     @staticmethod
     def run_podi_example_1d():
