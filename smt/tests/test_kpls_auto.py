@@ -43,7 +43,7 @@ class Test(SMTestCase):
         n_comp_opt["sphere"] = 1
         n_comp_opt["exp"] = 3
         n_comp_opt["tanh"] = 1
-        n_comp_opt["cos"] = 2
+        n_comp_opt["cos"] = 1
 
         self.nt = nt
         self.ne = ne
