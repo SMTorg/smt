@@ -86,10 +86,12 @@ The number of elements in each dimension is an option that trades off efficiency
 In general, RMTB is the better choice when training time is the most important,
 while RMTC is the better choice when accuracy of the interpolant is the most important.
 
-More details of these methods are given in [1]_. Specially with regard to the implementation, 
-``energy_weight`` and ``regularization_weight`` options below are respectively defined 
-as $\alpha'$ and $\beta'$ in the section _3.5 - Summary and implementation_.
+More details of these methods are given in [1]_. 
 
+Specially with regard to the implementation, the above functions to minimize are multiplied by :math:`\alpha` 
+which does not change the minimum result.
+Then the ``energy_weight`` and ``regularization_weight`` controlling options used below are respectively defined 
+as :math:`\alpha'=\alpha` and :math:`\beta'=\alpha\beta`. See the section `3.5 - Summary and implementation` in [1]_ for further details.
 
 .. [1] Hwang, J. T., & Martins, J. R. (2018). A fast-prediction surrogate model for large datasets. Aerospace Science and Technology, 75, 74-87.
 
