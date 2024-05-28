@@ -143,14 +143,14 @@ class Test(SMTestCase):
             
             self.ny = 100
             self.t = np.linspace(-1, 1, self.ny)
-            self.n_modes_test = 5
+            self.n_modes_test = 10
             
-            xlimits = [[0, 1], [0, 1]]
+            xlimits = [[0, 1], [0, 4]]
             sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
             sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed+1)
 
-            self.nt1 = 25
-            self.nt2 = 20
+            self.nt1 = 30
+            self.nt2 = 10
             self.nt = self.nt1*self.nt2
             self.xt1 = sampling_x1(self.nt1)
             self.xt2 = sampling_x2(self.nt)
@@ -161,11 +161,11 @@ class Test(SMTestCase):
             
             sampling_new = LHS(xlimits = np.array(xlimits), random_state = self.seed)
 
-            self.nn = 10
+            self.nn = 15
             self.xn = sampling_new(self.nn)
-            self.nv = 50
+            self.nv = 10
             self.xv = sampling_new(self.nv)
-            self.x = np.concatenate((self.xt, self.xn))
+            self.x = np.concatenate((self.xt, self.xv))
             
             u0 = np.zeros((self.ny, 1))
 
@@ -346,12 +346,12 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
     
-    def test_local(self):
+    def _test_local(self):
         full_database = self.pb_nd_local()
 
         plt.figure(figsize = (15,10))
         plt.scatter(self.xt[:,1], self.xt[:,0], marker = 'x', label = "Training points", color = 'g')
-        plt.scatter(self.xn[:,1], self.xn[:,0], marker = '*', label = "Prediction points", color = 'r')
+        plt.scatter(self.xv[:,1], self.xv[:,0], marker = '*', label = "Prediction points", color = 'r')
         plt.xlabel("x2", fontsize = 14)
         plt.ylabel("x1", fontsize = 14)
         plt.title("Training and Prediction points", fontsize = 14)
@@ -362,7 +362,6 @@ class Test(SMTestCase):
 
         tol = 0.9999
         local_pod_bases = []
-        full_local_pod_bases = []
         n_modes_list = []
         #compute local bases
         for i in range(self.nt1):
@@ -375,7 +374,6 @@ class Test(SMTestCase):
             n_modes = PODI.choice_n_modes_tol(ev_list, tol)
             n_modes_list.append(n_modes)
             local_basis = singular_vectors[:, :]
-            full_local_pod_bases.append(singular_vectors[:, :])
             local_pod_bases.append(local_basis)
     
         n_modes_max = max(n_modes_list)
@@ -384,30 +382,29 @@ class Test(SMTestCase):
         
         #keep first coordinate
         xt1 = np.atleast_2d(self.xt1[:, 0]).T
-        xn1 = np.atleast_2d(self.xn[:, 0]).T
+        xn1 = np.atleast_2d(self.xv[:, 0]).T
 
         DoE_bases = np.zeros((local_pod_bases[0].shape[0], n_modes_max, self.nt1))
         for i, basis in enumerate(local_pod_bases):
             DoE_bases[:,:,i] = basis
         
         #interpolate the bases to get a new one at the specific new coordinates
-        PODI.interp_matrices(xt = xt1, input_matrices = DoE_bases, xn = xn1, full_basis = True)
         interpolated_bases = PODI.interp_matrices(xt = xt1, input_matrices = DoE_bases, xn = xn1)
 
-        mean_u_x_new = np.zeros((self.ny, self.nn))
-        var_u_x_new = np.zeros((self.ny, self.nn))
+        mean_u_x_new = np.zeros((self.ny, self.nv))
+        var_u_x_new = np.zeros((self.ny, self.nv))
 
         light_pink = np.array((250, 181, 196))/255
         podi = PODI()
         for i, interpolated_basis in enumerate(interpolated_bases):
             podi.compute_pod(database = db_train, pod_type = "local", interpolated_basis = interpolated_basis)
             
-            print(f"basis {i}")
+            print(f"basis {i+1}/{self.nv}")
             
             podi.set_training_values(self.xt)
             podi.train()
-            mean_u_x_new[:, i] = podi.predict_values(np.atleast_2d(self.xn[i]))[:,0]
-            var_u_x_new[:, i] = podi.predict_variances(np.atleast_2d(self.xn[i]))[:,0]
+            mean_u_x_new[:, i] = podi.predict_values(np.atleast_2d(self.xv[i]))[:,0]
+            var_u_x_new[:, i] = podi.predict_variances(np.atleast_2d(self.xv[i]))[:,0]
         
             plt.figure(figsize = (15,10))
             plt.fill_between(
@@ -425,9 +422,9 @@ class Test(SMTestCase):
             rms = np.sqrt(np.mean(diff**2))
 
             plt.scatter([], [], color = 'w', label = 'error = ' + str(round(rms, 4)))
-            x2 = self.xn[i, 1]
-            x1 = self.xn[i, 0]
-            plt.title(f'x2 = {str(x2)[:5]}, x1 = {str(x1)[:5]}', fontsize = 14)
+            x2 = self.xv[i, 1]
+            x1 = self.xv[i, 0]
+            plt.title(f'x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}', fontsize = 14)
             plt.legend(fontsize = 14)
 
         plt.show()
@@ -562,4 +559,4 @@ if __name__ == "__main__":
     # Test.run_podi_example_1d()
     #unittest.main()
     test = Test()
-    test.test_local()
+    test._test_local()

@@ -37,13 +37,14 @@ class MatrixInterpolation():
         n_DoF = number of degree of freedom, n_modes = number of modes of the POD bases, n_DoE = DoE size
     """
     
-    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None):
+    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None, compute_projection_error = False):
         self.mu_train = DoE_mu
         self.bases = DoE_bases
         self.n_DoE = DoE_mu.shape[0]
         self.n_mu = DoE_mu.shape[1]
         self.n_DoF = DoE_bases.shape[0]
         self.n_modes = DoE_bases.shape[1]
+        self.compute_projection_error =  compute_projection_error
         self.snapshots = snapshots
         if type(self.snapshots) != type(None):
             self.n_t = self.snapshots.shape[1]
@@ -182,7 +183,7 @@ class MatrixInterpolation():
         return P_star, obj_fun
     
     def compute_tangent_plane_basis_and_DoE_coordinates(
-        self, Y0, epsilon=1e-3, compute_GP=True, full_basis = False
+        self, Y0, epsilon=1e-3, compute_GP=True
     ):
         """
         Function that computes a basis of a subspace of the tangent plane at Y0
@@ -235,7 +236,7 @@ class MatrixInterpolation():
             print("Consider increasing the DoE.")
     
         # truncature
-        if full_basis:
+        if self.compute_projection_error:
             self.Basis = u
         else:
             self.Basis = u[:, : self.n_B]
@@ -243,10 +244,10 @@ class MatrixInterpolation():
         # projection to get the coefficients in this basis
         self.alpha = np.dot(self.Basis.T, Z_centered)
         if compute_GP:
-            GP = self.compute_GP(self.alpha, full_basis = full_basis)
+            GP = self.compute_GP(self.alpha)
         return self.Basis, self.alpha, self.Z_mean
     
-    def compute_GP(self, alpha, kernel="matern52", full_basis = False):
+    def compute_GP(self, alpha, kernel="matern52"):
         """
         Function that computes the GP interpolation functions of each alpha coefficients.
     
@@ -263,7 +264,7 @@ class MatrixInterpolation():
             List of SMT object GP, one per coefficients.
         """
         self.GP = []
-        if full_basis:
+        if self.compute_projection_error:
             n = self.n_DoE
         else:
             n=self.n_B
@@ -279,7 +280,7 @@ class MatrixInterpolation():
             self.GP.append(gp)
         return self.GP
     
-    def pred_coeff(self, mu, compute_var=False, full_basis = False):
+    def pred_coeff(self, mu, compute_var=False):
         """
         Function that interpolates the coefficients of the tangent vector at n_new parametric points mu.
     
@@ -298,31 +299,24 @@ class MatrixInterpolation():
             Variance of the prediction.
         """
         n_new = mu.shape[0]
-        if full_basis:
-            coeff = np.zeros((self.n_DoE, n_new))
-            for i in range(self.n_DoE):
-                coeff[i] = self.GP[i].predict_values(mu)[:, 0]
-            if not (compute_var):
-                return coeff
-            elif compute_var:
-                var = np.zeros((self.n_DoE, n_new))
-                for i in range(self.n_DoE):
-                    var[i] = self.GP[i].predict_variances(mu)[:, 0]
-                return coeff, var
+        if self.compute_projection_error:
+            n = self.n_DoE
         else:
-            coeff = np.zeros((self.n_B, n_new))
-            for i in range(self.n_B):
-                coeff[i] = self.GP[i].predict_values(mu)[:, 0]
-            if not (compute_var):
-                return coeff
-            elif compute_var:
-                var = np.zeros((self.n_B, n_new))
-                for i in range(self.n_B):
-                    var[i] = self.GP[i].predict_variances(mu)[:, 0]
-                return coeff, var
+            n = self.n_B
+
+        coeff = np.zeros((n, n_new))
+        for i in range(n):
+            coeff[i] = self.GP[i].predict_values(mu)[:, 0]
+        if not (compute_var):
+            return coeff
+        elif compute_var:
+            var = np.zeros((n, n_new))
+            for i in range(n):
+                var[i] = self.GP[i].predict_variances(mu)[:, 0]
+            return coeff, var
     
     def interp_POD_basis(
-        self, mu, compute_realizations=False, n_real=1, fixed_xi=False, xi=None, full_basis = False
+        self, mu, compute_realizations=False, n_real=1, fixed_xi=False, xi=None
     ):
         """
         Function that computes the interpolation of the POD basis at n_new parametric points mu.
@@ -346,7 +340,7 @@ class MatrixInterpolation():
         n_new = mu.shape[0]
         if not (compute_realizations):
             # compute the interpolation of the coefficients
-            coeff = self.pred_coeff(mu, full_basis=full_basis)
+            coeff = self.pred_coeff(mu)
             # compute the corresponding tangent vectors
             Zi = np.dot(self.Basis, coeff) + self.Z_mean[:, np.newaxis]
             # reshape to get the matrices
@@ -833,22 +827,27 @@ class PODI(SurrogateBasedApplication):
         self.basis = self.singular_vectors[:, : self.n_modes]
 
     @staticmethod
-    def interp_matrices(xt, input_matrices, xn, full_basis = False):
+    def interp_matrices(xt, input_matrices, xn, compute_projection_error = True):
         nn = xn.shape[0]
-        interp = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices)
-    
-        Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
 
-        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet, full_basis = full_basis)
-        Yi_full = interp.interp_POD_basis(xn, full_basis = full_basis)
+        interp = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices, compute_projection_error = compute_projection_error)
+        Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
+        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
+        Yi_full = interp.interp_POD_basis(xn)
         yi = np.squeeze(Yi_full, axis = 1)
         interpolated_bases = []
         for i in range(nn):
             interpolated_basis = yi[i,:,:]
-            interpolated_bases.append(interpolated_basis)
-            PODI.compute_projection_error(basis = interpolated_basis)
+            print(compute_projection_error, interpolated_basis.shape)
+            if compute_projection_error:
+                PODI.compute_projection_error(basis = interpolated_basis)
+            else:
+                interpolated_bases.append(interpolated_basis)
 
-        return interpolated_bases
+        if compute_projection_error:
+            return PODI.interp_matrices(xt, input_matrices, xn, compute_projection_error = False)
+        else:
+            return interpolated_bases
 
     def compute_pod(
         self,
@@ -858,6 +857,7 @@ class PODI(SurrogateBasedApplication):
         n_modes: int = None,
         seed: int = None,
         interpolated_basis: list = None,
+        compute_projection_error = True
     ) -> None:
         database = ensure_2d_array(database, "database")
         self.n_snapshot = database.shape[1]
@@ -870,14 +870,14 @@ class PODI(SurrogateBasedApplication):
                 database=database, tol=tol, n_modes=n_modes, seed=seed
             )
         elif pod_type == "local":
-            self.n_modes = interpolated_basis.shape[1] #############  vérifier nombre de modes
+            self.n_modes = interpolated_basis.shape[1]
             self.basis = interpolated_basis
-            #PODI.compute_projection_error(basis = interpolated_basis, print_values = True)
+            if compute_projection_error:
+                PODI.compute_projection_error(basis = interpolated_basis)
         else:
             raise ValueError(
                 f"the pod type should be 'global' or 'local', not {pod_type}."
             )
-        #PODI.compute_projection_error(basis = self.basis, print_values = True)
 
         self.coeff = np.dot(database.T - self.mean.T, self.basis)
         self.pod_type = pod_type
