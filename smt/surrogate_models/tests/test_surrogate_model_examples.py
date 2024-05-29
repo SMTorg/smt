@@ -131,7 +131,7 @@ class Test(unittest.TestCase):
 
         sm = RMTC(
             xlimits=xlimits,
-            num_elements=20,
+            num_elements=6,
             energy_weight=1e-15,
             regularization_weight=0.0,
         )
