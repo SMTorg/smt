@@ -14,6 +14,15 @@ Both absolute exponential and squared exponential kernels are available for KPLS
 
 For an automatic selection of the number of components :math:`h`, the adjusted Wold's R criterion is implemented  as detailed in [3]_.
 	
+Caveats
+-------
+
+Although KPLS has good scaling with dimension, its training time is exponential in the number of training points.
+A plot of the runtime of a 3-dimensional tensor product sine with samples taken uniformly from [-1,1] is exhibited below:
+
+.. figure:: runtime_vs_samples_kpls.png
+
+
 .. [1] Wold, H., Soft modeling by latent variables: the nonlinear iterative partial least squares approach, Perspectives in probability and statistics, papers in honour of MS Bartlett, 1975, pp. 520--540.
 
 .. [2] Bouhlel, M. A. and Bartoli, N. and  Otsmane, A. and Morlier, J., Improving kriging surrogates of high-dimensional design models by Partial Least Squares dimension reduction, Structural and Multidisciplinary Optimization, Vol. 53, No. 5, 2016, pp. 935--952.
