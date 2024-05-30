@@ -36,6 +36,7 @@ from smt.utils.kriging import (
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
 )
+
 from smt.utils.misc import standardization
 from smt.utils.checks import ensure_2d_array, check_support
 from scipy.stats import multivariate_normal as m_norm
