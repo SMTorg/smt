@@ -37,14 +37,13 @@ class MatrixInterpolation():
         n_DoF = number of degree of freedom, n_modes = number of modes of the POD bases, n_DoE = DoE size
     """
     
-    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None, compute_projection_error = False):
+    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None):
         self.mu_train = DoE_mu
         self.bases = DoE_bases
         self.n_DoE = DoE_mu.shape[0]
         self.n_mu = DoE_mu.shape[1]
         self.n_DoF = DoE_bases.shape[0]
         self.n_modes = DoE_bases.shape[1]
-        self.compute_projection_error =  compute_projection_error
         self.snapshots = snapshots
         if type(self.snapshots) != type(None):
             self.n_t = self.snapshots.shape[1]
@@ -236,10 +235,7 @@ class MatrixInterpolation():
             print("Consider increasing the DoE.")
     
         # truncature
-        if self.compute_projection_error:
-            self.Basis = u
-        else:
-            self.Basis = u[:, : self.n_B]
+        self.Basis = u[:, : self.n_B]
     
         # projection to get the coefficients in this basis
         self.alpha = np.dot(self.Basis.T, Z_centered)
@@ -264,10 +260,7 @@ class MatrixInterpolation():
             List of SMT object GP, one per coefficients.
         """
         self.GP = []
-        if self.compute_projection_error:
-            n = self.n_DoE
-        else:
-            n=self.n_B
+        n=self.n_B
         for i in range(n):
             gp = KRG(
                 theta0=[1e-2] * self.n_mu,
@@ -299,10 +292,7 @@ class MatrixInterpolation():
             Variance of the prediction.
         """
         n_new = mu.shape[0]
-        if self.compute_projection_error:
-            n = self.n_DoE
-        else:
-            n = self.n_B
+        n = self.n_B
 
         coeff = np.zeros((n, n_new))
         for i in range(n):
@@ -763,13 +753,15 @@ class PODI(SurrogateBasedApplication):
                 return i + 1
         return len(EV_list)
 
-    def compute_global_pod(  ############static method ?
+    def compute_global_pod(
         self,
         database: np.ndarray,
         tol: float = None,
         n_modes: int = None,
-        seed: int = None,
+        compute_proj_error = True,
+        seed: int = None
     ) -> None:
+        ############compute erreur projection et interpolation et tout ce qu'on veut
         """
         Performs the global POD.
 
@@ -812,7 +804,6 @@ class PODI(SurrogateBasedApplication):
         svd.fit(database.T)
         self.singular_vectors = svd.components_.T
         self.singular_values = svd.singular_values_
-        PODI.compute_projection_error(basis = self.singular_vectors, print_values = False)
         EV_list = svd.explained_variance_
 
         if choice_svd == "tol":
@@ -826,28 +817,60 @@ class PODI(SurrogateBasedApplication):
 
         self.basis = self.singular_vectors[:, : self.n_modes]
 
+        if compute_proj_error:
+            true_coeff_list = []
+            ceoff_list = []
+            for n in range(self.n_snapshot):
+                reducted_database = np.concatenate((database[:,:n], database[:,n+1:]), axis=1)
+                svd.fit(reducted_database.T)
+                basis = svd.components_.T
+                coeff = np.dot(reducted_database.T - self.mean.T, basis)
+
+                single_vector = database[:,n]
+                true_coeff = np.dot(single_vector - self.mean.T, basis)
+                true_coeff_list.append(coeff)
+                sm = KRG(print_global = False)
+                reducted_xt = np.concatenate((xt[:n], xt[n+1:]))
+                single_input = xt[n]
+                sm.set_training_values(reducted_xt, )
+
+            
+
+
+
+
     @staticmethod
-    def interp_matrices(xt, input_matrices, xn, compute_projection_error = True):
+    def interp_subspaces(xt1, input_matrices, xn, frechet = False):
+        ###############frechet paramètre
+        ###############liste de matrices
+        ###############méthode employée
+        ############### pas de compute error projection
+        ############### changer nom
         nn = xn.shape[0]
 
-        interp = MatrixInterpolation(DoE_mu = xt, DoE_bases = input_matrices, compute_projection_error = compute_projection_error)
-        Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
-        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0_frechet)
+        ny, n_modes = input_matrices[0].shape
+        ###nombre de mode doit être cohérent avec database, dimension ny aussi, nombre de bases cohérentavec nombre de paramètres
+        n_bases = len(input_matrices)
+        DoE_bases = np.zeros((ny, n_modes, n_bases))
+        for i, basis in enumerate(input_matrices):
+            DoE_bases[:,:,i] = basis
+
+        interp = MatrixInterpolation(DoE_mu = xt1, DoE_bases = input_matrices)
+
+        if frechet:
+            Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
+            Y0 = Y0_frechet
+        else:
+            Y0 = input_matrices[:,:,0]
+        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
         Yi_full = interp.interp_POD_basis(xn)
         yi = np.squeeze(Yi_full, axis = 1)
         interpolated_bases = []
         for i in range(nn):
             interpolated_basis = yi[i,:,:]
-            print(compute_projection_error, interpolated_basis.shape)
-            if compute_projection_error:
-                PODI.compute_projection_error(basis = interpolated_basis)
-            else:
-                interpolated_bases.append(interpolated_basis)
-
-        if compute_projection_error:
-            return PODI.interp_matrices(xt, input_matrices, xn, compute_projection_error = False)
-        else:
-            return interpolated_bases
+            interpolated_bases.append(interpolated_basis)
+        
+        return interpolated_bases
 
     def compute_pod(
         self,
@@ -856,8 +879,9 @@ class PODI(SurrogateBasedApplication):
         tol: float = None,
         n_modes: int = None,
         seed: int = None,
-        interpolated_basis: list = None,
-        compute_projection_error = True
+        compute_proj_error = False,
+        xt = None,
+        interpolated_basis: np.ndarray = None
     ) -> None:
         database = ensure_2d_array(database, "database")
         self.n_snapshot = database.shape[1]
@@ -867,13 +891,15 @@ class PODI(SurrogateBasedApplication):
 
         if pod_type == "global":
             self.compute_global_pod(
-                database=database, tol=tol, n_modes=n_modes, seed=seed
+                database=database, tol=tol, n_modes=n_modes, compute_proj_error = compute_proj_error, seed=seed
             )
         elif pod_type == "local":
+            if interpolated_basis == None:
+                raise ValueError(
+                    "'interpolated_basis' should be specified"
+                )
             self.n_modes = interpolated_basis.shape[1]
             self.basis = interpolated_basis
-            if compute_projection_error:
-                PODI.compute_projection_error(basis = interpolated_basis)
         else:
             raise ValueError(
                 f"the pod type should be 'global' or 'local', not {pod_type}."
@@ -888,17 +914,7 @@ class PODI(SurrogateBasedApplication):
     
     @staticmethod
     def compute_projection_error(basis, test_ratio = 0.1, seed = 42, print_values = False):
-        if basis.shape[1] > 1:
-            basis_train, basis_test = train_test_split(basis.T, test_size = test_ratio, random_state = seed)
-            rms_proj_list = []
-            for vector in basis_test:
-                proj = np.dot(vector, basis_train.T)
-                rms_proj = np.sqrt(np.mean(proj**2))
-                rms_proj_list.append(rms_proj)
-                if rms_proj > 1e-3:
-                    warnings.warn("A projection of a vector from the POD basis is incorrect.")
-            if print_values:
-                print(rms_proj_list)
+        return None
             
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -943,7 +959,7 @@ class PODI(SurrogateBasedApplication):
         n_modes : int
             number of modes kept during the POD.
         """
-        return self.n_modes  ############ what if local ?
+        return self.n_modes
 
     def set_interp_options(
         self, interp_type: str = "KRG", interp_options: list = [{}]

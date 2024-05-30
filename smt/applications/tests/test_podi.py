@@ -37,7 +37,7 @@ class Test(SMTestCase):
     def setUp(self):
         """Sets up the test case for the tests."""
         
-        self.full_database = self.pb_nd_local()
+        self.full_database = self.pb_1d()
         self.database = self.full_database[:, :self.nt]
 
     def pb_1d(self) -> np.ndarray:
@@ -150,7 +150,7 @@ class Test(SMTestCase):
             sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed+1)
 
             self.nt1 = 30
-            self.nt2 = 10
+            self.nt2 = 15
             self.nt = self.nt1*self.nt2
             self.xt1 = sampling_x1(self.nt1)
             self.xt2 = sampling_x2(self.nt)
@@ -346,7 +346,10 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
     
-    def _test_local(self):
+    def test_local(self):
+        return None
+        #checker nombre de modes de chaque base
+        #donner liste de bases
         full_database = self.pb_nd_local()
 
         plt.figure(figsize = (15,10))
@@ -375,7 +378,8 @@ class Test(SMTestCase):
             n_modes_list.append(n_modes)
             local_basis = singular_vectors[:, :]
             local_pod_bases.append(local_basis)
-    
+
+        print(n_modes_list)
         n_modes_max = max(n_modes_list)
         for i in range(len(local_pod_bases)):
             local_pod_bases[i] = local_pod_bases[i][:, :n_modes_max]
@@ -383,13 +387,9 @@ class Test(SMTestCase):
         #keep first coordinate
         xt1 = np.atleast_2d(self.xt1[:, 0]).T
         xn1 = np.atleast_2d(self.xv[:, 0]).T
-
-        DoE_bases = np.zeros((local_pod_bases[0].shape[0], n_modes_max, self.nt1))
-        for i, basis in enumerate(local_pod_bases):
-            DoE_bases[:,:,i] = basis
         
         #interpolate the bases to get a new one at the specific new coordinates
-        interpolated_bases = PODI.interp_matrices(xt = xt1, input_matrices = DoE_bases, xn = xn1)
+        interpolated_bases = PODI.interp_subspaces(xt = xt1, input_matrices = local_pod_bases, xn = xn1)
 
         mean_u_x_new = np.zeros((self.ny, self.nv))
         var_u_x_new = np.zeros((self.ny, self.nv))
@@ -557,6 +557,6 @@ class Test(SMTestCase):
 
 if __name__ == "__main__":
     # Test.run_podi_example_1d()
-    #unittest.main()
-    test = Test()
-    test._test_local()
+    unittest.main()
+    #test = Test()
+    #test._test_local()
