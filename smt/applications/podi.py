@@ -682,6 +682,22 @@ class MatrixInterpolation():
     
         return Yi, l_res, n_iter
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class PODI(SurrogateBasedApplication):
     """
     Class for Proper Orthogonal Decomposition and Interpolation (PODI) surrogate models based.
@@ -721,7 +737,6 @@ class PODI(SurrogateBasedApplication):
 
         self.pod_computed = False
         self.interp_options_set = False
-        self.training_values_set = False
         self.train_done = False
 
         self.interp_coeff = None
@@ -753,12 +768,42 @@ class PODI(SurrogateBasedApplication):
                 return i + 1
         return len(EV_list)
 
+    @staticmethod
+    def interp_subspaces(xt1, input_matrices, xn1, frechet = False):
+        ###############méthode employée
+        ############### pas de compute error projection
+        ############### changer nom
+        nn = xn1.shape[0]
+
+        ny, n_modes = input_matrices[0].shape
+        ###nombre de mode doit être cohérent avec database, dimension ny aussi, nombre de bases cohérentavec nombre de paramètres
+        n_bases = len(input_matrices)
+        DoE_bases = np.zeros((ny, n_modes, n_bases))
+        for i, basis in enumerate(input_matrices):
+            DoE_bases[:,:,i] = basis
+
+        interp = MatrixInterpolation(DoE_mu = xt1, DoE_bases = DoE_bases)
+
+        if frechet:
+            Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[0])
+            Y0 = Y0_frechet
+        else:
+            Y0 = input_matrices[0]
+        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
+        Yi_full = interp.interp_POD_basis(xn1)
+        yi = np.squeeze(Yi_full, axis = 1)
+        interpolated_bases = []
+        for i in range(nn):
+            interpolated_basis = yi[i,:,:]
+            interpolated_bases.append(interpolated_basis)
+        
+        return interpolated_bases
+
     def compute_global_pod(
         self,
-        database: np.ndarray,
         tol: float = None,
         n_modes: int = None,
-        compute_proj_error = True,
+        compute_errors: bool = False,
         seed: int = None
     ) -> None:
         ############compute erreur projection et interpolation et tout ce qu'on veut
@@ -797,11 +842,10 @@ class PODI(SurrogateBasedApplication):
                 choice_svd = "tol"
 
         if choice_svd is None:
-            raise ValueError(
-                "either one of the arguments 'n_modes' and 'tol' must be specified"
-            )
+            self.n_modes = min(self.database.shape)
+            choice_svd = "mode"
 
-        svd.fit(database.T)
+        svd.fit(self.database.T)
         self.singular_vectors = svd.components_.T
         self.singular_values = svd.singular_values_
         EV_list = svd.explained_variance_
@@ -816,85 +860,45 @@ class PODI(SurrogateBasedApplication):
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
         self.basis = self.singular_vectors[:, : self.n_modes]
-
-        if compute_proj_error:
-            true_coeff_list = []
-            ceoff_list = []
-            for n in range(self.n_snapshot):
-                reducted_database = np.concatenate((database[:,:n], database[:,n+1:]), axis=1)
-                svd.fit(reducted_database.T)
-                basis = svd.components_.T
-                coeff = np.dot(reducted_database.T - self.mean.T, basis)
-
-                single_vector = database[:,n]
-                true_coeff = np.dot(single_vector - self.mean.T, basis)
-                true_coeff_list.append(coeff)
-                sm = KRG(print_global = False)
-                reducted_xt = np.concatenate((xt[:n], xt[n+1:]))
-                single_input = xt[n]
-                sm.set_training_values(reducted_xt, )
-
-            
-
-
-
-
-    @staticmethod
-    def interp_subspaces(xt1, input_matrices, xn, frechet = False):
-        ###############frechet paramètre
-        ###############liste de matrices
-        ###############méthode employée
-        ############### pas de compute error projection
-        ############### changer nom
-        nn = xn.shape[0]
-
-        ny, n_modes = input_matrices[0].shape
-        ###nombre de mode doit être cohérent avec database, dimension ny aussi, nombre de bases cohérentavec nombre de paramètres
-        n_bases = len(input_matrices)
-        DoE_bases = np.zeros((ny, n_modes, n_bases))
-        for i, basis in enumerate(input_matrices):
-            DoE_bases[:,:,i] = basis
-
-        interp = MatrixInterpolation(DoE_mu = xt1, DoE_bases = input_matrices)
-
-        if frechet:
-            Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[:,:,0])
-            Y0 = Y0_frechet
-        else:
-            Y0 = input_matrices[:,:,0]
-        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
-        Yi_full = interp.interp_POD_basis(xn)
-        yi = np.squeeze(Yi_full, axis = 1)
-        interpolated_bases = []
-        for i in range(nn):
-            interpolated_basis = yi[i,:,:]
-            interpolated_bases.append(interpolated_basis)
         
-        return interpolated_bases
+        if compute_errors:
+            self.compute_proj_interp_errors()
 
     def compute_pod(
         self,
+        xt: np.ndarray,
         database: np.ndarray,
         pod_type: str = "global",
         tol: float = None,
         n_modes: int = None,
         seed: int = None,
-        compute_proj_error = False,
-        xt = None,
+        compute_errors: bool = False,
         interpolated_basis: np.ndarray = None
     ) -> None:
-        database = ensure_2d_array(database, "database")
+        self.xt = ensure_2d_array(xt, "xt")
+        self.database = ensure_2d_array(database, "database")
         self.n_snapshot = database.shape[1]
+
+        self.nt = xt.shape[0]
+        self.nx = xt.shape[1]
+
+        if self.nt != self.n_snapshot:
+            raise ValueError(
+                f"there must be the same amount of train values than data values, {self.nt} != {self.n_snapshot}."
+            )
+
         self.ny = database.shape[0]
+
+        
 
         self.mean = np.atleast_2d(database.mean(axis=1)).T
 
         if pod_type == "global":
             self.compute_global_pod(
-                database=database, tol=tol, n_modes=n_modes, compute_proj_error = compute_proj_error, seed=seed
+                tol=tol, n_modes=n_modes, seed=seed, compute_errors=compute_errors
             )
         elif pod_type == "local":
-            if interpolated_basis == None:
+            if interpolated_basis is None:
                 raise ValueError(
                     "'interpolated_basis' should be specified"
                 )
@@ -906,15 +910,53 @@ class PODI(SurrogateBasedApplication):
             )
 
         self.coeff = np.dot(database.T - self.mean.T, self.basis)
+
         self.pod_type = pod_type
 
         self.pod_computed = True
         self.interp_options_set = False
-        self.training_values_set = False
     
-    @staticmethod
-    def compute_projection_error(basis, test_ratio = 0.1, seed = 42, print_values = False):
-        return None
+    def compute_proj_interp_errors(self):
+        interp_error_list = []
+        proj_error_list = []
+        for n in range(self.n_snapshot):
+            reducted_database = np.concatenate((self.database[:,:n], self.database[:,n+1:]), axis=1)
+            reducted_xt = np.concatenate((self.xt[:n], self.xt[n+1:]))
+            single_snapshot = np.atleast_2d(self.database[:, n]).T
+            single_xt = np.atleast_2d(self.xt[n])
+            
+            podi = PODI()
+            podi.compute_pod(xt = reducted_xt, database=reducted_database, compute_errors=False)
+            reducted_mean = np.atleast_2d(reducted_database.mean(axis=1)).T
+            reducted_basis = podi.get_singular_vectors()
+            n_modes = podi.get_n_modes()
+            
+            proj = np.atleast_2d(np.dot(single_snapshot.T - reducted_mean.T, reducted_basis)).T
+            reconstructed = reducted_mean + reducted_basis.dot(proj)
+            proj_error = reconstructed - single_snapshot
+            rms_proj_error = np.sqrt(np.mean(proj_error**2))
+            proj_error_list.append(rms_proj_error)
+
+            podi.train()
+            reducted_interp_coeff = podi.get_interp_coeff()
+            mean_coeff_interp = np.zeros((n_modes, 1))
+            
+            for i, coeff in enumerate(reducted_interp_coeff):
+                mu_i = coeff.predict_values(single_xt)
+                mean_coeff_interp[i] = mu_i[:, 0]
+                
+            true_coeff = np.atleast_2d(np.dot(single_snapshot.T - reducted_mean.T, reducted_basis)).T
+
+            interp_error = mean_coeff_interp - true_coeff
+            rms_interp_error = np.sqrt(np.mean(interp_error**2))
+            interp_error_list.append(rms_interp_error)
+        max_interp_error = max(interp_error_list)
+        max_proj_error = max(proj_error_list)
+        
+        if max_interp_error > 1e-2:
+            warnings.warn(f"The interpolation error is too high, please consider checking for an issue in the data.")
+        if max_proj_error > 1e-2:
+            warnings.warn(f"The interpolation error is too high, please consider checking for an issue in the data.")
             
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -1024,10 +1066,11 @@ class PODI(SurrogateBasedApplication):
             self.interp_coeff.append(sm_i)
 
         self.interp_options_set = True
-        self.training_values_set = False
 
+
+    """
     def set_training_values(self, xt: np.ndarray) -> None:
-        """
+        
         Set training data (values).
         If the models' options are still not set, default values are used for the initialization.
 
@@ -1035,7 +1078,7 @@ class PODI(SurrogateBasedApplication):
         ----------
         xt : np.ndarray[nt, nx]
             The input values for the nt training points.
-        """
+        
 
         xt = ensure_2d_array(xt, "xt")
 
@@ -1062,7 +1105,8 @@ class PODI(SurrogateBasedApplication):
             self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
 
         self.training_values_set = True
-
+    """
+        
     def train(self) -> None:
         """
         Performs the training of the model.
@@ -1071,13 +1115,17 @@ class PODI(SurrogateBasedApplication):
             raise RuntimeError(
                 "'compute_pod' method must have been succesfully executed before trying to train the models."
             )
+        
+        if not self.interp_options_set:
+            self.interp_coeff = []
+            for i in range(self.n_modes):
+                sm_i = PODI_available_models["KRG"](print_global=False)
 
-        if not self.training_values_set:
-            raise RuntimeError(
-                "the training values should have been set before trying to train the models."
-            )
+                self.interp_coeff.append(sm_i)
+            self.interp_options_set = True
 
-        for interp_coeff in self.interp_coeff:
+        for i, interp_coeff in enumerate(self.interp_coeff):
+            interp_coeff.set_training_values(self.xt, self.coeff[:, i])
             interp_coeff.train()
 
         self.train_done = True

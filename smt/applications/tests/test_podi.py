@@ -345,9 +345,22 @@ class Test(SMTestCase):
         )
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
+
+    def test_normal(self):
+        full_database = self.pb_1d()
+        database = full_database[:, :self.nt]
+
+        podi = PODI()
+        podi.compute_pod(xt=self.xt, database=database, n_modes = min(database.shape), compute_proj_error=True)
+        return None
+        podi.set_interp_options(interp_type = "KRG")
+        podi.train()
+        values = podi.predict_values(self.xn)
+        derivatives = podi.predict_derivatives(self.xn, kx = 0)
+        variances = podi.predict_variances(self.xn)
+
     
     def test_local(self):
-        return None
         #checker nombre de modes de chaque base
         #donner liste de bases
         full_database = self.pb_nd_local()
@@ -381,6 +394,7 @@ class Test(SMTestCase):
 
         print(n_modes_list)
         n_modes_max = max(n_modes_list)
+        print(n_modes_max)
         for i in range(len(local_pod_bases)):
             local_pod_bases[i] = local_pod_bases[i][:, :n_modes_max]
         
@@ -389,7 +403,7 @@ class Test(SMTestCase):
         xn1 = np.atleast_2d(self.xv[:, 0]).T
         
         #interpolate the bases to get a new one at the specific new coordinates
-        interpolated_bases = PODI.interp_subspaces(xt = xt1, input_matrices = local_pod_bases, xn = xn1)
+        interpolated_bases = PODI.interp_subspaces(xt1 = xt1, input_matrices = local_pod_bases, xn1 = xn1)
 
         mean_u_x_new = np.zeros((self.ny, self.nv))
         var_u_x_new = np.zeros((self.ny, self.nv))
@@ -557,6 +571,6 @@ class Test(SMTestCase):
 
 if __name__ == "__main__":
     # Test.run_podi_example_1d()
-    unittest.main()
-    #test = Test()
-    #test._test_local()
+    #unittest.main()
+    test = Test()
+    test.test_normal()
