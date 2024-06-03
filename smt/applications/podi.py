@@ -22,7 +22,7 @@ PODI_available_models = {
     "KPLSK": KPLSK,
 }
 
-class MatrixInterpolation():
+class SubspacesInterpolation():
     """
     Class that computes a GP interpolation of POD bases.
     
@@ -734,6 +734,7 @@ class PODI(SurrogateBasedApplication):
         self.n_modes = None
         self.singular_vectors = None
         self.singular_values = None
+        self.basis = None
 
         self.pod_computed = False
         self.interp_options_set = False
@@ -769,10 +770,8 @@ class PODI(SurrogateBasedApplication):
         return len(EV_list)
 
     @staticmethod
-    def interp_subspaces(xt1, input_matrices, xn1, frechet = False):
+    def interp_subspaces(xt1, input_matrices, xn1, frechet = False, method = 'KRG'):
         ###############méthode employée
-        ############### pas de compute error projection
-        ############### changer nom
         nn = xn1.shape[0]
 
         ny, n_modes = input_matrices[0].shape
@@ -782,22 +781,25 @@ class PODI(SurrogateBasedApplication):
         for i, basis in enumerate(input_matrices):
             DoE_bases[:,:,i] = basis
 
-        interp = MatrixInterpolation(DoE_mu = xt1, DoE_bases = DoE_bases)
+        interp = SubspacesInterpolation(DoE_mu = xt1, DoE_bases = DoE_bases)
 
         if frechet:
             Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[0])
             Y0 = Y0_frechet
         else:
             Y0 = input_matrices[0]
-        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
-        Yi_full = interp.interp_POD_basis(xn1)
-        yi = np.squeeze(Yi_full, axis = 1)
-        interpolated_bases = []
-        for i in range(nn):
-            interpolated_basis = yi[i,:,:]
-            interpolated_bases.append(interpolated_basis)
-        
-        return interpolated_bases
+
+        if method == 'KRG':
+            interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
+            Yi_full = interp.interp_POD_basis(xn1)
+            yi = np.squeeze(Yi_full, axis = 1)
+            interpolated_bases = []
+            for i in range(nn):
+                interpolated_basis = yi[i,:,:]
+                interpolated_bases.append(interpolated_basis)
+            
+            #print(interpolated_bases[0])
+            return interpolated_bases
 
     def compute_global_pod(
         self,
@@ -806,7 +808,6 @@ class PODI(SurrogateBasedApplication):
         compute_errors: bool = False,
         seed: int = None
     ) -> None:
-        ############compute erreur projection et interpolation et tout ce qu'on veut
         """
         Performs the global POD.
 
@@ -954,21 +955,24 @@ class PODI(SurrogateBasedApplication):
         max_proj_error = max(proj_error_list)
         
         if max_interp_error > 1e-2:
-            warnings.warn(f"The interpolation error is too high, please consider checking for an issue in the data.")
+            warnings.warn(f"The interpolation error is too high, please consider searching for an issue in the data.")
         if max_proj_error > 1e-2:
-            warnings.warn(f"The interpolation error is too high, please consider checking for an issue in the data.")
+            warnings.warn(f"The interpolation error is too high, please consider searching for an issue in the data.")
             
     def get_singular_vectors(self) -> np.ndarray:
         """
-        Getter for the singular vectors of the POD.
+        Getter for the singular vectors of the global POD.
         It represents the directions of maximum variance in the data.
 
         Returns
         -------
         singular_vectors : np.ndarray
-            singular vectors of the POD.
+            singular vectors of the global POD.
         """
-        return self.singular_vectors  ###############only if global ?
+        return self.singular_vectors
+    
+    def get_basis(self) -> np.ndarray:
+        return self.basis
 
     def get_singular_values(self) -> np.ndarray:
         """
