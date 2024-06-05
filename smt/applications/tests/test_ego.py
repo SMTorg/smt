@@ -87,6 +87,28 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
+        
+    def test_function_ego_GPN(self):
+        n_iter = 15
+        xlimits = np.array([[0.0, 25.0]])
+        criterion = "EI"
+        design_space = DesignSpace(xlimits)
+        noise0 = [1e-1] # fixed variance
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            n_doe=3,
+            surrogate=KRG(design_space=design_space, print_global=False),
+            random_state=42,
+            noise0 = noise0,
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
+
+        self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
+        self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
+        
 
     def test_function_test_1d_parallel(self):
         n_iter = 3
