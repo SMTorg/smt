@@ -203,7 +203,6 @@ class Test(SMTestCase):
             "matern32",
             "matern52",
         ]:  # For every kernel
-            
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
                     kr = KRG(print_global=False)
