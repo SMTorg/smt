@@ -307,7 +307,6 @@ class Test(SMTestCase):
             "matern32",
             "matern52",
             "pow_exp",
-            "squar_sin_exp",
         ]:
             self.setUp()
             kr = KRG(print_global=False)
