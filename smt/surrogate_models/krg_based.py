@@ -1516,12 +1516,12 @@ class KrgBased(SurrogateModel):
 
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"]=="squar_sin_exp":
-            dd=0
-        else: 
+        if self.options["corr"] == "squar_sin_exp":
+            dd = 0
+        else:
             dd = self._componentwise_distance(
                 dx, theta=self.optimal_theta, return_derivative=True
-        )
+            )
 
         # Compute the correlation function
         derivative_dic = {"dx": dx, "dd": dd}
@@ -1667,9 +1667,9 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"]=="squar_sin_exp":
-            dd=0
-        else :
+        if self.options["corr"] == "squar_sin_exp":
+            dd = 0
+        else:
             dd = self._componentwise_distance(
                 dx, theta=self.optimal_theta, return_derivative=True
             )
