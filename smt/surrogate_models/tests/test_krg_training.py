@@ -203,6 +203,7 @@ class Test(SMTestCase):
             "matern32",
             "matern52",
         ]:  # For every kernel
+            
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
                     kr = KRG(print_global=False)
@@ -300,6 +301,7 @@ class Test(SMTestCase):
 
     def test_variance_derivatives(self):
         for corr_str in [
+            "squar_sin_exp",
             "abs_exp",
             "squar_exp",
             "matern32",
@@ -307,6 +309,7 @@ class Test(SMTestCase):
             "pow_exp",
             "squar_sin_exp",
         ]:
+            self.setUp()
             kr = KRG(print_global=False)
             kr.options["poly"] = "constant"
             kr.options["corr"] = corr_str
