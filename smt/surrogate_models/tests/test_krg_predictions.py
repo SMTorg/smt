@@ -93,7 +93,6 @@ class Test(SMTestCase):
         )
 
         y_predicted = sm.predict_variances(x_valid)
-        print(sm.predict_values(x_valid))
         x = np.atleast_2d(x_valid[0])
         diff_g = (y_predicted[1, 0] - y_predicted[2, 0]) / (2 * e)
         diff_d = (y_predicted[3, 0] - y_predicted[4, 0]) / (2 * e)
@@ -110,7 +109,6 @@ class Test(SMTestCase):
                 np.abs((diff_d - deriv[0][1]) / diff_d),
             ]
         )
-        print(pred_errors)
         total_error = np.sum(pred_errors**2)
         np.testing.assert_allclose(total_error, 0, atol=5e-3)
 
