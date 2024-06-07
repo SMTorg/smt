@@ -1972,7 +1972,6 @@ class KrgBased(SurrogateModel):
                             raise ValueError(
                                 "For heteroscedastic noise, please use Cobyla"
                             )
-                        theta_all_loops = 10**theta_all_loops
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                                 minus_reduced_likelihood_function,
