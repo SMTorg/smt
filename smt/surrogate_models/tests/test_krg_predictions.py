@@ -30,7 +30,7 @@ class Test(SMTestCase):
         self.yt = pb(self.xt)
 
     def test_predictions(self):
-        trends = ["constant","linear"]
+        trends = ["constant", "linear"]
         kernels = [
             "pow_exp",
             "squar_exp",
@@ -43,7 +43,7 @@ class Test(SMTestCase):
 
         for trend in trends:
             for kernel in kernels:
-                if kernel=="squar_sin_exp" and trend=="linear":
+                if kernel == "squar_sin_exp" and trend == "linear":
                     continue
                 if kernel == "pow_exp":
                     for power in powers:
@@ -129,7 +129,7 @@ class Test(SMTestCase):
                 np.abs((diff_d - deriv[0][1]) / diff_d),
             ]
         )
-        
+
         total_error = np.sum(pred_errors**2)
 
         np.testing.assert_allclose(total_error, 0, atol=1e-9)
