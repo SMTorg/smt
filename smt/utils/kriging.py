@@ -729,14 +729,14 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
                 )
                 i += 1
         else:
-            grad_ind2 = grad_ind - cut
+            hess_ind2 = grad_ind - cut
             while i * nb_limit <= d.shape[0]:
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
-                    -theta_array[0][grad_ind2]
-                    * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                    -theta_array[0][hess_ind2]
+                    * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                     * np.sin(
                         2
-                        * d[i * nb_limit : (i + 1) * nb_limit, grad_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
                         * theta_array[0][grad_ind]
                     )
                     * r[i * nb_limit : (i + 1) * nb_limit, 0]
@@ -747,6 +747,7 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
     if hess_ind is not None:
         cut = int(len(theta) / 2)
         if grad_ind < cut and hess_ind < cut:
+
             hess_ind2 = cut + hess_ind
             while i * nb_limit <= d.shape[0]:
                 r[i * nb_limit : (i + 1) * nb_limit, 0] = (
