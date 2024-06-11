@@ -24,6 +24,7 @@ from smt.surrogate_models import (
     GEKPLS,
     KPLS,
     KRG,
+    GPX,
     CategoricalVariable,
     DesignSpace,
     FloatVariable,
@@ -87,8 +88,30 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
+    
+    ####### New test for EGO + GPX feature in 1D
+    def test_function_test_GPX_1d(self):
+        n_iter = 15
+        xlimits = np.array([[0.0, 25.0]])
+        criterion = "EI"
+        design_space = DesignSpace(xlimits)
+        surrogate = GPX(design_space=design_space)
+
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            n_doe=3,
+            surrogate=surrogate,
+            random_state=42,
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
+
+        self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
+        self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
         
-    def test_function_ego_GPN(self):
+    ####### New test for EGO + Noise feature in 1D
+    def test_function_ego_GPN_1D(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
         criterion = "EI"
@@ -158,7 +181,7 @@ class TestEGO(SMTestCase):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "SBO"  #'EI' or 'SBO' or 'LCB'
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         design_space = DesignSpace(xlimits)
 
         xdoe = FullFactorial(xlimits=xlimits)(50)
@@ -169,6 +192,55 @@ class TestEGO(SMTestCase):
             surrogate=KRG(design_space=design_space, print_global=False),
             random_state=42,
         )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
+        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
+        
+        
+    ####### New test for EGO + GPX feature in 2D
+    def test_function_ego_GPX_rosenbrock_2D(self):
+        n_iter = 10
+        fun = Rosenbrock(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "EI"
+        design_space = DesignSpace(xlimits)
+        surrogate=GPX(design_space=design_space)
+
+        xdoe = FullFactorial(xlimits=xlimits)(50)
+        ego = EGO(
+            xdoe=xdoe,
+            n_iter=n_iter,
+            criterion=criterion,
+            surrogate=surrogate,
+            random_state=42,
+        )
+
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
+        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
+        
+    ####### New test for EGO Noise feature in 2D
+    def test_function_ego_GPN_rosenbrock_2D(self):
+        n_iter = 10
+        fun = Rosenbrock(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "EI" 
+        design_space = DesignSpace(xlimits)
+        noise0 = [1e-1, 1e-1]
+
+        xdoe = FullFactorial(xlimits=xlimits)(50)
+        
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            n_doe=3,
+            surrogate=KRG(design_space=design_space, print_global=False),
+            random_state=42,
+            noise0 = noise0,
+        )
+
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
