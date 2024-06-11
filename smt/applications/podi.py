@@ -2,15 +2,12 @@
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
-import warnings
-
 import scipy.optimize as opt
 from sklearn.utils.extmath import randomized_svd
 
 from sklearn.decomposition import PCA
 import numpy as np
 
-from sklearn.model_selection import train_test_split
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models import KRG, KPLS, KPLSK
@@ -22,22 +19,38 @@ PODI_available_models = {
     "KPLSK": KPLSK,
 }
 
-class SubspacesInterpolation():
+
+class SubspacesInterpolation:
     """
-    Class that computes a GP interpolation of POD bases.
-    
-    Construction:\n
-    Inputs:
-    --------------------------------------------
-    DoE_mu : np.ndarray[n_DoE, n_mu]
+    Class that computes an interpolation of POD bases.
+
+    Attributes
+    ----------
+    n_DoE : int
+        Size of the DoE (Design of Experiments)
+    n_mu : int
+        dimension of the parametric space
+    mu_train : np.ndarray[n_DoE, n_mu]
         Database of parameter values where the POD bases have been computed.
-        n_DoE = DoE size, n_mu = dimension of the parametric space
-    DoE_bases : np.ndarray[n_DoF,n_modes,n_DoE]
+    n_DoF : int
+        number of degree of freedom
+    n_modes : int
+        number of modes of the POD bases
+    bases : np.ndarray[n_DoF, n_modes, n_DoE]
         Database of the POD bases to interpolate.
-        n_DoF = number of degree of freedom, n_modes = number of modes of the POD bases, n_DoE = DoE size
     """
-    
-    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None):
+
+    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None) -> None:
+        """
+        Initialization.
+
+        Parameters
+        ----------
+        DoE_mu : np.ndarray[n_DoE, n_mu]
+            Database of parameter values where the POD bases have been computed.
+        DoE_bases : np.ndarray[n_DoF, n_modes, n_DoE]
+            Database of the POD bases to interpolate.
+        """
         self.mu_train = DoE_mu
         self.bases = DoE_bases
         self.n_DoE = DoE_mu.shape[0]
@@ -48,21 +61,21 @@ class SubspacesInterpolation():
         if type(self.snapshots) != type(None):
             self.n_t = self.snapshots.shape[1]
         self.U_ref = U_ref
-    
-    def exponential_mapping(self, Y0, Ti):
+
+    def exponential_mapping(self, Y0, Ti) -> np.ndarray:
         """
         Function that computes the exponential mapping of the Grassmann manifold at point Y0.
-    
+
         Parameters
         ----------
         Y0 : np.ndarray[n_DoF, n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
         Ti : np.ndarray[n_DoF, n_modes]
             A vector in the tangent plane of Gr(n_DoF,n_modes) at Y0.
-    
+
         Returns
         -------
-        Yi : np.ndarray [..,n_DoF,n_modes]
+        Yi : np.ndarray [n_DoF,n_modes]
             A point on Gr(n_DoF,n_modes).
             The image of Ti by the exponential mapping at Y0. $$Yi=exp_{Y0}(Ti)$$
         """
@@ -78,18 +91,18 @@ class SubspacesInterpolation():
         vt = np.transpose(v, (0, 1, 3, 2))
         Yi = Y0 @ (vt @ coss) + u @ sins
         return Yi
-    
-    def logarithmic_mapping(self, Y0, Yi):
+
+    def logarithmic_mapping(self, Y0, Yi) -> np.ndarray:
         """
         Function that computes the logarithmic mapping of the Grassmann manifold at point Y0.
-    
+
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes)
         Yi: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes)
-    
+
         Returns
         -------
         Ti: np.ndarray[n_DoF,n_modes]
@@ -102,16 +115,16 @@ class SubspacesInterpolation():
         arctans = np.eye(Y0.shape[1]) * np.arctan(s)
         Ti = np.dot(u, np.dot(arctans, v))
         return Ti
-    
-    def log_DoE(self, Y0):
+
+    def log_DoE(self, Y0) -> np.ndarray:
         """
         Function that computes the logarithmic mapping of the DoE at a given point Y0.
-    
+
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
-    
+
         Returns
         -------
         T_train: np.ndarray[n_DoF,n_modes,n_DoE]
@@ -121,13 +134,13 @@ class SubspacesInterpolation():
         for i in range(self.n_DoE):
             T_train[:, :, i] = self.logarithmic_mapping(Y0, self.bases[:, :, i])
         return T_train
-    
+
     def compute_Frechet_mean(
         self, P0, itermax=20, epsilon=1e-6, alpha_0=1e-3, optimal_step=True
     ):
         """
         Function that computes the Frechet mean of the set DoE_bases.
-    
+
         Parameters
         ----------
         P0: np.ndarray[n_DoF,n_modes]
@@ -139,7 +152,12 @@ class SubspacesInterpolation():
         alpha_0: float,  default = 1e-3
             Initial guess for the step of the gradient descend algorithm.
         optimal_step: bool, default = True
-            Use optimal step size .
+            Use optimal step size.
+
+        Returns
+        -------
+        P_star: np.ndarray[n_DoF, n_modes]
+            Computed Frechet mean
         """
         it = 0
         cv = 1
@@ -153,7 +171,7 @@ class SubspacesInterpolation():
                 delta_P_temp = self.log_DoE(P_i_temp[0, 0])
                 delta_P_temp_norm = np.linalg.norm(delta_P_temp, axis=(0, 1)) ** 2
                 return delta_P_temp_norm.sum()
-    
+
         i = 0
         obj_fun = []
         while it < itermax and cv > epsilon:
@@ -166,7 +184,7 @@ class SubspacesInterpolation():
                 step = res["x"]
             else:
                 step = alpha_0
-    
+
             delta_P = step * delta_P
             P_i = self.exponential_mapping(
                 P0[np.newaxis, np.newaxis, :, :], delta_P[np.newaxis, np.newaxis, :, :]
@@ -180,7 +198,7 @@ class SubspacesInterpolation():
             it += 1
         P_star = P_i
         return P_star, obj_fun
-    
+
     def compute_tangent_plane_basis_and_DoE_coordinates(
         self, Y0, epsilon=1e-3, compute_GP=True
     ):
@@ -188,7 +206,7 @@ class SubspacesInterpolation():
         Function that computes a basis of a subspace of the tangent plane at Y0
         It is done from a set of vector that belong to this tangent plane,
         and the coefficients of the tangent vectors in this basis.
-    
+
         Parameters
         ----------
         Y0: np.ndarray[n_DoF,n_modes]
@@ -198,7 +216,7 @@ class SubspacesInterpolation():
             $$\frac{\\sum_i=1^{n_B} s_i}{\\sum_i=1^{n_DoE} s_i}>1-epsilon
         compute_GP: bool (default=True)
             Computes the GP approximation of each coefficient
-    
+
         Returns
         -------
         Basis: np.ndarray[n_DoF*n_modes,n_B]
@@ -218,7 +236,7 @@ class SubspacesInterpolation():
         self.Z_mean = Z.mean(axis=1)
         Z_centered = (Z.T - self.Z_mean).T
         # svd of the Z matrix:
-    
+
         u, s, v = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
         print(
@@ -233,34 +251,29 @@ class SubspacesInterpolation():
                 "WARNING: the dimension of the tangent plane's subspace is equal to the DoE size."
             )
             print("Consider increasing the DoE.")
-    
+
         # truncature
         self.Basis = u[:, : self.n_B]
-    
+
         # projection to get the coefficients in this basis
         self.alpha = np.dot(self.Basis.T, Z_centered)
         if compute_GP:
-            GP = self.compute_GP(self.alpha)
+            self.compute_GP(self.alpha)
         return self.Basis, self.alpha, self.Z_mean
-    
-    def compute_GP(self, alpha, kernel="matern52"):
+
+    def compute_GP(self, alpha, kernel="matern52") -> None:
         """
         Function that computes the GP interpolation functions of each alpha coefficients.
-    
+
         Parameters
         ----------
         alpha: np.ndarray[n_B,n_modes]
             Set of generalized coefficients expressing the tangent vectors in a subspace of the tangent plane.
         kernel: str
             Choice of the kernel of the GPs see SMT documentation.
-    
-        Returns
-        -------
-        GPs: list
-            List of SMT object GP, one per coefficients.
         """
         self.GP = []
-        n=self.n_B
+        n = self.n_B
         for i in range(n):
             gp = KRG(
                 theta0=[1e-2] * self.n_mu,
@@ -271,24 +284,23 @@ class SubspacesInterpolation():
             gp.set_training_values(self.mu_train, alpha[i, :])
             gp.train()
             self.GP.append(gp)
-        return self.GP
-    
+
     def pred_coeff(self, mu, compute_var=False):
         """
         Function that interpolates the coefficients of the tangent vector at n_new parametric points mu.
-    
+
         Parameters
         ----------
         mu: np.ndarray[n_new,n_mu]
             Parametric points where the interpolation should be provided.
         compute_var: bool (default=False)
             Computes the variance of the interpolation.
-    
+
         Returns
         -------
-        coeff: np.ndarray[n_B,n_new]
+        coeff: np.ndarray[n_B, n_new]
             Mean value of the prediction.
-        var: np.ndarray[n_B,n_new]
+        var: np.ndarray[n_B, n_new]
             Variance of the prediction.
         """
         n_new = mu.shape[0]
@@ -304,13 +316,13 @@ class SubspacesInterpolation():
             for i in range(n):
                 var[i] = self.GP[i].predict_variances(mu)[:, 0]
             return coeff, var
-    
+
     def interp_POD_basis(
         self, mu, compute_realizations=False, n_real=1, fixed_xi=False, xi=None
     ):
         """
         Function that computes the interpolation of the POD basis at n_new parametric points mu.
-    
+
         Parameters
         ----------
         mu: np.ndarray[n_new,n_mu]
@@ -319,12 +331,12 @@ class SubspacesInterpolation():
             Compute n_real random realizations of the interpolation.
         n_real: float
             Number of random realizations.
-    
+
         Returns
         -------
-        Basis: np.ndarray[n_mu,n_real,n_DoF,n_modes]
+        Basis: np.ndarray[n_mu, n_real, n_DoF, n_modes]
             POD basis at points mu.
-        Basis_real: np.ndarray[n_mu,n_real,n_DoF,n_modes]
+        Basis_real: np.ndarray[n_mu, n_real, n_DoF, n_modes]
             Random POD bases at points mu.
         """
         n_new = mu.shape[0]
@@ -333,6 +345,18 @@ class SubspacesInterpolation():
             coeff = self.pred_coeff(mu)
             # compute the corresponding tangent vectors
             Zi = np.dot(self.Basis, coeff) + self.Z_mean[:, np.newaxis]
+            print("Z_tilde_shape", Zi.shape)
+            # injectivity test to
+            pca = PCA(svd_solver="randomized", random_state=42)
+            pca.fit(Zi)
+            singular_values = pca.singular_values_
+            keep_injectivity = max(singular_values) < np.pi / 2
+            if not (keep_injectivity):
+                raise ValueError(
+                    "There is loss of injectivity for the interpolation of subspaces."
+                )
+            else:
+                print("no loss of injectivity")
             # reshape to get the matrices
             Ti = Zi.reshape((self.n_DoF, self.n_modes, n_new, 1))
             # transpose to apply the SVD in exp map to each matrix
@@ -341,7 +365,7 @@ class SubspacesInterpolation():
             Ti[ind] = 0.0
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
-    
+
             return Yi
         elif compute_realizations:
             if n_new != 1:
@@ -365,6 +389,7 @@ class SubspacesInterpolation():
             coeff_MC = (coeff.T)[:, :, np.newaxis] + var_coeff
             # compute the tangent vector
             Zi = np.dot(self.Basis, coeff_MC) + self.Z_mean[:, np.newaxis, np.newaxis]
+
             # reshape to get the matrix
             Ti = Zi.reshape((self.n_DoF, self.n_modes, n_new, n_real))
             # transpose to apply the SVD in exp map to each matrix
@@ -372,20 +397,20 @@ class SubspacesInterpolation():
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
             return Yi[:, -1, :, :], Yi[:, :-1, :, :]
-    
+
     def GP_GC(self, Yi, separate_variables=True, DoE=None):
         """
         Function that computes the GP interpolation of the generalized coordinates (GC) on a given basis.
-    
+
         Parameters
         ----------
-        Yi: np.ndarray[n_DOF,n_modes]
-    
+        Yi: np.ndarray[n_DOF, n_modes]
+            A point on the Grassmann manifold Gr(n_DoF,n_modes)
         separate_variables: bool (default=True)
             Either to interpolate the GC by a separation of variables approach or not.
         DoE: np.ndarray
             If separate_variables is set to False, DoE to use to learn the GP of the GC.
-    
+
         Returns
         -------
         GP_GC: list
@@ -426,9 +451,9 @@ class SubspacesInterpolation():
                     gp.train()
                     gp_coeff.append(gp)
                 self.GP_coeff.append(gp_coeff)
-    
+
             return self.GP_coeff, self.Bases_coeff, self.Mean_coeff
-    
+
         elif not (separate_variables):
             self.GP_coeff = []
             for i in range(self.n_modes):
@@ -443,23 +468,23 @@ class SubspacesInterpolation():
                 gp_coeff.append(gp)
                 self.GP_coeff.append(gp_coeff)
             return self.GP_coeff
-    
+
     def approx_NI_cst_basis(self, Yi, mu, realizations=False, n_real=None):
         """
         Computes the approximation of the response by non intrusive approach.
         Uncertainty quantification can be performed with respect to the GC interpolation.
-    
+
         Parameters
         ----------
         Yi: np.ndarray[n_DOF,n_modes]
-    
+
         mu: np.ndarray[1,n_mu]
             Parametric points where the interpolation should be provided.
         realizations: bool (default=False)
             Computes n_real random realizations of the interpolation.
         n_real: int
             If realizations is set to True, number of samples to draw.
-    
+
         Returns
         -------
         Approx: np.ndarray
@@ -485,7 +510,7 @@ class SubspacesInterpolation():
                     coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
                         self.Bases_coeff[i], gamma_hat_real
                     )
-    
+
                 U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
                 U_approx_MC.append(U_approx_hat)
             U_approx_MC = np.array(U_approx_MC)
@@ -495,7 +520,7 @@ class SubspacesInterpolation():
             for i in range(self.n_modes):
                 for j in range(self.n_DoE):
                     gamma_hat[i, j] = self.GP_coeff[i][j].predict_values(mu)[0]
-    
+
             coeff_hat = np.zeros((self.n_modes, self.n_t))
             for i in range(self.n_modes):
                 gamma_hat_real = np.zeros((self.n_DoE,))
@@ -504,11 +529,11 @@ class SubspacesInterpolation():
                 coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
                     self.Bases_coeff[i], gamma_hat_real
                 )
-    
+
             U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
-    
+
             return U_approx_hat
-    
+
     def approx_NI(
         self,
         mu,
@@ -522,7 +547,7 @@ class SubspacesInterpolation():
         """
         Computes a GP interpolation of both the basis and the GC.
         Interpolation uncertainty for both the basis and te GC can be evaluated by Monte Carlo sampling.
-    
+
         Parameters
         ----------
         mu: np.ndarray[1,n_mu]
@@ -535,9 +560,9 @@ class SubspacesInterpolation():
             If UQ_basis is set to True, size of the Monte Carlo sample for the basis.
         n_real_GC: int
             If UQ_GC is set to True, size of the Monte Carlo sample for the GC.
-    
+
         WARNING : if UQ_basis set to True and UQ_GC set to True, the MC sample size is n_real_basis*n_real_GC.
-    
+
         Returns
         -------
         """
@@ -598,11 +623,11 @@ class SubspacesInterpolation():
                 Yi[0, 0], mu, realizations=True, n_real=n_real_GC
             )
             return approx, approx_MC
-    
+
     def interp_POD_basis_RBF(self, mu, Y0, epsilon=1.0):
         """
         Function that computes the interpolation of the POD basis at a new parametric point mu by RBF.
-    
+
         Parameters
         ----------
         mu: np.ndarray[1,n_mu]
@@ -611,10 +636,10 @@ class SubspacesInterpolation():
             A point on the Grassmann manifold Gr(n_DoF,n_modes).
         epsilon : float
             Correlation lenght of the gaussian kernel.
-    
+
         Returns
         -------
-        Basis: np.ndarray[n_DoF,n_modes]
+        Basis: np.ndarray[n_DoF, n_modes]
             POD basis at points mu.
         """
         R1 = np.repeat(self.mu_train, self.n_DoE, 0)
@@ -629,27 +654,27 @@ class SubspacesInterpolation():
         T_train = self.log_DoE(Y0)
         # interpolation
         T_new = np.sum(T_train * w, axis=2)
-    
+
         # exponential mapping
         Yi = self.exponential_mapping(Y0, T_new[np.newaxis, np.newaxis, :, :])
         return Yi[0, 0]
-    
+
     def _gaussian_kernel(self, r, epsilon=1.0):
         return np.exp(-((r / epsilon) ** 2))
-    
+
     def interp_POD_basis_IDW(self, mu, P0, p=2, epsilon=1e-3, itermax=100):
         """
         Function that computes the interpolation of the POD basis at a new parametric point mu by IDW.
-    
+
         Parameters
         -----------
-        mu: np.ndarray[1,n_mu]
+        mu: np.ndarray[1, n_mu]
             Parametric points where the interpolation should be provided.
         P0: np.ndarray[n_DoF,n_modes]
             Initial guess.
         p: float
             The inverse distance is defined as a function of d(mu,mu_i)**p
-    
+
         Returns
         -------
         Y_i: np.ndarray[n_DoF,n_modes]
@@ -679,23 +704,8 @@ class SubspacesInterpolation():
             Yi = self.exponential_mapping(P0, T_new[np.newaxis, np.newaxis, :, :])[0, 0]
             P0 = Yi
             n_iter += 1
-    
+
         return Yi, l_res, n_iter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class PODI(SurrogateBasedApplication):
@@ -706,14 +716,26 @@ class PODI(SurrogateBasedApplication):
     ----------
     pod_type : str
         Indicates which type of POD should be performed ('global' or 'local')
+    nx : int
+        Dimension of the inputs in the DoE;
+    n_snapshot : int
+        Number of snapshots in the database.
+    ny : int
+        Dimension of the vector associated to a snapshot
+    database : np.ndarray[ny, n_snapshot]
+        Database containing the vectorial snapshots.
     n_modes : int
         Number of kept modes during the POD.
+    basis : np.ndarray[ny, n_modes]
+        POD basis.
+    EV_ratio : float
+        Ratio of explained variance according to the kept modes during the POD (only for global POD).
     singular_vectors : np.ndarray
-        Singular vectors of the POD.
+        Singular vectors of the POD (only for global POD).
     singular_values : np.ndarray
-        Singular values of the POD.
+        Singular values of the POD (only for global POD).
     interp_coeff : list[SurrogateModel]
-        List containing the surrogate models used.
+        List containing the surrogate models used during the interpolation.
 
     Examples
     --------
@@ -738,6 +760,7 @@ class PODI(SurrogateBasedApplication):
 
         self.pod_computed = False
         self.interp_options_set = False
+        self.training_values_set = False
         self.train_done = False
 
         self.interp_coeff = None
@@ -770,61 +793,96 @@ class PODI(SurrogateBasedApplication):
         return len(EV_list)
 
     @staticmethod
-    def interp_subspaces(xt1, input_matrices, xn1, frechet = False, method = 'KRG'):
-        ###############méthode employée
-        nn = xn1.shape[0]
+    def interp_subspaces(
+        xt1,
+        input_matrices,
+        xn1,
+        ref_index=0,
+        frechet=False,
+        frechet_guess=None,
+        method="KRG",
+    ) -> list:
+        """
+        Static method computing the interpolation of subspaces.
 
+        Parameters
+        ----------
+        xt1 : np.ndarray[n_snapshot, dim]
+            The input scalar values corresponding to each local bases.
+            dim = dimension of parametric space for local bases
+        input_matrices : list[np.ndarray[ny, n_modes]]
+            List containing the local bases for the subspaces' interpolation.
+            Each matrix is associated to a scalar value from xt1.
+        xn1 : np.ndarray[nn, dim]
+            The scalar values at which we want to compute a local basis.
+            dim = dimension of parametric space for local bases
+        ref_index : int
+            Index of the local base from 'input_matrices' we want to use as the reference point. Default value is 0.
+            (Only if frechet set to False)
+        frechet : bool
+            Indicates if the frechet's mean should be computed.
+        frechet_guess : np.ndarray[ny, n_modes]
+            Initial guess for the frechet's mean. Default value is the fisrt local basis of 'input_matrices'.
+            (Only if frechet set to True)
+
+        Returns
+        -------
+        interpolated_bases : list[np.ndarray[ny, n_modes]]
+            List of the output bases at each desired value of xn1.
+        """
+        nn = xn1.shape[0]
         ny, n_modes = input_matrices[0].shape
-        ###nombre de mode doit être cohérent avec database, dimension ny aussi, nombre de bases cohérentavec nombre de paramètres
         n_bases = len(input_matrices)
+
+        if n_bases != nn:
+            raise ValueError(
+                f"there must be the same amount of local bases than xt1 values, {n_bases} != {nn}."
+            )
+        
         DoE_bases = np.zeros((ny, n_modes, n_bases))
         for i, basis in enumerate(input_matrices):
-            DoE_bases[:,:,i] = basis
+            DoE_bases[:, :, i] = basis
 
-        interp = SubspacesInterpolation(DoE_mu = xt1, DoE_bases = DoE_bases)
+        interp = SubspacesInterpolation(DoE_mu=xt1, DoE_bases=DoE_bases)
 
         if frechet:
-            Y0_frechet, _ = interp.compute_Frechet_mean(P0 = input_matrices[0])
+            if frechet_guess is not None:
+                P0 = frechet_guess
+            else:
+                P0 = input_matrices[0]
+            Y0_frechet, _ = interp.compute_Frechet_mean(P0=P0)
             Y0 = Y0_frechet
         else:
-            Y0 = input_matrices[0]
+            Y0 = input_matrices[ref_index]
 
-        if method == 'KRG':
-            interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0 = Y0)
+        if method == "KRG":
+            interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0=Y0)
             Yi_full = interp.interp_POD_basis(xn1)
-            yi = np.squeeze(Yi_full, axis = 1)
+            yi = np.squeeze(Yi_full, axis=1)
             interpolated_bases = []
             for i in range(nn):
-                interpolated_basis = yi[i,:,:]
+                interpolated_basis = yi[i, :, :]
                 interpolated_bases.append(interpolated_basis)
-            
-            #print(interpolated_bases[0])
+
             return interpolated_bases
 
     def compute_global_pod(
         self,
         tol: float = None,
         n_modes: int = None,
-        compute_errors: bool = False,
-        seed: int = None
+        seed: int = None,
     ) -> None:
         """
         Performs the global POD.
 
         Parameters
         ----------
-        database : np.ndarray[ny, nt]
-            Snapshot matrix. Each column corresponds to a snapshot.
         tol : float
             Desired tolerance for the pod (if n_modes not set).
         n_modes : int
             Desired number of kept modes for the pod (if tol not set).
         seed : int
             seed number which controls random draws for internal optim. (optional)
-
-        Examples
-        ----------
-        >>> sm.compute_pod(database, tol = 0.99)
         """
         choice_svd = None
 
@@ -861,50 +919,63 @@ class PODI(SurrogateBasedApplication):
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
         self.basis = self.singular_vectors[:, : self.n_modes]
-        
-        if compute_errors:
-            self.compute_proj_interp_errors()
 
     def compute_pod(
         self,
-        xt: np.ndarray,
         database: np.ndarray,
         pod_type: str = "global",
         tol: float = None,
         n_modes: int = None,
         seed: int = None,
-        compute_errors: bool = False,
-        interpolated_basis: np.ndarray = None
+        local_basis: np.ndarray = None,
     ) -> None:
-        self.xt = ensure_2d_array(xt, "xt")
+        """
+        Performs the POD.
+
+        Parameters
+        ----------
+        database : np.ndarray[ny, n_snapshot]
+            Snapshot matrix. Each column corresponds to a snapshot.
+        pod_type : str
+            Name of the pod type that should be performed : 'global' or 'local'. Default value is 'global'.
+        tol : float
+            Desired tolerance for the pod (if n_modes not set).
+            Only for global POD, pod_type set to 'global'.
+        n_modes : int
+            Desired number of kept modes for the pod (if tol not set).
+            Only for global POD, pod_type set to 'global'.
+        seed : int
+            Seed number which controls random draws for internal optim. (optional)
+            Only for global POD, pod_type set to 'global'.
+        local_basis : np.ndarray[ny, n_modes]
+            Local basis used for the local POD.
+
+        Examples
+        --------
+        >>> sm.compute_pod(database, pod_type = 'global', tol = 0.99)
+        >>> sm.compute_pod(database, pod_type = 'local', local_basis = basis)
+        """
         self.database = ensure_2d_array(database, "database")
         self.n_snapshot = database.shape[1]
 
-        self.nt = xt.shape[0]
-        self.nx = xt.shape[1]
-
-        if self.nt != self.n_snapshot:
-            raise ValueError(
-                f"there must be the same amount of train values than data values, {self.nt} != {self.n_snapshot}."
-            )
-
         self.ny = database.shape[0]
-
-        
 
         self.mean = np.atleast_2d(database.mean(axis=1)).T
 
         if pod_type == "global":
-            self.compute_global_pod(
-                tol=tol, n_modes=n_modes, seed=seed, compute_errors=compute_errors
-            )
+            self.compute_global_pod(tol=tol, n_modes=n_modes, seed=seed)
         elif pod_type == "local":
-            if interpolated_basis is None:
+            if local_basis is None:
+                raise ValueError("'local_basis' should be specified")
+            self.n_modes = local_basis.shape[1]
+
+            ny = local_basis.shape[0]
+            if ny != self.ny:
                 raise ValueError(
-                    "'interpolated_basis' should be specified"
-                )
-            self.n_modes = interpolated_basis.shape[1]
-            self.basis = interpolated_basis
+                f"the first dimension of the database and the local basis must be the same, {ny} != {self.ny}."
+            )
+
+            self.basis = local_basis
         else:
             raise ValueError(
                 f"the pod type should be 'global' or 'local', not {pod_type}."
@@ -916,49 +987,79 @@ class PODI(SurrogateBasedApplication):
 
         self.pod_computed = True
         self.interp_options_set = False
-    
-    def compute_proj_interp_errors(self):
-        interp_error_list = []
-        proj_error_list = []
+
+    def compute_pod_errors(self, xt) -> list:
+        """
+        Calculates different errors for the POD.
+
+        Parameters
+        ----------
+        xt : np.ndarray[n_snapshot, nx]
+            The input values for the n_snapshot training points.
+
+        Returns
+        -------
+        error_list : list[float]
+            List of 3 POD errors : projection error, interpolation error and total error (projection and interpolation).
+        """
+        if not self.pod_computed:
+            print("OOF")
+
+        xt = ensure_2d_array(xt, "xt")
+
+        nt = xt.shape[0]
+
+        if nt != self.n_snapshot:
+            raise ValueError(
+                f"there must be the same amount of train values than data values, {nt} != {self.n_snapshot}."
+            )
+
+        max_interp_error = 0
+        max_proj_error = 0
+        max_total_error = 0
+
         for n in range(self.n_snapshot):
-            reducted_database = np.concatenate((self.database[:,:n], self.database[:,n+1:]), axis=1)
-            reducted_xt = np.concatenate((self.xt[:n], self.xt[n+1:]))
+            reduced_database = np.concatenate(
+                (self.database[:, :n], self.database[:, n + 1 :]), axis=1
+            )
+            reduced_xt = np.concatenate((self.xt[:n], self.xt[n + 1 :]))
             single_snapshot = np.atleast_2d(self.database[:, n]).T
             single_xt = np.atleast_2d(self.xt[n])
-            
-            podi = PODI()
-            podi.compute_pod(xt = reducted_xt, database=reducted_database, compute_errors=False)
-            reducted_mean = np.atleast_2d(reducted_database.mean(axis=1)).T
-            reducted_basis = podi.get_singular_vectors()
-            n_modes = podi.get_n_modes()
-            
-            proj = np.atleast_2d(np.dot(single_snapshot.T - reducted_mean.T, reducted_basis)).T
-            reconstructed = reducted_mean + reducted_basis.dot(proj)
-            proj_error = reconstructed - single_snapshot
-            rms_proj_error = np.sqrt(np.mean(proj_error**2))
-            proj_error_list.append(rms_proj_error)
 
+            podi = PODI()
+            podi.compute_pod(database=reduced_database)
+            reduced_mean = np.atleast_2d(reduced_database.mean(axis=1)).T
+            reduced_basis = podi.get_singular_vectors()
+            n_modes = podi.get_n_modes()
+
+            true_coeff = np.atleast_2d(
+                np.dot(single_snapshot.T - reduced_mean.T, reduced_basis)
+            ).T
+            recomposed = reduced_mean + reduced_basis.dot(true_coeff)
+            proj_error = recomposed - single_snapshot
+            rms_proj_error = np.sqrt(np.mean(proj_error**2))
+            max_proj_error = max(max_proj_error, rms_proj_error)
+
+            podi.set_training_values(xt=reduced_xt)
             podi.train()
-            reducted_interp_coeff = podi.get_interp_coeff()
+            reduced_interp_coeff = podi.get_interp_coeff()
             mean_coeff_interp = np.zeros((n_modes, 1))
-            
-            for i, coeff in enumerate(reducted_interp_coeff):
+
+            for i, coeff in enumerate(reduced_interp_coeff):
                 mu_i = coeff.predict_values(single_xt)
                 mean_coeff_interp[i] = mu_i[:, 0]
-                
-            true_coeff = np.atleast_2d(np.dot(single_snapshot.T - reducted_mean.T, reducted_basis)).T
 
             interp_error = mean_coeff_interp - true_coeff
             rms_interp_error = np.sqrt(np.mean(interp_error**2))
-            interp_error_list.append(rms_interp_error)
-        max_interp_error = max(interp_error_list)
-        max_proj_error = max(proj_error_list)
-        
-        if max_interp_error > 1e-2:
-            warnings.warn(f"The interpolation error is too high, please consider searching for an issue in the data.")
-        if max_proj_error > 1e-2:
-            warnings.warn(f"The interpolation error is too high, please consider searching for an issue in the data.")
-            
+            max_interp_error = max(max_interp_error, rms_interp_error)
+
+            recomposed = reduced_mean + reduced_basis.dot(mean_coeff_interp)
+            total_error = recomposed - single_snapshot
+            rms_total_error = np.sqrt(np.mean(total_error**2))
+            max_total_error = max(max_total_error, rms_total_error)
+
+        return [max_interp_error, max_proj_error, max_total_error]
+
     def get_singular_vectors(self) -> np.ndarray:
         """
         Getter for the singular vectors of the global POD.
@@ -967,11 +1068,19 @@ class PODI(SurrogateBasedApplication):
         Returns
         -------
         singular_vectors : np.ndarray
-            singular vectors of the global POD.
+            Singular vectors of the global POD.
         """
         return self.singular_vectors
-    
+
     def get_basis(self) -> np.ndarray:
+        """
+        Getter for the basis used for the POD.
+
+        Returns
+        -------
+        basis : np.ndarray
+            Basis of the POD.
+        """
         return self.basis
 
     def get_singular_values(self) -> np.ndarray:
@@ -983,7 +1092,7 @@ class PODI(SurrogateBasedApplication):
         singular_values : np.ndarray
             Singular values of the POD.
         """
-        return self.singular_values  #############only if global ?
+        return self.singular_values
 
     def get_ev_ratio(self) -> float:
         """
@@ -994,7 +1103,7 @@ class PODI(SurrogateBasedApplication):
         EV_ratio : float
             Explained variance ratio with the current kept modes.
         """
-        return self.EV_ratio  ################## only if global ?
+        return self.EV_ratio
 
     def get_n_modes(self) -> int:
         """
@@ -1071,21 +1180,18 @@ class PODI(SurrogateBasedApplication):
 
         self.interp_options_set = True
 
-
-    """
     def set_training_values(self, xt: np.ndarray) -> None:
-        
+        """
         Set training data (values).
         If the models' options are still not set, default values are used for the initialization.
 
         Parameters
         ----------
-        xt : np.ndarray[nt, nx]
-            The input values for the nt training points.
-        
+        xt : np.ndarray[n_snapshot, nx]
+            The input values for the n_snapshot training points.
+        """
 
         xt = ensure_2d_array(xt, "xt")
-
         if not self.pod_computed:
             raise RuntimeError(
                 "'compute_pod' method must have been succesfully executed before trying to set the training values."
@@ -1094,23 +1200,18 @@ class PODI(SurrogateBasedApplication):
             self.interp_coeff = []
             for i in range(self.n_modes):
                 sm_i = PODI_available_models["KRG"](print_global=False)
-
                 self.interp_coeff.append(sm_i)
             self.interp_options_set = True
-
-        self.nt = xt.shape[0]
+        nt = xt.shape[0]
         self.nx = xt.shape[1]
-
-        if self.nt != self.n_snapshot:
+        if nt != self.n_snapshot:
             raise ValueError(
-                f"there must be the same amount of train values than data values, {self.nt} != {self.n_snapshot}."
+                f"there must be the same amount of train values than snapshots, {nt} != {self.n_snapshot}."
             )
         for i in range(self.n_modes):
             self.interp_coeff[i].set_training_values(xt, self.coeff[:, i])
-
         self.training_values_set = True
-    """
-        
+
     def train(self) -> None:
         """
         Performs the training of the model.
@@ -1119,19 +1220,12 @@ class PODI(SurrogateBasedApplication):
             raise RuntimeError(
                 "'compute_pod' method must have been succesfully executed before trying to train the models."
             )
-        
-        if not self.interp_options_set:
-            self.interp_coeff = []
-            for i in range(self.n_modes):
-                sm_i = PODI_available_models["KRG"](print_global=False)
-
-                self.interp_coeff.append(sm_i)
-            self.interp_options_set = True
-
-        for i, interp_coeff in enumerate(self.interp_coeff):
-            interp_coeff.set_training_values(self.xt, self.coeff[:, i])
+        if not self.training_values_set:
+            raise RuntimeError(
+                "the training values should have been set before trying to train the models."
+            )
+        for interp_coeff in self.interp_coeff:
             interp_coeff.train()
-
         self.train_done = True
 
     def get_interp_coeff(self) -> np.ndarray:
@@ -1151,12 +1245,12 @@ class PODI(SurrogateBasedApplication):
 
         Parameters
         ----------
-        xn : np.ndarray
+        xn : np.ndarray[n_new, nx]
             Input values for the prediction points.
 
         Returns
         -------
-        yn : np.ndarray
+        yn : np.ndarray[n_new, nx]
             Output values at the prediction points.
         """
         if not self.train_done:
@@ -1166,11 +1260,11 @@ class PODI(SurrogateBasedApplication):
 
         xn = ensure_2d_array(xn, "xn")
 
-        self.dim_new = xn.shape[1]
+        dim_new = xn.shape[1]
 
-        if self.dim_new != self.nx:
+        if dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {dim_new} != {self.nx}"
             )
 
         self.n_new = xn.shape[0]
@@ -1190,12 +1284,12 @@ class PODI(SurrogateBasedApplication):
 
         Parameters
         ----------
-        xn : np.ndarray[nt, nx]
+        xn : np.ndarray[n_new, nx]
             Input values for the prediction points.
 
         Returns
         -------
-        s2 : np.ndarray[nt, ny]
+        s2 : np.ndarray[ny, n_new]
             Variances.
         """
 
@@ -1210,7 +1304,7 @@ class PODI(SurrogateBasedApplication):
 
         if dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {dim_new} != {self.nx}"
             )
 
         self.n_new = xn.shape[0]
@@ -1230,14 +1324,14 @@ class PODI(SurrogateBasedApplication):
 
         Parameters
         ----------
-        xn : np.ndarray[nt, nx]
+        xn : np.ndarray[n_new, nx]
             Input values for the prediction points.
         kx : int
             The 0-based index of the input variable with respect to which derivative is desired.
 
         Returns
         -------
-        dy_dx : np.ndarray[nt, ny]
+        dy_dx : np.ndarray[ny, n_new]
             Derivatives.
         """
         d = kx
@@ -1258,7 +1352,7 @@ class PODI(SurrogateBasedApplication):
 
         if dim_new != self.nx:
             raise ValueError(
-                f"the data values and the new values must be the same size, here {self.dim_new} != {self.nx}"
+                f"the data values and the new values must be the same size, here {dim_new} != {self.nx}"
             )
 
         self.n_new = xn.shape[0]

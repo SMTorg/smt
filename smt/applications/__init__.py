@@ -17,5 +17,5 @@ __all__ = [
     "EGO",
     "Evaluator",
     "PODI",
-    "SubspacesInterpolation"
+    "SubspacesInterpolation",
 ]

@@ -2,7 +2,6 @@
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
-import unittest
 from smt.utils.sm_test_case import SMTestCase
 from sklearn.decomposition import PCA
 
@@ -20,10 +19,12 @@ def cos_coeff(i: int, x: np.ndarray):
     a = 2 * i % 2 - 1
     return a * x[:, 0] * np.cos(i * x[:, 0])
 
+
 def cos_coeff_nd(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the multi dimensions problem."""
     a = 2 * i % 2 - 1
     return a * sum(x.T) * np.cos(i * sum(x.T))
+
 
 def Legendre(i: int, t: np.ndarray):
     """Generates the i-th Legendre's polynom and returns its values at input values."""
@@ -36,88 +37,9 @@ class Test(SMTestCase):
 
     def setUp(self):
         """Sets up the test case for the tests."""
-        
+
         self.full_database = self.pb_1d()
-        self.database = self.full_database[:, :self.nt]
-
-    def pb_1d(self) -> np.ndarray:
-            """
-            Constructs the one-dimension problem
-
-            Parameters
-            ----------
-            x : np.ndarray
-                Array containing the snapshot values : each row corresponds to a specific snapshot.
-
-            Returns
-            -------
-            database : np.ndarray
-                Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
-            """
-            self.seed = 42
-            
-            self.ny = 100
-            self.t = np.linspace(-1, 1, self.ny)
-            self.n_modes_test = 10
-            
-            xlimits = np.array([[0, 4]])
-            sampling = LHS(xlimits=xlimits, random_state=self.seed)
-            self.nt = 40
-            self.xt = sampling(self.nt)
-            self.nn = 15
-            self.xn = sampling(self.nn)
-            self.nv = 10 * self.nt
-            self.xv = sampling(self.nv)
-            self.x = np.concatenate((self.xt, self.xv))
-            
-            u0 = np.zeros((self.ny, 1))
-
-            alpha = np.zeros((self.x.shape[0], self.n_modes_test))
-            for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coeff(i, self.x)
-
-            V_init = np.zeros((self.ny, self.n_modes_test))
-            for i in range(self.n_modes_test):
-                V_init[:, i] = Legendre(i, self.t)
-
-            V = Test.gram_schmidt(V_init.T).T
-            database = u0 + np.dot(V, alpha.T)
-            self.basis_original = V
-
-            return database
-    
-    def pb_nd_global(self, nt = 100) -> np.ndarray:
-        self.seed = 42
-        
-        self.ny = 100
-        self.t = np.linspace(-1, 1, self.ny)
-        self.n_modes_test = 10
-        
-        xlimits = np.array([[0, 1], [0, 1]])
-        sampling = LHS(xlimits=xlimits, random_state=self.seed)
-        self.nt = nt
-        self.xt = sampling(self.nt)
-        self.nn = 15
-        self.xn = sampling(self.nn)
-        self.nv = 15
-        self.xv = sampling(self.nv)
-        self.x = np.concatenate((self.xt, self.xv))
-        
-        u0 = np.zeros((self.ny, 1))
-
-        alpha = np.zeros((self.x.shape[0], self.n_modes_test))
-        for i in range(self.n_modes_test):
-            alpha[:, i] = cos_coeff_nd(i, self.x)
-
-        V_init = np.zeros((self.ny, self.n_modes_test))
-        for i in range(self.n_modes_test):
-            V_init[:, i] = Legendre(i, self.t)
-
-        V = Test.gram_schmidt(V_init.T).T
-        database = u0 + np.dot(V, alpha.T)
-        self.basis_original = V
-
-        return database
+        self.database = self.full_database[:, : self.nt]
 
     @staticmethod
     def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
@@ -162,61 +84,113 @@ class Test(SMTestCase):
             proj = projection[:, i]
             norm_residue[i] = np.linalg.norm(basis_pod[:, i] - proj)
         return norm_residue
-    
-    def pb_nd_local(self, nt1 = 10, nt2 = 10) -> np.ndarray:
-            """
-            Constructs the multi-dimension problem
 
-            Returns
-            -------
-            database : np.ndarray
-                Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
-            """
-            self.seed = 42
-            
-            self.ny = 100
-            self.t = np.linspace(-1, 1, self.ny)
-            self.n_modes_test = 10
-            
-            xlimits = [[0, 1], [0, 4]]
-            sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
-            sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed+1)
+    def pb_1d(self, nt = 40) -> np.ndarray:
+        """
+        Constructs the one-dimension problem
 
-            self.nt1 = nt1
-            #nt1 30
-            self.nt2 = nt2
-            #nt2 15
-            self.nt = self.nt1*self.nt2
-            self.xt1 = sampling_x1(self.nt1)
-            self.xt2 = sampling_x2(self.nt)
-            self.xt = np.zeros((self.nt,2))
-            self.xt[:,1] = self.xt2[:,0]
-            for i, elt in enumerate(self.xt1):
-                self.xt[i*self.nt2 : (i+1)*self.nt2, 0] = elt
-            
-            sampling_new = LHS(xlimits = np.array(xlimits), random_state = self.seed)
+        Parameters
+        ----------
+        nt : int
+            Number of training values desired (number of snapshot).
 
-            self.nn = 15
-            self.xn = sampling_new(self.nn)
-            self.nv = 10
-            self.xv = sampling_new(self.nv)
-            self.x = np.concatenate((self.xt, self.xv))
-            
-            u0 = np.zeros((self.ny, 1))
+        Returns
+        -------
+        database : np.ndarray
+            Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
+        """
+        self.seed = 42
 
-            alpha = np.zeros((self.x.shape[0], self.n_modes_test))
-            for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coeff_nd(i, self.x)
+        self.ny = 100
+        self.t = np.linspace(-1, 1, self.ny)
+        self.n_modes_test = 10
 
-            V_init = np.zeros((self.ny, self.n_modes_test))
-            for i in range(self.n_modes_test):
-                V_init[:, i] = Legendre(i, self.t)
+        xlimits = np.array([[0, 4]])
+        sampling = LHS(xlimits=xlimits, random_state=self.seed)
+        self.nt = nt
+        self.xt = sampling(self.nt)
+        self.nn = 15
+        self.xn = sampling(self.nn)
+        self.nv = 10 * self.nt
+        self.xv = sampling(self.nv)
+        self.x = np.concatenate((self.xt, self.xv))
 
-            V = Test.gram_schmidt(V_init.T).T
-            database = u0 + np.dot(V, alpha.T)
-            self.basis_original = V
+        u0 = np.zeros((self.ny, 1))
 
-            return database
+        alpha = np.zeros((self.x.shape[0], self.n_modes_test))
+        for i in range(self.n_modes_test):
+            alpha[:, i] = cos_coeff(i, self.x)
+
+        V_init = np.zeros((self.ny, self.n_modes_test))
+        for i in range(self.n_modes_test):
+            V_init[:, i] = Legendre(i, self.t)
+
+        V = Test.gram_schmidt(V_init.T).T
+        database = u0 + np.dot(V, alpha.T)
+        self.basis_original = V
+
+        return database
+
+    def pb_2d_local(self, nt1=10, nt2=10) -> np.ndarray:
+        """
+        Constructs the two-dimension problem adapted for local POD (can be used for global POD as well).
+
+        Parameters
+        ----------
+        nt1 : int
+            Number of values for the first dimension of the inputs.
+            Each one of these values will correspond to a line in the DoE. 
+        nt2 : int
+            Number of values for the second dimension of the inputs.
+
+        Returns
+        -------
+        database : np.ndarray
+            Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
+        """
+        self.seed = 42
+
+        self.ny = 100
+        self.t = np.linspace(-1, 1, self.ny)
+        self.n_modes_test = 10
+
+        xlimits = [[0, 1], [0, 4]]
+        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
+        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed + 1)
+
+        self.nt1 = nt1
+        self.nt2 = nt2
+        self.nt = self.nt1 * self.nt2
+        self.xt1 = sampling_x1(self.nt1)
+        self.xt2 = sampling_x2(self.nt)
+        self.xt = np.zeros((self.nt, 2))
+        self.xt[:, 1] = self.xt2[:, 0]
+        for i, elt in enumerate(self.xt1):
+            self.xt[i * self.nt2 : (i + 1) * self.nt2, 0] = elt
+
+        sampling_new = LHS(xlimits=np.array(xlimits), random_state=self.seed)
+
+        self.nn = 15
+        self.xn = sampling_new(self.nn)
+        self.nv = 10
+        self.xv = sampling_new(self.nv)
+        self.x = np.concatenate((self.xt, self.xv))
+
+        u0 = np.zeros((self.ny, 1))
+
+        alpha = np.zeros((self.x.shape[0], self.n_modes_test))
+        for i in range(self.n_modes_test):
+            alpha[:, i] = cos_coeff_nd(i, self.x)
+
+        V_init = np.zeros((self.ny, self.n_modes_test))
+        for i in range(self.n_modes_test):
+            V_init[:, i] = Legendre(i, self.t)
+
+        V = Test.gram_schmidt(V_init.T).T
+        database = u0 + np.dot(V, alpha.T)
+        self.basis_original = V
+
+        return database
 
     def test_predict(self):
         """Tests the predict methods."""
@@ -315,7 +289,7 @@ class Test(SMTestCase):
             for key in options_local[i].keys():
                 self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
-    def test_pod(self):
+    def test_global_pod(self):
         """Tests the computing of the pod."""
 
         sm = PODI()
@@ -345,7 +319,9 @@ class Test(SMTestCase):
         singular_values = sm.get_singular_values()
         self.assertEqual(len(singular_values), min(self.nt, self.ny))
         np.testing.assert_allclose(
-            singular_values[n_modes:], np.zeros(min(self.nt, self.ny) - n_modes), atol=1e-6
+            singular_values[n_modes:],
+            np.zeros(min(self.nt, self.ny) - n_modes),
+            atol=1e-6,
         )
 
         norm_residue = Test.check_projection(self.basis_original, basis_pod)
@@ -382,133 +358,185 @@ class Test(SMTestCase):
             sm.train()
 
     def test_global(self):
-        full_database = self.pb_nd_local(nt1 = 10, nt2 = 15)
-        database = full_database[:, :self.nt]
-        db_validation = full_database[:, self.nt:]
+        full_database = self.pb_2d_local(nt1 = 15, nt2 = 10)
+        database = full_database[:, : self.nt]
+        db_validation = full_database[:, self.nt :]
 
-        plt.figure(figsize = (15,10))
-        plt.scatter(self.xt[:,1], self.xt[:,0], marker = 'x', label = "Training points", color = 'g')
-        plt.scatter(self.xv[:,1], self.xv[:,0], marker = '*', label = "Prediction points", color = 'r')
-        plt.xlabel("x2", fontsize = 14)
-        plt.ylabel("x1", fontsize = 14)
-        plt.title("Training and Prediction points", fontsize = 14)
-        plt.legend(loc = 'upper right', fontsize = 14)
+        plt.figure(figsize=(15, 10))
+        plt.scatter(
+            self.xt[:, 1], self.xt[:, 0], marker="x", label="Training points", color="g"
+        )
+        plt.scatter(
+            self.xv[:, 1],
+            self.xv[:, 0],
+            marker="*",
+            label="Prediction points",
+            color="r",
+        )
+        plt.xlabel("x2", fontsize=14)
+        plt.ylabel("x1", fontsize=14)
+        plt.title("Training and Prediction points", fontsize=14)
+        plt.legend(loc="upper right", fontsize=14)
 
         podi = PODI()
-        podi.compute_pod(xt=self.xt, database=database, compute_errors=False, tol = 0.9999)
+        podi.compute_pod(xt=self.xt, database=database, tol=0.9999)
         print("n_modes", podi.get_n_modes())
-        podi.set_interp_options(interp_type = "KRG")
+        podi.set_interp_options(interp_type="KRG")
+        podi.set_training_values(self.xt)
         podi.train()
         mean_u_x_new = podi.predict_values(self.xv)
-        derivatives = podi.predict_derivatives(self.xv, kx = 0)
         var_u_x_new = podi.predict_variances(self.xv)
 
-        light_pink = np.array((250, 181, 196))/255
+        light_pink = np.array((250, 181, 196)) / 255
         for i in range(self.nv):
-            
-            plt.figure(figsize = (15,10))
+            plt.figure(figsize=(15, 10))
             plt.fill_between(
-            np.ravel(self.t),
-            np.ravel(mean_u_x_new[:, i] - 3*np.sqrt(var_u_x_new[:, i])),
-            np.ravel(mean_u_x_new[:, i] + 3*np.sqrt(var_u_x_new[:, i])),
-            color = light_pink,
-            label = 'confiance interval (99%)'
+                np.ravel(self.t),
+                np.ravel(mean_u_x_new[:, i] - 3 * np.sqrt(var_u_x_new[:, i])),
+                np.ravel(mean_u_x_new[:, i] + 3 * np.sqrt(var_u_x_new[:, i])),
+                color=light_pink,
+                label="confiance interval (99%)",
             )
-            plt.scatter(self.t, mean_u_x_new[:, i], color = 'r', label = 'prediction (mean)', s = 50, marker = '*')
-            
-            plt.scatter(self.t, db_validation[:, i], color = 'b', label = 'reference', s = 50, marker = 'x')
-            
+            plt.scatter(
+                self.t,
+                mean_u_x_new[:, i],
+                color="r",
+                label="prediction (mean)",
+                s=50,
+                marker="*",
+            )
+
+            plt.scatter(
+                self.t,
+                db_validation[:, i],
+                color="b",
+                label="reference",
+                s=50,
+                marker="x",
+            )
+
             diff = np.abs(db_validation[:, i] - mean_u_x_new[:, i])
             rms = np.sqrt(np.mean(diff**2))
 
-            plt.scatter([], [], color = 'w', label = 'error = ' + str(round(rms, 4)))
+            plt.scatter([], [], color="w", label="error = " + str(round(rms, 4)))
             x2 = self.xv[i, 1]
             x1 = self.xv[i, 0]
-            plt.title(f'x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}', fontsize = 14)
-            plt.legend(loc = 'upper right', fontsize = 14)
+            plt.title(f"x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}", fontsize=14)
+            plt.legend(loc="upper right", fontsize=14)
 
         plt.show()
 
-    
     def test_local(self):
-        #checker nombre de modes de chaque base
-        #donner liste de bases
-        full_database = self.pb_nd_local(nt1 = 22, nt2 = 17)
+        full_database = self.pb_2d_local(nt1=22, nt2=12)
 
-        plt.figure(figsize = (15,10))
-        plt.scatter(self.xt[:,1], self.xt[:,0], marker = 'x', label = "Training points", color = 'g')
-        plt.scatter(self.xv[:,1], self.xv[:,0], marker = '*', label = "Prediction points", color = 'r')
-        plt.xlabel("x2", fontsize = 14)
-        plt.ylabel("x1", fontsize = 14)
-        plt.title("Training and Prediction points", fontsize = 14)
-        plt.legend(loc = 'upper right', fontsize = 14)
+        plt.figure(figsize=(15, 10))
+        plt.scatter(
+            self.xt[:, 1], self.xt[:, 0], marker="x", label="Training points", color="g"
+        )
+        plt.scatter(
+            self.xv[:, 1],
+            self.xv[:, 0],
+            marker="*",
+            label="Prediction points",
+            color="r",
+        )
+        plt.xlabel("x2", fontsize=14)
+        plt.ylabel("x1", fontsize=14)
+        plt.title("Training and Prediction points", fontsize=14)
+        plt.legend(loc="upper right", fontsize=14)
 
-        db_train = full_database[:, :self.nt]
-        db_validation = full_database[:, self.nt:]
+        db_train = full_database[:, : self.nt]
+        db_validation = full_database[:, self.nt :]
 
         tol = 0.9999
         local_pod_bases = []
         n_modes_list = []
-        #compute local bases
+        # compute local bases
         for i in range(self.nt1):
-            db_loc = db_train[:, i*self.nt2 : (i+1)*self.nt2]
+            db_loc = db_train[:, i * self.nt2 : (i + 1) * self.nt2]
             svd = PCA(svd_solver="randomized", random_state=i)
             svd.fit(db_loc.T)
             ev_list = svd.explained_variance_ratio_
             singular_vectors = svd.components_.T
-            
+
             n_modes = PODI.choice_n_modes_tol(ev_list, tol)
             n_modes_list.append(n_modes)
             local_basis = singular_vectors[:, :]
             local_pod_bases.append(local_basis)
 
-        print(n_modes_list)
+        print("n_modes_list", n_modes_list)
         n_modes_max = max(n_modes_list)
-        print("n_modes", n_modes_max)
+        print("n_modes_max", n_modes_max)
         for i in range(len(local_pod_bases)):
             local_pod_bases[i] = local_pod_bases[i][:, :n_modes_max]
-        
-        #keep first coordinate
+
+        # keep first coordinate
         xt1 = np.atleast_2d(self.xt1[:, 0]).T
         xn1 = np.atleast_2d(self.xv[:, 0]).T
-        
-        #interpolate the bases to get a new one at the specific new coordinates
-        interpolated_bases = PODI.interp_subspaces(xt1 = xt1, input_matrices = local_pod_bases, xn1 = xn1, frechet = False)
+
+        # interpolate the bases to get a new one at the specific new coordinates
+        interpolated_bases = PODI.interp_subspaces(
+            xt1=xt1,
+            input_matrices=local_pod_bases,
+            xn1=xn1,
+            ref_index=0,
+            frechet=True,
+            frechet_guess=local_pod_bases[0],
+        )
 
         mean_u_x_new = np.zeros((self.ny, self.nv))
         var_u_x_new = np.zeros((self.ny, self.nv))
 
-        light_pink = np.array((250, 181, 196))/255
+        light_pink = np.array((250, 181, 196)) / 255
         podi = PODI()
         for i, interpolated_basis in enumerate(interpolated_bases):
-            podi.compute_pod(xt = self.xt, database = db_train, pod_type = "local", interpolated_basis = interpolated_basis)
-            
-            print(f"basis {i+1}/{self.nv}")
-            
-            podi.train()
-            mean_u_x_new[:, i] = podi.predict_values(np.atleast_2d(self.xv[i]))[:,0]
-            var_u_x_new[:, i] = podi.predict_variances(np.atleast_2d(self.xv[i]))[:,0]
-        
-            plt.figure(figsize = (15,10))
-            plt.fill_between(
-            np.ravel(self.t),
-            np.ravel(mean_u_x_new[:, i] - 3*np.sqrt(var_u_x_new[:, i])),
-            np.ravel(mean_u_x_new[:, i] + 3*np.sqrt(var_u_x_new[:, i])),
-            color = light_pink,
-            label = 'confiance interval (99%)'
+            podi.compute_pod(
+                database=db_train,
+                pod_type="local",
+                interpolated_basis=interpolated_basis,
             )
-            plt.scatter(self.t, mean_u_x_new[:, i], color = 'r', label = 'prediction (mean)', s = 50, marker = '*')
-            
-            plt.scatter(self.t, db_validation[:, i], color = 'b', label = 'reference', s = 50, marker = 'x')
-            
+
+            print(f"basis {i+1}/{self.nv}")
+            podi.set_training_values(self.xt)
+            podi.train()
+            mean_u_x_new[:, i] = podi.predict_values(np.atleast_2d(self.xv[i]))[:, 0]
+            var_u_x_new[:, i] = podi.predict_variances(np.atleast_2d(self.xv[i]))[:, 0]
+
+            plt.figure(figsize=(15, 10))
+            plt.fill_between(
+                np.ravel(self.t),
+                np.ravel(mean_u_x_new[:, i] - 3 * np.sqrt(var_u_x_new[:, i])),
+                np.ravel(mean_u_x_new[:, i] + 3 * np.sqrt(var_u_x_new[:, i])),
+                color=light_pink,
+                label="confiance interval (99%)",
+            )
+            plt.scatter(
+                self.t,
+                mean_u_x_new[:, i],
+                color="r",
+                label="prediction (mean)",
+                s=50,
+                marker="*",
+            )
+
+            plt.scatter(
+                self.t,
+                db_validation[:, i],
+                color="b",
+                label="reference",
+                s=50,
+                marker="x",
+            )
+
             diff = np.abs(db_validation[:, i] - mean_u_x_new[:, i])
             rms = np.sqrt(np.mean(diff**2))
 
-            plt.scatter([], [], color = 'w', label = 'error = ' + str(round(rms, 4)))
+            plt.scatter([], [], color="w", label="error = " + str(round(rms, 4)))
+            print(f"rms {i+1}", rms)
             x2 = self.xv[i, 1]
             x1 = self.xv[i, 0]
-            plt.title(f'x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}', fontsize = 14)
-            plt.legend(fontsize = 14)
+            plt.title(f"x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}", fontsize=14)
+            plt.legend(fontsize=14)
 
         plt.show()
 
@@ -640,7 +668,7 @@ class Test(SMTestCase):
 
 if __name__ == "__main__":
     # Test.run_podi_example_1d()
-    #unittest.main()
+    # unittest.main()
     test = Test()
-    #test.test_local()
-    test.test_global()
+    test.test_local()
+    # test.test_global()
