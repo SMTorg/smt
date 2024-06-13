@@ -299,10 +299,6 @@ class SurrogateModel(metaclass=ABCMeta):
         self.printer()
         self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
         self.printer()
-
-        if y.shape != (n, self.ny):
-            ValueError(f"{n} !=  {self.ny}")
-
         return y
 
     def predict_values(self, x: np.ndarray) -> np.ndarray:
