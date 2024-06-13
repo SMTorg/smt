@@ -555,8 +555,8 @@ class SurrogateModel(metaclass=ABCMeta):
 
         Returns
         -------
-         derived_variance:  np.ndarray
-             The jacobian of the variance of the kriging model
+        derived_variance:  np.ndarray
+            The gradient of the variance of the kriging model
         """
         check_support(self, "variance_derivatives", fail=True)
 

@@ -85,12 +85,13 @@ class Test(SMTestCase):
         sm = KRG(theta0=[0.01], print_global=False)
         sm.set_training_values(self.xt, self.yt)
         sm.train()
-        x = np.array([[1, 2]])
+        x = np.array([1, 2])
         deriv0 = sm.predict_variance_derivatives(x, 0)
         deriv1 = sm.predict_variance_derivatives(x, 1)
         derivs = np.hstack((deriv0, deriv1))
-        gradients = sm.predict_variance_gradient(x)
-        np.testing.assert_allclose(gradients, derivs)
+        gradient = sm.predict_variance_gradient(x)
+        self.assertEqual((1, 2), gradient.shape)
+        np.testing.assert_allclose(gradient, derivs)
 
     @staticmethod
     def _check_prediction_variances(self, sm):
