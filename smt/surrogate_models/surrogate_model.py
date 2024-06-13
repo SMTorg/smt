@@ -404,17 +404,18 @@ class SurrogateModel(metaclass=ABCMeta):
 
     def predict_variance_derivatives(self, x, kx):
         """
-        Predict the derivation of the variance at a point
-
+        Provide the derivatives of the variance of the model at a set of points
         Parameters
-        ----------
-        x : np.ndarray
-            Input value for the prediction point.
+        -----------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+        kx : int
+            The 0-based index of the input variable with respect to which derivatives are desired.
 
         Returns
         -------
-        derived_variance: np.ndarray
-            The jacobian of the variance
+         derived_variance:  np.ndarray
+             The kx-th derivatives of the variance of the kriging model
         """
         x = ensure_2d_array(x, "x")
         check_support(self, "variance_derivatives")
@@ -435,6 +436,48 @@ class SurrogateModel(metaclass=ABCMeta):
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
             y = self._predict_variance_derivatives(x, kx)
+
+        time_pt = self.printer._time("prediction")[-1] / n
+        self.printer()
+        self.printer("Prediction time/pt. (sec) : %10.7f" % time_pt)
+        self.printer()
+
+        return y
+
+    def predict_variance_gradient(self, x):
+        """
+        Provide the gradient of the variance of the model at a given point
+        (ie the derivatives wrt to all component at a unique point x)
+
+        Parameters
+        -----------
+        x : np.ndarray [1, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+         derived_variance:  np.ndarray
+             The jacobian of the variance of the kriging model
+        """
+        x = ensure_2d_array(x, "x")
+        check_support(self, "variance_derivatives")
+        self._check_xdim(x)
+        n = x.shape[0]
+        self.printer.active = (
+            self.options["print_global"] and self.options["print_prediction"]
+        )
+
+        if self.name == "MixExp":
+            # Mixture of experts model
+            self.printer._title("Evaluation of the Mixture of experts")
+        else:
+            self.printer._title("Evaluation")
+        self.printer("   %-12s : %i" % ("# eval points.", n))
+        self.printer()
+
+        # Evaluate the unknown points using the specified model-method
+        with self.printer._timed_context("Predicting", key="prediction"):
+            y = self._predict_variance_gradient(x)
 
         time_pt = self.printer._time("prediction")[-1] / n
         self.printer()
@@ -559,7 +602,23 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         check_support(self, "variances", fail=True)
 
-    def _predict_variance_derivatives(self, x):
+    def _predict_variance_derivatives(self, x, kx):
+        """
+        Implemented by surrogate models to predict the derivation of the variance at a point (optional).
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Input value for the prediction point.
+
+        Returns
+        -------
+        derived_variance: np.ndarray
+            The jacobian of the variance
+        """
+        check_support(self, "variance_derivatives", fail=True)
+
+    def _predict_variance_jacobian(self, x):
         """
         Implemented by surrogate models to predict the derivation of the variance at a point (optional).
 
