@@ -560,7 +560,10 @@ class SurrogateModel(metaclass=ABCMeta):
         derived_variance:  np.ndarray
             The gradient of the variance of the kriging model
         """
-        check_support(self, "variance_derivatives", fail=True)
+        gradient = [
+            self._predict_variance_derivatives(self, x, kx) for kx in range(self.nx)
+        ]
+        return np.array(gradient)
 
     def _check_xdim(self, x):
         """Raise a ValueError if x dimension is not consistent with surrogate model training data dimension.
