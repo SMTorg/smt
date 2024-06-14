@@ -50,6 +50,10 @@ All surrogate modeling methods implement the following API, though some of the f
 
   .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variances
 
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_gradient
+
 
 How to save and load trained surrogate models
 ---------------------------------------------
