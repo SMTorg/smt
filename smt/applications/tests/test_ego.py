@@ -89,7 +89,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
     
-    ####### New test for EGO + GPX feature in 1D
     def test_function_test_GPX_1d(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
@@ -110,8 +109,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
         
-    ####### New test for EGO + Noise feature in 1D
-    # Passed
     def test_function_ego_GPN_1D(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
@@ -199,7 +196,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
         
         
-    ####### New test for EGO + GPX feature in 2D
     def test_function_ego_GPX_rosenbrock_2D(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
@@ -222,8 +218,6 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
         
-    ####### New test for EGO Noise feature in 2D
-    # Passed
     def test_function_ego_GPN_rosenbrock_2D(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
