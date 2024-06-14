@@ -416,7 +416,7 @@ class SurrogateModel(metaclass=ABCMeta):
 
         Parameters
         -----------
-        x : np.ndarray [1, dim]
+        x : np.ndarray [1, dim] or even (dim,) vector
             Evaluation point input variable values
 
         Returns
@@ -425,6 +425,8 @@ class SurrogateModel(metaclass=ABCMeta):
              The jacobian of the variance of the kriging model
         """
         check_support(self, "variance_derivatives")
+        if x.shape == (self.nx,):  # allow to pass row vector for convenience
+            x = np.atleast_2d(x.copy())
         x = self._pre_predict(x)
         # Evaluate the unknown points using the specified model-method
         with self.printer._timed_context("Predicting", key="prediction"):
