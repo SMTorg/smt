@@ -17,7 +17,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, MGP
+from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, MGP, GPX
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
@@ -71,6 +71,13 @@ class EGO(SurrogateBasedApplication):
             types=int,
             desc="Maximum number of internal optimizations",
         )
+        # New declaration for noise0
+        declare(
+            "noise0",
+            [0.0],
+            types=(list, np.ndarray),
+            desc="Initial noise hyperparameters",
+        )
         declare("n_start", 20, types=int, desc="Number of optimization start points")
         declare(
             "n_parallel",
@@ -109,7 +116,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX), #####
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(
