@@ -10,11 +10,12 @@ import sys
 
 class Silence(object):
     def __enter__(self):
+        self.stdout = sys.stdout
         sys.stdout = open(os.devnull, "w")
 
     def __exit__(self, *args):
         sys.stdout.close()
-        sys.stdout = sys.__stdout__
+        sys.stdout = self.stdout
         return False
 
 
