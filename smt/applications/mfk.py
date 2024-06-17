@@ -954,7 +954,8 @@ class MFK(KrgBased):
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
-        return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        deriv = dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        return deriv.reshape((x.shape[0], self.ny))
 
     def _get_theta(self, i):
         return self.optimal_theta[i]

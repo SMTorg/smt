@@ -160,4 +160,5 @@ class QP(SurrogateModel):
         M = self._response_surface(x)
         y_ = np.dot(M, self.coef)
         y = (self.y_mean + self.y_std * y_).ravel()
+        y = y.reshape((x.shape[0], self.ny))
         return y
