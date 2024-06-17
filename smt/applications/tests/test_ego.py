@@ -94,7 +94,7 @@ class TestEGO(SMTestCase):
         xlimits = np.array([[0.0, 25.0]])
         criterion = "EI"
         design_space = DesignSpace(xlimits)
-        surrogate = GPX(design_space=design_space) # Test with GPX 
+        surrogate = GPX(design_space=design_space)
 
         ego = EGO(
             n_iter=n_iter,
@@ -201,7 +201,7 @@ class TestEGO(SMTestCase):
         xlimits = fun.xlimits
         criterion = "EI"
         design_space = DesignSpace(xlimits)
-        surrogate=GPX(design_space=design_space) # GPX model
+        surrogate=GPX(design_space=design_space)
 
         xdoe = FullFactorial(xlimits=xlimits)(50)
         ego = EGO(
@@ -572,7 +572,7 @@ class TestEGO(SMTestCase):
                 FloatVariable(-5, 2),
                 FloatVariable(-5, 2),
                 OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
-                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4
+                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4 
                 IntegerVariable(0, 5),  # x5
                 IntegerVariable(0, 5),  # x6
                 IntegerVariable(0, 5),  # x7
