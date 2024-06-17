@@ -109,20 +109,19 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
         
-    def test_function_ego_GPN_1D(self):
+    def test_function_ego_noisy_KRG_1D(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
         criterion = "EI"
         design_space = DesignSpace(xlimits)
-        noise0 = [1e-1] # fixed variance for 1D
+        noise0 = [1e-1]
 
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(design_space=design_space, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False, noise0 = noise0),
             random_state=42,
-            noise0 = noise0, # Noise
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
@@ -218,13 +217,13 @@ class TestEGO(SMTestCase):
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
         
-    def test_function_ego_GPN_rosenbrock_2D(self):
+    def test_function_ego_noisy_KRG_rosenbrock_2D(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI" 
         design_space = DesignSpace(xlimits)
-        noise0 = [1e-1, 1e-1] # Fixed variances in 2D
+        noise0 = [1e-1] 
 
         xdoe = FullFactorial(xlimits=xlimits)(50)
         
@@ -232,9 +231,8 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(design_space=design_space, print_global=False),
+            surrogate=KRG(design_space=design_space, print_global=False, noise0 = noise0),
             random_state=42,
-            noise0 = noise0, # Noise
         )
 
 
