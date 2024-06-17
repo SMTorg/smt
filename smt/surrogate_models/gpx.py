@@ -3,7 +3,7 @@ import numpy as np
 # New import
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.design_space import (
-    BaseDesignSpace,  
+    BaseDesignSpace,
     ensure_design_space,
 )
 
@@ -101,7 +101,7 @@ class GPX(SurrogateModel):
         supports["variance_derivatives"] = True
 
         self._gpx = None
-        
+
     @property
     def design_space(self) -> BaseDesignSpace:
         xt = self.training_points.get(None)
