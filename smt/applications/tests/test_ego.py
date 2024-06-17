@@ -88,7 +88,8 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
-    
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_function_test_GPX_1d(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
@@ -108,7 +109,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
-        
+
     def test_function_ego_noisy_KRG_1D(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
@@ -120,7 +121,7 @@ class TestEGO(SMTestCase):
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(design_space=design_space, print_global=False, noise0 = noise0),
+            surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
         )
 
@@ -128,7 +129,6 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
-        
 
     def test_function_test_1d_parallel(self):
         n_iter = 3
@@ -193,15 +193,15 @@ class TestEGO(SMTestCase):
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
-        
-        
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_function_ego_GPX_rosenbrock_2D(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"
         design_space = DesignSpace(xlimits)
-        surrogate=GPX(design_space=design_space)
+        surrogate = GPX(design_space=design_space)
 
         xdoe = FullFactorial(xlimits=xlimits)(50)
         ego = EGO(
@@ -212,29 +212,25 @@ class TestEGO(SMTestCase):
             random_state=42,
         )
 
-
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
-        
+
     def test_function_ego_noisy_KRG_rosenbrock_2D(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
-        criterion = "EI" 
+        criterion = "EI"
         design_space = DesignSpace(xlimits)
-        noise0 = [1e-1] 
+        noise0 = [1e-1]
 
-        xdoe = FullFactorial(xlimits=xlimits)(50)
-        
         ego = EGO(
             n_iter=n_iter,
             criterion=criterion,
             n_doe=3,
-            surrogate=KRG(design_space=design_space, print_global=False, noise0 = noise0),
+            surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
         )
-
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
@@ -572,7 +568,7 @@ class TestEGO(SMTestCase):
                 FloatVariable(-5, 2),
                 FloatVariable(-5, 2),
                 OrdinalVariable(values=[8, 16, 32, 64, 128, 256]),  # x3
-                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4 
+                CategoricalVariable(values=["ReLU", "SELU", "ISRLU"]),  # x4
                 IntegerVariable(0, 5),  # x5
                 IntegerVariable(0, 5),  # x6
                 IntegerVariable(0, 5),  # x7

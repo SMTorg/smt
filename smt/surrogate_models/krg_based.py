@@ -138,8 +138,8 @@ class KrgBased(SurrogateModel):
         declare(
             "optimized_theta0",
             True,
-            types = bool,
-            desc = "Decision to determine whether we optimize theta0 or not"
+            types=bool,
+            desc="Decision to determine whether we optimize theta0 or not",
         )
         declare(
             "theta_bounds",
@@ -1946,7 +1946,7 @@ class KrgBased(SurrogateModel):
                         theta_lhs_loops = sampling(self.options["n_start"])
                         theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
                     else:
-                         theta_all_loops = theta0
+                        theta_all_loops = theta0
 
                 optimal_theta_res = {"fun": float("inf")}
                 optimal_theta_res_loop = None
@@ -1958,7 +1958,8 @@ class KrgBased(SurrogateModel):
                                     minus_reduced_likelihood_function,
                                     theta0_loop,
                                     constraints=[
-                                        {"fun": con, "type": "ineq"} for con in constraints
+                                        {"fun": con, "type": "ineq"}
+                                        for con in constraints
                                     ],
                                     method="COBYLA",
                                     options={
@@ -1967,7 +1968,10 @@ class KrgBased(SurrogateModel):
                                         "maxiter": limit,
                                     },
                                 )
-                                if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                if (
+                                    optimal_theta_res_loop["fun"]
+                                    < optimal_theta_res["fun"]
+                                ):
                                     optimal_theta_res = optimal_theta_res_loop
 
                         elif self.options["hyper_opt"] == "TNC":
@@ -1987,7 +1991,10 @@ class KrgBased(SurrogateModel):
                                     bounds=bounds_hyp,
                                     options={"maxfun": limit},
                                 )
-                                if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                if (
+                                    optimal_theta_res_loop["fun"]
+                                    < optimal_theta_res["fun"]
+                                ):
                                     optimal_theta_res = optimal_theta_res_loop
 
                         if "x" not in optimal_theta_res:
@@ -1998,7 +2005,7 @@ class KrgBased(SurrogateModel):
 
                         if self.name not in ["MGP"]:
                             optimal_theta = 10**optimal_theta
-                            
+
                     else:
                         optimal_theta = theta0[0]
 
@@ -2014,7 +2021,8 @@ class KrgBased(SurrogateModel):
                                     return
                                 if stop > max_retry:
                                     raise ValueError(
-                                        "%d attempts to train the model failed" % max_retry
+                                        "%d attempts to train the model failed"
+                                        % max_retry
                                     )
                             else:
                                 if optimal_rlf_value >= self.best_iteration_fail:
