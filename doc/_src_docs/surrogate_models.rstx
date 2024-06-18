@@ -4,22 +4,16 @@ Surrogate modeling methods
 SMT contains the surrogate modeling methods listed below.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :titlesonly:
 
+   surrogate_models/ls
+   surrogate_models/qp
+   surrogate_models/gpr
    surrogate_models/rbf
    surrogate_models/idw
    surrogate_models/rmts
-   surrogate_models/ls
-   surrogate_models/qp
-   surrogate_models/krg
-   surrogate_models/kpls
-   surrogate_models/kplsk
-   surrogate_models/gekpls
-   surrogate_models/gpx
    surrogate_models/genn
-   surrogate_models/mgp
-   surrogate_models/sgp
 
 
 Usage
