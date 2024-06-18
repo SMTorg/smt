@@ -1,5 +1,5 @@
-Kriging
-=======
+Kriging (KRG)
+=============
 
 Kriging is an interpolating model that is a linear combination of a known function :math:`f_i({\bf x})` which is added to a realization of a stochastic process :math:`Z({\bf x})`
 
@@ -142,7 +142,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1214223
+     Training - done. Time (sec):  0.0942090
   ___________________________________________________________________________
      
    Evaluation
@@ -229,9 +229,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0101421
+     Predicting - done. Time (sec):  0.0082176
      
-     Prediction time/pt. (sec) :  0.0000203
+     Prediction time/pt. (sec) :  0.0000164
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -304,7 +304,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3176570
+     Training - done. Time (sec):  0.2642734
   ___________________________________________________________________________
      
    Evaluation
