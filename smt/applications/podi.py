@@ -106,7 +106,7 @@ class PODI(SurrogateBasedApplication):
             seed number which controls random draws for internal optim. (optional)
 
         Examples
-        ----------
+        --------
         >>> sm.compute_pod(database, tol = 0.99)
         """
         choice_svd = None

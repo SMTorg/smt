@@ -391,7 +391,7 @@ class SurrogateModel(metaclass=ABCMeta):
         """
         Provide the derivatives of the variance of the model at a set of points
         Parameters
-        -----------
+        ----------
         x : np.ndarray [n_evals, dim]
             Evaluation point input variable values
         kx : int
@@ -399,8 +399,8 @@ class SurrogateModel(metaclass=ABCMeta):
 
         Returns
         -------
-         derived_variance:  np.ndarray
-             The kx-th derivatives of the variance of the kriging model
+        derived_variance:  np.ndarray
+            The kx-th derivatives of the variance of the kriging model
         """
         check_support(self, "variance_derivatives")
         x = self._pre_predict(x)
@@ -415,14 +415,14 @@ class SurrogateModel(metaclass=ABCMeta):
         (ie the derivatives wrt to all component at a unique point x)
 
         Parameters
-        -----------
+        ----------
         x : np.ndarray [1, dim] or even (dim,) vector
             Evaluation point input variable values
 
         Returns
         -------
-         derived_variance:  np.ndarray
-             The jacobian of the variance of the kriging model
+        derived_variance :  np.ndarray
+            The jacobian of the variance of the kriging model
         """
         check_support(self, "variance_derivatives")
         if x.shape == (self.nx,):  # allow to pass row vector for convenience
