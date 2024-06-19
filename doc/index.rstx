@@ -74,7 +74,7 @@ Documentation contents
 ----------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :titlesonly:
 
    _src_docs/getting_started
