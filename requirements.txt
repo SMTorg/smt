@@ -1,5 +1,5 @@
 Cython
-numpy <2.0
+numpy
 scipy
 scikit-learn
 pyDOE3
