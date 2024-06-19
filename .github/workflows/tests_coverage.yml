@@ -28,6 +28,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
+        pip install ConfigSpace==0.6.1
         pip list
         pip install -e .
 
