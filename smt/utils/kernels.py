@@ -1,10 +1,11 @@
 import numpy as np
-from abc import ABCMeta#, abstractmethod
+from abc import ABCMeta  # , abstractmethod
 
 
 class Kernel(metaclass=ABCMeta):
     def __init__(self, theta):
-        self.theta=np.array(theta)
+        self.theta = np.array(theta)
+
 
 class PowExp(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
@@ -49,6 +50,7 @@ class PowExp(Kernel):
 
         return r
 
+
 class Matern52(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
         r = np.zeros((d.shape[0], 1))
@@ -56,9 +58,11 @@ class Matern52(Kernel):
 
         # Construct/split the correlation matrix
         i, nb_limit = 0, int(1e4)
-        theta=self.theta
+        theta = self.theta
         while i * nb_limit <= d.shape[0]:
-            ll = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
+            ll = (
+                theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
+            )
             r[i * nb_limit : (i + 1) * nb_limit, 0] = (
                 1.0 + np.sqrt(5.0) * ll + 5.0 / 3.0 * ll**2.0
             ).prod(axis=1) * np.exp(-np.sqrt(5.0) * (ll.sum(axis=1)))
@@ -89,9 +93,9 @@ class Matern52(Kernel):
                 )
                 fact_3 = np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
 
-                r[i * nb_limit : (i + 1) * nb_limit, 0] = (fact_1 / fact_2 - fact_3) * r[
-                    i * nb_limit : (i + 1) * nb_limit, 0
-                ]
+                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                    fact_1 / fact_2 - fact_3
+                ) * r[i * nb_limit : (i + 1) * nb_limit, 0]
                 i += 1
         i = 0
 
@@ -116,9 +120,9 @@ class Matern52(Kernel):
                 )
                 fact_3 = np.sqrt(5) * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
 
-                r[i * nb_limit : (i + 1) * nb_limit, 0] = (fact_1 / fact_2 - fact_3) * r[
-                    i * nb_limit : (i + 1) * nb_limit, 0
-                ]
+                r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                    fact_1 / fact_2 - fact_3
+                ) * r[i * nb_limit : (i + 1) * nb_limit, 0]
 
                 if hess_ind == grad_ind:
                     fact_4 = (
@@ -178,12 +182,13 @@ class Matern52(Kernel):
             return r, dr
 
         return r
-    
+
+
 class Matern32(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
         r = np.zeros((d.shape[0], 1))
         n_components = d.shape[1]
-        theta=self.theta
+        theta = self.theta
         # Construct/split the correlation matrix
         i, nb_limit = 0, int(1e4)
 
@@ -288,35 +293,37 @@ class Matern32(Kernel):
 
         return r
 
+
 class Operator(Kernel):
     def __init__(self, corr1, corr2):
-        self.theta=np.array([corr1.theta, corr2.theta])
-        self.corr1=corr1
-        self.corr2=corr2
+        self.theta = np.array([corr1.theta, corr2.theta])
+        self.corr1 = corr1
+        self.corr2 = corr2
+
 
 class Sum(Operator):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
-        return self.corr1(d, grad_ind, hess_ind, derivative_params) + self.corr2(d, grad_ind, hess_ind, derivative_params)
-    
+        return self.corr1(d, grad_ind, hess_ind, derivative_params) + self.corr2(
+            d, grad_ind, hess_ind, derivative_params
+        )
+
+
 class Product(Operator):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
-        return self.corr1(d, grad_ind, hess_ind, derivative_params) * self.corr2(d, grad_ind, hess_ind, derivative_params)
+        return self.corr1(d, grad_ind, hess_ind, derivative_params) * self.corr2(
+            d, grad_ind, hess_ind, derivative_params
+        )
 
 
-
-if __name__=="__main__":
-    d=np.abs(np.array([[-1,  -1.],
-       [ 1.,  1.],
-       [-1,  1.],
-       [ 1., -1.]
-       ]))
-    theta1 = np.array([1., 2.])
+if __name__ == "__main__":
+    d = np.abs(np.array([[-1, -1.0], [1.0, 1.0], [-1, 1.0], [1.0, -1.0]]))
+    theta1 = np.array([1.0, 2.0])
     theta2 = np.array([0.9, 0.5])
-    k1=PowExp(theta1)
-    k2=PowExp(theta2)
-    k3=Sum(k1,k2)
-    k4=Product(k1,k2)
-    k5=Product(k4,k3)
+    k1 = PowExp(theta1)
+    k2 = PowExp(theta2)
+    k3 = Sum(k1, k2)
+    k4 = Product(k1, k2)
+    k5 = Product(k4, k3)
     print(k1(d))
     print(k2(d))
     print(k3(d))
