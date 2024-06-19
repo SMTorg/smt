@@ -243,13 +243,13 @@ class Test(SMTestCase):
 
     def test_likelihood_hessian(self):
         for corr_str in [
-            "squar_sin_exp",
             "pow_exp",
             "abs_exp",
             "squar_exp",
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
