@@ -1,6 +1,5 @@
 import numpy as np
 
-# New import
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.design_space import (
     BaseDesignSpace,
@@ -86,7 +85,7 @@ class GPX(SurrogateModel):
             desc="Seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-        # New declaration
+
         declare(
             "design_space",
             None,
