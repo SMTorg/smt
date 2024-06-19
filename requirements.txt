@@ -5,7 +5,7 @@ scikit-learn
 pyDOE3
 numba           # JIT compiler
 matplotlib      # used in examples and tests
-pytest ~= 8.0.1 # tests runner
+pytest          # tests runner
 pytest-xdist    # allows running parallel testing with pytest -n <num_workers>
 pytest-cov      # allows to get coverage report
 ruff            # format and lint code
