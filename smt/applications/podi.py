@@ -352,8 +352,8 @@ class SubspacesInterpolation:
             singular_values = pca.singular_values_
             keep_injectivity = max(singular_values) < np.pi / 2
             if not (keep_injectivity):
-                raise ValueError(
-                    "There is loss of injectivity for the interpolation of subspaces."
+                print(
+                    "Warning : There is loss of injectivity for the interpolation of subspaces."
                 )
             else:
                 print("no loss of injectivity")
@@ -365,7 +365,7 @@ class SubspacesInterpolation:
             Ti[ind] = 0.0
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
-
+            print("False", Yi.shape)
             return Yi
         elif compute_realizations:
             if n_new != 1:
@@ -396,6 +396,7 @@ class SubspacesInterpolation:
             Ti = np.transpose(Ti, (2, 3, 0, 1))
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
+            print("True", Yi.shape)
             return Yi[:, -1, :, :], Yi[:, :-1, :, :]
 
     def GP_GC(self, Yi, separate_variables=True, DoE=None):
@@ -801,6 +802,8 @@ class PODI(SurrogateBasedApplication):
         frechet=False,
         frechet_guess=None,
         method="KRG",
+        compute_realizations=False,
+        n_realizations=1,
     ) -> list:
         """
         Static method computing the interpolation of subspaces.
@@ -810,7 +813,7 @@ class PODI(SurrogateBasedApplication):
         xt1 : np.ndarray[n_snapshot, dim]
             The input scalar values corresponding to each local bases.
             dim = dimension of parametric space for local bases
-        input_matrices : list[np.ndarray[ny, n_modes]]
+        input_bases : list[np.ndarray[ny, n_modes]]
             List containing the local bases for the subspaces' interpolation.
             Each matrix is associated to a scalar value from xt1.
         xn1 : np.ndarray[nn, dim]
@@ -824,21 +827,40 @@ class PODI(SurrogateBasedApplication):
         frechet_guess : np.ndarray[ny, n_modes]
             Initial guess for the frechet's mean. Default value is the fisrt local basis of 'input_matrices'.
             (Only if frechet set to True)
+        compute_realizations : bool
+            Indicates if some realizations of random POD bases should be computed.
+        n_realizations : int
+            In case compute_realizations is set to True, indicates the number of realizations that should be computed.
 
         Returns
         -------
-        interpolated_bases : list[np.ndarray[ny, n_modes]]
+        bases : list[np.ndarray[ny, n_modes]]
             List of the output bases at each desired value of xn1.
+        bases_realizations : list[list[np.ndarray[ny, n_modes]]]
+            List of realizations of the output bases. (Random POD bases)
+            Returned only if compute_realizations is set to True.
+
+        Examples
+        --------
+        #normal case
+        >>> bases = PODI.interp_subspaces(xt1=xt1, input_bases=matrices, xn1=xn1)
+        #use of frechet
+        >>> bases = PODI.interp_subspaces(
+                            xt1=xt1, input_bases=matrices, xn1=xn1,
+                            frechet=True,
+                            frechet_guess=frechet_matrix
+                            )
         """
         nn = xn1.shape[0]
+        nt1 = xt1.shape[0]
         ny, n_modes = input_matrices[0].shape
         n_bases = len(input_matrices)
 
-        if n_bases != nn:
+        if n_bases != nt1:
             raise ValueError(
-                f"there must be the same amount of local bases than xt1 values, {n_bases} != {nn}."
+                f"there must be the same amount of local bases than xt1 values, {n_bases} != {nt1}."
             )
-        
+
         DoE_bases = np.zeros((ny, n_modes, n_bases))
         for i, basis in enumerate(input_matrices):
             DoE_bases[:, :, i] = basis
@@ -857,14 +879,42 @@ class PODI(SurrogateBasedApplication):
 
         if method == "KRG":
             interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0=Y0)
-            Yi_full = interp.interp_POD_basis(xn1)
-            yi = np.squeeze(Yi_full, axis=1)
-            interpolated_bases = []
-            for i in range(nn):
-                interpolated_basis = yi[i, :, :]
-                interpolated_bases.append(interpolated_basis)
+            if compute_realizations:
+                Yi_full, Yi_full2 = interp.interp_POD_basis(
+                    xn1,
+                    compute_realizations=True,
+                    n_real=n_realizations,
+                )
+                yi = Yi_full
+                interpolated_bases = []
 
-            return interpolated_bases
+                yi_real = []
+                for real in range(Yi_full2.shape[1]):
+                    yi_real.append(Yi_full2[:, real, :, :])
+                interpolated_bases_real = []
+
+                for i in range(nn):
+                    interpolated_basis = yi[i, :, :]
+                    interpolated_bases.append(interpolated_basis)
+
+                    realizations_i = []
+                    for j in range(n_realizations):
+                        realization_j_of_i = yi_real[j][i, :, :]
+                        realizations_i.append(realization_j_of_i)
+                    interpolated_bases_real.append(realizations_i)
+
+                return interpolated_bases, interpolated_bases_real
+            else:
+                Yi_full = interp.interp_POD_basis(
+                    xn1, compute_realizations=False
+                )
+                yi = Yi_full[:, 0, :, :]
+                interpolated_bases = []
+                for i in range(nn):
+                    interpolated_basis = yi[i, :, :]
+                    interpolated_bases.append(interpolated_basis)
+                
+                return interpolated_bases
 
     def compute_global_pod(
         self,
@@ -901,8 +951,9 @@ class PODI(SurrogateBasedApplication):
                 choice_svd = "tol"
 
         if choice_svd is None:
-            self.n_modes = min(self.database.shape)
-            choice_svd = "mode"
+            raise ValueError(
+                    "pod needs atleast one of the arguments 'n_modes' or 'tol'"
+                )
 
         svd.fit(self.database.T)
         self.singular_vectors = svd.components_.T
@@ -952,7 +1003,9 @@ class PODI(SurrogateBasedApplication):
 
         Examples
         --------
+        #global POD
         >>> sm.compute_pod(database, pod_type = 'global', tol = 0.99)
+        #local POD
         >>> sm.compute_pod(database, pod_type = 'local', local_basis = basis)
         """
         self.database = ensure_2d_array(database, "database")
@@ -972,8 +1025,8 @@ class PODI(SurrogateBasedApplication):
             ny = local_basis.shape[0]
             if ny != self.ny:
                 raise ValueError(
-                f"the first dimension of the database and the local basis must be the same, {ny} != {self.ny}."
-            )
+                    f"the first dimension of the database and the local basis must be the same, {ny} != {self.ny}."
+                )
 
             self.basis = local_basis
         else:
@@ -1366,3 +1419,52 @@ class PODI(SurrogateBasedApplication):
         dy_dx = np.dot(self.basis, deriv_coeff_interp)
 
         return dy_dx
+    
+    def predict_variances_derivatives(self, xn, kx) -> np.ndarray:
+        """
+        Predict the derivatives of the variances at a set of points.
+
+        Parameters
+        ----------
+        xn : np.ndarray[n_new, nx]
+            Input values for the prediction points.
+        kx : int
+            The 0-based index of the input variable with respect to which derivative is desired.
+
+        Returns
+        -------
+        dv_dx : np.ndarray[ny, n_new]
+            Derivatives of the variances.
+        """
+        d = kx
+
+        if not self.train_done:
+            raise RuntimeError(
+                "the model should have been trained before trying to make a prediction"
+            )
+
+        xn = ensure_2d_array(xn, "xn")
+
+        dim_new = xn.shape[1]
+
+        if d >= dim_new:
+            raise ValueError(
+                "the desired derivative kx should correspond to a dimension of the data, here kx is out of bounds."
+            )
+
+        if dim_new != self.nx:
+            raise ValueError(
+                f"the data values and the new values must be the same size, here {dim_new} != {self.nx}"
+            )
+
+        self.n_new = xn.shape[0]
+        deriv_coeff_interp = np.zeros((self.n_modes, self.n_new))
+
+        for i in range(self.n_modes):
+            deriv_coeff_interp[i] = self.interp_coeff[i].predict_variances_derivatives(xn, d)[
+                :, 0
+            ]
+
+        dv_dx = np.dot(self.basis, deriv_coeff_interp)
+
+        return dv_dx

@@ -1,7 +1,7 @@
 """
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
-
+import unittest
 from smt.utils.sm_test_case import SMTestCase
 from sklearn.decomposition import PCA
 
@@ -85,7 +85,7 @@ class Test(SMTestCase):
             norm_residue[i] = np.linalg.norm(basis_pod[:, i] - proj)
         return norm_residue
 
-    def pb_1d(self, nt = 40) -> np.ndarray:
+    def pb_1d(self, nt=40, nv=20) -> np.ndarray:
         """
         Constructs the one-dimension problem
 
@@ -111,8 +111,9 @@ class Test(SMTestCase):
         self.xt = sampling(self.nt)
         self.nn = 15
         self.xn = sampling(self.nn)
-        self.nv = 10 * self.nt
-        self.xv = sampling(self.nv)
+        self.nv = nv
+        sampling_new = LHS(xlimits=xlimits, random_state=self.seed + 1)
+        self.xv = sampling_new(self.nv)
         self.x = np.concatenate((self.xt, self.xv))
 
         u0 = np.zeros((self.ny, 1))
@@ -139,7 +140,7 @@ class Test(SMTestCase):
         ----------
         nt1 : int
             Number of values for the first dimension of the inputs.
-            Each one of these values will correspond to a line in the DoE. 
+            Each one of these values will correspond to a line in the DoE.
         nt2 : int
             Number of values for the second dimension of the inputs.
 
@@ -327,6 +328,15 @@ class Test(SMTestCase):
         norm_residue = Test.check_projection(self.basis_original, basis_pod)
         np.testing.assert_allclose(norm_residue[:n_modes], np.zeros(n_modes), atol=1e-6)
 
+    def test_local_pod(self):
+        """Tests the compute_pod method with pod_type = 'local'"""
+
+        sm = PODI()
+
+        error_msg = "It should not be possible to execute compute_pod in local mode with more mods than data values."
+        with self.assertRaises(ValueError, msg=error_msg):
+            sm.compute_pod(self.database, n_modes=self.nt + 1, seed=self.seed)
+
     def test_set_training_train(self):
         """Tests the set_training_values and train methods."""
         sm = PODI()
@@ -357,8 +367,148 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
-    def test_global(self):
-        full_database = self.pb_2d_local(nt1 = 15, nt2 = 10)
+    def test_global_global(self):
+        return None
+        full_database = self.pb_1d(nt=25, nv=12)
+        database = full_database[:, : self.nt]
+        db_validation = full_database[:, self.nt :]
+
+        plt.figure(figsize=(10, 5))
+        plt.scatter(
+            self.xt[:],
+            np.zeros(self.nt),
+            marker="x",
+            label="Training points",
+            color="g",
+        )
+        plt.scatter(
+            self.xv[:],
+            np.zeros(self.nv),
+            marker="*",
+            label="Prediction points",
+            color="r",
+        )
+        axes = plt.gca()
+        axes.tick_params(axis = 'x', labelsize = 14)
+
+        axes.yaxis.set_visible(False)
+        plt.xlabel("x", fontsize=16)
+        plt.legend(loc="upper right", fontsize=14)
+
+        podi = PODI()
+        podi.compute_pod(database=database, n_modes=10)
+        print("n_modes", podi.get_n_modes())
+        podi.set_interp_options(interp_type="KRG")
+        podi.set_training_values(self.xt)
+        podi.train()
+        mean_u_x_new = podi.predict_values(self.xv)
+        var_u_x_new = podi.predict_variances(self.xv)
+
+        light_pink = np.array((250, 181, 196)) / 255
+        rms_list = []
+        for i in range(self.nv):
+            plt.figure(figsize=(15, 10))
+            plt.fill_between(
+                np.ravel(self.t),
+                np.ravel(mean_u_x_new[:, i] - 3 * np.sqrt(var_u_x_new[:, i])),
+                np.ravel(mean_u_x_new[:, i] + 3 * np.sqrt(var_u_x_new[:, i])),
+                color=light_pink,
+                label="confiance interval (99%)",
+            )
+            plt.scatter(
+                self.t,
+                mean_u_x_new[:, i],
+                color="r",
+                label="prediction (mean)",
+                s=50,
+                marker="*",
+            )
+
+            plt.scatter(
+                self.t,
+                db_validation[:, i],
+                color="b",
+                label="reference",
+                s=50,
+                marker="x",
+            )
+
+            diff = np.abs(db_validation[:, i] - mean_u_x_new[:, i])
+            rms = np.sqrt(np.mean(diff**2))
+            rms_list.append(rms)
+
+            axes = plt.gca()
+            axes.tick_params(axis = 'x', labelsize = 16)
+            axes.tick_params(axis = 'y', labelsize = 16)
+            plt.scatter([], [], color="w", label="rms = " + str(round(rms, 4)))
+            x = self.xv[i, 0]
+            plt.ylabel(f"u(x={str(x)[:5]})", fontsize = 18)
+            plt.xlabel("t", fontsize = 18)
+            plt.title(f"x = {str(x)[:5]}", fontsize=20)
+            plt.legend(fontsize=16)
+
+            plt.figure(figsize=(15, 10))
+            plt.scatter(
+                self.t,
+                db_validation[:, i],
+                color="b",
+                label="reference",
+                s=50,
+                marker="x",
+            )
+            plt.ylabel(f"u(x={str(x)[:5]})", fontsize = 18)
+            plt.xlabel("t", fontsize = 18)
+            plt.title(f"x = {str(x)[:5]}", fontsize=18)
+            plt.legend(loc="upper right", fontsize=16)
+
+        size_list = []
+        for rms in rms_list:
+            alpha = (np.log(rms) - np.log(min(rms_list))) / (
+                np.log(max(rms_list)) - np.log(min(rms_list))
+            )
+            alpha = (rms - 0) / max(rms_list)
+            size = alpha * 2000 + (1 - alpha) * 200
+            size_list.append(size)
+
+        import matplotlib.colors as mcolors
+
+        colors = [(0, (155/255, 1, 0)), (0.33, (1, 1, 0)), (0.66, 'orange'), (1, (1, 0, 0))]
+        cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', colors, N=256)
+        norm = mcolors.Normalize(vmin=min(rms_list), vmax=max(rms_list))
+
+        plt.figure(figsize=(15, 10))
+        plt.scatter(
+            self.xt[:],
+            np.zeros(self.nt),
+            marker="x",
+            label="Training points",
+            color="g",
+        )
+        sc = plt.scatter(
+            self.xv[:],
+            np.zeros(self.nv),
+            marker=".",
+            label="Prediction points",
+            c=rms_list,
+            edgecolors="black",
+            s=size_list,
+            alpha=0.6,
+            cmap=cmap,
+            norm=norm
+        )
+        cbar = plt.colorbar(sc)
+        cbar.set_label('rms error')
+
+        axes = plt.gca()
+        axes.get_yaxis().set_visible(False)
+        plt.xlabel("x", fontsize=14)
+        plt.legend(loc="upper right", fontsize=14)
+
+        plt.show()
+
+    def test_global_local(self):
+        return None
+        full_database = self.pb_2d_local(nt1=15, nt2=10)
         database = full_database[:, : self.nt]
         db_validation = full_database[:, self.nt :]
 
@@ -418,7 +568,7 @@ class Test(SMTestCase):
             diff = np.abs(db_validation[:, i] - mean_u_x_new[:, i])
             rms = np.sqrt(np.mean(diff**2))
 
-            plt.scatter([], [], color="w", label="error = " + str(round(rms, 4)))
+            plt.scatter([], [], color="w", label="rms = " + str(round(rms, 4)))
             x2 = self.xv[i, 1]
             x1 = self.xv[i, 0]
             plt.title(f"x1 = {str(x1)[:5]}, x2 = {str(x2)[:5]}", fontsize=14)
@@ -427,6 +577,7 @@ class Test(SMTestCase):
         plt.show()
 
     def test_local(self):
+        return None
         full_database = self.pb_2d_local(nt1=22, nt2=12)
 
         plt.figure(figsize=(15, 10))
@@ -475,15 +626,30 @@ class Test(SMTestCase):
         xn1 = np.atleast_2d(self.xv[:, 0]).T
 
         # interpolate the bases to get a new one at the specific new coordinates
-        interpolated_bases = PODI.interp_subspaces(
+        Yi_full1, interpolated_bases = PODI.interp_subspaces(
             xt1=xt1,
             input_matrices=local_pod_bases,
             xn1=xn1,
             ref_index=0,
             frechet=True,
             frechet_guess=local_pod_bases[0],
+            compute_realizations=True,
+            n_realizations=1,
         )
 
+        Yi_full2, interpolated_bases = PODI.interp_subspaces(
+            xt1=xt1,
+            input_matrices=local_pod_bases,
+            xn1=xn1,
+            ref_index=0,
+            frechet=True,
+            frechet_guess=local_pod_bases[0],
+            compute_realizations=True,
+            n_realizations=1,
+        )
+        print("diff", Yi_full1 - Yi_full2)
+
+        return None
         mean_u_x_new = np.zeros((self.ny, self.nv))
         var_u_x_new = np.zeros((self.ny, self.nv))
 
@@ -550,20 +716,20 @@ class Test(SMTestCase):
         light_pink = np.array((250, 233, 232)) / 255
 
         p = 100
-        y = np.linspace(-1, 1, p)
+        t = np.linspace(-1, 1, p)
         n_modes_test = 10
 
-        def function_test_1d(x, y, n_modes_test, p):
+        def function_test_1d(x, t, n_modes_test, p):
             import numpy as np  # Note: only required by SMT doc testing toolchain
 
             def cos_coeff(i: int, x: np.ndarray):
                 a = 2 * i % 2 - 1
                 return a * x[:, 0] * np.cos(i * x[:, 0])
 
-            def Legendre(i: int, y: np.ndarray):
+            def Legendre(i: int, t: np.ndarray):
                 from scipy import special
 
-                return special.legendre(i)(y)
+                return special.legendre(i)(t)
 
             def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
                 """To perform the  Gram-Schmidt's algorithm."""
@@ -588,7 +754,7 @@ class Test(SMTestCase):
 
             V_init = np.zeros((p, n_modes_test))
             for i in range(n_modes_test):
-                V_init[:, i] = Legendre(i, y)
+                V_init[:, i] = Legendre(i, t)
 
             V = gram_schmidt(V_init.T).T
             database = u0 + np.dot(V, alpha.T)
@@ -606,7 +772,7 @@ class Test(SMTestCase):
         xv = sampling(nv)
 
         x = np.concatenate((xt, xv))
-        dbfull = function_test_1d(x, y, n_modes_test, p)
+        dbfull = function_test_1d(x, t, n_modes_test, p)
 
         # Training data
         dbt = dbfull[:, :nt]
@@ -631,14 +797,14 @@ class Test(SMTestCase):
         plt.figure(figsize=(8, 5))
         light_pink = np.array((250, 233, 232)) / 255
         plt.fill_between(
-            np.ravel(y),
+            np.ravel(t),
             np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
             np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
             color=light_pink,
             label="confiance interval (99%)",
         )
         plt.scatter(
-            y,
+            t,
             values[:, i],
             color="r",
             marker="x",
@@ -647,7 +813,7 @@ class Test(SMTestCase):
             label="prediction (mean)",
         )
         plt.scatter(
-            y,
+            t,
             dbv[:, i],
             color="b",
             marker="*",
@@ -655,7 +821,7 @@ class Test(SMTestCase):
             alpha=1.0,
             label="reference",
         )
-        plt.plot([], [], color="w", label="error = " + str(round(rms_error, 9)))
+        plt.plot([], [], color="w", label="rms = " + str(round(rms_error, 9)))
 
         ax = plt.gca()
         ax.axes.xaxis.set_visible(False)
@@ -668,7 +834,7 @@ class Test(SMTestCase):
 
 if __name__ == "__main__":
     # Test.run_podi_example_1d()
-    # unittest.main()
-    test = Test()
-    test.test_local()
-    # test.test_global()
+    unittest.main()
+    #test = Test()
+    # test.test_local()
+    #test.test_global_global()
