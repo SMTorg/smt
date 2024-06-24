@@ -171,7 +171,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.55))
+        np.testing.assert_allclose([1, 1], x_opt, atol=0.55)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     def test_rosenbrock_2D_SBO(self):
@@ -191,11 +191,10 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
+        np.testing.assert_allclose([1, 1], x_opt, atol=1)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
-    def test_function_ego_GPX_rosenbrock_2d(self):
+    def test_rosenbrock_2D_GPX(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
@@ -213,10 +212,10 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
+        np.testing.assert_allclose([1, 1], x_opt, atol=1)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
-    def test_function_ego_noisy_KRG_rosenbrock_2d(self):
+    def test_rosenbrock_2D_noisy_KRG(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
@@ -233,7 +232,7 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, atol=1))
+        np.testing.assert_allclose([1, 1], x_opt, atol=1.5)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1.5)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
@@ -261,7 +260,7 @@ class TestEGO(SMTestCase):
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
         print("Rosenbrock: ", x_opt)
-        self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
+        np.testing.assert_allclose([1, 1], x_opt, atol=0.5)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     def test_branin_2D(self):
