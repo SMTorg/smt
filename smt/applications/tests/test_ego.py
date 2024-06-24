@@ -8,6 +8,7 @@ import os
 import unittest
 from multiprocessing import Pool
 from sys import argv
+from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 import numpy as np
 
@@ -89,7 +90,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_function_test_GPX_1d(self):
         n_iter = 15
         xlimits = np.array([[0.0, 25.0]])
@@ -194,6 +195,7 @@ class TestEGO(SMTestCase):
         np.testing.assert_allclose([1, 1], x_opt, atol=1)
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_rosenbrock_2D_GPX(self):
         n_iter = 10
         fun = Rosenbrock(ndim=2)
