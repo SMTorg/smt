@@ -73,9 +73,9 @@ class NestedLHS(object):
     def __call__(self, nb_samples_hifi):
         """
         Builds nlevel nested design of experiments of dimension dim and size n_samples.
-        Each doe sis built with the optmized lhs procedure.
-        Builds the highest level first; nested properties are ensured by deleting
-        the nearest neighbours in lower levels of fidelity.
+        Each doe is built with an optmized LHS procedure.
+        The method builds the highest level first and
+        nested properties are ensured by deleting the nearest neighbours in lower levels of fidelity.
 
         Parameters
         ----------
