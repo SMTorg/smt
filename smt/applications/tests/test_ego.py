@@ -218,7 +218,7 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     def test_rosenbrock_2D_noisy_KRG(self):
-        n_iter = 10
+        n_iter = 20
         fun = Rosenbrock(ndim=2)
         xlimits = fun.xlimits
         criterion = "EI"
