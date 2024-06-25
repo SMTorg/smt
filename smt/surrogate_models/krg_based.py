@@ -220,7 +220,7 @@ class KrgBased(SurrogateModel):
 
         # initialize default power values
         if self.options["corr"] == "squar_exp":
-            self.options["pow_exp_power"] = 2.0
+            self.options["pow_exp_power"] = 2.0 - 1e-8
         elif self.options["corr"] in [
             "abs_exp",
             "squar_sin_exp",
@@ -850,7 +850,7 @@ class KrgBased(SurrogateModel):
                     self.options["n_comp"] = old_n_comp
         return r
 
-    def _reduced_likelihood_function(self, theta):
+    def _reduced_likelihood_function(self, theta, is_optimal_theta=False):
         """
         This function determines the BLUP parameters and evaluates the reduced
         likelihood function for the given autocorrelation parameters theta.
@@ -964,11 +964,12 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
-        if linalg.svd(R, compute_uv=False)[-1] < 1.1 * nugget:
-            warnings.warn(
-                "R is too ill conditioned. Poor combination "
-                "of regression model and observations."
-            )
+        if is_optimal_theta:
+            if linalg.svd(R, compute_uv=False)[-1] < nugget and (np.min(self.D) < 1e-5):
+                warnings.warn(
+                    "R is too ill conditioned. Poor combination "
+                    "of regression model and observations."
+                )
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
@@ -2032,7 +2033,7 @@ class KrgBased(SurrogateModel):
                         optimal_theta = 10**optimal_theta
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                        theta=optimal_theta
+                        theta=optimal_theta, is_optimal_theta=True
                     )
                     # Compare the new optimizer to the best previous one
                     if k > 0:
