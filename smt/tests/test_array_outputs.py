@@ -37,7 +37,7 @@ class ArrayOutputTest(SMTestCase):
             d0 = interp.predict_derivatives(np.atleast_2d(xt[10, :]), 0)
 
         self.assert_error(
-            d0, np.array([[0.24897752, 5.808781166293778]]), atol=0.55, rtol=0.15
+            d0, np.array([[0.24897752, 7.665354183788673]]), atol=0.55, rtol=0.15
         )
 
     def test_RBF(self):

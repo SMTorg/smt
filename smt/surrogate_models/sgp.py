@@ -159,7 +159,7 @@ class SGP(KRG):
         return super()._new_train()
 
     # overload kriging based implementation
-    def _reduced_likelihood_function(self, theta):
+    def _reduced_likelihood_function(self, theta, is_optimal_theta=False):
         X = self.training_points[None][0][0]
         Y = self.training_points[None][0][1]
         Z = self.Z
