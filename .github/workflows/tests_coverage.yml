@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt numpy==1.26.4 ConfigSpace==0.6.1
         pip list
         pip install -e .
 
@@ -38,7 +38,7 @@ jobs:
 
     - name: Test with pytest and coverage
       run: |
-        RUN_SLOW_TESTS=1 pytest --cov=smt
+        RUN_SLOW_TESTS=1 pytest -v --durations=0 --cov=smt
 
     - name: Coveralls
       uses: AndreMiras/coveralls-python-action@develop
