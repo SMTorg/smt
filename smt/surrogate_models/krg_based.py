@@ -83,7 +83,7 @@ class KrgBased(SurrogateModel):
         )
         declare(
             "corr",
-            "pow_exp",
+            "squar_exp",
             values=(
                 "pow_exp",
                 "abs_exp",

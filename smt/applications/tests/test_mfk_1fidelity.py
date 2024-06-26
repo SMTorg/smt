@@ -56,8 +56,8 @@ class TestMFKOneFidelity(SMTestCase):
             t_error = compute_rms_error(sm)
             e_error = compute_rms_error(sm, xv, yv)
 
-            self.assert_error(t_error, 0.0, 1e-6)
-            self.assert_error(e_error, 0.0, 4e-6)
+            self.assert_error(t_error, 0.0, 3e-3)
+            self.assert_error(e_error, 0.0, 3e-3)
 
     @staticmethod
     def run_mfk_example_1fidelity():
@@ -81,7 +81,7 @@ class TestMFKOneFidelity(SMTestCase):
         # Evaluate the HF function
         yt_e = hf_function(xt_e)
 
-        sm = MFK(theta0=xt_e.shape[1] * [1.0])
+        sm = MFK(theta0=xt_e.shape[1] * [1.0], corr="squar_exp")
 
         # High-fidelity dataset without name
         sm.set_training_values(xt_e, yt_e)
