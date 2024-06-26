@@ -46,7 +46,7 @@ class TestKrgBased(unittest.TestCase):
         yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
 
         # training the model with the option eval_noise= True
-        sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.9999)
+        sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.99999)
         sm.set_training_values(xt, yt)
 
         self.assertWarns(UserWarning, sm.train)
