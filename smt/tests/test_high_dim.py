@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import inspect
-import os
 import unittest
 from collections import OrderedDict
 
