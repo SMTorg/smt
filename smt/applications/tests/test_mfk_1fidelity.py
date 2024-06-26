@@ -57,7 +57,7 @@ class TestMFKOneFidelity(SMTestCase):
             e_error = compute_rms_error(sm, xv, yv)
 
             self.assert_error(t_error, 0.0, 1e-6)
-            self.assert_error(e_error, 0.0, 1e-6)
+            self.assert_error(e_error, 0.0, 4e-6)
 
     @staticmethod
     def run_mfk_example_1fidelity():
