@@ -522,7 +522,9 @@ class KrgBased(SurrogateModel):
 
     def check_training_numerically(self):
         """
-        Check if the training dataset could be an issue and print both the dataset correlation matrix condition number and minimal distance between two points.
+        Check if the training dataset could be an issue and print both
+        the dataset correlation matrix condition number and
+        minimal distance between two points.
         """
 
         print(
