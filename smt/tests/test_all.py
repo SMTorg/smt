@@ -22,6 +22,7 @@ from smt.surrogate_models import (
     KRG,
     LS,
     QP,
+    MGP,
     DesignSpace,
     MGP,
 )
@@ -105,7 +106,7 @@ class Test(SMTestCase):
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
         e_errors["KPLSK"] = 3e-2
-        e_errors["MGP"] = 1e-0
+        e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 3e-2
         if COMPILED_AVAILABLE:
@@ -177,6 +178,8 @@ class Test(SMTestCase):
             self.assertLessEqual(e_error, 1.5e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
+        elif pname == "tanh" and sname in ["MGP"]:
+            self.assertLessEqual(e_error, 9e-1)
         else:
             self.assertLessEqual(e_error, self.e_errors[sname])
         self.assertLessEqual(t_error, self.t_errors[sname])

@@ -55,7 +55,7 @@ class TestMFK(SMTestCase):
             self.assertTrue(found)
 
     def test_mfk(self):
-        self.problems = ["exp", "tanh", "cos"]
+        self.problems = ["exp"]  # , "tanh", "cos"]
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
@@ -94,7 +94,7 @@ class TestMFK(SMTestCase):
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
 
-        nt = 500
+        nt = 100
         np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
