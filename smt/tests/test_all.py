@@ -22,6 +22,7 @@ from smt.surrogate_models import (
     KRG,
     LS,
     QP,
+    MGP,
     DesignSpace,
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
@@ -60,7 +61,7 @@ class Test(SMTestCase):
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
-        sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
+        sms["MGP"] = MGP(theta0=[1e-2] * ndim)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = GENN(
             num_iterations=1000,
@@ -104,7 +105,7 @@ class Test(SMTestCase):
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
         e_errors["KPLSK"] = 2e-2
-        e_errors["MGP"] = 2e-2
+        e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 3e-2
         if COMPILED_AVAILABLE:
@@ -176,6 +177,8 @@ class Test(SMTestCase):
             self.assertLessEqual(e_error, 1.5e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
+        elif pname == "tanh" and sname in ["MGP"]:
+            self.assertLessEqual(e_error, 9e-1)
         else:
             self.assertLessEqual(e_error, self.e_errors[sname])
 
