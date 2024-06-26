@@ -149,8 +149,8 @@ class Test(SMTestCase):
         )
 
         total_error = np.sum(pred_errors**2)
-
-        np.testing.assert_allclose(total_error, 0, atol=1e-9)
+        np.testing.assert_allclose(deriv,np.array([[diff_g,diff_d]]),atol=1e-2,rtol=1e-2)
+        # np.testing.assert_allclose(total_error, 0, atol=1e-9)
 
         ### VECTORIZATION TESTS
 

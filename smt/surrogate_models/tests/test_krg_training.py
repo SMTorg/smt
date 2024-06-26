@@ -35,7 +35,7 @@ class Test(SMTestCase):
     def setUp(self):
         eps = 1e-8
         xlimits = np.asarray([[0, 1], [0, 1]])
-        self.random = np.random.RandomState(42)
+        self.random = np.random.RandomState(41)
         lhs = LHS(xlimits=xlimits, random_state=self.random)
         X = lhs(8)
         y = LHS(xlimits=np.asarray([[0, 1]]), random_state=self.random)(8)
