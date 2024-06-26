@@ -22,7 +22,6 @@ from smt.surrogate_models import (
     KRG,
     LS,
     QP,
-    MGP,
     DesignSpace,
     MGP,
 )
