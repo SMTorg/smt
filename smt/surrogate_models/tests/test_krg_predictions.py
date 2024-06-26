@@ -34,7 +34,6 @@ class Test(SMTestCase):
         self.xt = self.sampling(12)
         self.yt = pb(self.xt)
         self.yt_squar_sin_exp = pb_for_sin_squar_exp(self.xt)
-        # def pb_for_sinsquar
 
     def test_predictions(self):
         trends = ["constant", "linear"]

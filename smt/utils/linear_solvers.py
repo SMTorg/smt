@@ -139,7 +139,7 @@ class DenseCholeskySolver(LinearSolver):
     def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options["print_init"]) as printer:
-            self.mtx = mtx.A
+            self.mtx = mtx.todense()
             assert isinstance(self.mtx, np.ndarray), "mtx is of type %s" % type(mtx)
 
             with printer._timed_context(
