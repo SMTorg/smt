@@ -141,16 +141,7 @@ class Test(SMTestCase):
         deriv = np.array(
             [sm.predict_derivatives(x, 0)[0], sm.predict_derivatives(x, 1)[0]]
         ).T
-        pred_errors = np.array(
-            [
-                np.abs((diff_g - deriv[0][0]) / diff_g),
-                np.abs((diff_d - deriv[0][1]) / diff_d),
-            ]
-        )
-
-        total_error = np.sum(pred_errors**2)
-        np.testing.assert_allclose(deriv,np.array([[diff_g,diff_d]]),atol=1e-2,rtol=1e-2)
-        # np.testing.assert_allclose(total_error, 0, atol=1e-9)
+        np.testing.assert_allclose(deriv, np.array([[diff_g,diff_d]]), atol=1e-2, rtol=1e-2)
 
         ### VECTORIZATION TESTS
 
