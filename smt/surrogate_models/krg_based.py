@@ -220,7 +220,7 @@ class KrgBased(SurrogateModel):
 
         # initialize default power values
         if self.options["corr"] == "squar_exp":
-            self.options["pow_exp_power"] = 2.0 
+            self.options["pow_exp_power"] = 2.0
         elif self.options["corr"] in [
             "abs_exp",
             "squar_sin_exp",
