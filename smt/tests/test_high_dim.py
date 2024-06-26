@@ -121,10 +121,6 @@ class Test(SMTestCase):
     def test_sphere_QP(self):
         self.run_test()
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
-    def test_sphere_KRG(self):
-        self.run_test()
-
     def test_sphere_KPLS(self):
         self.run_test()
 
@@ -143,10 +139,6 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_exp_QP(self):
-        self.run_test()
-
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
-    def test_exp_KRG(self):
         self.run_test()
 
     def test_exp_KPLS(self):
@@ -169,10 +161,6 @@ class Test(SMTestCase):
     def test_tanh_QP(self):
         self.run_test()
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
-    def test_tanh_KRG(self):
-        self.run_test()
-
     def test_tanh_KPLS(self):
         self.run_test()
 
@@ -191,10 +179,6 @@ class Test(SMTestCase):
         self.run_test()
 
     def test_cos_QP(self):
-        self.run_test()
-
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
-    def test_cos_KRG(self):
         self.run_test()
 
     def test_cos_KPLS(self):
