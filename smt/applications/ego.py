@@ -189,7 +189,7 @@ class EGO(SurrogateBasedApplication):
         y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
-        sig = np.sqrt(self.gpr.predict_variances(points))
+        sig = np.sqrt(self.gpr.predict_variances(points, is_ri=True))
         args0 = (f_min - pred) / sig
         args1 = (f_min - pred) * norm.cdf(args0)
         args2 = sig * norm.pdf(args0)
