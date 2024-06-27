@@ -137,12 +137,6 @@ class KrgBased(SurrogateModel):
         # X in R, X_norm = (X-X_mean)/X_std, then X_norm in [-1,1] if considering
         # one std intervals. This leads to theta in (0,2e1]
         declare(
-            "optimized_theta0",
-            True,
-            types=bool,
-            desc="Decision to determine whether we optimize theta0 or not",
-        )
-        declare(
             "theta_bounds",
             [1e-6, 2e1],
             types=(list, np.ndarray),
