@@ -520,22 +520,28 @@ class KrgBased(SurrogateModel):
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
-    def check_training_numerically(self):
+    def is_training_ill_conditioned(self):
         """
         Check if the training dataset could be an issue and print both
         the dataset correlation matrix condition number and
         minimal distance between two points.
+        ----
+        Returns true if R is ill_conditionned
         """
-
+        R = self.optimal_par["C"] @ self.optimal_par["C"]
+        condR = np.linalg.cond(R)
         print(
             "Minimal distance between two points in any dimension is",
             "{:.2e}".format(np.min(self.D)),
         )
         print(
             "Correlation matrix R condition number is",
-            "{:.2e}".format(
-                np.linalg.cond(self.optimal_par["C"] @ self.optimal_par["C"])
-            ),
+            "{:.2e}".format(condR),
+        )
+        return (
+            linalg.svd(R, compute_uv=False)[-1]
+            < (1.5 * 100.0 * np.finfo(np.double).eps)
+            and condR > 1e9
         )
 
     def _train(self):

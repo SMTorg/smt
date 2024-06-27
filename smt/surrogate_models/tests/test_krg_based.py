@@ -94,8 +94,13 @@ class TestKrgBased(unittest.TestCase):
         # Prediction of the validation points
         t.predict_values(xtest)
         print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
-        t.check_training_numerically()
+        print("R is ill-conditioned?", t.is_training_ill_conditioned())
+        self.assertTrue(not (t.is_training_ill_conditioned()))
         # The variable 'theta0' is a list of length ndim.
+        ndoe = 50  # int(10*ndim)
+        xt = sampling(ndoe)
+        # Compute the outputs
+        yt = fun(xt)
         t = KRG(theta0=[1e-2] * ndim, print_prediction=False, corr="squar_exp")
         t.set_training_values(xt, yt[:, 0])
 
@@ -104,7 +109,8 @@ class TestKrgBased(unittest.TestCase):
         # Prediction of the validation points
         t.predict_values(xtest)
         print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
-        t.check_training_numerically()
+        print("R is ill-conditioned?", t.is_training_ill_conditioned())
+        self.assertTrue(t.is_training_ill_conditioned())
 
 
 if __name__ == "__main__":
