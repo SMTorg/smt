@@ -36,6 +36,7 @@ from smt.utils.kriging import (
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
 )
+
 from smt.utils.misc import standardization
 from smt.utils.checks import ensure_2d_array, check_support
 from scipy.stats import multivariate_normal as m_norm
@@ -1515,10 +1516,12 @@ class KrgBased(SurrogateModel):
 
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-
-        dd = self._componentwise_distance(
-            dx, theta=self.optimal_theta, return_derivative=True
-        )
+        if self.options["corr"] == "squar_sin_exp":
+            dd = 0
+        else:
+            dd = self._componentwise_distance(
+                dx, theta=self.optimal_theta, return_derivative=True
+            )
 
         # Compute the correlation function
         derivative_dic = {"dx": dx, "dd": dd}
@@ -1689,9 +1692,12 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        dd = self._componentwise_distance(
-            dx, theta=self.optimal_theta, return_derivative=True
-        )
+        if self.options["corr"] == "squar_sin_exp":
+            dd = 0
+        else:
+            dd = self._componentwise_distance(
+                dx, theta=self.optimal_theta, return_derivative=True
+            )
         derivative_dic = {"dx": dx, "dd": dd}
 
         sigma2 = self.optimal_par["sigma2"]
