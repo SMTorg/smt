@@ -9,6 +9,7 @@ class Kernel(metaclass=ABCMeta):
 
 class PowExp(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
+        theta =self.theta
         r = np.zeros((d.shape[0], 1))
         n_components = d.shape[1]
 
@@ -17,7 +18,7 @@ class PowExp(Kernel):
         while i * nb_limit <= d.shape[0]:
             r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
                 -np.sum(
-                    self.theta.reshape(1, n_components)
+                    theta.reshape(1, n_components)
                     * d[i * nb_limit : (i + 1) * nb_limit, :],
                     axis=1,
                 )
@@ -50,6 +51,160 @@ class PowExp(Kernel):
 
         return r
 
+class SquarSinExp(Kernel):
+    def __call__(self,d,grad_ind=None,hess_ind=None,derivative_params=None):
+        theta=self.theta
+        r = np.zeros((d.shape[0], 1))
+        # Construct/split the correlation matrix
+        i, nb_limit = 0, int(1e4)
+        while i * nb_limit <= d.shape[0]:
+            theta_array = theta.reshape(1, len(theta))
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = np.exp(
+                -np.sum(
+                    np.atleast_2d(theta_array[0][0 : int(len(theta) / 2)])
+                    * np.sin(
+                        np.atleast_2d(theta_array[0][int(len(theta) / 2) : int(len(theta))])
+                        * d[i * nb_limit : (i + 1) * nb_limit, :]
+                    )
+                    ** 2,
+                    axis=1,
+                )
+            )
+            i += 1
+        kernel = r.copy()
+
+        i = 0
+        if grad_ind is not None:
+            cut = int(len(theta) / 2)
+            if (
+                hess_ind is not None and grad_ind >= cut and hess_ind < cut
+            ):  # trick to use the symetry of the hessian when the hessian is asked
+                grad_ind, hess_ind = hess_ind, grad_ind
+
+            if grad_ind < cut:
+                grad_ind2 = cut + grad_ind
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -(
+                            np.sin(
+                                theta_array[0][grad_ind2]
+                                * d[i * nb_limit : (i + 1) * nb_limit, grad_ind]
+                            )
+                            ** 2
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+            else:
+                hess_ind2 = grad_ind - cut
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -theta_array[0][hess_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                        * np.sin(
+                            2
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            * theta_array[0][grad_ind]
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+
+        i = 0
+        if hess_ind is not None:
+            cut = int(len(theta) / 2)
+            if grad_ind < cut and hess_ind < cut:
+                hess_ind2 = cut + hess_ind
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -(
+                            np.sin(
+                                theta_array[0][hess_ind2]
+                                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind]
+                            )
+                            ** 2
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    i += 1
+            elif grad_ind >= cut and hess_ind >= cut:
+                hess_ind2 = hess_ind - cut
+                if grad_ind == hess_ind:
+                    while i * nb_limit <= d.shape[0]:
+                        r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                            -2
+                            * theta_array[0][hess_ind2]
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2] ** 2
+                            * np.cos(
+                                2
+                                * theta_array[0][grad_ind]
+                                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            )
+                            * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
+                            - theta_array[0][hess_ind2]
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            * np.sin(
+                                2
+                                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                                * theta_array[0][hess_ind]
+                            )
+                            * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                        )
+                        i += 1
+                else:
+                    while i * nb_limit <= d.shape[0]:
+                        r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                            -theta_array[0][hess_ind2]
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            * np.sin(
+                                2
+                                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                                * theta_array[0][hess_ind]
+                            )
+                            * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                        )
+                        i += 1
+            elif grad_ind < cut and hess_ind >= cut:
+                hess_ind2 = hess_ind - cut
+                while i * nb_limit <= d.shape[0]:
+                    r[i * nb_limit : (i + 1) * nb_limit, 0] = (
+                        -theta_array[0][hess_ind2]
+                        * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                        * np.sin(
+                            2
+                            * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            * theta_array[0][hess_ind]
+                        )
+                        * r[i * nb_limit : (i + 1) * nb_limit, 0]
+                    )
+                    if hess_ind2 == grad_ind:
+                        r[i * nb_limit : (i + 1) * nb_limit, 0] += (
+                            -d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                            * np.sin(
+                                2
+                                * d[i * nb_limit : (i + 1) * nb_limit, hess_ind2]
+                                * theta_array[0][hess_ind]
+                            )
+                            * kernel[i * nb_limit : (i + 1) * nb_limit, 0]
+                        )
+
+                    i += 1
+            i = 0
+
+        if derivative_params is not None:
+            cut = int(len(theta) / 2)
+            dx = derivative_params["dx"]
+            dr = np.empty(dx.shape)
+            for j in range(dx.shape[0]):
+                for k in range(dx.shape[1]):
+                    dr[j, k] = (
+                        -theta_array[0][k]
+                        * theta_array[0][k + cut]
+                        * np.sin(2 * theta_array[0][k + cut] * dx[j][k])
+                        * kernel[j][0]
+                    )
+            return r, dr
+        return r
 
 class Matern52(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):

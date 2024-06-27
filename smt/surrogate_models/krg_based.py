@@ -11,6 +11,12 @@ from copy import deepcopy
 import warnings
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.kernels import (
+    SquarSinExp,
+    PowExp,
+    Matern52,
+    Matern32,
+)
 from smt.utils.kriging import (
     differences,
     constant,
@@ -60,13 +66,13 @@ class KrgBased(SurrogateModel):
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
     _correlation_types = {
-        "pow_exp": pow_exp,
-        "abs_exp": abs_exp,
-        "squar_exp": squar_exp,
-        "squar_sin_exp": squar_sin_exp,
+        "pow_exp": PowExp,
+        "abs_exp": PowExp,
+        "squar_exp": PowExp,
+        "squar_sin_exp": SquarSinExp,
         "act_exp": act_exp,
-        "matern52": matern52,
-        "matern32": matern32,
+        "matern52": Matern52,
+        "matern32": Matern32,
     }
 
     name = "KrigingBased"
@@ -229,7 +235,7 @@ class KrgBased(SurrogateModel):
             "matern52",
         ]:
             self.options["pow_exp_power"] = 1.0
-
+        self.corr=self._correlation_types[self.options["corr"]](self.options["theta0"])
         # Check the pow_exp_power is >0 and <=2
         assert (
             self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
@@ -951,7 +957,7 @@ class KrgBased(SurrogateModel):
                 cat_kernel=self.options["categorical_kernel"],
             ).reshape(-1, 1)
         else:
-            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
+            r = self.corr(self.D).reshape(
                 -1, 1
             )
         R = np.eye(self.nt) * (1.0 + nugget + noise)
