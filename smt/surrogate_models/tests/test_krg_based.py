@@ -10,6 +10,9 @@ import numpy as np
 
 from smt.surrogate_models import KRG
 from smt.surrogate_models.krg_based import KrgBased
+from smt.utils.misc import compute_rms_error
+from smt.problems import Rosenbrock
+from smt.sampling_methods import LHS
 
 
 # defining the toy example
@@ -37,20 +40,6 @@ class TestKrgBased(unittest.TestCase):
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))  # erroneous
         self.assertRaises(ValueError, krg._check_param)
 
-    def test_almost_squar_exp(self):
-        nobs = 50  # number of obsertvations
-        np.random.seed(0)  # a seed for reproducibility
-        xt = np.random.uniform(size=nobs)  # design points
-
-        # adding a random noise to observations
-        yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
-
-        # training the model with the option eval_noise= True
-        sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.9999)
-        sm.set_training_values(xt, yt)
-
-        self.assertWarns(UserWarning, sm.train)
-
     def test_less_almost_squar_exp(self):
         nobs = 50  # number of obsertvations
         np.random.seed(0)  # a seed for reproducibility
@@ -76,6 +65,52 @@ class TestKrgBased(unittest.TestCase):
             ),
             1.01e-2,
         )
+
+    def test_check_training_numerically(self):
+        ndim = 2
+        ndoe = 20  # int(10*ndim)
+        # Define the function
+        fun = Rosenbrock(ndim=ndim)
+
+        # Construction of the DOE
+        # in order to have the always same LHS points, random_state=1
+        sampling = LHS(xlimits=fun.xlimits, criterion="ese", random_state=1)
+        xt = sampling(ndoe)
+        # Compute the outputs
+        yt = fun(xt)
+
+        # Construction of the validation points
+        ntest = 200  # 500
+        sampling = LHS(xlimits=fun.xlimits, criterion="ese", random_state=1)
+        xtest = sampling(ntest)
+        ytest = fun(xtest)
+
+        # The variable 'theta0' is a list of length ndim.
+        t = KRG(theta0=[1e-2] * ndim, print_prediction=False, corr="pow_exp")
+        t.set_training_values(xt, yt[:, 0])
+
+        t.train()
+
+        # Prediction of the validation points
+        t.predict_values(xtest)
+        print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
+        print("R is ill-conditioned?", t.is_training_ill_conditioned())
+        self.assertTrue(not (t.is_training_ill_conditioned()))
+        # The variable 'theta0' is a list of length ndim.
+        ndoe = 50  # int(10*ndim)
+        xt = sampling(ndoe)
+        # Compute the outputs
+        yt = fun(xt)
+        t = KRG(theta0=[1e-2] * ndim, print_prediction=False, corr="squar_exp")
+        t.set_training_values(xt, yt[:, 0])
+
+        t.train()
+
+        # Prediction of the validation points
+        t.predict_values(xtest)
+        print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
+        print("R is ill-conditioned?", t.is_training_ill_conditioned())
+        self.assertTrue(t.is_training_ill_conditioned())
 
 
 if __name__ == "__main__":
