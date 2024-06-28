@@ -1,23 +1,23 @@
-from .ls import LS
-from .qp import QP
-from .krg import KRG
-from .kpls import KPLS
-from .gekpls import GEKPLS
-from .kplsk import KPLSK
-from .gpx import GPX
-from .genn import GENN
-from .mgp import MGP
-from .sgp import SGP
-
-from .krg_based import MixIntKernelType
 from smt.utils.design_space import (
+    CategoricalVariable,
     DesignSpace,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
-    CategoricalVariable,
 )
 from smt.utils.kriging import MixHrcKernelType
+
+from .gekpls import GEKPLS
+from .genn import GENN
+from .gpx import GPX
+from .kpls import KPLS
+from .kplsk import KPLSK
+from .krg import KRG
+from .krg_based import MixIntKernelType
+from .ls import LS
+from .mgp import MGP
+from .qp import QP
+from .sgp import SGP
 
 __all__ = [
     "LS",
@@ -42,8 +42,8 @@ __all__ = [
 try:
     from .idw import IDW
     from .rbf import RBF
-    from .rmtc import RMTC
     from .rmtb import RMTB
+    from .rmtc import RMTC
 
     __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB"]
 

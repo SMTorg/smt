@@ -3,12 +3,13 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
 import unittest
-from smt.utils.sm_test_case import SMTestCase
 
 import numpy as np
 from scipy import special
-from smt.sampling_methods import LHS
+
 from smt.applications import PODI
+from smt.sampling_methods import LHS
+from smt.utils.sm_test_case import SMTestCase
 
 
 def cos_coeff(i: int, x: np.ndarray):
@@ -292,10 +293,11 @@ class Test(SMTestCase):
 
     @staticmethod
     def run_podi_example_1d():
-        import numpy as np
-        from smt.sampling_methods import LHS
-        from smt.applications import PODI
         import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.applications import PODI
+        from smt.sampling_methods import LHS
 
         light_pink = np.array((250, 233, 232)) / 255
 

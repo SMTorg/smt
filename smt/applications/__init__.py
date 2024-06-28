@@ -3,8 +3,8 @@ from .mfk import MFK, NestedLHS
 from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
-from .vfm import VFM
 from .podi import PODI
+from .vfm import VFM
 
 __all__ = [
     "VFM",

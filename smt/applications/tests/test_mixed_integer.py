@@ -27,6 +27,7 @@ from smt.problems import HierarchicalGoldstein, HierarchicalNeuralNetwork, Spher
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KPLS,
+    KPLSK,
     KRG,
     QP,
     MixHrcKernelType,
@@ -1496,6 +1497,88 @@ class TestMixedInteger(unittest.TestCase):
             surrogate=KPLS(
                 n_comp=1,
                 eval_noise=True,
+                design_space=design_space,
+                theta0=[1e-2],
+                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                hyper_opt="Cobyla",
+                corr="abs_exp",
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
+
+    def test_mixed_CR_PLS_2D(self):
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
+        # Surrogate
+        sm = MixedIntegerKrigingModel(
+            surrogate=KPLS(
+                n_comp=1,
+                eval_noise=False,
+                design_space=design_space,
+                theta0=[1e-2],
+                categorical_kernel=MixIntKernelType.CONT_RELAX,
+                hyper_opt="Cobyla",
+                corr="abs_exp",
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # DOE for validation
+        x = np.linspace(0, 4, 5)
+        x2 = np.linspace(-5, 5, 21)
+        x1 = []
+        for element in itertools.product(x, x2):
+            x1.append(np.array(element))
+        x_pred = np.array(x1)
+
+        y = sm.predict_values(x_pred)
+        yvar = sm.predict_variances(x_pred)
+
+        # prediction are correct on known points
+        self.assertTrue(np.abs(np.sum(np.array([y[20], y[50], y[95]]) - yt)) < 1e-6)
+        self.assertTrue(np.abs(np.sum(np.array([yvar[20], yvar[50], yvar[95]]))) < 1e-6)
+
+        self.assertEqual(np.shape(y), (105, 1))
+
+    def test_mixed_CR_KPLSK_2D(self):
+        xt = np.array([[0, 5], [2, -1], [4, 0.5]])
+        yt = np.array([[0.0], [1.0], [1.5]])
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["0.0", "1.0", " 2.0", "3.0", "4.0"]),
+                FloatVariable(-5, 5),
+            ]
+        )
+        # Surrogate
+        sm = MixedIntegerKrigingModel(
+            surrogate=KPLSK(
+                n_comp=1,
+                eval_noise=False,
                 design_space=design_space,
                 theta0=[1e-2],
                 categorical_kernel=MixIntKernelType.CONT_RELAX,
