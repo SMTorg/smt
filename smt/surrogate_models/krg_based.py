@@ -1036,27 +1036,9 @@ class KrgBased(SurrogateModel):
         # noisy KRG
         sigma2_ri = None
         is_noisy = eval_noise or is_noise0
-        par["sigma2_ri"] = None
+        sigma2_ri = None
         if is_noisy:
-            Y_ri = self.y_norma
-
-            # Cholesky decomposition of R and computation of its inverse
-            C_bis = linalg.cholesky(R, lower=True)
-            C_bis_inv = np.linalg.inv(C_bis)
-            R_inv = np.dot(C_bis_inv.T, C_bis_inv)
-
-            R_ri = R_noisy @ R_inv @ R_noisy
-            # Cholesky decomposition of R_ri
-            C_ri = np.linalg.cholesky(R_ri)
-
-            # Get generalized least squared solution
-            Ft_ri = linalg.solve_triangular(C_ri, self.F, lower=True)
-            Q_ri, G_ri = linalg.qr(Ft_ri, mode="economic")
-            Yt_ri = linalg.solve_triangular(C_ri, Y_ri, lower=True)
-            beta_ri = linalg.solve_triangular(G_ri, np.dot(Q.T, Yt))
-            rho_ri = Yt_ri - np.dot(Ft_ri, beta_ri)
-            sigma2_ri = (rho_ri**2.0).sum(axis=0) / (self.nt - p - q)
-            sigma2_ri *= self.y_std**2.0
+            sigma2_ri = self._compute_sigma2_ri(R, R_noisy, p, q)
         par["sigma2_ri"] = sigma2_ri
         par["sigma2"] = sigma2 * self.y_std**2.0
         par["sigma2"] = sigma2 * self.y_std**2.0
@@ -1086,6 +1068,51 @@ class KrgBased(SurrogateModel):
         if reduced_likelihood_function_value > 1e15:
             reduced_likelihood_function_value = 1e15
         return reduced_likelihood_function_value, par
+
+    def _compute_sigma2_ri(self, R, R_noisy, p, q):
+        """
+        This function computes the re-interpolated variance sigma2_ri in the context
+        of noisy Gaussian Processes (GPs). This is particularly useful when we want
+        to re-interpolate the points in the variance calculation.
+
+        Parameters
+        ----------
+        R: array-like, shape (n_samples, n_samples)
+            - The correlation matrix [R] of the training data without noise.
+        R_noisy: array-like, shape (n_samples, n_samples)
+            - The correlation matrix [R_noisy] of the training data with noise.
+        p: int
+            - Number of regression model parameters.
+        q: int
+            - Number of variance parameters.
+
+        Returns
+        -------
+        sigma2_ri: real
+            - The re-interpolated Gaussian Process variance.
+        """
+        sigma2_ri = None
+
+        Y_ri = self.y_norma
+
+        # Cholesky decomposition of R and computation of its inverse
+        C = linalg.cholesky(R, lower=True)
+        C_inv = np.linalg.inv(C)
+        R_inv = np.dot(C_inv.T, C_inv)
+
+        R_ri = R_noisy @ R_inv @ R_noisy
+        # Cholesky decomposition of R_ri
+        C_ri = np.linalg.cholesky(R_ri)
+
+        # Get generalized least squared solution
+        Ft_ri = linalg.solve_triangular(C_ri, self.F, lower=True)
+        Q_ri, G_ri = linalg.qr(Ft_ri, mode="economic")
+        Yt_ri = linalg.solve_triangular(C_ri, Y_ri, lower=True)
+        beta_ri = linalg.solve_triangular(G_ri, np.dot(Q_ri.T, Yt_ri))
+        rho_ri = Yt_ri - np.dot(Ft_ri, beta_ri)
+        sigma2_ri = (rho_ri**2.0).sum(axis=0) / (self.nt - p - q)
+        sigma2_ri *= self.y_std**2.0
+        return sigma2_ri
 
     def _reduced_likelihood_gradient(self, theta):
         """
@@ -2040,7 +2067,7 @@ class KrgBased(SurrogateModel):
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
                 if ii == 1 or "KPLSK" not in self.name:
-                    if self.options["n_start"] > 1 & self.options["optimized_theta0"]:
+                    if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,
                             criterion="maximin",
@@ -2048,115 +2075,96 @@ class KrgBased(SurrogateModel):
                         )
                         theta_lhs_loops = sampling(self.options["n_start"])
                         theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
-                    else:
-                        theta_all_loops = theta0
 
                 optimal_theta_res = {"fun": float("inf")}
                 optimal_theta_res_loop = None
                 try:
-                    if self.options["optimized_theta0"]:
-                        if self.options["hyper_opt"] == "Cobyla":
-                            for theta0_loop in theta_all_loops:
-                                optimal_theta_res_loop = optimize.minimize(
-                                    minus_reduced_likelihood_function,
-                                    theta0_loop,
-                                    constraints=[
-                                        {"fun": con, "type": "ineq"}
-                                        for con in constraints
-                                    ],
-                                    method="COBYLA",
-                                    options={
-                                        "rhobeg": _rhobeg,
-                                        "tol": 1e-4,
-                                        "maxiter": limit,
-                                    },
-                                )
-                                if (
-                                    optimal_theta_res_loop["fun"]
-                                    < optimal_theta_res["fun"]
-                                ):
-                                    optimal_theta_res = optimal_theta_res_loop
-
-                        elif self.options["hyper_opt"] == "TNC":
-                            if self.options["use_het_noise"]:
-                                raise ValueError(
-                                    "For heteroscedastic noise, please use Cobyla"
-                                )
-                            for theta0_loop in theta_all_loops:
-                                optimal_theta_res_loop = optimize.minimize(
-                                    minus_reduced_likelihood_function,
-                                    theta0_loop,
-                                    method="TNC",
-                                    jac=grad_minus_reduced_likelihood_function,
-                                    ###The hessian information is available but never used
-                                    #
-                                    ####hess=hessian_minus_reduced_likelihood_function,
-                                    bounds=bounds_hyp,
-                                    options={"maxfun": limit},
-                                )
-                                if (
-                                    optimal_theta_res_loop["fun"]
-                                    < optimal_theta_res["fun"]
-                                ):
-                                    optimal_theta_res = optimal_theta_res_loop
-
-                        if "x" not in optimal_theta_res:
-                            raise ValueError(
-                                f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
+                    if self.options["hyper_opt"] == "Cobyla":
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                constraints=[
+                                    {"fun": con, "type": "ineq"} for con in constraints
+                                ],
+                                method="COBYLA",
+                                options={
+                                    "rhobeg": _rhobeg,
+                                    "tol": 1e-4,
+                                    "maxiter": limit,
+                                },
                             )
-                        optimal_theta = optimal_theta_res["x"]
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
-                        if self.name not in ["MGP"]:
-                            optimal_theta = 10**optimal_theta
+                    elif self.options["hyper_opt"] == "TNC":
+                        if self.options["use_het_noise"]:
+                            raise ValueError(
+                                "For heteroscedastic noise, please use Cobyla"
+                            )
+                        for theta0_loop in theta_all_loops:
+                            optimal_theta_res_loop = optimize.minimize(
+                                minus_reduced_likelihood_function,
+                                theta0_loop,
+                                method="TNC",
+                                jac=grad_minus_reduced_likelihood_function,
+                                ###The hessian information is available but never used
+                                #
+                                ####hess=hessian_minus_reduced_likelihood_function,
+                                bounds=bounds_hyp,
+                                options={"maxfun": limit},
+                            )
+                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
+                                optimal_theta_res = optimal_theta_res_loop
 
-                    else:
-                        optimal_theta = theta0[0]
+                    if "x" not in optimal_theta_res:
+                        raise ValueError(
+                            f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
+                        )
+                    optimal_theta = optimal_theta_res["x"]
+
+                    if self.name not in ["MGP"]:
+                        optimal_theta = 10**optimal_theta
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
-                    # Compare the new optimizer to the best previous one if optimized_theta0
-                    if self.options["optimized_theta0"]:
-                        if k > 0:
-                            if np.isinf(optimal_rlf_value):
-                                stop += 1
-                                if incr != 0:
-                                    return
-                                if stop > max_retry:
-                                    raise ValueError(
-                                        "%d attempts to train the model failed"
-                                        % max_retry
-                                    )
-                            else:
-                                if optimal_rlf_value >= self.best_iteration_fail:
-                                    if optimal_rlf_value > best_optimal_rlf_value:
-                                        best_optimal_rlf_value = optimal_rlf_value
-                                        best_optimal_par = optimal_par
-                                        best_optimal_theta = optimal_theta
-                                    else:
-                                        if (
-                                            self.best_iteration_fail
-                                            > best_optimal_rlf_value
-                                        ):
-                                            best_optimal_theta = self._thetaMemory
-                                            (
-                                                best_optimal_rlf_value,
-                                                best_optimal_par,
-                                            ) = self._reduced_likelihood_function(
-                                                theta=best_optimal_theta
-                                            )
+                    # Compare the new optimizer to the best previous one
+                    if k > 0:
+                        if np.isinf(optimal_rlf_value):
+                            stop += 1
+                            if incr != 0:
+                                return
+                            if stop > max_retry:
+                                raise ValueError(
+                                    "%d attempts to train the model failed" % max_retry
+                                )
                         else:
-                            if np.isinf(optimal_rlf_value):
-                                stop += 1
-                            else:
-                                best_optimal_rlf_value = optimal_rlf_value
-                                best_optimal_par = optimal_par
-                                best_optimal_theta = optimal_theta
-                        k += 1
+                            if optimal_rlf_value >= self.best_iteration_fail:
+                                if optimal_rlf_value > best_optimal_rlf_value:
+                                    best_optimal_rlf_value = optimal_rlf_value
+                                    best_optimal_par = optimal_par
+                                    best_optimal_theta = optimal_theta
+                                else:
+                                    if (
+                                        self.best_iteration_fail
+                                        > best_optimal_rlf_value
+                                    ):
+                                        best_optimal_theta = self._thetaMemory
+                                        (
+                                            best_optimal_rlf_value,
+                                            best_optimal_par,
+                                        ) = self._reduced_likelihood_function(
+                                            theta=best_optimal_theta
+                                        )
                     else:
-                        best_optimal_theta = optimal_theta
-                        best_optimal_rlf_value = optimal_rlf_value
-                        best_optimal_par = optimal_par
+                        if np.isinf(optimal_rlf_value):
+                            stop += 1
+                        else:
+                            best_optimal_rlf_value = optimal_rlf_value
+                            best_optimal_par = optimal_par
+                            best_optimal_theta = optimal_theta
+                    k += 1
                 except ValueError as ve:
                     # raise ve
                     # If iteration is max when fmin_cobyla fail is not reached
