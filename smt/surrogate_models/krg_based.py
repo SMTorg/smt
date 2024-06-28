@@ -11,6 +11,7 @@ from copy import deepcopy
 import warnings
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+
 from smt.utils.kernels import (
     SquarSinExp,
     PowExp,
@@ -1101,8 +1102,8 @@ class KrgBased(SurrogateModel):
         dbeta_all = []
         for i_der in range(nb_theta):
             # Compute R derivatives
-            dr = self._correlation_types[self.options["corr"]](
-                theta, self.D, grad_ind=i_der
+            dr = self.corr(
+                self.D, grad_ind=i_der
             )
 
             dr_all.append(dr)
@@ -1485,8 +1486,8 @@ class KrgBased(SurrogateModel):
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
+            r = self.corr(
+                d
             ).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
         X_cont = (X_cont - self.X_offset) / self.X_scale
@@ -1532,8 +1533,8 @@ class KrgBased(SurrogateModel):
         # Compute the correlation function
         derivative_dic = {"dx": dx, "dd": dd}
 
-        r, dr = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d, derivative_params=derivative_dic
+        r, dr = self.corr(
+            d, derivative_params=derivative_dic
         )
         r = r.reshape(n_eval, self.nt)
 
@@ -1628,8 +1629,8 @@ class KrgBased(SurrogateModel):
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
+            r = self.corr(
+                d
             ).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
         C = self.optimal_par["C"]
@@ -1685,8 +1686,8 @@ class KrgBased(SurrogateModel):
         C = self.optimal_par["C"]
 
         # p1 : derivative of (rt**2.0).sum(axis=0)
-        r, dr = self._correlation_types[self.options["corr"]](
-            theta, d, derivative_params=derivative_dic
+        r, dr = self.corr(
+            d, derivative_params=derivative_dic
         )
         r = r.reshape(n_eval, self.nt)
         drx = dr[:, kx]
@@ -1818,6 +1819,7 @@ class KrgBased(SurrogateModel):
             bounds_hyp = []
 
             self.theta0 = deepcopy(self.options["theta0"])
+            self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -2137,7 +2139,6 @@ class KrgBased(SurrogateModel):
             else:
                 n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(n_param)
-
         else:
             self.options["theta0"] *= np.ones(n_param)
         if (
