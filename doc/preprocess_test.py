@@ -4,12 +4,11 @@ Author: Dr. John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
+import contextlib
+import importlib
+import inspect
 import os
 import sys
-import inspect
-import importlib
-import contextlib
-
 from io import StringIO
 
 import matplotlib

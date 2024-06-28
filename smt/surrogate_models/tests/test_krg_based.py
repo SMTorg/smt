@@ -8,11 +8,11 @@ import unittest
 
 import numpy as np
 
+from smt.problems import Rosenbrock
+from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.misc import compute_rms_error
-from smt.problems import Rosenbrock
-from smt.sampling_methods import LHS
 
 
 # defining the toy example

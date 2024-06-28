@@ -140,7 +140,9 @@ class Test(SMTestCase):
         deriv = np.array(
             [sm.predict_derivatives(x, 0)[0], sm.predict_derivatives(x, 1)[0]]
         ).T
-        np.testing.assert_allclose(deriv, np.array([[diff_g,diff_d]]), atol=1e-2, rtol=1e-2)
+        np.testing.assert_allclose(
+            deriv, np.array([[diff_g, diff_d]]), atol=1e-2, rtol=1e-2
+        )
 
         ### VECTORIZATION TESTS
 

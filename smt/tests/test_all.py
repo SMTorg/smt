@@ -21,9 +21,9 @@ from smt.surrogate_models import (
     KPLSK,
     KRG,
     LS,
+    MGP,
     QP,
     DesignSpace,
-    MGP,
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.utils.misc import compute_rms_error

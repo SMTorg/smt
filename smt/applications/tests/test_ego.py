@@ -8,7 +8,6 @@ import os
 import unittest
 from multiprocessing import Pool
 from sys import argv
-from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 import numpy as np
 
@@ -23,9 +22,9 @@ from smt.problems import Branin, Rosenbrock
 from smt.sampling_methods import LHS, FullFactorial
 from smt.surrogate_models import (
     GEKPLS,
+    GPX,
     KPLS,
     KRG,
-    GPX,
     CategoricalVariable,
     DesignSpace,
     FloatVariable,
@@ -33,6 +32,7 @@ from smt.surrogate_models import (
     MixIntKernelType,
     OrdinalVariable,
 )
+from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.utils.sm_test_case import SMTestCase
 
 try:
