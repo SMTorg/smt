@@ -979,10 +979,7 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-        R = np.eye(self.nt) * (1.0 + nugget)
         R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
-        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
         R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
         # Cholesky decomposition of R_noisy
@@ -1030,15 +1027,10 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR_noisy)
-
-        eval_noise = self.options["eval_noise"]
-        is_noise0 = self.options["noise0"] != [0.0]
         # noisy KRG
         sigma2_ri = None
-        is_noisy = eval_noise or is_noise0
-        sigma2_ri = None
-        if is_noisy:
-            sigma2_ri = self._compute_sigma2_ri(R, R_noisy, p, q)
+        if self.options["eval_noise"] or self.options["noise0"] != [0.0]:
+            sigma2_ri = self._compute_sigma2_ri(r, R_noisy, p, q, nugget)
         par["sigma2_ri"] = sigma2_ri
         par["sigma2"] = sigma2 * self.y_std**2.0
         par["sigma2"] = sigma2 * self.y_std**2.0
@@ -1069,7 +1061,7 @@ class KrgBased(SurrogateModel):
             reduced_likelihood_function_value = 1e15
         return reduced_likelihood_function_value, par
 
-    def _compute_sigma2_ri(self, R, R_noisy, p, q):
+    def _compute_sigma2_ri(self, r, R_noisy, p, q, nugget):
         """
         This function computes the re-interpolated variance sigma2_ri in the context
         of noisy Gaussian Processes (GPs). This is particularly useful when we want
@@ -1077,14 +1069,16 @@ class KrgBased(SurrogateModel):
 
         Parameters
         ----------
-        R: array-like, shape (n_samples, n_samples)
-            - The correlation matrix [R] of the training data without noise.
+        r: array-like, shape (n_samples * (n_samples - 1) / 2, 1)
+            - The vector containing the pairwise correlations of the training data.
         R_noisy: array-like, shape (n_samples, n_samples)
             - The correlation matrix [R_noisy] of the training data with noise.
         p: int
             - Number of regression model parameters.
         q: int
             - Number of variance parameters.
+        nugget: float
+            - A small value added to the diagonal of the correlation matrix for numerical stability.
 
         Returns
         -------
@@ -1094,6 +1088,9 @@ class KrgBased(SurrogateModel):
         sigma2_ri = None
 
         Y_ri = self.y_norma
+        R = np.eye(self.nt) * (1.0 + nugget)
+        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
         # Cholesky decomposition of R and computation of its inverse
         C = linalg.cholesky(R, lower=True)
