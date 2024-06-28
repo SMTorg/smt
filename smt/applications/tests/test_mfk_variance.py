@@ -13,6 +13,7 @@ https://doi.org/10.1080/00401706.2014.928233
 """
 
 import unittest
+
 import numpy as np
 
 from smt.applications.mfk import MFK, NestedLHS

@@ -4,48 +4,48 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-from enum import Enum
-from scipy import linalg, optimize
-from copy import deepcopy
 import warnings
+from copy import deepcopy
+from enum import Enum
 
+import numpy as np
+from scipy import linalg, optimize
+from scipy.stats import multivariate_normal as m_norm
+
+from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.checks import check_support, ensure_2d_array
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    CategoricalVariable,
+    ensure_design_space,
+)
 from smt.utils.kriging import (
-    differences,
-    constant,
-    linear,
-    quadratic,
-    pow_exp,
-    squar_exp,
-    squar_sin_exp,
+    MixHrcKernelType,
     abs_exp,
     act_exp,
-    cross_distances,
-    matern52,
-    matern32,
-    gower_componentwise_distances,
     componentwise_distance,
     componentwise_distance_PLS,
     compute_X_cont,
-    cross_levels,
     compute_X_cross,
+    constant,
+    cross_distances,
+    cross_levels,
     cross_levels_homo_space,
-    MixHrcKernelType,
+    differences,
+    gower_componentwise_distances,
+    linear,
+    matern32,
+    matern52,
     matrix_data_corr_levels_cat_matrix,
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
+    pow_exp,
+    quadratic,
+    squar_exp,
+    squar_sin_exp,
 )
-
 from smt.utils.misc import standardization
-from smt.utils.checks import ensure_2d_array, check_support
-from scipy.stats import multivariate_normal as m_norm
-from smt.sampling_methods import LHS
-from smt.utils.design_space import (
-    BaseDesignSpace,
-    ensure_design_space,
-    CategoricalVariable,
-)
 
 
 class MixIntKernelType(Enum):
@@ -1870,7 +1870,6 @@ class KrgBased(SurrogateModel):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
-
             self.theta0 = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),

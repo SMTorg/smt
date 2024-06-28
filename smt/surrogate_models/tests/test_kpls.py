@@ -4,15 +4,14 @@ Author: Remi Lafage <<remi.lafage@onera.fr>>
 This package is distributed under New BSD license.
 """
 
+import time
 import unittest
 
 import numpy as np
 
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KPLS
-from smt.surrogate_models import KRG, KPLSK
+from smt.surrogate_models import KPLS, KPLSK, KRG
 from smt.utils.misc import compute_rms_error
-import time
 
 
 class TestKPLS(unittest.TestCase):
