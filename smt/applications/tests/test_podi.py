@@ -4,15 +4,11 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 
 import unittest
 from smt.utils.sm_test_case import SMTestCase
-from sklearn.decomposition import PCA
-
 import numpy as np
 from scipy import special
 from smt.sampling_methods import LHS
 from smt.applications import PODI
-
 import matplotlib.pyplot as plt
-
 
 def cos_coeff(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
@@ -364,7 +360,6 @@ class Test(SMTestCase):
         import numpy as np
         from smt.sampling_methods import LHS
         from smt.applications import PODI
-        import matplotlib.pyplot as plt
 
         light_pink = np.array((250, 233, 232)) / 255
 
@@ -483,6 +478,7 @@ class Test(SMTestCase):
         plt.title("Estimation of u at x = " + str(xv[i, 0])[:4])
         plt.legend()
         plt.show()
+
 
 if __name__ == "__main__":
     unittest.main()

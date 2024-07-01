@@ -962,7 +962,7 @@ class PODI(SurrogateBasedApplication):
         else:
             if n_modes > self.n_snapshot:
                 raise ValueError(
-                    f"the number of kept modes can't be superior to the number of data values (snapshots)"
+                    "the number of kept modes can't be superior to the number of data values (snapshots)"
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
@@ -1075,7 +1075,9 @@ class PODI(SurrogateBasedApplication):
             single_xt = np.atleast_2d(xt[n])
 
             podi = PODI()
-            podi.compute_pod(database=reduced_database, n_modes=min(reduced_database.shape))
+            podi.compute_pod(
+                database=reduced_database, n_modes=min(reduced_database.shape)
+            )
             reduced_mean = np.atleast_2d(reduced_database.mean(axis=1)).T
             reduced_basis = podi.get_singular_vectors()
             n_modes = podi.get_n_modes()
