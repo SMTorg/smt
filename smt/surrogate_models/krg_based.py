@@ -899,6 +899,7 @@ class KrgBased(SurrogateModel):
             - A dictionary containing the requested Gaussian Process model
               parameters:
             sigma2
+            sigma2_ri
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
@@ -978,16 +979,16 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-        R = np.eye(self.nt) * (1.0 + nugget + noise)
-        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-        # Cholesky decomposition of R
+        R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
+        R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+        # Cholesky decomposition of R_noisy
 
         try:
-            C = linalg.cholesky(R, lower=True)
+            C = linalg.cholesky(R_noisy, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            print(np.linalg.eig(R)[0])
+            print(np.linalg.eig(R_noisy)[0])
             return reduced_likelihood_function_value, par
 
         # Get generalized least squared solution
@@ -1015,7 +1016,7 @@ class KrgBased(SurrogateModel):
 
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        detR = (np.diag(C) ** (2.0 / self.nt)).prod()
+        detR_noisy = (np.diag(C) ** (2.0 / self.nt)).prod()
         # Compute/Organize output
         p = 0
         q = 0
@@ -1025,7 +1026,13 @@ class KrgBased(SurrogateModel):
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
-        ) - self.nt * np.log10(detR)
+        ) - self.nt * np.log10(detR_noisy)
+        # noisy KRG
+        sigma2_ri = None
+        if self.options["eval_noise"] or self.options["noise0"] != [0.0]:
+            sigma2_ri = self._compute_sigma2_ri(r, R_noisy, p, q, nugget)
+        par["sigma2_ri"] = sigma2_ri
+        par["sigma2"] = sigma2 * self.y_std**2.0
         par["sigma2"] = sigma2 * self.y_std**2.0
         par["beta"] = beta
         par["gamma"] = linalg.solve_triangular(C.T, rho)
@@ -1053,6 +1060,56 @@ class KrgBased(SurrogateModel):
         if reduced_likelihood_function_value > 1e15:
             reduced_likelihood_function_value = 1e15
         return reduced_likelihood_function_value, par
+
+    def _compute_sigma2_ri(self, r, R_noisy, p, q, nugget):
+        """
+        This function computes the re-interpolated variance sigma2_ri in the context
+        of noisy Gaussian Processes (GPs). This is particularly useful when we want
+        to re-interpolate the points in the variance calculation.
+
+        Parameters
+        ----------
+        r: array-like, shape (n_samples * (n_samples - 1) / 2, 1)
+            - The vector containing the pairwise correlations of the training data.
+        R_noisy: array-like, shape (n_samples, n_samples)
+            - The correlation matrix [R_noisy] of the training data with noise.
+        p: int
+            - Number of regression model parameters.
+        q: int
+            - Number of variance parameters.
+        nugget: float
+            - A small value added to the diagonal of the correlation matrix for numerical stability.
+
+        Returns
+        -------
+        sigma2_ri: real
+            - The re-interpolated Gaussian Process variance.
+        """
+        sigma2_ri = None
+
+        Y_ri = self.y_norma
+        R = np.eye(self.nt) * (1.0 + nugget)
+        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+
+        # Cholesky decomposition of R and computation of its inverse
+        C = linalg.cholesky(R, lower=True)
+        C_inv = np.linalg.inv(C)
+        R_inv = np.dot(C_inv.T, C_inv)
+
+        R_ri = R_noisy @ R_inv @ R_noisy
+        # Cholesky decomposition of R_ri
+        C_ri = np.linalg.cholesky(R_ri)
+
+        # Get generalized least squared solution
+        Ft_ri = linalg.solve_triangular(C_ri, self.F, lower=True)
+        Q_ri, G_ri = linalg.qr(Ft_ri, mode="economic")
+        Yt_ri = linalg.solve_triangular(C_ri, Y_ri, lower=True)
+        beta_ri = linalg.solve_triangular(G_ri, np.dot(Q_ri.T, Yt_ri))
+        rho_ri = Yt_ri - np.dot(Ft_ri, beta_ri)
+        sigma2_ri = (rho_ri**2.0).sum(axis=0) / (self.nt - p - q)
+        sigma2_ri *= self.y_std**2.0
+        return sigma2_ri
 
     def _reduced_likelihood_gradient(self, theta):
         """
@@ -1570,7 +1627,9 @@ class KrgBased(SurrogateModel):
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
-    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -1599,10 +1658,12 @@ class KrgBased(SurrogateModel):
 
         n = x.shape[0]
         x2 = np.copy(x)
-        s2 = self._predict_variances(x2, is_acting=is_acting)
+        s2 = self._predict_variances(x2, is_acting=is_acting, is_ri=is_ri)
         return s2.reshape((n, self.ny))
 
-    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Provide uncertainty of the model at a set of points
         Parameters
@@ -1613,8 +1674,8 @@ class KrgBased(SurrogateModel):
             Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
         Returns
         -------
-        MSE : np.ndarray
-            Evaluation point output variable MSE
+        s2 : np.ndarray
+            Evaluation point output variable variances (uncertainty at the prediction points)
         """
         # Initialization
         if not (self.is_continuous):
@@ -1653,15 +1714,21 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
-        A = self.optimal_par["sigma2"]
+        # We have to re-interpolate with a plug-in estimator
+        # in the case of noisy KRG
+        is_noisy = self.options["noise0"] != [0.0] or self.options["eval_noise"]
+        if is_noisy and is_ri:
+            A = self.optimal_par["sigma2_ri"]
+        else:
+            A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         # machine precision: force to zero!
         B[B < 1e-12] = 0
-        MSE = np.einsum("i,j -> ji", A, B)
-        # Mean Squared Error might be slightly negative depending on
+        s2 = np.einsum("i,j -> ji", A, B)
+        # s2 might be slightly negative depending on
         # machine precision: force to zero!
-        MSE[MSE < 0.0] = 0.0
-        return MSE
+        s2[s2 < 0.0] = 0.0
+        return s2
 
     def _predict_variance_derivatives(self, x, kx):
         """
