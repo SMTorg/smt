@@ -38,9 +38,13 @@ class SubspacesInterpolation:
         number of modes of the POD bases
     bases : np.ndarray[n_DoF, n_modes, n_DoE]
         Database of the POD bases to interpolate.
+    print_global : bool
+        Indicates if the indications plot (except the warnings) should be displayed.
     """
 
-    def __init__(self, DoE_mu, DoE_bases, snapshots=None, U_ref=None) -> None:
+    def __init__(
+        self, DoE_mu, DoE_bases, print_global, snapshots=None, U_ref=None
+    ) -> None:
         """
         Initialization.
 
@@ -51,6 +55,7 @@ class SubspacesInterpolation:
         DoE_bases : np.ndarray[n_DoF, n_modes, n_DoE]
             Database of the POD bases to interpolate.
         """
+        self.print_global = print_global
         self.mu_train = DoE_mu
         self.bases = DoE_bases
         self.n_DoE = DoE_mu.shape[0]
@@ -239,13 +244,17 @@ class SubspacesInterpolation:
 
         u, s, v = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
-        print(
-            "The Grassmann manifold of interest is of dimension "
-            + str((self.n_DoF - self.n_modes) * self.n_modes)
-        )
-        print("The number of tangent vectors is " + str(self.n_DoE))
+        if self.print_global:
+            print(
+                "The Grassmann manifold of interest is of dimension "
+                + str((self.n_DoF - self.n_modes) * self.n_modes)
+            )
+            print("The number of tangent vectors is " + str(self.n_DoE))
         self.n_B = np.argwhere(s.cumsum() / s.sum() >= 1 - epsilon)[0, 0] + 1
-        print("The dimension of the subspace of the tangent plane is " + str(self.n_B))
+        if self.print_global:
+            print(
+                "The dimension of the subspace of the tangent plane is " + str(self.n_B)
+            )
         if self.n_B == self.n_DoE:
             print(
                 "WARNING: the dimension of the tangent plane's subspace is equal to the DoE size."
@@ -345,7 +354,6 @@ class SubspacesInterpolation:
             coeff = self.pred_coeff(mu)
             # compute the corresponding tangent vectors
             Zi = np.dot(self.Basis, coeff) + self.Z_mean[:, np.newaxis]
-            print("Z_tilde_shape", Zi.shape)
             # injectivity test to
             pca = PCA(svd_solver="randomized", random_state=42)
             pca.fit(Zi)
@@ -355,8 +363,6 @@ class SubspacesInterpolation:
                 print(
                     "Warning : There is loss of injectivity for the interpolation of subspaces."
                 )
-            else:
-                print("no loss of injectivity")
             # reshape to get the matrices
             Ti = Zi.reshape((self.n_DoF, self.n_modes, n_new, 1))
             # transpose to apply the SVD in exp map to each matrix
@@ -365,7 +371,6 @@ class SubspacesInterpolation:
             Ti[ind] = 0.0
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
-            print("False", Yi.shape)
             return Yi
         elif compute_realizations:
             if n_new != 1:
@@ -396,7 +401,6 @@ class SubspacesInterpolation:
             Ti = np.transpose(Ti, (2, 3, 0, 1))
             # exponential mapping
             Yi = self.exponential_mapping(self.Y0, Ti)
-            print("True", Yi.shape)
             return Yi[:, -1, :, :], Yi[:, :-1, :, :]
 
     def GP_GC(self, Yi, separate_variables=True, DoE=None):
@@ -798,6 +802,7 @@ class PODI(SurrogateBasedApplication):
         xt1,
         input_matrices,
         xn1,
+        print_global=True,
         ref_index=0,
         frechet=False,
         frechet_guess=None,
@@ -852,20 +857,16 @@ class PODI(SurrogateBasedApplication):
                             )
         """
         nn = xn1.shape[0]
-        nt1 = xt1.shape[0]
         ny, n_modes = input_matrices[0].shape
         n_bases = len(input_matrices)
-
-        if n_bases != nt1:
-            raise ValueError(
-                f"there must be the same amount of local bases than xt1 values, {n_bases} != {nt1}."
-            )
 
         DoE_bases = np.zeros((ny, n_modes, n_bases))
         for i, basis in enumerate(input_matrices):
             DoE_bases[:, :, i] = basis
 
-        interp = SubspacesInterpolation(DoE_mu=xt1, DoE_bases=DoE_bases)
+        interp = SubspacesInterpolation(
+            DoE_mu=xt1, DoE_bases=DoE_bases, print_global=print_global
+        )
 
         if frechet:
             if frechet_guess is not None:
@@ -905,15 +906,13 @@ class PODI(SurrogateBasedApplication):
 
                 return interpolated_bases, interpolated_bases_real
             else:
-                Yi_full = interp.interp_POD_basis(
-                    xn1, compute_realizations=False
-                )
+                Yi_full = interp.interp_POD_basis(xn1, compute_realizations=False)
                 yi = Yi_full[:, 0, :, :]
                 interpolated_bases = []
                 for i in range(nn):
                     interpolated_basis = yi[i, :, :]
                     interpolated_bases.append(interpolated_basis)
-                
+
                 return interpolated_bases
 
     def compute_global_pod(
@@ -952,8 +951,8 @@ class PODI(SurrogateBasedApplication):
 
         if choice_svd is None:
             raise ValueError(
-                    "pod needs atleast one of the arguments 'n_modes' or 'tol'"
-                )
+                "pod needs atleast one of the arguments 'n_modes' or 'tol'"
+            )
 
         svd.fit(self.database.T)
         self.singular_vectors = svd.components_.T
@@ -1041,7 +1040,7 @@ class PODI(SurrogateBasedApplication):
         self.pod_computed = True
         self.interp_options_set = False
 
-    def compute_pod_errors(self, xt) -> list:
+    def compute_pod_errors(self, xt, database) -> list:
         """
         Calculates different errors for the POD.
 
@@ -1061,26 +1060,27 @@ class PODI(SurrogateBasedApplication):
         xt = ensure_2d_array(xt, "xt")
 
         nt = xt.shape[0]
+        n_snapshot = database.shape[1]
 
-        if nt != self.n_snapshot:
+        if nt != n_snapshot:
             raise ValueError(
-                f"there must be the same amount of train values than data values, {nt} != {self.n_snapshot}."
+                f"there must be the same amount of train values than data values, {nt} != {n_snapshot}."
             )
 
         max_interp_error = 0
         max_proj_error = 0
         max_total_error = 0
 
-        for n in range(self.n_snapshot):
+        for n in range(n_snapshot):
             reduced_database = np.concatenate(
-                (self.database[:, :n], self.database[:, n + 1 :]), axis=1
+                (database[:, :n], database[:, n + 1 :]), axis=1
             )
-            reduced_xt = np.concatenate((self.xt[:n], self.xt[n + 1 :]))
-            single_snapshot = np.atleast_2d(self.database[:, n]).T
-            single_xt = np.atleast_2d(self.xt[n])
+            reduced_xt = np.concatenate((xt[:n], xt[n + 1 :]))
+            single_snapshot = np.atleast_2d(database[:, n]).T
+            single_xt = np.atleast_2d(xt[n])
 
             podi = PODI()
-            podi.compute_pod(database=reduced_database)
+            podi.compute_pod(database=reduced_database, n_modes=min(database.shape))
             reduced_mean = np.atleast_2d(reduced_database.mean(axis=1)).T
             reduced_basis = podi.get_singular_vectors()
             n_modes = podi.get_n_modes()
@@ -1419,7 +1419,7 @@ class PODI(SurrogateBasedApplication):
         dy_dx = np.dot(self.basis, deriv_coeff_interp)
 
         return dy_dx
-    
+
     def predict_variances_derivatives(self, xn, kx) -> np.ndarray:
         """
         Predict the derivatives of the variances at a set of points.
@@ -1461,9 +1461,9 @@ class PODI(SurrogateBasedApplication):
         deriv_coeff_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[i] = self.interp_coeff[i].predict_variances_derivatives(xn, d)[
-                :, 0
-            ]
+            deriv_coeff_interp[i] = self.interp_coeff[i].predict_variances_derivatives(
+                xn, d
+            )[:, 0]
 
         dv_dx = np.dot(self.basis, deriv_coeff_interp)
 

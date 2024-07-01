@@ -1,6 +1,7 @@
 """
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
+
 import unittest
 from smt.utils.sm_test_case import SMTestCase
 from sklearn.decomposition import PCA
@@ -389,7 +390,7 @@ class Test(SMTestCase):
             color="r",
         )
         axes = plt.gca()
-        axes.tick_params(axis = 'x', labelsize = 14)
+        axes.tick_params(axis="x", labelsize=14)
 
         axes.yaxis.set_visible(False)
         plt.xlabel("x", fontsize=16)
@@ -438,12 +439,12 @@ class Test(SMTestCase):
             rms_list.append(rms)
 
             axes = plt.gca()
-            axes.tick_params(axis = 'x', labelsize = 16)
-            axes.tick_params(axis = 'y', labelsize = 16)
+            axes.tick_params(axis="x", labelsize=16)
+            axes.tick_params(axis="y", labelsize=16)
             plt.scatter([], [], color="w", label="rms = " + str(round(rms, 4)))
             x = self.xv[i, 0]
-            plt.ylabel(f"u(x={str(x)[:5]})", fontsize = 18)
-            plt.xlabel("t", fontsize = 18)
+            plt.ylabel(f"u(x={str(x)[:5]})", fontsize=18)
+            plt.xlabel("t", fontsize=18)
             plt.title(f"x = {str(x)[:5]}", fontsize=20)
             plt.legend(fontsize=16)
 
@@ -456,8 +457,8 @@ class Test(SMTestCase):
                 s=50,
                 marker="x",
             )
-            plt.ylabel(f"u(x={str(x)[:5]})", fontsize = 18)
-            plt.xlabel("t", fontsize = 18)
+            plt.ylabel(f"u(x={str(x)[:5]})", fontsize=18)
+            plt.xlabel("t", fontsize=18)
             plt.title(f"x = {str(x)[:5]}", fontsize=18)
             plt.legend(loc="upper right", fontsize=16)
 
@@ -472,8 +473,13 @@ class Test(SMTestCase):
 
         import matplotlib.colors as mcolors
 
-        colors = [(0, (155/255, 1, 0)), (0.33, (1, 1, 0)), (0.66, 'orange'), (1, (1, 0, 0))]
-        cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', colors, N=256)
+        colors = [
+            (0, (155 / 255, 1, 0)),
+            (0.33, (1, 1, 0)),
+            (0.66, "orange"),
+            (1, (1, 0, 0)),
+        ]
+        cmap = mcolors.LinearSegmentedColormap.from_list("custom_cmap", colors, N=256)
         norm = mcolors.Normalize(vmin=min(rms_list), vmax=max(rms_list))
 
         plt.figure(figsize=(15, 10))
@@ -494,10 +500,10 @@ class Test(SMTestCase):
             s=size_list,
             alpha=0.6,
             cmap=cmap,
-            norm=norm
+            norm=norm,
         )
         cbar = plt.colorbar(sc)
-        cbar.set_label('rms error')
+        cbar.set_label("rms error")
 
         axes = plt.gca()
         axes.get_yaxis().set_visible(False)
@@ -835,6 +841,6 @@ class Test(SMTestCase):
 if __name__ == "__main__":
     # Test.run_podi_example_1d()
     unittest.main()
-    #test = Test()
+    # test = Test()
     # test.test_local()
-    #test.test_global_global()
+    # test.test_global_global()
