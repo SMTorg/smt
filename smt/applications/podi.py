@@ -63,7 +63,7 @@ class SubspacesInterpolation:
         self.n_DoF = DoE_bases.shape[0]
         self.n_modes = DoE_bases.shape[1]
         self.snapshots = snapshots
-        if type(self.snapshots) != type(None):
+        if self.snapshots is not None:
             self.n_t = self.snapshots.shape[1]
         self.U_ref = U_ref
 
