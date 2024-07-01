@@ -161,11 +161,11 @@ void RMTC::compute_uniq2elem(double * data, int * rows, int * cols) {
 }
 
 void RMTC::compute_full_from_block(double * mtx, double * data, int * rows, int * cols){
-  int inz = 0;
+  long inz = 0;
 
-  for (int ielem = 0; ielem < nelem; ielem++) {
-    for (int iterm1 = 0; iterm1 < nterm; iterm1++) {
-      for (int iterm2 = 0; iterm2 < nterm; iterm2++) {
+  for (long ielem = 0; ielem < nelem; ielem++) {
+    for (long iterm1 = 0; iterm1 < nterm; iterm1++) {
+      for (long iterm2 = 0; iterm2 < nterm; iterm2++) {
         data[inz] = mtx[iterm1 * nterm + iterm2];
         rows[inz] = ielem * nterm + iterm1;
         cols[inz] = ielem * nterm + iterm2;

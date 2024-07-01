@@ -1,6 +1,10 @@
 import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    ensure_design_space,
+)
 
 try:
     import egobox as egx
@@ -82,12 +86,38 @@ class GPX(SurrogateModel):
                 for internal optim (set by default to get reproductibility)",
         )
 
+        declare(
+            "design_space",
+            None,
+            types=(BaseDesignSpace, list, np.ndarray),
+            desc="definition of the (hierarchical) design space: "
+            "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
+        )
+
         supports = self.supports
         supports["derivatives"] = True
         supports["variances"] = True
         supports["variance_derivatives"] = True
 
         self._gpx = None
+
+    @property
+    def design_space(self) -> BaseDesignSpace:
+        xt = self.training_points.get(None)
+        if xt is not None:
+            xt = xt[0][0]
+
+        if self.options["design_space"] is None:
+            self.options["design_space"] = ensure_design_space(
+                xt=xt, xlimits=self.options["xlimits"]
+            )
+
+        elif not isinstance(self.options["design_space"], BaseDesignSpace):
+            ds_input = self.options["design_space"]
+            self.options["design_space"] = ensure_design_space(
+                xt=xt, xlimits=ds_input, design_space=ds_input
+            )
+        return self.options["design_space"]
 
     def _train(self):
         xt, yt = self.training_points[None][0]

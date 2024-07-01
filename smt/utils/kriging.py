@@ -825,9 +825,18 @@ def squar_sin_exp(theta, d, grad_ind=None, hess_ind=None, derivative_params=None
         i = 0
 
     if derivative_params is not None:
-        raise ValueError(
-            "Spatial derivatives for ExpSinSquared not available yet (to implement)."
-        )
+        cut = int(len(theta) / 2)
+        dx = derivative_params["dx"]
+        dr = np.empty(dx.shape)
+        for j in range(dx.shape[0]):
+            for k in range(dx.shape[1]):
+                dr[j, k] = (
+                    -theta_array[0][k]
+                    * theta_array[0][k + cut]
+                    * np.sin(2 * theta_array[0][k + cut] * dx[j][k])
+                    * kernel[j][0]
+                )
+        return r, dr
     return r
 
 
@@ -1381,10 +1390,6 @@ def componentwise_distance(
             )
         if corr == "act_exp":
             raise ValueError("this option is not implemented for active learning")
-        if corr == "squar_sin_exp":
-            raise ValueError(
-                "Spatial derivatives for ExpSinSquared not available yet (to implement)."
-            )
         der = _comp_dist_derivative(D, power)
         D_corr = power * np.einsum("j,ij->ij", theta.T, der)
         return D_corr

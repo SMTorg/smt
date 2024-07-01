@@ -73,9 +73,9 @@ class NestedLHS(object):
     def __call__(self, nb_samples_hifi):
         """
         Builds nlevel nested design of experiments of dimension dim and size n_samples.
-        Each doe sis built with the optmized lhs procedure.
-        Builds the highest level first; nested properties are ensured by deleting
-        the nearest neighbours in lower levels of fidelity.
+        Each doe is built with an optmized LHS procedure.
+        The method builds the highest level first and
+        nested properties are ensured by deleting the nearest neighbours in lower levels of fidelity.
 
         Parameters
         ----------
@@ -954,7 +954,8 @@ class MFK(KrgBased):
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
-        return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        deriv = dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        return deriv.reshape((x.shape[0], self.ny))
 
     def _get_theta(self, i):
         return self.optimal_theta[i]
