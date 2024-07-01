@@ -5,19 +5,21 @@
 #include <math.h>
 #include <iostream>
 #include <cstring>
+#include <stdexcept>
+#include <sstream>
 
 using namespace std;
 
-void compute_knot_vector_uniform(int order, int ncp, double * knots) {
-  for (int i = 0; i < order + ncp; i++) {
+void compute_knot_vector_uniform(long order, long ncp, double * knots) {
+  for (long i = 0; i < order + ncp; i++) {
     knots[i] = 1. * (i - order + 1) / (ncp - order + 1);
   }
 }
 
-int compute_i_start(int order, int ncp, double param, double * knots) {
-  int istart = -1;
+long compute_i_start(long order, long ncp, double param, double * knots) {
+  long istart = -1;
 
-  for (int i = order - 1; i < ncp; i++) {
+  for (long i = order - 1; i < ncp; i++) {
     if ((knots[i] <= param) && (param < knots[i + 1])) {
       istart = i - order + 1;
     }
@@ -30,25 +32,25 @@ int compute_i_start(int order, int ncp, double param, double * knots) {
   return istart;
 }
 
-int compute_basis_0(int order, int ncp, double param, double * knots, double * basis0_vec) {
-  int istart = compute_i_start(order, ncp, param, knots);
+long compute_basis_0(long order, long ncp, double param, double * knots, double * basis0_vec) {
+  long istart = compute_i_start(order, ncp, param, knots);
 
-  for (int i = 0; i < order; i++) {
+  for (long i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
 
-  for (int i = 1; i < order; i++) {
-    int j1 = order - i - 1;
-    int j2 = order - 1;
-    int n = istart + j1;
+  for (long i = 1; i < order; i++) {
+    long j1 = order - i - 1;
+    long j2 = order - 1;
+    long n = istart + j1;
 
     if (knots[n + i + 1] != knots[n + 1]) {
       basis0_vec[j1] = (knots[n + i + 1] - param) / (knots[n + i + 1] - knots[n + 1]) * basis0_vec[j1 + 1];
     } else {
       basis0_vec[j1] = 0.;
     }
-    for (int j = j1 + 1; j < j2; j++) {
+    for (long j = j1 + 1; j < j2; j++) {
       n = istart + j;
       if (knots[n + i] != knots[n]) {
         basis0_vec[j] = (param - knots[n]) / (knots[n + i] - knots[n]) * basis0_vec[j];
@@ -69,23 +71,23 @@ int compute_basis_0(int order, int ncp, double param, double * knots, double * b
   return istart;
 }
 
-int compute_basis_1(int order, int ncp, double param, double * knots, double * basis1_vec) {
-  int istart = compute_i_start(order, ncp, param, knots);
+long compute_basis_1(long order, long ncp, double param, double * knots, double * basis1_vec) {
+  long istart = compute_i_start(order, ncp, param, knots);
 
   double * basis0_vec = new double[order];
 
-  for (int i = 0; i < order; i++) {
+  for (long i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
     basis1_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
 
-  for (int i = 1; i < order; i++) {
-    int j1 = order - i - 1;
-    int j2 = order - 1;
+  for (long i = 1; i < order; i++) {
+    long j1 = order - i - 1;
+    long j2 = order - 1;
 
-    for (int j = j1; j < j2 + 1; j++) {
-      int n = istart + j;
+    for (long j = j1; j < j2 + 1; j++) {
+      long n = istart + j;
       double b1, b2, f1, f2;
 
       if (knots[n + i] != knots[n]) {
@@ -114,25 +116,25 @@ int compute_basis_1(int order, int ncp, double param, double * knots, double * b
   return istart;
 }
 
-int compute_basis_2(int order, int ncp, double param, double * knots, double * basis2_vec) {
-  int istart = compute_i_start(order, ncp, param, knots);
+long compute_basis_2(long order, long ncp, double param, double * knots, double * basis2_vec) {
+  long istart = compute_i_start(order, ncp, param, knots);
 
   double * basis0_vec = new double[order];
   double * basis1_vec = new double[order];
 
-  for (int i = 0; i < order; i++) {
+  for (long i = 0; i < order; i++) {
     basis0_vec[i] = 0.;
     basis1_vec[i] = 0.;
     basis2_vec[i] = 0.;
   }
   basis0_vec[order - 1] = 1.;
 
-  for (int i = 1; i < order; i++) {
-    int j1 = order - i - 1;
-    int j2 = order - 1;
+  for (long i = 1; i < order; i++) {
+    long j1 = order - i - 1;
+    long j2 = order - 1;
 
-    for (int j = j1; j < j2 + 1; j++) {
-      int n = istart + j;
+    for (long j = j1; j < j2 + 1; j++) {
+      long n = istart + j;
       double b1, b2, f1, f2, s1, s2;
 
       if (knots[n + i] != knots[n]) {
@@ -195,32 +197,32 @@ void RMTB::setup(int nx, double * lower, double * upper, int * order_list, int *
 void RMTB::compute_jac(
     int ix1, int ix2, int n, double * params,
     double * data, int * rows, int * cols) {
-  int nnz_row = 1;
+  long nnz_row = 1;
 
-  for (int ix = 0; ix < nx; ix++) {
+  for (long ix = 0; ix < nx; ix++) {
     nnz_row *= order_list[ix];
   }
 
-  for (int i = 0; i < n; i++) {
-    for (int inz_row = 0; inz_row < nnz_row; inz_row++) {
+  for (long i = 0; i < n; i++) {
+    for (long inz_row = 0; inz_row < nnz_row; inz_row++) {
       data[i * nnz_row + inz_row] = 1.;
       rows[i * nnz_row + inz_row] = i;
       cols[i * nnz_row + inz_row] = 0;
     }
   }
 
-  for (int ix = 0; ix < nx; ix++) {
-    int order = order_list[ix];
-    int ncp = ncp_list[ix];
+  for (long ix = 0; ix < nx; ix++) {
+    long order = order_list[ix];
+    long ncp = ncp_list[ix];
 
     double * knots = new double[order + ncp];
     double * basis_vec = new double[order];
 
     compute_knot_vector_uniform(order, ncp, knots);
 
-    for (int i = 0; i < n; i++) {
-      int istart;
-      int (*compute_basis)(int, int, double, double *, double *);
+    for (long i = 0; i < n; i++) {
+      long istart;
+      long (*compute_basis)(long, long, double, double *, double *);
 
       if ((ix != ix1) && (ix != ix2)) {compute_basis = &compute_basis_0;}
       else if ((ix == ix1) && (ix != ix2)) {compute_basis = &compute_basis_1;}
@@ -229,29 +231,51 @@ void RMTB::compute_jac(
 
       istart = (*compute_basis) (order, ncp, params[i * nx + ix], knots, basis_vec);
 
-      for (int inz_row = 0; inz_row < nnz_row; inz_row++) {
-        int rem = inz_row;
-        int inz_dim;
+      for (long inz_row = 0; inz_row < nnz_row; inz_row++) {
+        long rem = inz_row;
+        long inz_dim;
 
-        for (int jx = 0; jx < ix + 1; jx++) {
-          int prod = 1;
-          for (int kx = jx + 1; kx < nx; kx++) {
+        for (long jx = 0; jx < ix + 1; jx++) {
+          long prod = 1;
+          for (long kx = jx + 1; kx < nx; kx++) {
             prod *= order_list[kx];
           }
           inz_dim = rem / prod;
           rem -= inz_dim * prod;
         }
 
-        int inz = i * nnz_row + inz_row;
+        long inz = i * nnz_row + inz_row;
 
-        int prod = 1;
-        for (int jx = ix + 1; jx < nx; jx++) {
+        long prod = 1;
+        for (long jx = ix + 1; jx < nx; jx++) {
           prod *= ncp_list[jx];
         }
-
         data[inz] *= basis_vec[inz_dim];
         cols[inz] += (inz_dim + istart) * prod;
       }
+    }
+
+    for (long i = 0; i < n; i++) {
+        for (long inz_row = 0; inz_row < nnz_row; inz_row++) {
+            long idx = i * nnz_row + inz_row;
+            // Refer to https://github.com/SMTorg/smt/issues/573
+            // I do not know why these column indices are sometimes negative.
+            // However, I *have* shown that this post-filtering of the indices
+            // fixes the problem, at least in the cases I have examined.
+            if (cols[idx] < 0) {
+                cols[idx] = 0;
+                // The exception code is kept for future reference-
+                // this is probably what *should* be done,
+                // and the root cause of the negative indices should be understood.
+                // std::ostringstream oss;
+                // oss << __FILE__ << ":" << __LINE__ << ":" << __func__;
+                // oss << ":\n Computed a negative column index for sparse matrix; ";
+                // oss << "please submit a bug report: https://github.com/SMTorg/smt/issues.\n";
+                // oss << "Extra information for debug: ix1=" << ix1 << ", ix2=" << ix2 << ", ";
+                // oss << "n= " << n << "\n";
+                // throw std::logic_error(oss.str());
+            }
+        }
     }
 
     delete[] knots;

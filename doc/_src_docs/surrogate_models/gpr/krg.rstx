@@ -1,5 +1,5 @@
-Kriging
-=======
+Kriging (KRG)
+=============
 
 Kriging is an interpolating model that is a linear combination of a known function :math:`f_i({\bf x})` which is added to a realization of a stochastic process :math:`Z({\bf x})`
 

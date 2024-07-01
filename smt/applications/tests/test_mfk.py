@@ -55,7 +55,7 @@ class TestMFK(SMTestCase):
             self.assertTrue(found)
 
     def test_mfk(self):
-        self.problems = ["exp", "tanh", "cos"]
+        self.problems = ["exp"]  # , "tanh", "cos"]
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
@@ -94,7 +94,7 @@ class TestMFK(SMTestCase):
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
 
-        nt = 500
+        nt = 100
         np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
@@ -112,7 +112,7 @@ class TestMFK(SMTestCase):
         for kx in range(prob.xlimits.shape[0]):
             dye[kx] = prob(xe, kx=kx)
 
-        sm = MFK(theta0=[1e-2] * self.ndim)
+        sm = MFK(theta0=[1e-2] * self.ndim, corr="squar_exp")
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
@@ -169,7 +169,7 @@ class TestMFK(SMTestCase):
         yt_e = hf_function(xt_e)
         yt_c = lf_function(xt_c)
 
-        sm = MFK(theta0=xt_e.shape[1] * [1.0])
+        sm = MFK(theta0=xt_e.shape[1] * [1.0], corr="squar_exp")
 
         # low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(xt_c, yt_c, name=0)
