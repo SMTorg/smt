@@ -27,7 +27,7 @@ Each column of the matrix corresponds to a snapshot output :math:`u(\mathbf{x_k}
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
 
-The vectorial output $u$ is a vector of dimension $p$. Its POD is this decomposition:
+The vectorial output :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition:
 
 .. math ::
 	\begin{equation}\label{e:pod}
@@ -156,9 +156,15 @@ PODI class API
 
 .. autoclass:: smt.applications.podi.PODI
 
+	.. automethod:: smt.applications.podi.PODI.interp_subspaces
+
   	.. automethod:: smt.applications.podi.PODI.compute_pod
 
+	.. automethod:: smt.application.podi.PODI.compute_pod_errors
+
     .. automethod:: smt.applications.podi.PODI.get_singular_vectors
+
+	.. automethod:: smt.applications.podi.PODI.get_basis
 
 	.. automethod:: smt.applications.podi.PODI.get_singular_values
 
@@ -167,8 +173,6 @@ PODI class API
 	.. automethod:: smt.applications.podi.PODI.get_n_modes
 
 	.. automethod:: smt.applications.podi.PODI.set_interp_options
-
-	.. automethod:: smt.applications.podi.PODI.compute_pod
 
 	.. automethod:: smt.applications.podi.PODI.set_training_values
 
