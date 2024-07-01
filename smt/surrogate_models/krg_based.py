@@ -521,6 +521,30 @@ class KrgBased(SurrogateModel):
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
+    def is_training_ill_conditioned(self):
+        """
+        Check if the training dataset could be an issue and print both
+        the dataset correlation matrix condition number and
+        minimal distance between two points.
+        ----
+        Returns true if R is ill_conditionned
+        """
+        R = self.optimal_par["C"] @ self.optimal_par["C"]
+        condR = np.linalg.cond(R)
+        print(
+            "Minimal distance between two points in any dimension is",
+            "{:.2e}".format(np.min(self.D)),
+        )
+        print(
+            "Correlation matrix R condition number is",
+            "{:.2e}".format(condR),
+        )
+        return (
+            linalg.svd(R, compute_uv=False)[-1]
+            < (1.5 * 100.0 * np.finfo(np.double).eps)
+            and condR > 1e9
+        )
+
     def _train(self):
         """
         Train the model
@@ -966,11 +990,14 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R_noisy)[0])
             return reduced_likelihood_function_value, par
+<<<<<<< HEAD
         if linalg.svd(R_noisy, compute_uv=False)[-1] < 1.1 * nugget:
             warnings.warn(
                 "R is too ill conditioned. Poor combination "
                 "of regression model and observations."
             )
+=======
+>>>>>>> a97b19906d653e8f045f4ca9e8fe72a8df75fa95
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
