@@ -990,14 +990,6 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R_noisy)[0])
             return reduced_likelihood_function_value, par
-<<<<<<< HEAD
-        if linalg.svd(R_noisy, compute_uv=False)[-1] < 1.1 * nugget:
-            warnings.warn(
-                "R is too ill conditioned. Poor combination "
-                "of regression model and observations."
-            )
-=======
->>>>>>> a97b19906d653e8f045f4ca9e8fe72a8df75fa95
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
