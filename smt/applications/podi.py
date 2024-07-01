@@ -806,7 +806,6 @@ class PODI(SurrogateBasedApplication):
         ref_index=0,
         frechet=False,
         frechet_guess=None,
-        method="KRG",
         compute_realizations=False,
         n_realizations=1,
     ) -> list:
@@ -878,42 +877,41 @@ class PODI(SurrogateBasedApplication):
         else:
             Y0 = input_matrices[ref_index]
 
-        if method == "KRG":
-            interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0=Y0)
-            if compute_realizations:
-                Yi_full, Yi_full2 = interp.interp_POD_basis(
-                    xn1,
-                    compute_realizations=True,
-                    n_real=n_realizations,
-                )
-                yi = Yi_full
-                interpolated_bases = []
+        interp.compute_tangent_plane_basis_and_DoE_coordinates(Y0=Y0)
+        if compute_realizations:
+            Yi_full, Yi_full2 = interp.interp_POD_basis(
+                xn1,
+                compute_realizations=True,
+                n_real=n_realizations,
+            )
+            yi = Yi_full
+            interpolated_bases = []
 
-                yi_real = []
-                for real in range(Yi_full2.shape[1]):
-                    yi_real.append(Yi_full2[:, real, :, :])
-                interpolated_bases_real = []
+            yi_real = []
+            for real in range(Yi_full2.shape[1]):
+                yi_real.append(Yi_full2[:, real, :, :])
+            interpolated_bases_real = []
 
-                for i in range(nn):
-                    interpolated_basis = yi[i, :, :]
-                    interpolated_bases.append(interpolated_basis)
+            for i in range(nn):
+                interpolated_basis = yi[i, :, :]
+                interpolated_bases.append(interpolated_basis)
 
-                    realizations_i = []
-                    for j in range(n_realizations):
-                        realization_j_of_i = yi_real[j][i, :, :]
-                        realizations_i.append(realization_j_of_i)
-                    interpolated_bases_real.append(realizations_i)
+                realizations_i = []
+                for j in range(n_realizations):
+                    realization_j_of_i = yi_real[j][i, :, :]
+                    realizations_i.append(realization_j_of_i)
+                interpolated_bases_real.append(realizations_i)
 
-                return interpolated_bases, interpolated_bases_real
-            else:
-                Yi_full = interp.interp_POD_basis(xn1, compute_realizations=False)
-                yi = Yi_full[:, 0, :, :]
-                interpolated_bases = []
-                for i in range(nn):
-                    interpolated_basis = yi[i, :, :]
-                    interpolated_bases.append(interpolated_basis)
+            return interpolated_bases, interpolated_bases_real
+        else:
+            Yi_full = interp.interp_POD_basis(xn1, compute_realizations=False)
+            yi = Yi_full[:, 0, :, :]
+            interpolated_bases = []
+            for i in range(nn):
+                interpolated_basis = yi[i, :, :]
+                interpolated_bases.append(interpolated_basis)
 
-                return interpolated_bases
+            return interpolated_bases
 
     def compute_global_pod(
         self,
@@ -962,9 +960,9 @@ class PODI(SurrogateBasedApplication):
         if choice_svd == "tol":
             self.n_modes = PODI.choice_n_modes_tol(EV_list, tol)
         else:
-            if self.n_modes > self.n_snapshot:
+            if n_modes > self.n_snapshot:
                 raise ValueError(
-                    "the number of kept modes can't be superior to the number of data values (snapshots)"
+                    f"the number of kept modes can't be superior to the number of data values (snapshots)"
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
 
@@ -980,7 +978,7 @@ class PODI(SurrogateBasedApplication):
         local_basis: np.ndarray = None,
     ) -> None:
         """
-        Performs the POD.
+        Performs the POD (global or local).
 
         Parameters
         ----------
@@ -1054,9 +1052,6 @@ class PODI(SurrogateBasedApplication):
         error_list : list[float]
             List of 3 POD errors : projection error, interpolation error and total error (projection and interpolation).
         """
-        if not self.pod_computed:
-            print("OOF")
-
         xt = ensure_2d_array(xt, "xt")
 
         nt = xt.shape[0]
@@ -1080,7 +1075,7 @@ class PODI(SurrogateBasedApplication):
             single_xt = np.atleast_2d(xt[n])
 
             podi = PODI()
-            podi.compute_pod(database=reduced_database, n_modes=min(database.shape))
+            podi.compute_pod(database=reduced_database, n_modes=min(reduced_database.shape))
             reduced_mean = np.atleast_2d(reduced_database.mean(axis=1)).T
             reduced_basis = podi.get_singular_vectors()
             n_modes = podi.get_n_modes()
