@@ -8,7 +8,6 @@ import numpy as np
 from scipy import special
 from smt.sampling_methods import LHS
 from smt.applications import PODI
-import matplotlib.pyplot as plt
 
 
 def cos_coeff(i: int, x: np.ndarray):
@@ -361,6 +360,7 @@ class Test(SMTestCase):
         import numpy as np
         from smt.sampling_methods import LHS
         from smt.applications import PODI
+        import matplotlib.pyplot as plt
 
         light_pink = np.array((250, 233, 232)) / 255
 
