@@ -978,11 +978,54 @@ class KrgBased(SurrogateModel):
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
                 -1, 1
             )
-        R = np.eye(self.nt) * (1.0 + nugget + noise)
+        R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
+        R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+        R = np.eye(self.nt) * (1.0 + nugget)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-        # Cholesky decomposition of R
+        p = 0
+        q = 0
 
+        # Cholesky decomposition of R and computation of its inverse
+        C = linalg.cholesky(R, lower=True)
+        C_inv = np.linalg.inv(C)
+        R_inv = np.dot(C_inv.T, C_inv)
+
+        R_ri = R_noisy @ R_inv @ R_noisy
+        reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
+            R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
+        )
+        reduced_likelihood_function_value_ri, par, sigma2_ri = self._compute_sigma2(
+            R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
+        )
+        par["sigma2"] = sigma2 * self.y_std**2.0
+        par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
+        print("sigma2", par["sigma2"])
+
+        if self.name in ["MGP"]:
+            reduced_likelihood_function_value += self._reduced_log_prior(theta)
+
+        # A particular case when f_min_cobyla fail
+        if (self.best_iteration_fail is not None) and (
+            not np.isinf(reduced_likelihood_function_value)
+        ):
+            if reduced_likelihood_function_value > self.best_iteration_fail:
+                self.best_iteration_fail = reduced_likelihood_function_value
+                self._thetaMemory = np.array(tmp_var)
+
+        elif (self.best_iteration_fail is None) and (
+            not np.isinf(reduced_likelihood_function_value)
+        ):
+            self.best_iteration_fail = reduced_likelihood_function_value
+            self._thetaMemory = np.array(tmp_var)
+        if reduced_likelihood_function_value > 1e15:
+            reduced_likelihood_function_value = 1e15
+        return reduced_likelihood_function_value, par
+
+    def _compute_sigma2(
+        self, R, reduced_likelihood_function_value, par, p, q, is_ri=False
+    ):
         try:
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
@@ -1016,43 +1059,19 @@ class KrgBased(SurrogateModel):
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-        # Compute/Organize output
-        p = 0
-        q = 0
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            p = self.p
-            q = self.q
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        par["sigma2"] = sigma2 * self.y_std**2.0
-        par["beta"] = beta
-        par["gamma"] = linalg.solve_triangular(C.T, rho)
-        par["C"] = C
-        par["Ft"] = Ft
-        par["G"] = G
-        par["Q"] = Q
+        if is_ri:
+            par["beta"] = beta
+            par["gamma"] = linalg.solve_triangular(C.T, rho)
+            par["C"] = C
+            par["Ft"] = Ft
+            par["G"] = G
+            par["Q"] = Q
 
-        if self.name in ["MGP"]:
-            reduced_likelihood_function_value += self._reduced_log_prior(theta)
-
-        # A particular case when f_min_cobyla fail
-        if (self.best_iteration_fail is not None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            if reduced_likelihood_function_value > self.best_iteration_fail:
-                self.best_iteration_fail = reduced_likelihood_function_value
-                self._thetaMemory = np.array(tmp_var)
-
-        elif (self.best_iteration_fail is None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            self.best_iteration_fail = reduced_likelihood_function_value
-            self._thetaMemory = np.array(tmp_var)
-        if reduced_likelihood_function_value > 1e15:
-            reduced_likelihood_function_value = 1e15
-        return reduced_likelihood_function_value, par
+        return reduced_likelihood_function_value, par, sigma2
 
     def _reduced_likelihood_gradient(self, theta):
         """
