@@ -981,12 +981,27 @@ class KrgBased(SurrogateModel):
         R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
         R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+        R = np.eye(self.nt) * (1.0 + nugget)
+        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+
         p = 0
         q = 0
+
+        # Cholesky decomposition of R and computation of its inverse
+        C = linalg.cholesky(R, lower=True)
+        C_inv = np.linalg.inv(C)
+        R_inv = np.dot(C_inv.T, C_inv)
+
+        R_ri = R_noisy @ R_inv @ R_noisy
         reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
             R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
         )
+        reduced_likelihood_function_value_ri, par, sigma2_ri = self._compute_sigma2(
+            R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
+        )
         par["sigma2"] = sigma2 * self.y_std**2.0
+        par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
 
         if self.name in ["MGP"]:
             reduced_likelihood_function_value += self._reduced_log_prior(theta)
@@ -1578,7 +1593,9 @@ class KrgBased(SurrogateModel):
         y = (df_dx[kx] + np.dot(drx, gamma)) * self.y_std / self.X_scale[kx]
         return y
 
-    def predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Predict the variances at a set of points.
 
@@ -1607,10 +1624,12 @@ class KrgBased(SurrogateModel):
 
         n = x.shape[0]
         x2 = np.copy(x)
-        s2 = self._predict_variances(x2, is_acting=is_acting)
+        s2 = self._predict_variances(x2, is_acting=is_acting, is_ri=is_ri)
         return s2.reshape((n, self.ny))
 
-    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Provide uncertainty of the model at a set of points
         Parameters
@@ -1661,6 +1680,12 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
+        is_noisy = self.options["noise0"] != [0.0] or self.options["eval_noise"]
+        if is_noisy and is_ri:
+            A = self.optimal_par["sigma2_ri"]
+        else:
+            A = self.optimal_par["sigma2"]
+        print(self.optimal_par["sigma2"], self.optimal_par["sigma2_ri"])
         A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         # machine precision: force to zero!
