@@ -646,7 +646,9 @@ class MFK(KrgBased):
 
         return self._predict_intermediate_values(X, self.nlvl)
 
-    def _predict_variances(self, X: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, X: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 
