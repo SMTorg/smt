@@ -899,6 +899,7 @@ class KrgBased(SurrogateModel):
             - A dictionary containing the requested Gaussian Process model
               parameters:
             sigma2
+            sigma2_ri
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
@@ -992,21 +993,21 @@ class KrgBased(SurrogateModel):
         # Cholesky decomposition of R and computation of its inverse
         try:
             C_bis = linalg.cholesky(R_bis, lower=True)
-            # C_bis_inv = np.linalg.inv(C_bis)
-            # R_bis_inv = np.dot(C_bis_inv.T, C_bis_inv)
+            C_bis_inv = np.linalg.inv(C_bis)
+            R_bis_inv = np.dot(C_bis_inv.T, C_bis_inv)
         except ValueError as e:
             print(R_bis)
             print(e)
 
-        # R_ri = R_noisy @ R_bis_inv @ R_noisy
+        R_ri = R_noisy @ R_bis_inv @ R_noisy
         reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
             R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
         )
-        # reduced_likelihood_function_value_ri, par, sigma2_ri = self._compute_sigma2(
-        #     R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
-        # )
+        reduced_likelihood_function_value_ri, par, sigma2_ri = self._compute_sigma2(
+            R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
+        )
         par["sigma2"] = sigma2 * self.y_std**2.0
-        # par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
+        par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
 
         if self.name in ["MGP"]:
             reduced_likelihood_function_value += self._reduced_log_prior(theta)
@@ -1635,8 +1636,8 @@ class KrgBased(SurrogateModel):
             Matrix specifying for each design variable whether it is acting or not (for hierarchical design spaces)
         Returns
         -------
-        MSE : np.ndarray
-            Evaluation point output variable MSE
+        s2 : np.ndarray
+            Evaluation point output variable s2
         """
         # Initialization
         if not (self.is_continuous):
@@ -1679,16 +1680,14 @@ class KrgBased(SurrogateModel):
             A = self.optimal_par["sigma2_ri"]
         else:
             A = self.optimal_par["sigma2"]
-        print(A)
-        A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         # machine precision: force to zero!
         B[B < 1e-12] = 0
-        MSE = np.einsum("i,j -> ji", A, B)
+        s2 = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
-        MSE[MSE < 0.0] = 0.0
-        return MSE
+        s2[s2 < 0.0] = 0.0
+        return s2
 
     def _predict_variance_derivatives(self, x, kx):
         """
