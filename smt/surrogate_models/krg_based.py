@@ -989,6 +989,9 @@ class KrgBased(SurrogateModel):
 
         p = 0
         q = 0
+        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
+            p = self.p
+            q = self.q
 
         # Cholesky decomposition of R and computation of its inverse
 
@@ -1071,9 +1074,6 @@ class KrgBased(SurrogateModel):
         # elements of its Cholesky decomposition C
         detR = (np.diag(C) ** (2.0 / self.nt)).prod()
 
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            p = self.p
-            q = self.q
         sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
