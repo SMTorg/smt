@@ -329,7 +329,9 @@ class SGP(KRG):
         return mu
 
     # overload kriging based implementation
-    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Evaluates the model at a set of points using the inverse Woodbury vector.
         """
