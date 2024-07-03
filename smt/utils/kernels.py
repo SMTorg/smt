@@ -448,6 +448,46 @@ class Matern32(Kernel):
 
         return r
 
+class ActExp(Kernel):
+    def __call__(self, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=None):
+        r = np.zeros((d.shape[0], 1))
+        n_components = d.shape[1]
+
+        if len(self.theta) % n_components != 0:
+            raise Exception("Length of theta must be a multiple of n_components")
+
+        n_small_components = len(self.theta) // n_components
+
+        A = np.reshape(self.theta, (n_small_components, n_components)).T
+
+        d_A = d.dot(A)
+
+        # Necessary when working in embeddings space
+        if d_x is not None:
+            d = d_x
+            n_components = d.shape[1]
+
+        r[:, 0] = np.exp(-(1 / 2) * np.sum(d_A**2.0, axis=1))
+
+        if grad_ind is not None:
+            d_grad_ind = grad_ind % n_components
+            d_A_grad_ind = grad_ind // n_components
+
+            if hess_ind is None:
+                r[:, 0] = -d[:, d_grad_ind] * d_A[:, d_A_grad_ind] * r[:, 0]
+
+            elif hess_ind is not None:
+                d_hess_ind = hess_ind % n_components
+                d_A_hess_ind = hess_ind // n_components
+                fact = -d_A[:, d_A_grad_ind] * d_A[:, d_A_hess_ind]
+                if d_A_hess_ind == d_A_grad_ind:
+                    fact = 1 + fact
+                r[:, 0] = -d[:, d_grad_ind] * d[:, d_hess_ind] * fact * r[:, 0]
+
+        if derivative_params is not None:
+            raise ValueError("Jacobians are not available for this correlation kernel")
+
+        return r
 
 class Operator(Kernel):
     def __init__(self, corr1, corr2):
