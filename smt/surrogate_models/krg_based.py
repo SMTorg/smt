@@ -1877,8 +1877,7 @@ class KrgBased(SurrogateModel):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
-            if "KPLSK" in self.name and ii == 0:
-                self.kplsk_second_loop = True
+            self.kplsk_second_loop = "KPLSK" in self.name and ii == 0
             self.theta0 = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
