@@ -192,7 +192,9 @@ class EGO(SurrogateBasedApplication):
         sig = np.sqrt(self.gpr.predict_variances(points))
         args0 = (f_min - pred) * 1e-13
         args1 = (f_min - pred) * 1e-13
-        if np.abs(sig) > 1e-12:
+        if (sig.size == 1 and np.abs(sig) > 1e-12) or (
+            sig.size > 1 and np.min(np.abs(sig)) > 1e-12
+        ):
             args0 = (f_min - pred) / sig
             args1 = (f_min - pred) * norm.cdf(args0)
         args2 = sig * norm.pdf(args0)
