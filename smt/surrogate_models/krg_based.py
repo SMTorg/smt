@@ -994,7 +994,7 @@ class KrgBased(SurrogateModel):
             q = self.q
 
         # Cholesky decomposition of R and computation of its inverse
-
+        C = None
         try:
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
