@@ -205,16 +205,15 @@ class Test(SMTestCase):
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
-                    kr = KRG(print_global=False)
+                    kr = KRG(print_global=False, corr=corr_str)
                     theta = self.random.rand(4)
                 elif corr_str == "act_exp":
-                    kr = MGP(print_global=False)
+                    kr = MGP(print_global=False, corr=corr_str)
                     theta = self.random.rand(4)
                 else:
-                    kr = KRG(print_global=False)
+                    kr = KRG(print_global=False, corr=corr_str)
                     theta = self.theta
                 kr.options["poly"] = poly_str
-                kr.options["corr"] = corr_str
                 kr.options["pow_exp_power"] = self.power_val[corr_str]
                 kr.set_training_values(self.X, self.y)
                 kr.train()
@@ -253,16 +252,15 @@ class Test(SMTestCase):
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
-                    kr = KRG(print_global=False)
+                    kr = KRG(print_global=False, corr=corr_str)
                     theta = self.random.rand(4)
                 elif corr_str == "act_exp":
-                    kr = MGP(print_global=False)
+                    kr = MGP(print_global=False, corr=corr_str)
                     theta = self.random.rand(4)
                 else:
-                    kr = KRG(print_global=False)
+                    kr = KRG(print_global=False, corr=corr_str)
                     theta = self.theta
                 kr.options["poly"] = poly_str
-                kr.options["corr"] = corr_str
                 kr.options["pow_exp_power"] = self.power_val[corr_str]
                 kr.set_training_values(self.X, self.y)
                 kr.train()
@@ -308,9 +306,9 @@ class Test(SMTestCase):
             "pow_exp",
         ]:
             self.setUp()
-            kr = KRG(print_global=False)
+            kr = KRG(print_global=False, corr=corr_str)
             kr.options["poly"] = "constant"
-            kr.options["corr"] = corr_str
+            print(corr_str)
             kr.options["pow_exp_power"] = self.power_val[corr_str]
             kr.set_training_values(self.X, self.y)
             kr.train()
