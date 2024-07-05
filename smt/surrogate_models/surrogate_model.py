@@ -6,14 +6,15 @@ This package is distributed under New BSD license.
 Paul Saves : Mixed Integer
 """
 
-from typing import Optional
-import numpy as np
-from collections import defaultdict
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from typing import Optional
 
-from smt.utils.printer import Printer
+import numpy as np
+
+from smt.utils.checks import check_nx, check_support, ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
-from smt.utils.checks import check_support, check_nx, ensure_2d_array
+from smt.utils.printer import Printer
 
 
 class SurrogateModel(metaclass=ABCMeta):
