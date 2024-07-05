@@ -1125,9 +1125,22 @@ class TestEGO(SMTestCase):
         ego._train_gpr(x_data, y_data)
 
         # Test the EI value at the following point
-        ei = ego.EI(np.array([[0.8398599985874058, -0.3240337426231973]]))
+        ei = ego.EI(
+            np.array(
+                [[0.8398599985874058, -0.3240337426231973], [-0.45961638, 0.40808533]]
+            )
+        )
 
-        self.assertTrue(np.allclose(ei, [6.87642e-12, 1.47804e-10, 2.76223], atol=1e-1))
+        self.assertTrue(
+            np.allclose(
+                ei,
+                [
+                    [6.87642e-12, 1.47804e-10, 2.76223],
+                    [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                ],
+                atol=1e-2,
+            )
+        )
 
     def test_qei_criterion_default(self):
         fun = TestEGO.function_test_1d

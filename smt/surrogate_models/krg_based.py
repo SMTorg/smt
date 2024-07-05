@@ -633,6 +633,7 @@ class KrgBased(SurrogateModel):
         cat_features,
         cat_kernel,
         x=None,
+        kplsk_second_loop=False,
     ):
         """
         matrix kernel correlation model.
@@ -657,6 +658,8 @@ class KrgBased(SurrogateModel):
              - The kernel to use for categorical inputs. Only for non continuous Kriging",
         x : np.ndarray[n_obs , n_comp]
             - The input instead of dx for homo_hs prediction
+        kplsk_second_loop : bool
+            - If we are doing the second loop for kplsk
         Returns
         -------
         r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
@@ -703,7 +706,7 @@ class KrgBased(SurrogateModel):
             X_pls_space = np.copy(X)
         else:
             X_pls_space, _ = compute_X_cont(X, design_space)
-        if cat_kernel_comps is not None or ncomp < 1e5:
+        if not (kplsk_second_loop) and (cat_kernel_comps is not None or ncomp < 1e5):
             if np.size(self.pls_coeff_cont) == 0:
                 X, y = self._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = self.coeff_pls
@@ -973,6 +976,7 @@ class KrgBased(SurrogateModel):
                 n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(-1, 1)
         else:
             r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
@@ -1489,6 +1493,7 @@ class KrgBased(SurrogateModel):
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
                 x=x,
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
@@ -1633,6 +1638,7 @@ class KrgBased(SurrogateModel):
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
                 x=x,
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
@@ -1851,6 +1857,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
+        self.kplsk_second_loop = False
         if "KPLSK" in self.name:
             n_iter = 1
         else:
@@ -1870,6 +1877,7 @@ class KrgBased(SurrogateModel):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
+            self.kplsk_second_loop = "KPLSK" in self.name and ii == 0
             self.theta0 = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
