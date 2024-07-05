@@ -919,8 +919,8 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         nugget = self.options["nugget"]
-        # if self.options["eval_noise"]:
-        #     nugget = 0
+        if self.options["eval_noise"]:
+            nugget = 100.0 * np.finfo(np.double).eps
 
         noise = self.noise0
         tmp_var = theta
