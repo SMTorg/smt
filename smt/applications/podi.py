@@ -240,24 +240,25 @@ class SubspacesInterpolation:
         Z_centered = (Z.T - self.Z_mean).T
         # svd of the Z matrix:
 
-        u, s, v = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
+        u, s, _ = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
+        self.n_B = np.argwhere(s.cumsum() / s.sum() >= 1 - epsilon)[0, 0] + 1
+
         if self.print_global:
             print(
                 "The Grassmann manifold of interest is of dimension "
                 + str((self.n_DoF - self.n_modes) * self.n_modes)
             )
             print("The number of tangent vectors is " + str(self.n_DoE))
-        self.n_B = np.argwhere(s.cumsum() / s.sum() >= 1 - epsilon)[0, 0] + 1
-        if self.print_global:
+
             print(
                 "The dimension of the subspace of the tangent plane is " + str(self.n_B)
             )
-        if self.n_B == self.n_DoE:
-            print(
-                "WARNING: the dimension of the tangent plane's subspace is equal to the DoE size."
-            )
-            print("Consider increasing the DoE.")
+            if self.n_B == self.n_DoE:
+                print(
+                    "WARNING: the dimension of the tangent plane's subspace is equal to the DoE size."
+                )
+                print("Consider increasing the DoE.")
 
         # truncature
         self.Basis = u[:, : self.n_B]
@@ -401,315 +402,6 @@ class SubspacesInterpolation:
             Yi = self.exponential_mapping(self.Y0, Ti)
             return Yi[:, -1, :, :], Yi[:, :-1, :, :]
 
-    def GP_GC(self, Yi, separate_variables=True, DoE=None):
-        """
-        Function that computes the GP interpolation of the generalized coordinates (GC) on a given basis.
-
-        Parameters
-        ----------
-        Yi: np.ndarray[n_DOF, n_modes]
-            A point on the Grassmann manifold Gr(n_DoF,n_modes)
-        separate_variables: bool (default=True)
-            Either to interpolate the GC by a separation of variables approach or not.
-        DoE: np.ndarray
-            If separate_variables is set to False, DoE to use to learn the GP of the GC.
-
-        Returns
-        -------
-        GP_GC: list
-            List of the GP objects that interpolate each GC
-            If separate_variables is set to True, each list contains n GP for each GC.
-        Bases_GC: list
-            If separate_variables is set to True, list of basis for the reconstruction of the GC.
-        Mean_GC: list
-            If separate_variables is set to True, list of mean for the reconstruction of the GC.
-        """
-        # project the snapshots on Yi to get a DoE of GC
-        Yi = Yi[np.newaxis, :, :]
-        Yi_t = np.transpose(Yi, (0, 2, 1))
-        snapshots_t = np.transpose(self.snapshots, (0, 2, 1))
-        GC_DoE = Yi_t @ snapshots_t
-        if separate_variables:
-            self.GP_coeff = []
-            self.Bases_coeff = []
-            self.Mean_coeff = []
-            for i in range(self.n_modes):
-                beta_i = GC_DoE[:, i, :]
-                mean_i = beta_i.mean(axis=0)
-                self.Mean_coeff.append(mean_i)
-                beta_i = beta_i - mean_i
-                # we express beta_i as a linear combination of temporal modes
-                u, s, v = np.linalg.svd(beta_i.T)
-                B_i = u[:, : self.n_DoE]
-                self.Bases_coeff.append(B_i)
-                gamma_i = np.dot(B_i.T, beta_i.T)
-                gp_coeff = []
-                for j in range(self.n_DoE):
-                    gp = KRG(
-                        theta0=[1e-2] * (self.n_mu),
-                        print_prediction=False,
-                        corr="matern32",
-                    )
-                    gp.set_training_values(self.mu_train, gamma_i[j, :])
-                    gp.train()
-                    gp_coeff.append(gp)
-                self.GP_coeff.append(gp_coeff)
-
-            return self.GP_coeff, self.Bases_coeff, self.Mean_coeff
-
-        elif not (separate_variables):
-            self.GP_coeff = []
-            for i in range(self.n_modes):
-                beta_i = GC_DoE[:, i, :]
-                gp = KRG(
-                    theta0=[1e-2] * (DoE.shape[1]),
-                    print_prediction=False,
-                    corr="squar_exp",
-                )
-                gp.set_training_values(DoE, beta_i.flatten())
-                gp.train()
-                gp_coeff.append(gp)
-                self.GP_coeff.append(gp_coeff)
-            return self.GP_coeff
-
-    def approx_NI_cst_basis(self, Yi, mu, realizations=False, n_real=None):
-        """
-        Computes the approximation of the response by non intrusive approach.
-        Uncertainty quantification can be performed with respect to the GC interpolation.
-
-        Parameters
-        ----------
-        Yi: np.ndarray[n_DOF,n_modes]
-
-        mu: np.ndarray[1,n_mu]
-            Parametric points where the interpolation should be provided.
-        realizations: bool (default=False)
-            Computes n_real random realizations of the interpolation.
-        n_real: int
-            If realizations is set to True, number of samples to draw.
-
-        Returns
-        -------
-        Approx: np.ndarray
-            Approximation of the response at mu on the ROB Yi.
-        """
-        if realizations:
-            U_approx_MC = []
-            gamma_hat = np.zeros((self.n_modes, self.n_DoE))
-            gamma_hat_var = np.zeros((self.n_modes, self.n_DoE))
-            for i in range(self.n_modes):
-                for j in range(self.n_DoE):
-                    gamma_hat[i, j] = self.GP_coeff[i][j].predict_values(mu)[0]
-                    gamma_hat_var[i, j] = self.GP_coeff[i][j].predict_variances(mu)[0]
-            for n in range(n_real):
-                coeff_hat = np.zeros((self.n_modes, self.n_t))
-                for i in range(self.n_modes):
-                    gamma_hat_real = np.zeros((self.n_DoE,))
-                    for j in range(self.n_DoE):
-                        xi = np.random.normal()
-                        gamma_hat_real[j] = (
-                            gamma_hat[i, j] + np.sqrt(gamma_hat_var[i, j]) * xi
-                        )
-                    coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
-                        self.Bases_coeff[i], gamma_hat_real
-                    )
-
-                U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
-                U_approx_MC.append(U_approx_hat)
-            U_approx_MC = np.array(U_approx_MC)
-            return U_approx_MC
-        elif not (realizations):
-            gamma_hat = np.zeros((self.n_modes, self.n_DoE))
-            for i in range(self.n_modes):
-                for j in range(self.n_DoE):
-                    gamma_hat[i, j] = self.GP_coeff[i][j].predict_values(mu)[0]
-
-            coeff_hat = np.zeros((self.n_modes, self.n_t))
-            for i in range(self.n_modes):
-                gamma_hat_real = np.zeros((self.n_DoE,))
-                for j in range(self.n_DoE):
-                    gamma_hat_real[j] = gamma_hat[i, j]
-                coeff_hat[i, :] = self.Mean_coeff[i] + np.dot(
-                    self.Bases_coeff[i], gamma_hat_real
-                )
-
-            U_approx_hat = np.dot(Yi, coeff_hat).T + self.U_ref
-
-            return U_approx_hat
-
-    def approx_NI(
-        self,
-        mu,
-        UQ_basis=False,
-        UQ_GC=False,
-        n_real_basis=None,
-        n_real_GC=None,
-        fixed_xi_basis=False,
-        xi_basis=None,
-    ):
-        """
-        Computes a GP interpolation of both the basis and the GC.
-        Interpolation uncertainty for both the basis and te GC can be evaluated by Monte Carlo sampling.
-
-        Parameters
-        ----------
-        mu: np.ndarray[1,n_mu]
-            Parametric points where the interpolation should be provided.
-        UQ_basis: bool (default=False)
-            Weither to performe UQ for the POD basis interpolation.
-        UQ_GC: bool (default=False)
-            Weither to performe UQ for the GC interpolation.
-        n_real_basis: int
-            If UQ_basis is set to True, size of the Monte Carlo sample for the basis.
-        n_real_GC: int
-            If UQ_GC is set to True, size of the Monte Carlo sample for the GC.
-
-        WARNING : if UQ_basis set to True and UQ_GC set to True, the MC sample size is n_real_basis*n_real_GC.
-
-        Returns
-        -------
-        """
-        if not (UQ_basis) and not (UQ_GC):
-            Yi = self.interp_POD_basis(mu, compute_realizations=False, n_real=1)
-            # res = self.GP_GC(Yi[0, 0])
-            approx = self.approx_NI_cst_basis(Yi[0, 0], mu)
-            return approx
-        elif UQ_basis and not (UQ_GC):
-            if not (fixed_xi_basis):
-                Yi, Yi_real = self.interp_POD_basis(
-                    mu, compute_realizations=True, n_real=n_real_basis
-                )
-            else:
-                Yi, Yi_real = self.interp_POD_basis(
-                    mu,
-                    compute_realizations=True,
-                    n_real=n_real_basis,
-                    fixed_xi=fixed_xi_basis,
-                    xi=xi_basis,
-                )
-            # res = self.GP_GC(Yi[0])
-            approx = self.approx_NI_cst_basis(Yi[0], mu)
-            approx_MC = []
-            for i in range(n_real_basis):
-                # res = self.GP_GC(Yi_real[0, i])
-                approx_MC.append(self.approx_NI_cst_basis(Yi_real[0, i], mu))
-            return approx, approx_MC
-        elif UQ_basis and UQ_GC:
-            if not (fixed_xi_basis):
-                Yi, Yi_real = self.interp_POD_basis(
-                    mu, compute_realizations=True, n_real=n_real_basis
-                )
-            else:
-                Yi, Yi_real = self.interp_POD_basis(
-                    mu,
-                    compute_realizations=True,
-                    n_real=n_real_basis,
-                    fixed_xi=fixed_xi_basis,
-                    xi=xi_basis,
-                )
-            # res = self.GP_GC(Yi[0])
-            approx = self.approx_NI_cst_basis(Yi[0], mu)
-            approx_MC = []
-            for i in range(n_real_basis):
-                # res = self.GP_GC(Yi_real[0, i])
-                approx_MC.append(
-                    self.approx_NI_cst_basis(
-                        Yi_real[0, i], mu, realizations=True, n_real=n_real_GC
-                    )
-                )
-            return approx, approx_MC
-        elif not (UQ_basis) and UQ_GC:
-            Yi = self.interp_POD_basis(mu, compute_realizations=False, n_real=1)
-            # res = self.GP_GC(Yi[0, 0])
-            approx = self.approx_NI_cst_basis(Yi[0, 0], mu)
-            approx_MC = self.approx_NI_cst_basis(
-                Yi[0, 0], mu, realizations=True, n_real=n_real_GC
-            )
-            return approx, approx_MC
-
-    def interp_POD_basis_RBF(self, mu, Y0, epsilon=1.0):
-        """
-        Function that computes the interpolation of the POD basis at a new parametric point mu by RBF.
-
-        Parameters
-        ----------
-        mu: np.ndarray[1,n_mu]
-            Parametric points where the interpolation should be provided.
-        Y0: np.ndarray[n_DoF,n_modes]
-            A point on the Grassmann manifold Gr(n_DoF,n_modes).
-        epsilon : float
-            Correlation lenght of the gaussian kernel.
-
-        Returns
-        -------
-        Basis: np.ndarray[n_DoF, n_modes]
-            POD basis at points mu.
-        """
-        R1 = np.repeat(self.mu_train, self.n_DoE, 0)
-        R2 = np.tile(self.mu_train, (self.n_DoE, 1))
-        norm = np.linalg.norm(R1 - R2, axis=1)
-        Phi = self._gaussian_kernel(norm, epsilon)
-        Phi = Phi.reshape((self.n_DoE, self.n_DoE))
-        norm_new = np.linalg.norm(self.mu_train - mu, axis=1)
-        phi = self._gaussian_kernel(norm_new, epsilon)
-        w = np.linalg.solve(Phi, phi)
-        # DoE vetors on the tangent plane
-        T_train = self.log_DoE(Y0)
-        # interpolation
-        T_new = np.sum(T_train * w, axis=2)
-
-        # exponential mapping
-        Yi = self.exponential_mapping(Y0, T_new[np.newaxis, np.newaxis, :, :])
-        return Yi[0, 0]
-
-    def _gaussian_kernel(self, r, epsilon=1.0):
-        return np.exp(-((r / epsilon) ** 2))
-
-    def interp_POD_basis_IDW(self, mu, P0, p=2, epsilon=1e-3, itermax=100):
-        """
-        Function that computes the interpolation of the POD basis at a new parametric point mu by IDW.
-
-        Parameters
-        -----------
-        mu: np.ndarray[1, n_mu]
-            Parametric points where the interpolation should be provided.
-        P0: np.ndarray[n_DoF,n_modes]
-            Initial guess.
-        p: float
-            The inverse distance is defined as a function of d(mu,mu_i)**p
-
-        Returns
-        -------
-        Y_i: np.ndarray[n_DoF,n_modes]
-            POD basis at points mu.
-        l_res: list
-            List containing the value of the norm of the gradient of the optimization problem.
-        itermax: int, default=100
-            Max number of iteration for the resolution of the optimization problem.
-        """
-        # Compute weights
-        norm_new = np.linalg.norm(self.mu_train - mu, axis=1)
-        ind = norm_new == 0.0
-        if ind.any():
-            alpha = np.zeros((len(ind),))
-            alpha[ind] = 1.0
-        else:
-            S = np.sum(1 / norm_new**p)
-            alpha = 1 / (S * norm_new**p)
-        n_iter = 0
-        l_res = []
-        res = 1.0
-        while res > epsilon and n_iter < itermax:
-            T_train = self.log_DoE(P0)
-            T_new = 1 / len(alpha) * np.sum(T_train * alpha, axis=2)
-            res = np.linalg.norm(T_new)
-            l_res.append(res)
-            Yi = self.exponential_mapping(P0, T_new[np.newaxis, np.newaxis, :, :])[0, 0]
-            P0 = Yi
-            n_iter += 1
-
-        return Yi, l_res, n_iter
-
 
 class PODI(SurrogateBasedApplication):
     """
@@ -812,7 +504,7 @@ class PODI(SurrogateBasedApplication):
 
         Parameters
         ----------
-        xt1 : np.ndarray[n_snapshot, dim]
+        xt1 : np.ndarray[nt1, dim]
             The input scalar values corresponding to each local bases.
             dim = dimension of parametric space for local bases
         input_bases : list[np.ndarray[ny, n_modes]]
@@ -841,6 +533,7 @@ class PODI(SurrogateBasedApplication):
         bases_realizations : list[list[np.ndarray[ny, n_modes]]]
             List of realizations of the output bases. (Random POD bases)
             Returned only if compute_realizations is set to True.
+            The list contain for each value of xn1 a list of the associated realizations.
 
         Examples
         --------
@@ -853,12 +546,23 @@ class PODI(SurrogateBasedApplication):
                             frechet_guess=frechet_matrix
                             )
         """
-        nn = xn1.shape[0]
-        ny, n_modes = input_matrices[0].shape
+        nt1 = xt1.shape[0]
         n_bases = len(input_matrices)
 
+        if nt1 != n_bases:
+            raise ValueError(
+                f"the xt1 rows should correspond to each basis, there are {nt1} xt1 rows, but {n_bases} input bases."
+            )
+
+        nn = xn1.shape[0]
+        ny, n_modes = input_matrices[0].shape
+
         DoE_bases = np.zeros((ny, n_modes, n_bases))
+        ########vérifier qu'en sortie matrice bonnes dimensions, pareil pour réalisations
+        first_dim = input_matrices[0].shape
         for i, basis in enumerate(input_matrices):
+            if basis.shape != first_dim:
+                raise ValueError("The input matrices should have the same dimensions.")
             DoE_bases[:, :, i] = basis
 
         interp = SubspacesInterpolation(
@@ -1107,6 +811,7 @@ class PODI(SurrogateBasedApplication):
             max_total_error = max(max_total_error, rms_total_error)
 
         return [max_interp_error, max_proj_error, max_total_error]
+        #########verify if list of 3 values ??
 
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -1415,7 +1120,7 @@ class PODI(SurrogateBasedApplication):
 
         return dy_dx
 
-    def predict_variances_derivatives(self, xn, kx) -> np.ndarray:
+    def predict_variance_derivatives(self, xn, kx) -> np.ndarray:
         """
         Predict the derivatives of the variances at a set of points.
 
@@ -1456,7 +1161,7 @@ class PODI(SurrogateBasedApplication):
         deriv_coeff_interp = np.zeros((self.n_modes, self.n_new))
 
         for i in range(self.n_modes):
-            deriv_coeff_interp[i] = self.interp_coeff[i].predict_variances_derivatives(
+            deriv_coeff_interp[i] = self.interp_coeff[i].predict_variance_derivatives(
                 xn, d
             )[:, 0]
 

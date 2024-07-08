@@ -204,9 +204,10 @@ class Test(SMTestCase):
             with self.assertRaises(RuntimeError, msg=error_msg):
                 predict_method(self.xn)
 
-        error_msg = "It should not be possible to execute predict_derivatives before training the model."
-        with self.assertRaises(RuntimeError, msg=error_msg):
-            sm.predict_derivatives(self.xn, 0)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            error_msg = f"It should not be possible to call {predict_method.__name__} before the training."
+            with self.assertRaises(RuntimeError, msg=error_msg):
+                predict_method(self.xn, 0)
 
         sm.train()
 
@@ -215,12 +216,14 @@ class Test(SMTestCase):
             with self.assertRaises(ValueError, msg=error_msg):
                 predict_method(np.ones((1, self.xn.shape[1] + 1)))
 
-        with self.assertRaises(ValueError, msg=error_msg):
-            sm.predict_derivatives(np.ones((1, self.xn.shape[1] + 1)), 0)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            with self.assertRaises(ValueError, msg=error_msg):
+                predict_method(np.ones((1, self.xn.shape[1] + 1)), 0)
 
         error_msg = "It should not be possible to predict a derivative out of the input's dimensions."
-        with self.assertRaises(ValueError, msg=error_msg):
-            sm.predict_derivatives(self.xn, self.xn.shape[1] + 1)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            with self.assertRaises(ValueError, msg=error_msg):
+                predict_method(self.xn, self.xn.shape[1] + 1)
 
         var_xt = sm.predict_variances(self.xt)
 
@@ -229,10 +232,12 @@ class Test(SMTestCase):
         mean_xn = sm.predict_values(self.xn)
         var_xn = sm.predict_variances(self.xn)
         deriv_xn = sm.predict_derivatives(self.xn, 0)
+        var_deriv_xn = sm.predict_variance_derivatives(self.xn, 0)
 
         self.assertEqual(mean_xn.shape, (self.ny, self.nn))
         self.assertEqual(var_xn.shape, (self.ny, self.nn))
         self.assertEqual(deriv_xn.shape, (self.ny, self.nn))
+        self.assertEqual(var_deriv_xn.shape, (self.ny, self.nn))
 
         mean_xv = sm.predict_values(self.xv)
 
@@ -288,7 +293,7 @@ class Test(SMTestCase):
                 self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
     def test_global_pod(self):
-        """Tests the computing of the pod."""
+        """Tests the computing of the global pod."""
 
         sm = PODI()
 
@@ -324,6 +329,57 @@ class Test(SMTestCase):
 
         norm_residue = Test.check_projection(self.basis_original, basis_pod)
         np.testing.assert_allclose(norm_residue[:n_modes], np.zeros(n_modes), atol=1e-6)
+
+        # local pod
+        error_msg = "It should not be possible to compute the local pod with a local basis with incorrect dimensions."
+        with self.assertRaises(ValueError, msg=error_msg):
+            sm.compute_pod(
+                database=self.database, pod_type="local", local_basis=basis_pod[1:, :]
+            )
+        sm.compute_pod(database=self.database, pod_type="local", local_basis=basis_pod)
+
+    def test_interp_subspaces(self):
+        xt1 = np.array([[1], [2]])
+
+        m1 = np.array([[1, 1], [1, 2]])
+        m2 = np.array([[1, 1], [2, 1]])
+        input_matrices = [m1, m2]
+
+        xn1 = np.array([[1.5]])
+
+        error_msg = "It should not be possible to interpolate subspaces if the bases don't have the same dimensions."
+        with self.assertRaises(ValueError, msg=error_msg):
+            PODI.interp_subspaces(xt1=xt1, input_matrices=[m1, m2[:1]], xn1=xn1)
+
+        error_msg = "It should not be possible to interpolate if there are not as much bases than assiociated values."
+        with self.assertRaises(ValueError, msg=error_msg):
+            PODI.interp_subspaces(xt1=xt1[0], input_matrices=input_matrices, xn1=xn1)
+
+        output_list = PODI.interp_subspaces(
+            xt1=xt1, input_matrices=input_matrices, xn1=xn1, print_global=False
+        )
+        self.assertEqual(len(output_list), xn1.shape[0])
+        for basis in output_list:
+            self.assertEqual(basis.shape, input_matrices[0].shape)
+
+        # with realizations
+        n_realizations = 10
+        output_list, realization_list = PODI.interp_subspaces(
+            xt1=xt1,
+            input_matrices=input_matrices,
+            xn1=xn1,
+            compute_realizations=True,
+            n_realizations=n_realizations,
+            print_global=False,
+        )
+        self.assertEqual(len(output_list), xn1.shape[0])
+        for basis in output_list:
+            self.assertEqual(basis.shape, input_matrices[0].shape)
+        self.assertEqual(len(realization_list), xn1.shape[0])
+        for realization in realization_list:
+            self.assertEqual(len(realization), n_realizations)
+            for basis in realization:
+                self.assertEqual(basis.shape, input_matrices[0].shape)
 
     def test_set_training_train(self):
         """Tests the set_training_values and train methods."""
