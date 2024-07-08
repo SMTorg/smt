@@ -11,6 +11,7 @@ from copy import deepcopy
 import warnings
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+
 from smt.utils.kernels import (
     SquarSinExp,
     PowExp,
@@ -1789,6 +1790,7 @@ class KrgBased(SurrogateModel):
             bounds_hyp = []
 
             self.theta0 = deepcopy(self.options["theta0"])
+            self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -2108,7 +2110,6 @@ class KrgBased(SurrogateModel):
             else:
                 n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(n_param)
-
         else:
             self.options["theta0"] *= np.ones(n_param)
         if (
