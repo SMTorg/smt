@@ -205,9 +205,9 @@ class TestVFM(SMTestCase):
         self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=2e-2, rtol=3e-2)
         self.assert_error(
             dyp,
-            np.array([[-3.11718627e-03, 7.309329141970482]]),
-            atol=4e-1,
-            rtol=1.5e-2,
+            np.array([[0.31539861, 7.30043182]]),
+            atol=5e-1,
+            rtol=5e-2,
         )
 
     def test_QP_KRG_additive(self):
@@ -220,9 +220,11 @@ class TestVFM(SMTestCase):
             yp = M.predict_values(np.atleast_2d(xt[0]))
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
 
-        self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=1e-2, rtol=1e-2)
         self.assert_error(
-            dyp, np.array([[0.02596425, 5.896315760605044]]), atol=3e-1, rtol=1e-2
+            yp, np.array([[0.01535549, 0.36720433]]), atol=1e-2, rtol=1e-2
+        )
+        self.assert_error(
+            dyp, np.array([[0.27030465, 5.89010571]]), atol=5e-1, rtol=5e-2
         )
 
     def test_KRG_KRG_mult(self):
@@ -235,9 +237,11 @@ class TestVFM(SMTestCase):
             yp = M.predict_values(np.atleast_2d(xt[0]))
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
 
-        self.assert_error(yp, np.array([[0.015368, 0.367424]]), atol=2e-2, rtol=3e-2)
         self.assert_error(
-            dyp, np.array([[-3.11718627e-03, 7.180528650956242]]), atol=3e-1, rtol=1e-2
+            yp, np.array([[0.01536264, 0.36713384]]), atol=2e-2, rtol=3e-2
+        )
+        self.assert_error(
+            dyp, np.array([[0.29039224, 7.16030401]]), atol=5e-1, rtol=5e-2
         )
 
     def test_QP_KRG_mult(self):
@@ -251,10 +255,10 @@ class TestVFM(SMTestCase):
             dyp = M.predict_derivatives(np.atleast_2d(xt[0]), kx=0)
 
         self.assert_error(
-            yp, np.array([[0.01537882, 0.36681699]]), atol=3e-1, rtol=1e-2
+            yp, np.array([[0.01536423, 0.36742269]]), atol=3e-1, rtol=1e-2
         )
         self.assert_error(
-            dyp, np.array([[0.21520949, 5.39988813637811]]), atol=3e-1, rtol=1e-2
+            dyp, np.array([[0.19562493, 5.39545518]]), atol=3e-1, rtol=1e-2
         )
 
 

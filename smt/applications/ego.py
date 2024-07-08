@@ -17,7 +17,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, MGP
+from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
@@ -109,7 +109,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX),
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(
@@ -190,11 +190,24 @@ class EGO(SurrogateBasedApplication):
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
         sig = np.sqrt(self.gpr.predict_variances(points))
-        args0 = (f_min - pred) / sig
-        args1 = (f_min - pred) * norm.cdf(args0)
-        args2 = sig * norm.pdf(args0)
-        if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
+
+        # initialization good format (array or scalar)
+        args0 = (f_min - pred) * 0.0
+        args1 = (f_min - pred) * 0.0
+
+        if sig.size == 1 and np.abs(sig) > 1e-12:
+            args0 = (f_min - pred) / sig
+            args1 = (f_min - pred) * norm.cdf(args0)
+        elif sig.size > 1:
+            for i, sigma in enumerate(list(sig[0])):
+                if np.abs(sigma) > 1e-12:
+                    args0[0][i] = (f_min[i] - pred[0][i]) / sigma
+                    args1[0][i] = (f_min[i] - pred[0][i]) * norm.cdf(args0[0][i])
+        if (
+            sig.size == 1 and np.abs(sig) < 1e-12
+        ):  # can be use only if one point is computed
             return 0.0
+        args2 = sig * norm.pdf(args0)
         ei = args1 + args2
         # penalize the points already evaluated with tunneling
         if enable_tunneling:

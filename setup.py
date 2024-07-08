@@ -8,10 +8,11 @@ Author: John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from setuptools import setup, Extension
 import sys
+
 import numpy as np
 from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 from smt import __version__
 
@@ -120,7 +121,7 @@ metadata = dict(
         "cs": [  # pip install smt[cs]
             "ConfigSpace~=0.6.1",
         ],
-        "gpx": ["egobox~=0.19"],  # pip install smt[gpx]
+        "gpx": ["egobox~=0.20"],  # pip install smt[gpx]
     },
     python_requires=">=3.8",
     zip_safe=False,

@@ -2,11 +2,11 @@
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
-from sklearn.decomposition import PCA
 import numpy as np
+from sklearn.decomposition import PCA
 
 from smt.applications.application import SurrogateBasedApplication
-from smt.surrogate_models import KRG, KPLS, KPLSK
+from smt.surrogate_models import KPLS, KPLSK, KRG
 from smt.utils.checks import ensure_2d_array
 
 PODI_available_models = {
@@ -106,7 +106,7 @@ class PODI(SurrogateBasedApplication):
             seed number which controls random draws for internal optim. (optional)
 
         Examples
-        ----------
+        --------
         >>> sm.compute_pod(database, tol = 0.99)
         """
         choice_svd = None

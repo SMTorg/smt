@@ -1,7 +1,8 @@
 from math import pi as π
-import numpy as np
-from smt.surrogate_models import RMTB
 
+import numpy as np
+
+from smt.surrogate_models import RMTB
 
 dimension = 2
 
