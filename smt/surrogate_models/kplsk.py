@@ -5,7 +5,7 @@ This package is distributed under New BSD license.
 """
 
 from smt.surrogate_models import KPLS
-from smt.utils.kriging import componentwise_distance_PLS, componentwise_distance
+from smt.utils.kriging import componentwise_distance, componentwise_distance_PLS
 
 
 class KPLSK(KPLS):

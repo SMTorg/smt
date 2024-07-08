@@ -8,10 +8,11 @@ Author: John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from setuptools import setup, Extension
 import sys
+
 import numpy as np
 from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 from smt import __version__
 
