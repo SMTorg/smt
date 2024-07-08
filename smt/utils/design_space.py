@@ -19,11 +19,11 @@ try:
         ForbiddenAndConjunction,
         ForbiddenEqualsClause,
         ForbiddenInClause,
+        ForbiddenLessThanRelation,
         InCondition,
         OrdinalHyperparameter,
         UniformFloatHyperparameter,
         UniformIntegerHyperparameter,
-        ForbiddenLessThanRelation,
     )
     from ConfigSpace.exceptions import ForbiddenValueError
     from ConfigSpace.util import get_random_neighbor

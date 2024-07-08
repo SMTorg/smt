@@ -4,13 +4,11 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 
 import scipy.optimize as opt
 from sklearn.utils.extmath import randomized_svd
-
 from sklearn.decomposition import PCA
 import numpy as np
 
-
 from smt.applications.application import SurrogateBasedApplication
-from smt.surrogate_models import KRG, KPLS, KPLSK
+from smt.surrogate_models import KPLS, KPLSK, KRG
 from smt.utils.checks import ensure_2d_array
 
 PODI_available_models = {
