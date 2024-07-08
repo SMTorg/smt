@@ -445,6 +445,7 @@ class MFK(KrgBased):
         self.nt = self.nt_all[lvl]
         self.q = self.q_all[lvl]
         self.p = self.p_all[lvl]
+        self.kplsk_second_loop = False
         (
             self.optimal_rlf_value[lvl],
             self.optimal_par[lvl],

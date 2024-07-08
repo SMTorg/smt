@@ -1859,7 +1859,7 @@ class KrgBased(SurrogateModel):
         exit_function = False
         if not (hasattr(self, "kplsk_second_loop")):
             self.kplsk_second_loop = False
-        else:
+        elif self.kplsk_second_loop is True:
             exit_function = True
         if "KPLSK" in self.name:
             n_iter = 1
