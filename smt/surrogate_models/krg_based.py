@@ -1085,7 +1085,7 @@ class KrgBased(SurrogateModel):
         dbeta_all = []
         for i_der in range(nb_theta):
             # Compute R derivatives
-            self.corr.theta=theta
+            # self.corr.theta=theta
             dr=self.corr(self.D,grad_ind=i_der)
             dr_all.append(dr)
 
@@ -1228,7 +1228,7 @@ class KrgBased(SurrogateModel):
                 dRdeta = np.zeros((self.nt, self.nt))
                 dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:, 0]
                 dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:, 0]
-                self.corr.theta=theta
+                # self.corr.theta=theta
                 dr_eta_omega = self.corr(self.D, grad_ind=omega, hess_ind=eta
                 )
                 dRdetadomega = np.zeros((self.nt, self.nt))

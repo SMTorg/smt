@@ -117,7 +117,7 @@ class MGP(KrgBased):
             d_x = None
 
         # Compute the correlation function
-        self.corr.theta=theta
+        # self.corr.theta=theta
         r=self.corr(d,d_x=d_x).reshape(n_eval,self.nt)
         # r = self._correlation_types[self.options["corr"]](theta, d, d_x=d_x).reshape(
         #     n_eval, self.nt
@@ -280,7 +280,7 @@ class MGP(KrgBased):
             d_x = None
 
         # Compute the correlation function
-        self.corr.theta=theta
+        # self.corr.theta=theta
         r=self.corr(d,d_x=d_x).reshape(n_eval,self.nt)
         # r = self._correlation_types[self.options["corr"]](theta, d, d_x=d_x).reshape(
         #     n_eval, self.nt
@@ -295,7 +295,7 @@ class MGP(KrgBased):
         Rinv_dmu = self.optimal_par["Rinv_dmu"]
 
         for omega in range(len(self.optimal_theta)):
-            self.corr.theta=theta
+            # self.corr.theta=theta
             drdomega=self.corr(d,grad_ind=omega,d_x=d_x).reshape(n_eval,self.nt)
             # drdomega = self._correlation_types[self.options["corr"]](
             #     theta, d, grad_ind=omega, d_x=d_x
@@ -352,7 +352,7 @@ class MGP(KrgBased):
             d_x = None
 
         # Compute the correlation function
-        self.corr.theta=theta
+        # self.corr.theta=theta
         r=self.corr(d,d_x=d_x).reshape(n_eval,self.nt).T
         # r = (
         #     self._correlation_types[self.options["corr"]](theta, d, d_x=d_x)
@@ -390,7 +390,7 @@ class MGP(KrgBased):
         dsigma = self.optimal_par["dsigma"]
 
         for omega in range(len(self.optimal_theta)):
-            self.corr.theta=theta
+            # self.corr.theta=theta
             drdomega=self.corr(d,grad_ind=omega,d_x=d_x).reshape(n_eval,self.nt).T
             # drdomega = (
             #     self._correlation_types[self.options["corr"]](
