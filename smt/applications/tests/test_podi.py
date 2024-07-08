@@ -6,10 +6,8 @@ import unittest
 from smt.utils.sm_test_case import SMTestCase
 import numpy as np
 from scipy import special
-
 from smt.applications import PODI
 from smt.sampling_methods import LHS
-from smt.utils.sm_test_case import SMTestCase
 
 
 def cos_coeff(i: int, x: np.ndarray):
