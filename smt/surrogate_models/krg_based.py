@@ -202,6 +202,7 @@ class KrgBased(SurrogateModel):
             desc="Numpy RandomState object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
+        self.kplsk_second_loop = None
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
@@ -1857,7 +1858,7 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
-        if not (hasattr(self, "kplsk_second_loop")):
+        if self.kplsk_second_loop is None:
             self.kplsk_second_loop = False
         elif self.kplsk_second_loop is True:
             exit_function = True
