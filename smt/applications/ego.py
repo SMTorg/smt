@@ -199,10 +199,10 @@ class EGO(SurrogateBasedApplication):
             args0 = (f_min - pred) / sig
             args1 = (f_min - pred) * norm.cdf(args0)
         elif sig.size > 1:
-            for i, sigma in enumerate(list(sig[0])):
+            for i, sigma in enumerate(list(sig.T[0])):
                 if np.abs(sigma) > 1e-12:
-                    args0[0][i] = (f_min[i] - pred[0][i]) / sigma
-                    args1[0][i] = (f_min[i] - pred[0][i]) * norm.cdf(args0[0][i])
+                    args0[i][0] = (f_min[0] - pred[i][0]) / sigma
+                    args1[i][0] = (f_min[0] - pred[i][0]) * norm.cdf(args0[i][0])
         if (
             sig.size == 1 and np.abs(sig) < 1e-12
         ):  # can be use only if one point is computed
