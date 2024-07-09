@@ -3,8 +3,8 @@ from .mfk import MFK, NestedLHS
 from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
-from .podi import PODI
 from .vfm import VFM
+from .podi import PODI, SubspacesInterpolation
 
 __all__ = [
     "VFM",
@@ -17,4 +17,5 @@ __all__ = [
     "EGO",
     "Evaluator",
     "PODI",
+    "SubspacesInterpolation",
 ]
