@@ -202,6 +202,7 @@ class KrgBased(SurrogateModel):
             desc="Numpy RandomState object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
+        self.kplsk_second_loop = None
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
@@ -1857,7 +1858,10 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
-        self.kplsk_second_loop = False
+        if self.kplsk_second_loop is None:
+            self.kplsk_second_loop = False
+        elif self.kplsk_second_loop is True:
+            exit_function = True
         if "KPLSK" in self.name:
             n_iter = 1
         else:
@@ -1877,7 +1881,9 @@ class KrgBased(SurrogateModel):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
-            self.kplsk_second_loop = "KPLSK" in self.name and ii == 0
+            self.kplsk_second_loop = (
+                "KPLSK" in self.name and ii == 0
+            ) or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
@@ -1887,7 +1893,7 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    if ii == 0 and "KPLSK" in self.name:
+                    if "KPLSK" in self.name:
                         if self.theta0[i] - theta_bounds[1] > 0:
                             self.theta0[i] = theta_bounds[1] - 1e-10
                         else:
@@ -2143,8 +2149,14 @@ class KrgBased(SurrogateModel):
                     self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
-
-                self.options["n_comp"] = int(self.nx)
+                self.n_param = compute_n_param(
+                    self.design_space,
+                    self.options["categorical_kernel"],
+                    self.nx,
+                    None,
+                    None,
+                )
+                self.options["n_comp"] = int(self.n_param)
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
                 exit_function = True
@@ -2181,7 +2193,7 @@ class KrgBased(SurrogateModel):
         )
 
         n_comp = self.options["n_comp"] if "n_comp" in self.options else None
-        n_param = compute_n_param(
+        self.n_param = compute_n_param(
             self.design_space,
             self.options["categorical_kernel"],
             d,
@@ -2194,13 +2206,13 @@ class KrgBased(SurrogateModel):
                 self.is_continuous
                 or self.options["categorical_kernel"] == MixIntKernelType.GOWER
             ):
-                self.options["theta0"] *= np.ones(2 * n_param)
+                self.options["theta0"] *= np.ones(2 * self.n_param)
             else:
-                n_param += len([self.design_space.is_cat_mask])
-                self.options["theta0"] *= np.ones(n_param)
+                self.n_param += len([self.design_space.is_cat_mask])
+                self.options["theta0"] *= np.ones(self.n_param)
 
         else:
-            self.options["theta0"] *= np.ones(n_param)
+            self.options["theta0"] *= np.ones(self.n_param)
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
