@@ -58,15 +58,6 @@ class Test(SMTestCase):
             "matern52",
             "squar_sin_exp",
         ]
-        # corr_def = [
-        #     pow_exp,
-        #     abs_exp,
-        #     squar_exp,
-        #     act_exp,
-        #     matern32,
-        #     matern52,
-        #     squar_sin_exp,
-        # ]
         corr_def=[
             PowExp,
             ActExp,

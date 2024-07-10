@@ -210,7 +210,6 @@ class SGP(KRG):
         # Compute the correlation vector r and matrix R
         self.corr.theta=theta
         r=self.corr(d)
-        # r = self._correlation_types[self.options["corr"]](theta, d)
         R = r.reshape(A.shape[0], B.shape[0])
         # Compute the covariance matrix K
         K = sigma2 * R
