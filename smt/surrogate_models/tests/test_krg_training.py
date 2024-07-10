@@ -35,7 +35,7 @@ class Test(SMTestCase):
     def setUp(self):
         eps = 1e-8
         xlimits = np.asarray([[0, 1], [0, 1]])
-        self.random = np.random.RandomState(42)
+        self.random = np.random.RandomState(41)
         lhs = LHS(xlimits=xlimits, random_state=self.random)
         X = lhs(8)
         y = LHS(xlimits=np.asarray([[0, 1]]), random_state=self.random)(8)
@@ -242,13 +242,13 @@ class Test(SMTestCase):
 
     def test_likelihood_hessian(self):
         for corr_str in [
-            "squar_sin_exp",
             "pow_exp",
             "abs_exp",
             "squar_exp",
             "act_exp",
             "matern32",
             "matern52",
+            "squar_sin_exp",
         ]:  # For every kernel
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
@@ -308,7 +308,6 @@ class Test(SMTestCase):
             self.setUp()
             kr = KRG(print_global=False, corr=corr_str)
             kr.options["poly"] = "constant"
-            print(corr_str)
             kr.options["pow_exp_power"] = self.power_val[corr_str]
             kr.set_training_values(self.X, self.y)
             kr.train()

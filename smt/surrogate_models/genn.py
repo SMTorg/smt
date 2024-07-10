@@ -6,12 +6,12 @@ Author: Steven H. Berguin <steven.berguin@gtri.gatech.edu>
 This package is distributed under New BSD license.
 """
 
-from smt.surrogate_models.surrogate_model import SurrogateModel
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from jenn.model import NeuralNet
-from typing import Union, Dict, Tuple, List
 
+from smt.surrogate_models.surrogate_model import SurrogateModel
 
 # The missing type
 SMTrainingPoints = Dict[Union[int, None], Dict[int, List[np.ndarray]]]

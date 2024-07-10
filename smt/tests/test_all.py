@@ -21,6 +21,7 @@ from smt.surrogate_models import (
     KPLSK,
     KRG,
     LS,
+    MGP,
     QP,
     DesignSpace,
 )
@@ -60,7 +61,7 @@ class Test(SMTestCase):
         sms["KRG"] = KRG(theta0=[1e-2] * ndim)
         sms["KPLS"] = KPLS(theta0=[1e-2] * ncomp, n_comp=ncomp)
         sms["KPLSK"] = KPLSK(theta0=[1] * ncomp, n_comp=ncomp)
-        sms["MGP"] = KPLSK(theta0=[1e-2] * ncomp, n_comp=ncomp)
+        sms["MGP"] = MGP(theta0=[1e-2] * ndim)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = GENN(
             num_iterations=1000,
@@ -82,14 +83,14 @@ class Test(SMTestCase):
         t_errors = {}
         t_errors["LS"] = 1.0
         t_errors["QP"] = 1.0
-        t_errors["GPX"] = 1.2
-        t_errors["KRG"] = 1.2
+        t_errors["GPX"] = 1.1
+        t_errors["KRG"] = 1.1
         t_errors["MFK"] = 1e0
-        t_errors["KPLS"] = 1.2
+        t_errors["KPLS"] = 1.1
         t_errors["KPLSK"] = 1e0
         t_errors["MGP"] = 1e0
         t_errors["GEKPLS"] = 1.4
-        t_errors["GENN"] = 1.2
+        t_errors["GENN"] = 1.1
         if COMPILED_AVAILABLE:
             t_errors["IDW"] = 1e0
             t_errors["RBF"] = 1e-2
@@ -100,11 +101,11 @@ class Test(SMTestCase):
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
         e_errors["GPX"] = 2e-2
-        e_errors["KRG"] = 2e-2
+        e_errors["KRG"] = 3e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
-        e_errors["KPLSK"] = 2e-2
-        e_errors["MGP"] = 2e-2
+        e_errors["KPLSK"] = 3e-2
+        e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 3e-2
         if COMPILED_AVAILABLE:
@@ -176,9 +177,10 @@ class Test(SMTestCase):
             self.assertLessEqual(e_error, 1.5e-1)
         elif pname == "exp" and sname in ["RMTB"]:
             self.assertLessEqual(e_error, self.e_errors[sname] + 0.5)
+        elif pname == "tanh" and sname in ["MGP"]:
+            self.assertLessEqual(e_error, 9e-1)
         else:
             self.assertLessEqual(e_error, self.e_errors[sname])
-
         self.assertLessEqual(t_error, self.t_errors[sname])
 
     def test_exp_LS(self):

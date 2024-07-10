@@ -559,6 +559,7 @@ class MOE(SurrogateBasedApplication):
             sm.options["print_global"] = False
             sm.set_training_values(training_values[:, 0:dim], training_values[:, dim])
             sm.train()
+            sm.kplsk_second_loop = False
 
             expected = test_values[:, dim]
             actual = sm.predict_values(test_values[:, 0:dim]).reshape(-1)

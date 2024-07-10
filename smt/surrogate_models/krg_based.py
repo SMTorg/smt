@@ -4,12 +4,15 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
-import numpy as np
-from enum import Enum
-from scipy import linalg, optimize
-from copy import deepcopy
 import warnings
+from copy import deepcopy
+from enum import Enum
 
+import numpy as np
+from scipy import linalg, optimize
+from scipy.stats import multivariate_normal as m_norm
+
+from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 from smt.utils.kernels import (
@@ -19,7 +22,14 @@ from smt.utils.kernels import (
     Matern32,
     ActExp,
 )
+from smt.utils.checks import check_support, ensure_2d_array
+from smt.utils.design_space import (
+    BaseDesignSpace,
+    CategoricalVariable,
+    ensure_design_space,
+)
 from smt.utils.kriging import (
+    MixHrcKernelType,
     differences,
     constant,
     linear,
@@ -29,24 +39,15 @@ from smt.utils.kriging import (
     componentwise_distance,
     componentwise_distance_PLS,
     compute_X_cont,
-    cross_levels,
     compute_X_cross,
+    cross_levels,
     cross_levels_homo_space,
-    MixHrcKernelType,
     matrix_data_corr_levels_cat_matrix,
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
 )
 
 from smt.utils.misc import standardization
-from smt.utils.checks import ensure_2d_array, check_support
-from scipy.stats import multivariate_normal as m_norm
-from smt.sampling_methods import LHS
-from smt.utils.design_space import (
-    BaseDesignSpace,
-    ensure_design_space,
-    CategoricalVariable,
-)
 
 
 class MixIntKernelType(Enum):
@@ -202,6 +203,7 @@ class KrgBased(SurrogateModel):
             desc="Numpy RandomState object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
+        self.kplsk_second_loop = None
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
         self.is_acting_points = {}
@@ -523,6 +525,30 @@ class KrgBased(SurrogateModel):
         # if self.name != "MGP":
         #     del self.y_norma, self.D
 
+    def is_training_ill_conditioned(self):
+        """
+        Check if the training dataset could be an issue and print both
+        the dataset correlation matrix condition number and
+        minimal distance between two points.
+        ----
+        Returns true if R is ill_conditionned
+        """
+        R = self.optimal_par["C"] @ self.optimal_par["C"]
+        condR = np.linalg.cond(R)
+        print(
+            "Minimal distance between two points in any dimension is",
+            "{:.2e}".format(np.min(self.D)),
+        )
+        print(
+            "Correlation matrix R condition number is",
+            "{:.2e}".format(condR),
+        )
+        return (
+            linalg.svd(R, compute_uv=False)[-1]
+            < (1.5 * 100.0 * np.finfo(np.double).eps)
+            and condR > 1e9
+        )
+
     def _train(self):
         """
         Train the model
@@ -611,6 +637,7 @@ class KrgBased(SurrogateModel):
         cat_features,
         cat_kernel,
         x=None,
+        kplsk_second_loop=False,
     ):
         """
         matrix kernel correlation model.
@@ -635,6 +662,8 @@ class KrgBased(SurrogateModel):
              - The kernel to use for categorical inputs. Only for non continuous Kriging",
         x : np.ndarray[n_obs , n_comp]
             - The input instead of dx for homo_hs prediction
+        kplsk_second_loop : bool
+            - If we are doing the second loop for kplsk
         Returns
         -------
         r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
@@ -671,7 +700,7 @@ class KrgBased(SurrogateModel):
             X_pls_space = np.copy(X)
         else:
             X_pls_space, _ = compute_X_cont(X, design_space)
-        if cat_kernel_comps is not None or ncomp < 1e5:
+        if not (kplsk_second_loop) and (cat_kernel_comps is not None or ncomp < 1e5):
             if np.size(self.pls_coeff_cont) == 0:
                 X, y = self._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = self.coeff_pls
@@ -944,6 +973,7 @@ class KrgBased(SurrogateModel):
                 n_levels=self.n_levels,
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(-1, 1)
         else:
             self.corr.theta = theta
@@ -959,11 +989,6 @@ class KrgBased(SurrogateModel):
             print("exception : ", e)
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
-        if linalg.svd(R, compute_uv=False)[-1] < 1.1 * nugget:
-            warnings.warn(
-                "R is too ill conditioned. Poor combination "
-                "of regression model and observations."
-            )
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
@@ -1458,6 +1483,7 @@ class KrgBased(SurrogateModel):
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
                 x=x,
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
@@ -1597,6 +1623,7 @@ class KrgBased(SurrogateModel):
                 cat_features=self.cat_features,
                 cat_kernel=self.options["categorical_kernel"],
                 x=x,
+                kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(n_eval, self.nt)
 
             X_cont, _ = compute_X_cont(x, self.design_space)
@@ -1627,7 +1654,8 @@ class KrgBased(SurrogateModel):
 
     def _predict_variance_derivatives(self, x, kx):
         """
-        Provide the derivative of the variance of the model at a set of points
+        Provide the derivatives of the variance of the model at a set of points
+
         Parameters
         -----------
         x : np.ndarray [n_evals, dim]
@@ -1637,8 +1665,32 @@ class KrgBased(SurrogateModel):
 
         Returns
         -------
+        derived_variance:  np.ndarray
+            The derivatives wrt kx-th component of the variance of the kriging model
+        """
+        return self._internal_predict_variance(x, kx)
+
+    def _predict_variance_gradient(self, x):
+        """
+        Provide the gradient of the variance of the model at a given point
+        (ie the derivatives wrt to all component at a unique point x)
+
+        Parameters
+        -----------
+        x : np.ndarray [1, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
          derived_variance:  np.ndarray
-             The jacobian of the variance of the kriging model (the kx-th derivative)
+            The gradient of the variance of the kriging model
+        """
+        return self._internal_predict_variance(x)
+
+    def _internal_predict_variance(self, x, kx=None):
+        """
+        When kx is None gradient is computed at the location x
+        otherwise partial derivatives wrt kx-th component of a set of points x
         """
 
         # Initialization
@@ -1660,11 +1712,14 @@ class KrgBased(SurrogateModel):
 
         # p1 : derivative of (rt**2.0).sum(axis=0)
         r, dr = self.corr(d, derivative_params=derivative_dic)
-        r = r.reshape(n_eval, self.nt)
-        drx = dr[:, kx]
-        drx = drx.reshape(n_eval, self.nt)
+        if kx is None:
+            rt = linalg.solve_triangular(C, r, lower=True)
+            drx = dr.T
+        else:
+            r = r.reshape(n_eval, self.nt)
+            rt = linalg.solve_triangular(C, r.T, lower=True)
+            drx = dr[:, kx].reshape(n_eval, self.nt)
 
-        rt = linalg.solve_triangular(C, r.T, lower=True)
         invKr = linalg.solve_triangular(C.T, rt)
         p1 = 2 * np.dot(drx, invKr).T
 
@@ -1674,7 +1729,10 @@ class KrgBased(SurrogateModel):
         rho2 = linalg.solve_triangular(C, F, lower=True)
         invKF = linalg.solve_triangular(C.T, rho2)
 
-        A = f_x.T - np.dot(r, invKF)
+        if kx is None:
+            A = f_x.T - np.dot(r.T, invKF)
+        else:
+            A = f_x.T - np.dot(r, invKF)
 
         B = np.dot(F.T, invKF)
         rho3 = linalg.cholesky(B, lower=True)
@@ -1692,17 +1750,27 @@ class KrgBased(SurrogateModel):
                 + "universal kriging using a linear trend"
             )
 
-        dA = df[:, kx].T - np.dot(drx, invKF)
+        if kx is None:
+            dA = df.T - np.dot(dr.T, invKF)
+        else:
+            dA = df[:, kx].T - np.dot(drx, invKF)
+
         p3 = 2 * np.dot(dA, D).T
 
         # prime : derivative of MSE
         # MSE ~1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
         prime = 0 - p1 + p3
         ## scaling factors
-        x_std = self.X_scale[kx]
-        derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
-
-        return np.atleast_2d(derived_variance.T)
+        if kx is None:
+            derived_variance = []
+            x_std = np.resize(self.X_scale, self.nx)
+            for i in range(len(x_std)):
+                derived_variance.append(sigma2 * prime.T[i] / x_std[i])
+            return np.array(derived_variance).T
+        else:
+            x_std = self.X_scale[kx]
+            derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
+            return np.atleast_2d(derived_variance).T
 
     def _optimize_hyperparam(self, D):
         """
@@ -1769,6 +1837,10 @@ class KrgBased(SurrogateModel):
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
+        if self.kplsk_second_loop is None:
+            self.kplsk_second_loop = False
+        elif self.kplsk_second_loop is True:
+            exit_function = True
         if "KPLSK" in self.name:
             n_iter = 1
         else:
@@ -1788,7 +1860,9 @@ class KrgBased(SurrogateModel):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
-
+            self.kplsk_second_loop = (
+                "KPLSK" in self.name and ii == 0
+            ) or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
             self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
@@ -1799,7 +1873,7 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    if ii == 0 and "KPLSK" in self.name:
+                    if "KPLSK" in self.name:
                         if self.theta0[i] - theta_bounds[1] > 0:
                             self.theta0[i] = theta_bounds[1] - 1e-10
                         else:
@@ -2055,8 +2129,14 @@ class KrgBased(SurrogateModel):
                     self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
-
-                self.options["n_comp"] = int(self.nx)
+                self.n_param = compute_n_param(
+                    self.design_space,
+                    self.options["categorical_kernel"],
+                    self.nx,
+                    None,
+                    None,
+                )
+                self.options["n_comp"] = int(self.n_param)
                 limit = 10 * self.options["n_comp"]
                 self.best_iteration_fail = None
                 exit_function = True
@@ -2093,7 +2173,7 @@ class KrgBased(SurrogateModel):
         )
 
         n_comp = self.options["n_comp"] if "n_comp" in self.options else None
-        n_param = compute_n_param(
+        self.n_param = compute_n_param(
             self.design_space,
             self.options["categorical_kernel"],
             d,
@@ -2106,12 +2186,13 @@ class KrgBased(SurrogateModel):
                 self.is_continuous
                 or self.options["categorical_kernel"] == MixIntKernelType.GOWER
             ):
-                self.options["theta0"] *= np.ones(2 * n_param)
+                self.options["theta0"] *= np.ones(2 * self.n_param)
             else:
-                n_param += len([self.design_space.is_cat_mask])
-                self.options["theta0"] *= np.ones(n_param)
+                self.n_param += len([self.design_space.is_cat_mask])
+                self.options["theta0"] *= np.ones(self.n_param)
+
         else:
-            self.options["theta0"] *= np.ones(n_param)
+            self.options["theta0"] *= np.ones(self.n_param)
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
