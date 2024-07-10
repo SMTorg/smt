@@ -14,6 +14,14 @@ from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
+
+from smt.utils.kernels import (
+    SquarSinExp,
+    PowExp,
+    Matern52,
+    Matern32,
+    ActExp,
+)
 from smt.utils.checks import check_support, ensure_2d_array
 from smt.utils.design_space import (
     BaseDesignSpace,
@@ -22,29 +30,23 @@ from smt.utils.design_space import (
 )
 from smt.utils.kriging import (
     MixHrcKernelType,
-    abs_exp,
-    act_exp,
+    differences,
+    constant,
+    linear,
+    quadratic,
+    cross_distances,
+    gower_componentwise_distances,
     componentwise_distance,
     componentwise_distance_PLS,
     compute_X_cont,
     compute_X_cross,
-    constant,
-    cross_distances,
     cross_levels,
     cross_levels_homo_space,
-    differences,
-    gower_componentwise_distances,
-    linear,
-    matern32,
-    matern52,
     matrix_data_corr_levels_cat_matrix,
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
-    pow_exp,
-    quadratic,
-    squar_exp,
-    squar_sin_exp,
 )
+
 from smt.utils.misc import standardization
 
 
@@ -59,16 +61,15 @@ class MixIntKernelType(Enum):
 class KrgBased(SurrogateModel):
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
-    _correlation_types = {
-        "pow_exp": pow_exp,
-        "abs_exp": abs_exp,
-        "squar_exp": squar_exp,
-        "squar_sin_exp": squar_sin_exp,
-        "act_exp": act_exp,
-        "matern52": matern52,
-        "matern32": matern32,
+    _correlation_class = {
+        "pow_exp": PowExp,
+        "abs_exp": PowExp,
+        "squar_exp": PowExp,
+        "squar_sin_exp": SquarSinExp,
+        "matern52": Matern52,
+        "matern32": Matern32,
+        "act_exp": ActExp,
     }
-
     name = "KrigingBased"
 
     def _initialize(self):
@@ -230,7 +231,9 @@ class KrgBased(SurrogateModel):
             "matern52",
         ]:
             self.options["pow_exp_power"] = 1.0
-
+        self.corr = self._correlation_class[self.options["corr"]](
+            self.options["theta0"]
+        )
         # Check the pow_exp_power is >0 and <=2
         assert (
             self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
@@ -667,16 +670,6 @@ class KrgBased(SurrogateModel):
             An array containing the values of the autocorrelation model.
         """
 
-        _correlation_types = {
-            "pow_exp": pow_exp,
-            "abs_exp": abs_exp,
-            "squar_exp": squar_exp,
-            "squar_sin_exp": squar_sin_exp,
-            "act_exp": act_exp,
-            "matern52": matern52,
-            "matern32": matern32,
-        }
-
         # Initialize static parameters
         (
             cat_kernel_comps,
@@ -721,7 +714,8 @@ class KrgBased(SurrogateModel):
                     theta=None,
                     return_derivative=False,
                 )
-                r = _correlation_types[corr](theta, d)
+                self.corr.theta = theta
+                r = self.corr(d)
                 return r
             else:
                 d_cont = componentwise_distance_PLS(
@@ -743,7 +737,8 @@ class KrgBased(SurrogateModel):
                 return_derivative=False,
             )
             if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-                r = _correlation_types[corr](theta, d)
+                self.corr.theta = theta
+                r = self.corr(d)
                 return r
             else:
                 d_cont = d[:, np.logical_not(cat_features)]
@@ -761,7 +756,8 @@ class KrgBased(SurrogateModel):
                 )
 
         theta_cont = theta[theta_cont_features[:, 0]]
-        r_cont = _correlation_types[corr](theta_cont, d_cont)
+        self.corr.theta = theta_cont
+        r_cont = self.corr(d_cont)
         r_cat = np.copy(r_cont) * 0
         r = np.copy(r_cont)
         ##Theta_cat_i loop
@@ -980,9 +976,8 @@ class KrgBased(SurrogateModel):
                 kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(-1, 1)
         else:
-            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
-                -1, 1
-            )
+            self.corr.theta = theta
+            r = self.corr(self.D).reshape(-1, 1)
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
@@ -1119,10 +1114,7 @@ class KrgBased(SurrogateModel):
         dbeta_all = []
         for i_der in range(nb_theta):
             # Compute R derivatives
-            dr = self._correlation_types[self.options["corr"]](
-                theta, self.D, grad_ind=i_der
-            )
-
+            dr = self.corr(self.D, grad_ind=i_der)
             dr_all.append(dr)
 
             dR = np.zeros((self.nt, self.nt))
@@ -1264,10 +1256,7 @@ class KrgBased(SurrogateModel):
                 dRdeta = np.zeros((self.nt, self.nt))
                 dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:, 0]
                 dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:, 0]
-
-                dr_eta_omega = self._correlation_types[self.options["corr"]](
-                    theta, self.D, grad_ind=omega, hess_ind=eta
-                )
+                dr_eta_omega = self.corr(self.D, grad_ind=omega, hess_ind=eta)
                 dRdetadomega = np.zeros((self.nt, self.nt))
                 dRdetadomega[self.ij[:, 0], self.ij[:, 1]] = dr_eta_omega[:, 0]
                 dRdetadomega[self.ij[:, 1], self.ij[:, 0]] = dr_eta_omega[:, 0]
@@ -1504,9 +1493,7 @@ class KrgBased(SurrogateModel):
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+            r = self.corr(d).reshape(n_eval, self.nt)
             y = np.zeros(n_eval)
         X_cont = (X_cont - self.X_offset) / self.X_scale
         # Compute the regression function
@@ -1550,10 +1537,7 @@ class KrgBased(SurrogateModel):
 
         # Compute the correlation function
         derivative_dic = {"dx": dx, "dd": dd}
-
-        r, dr = self._correlation_types[self.options["corr"]](
-            self.optimal_theta, d, derivative_params=derivative_dic
-        )
+        r, dr = self.corr(d, derivative_params=derivative_dic)
         r = r.reshape(n_eval, self.nt)
 
         drx = dr[:, kx].reshape(n_eval, self.nt)
@@ -1648,9 +1632,7 @@ class KrgBased(SurrogateModel):
             X_cont = np.copy(x)
             d = self._componentwise_distance(dx)
             # Compute the correlation function
-            r = self._correlation_types[self.options["corr"]](
-                self.optimal_theta, d
-            ).reshape(n_eval, self.nt)
+            r = self.corr(d).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
         C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
@@ -1714,7 +1696,6 @@ class KrgBased(SurrogateModel):
         # Initialization
         n_eval, _ = x.shape
         x = (x - self.X_offset) / self.X_scale
-        theta = self.optimal_theta
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
@@ -1730,9 +1711,7 @@ class KrgBased(SurrogateModel):
         C = self.optimal_par["C"]
 
         # p1 : derivative of (rt**2.0).sum(axis=0)
-        r, dr = self._correlation_types[self.options["corr"]](
-            theta, d, derivative_params=derivative_dic
-        )
+        r, dr = self.corr(d, derivative_params=derivative_dic)
         if kx is None:
             rt = linalg.solve_triangular(C, r, lower=True)
             drx = dr.T
@@ -1885,6 +1864,7 @@ class KrgBased(SurrogateModel):
                 "KPLSK" in self.name and ii == 0
             ) or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
+            self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
