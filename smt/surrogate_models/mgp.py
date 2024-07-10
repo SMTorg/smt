@@ -344,11 +344,6 @@ class MGP(KrgBased):
         # Compute the correlation function
         self.corr.theta = theta
         r = self.corr(d, d_x=d_x).reshape(n_eval, self.nt).T
-        # r = (
-        #     self._correlation_types[self.options["corr"]](theta, d, d_x=d_x)
-        #     .reshape(n_eval, self.nt)
-        #     .T
-        # )
         f = self._regression_types[self.options["poly"]](x).T
 
         C = self.optimal_par["C"]
@@ -381,13 +376,6 @@ class MGP(KrgBased):
 
         for omega in range(len(self.optimal_theta)):
             drdomega = self.corr(d, grad_ind=omega, d_x=d_x).reshape(n_eval, self.nt).T
-            # drdomega = (
-            #     self._correlation_types[self.options["corr"]](
-            #         theta, d, grad_ind=omega, d_x=d_x
-            #     )
-            #     .reshape(n_eval, self.nt)
-            #     .T
-            # )
 
             dRdomega = np.zeros((self.nt, self.nt))
             dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
