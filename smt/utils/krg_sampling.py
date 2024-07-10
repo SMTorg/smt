@@ -38,12 +38,12 @@ def covariance_matrix(krg, X, conditioned=True):
 
     C = krg.optimal_par["C"]
     n_eval = X.shape[0]
-    k=krg.corr(krg._componentwise_distance(cross_d)).reshape(n_eval, n_eval)
+    k = krg.corr(krg._componentwise_distance(cross_d)).reshape(n_eval, n_eval)
 
     if not conditioned:
         cov_matrix = krg.optimal_par["sigma2"] * k
         return cov_matrix
-    r=krg.corr(krg._componentwise_distance(d)).reshape(n_eval, -1)
+    r = krg.corr(krg._componentwise_distance(d)).reshape(n_eval, -1)
 
     rt = linalg.solve_triangular(C, r.T, lower=True)
 
@@ -315,8 +315,7 @@ def evaluate_eigen_function(krg, X, eig_val, eig_vec, x_grid, weights_grid, M):
     cross_d = (
         np.tile(X_cont, (n_grid, 1)) - X_grid_cont.repeat(repeats=n_X, axis=0)
     ) ** 2
-    C = krg.optimal_par["sigma2"] * krg.corr(cross_d).reshape(n_grid,n_X)
-
+    C = krg.optimal_par["sigma2"] * krg.corr(cross_d).reshape(n_grid, n_X)
 
     U = np.diagflat(np.sqrt(1 / eig_val[:M]))
     phi = U.dot(eig_vec[:, :M].T.dot(W_sqrt).dot(C))
@@ -377,7 +376,7 @@ def sample_eigen(krg, X, eig_val, eig_vec, x_grid, weights_grid, M, n_traj):
     X_cont = (X - krg.X_offset) / krg.X_scale
     dx = differences(X_cont, Y=krg.X_norma.copy())
     d = krg._componentwise_distance(dx)
-    r=krg.corr(d).reshape(X.shape[0],krg.nt)
+    r = krg.corr(d).reshape(X.shape[0], krg.nt)
 
     y = np.zeros(X.shape[0])
     f = krg._regression_types[krg.options["poly"]](X_cont)

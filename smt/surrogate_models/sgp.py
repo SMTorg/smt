@@ -208,8 +208,8 @@ class SGP(KRG):
         dx = differences(A, B)
         d = self._componentwise_distance(dx)
         # Compute the correlation vector r and matrix R
-        self.corr.theta=theta
-        r=self.corr(d)
+        self.corr.theta = theta
+        r = self.corr(d)
         R = r.reshape(A.shape[0], B.shape[0])
         # Compute the covariance matrix K
         K = sigma2 * R

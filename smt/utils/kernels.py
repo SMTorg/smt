@@ -9,7 +9,7 @@ class Kernel(metaclass=ABCMeta):
 
 class PowExp(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
-        theta =self.theta
+        theta = self.theta
         r = np.zeros((d.shape[0], 1))
         n_components = d.shape[1]
 
@@ -51,9 +51,10 @@ class PowExp(Kernel):
 
         return r
 
+
 class SquarSinExp(Kernel):
-    def __call__(self,d,grad_ind=None,hess_ind=None,derivative_params=None):
-        theta=self.theta
+    def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
+        theta = self.theta
         r = np.zeros((d.shape[0], 1))
         # Construct/split the correlation matrix
         i, nb_limit = 0, int(1e4)
@@ -63,7 +64,9 @@ class SquarSinExp(Kernel):
                 -np.sum(
                     np.atleast_2d(theta_array[0][0 : int(len(theta) / 2)])
                     * np.sin(
-                        np.atleast_2d(theta_array[0][int(len(theta) / 2) : int(len(theta))])
+                        np.atleast_2d(
+                            theta_array[0][int(len(theta) / 2) : int(len(theta))]
+                        )
                         * d[i * nb_limit : (i + 1) * nb_limit, :]
                     )
                     ** 2,
@@ -205,6 +208,7 @@ class SquarSinExp(Kernel):
                     )
             return r, dr
         return r
+
 
 class Matern52(Kernel):
     def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
@@ -448,8 +452,11 @@ class Matern32(Kernel):
 
         return r
 
+
 class ActExp(Kernel):
-    def __call__(self, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=None):
+    def __call__(
+        self, d, grad_ind=None, hess_ind=None, d_x=None, derivative_params=None
+    ):
         r = np.zeros((d.shape[0], 1))
         n_components = d.shape[1]
 

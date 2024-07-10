@@ -513,8 +513,8 @@ class MFK(KrgBased):
         if self.is_continuous:
             dx = self._differences(X, Y=self.X_norma_all[0])
             d = self._componentwise_distance(dx)
-            self.corr.theta=self.optimal_theta[0]
-            r_=self.corr(d).reshape(n_eval,self.nt_all[0])
+            self.corr.theta = self.optimal_theta[0]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
         else:
             _, x_is_acting = self.design_space.correct_get_acting(X_usc)
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
@@ -570,8 +570,8 @@ class MFK(KrgBased):
             if self.is_continuous:
                 dx = self._differences(X, Y=self.X_norma_all[i])
                 d = self._componentwise_distance(dx)
-                self.corr.theta=self.optimal_theta[i]
-                r_=self.corr(d).reshape(n_eval, self.nt_all[i])
+                self.corr.theta = self.optimal_theta[i]
+                r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             else:
                 _, x_is_acting = self.design_space.correct_get_acting(X_usc)
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
@@ -700,8 +700,8 @@ class MFK(KrgBased):
         if self.is_continuous:
             dx = self._differences(X, Y=self.X_norma_all[0])
             d = self._componentwise_distance(dx)
-            self.corr.theta=self.optimal_theta[0]
-            r_= self.corr(d).reshape(n_eval,self.nt_all[0])
+            self.corr.theta = self.optimal_theta[0]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
         else:
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             _, x_is_acting = self.design_space.correct_get_acting(X)
@@ -772,8 +772,8 @@ class MFK(KrgBased):
             if self.is_continuous:
                 dx = self._differences(X, Y=self.X_norma_all[i])
                 d = self._componentwise_distance(dx)
-                self.corr.theta=self.optimal_theta[i]
-                r_=self.corr(d).reshape(n_eval,self.nt_all[i])
+                self.corr.theta = self.optimal_theta[i]
+                r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             else:
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 _, x_is_acting = self.design_space.correct_get_acting(X)
@@ -911,8 +911,8 @@ class MFK(KrgBased):
         dx = self._differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
-        self.corr.theta=self.optimal_theta[0]
-        r_=self.corr(d).reshape(n_eval, self.nt_all[0])
+        self.corr.theta = self.optimal_theta[0]
+        r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
 
         # Beta and gamma = R^-1(y-FBeta)
         beta = self.optimal_par[0]["beta"]
@@ -931,8 +931,8 @@ class MFK(KrgBased):
             g = self._regression_types[self.options["rho_regr"]](x)
             dx = self._differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
-            self.corr.theta=self.optimal_theta[i]
-            r_=self.corr(d).reshape(n_eval, self.nt_all[i])
+            self.corr.theta = self.optimal_theta[i]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             df = np.vstack((g.T * dy_dx[:, i - 1], df0.T))
 
             beta = self.optimal_par[i]["beta"]

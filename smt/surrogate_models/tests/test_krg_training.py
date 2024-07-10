@@ -22,15 +22,8 @@ from smt.utils.kernels import (
     SquarSinExp,
 )
 from smt.utils.kriging import (
-    # abs_exp,
-    # act_exp,
     componentwise_distance,
     cross_distances,
-    # matern32,
-    # matern52,
-    # pow_exp,
-    # squar_exp,
-    # squar_sin_exp,
 )
 from smt.utils.misc import standardization
 from smt.utils.sm_test_case import SMTestCase
@@ -58,7 +51,7 @@ class Test(SMTestCase):
             "matern52",
             "squar_sin_exp",
         ]
-        corr_def=[
+        corr_def = [
             PowExp,
             ActExp,
             Matern32,
@@ -122,7 +115,7 @@ class Test(SMTestCase):
             else:
                 theta = self.theta
 
-            kernel=corr(theta)
+            kernel = corr(theta)
             k = kernel(D)
             K = np.eye(self.X.shape[0])
             K[self.ij[:, 0], self.ij[:, 1]] = k[:, 0]
@@ -133,7 +126,7 @@ class Test(SMTestCase):
             for i, theta_i in enumerate(theta):
                 eps_theta = np.zeros(theta.shape)
                 eps_theta[i] = self.eps
-                kernel.theta=theta+eps_theta
+                kernel.theta = theta + eps_theta
                 k_dk = kernel(D)
 
                 K_dk = np.eye(self.X.shape[0])
@@ -141,7 +134,7 @@ class Test(SMTestCase):
                 K_dk[self.ij[:, 1], self.ij[:, 0]] = k_dk[:, 0]
 
                 grad_eps = (K_dk - K) / self.eps
-                kernel.theta=theta
+                kernel.theta = theta
                 dk = kernel(D, grad_ind=i)
                 dK = np.zeros((self.X.shape[0], self.X.shape[0]))
                 dK[self.ij[:, 0], self.ij[:, 1]] = dk[:, 0]
@@ -171,7 +164,7 @@ class Test(SMTestCase):
             grad_norm_all = []
             diff_norm_all = []
             for i, theta_i in enumerate(theta):
-                kernel=corr(theta)
+                kernel = corr(theta)
                 k = kernel(D, grad_ind=i)
 
                 K = np.eye(self.X.shape[0])
@@ -180,7 +173,7 @@ class Test(SMTestCase):
                 for j, omega_j in enumerate(theta):
                     eps_omega = np.zeros(theta.shape)
                     eps_omega[j] = self.eps
-                    kernel.theta=theta + eps_omega
+                    kernel.theta = theta + eps_omega
                     k_dk = kernel(D, grad_ind=i)
 
                     K_dk = np.eye(self.X.shape[0])
@@ -188,7 +181,7 @@ class Test(SMTestCase):
                     K_dk[self.ij[:, 1], self.ij[:, 0]] = k_dk[:, 0]
 
                     grad_eps = (K_dk - K) / self.eps
-                    kernel.theta=theta
+                    kernel.theta = theta
                     dk = kernel(D, grad_ind=i, hess_ind=j)
                     dK = np.zeros((self.X.shape[0], self.X.shape[0]))
                     dK[self.ij[:, 0], self.ij[:, 1]] = dk[:, 0]
