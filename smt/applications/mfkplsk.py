@@ -12,10 +12,12 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 
 from smt.applications import MFKPLS
 from smt.utils.kriging import componentwise_distance
+from smt.surrogate_models.kplsk import KPLSK
 
 
-class MFKPLSK(MFKPLS):
+class MFKPLSK(MFKPLS, KPLSK):
     def _initialize(self):
+        super(KPLSK, self)._initialize()
         super(MFKPLSK, self)._initialize()
         declare = self.options.declare
         # Like KPLSK, MFKPLSK used only with "squar_exp" correlations
