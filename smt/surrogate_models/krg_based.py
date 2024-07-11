@@ -900,6 +900,7 @@ class KrgBased(SurrogateModel):
               parameters:
             sigma2
             sigma2_ri
+            sigma2_ri
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
@@ -984,6 +985,10 @@ class KrgBased(SurrogateModel):
         R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
         R = np.eye(self.nt) * (1.0 + nugget)
+        R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
+        R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+        R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+        R = np.eye(self.nt) * (1.0 + nugget)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -999,6 +1004,7 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
+            print(np.linalg.eig(C)[0])
             print(np.linalg.eig(C)[0])
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
