@@ -19,12 +19,14 @@ prange = range
 if USE_NUMBA_JIT:
     from numba import njit, prange
 
+
 class MixIntKernelType(Enum):
     EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
     HOMO_HSPHERE = "HOMO_HSPHERE"
     CONT_RELAX = "CONT_RELAX"
     GOWER = "GOWER"
     COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
+
 
 """
 Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
@@ -1025,9 +1027,9 @@ def matrix_data_corr_levels_cat_mod_comps(
                         Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                     )
                 r_cat[k] = kval_cat
-                
-@njit_use()
 
+
+@njit_use()
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
     """
     Returns the he number of parameters needed for an homoscedastic or full group kernel.
@@ -1070,4 +1072,3 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             if cat_kernel == MixIntKernelType.CONT_RELAX:
                 n_param += int(n_values)
     return n_param
-

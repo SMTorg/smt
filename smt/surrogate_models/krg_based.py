@@ -2270,5 +2270,3 @@ class KrgBased(SurrogateModel):
                 )
                 % (self.nt, p)
             )
-
-  

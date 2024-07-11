@@ -8,14 +8,15 @@ from smt.surrogate_models import KPLS
 from smt.utils.kriging import componentwise_distance, componentwise_distance_PLS
 import numpy as np
 from copy import deepcopy
-import warnings 
+import warnings
 from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
-from scipy import linalg, optimize
+from scipy import optimize
 
 from smt.utils.kriging import (
     compute_n_param,
 )
+
 
 class KPLSK(KPLS):
     name = "KPLSK"
@@ -425,5 +426,3 @@ class KPLSK(KPLS):
                 self.best_iteration_fail = None
                 exit_function = True
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
-    
-   
