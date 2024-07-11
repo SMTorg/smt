@@ -1007,6 +1007,7 @@ class KrgBased(SurrogateModel):
         R_ri = R_noisy @ R_inv @ R_noisy
         par["C"] = C
 
+        par["sigma2"] = None
         par["sigma2_ri"] = None
         _, _, sigma2_ri = self._compute_sigma2(
             R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
@@ -1017,7 +1018,8 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
             R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
         )
-        par["sigma2"] = sigma2 * self.y_std**2.0
+        if sigma2 is not None:
+            par["sigma2"] = sigma2 * self.y_std**2.0
 
         if self.name in ["MGP"]:
             reduced_likelihood_function_value += self._reduced_log_prior(theta)
@@ -1047,7 +1049,10 @@ class KrgBased(SurrogateModel):
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
             print(np.linalg.eig(R)[0])
-            return reduced_likelihood_function_value, par, None
+            sigma2 = par["sigma2"]
+            if is_ri:
+                sigma2 = par["sigma2_ri"]
+            return reduced_likelihood_function_value, par, sigma2
 
         # Get generalized least squared solution
         Ft = linalg.solve_triangular(C, self.F, lower=True)
