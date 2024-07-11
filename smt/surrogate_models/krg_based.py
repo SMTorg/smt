@@ -1006,10 +1006,7 @@ class KrgBased(SurrogateModel):
         C_inv = np.linalg.inv(C)
         R_inv = np.dot(C_inv.T, C_inv)
         R_ri = R_noisy @ R_inv @ R_noisy
-        reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
-            R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
-        )
-        par["sigma2"] = sigma2 * self.y_std**2.0
+        par["C"] = C
 
         par["sigma2_ri"] = None
         _, _, sigma2_ri = self._compute_sigma2(
@@ -1017,6 +1014,11 @@ class KrgBased(SurrogateModel):
         )
         if sigma2_ri is not None:
             par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
+
+        reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
+            R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
+        )
+        par["sigma2"] = sigma2 * self.y_std**2.0
 
         if self.name in ["MGP"]:
             reduced_likelihood_function_value += self._reduced_log_prior(theta)
@@ -1078,13 +1080,13 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
-        if not (is_ri):
+        if not is_ri:
             par["beta"] = beta
             par["gamma"] = linalg.solve_triangular(C.T, rho)
-            par["C"] = C
             par["Ft"] = Ft
             par["G"] = G
             par["Q"] = Q
+            par["C_noisy"] = C
 
         return reduced_likelihood_function_value, par, sigma2
 
@@ -1672,7 +1674,10 @@ class KrgBased(SurrogateModel):
             # Compute the correlation function
             r = self.corr(d).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
-        C = self.optimal_par["C"]
+        if is_ri:
+            C = self.optimal_par["C"]
+        else:
+            C = self.optimal_par["C_noisy"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
