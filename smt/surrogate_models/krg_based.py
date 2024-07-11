@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 
 import warnings
 from copy import deepcopy
-from enum import Enum
 
 import numpy as np
 from scipy import linalg, optimize
@@ -46,17 +45,10 @@ from smt.utils.kriging import (
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
     compute_n_param,
+    MixIntKernelType,
 )
 
 from smt.utils.misc import standardization
-
-
-class MixIntKernelType(Enum):
-    EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
-    HOMO_HSPHERE = "HOMO_HSPHERE"
-    CONT_RELAX = "CONT_RELAX"
-    GOWER = "GOWER"
-    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
 class KrgBased(SurrogateModel):
