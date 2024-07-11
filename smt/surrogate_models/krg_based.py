@@ -9,7 +9,6 @@ from copy import deepcopy
 
 import numpy as np
 from scipy import linalg, optimize
-from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -1863,31 +1862,18 @@ class KrgBased(SurrogateModel):
                     + theta_bounds[0]
                 )
 
-            if self.name in ["MGP"]:  # to be discussed with R. Priem
-                constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
-                constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
-                bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
-            else:
-                log10t_bounds = np.log10(theta_bounds)
-                constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
-                constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
-                bounds_hyp.append(log10t_bounds)
-
-        if self.name in ["MGP"]:
-            theta0_rand = m_norm.rvs(
-                self.options["prior"]["mean"] * len(self.theta0),
-                self.options["prior"]["var"],
-                1,
-            )
-            theta0 = self.theta0
-        else:
-            theta_bounds = self.options["theta_bounds"]
             log10t_bounds = np.log10(theta_bounds)
-            theta0_rand = self.random_state.rand(len(self.theta0))
-            theta0_rand = (
-                theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
-            )
-            theta0 = np.log10(self.theta0)
+            constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
+            constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
+            bounds_hyp.append(log10t_bounds)
+
+        theta_bounds = self.options["theta_bounds"]
+        log10t_bounds = np.log10(theta_bounds)
+        theta0_rand = self.random_state.rand(len(self.theta0))
+        theta0_rand = (
+            theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
+        )
+        theta0 = np.log10(self.theta0)
 
         if self.name not in ["SGP"]:
             if not (self.is_continuous):
@@ -2013,8 +1999,7 @@ class KrgBased(SurrogateModel):
                     )
                 optimal_theta = optimal_theta_res["x"]
 
-                if self.name not in ["MGP"]:
-                    optimal_theta = 10**optimal_theta
+                optimal_theta = 10**optimal_theta
 
                 optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta

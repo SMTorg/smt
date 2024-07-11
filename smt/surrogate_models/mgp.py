@@ -232,9 +232,6 @@ class MGP(KrgBased):
                         f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
                     )
                 optimal_theta = optimal_theta_res["x"]
-
-                optimal_theta = 10**optimal_theta
-
                 optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta
                 )
