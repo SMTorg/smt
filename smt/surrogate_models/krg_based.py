@@ -977,9 +977,8 @@ class KrgBased(SurrogateModel):
                 kplsk_second_loop=self.kplsk_second_loop,
             ).reshape(-1, 1)
         else:
-            r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(
-                -1, 1
-            )
+            self.corr.theta = theta
+            r = self.corr(self.D).reshape(-1, 1)
         R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
         R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
