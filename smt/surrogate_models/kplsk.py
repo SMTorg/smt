@@ -9,7 +9,6 @@ from smt.utils.kriging import componentwise_distance, componentwise_distance_PLS
 import numpy as np
 from copy import deepcopy
 import warnings
-from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 from scipy import optimize
 
@@ -66,8 +65,6 @@ class KPLSK(KPLS):
         D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
-           For SGP surrogate, D is not used
-
         Returns
         -------
         best_optimal_rlf_value: real
@@ -83,42 +80,27 @@ class KPLSK(KPLS):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        if self.name in ["MGP"]:
 
-            def minus_reduced_likelihood_function(theta):
-                res = -self._reduced_likelihood_function(theta)[0]
-                return res
+        def minus_reduced_likelihood_function(log10t):
+            return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
 
-            def grad_minus_reduced_likelihood_function(theta):
-                grad = -self._reduced_likelihood_gradient(theta)[0]
-                return grad
+        def grad_minus_reduced_likelihood_function(log10t):
+            log10t_2d = np.atleast_2d(log10t).T
+            res = (
+                -np.log(10.0)
+                * (10.0**log10t_2d)
+                * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
+            )
+            return res
 
-            def hessian_minus_reduced_likelihood_function(theta):
-                hess = -self._reduced_likelihood_hessian(theta)[0]
-                return hess
-
-        else:
-
-            def minus_reduced_likelihood_function(log10t):
-                return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
-
-            def grad_minus_reduced_likelihood_function(log10t):
-                log10t_2d = np.atleast_2d(log10t).T
-                res = (
-                    -np.log(10.0)
-                    * (10.0**log10t_2d)
-                    * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
-                )
-                return res
-
-            def hessian_minus_reduced_likelihood_function(log10t):
-                log10t_2d = np.atleast_2d(log10t).T
-                res = (
-                    -np.log(10.0)
-                    * (10.0**log10t_2d)
-                    * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
-                )
-                return res
+        def hessian_minus_reduced_likelihood_function(log10t):
+            log10t_2d = np.atleast_2d(log10t).T
+            res = (
+                -np.log(10.0)
+                * (10.0**log10t_2d)
+                * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
+            )
+            return res
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
@@ -126,10 +108,7 @@ class KPLSK(KPLS):
             self.kplsk_second_loop = False
         elif self.kplsk_second_loop is True:
             exit_function = True
-        if "KPLSK" in self.name:
-            n_iter = 1
-        else:
-            n_iter = 0
+        n_iter = 1
 
         (
             best_optimal_theta,
@@ -145,9 +124,7 @@ class KPLSK(KPLS):
 
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
-            self.kplsk_second_loop = (
-                "KPLSK" in self.name and ii == 0
-            ) or self.kplsk_second_loop
+            self.kplsk_second_loop = ii == 0 or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
             self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
@@ -158,58 +135,29 @@ class KPLSK(KPLS):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    if "KPLSK" in self.name:
-                        if self.theta0[i] - theta_bounds[1] > 0:
-                            self.theta0[i] = theta_bounds[1] - 1e-10
-                        else:
-                            self.theta0[i] = theta_bounds[0] + 1e-10
+                    if self.theta0[i] - theta_bounds[1] > 0:
+                        self.theta0[i] = theta_bounds[1] - 1e-10
                     else:
-                        warnings.warn(
-                            f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
-                                [{theta_bounds[0]}, {theta_bounds[1]}]). \
-                                    A random initialisation is used instead."
-                        )
-                        self.theta0[i] = self.random_state.rand()
-                        self.theta0[i] = (
-                            self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
-                            + theta_bounds[0]
-                        )
+                        self.theta0[i] = theta_bounds[0] + 1e-10
 
-                if self.name in ["MGP"]:  # to be discussed with R. Priem
-                    constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
-                    constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
-                    bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
-                else:
-                    log10t_bounds = np.log10(theta_bounds)
-                    constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
-                    constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
-                    bounds_hyp.append(log10t_bounds)
-
-            if self.name in ["MGP"]:
-                theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.theta0),
-                    self.options["prior"]["var"],
-                    1,
-                )
-                theta0 = self.theta0
-            else:
-                theta_bounds = self.options["theta_bounds"]
                 log10t_bounds = np.log10(theta_bounds)
-                theta0_rand = self.random_state.rand(len(self.theta0))
-                theta0_rand = (
-                    theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
-                    + log10t_bounds[0]
-                )
-                theta0 = np.log10(self.theta0)
+                constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
+                constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
+                bounds_hyp.append(log10t_bounds)
 
-            if self.name not in ["SGP"]:
-                if not (self.is_continuous):
-                    self.D = D
-                else:
-                    ##from abs distance to kernel distance
-                    self.D = self._componentwise_distance(D, opt=ii)
-            else:  # SGP case, D is not used
-                pass
+            theta_bounds = self.options["theta_bounds"]
+            log10t_bounds = np.log10(theta_bounds)
+            theta0_rand = self.random_state.rand(len(self.theta0))
+            theta0_rand = (
+                theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
+            )
+            theta0 = np.log10(self.theta0)
+
+            if not (self.is_continuous):
+                self.D = D
+            else:
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
             k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -217,26 +165,7 @@ class KPLSK(KPLS):
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
                 noise_bounds = self.options["noise_bounds"]
-
-                # SGP: GP variance is optimized too
                 offset = 0
-                if self.name in ["SGP"]:
-                    sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
-                    theta0_sigma2 = np.concatenate([theta0, sigma2_0])
-                    sigma2_bounds = np.log10(
-                        np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
-                    )
-                    constraints.append(
-                        lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
-                    )
-                    constraints.append(
-                        lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
-                    )
-                    bounds_hyp.append(sigma2_bounds)
-                    offset = 1
-                    theta0 = theta0_sigma2
-                    theta0_rand = np.concatenate([theta0_rand, sigma2_0])
-
                 if self.options["eval_noise"] and not self.options["use_het_noise"]:
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                     for i in range(len(self.noise0)):
@@ -274,7 +203,7 @@ class KPLSK(KPLS):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-                if ii == 1 or "KPLSK" not in self.name:
+                if ii == 1:
                     if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,
@@ -331,8 +260,7 @@ class KPLSK(KPLS):
                         )
                     optimal_theta = optimal_theta_res["x"]
 
-                    if self.name not in ["MGP"]:
-                        optimal_theta = 10**optimal_theta
+                    optimal_theta = 10**optimal_theta
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -398,31 +326,29 @@ class KPLSK(KPLS):
                     else:
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
+            if self.options["eval_noise"]:
+                # best_optimal_theta contains [theta, noise] if eval_noise = True
+                theta = best_optimal_theta[:-1]
+            else:
+                # best_optimal_theta contains [theta] if eval_noise = False
+                theta = best_optimal_theta
 
-            if "KPLSK" in self.name:
-                if self.options["eval_noise"]:
-                    # best_optimal_theta contains [theta, noise] if eval_noise = True
-                    theta = best_optimal_theta[:-1]
-                else:
-                    # best_optimal_theta contains [theta] if eval_noise = False
-                    theta = best_optimal_theta
+            if exit_function:
+                return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
-                if exit_function:
-                    return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
-
-                if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
-                else:
-                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
-                self.n_param = compute_n_param(
-                    self.design_space,
-                    self.options["categorical_kernel"],
-                    self.nx,
-                    None,
-                    None,
-                )
-                self.options["n_comp"] = int(self.n_param)
-                limit = 10 * self.options["n_comp"]
-                self.best_iteration_fail = None
-                exit_function = True
+            if self.options["corr"] == "squar_exp":
+                self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+            else:
+                self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+            self.n_param = compute_n_param(
+                self.design_space,
+                self.options["categorical_kernel"],
+                self.nx,
+                None,
+                None,
+            )
+            self.options["n_comp"] = int(self.n_param)
+            limit = 10 * self.options["n_comp"]
+            self.best_iteration_fail = None
+            exit_function = True
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
