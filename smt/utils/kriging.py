@@ -19,6 +19,13 @@ prange = range
 if USE_NUMBA_JIT:
     from numba import njit, prange
 
+class MixIntKernelType(Enum):
+    EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
+    HOMO_HSPHERE = "HOMO_HSPHERE"
+    CONT_RELAX = "CONT_RELAX"
+    GOWER = "GOWER"
+    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
+
 """
 Quick benchmarking with the mixed-integer hierarchical Goldstein function indicates the following:
 
@@ -1018,3 +1025,49 @@ def matrix_data_corr_levels_cat_mod_comps(
                         Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
                     )
                 r_cat[k] = kval_cat
+                
+@njit_use()
+
+def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
+    """
+    Returns the he number of parameters needed for an homoscedastic or full group kernel.
+    Parameters
+     ----------
+    design_space: BaseDesignSpace
+            - design space definition
+    cat_kernel : string
+            -The kernel to use for categorical inputs. Only for non continuous Kriging,
+    d: int
+            - n_comp or nx
+    n_comp : int
+            - if PLS, then it is the number of components else None,
+    mat_dim : int
+            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
+    Returns
+    -------
+     n_param: int
+            - The number of parameters.
+    """
+    n_param = design_space.n_dv
+    if n_comp is not None:
+        n_param = d
+        if cat_kernel == MixIntKernelType.CONT_RELAX:
+            return n_param
+        if mat_dim is not None:
+            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
+    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
+        return n_param
+    for i, dv in enumerate(design_space.design_variables):
+        if isinstance(dv, CategoricalVariable):
+            n_values = dv.n_values
+            if design_space.n_dv == d:
+                n_param -= 1
+            if cat_kernel in [
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]:
+                n_param += int(n_values * (n_values - 1) / 2)
+            if cat_kernel == MixIntKernelType.CONT_RELAX:
+                n_param += int(n_values)
+    return n_param
+
