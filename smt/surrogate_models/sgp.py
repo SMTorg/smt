@@ -21,8 +21,6 @@ from smt.sampling_methods import LHS
 from scipy import optimize
 
 
-
-
 class SGP(KRG):
     name = "SGP"
 
@@ -99,7 +97,7 @@ class SGP(KRG):
         self.optimal_par = {}
         self.optimal_noise = None
 
-    def _optimize_hyperparam(self):
+    def _optimize_hyperparam(self, D=None):
         """
         This function evaluates the Gaussian Process model at x.
 
