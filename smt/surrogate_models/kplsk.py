@@ -27,7 +27,7 @@ class KPLSK(KPLS):
         declare(
             "corr",
             "squar_exp",
-            values=("squar_exp"),
+            values=("squar_exp", "abs_exp"),
             desc="Correlation function type",
             types=(str),
         )
@@ -48,7 +48,7 @@ class KPLSK(KPLS):
             d = componentwise_distance_PLS(
                 dx,
                 self.options["corr"],
-                self.options["n_comp"],
+                self.n_comp,
                 self.coeff_pls,
                 power=self.options["pow_exp_power"],
                 theta=theta,
@@ -119,12 +119,12 @@ class KPLSK(KPLS):
             [],
             [],
         )
-
+        self.theta0 = deepcopy(self.options["theta0"])
+        self.n_comp = deepcopy(self.options["n_comp"])
         for ii in range(2):
             bounds_hyp = []
             self.kplsk_second_loop = ii == 1 or self.kplsk_second_loop
-            self.theta0 = deepcopy(self.options["theta0"])
-            self.corr.theta = deepcopy(self.options["theta0"])
+            self.corr.theta = deepcopy(self.theta0)
             for i in range(len(self.theta0)):
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -335,9 +335,10 @@ class KPLSK(KPLS):
                 return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
             if self.options["corr"] == "squar_exp":
-                self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+                self.theta0 = (theta * self.coeff_pls**2).sum(1)
+
             else:
-                self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+                self.theta0 = (theta * np.abs(self.coeff_pls)).sum(1)
             self.n_param = compute_n_param(
                 self.design_space,
                 self.options["categorical_kernel"],
@@ -345,7 +346,7 @@ class KPLSK(KPLS):
                 None,
                 None,
             )
-            self.options["n_comp"] = int(self.n_param)
+            self.n_comp = int(self.n_param)
             limit = 10 * self.options["n_comp"]
             self.best_iteration_fail = None
             exit_function = True

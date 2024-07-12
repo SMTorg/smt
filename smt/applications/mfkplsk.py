@@ -37,9 +37,9 @@ class MFKPLSK(MFKPLS, KPLSK):
         )
         self.name = "MFKPLSK"
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx, opt=1):
         # Modif for KPLSK model
-        if opt == 0:
+        if opt == 1:
             # Kriging step
             d = componentwise_distance(
                 dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
@@ -56,13 +56,13 @@ class MFKPLSK(MFKPLS, KPLSK):
         Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
         """
         self._new_train_init()
-        self.n_comp = self.options["n_comp"]
+        self.n_comp_mfkplsk = self.options["n_comp"]
         theta0 = self.options["theta0"].copy()
         noise0 = self.options["noise0"].copy()
 
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
-            self.options["n_comp"] = self.n_comp
+            self.options["n_comp"] = self.n_comp_mfkplsk
             self.options["theta0"] = theta0
             self.options["noise0"] = noise0
 
