@@ -103,11 +103,10 @@ class KPLSK(KPLS):
             return res
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
-        exit_function = False
         if self.kplsk_second_loop is None:
             self.kplsk_second_loop = False
         elif self.kplsk_second_loop is True:
-            exit_function = True
+            pass
         (
             best_optimal_theta,
             best_optimal_rlf_value,
@@ -331,7 +330,7 @@ class KPLSK(KPLS):
                 # best_optimal_theta contains [theta] if eval_noise = False
                 theta = best_optimal_theta
 
-            if exit_function:
+            if self.kplsk_second_loop:
                 return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
             if self.options["corr"] == "squar_exp":
@@ -349,5 +348,4 @@ class KPLSK(KPLS):
             self.n_comp = int(self.n_param)
             limit = 10 * self.options["n_comp"]
             self.best_iteration_fail = None
-            exit_function = True
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
