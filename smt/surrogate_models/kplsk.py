@@ -105,8 +105,6 @@ class KPLSK(KPLS):
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         if self.kplsk_second_loop is None:
             self.kplsk_second_loop = False
-        elif self.kplsk_second_loop is True:
-            pass
         (
             best_optimal_theta,
             best_optimal_rlf_value,
