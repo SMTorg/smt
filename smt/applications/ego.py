@@ -189,6 +189,8 @@ class EGO(SurrogateBasedApplication):
         y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
+
+        # Check to apply a reinterpolation only when it's possible
         if isinstance(self.gpr, KRG):
             sig = np.sqrt(self.gpr.predict_variances(points, is_ri=True))
         else:

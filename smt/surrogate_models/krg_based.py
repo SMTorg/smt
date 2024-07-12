@@ -900,7 +900,6 @@ class KrgBased(SurrogateModel):
               parameters:
             sigma2
             sigma2_ri
-            sigma2_ri
             Gaussian Process variance.
             beta
             Generalized least-squares regression weights for
@@ -920,6 +919,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         nugget = self.options["nugget"]
+        # Nugget to ensure that the Cholesky decomposition can be performed
         if self.options["eval_noise"]:
             nugget = 100.0 * np.finfo(np.double).eps
 
@@ -1003,6 +1003,7 @@ class KrgBased(SurrogateModel):
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
+        # Computation of R_ri for the reinterpolation case
         C_inv = np.linalg.inv(C)
         R_inv = np.dot(C_inv.T, C_inv)
         R_ri = R_noisy @ R_inv @ R_noisy
@@ -1045,6 +1046,43 @@ class KrgBased(SurrogateModel):
     def _compute_sigma2(
         self, R, reduced_likelihood_function_value, par, p, q, is_ri=False
     ):
+        """
+        This function computes the Gaussian Process variance (sigma2) and updates
+        the reduced likelihood function value given the correlation matrix R.
+
+        Parameters
+        ----------
+        R: array-like of shape (n_samples, n_samples)
+            - The correlation matrix for which the Gaussian Process variance should be computed.
+        reduced_likelihood_function_value: float
+            - The current value of the reduced likelihood function.
+        par: dict
+            - A dictionary containing the Gaussian Process model parameters.
+        p: int
+            - The number of regression weights for Universal Kriging or for Ordinary Kriging.
+        q: int
+            - The number of Gaussian Process weights.
+        is_ri: bool, optional (default: False)
+            - A boolean indicating if one wants to reinterpolate the variance in the case of noisy GP.
+
+        Returns
+        -------
+        reduced_likelihood_function_value: float
+            - The updated value of the reduced likelihood function.
+        par: dict
+            - The dictionary containing the updated Gaussian Process model parameters:
+            - sigma2
+            - sigma2_ri
+            - beta
+            - gamma
+            - C_noisy
+            - Ft
+            - Q
+            - G
+        sigma2: float or None
+            - The computed Gaussian Process variance, or None if the computation fails.
+        """
+        #  Cholesky decomposition
         try:
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
