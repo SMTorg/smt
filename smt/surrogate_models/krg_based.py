@@ -1773,8 +1773,6 @@ class KrgBased(SurrogateModel):
         D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
-           For SGP surrogate, D is not used
-
         Returns
         -------
         best_optimal_rlf_value: real
@@ -1789,43 +1787,28 @@ class KrgBased(SurrogateModel):
         # reinitialize optimization best values
         self.best_iteration_fail = None
         self._thetaMemory = None
+
         # Initialize the hyperparameter-optimization
-        if self.name in ["MGP"]:
+        def minus_reduced_likelihood_function(log10t):
+            return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
 
-            def minus_reduced_likelihood_function(theta):
-                res = -self._reduced_likelihood_function(theta)[0]
-                return res
+        def grad_minus_reduced_likelihood_function(log10t):
+            log10t_2d = np.atleast_2d(log10t).T
+            res = (
+                -np.log(10.0)
+                * (10.0**log10t_2d)
+                * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
+            )
+            return res
 
-            def grad_minus_reduced_likelihood_function(theta):
-                grad = -self._reduced_likelihood_gradient(theta)[0]
-                return grad
-
-            def hessian_minus_reduced_likelihood_function(theta):
-                hess = -self._reduced_likelihood_hessian(theta)[0]
-                return hess
-
-        else:
-
-            def minus_reduced_likelihood_function(log10t):
-                return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
-
-            def grad_minus_reduced_likelihood_function(log10t):
-                log10t_2d = np.atleast_2d(log10t).T
-                res = (
-                    -np.log(10.0)
-                    * (10.0**log10t_2d)
-                    * (self._reduced_likelihood_gradient(10.0**log10t_2d)[0])
-                )
-                return res
-
-            def hessian_minus_reduced_likelihood_function(log10t):
-                log10t_2d = np.atleast_2d(log10t).T
-                res = (
-                    -np.log(10.0)
-                    * (10.0**log10t_2d)
-                    * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
-                )
-                return res
+        def hessian_minus_reduced_likelihood_function(log10t):
+            log10t_2d = np.atleast_2d(log10t).T
+            res = (
+                -np.log(10.0)
+                * (10.0**log10t_2d)
+                * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
+            )
+            return res
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         (
@@ -1839,7 +1822,6 @@ class KrgBased(SurrogateModel):
             [],
             [],
         )
-
         bounds_hyp = []
         self.theta0 = deepcopy(self.options["theta0"])
         self.corr.theta = deepcopy(self.options["theta0"])
@@ -1875,14 +1857,11 @@ class KrgBased(SurrogateModel):
         )
         theta0 = np.log10(self.theta0)
 
-        if self.name not in ["SGP"]:
-            if not (self.is_continuous):
-                self.D = D
-            else:
-                ##from abs distance to kernel distance
-                self.D = self._componentwise_distance(D)
-        else:  # SGP case, D is not used
-            pass
+        if not (self.is_continuous):
+            self.D = D
+        else:
+            ##from abs distance to kernel distance
+            self.D = self._componentwise_distance(D)
 
         # Initialization
         k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
@@ -1890,24 +1869,7 @@ class KrgBased(SurrogateModel):
             # Use specified starting point as first guess
             self.noise0 = np.array(self.options["noise0"])
             noise_bounds = self.options["noise_bounds"]
-
-            # SGP: GP variance is optimized too
             offset = 0
-            if self.name in ["SGP"]:
-                sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
-                theta0_sigma2 = np.concatenate([theta0, sigma2_0])
-                sigma2_bounds = np.log10(np.array([1e-12, (3.0 * self.y_std[0]) ** 2]))
-                constraints.append(
-                    lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
-                )
-                constraints.append(
-                    lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
-                )
-                bounds_hyp.append(sigma2_bounds)
-                offset = 1
-                theta0 = theta0_sigma2
-                theta0_rand = np.concatenate([theta0_rand, sigma2_0])
-
             if self.options["eval_noise"] and not self.options["use_het_noise"]:
                 self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                 for i in range(len(self.noise0)):
@@ -1953,7 +1915,6 @@ class KrgBased(SurrogateModel):
                 )
                 theta_lhs_loops = sampling(self.options["n_start"])
                 theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
-
             optimal_theta_res = {"fun": float("inf")}
             optimal_theta_res_loop = None
             try:
@@ -1974,7 +1935,6 @@ class KrgBased(SurrogateModel):
                         )
                         if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                             optimal_theta_res = optimal_theta_res_loop
-
                 elif self.options["hyper_opt"] == "TNC":
                     if self.options["use_het_noise"]:
                         raise ValueError("For heteroscedastic noise, please use Cobyla")
@@ -1998,9 +1958,7 @@ class KrgBased(SurrogateModel):
                         f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
                     )
                 optimal_theta = optimal_theta_res["x"]
-
                 optimal_theta = 10**optimal_theta
-
                 optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                     theta=optimal_theta
                 )
@@ -2062,7 +2020,6 @@ class KrgBased(SurrogateModel):
                 else:
                     k = stop + 1
                     print("fmin_cobyla failed but the best value is retained")
-
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
