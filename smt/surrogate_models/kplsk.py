@@ -32,8 +32,8 @@ class KPLSK(KPLS):
             types=(str),
         )
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
-        if opt == 0:
+    def _componentwise_distance(self, dx, opt=1, theta=None, return_derivative=False):
+        if opt == 1:
             # Kriging step
             d = componentwise_distance(
                 dx,
@@ -108,8 +108,6 @@ class KPLSK(KPLS):
             self.kplsk_second_loop = False
         elif self.kplsk_second_loop is True:
             exit_function = True
-        n_iter = 1
-
         (
             best_optimal_theta,
             best_optimal_rlf_value,
@@ -122,9 +120,9 @@ class KPLSK(KPLS):
             [],
         )
 
-        for ii in range(n_iter, -1, -1):
+        for ii in range(2):
             bounds_hyp = []
-            self.kplsk_second_loop = ii == 0 or self.kplsk_second_loop
+            self.kplsk_second_loop = ii == 1 or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
             self.corr.theta = deepcopy(self.options["theta0"])
             for i in range(len(self.theta0)):
@@ -203,7 +201,7 @@ class KPLSK(KPLS):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-                if ii == 1:
+                if ii == 0:
                     if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,
