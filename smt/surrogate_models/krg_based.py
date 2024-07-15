@@ -999,7 +999,6 @@ class KrgBased(SurrogateModel):
             C = linalg.cholesky(R, lower=True)
         except (linalg.LinAlgError, ValueError) as e:
             print("exception : ", e)
-            print(np.linalg.eig(C)[0])
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
