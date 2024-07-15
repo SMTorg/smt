@@ -75,19 +75,21 @@ class KrgBased(SurrogateModel):
             desc="Regression function type",
             types=(str),
         )
-        declare(
-            "corr",
-            "squar_exp",
-            values=(
-                "pow_exp",
-                "abs_exp",
-                "squar_exp",
-                "act_exp",
-                "matern52",
-                "matern32",
-            ),
-            desc="Correlation function type",
-        )
+        # =============================================================================
+        #         declare(
+        #             "corr",
+        #             "squar_exp",
+        #             values=(
+        #                 "pow_exp",
+        #                 "abs_exp",
+        #                 "squar_exp",
+        #                 "act_exp",
+        #                 "matern52",
+        #                 "matern32",
+        #             ),
+        #             desc="Correlation function type",
+        #         )
+        # =============================================================================
         declare(
             "pow_exp_power",
             1.9,
