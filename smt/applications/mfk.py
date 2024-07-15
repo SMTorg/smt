@@ -148,6 +148,20 @@ class MFK(KrgBased):
         super()._initialize()
         declare = self.options.declare
         declare(
+            "corr",
+            "squar_exp",
+            values=(
+                "pow_exp",
+                "abs_exp",
+                "squar_exp",
+                "squar_sin_exp",
+                "matern52",
+                "matern32",
+            ),
+            desc="Correlation function type",
+            types=(str),
+        )
+        declare(
             "rho_regr",
             "constant",
             values=("constant", "linear", "quadratic"),
