@@ -110,6 +110,19 @@ class KrgBased(SurrogateModel):
             desc="a jitter for numerical stability",
         )
         declare(
+            "corr",
+            "squar_exp",
+            values=(
+                "pow_exp",
+                "abs_exp",
+                "squar_exp",
+                "act_exp",
+                "matern52",
+                "matern32",
+            ),
+            desc="Correlation function type",
+        )
+        declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
         # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty), i.e.

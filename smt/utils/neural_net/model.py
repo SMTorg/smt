@@ -8,13 +8,15 @@ This package is distributed under New BSD license.
 
 import numpy as np
 
-from smt.utils.neural_net.activation import Linear, Tanh
+from smt.utils.neural_net.data import random_mini_batches
+from smt.utils.neural_net.optimizer import Adam
+from smt.utils.neural_net.activation import Tanh, Linear
 from smt.utils.neural_net.bwd_prop import L_model_backward
-from smt.utils.neural_net.data import load_csv, normalize_data, random_mini_batches
-from smt.utils.neural_net.fwd_prop import L_grads_forward, L_model_forward
+from smt.utils.neural_net.fwd_prop import L_model_forward, L_grads_forward
 from smt.utils.neural_net.loss import lse
 from smt.utils.neural_net.metrics import rsquare
-from smt.utils.neural_net.optimizer import Adam
+from smt.utils.neural_net.data import normalize_data, load_csv
+
 
 # TODO: implement batch-norm (deeper networks might suffer from exploding/vanishing gradients during training)
 
@@ -438,8 +440,8 @@ class Model(object):
         return J
 
     def goodness_of_fit(self, X_test, Y_test, J_test=None, response=0, partial=0):
-        import matplotlib.gridspec as gridspec
         import matplotlib.pyplot as plt
+        import matplotlib.gridspec as gridspec
 
         assert X_test.shape[1] == Y_test.shape[1]
         assert Y_test.shape[0] == Y_test.shape[0]

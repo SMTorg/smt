@@ -42,8 +42,20 @@ class MGP(KrgBased):
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
         )
-        self.options["hyper_opt"] = "TNC"
-        self.options["corr"] = "act_exp"
+        declare(
+            "hyper_opt",
+            "TNC",
+            values=("TNC"),
+            desc="Optimiser for hyperparameters optimisation",
+            types=str,
+        )
+        declare(
+            "corr",
+            "act_exp",  # active subspace kernel only
+            values=("act_exp"),
+            desc="Correlation function type",
+            types=(str),
+        )
 
     def _optimize_hyperparam(self, D):
         """
