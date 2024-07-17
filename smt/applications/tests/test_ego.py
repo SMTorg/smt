@@ -155,11 +155,8 @@ class TestEGO(SMTestCase):
 
     def test_EGO_free_vs_noisy(self):
         X_plot = np.atleast_2d(np.linspace(0, 25, 10000)).T
-        Y_plot = self.function_test_1d(X_plot)
         # Ajouter les points DOE
         xdoe = np.atleast_2d([0, 7, 25]).T
-        ydoe = self.function_test_1d(xdoe)
-        n_doe = xdoe.shape[0]
 
         n_iter = 8  # the number of points one wants to infill to find the minimum
         xlimits = np.array([[0.0, 25.0]])
