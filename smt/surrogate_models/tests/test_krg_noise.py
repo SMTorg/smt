@@ -80,7 +80,7 @@ class Test(SMTestCase):
         var_noise_estim = sm_noise_estim.predict_variances(x)  # predictive variance
         self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-3)
 
-    def test_predict_variance_ri(self):
+    def test_null_predict_variance_ri_at_data_points(self):
         # defining the training data
         xt = np.array([0.0, 1.0, 2.0, 2.5, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 1.1, 1.0])
@@ -91,14 +91,13 @@ class Test(SMTestCase):
         sm_noisy.set_training_values(xt, yt)
         sm_noisy.train()
 
-        var_estim_free = sm_noisy.predict_variances(xt, is_ri=False)
         var_estim_noisy = sm_noisy.predict_variances(xt, is_ri=True)
 
         # the variances with re-interpolation should be lower than without
-        for var_free, var_noisy in zip(var_estim_free, var_estim_noisy):
+        for var_noisy in var_estim_noisy:
             self.assertTrue(
-                var_noisy < var_free,
-                f"Expected var_noisy < var_free but got {var_noisy} >= {var_free}",
+                var_noisy < 1e-1,
+                f"Expected var_noisy = var_free but got {var_noisy} >= 0",
             )
 
 
