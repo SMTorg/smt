@@ -107,6 +107,12 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
+            "is_ri",
+            False,
+            types=bool,
+            desc="Enable to re interpolate the variance for training points",
+        )
+        declare(
             "surrogate",
             KRG(print_global=False),
             types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX),
@@ -184,14 +190,14 @@ class EGO(SurrogateBasedApplication):
         if self.options["verbose"]:
             print(msg)
 
-    def EI(self, points, enable_tunneling=False, x_data=None):
+    def EI(self, points, enable_tunneling=False, x_data=None, is_ri=False):
         """Expected improvement"""
         y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
 
         # Check to apply a reinterpolation only when it's possible
-        if isinstance(self.gpr, KRG):
+        if isinstance(self.gpr, KRG) and is_ri:
             sig = np.sqrt(self.gpr.predict_variances(points, is_ri=True))
         else:
             sig = np.sqrt(self.gpr.predict_variances(points))
