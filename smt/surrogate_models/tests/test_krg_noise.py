@@ -91,12 +91,20 @@ class Test(SMTestCase):
         sm_noisy.set_training_values(xt, yt)
         sm_noisy.train()
 
+        var_estim_free = sm_noisy.predict_variances(xt, is_ri=False)
         var_estim_noisy = sm_noisy.predict_variances(xt, is_ri=True)
 
         # the variances with re-interpolation should be lower than without
+        for var_free, var_noisy in zip(var_estim_free, var_estim_noisy):
+            self.assertTrue(
+                var_noisy < var_free,
+                f"Expected var_noisy < var_free but got {var_noisy} >= {var_free}",
+            )
+
+        # the variances with re-interpolation should be close to zero
         for var_noisy in var_estim_noisy:
             self.assertTrue(
-                var_noisy < 1e-1,
+                var_noisy < 1e-2,
                 f"Expected var_noisy = var_free but got {var_noisy} >= 0",
             )
 
