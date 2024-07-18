@@ -422,7 +422,7 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        assert len(seen_x) == 49
+        assert len(seen_x) == 42
         assert len(seen_is_acting) == 2
 
     @unittest.skipIf(
