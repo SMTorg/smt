@@ -340,7 +340,7 @@ class Test(unittest.TestCase):
                 CategoricalVariable(["A", "B", "C"]),  # x0
                 CategoricalVariable(["E", "F"]),  # x1
                 IntegerVariable(0, 1),  # x2
-                FloatVariable(0, 1),  # x3
+                FloatVariable(0.1, 1),  # x3
             ],
             random_state=42,
         )
@@ -372,14 +372,14 @@ class Test(unittest.TestCase):
                     [0, 1, 0, 0.75],
                     [0, 1, 1, 0.25],
                     [0, 1, 1, 0.75],
-                    [1, 0, 0, 0.5],
-                    [1, 0, 1, 0.5],
-                    [1, 1, 0, 0.5],
-                    [1, 1, 1, 0.5],
-                    [2, 0, 0, 0.5],
-                    [2, 0, 1, 0.5],
-                    [2, 1, 0, 0.5],
-                    [2, 1, 1, 0.5],
+                    [1, 0, 0, 0.55],
+                    [1, 0, 1, 0.55],
+                    [1, 1, 0, 0.55],
+                    [1, 1, 1, 0.55],
+                    [2, 0, 0, 0.55],
+                    [2, 0, 1, 0.55],
+                    [2, 1, 0, 0.55],
+                    [2, 1, 1, 0.55],
                 ]
             ),
         )
@@ -410,11 +410,11 @@ class Test(unittest.TestCase):
         x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
         assert x_sampled.shape == (100, 4)
         x_sampled[is_acting_sampled[:, 3], 3] = np.round(
-            x_sampled[is_acting_sampled[:, 3], 3]
+            x_sampled[is_acting_sampled[:, 3], 3], 4
         )
 
         x_corr, is_acting_corr = ds.correct_get_acting(x_sampled)
-        self.assertTrue(np.all(x_corr == x_sampled))
+        self.assertTrue(np.sum(np.abs(x_corr - x_sampled)) < 1e-12)
         self.assertTrue(np.all(is_acting_corr == is_acting_sampled))
 
         seen_x = set()
@@ -422,7 +422,7 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        assert len(seen_x) == 16
+        assert len(seen_x) == 49
         assert len(seen_is_acting) == 2
 
     @unittest.skipIf(
@@ -583,7 +583,6 @@ class Test(unittest.TestCase):
                 ds.declare_decreed_var(
                     decreed_var=3, meta_var=0, meta_value="A"
                 )  # Activate x3 if x0 == A
-
                 self.assertRaises(
                     RuntimeError, lambda: ds.sample_valid_x(10, random_state=42)
                 )

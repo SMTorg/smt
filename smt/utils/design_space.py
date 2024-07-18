@@ -1017,7 +1017,9 @@ class DesignSpace(BaseDesignSpace):
                 configs.append(self._get_correct_config(xi[inv_cs_var_idx]))
 
             # Convert Configuration objects to design vectors and get the is_active matrix
-            return self._configs_to_x(configs)
+            x_out, is_act = self._configs_to_x(configs)
+            self._impute_non_acting(x_out, is_act)
+            return x_out, is_act
 
         # Simplified implementation
         # Correct discrete variables
@@ -1190,7 +1192,7 @@ class DesignSpace(BaseDesignSpace):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 # Impute continuous variables to the mid of their bounds
-                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower)
+                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower) + dv.lower
 
             else:
                 # Impute discrete variables to their lower bounds
@@ -1300,3 +1302,35 @@ class FixedIntegerParam(UniformIntegerHyperparameter):
         return super().get_neighbors(
             value, rs, number=number, transform=transform, std=std
         )
+
+
+def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
+    """Interface to turn adsg input formats into legacy DesignSpace"""
+
+    # Define the mixed hierarchical design space
+    from adsg_core import SelectionChoiceNode
+    from adsg_core import GraphProcessor
+
+    gp = GraphProcessor(adsg)
+    listvar = []
+    gvars = gp._all_des_var_data[0]
+
+    for i in gvars:
+        print(i._bounds, i.n_opts, type(i.node))
+        if i._bounds is not None:
+            listvar.append(FloatVariable(lower=i._bounds[0], upper=i._bounds[1]))
+        elif type(i.node) is SelectionChoiceNode:
+            a = str(i._opts).replace("[", "").replace("]", "").split(",")
+            listvar.append(CategoricalVariable(a))
+        else:
+            a = (
+                str(i._opts)
+                .replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .replace("'", "")
+                .split(",")
+            )
+            listvar.append(OrdinalVariable(a))
+
+    DesignSpace(listvar)
