@@ -1122,6 +1122,7 @@ class KrgBased(SurrogateModel):
         reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
             sigma2.sum()
         ) - self.nt * np.log10(detR)
+
         if not is_ri:
             par["beta"] = beta
             par["gamma"] = linalg.solve_triangular(C.T, rho)

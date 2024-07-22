@@ -183,7 +183,8 @@ class EGO(SurrogateBasedApplication):
             y_data[-n_parallel:] = y
             end_time = time.time()
             iteration_time = end_time - start_time
-            print(f"iteration {k+1} took {iteration_time:.2f} seconds")
+            if self.options["verbose"]:
+                print(f"iteration {k+1} took {iteration_time:.2f} seconds")
         # Find the optimal point
         ind_best = np.argmin(y_data if y_data.ndim == 1 else y_data[:, 0])
         x_opt = x_data[ind_best]
