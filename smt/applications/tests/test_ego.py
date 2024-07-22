@@ -154,7 +154,6 @@ class TestEGO(SMTestCase):
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
 
     def test_EGO_free_vs_noisy(self):
-        X_plot = np.atleast_2d(np.linspace(0, 25, 10000)).T
         # Ajouter les points DOE
         xdoe = np.atleast_2d([0, 7, 25]).T
 
@@ -196,6 +195,8 @@ class TestEGO(SMTestCase):
         # The optimum found is far from the expected result without re-interpolation
         self.assertNotAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertNotAlmostEqual(-15.1, y_opt.item(), delta=1)
+        # The minimum found here is y =~ 0 instead of -15.1
+
         # The optimum found is pretty close to the expected result with re-interpolation
         self.assertAlmostEqual(18.9, x_opt_ri.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt_ri.item(), delta=1)
