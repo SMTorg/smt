@@ -124,6 +124,7 @@ class TestEGO(SMTestCase):
             n_doe=3,
             surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
+            is_ri=True,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
@@ -279,11 +280,12 @@ class TestEGO(SMTestCase):
             n_doe=3,
             surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
+            is_ri=True,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        np.testing.assert_allclose([1, 1], x_opt, atol=1.5)
-        self.assertAlmostEqual(0.0, y_opt.item(), delta=1.5)
+        np.testing.assert_allclose([1, 1], x_opt, atol=1)
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
 
     # Comment out broken test on CI ubuntu py3.11, fail without error! code exit 2?
     # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
