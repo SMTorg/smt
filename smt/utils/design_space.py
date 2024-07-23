@@ -1314,6 +1314,7 @@ def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
     gp = GraphProcessor(adsg)
     listvar = []
     gvars = gp._all_des_var_data[0]
+    varnames= [ii.name for ii in gvars]
 
     for i in gvars:
         print(i._bounds, i.n_opts, type(i.node))
@@ -1333,4 +1334,22 @@ def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
             )
             listvar.append(OrdinalVariable(a))
 
-    DesignSpace(listvar)
+    design_space = DesignSpace(listvar)
+    # Define the mixed hierarchical design space
+    
+    active_vars = [i for i, x in enumerate(gp.dv_is_conditionally_active) if x]
+    nodelist = list(adsg._graph.nodes)
+    nodenamelist = [element.strip()[1:-1] for element in str(list(adsg._graph.nodes))[1:-1].replace("D[Sel:","[").replace("DV[","[").replace(" ","").split(",")  if element.strip().startswith('[') and element.strip().endswith(']')]
+    for i in range(np.sum(gp.dv_is_conditionally_active)) :
+        meta_values = [metav for metav in  iter(adsg._graph.predecessors(nodelist[nodenamelist.index(gvars[active_vars[i]].name)]))] 
+        meta_variable =  next(iter(adsg._graph.predecessors(meta_values[0])))
+        while (str(meta_variable).split("[")[0] !='D') :
+            meta_values =  [metav for metav in  iter((adsg._graph.predecessors(meta_values[0])))]
+            meta_variable =  next(iter(adsg._graph.predecessors(meta_values[0])))
+        namemetavar= str(meta_variable).replace("D[Sel:","").replace("DV[","").replace(" ","").replace("[", "").replace("]","")
+        print([str(metaval)[1:-1] for metaval in meta_values] )
+        design_space.declare_decreed_var(decreed_var =active_vars[i], meta_var =varnames.index(namemetavar), meta_value = [str(metaval)[1:-1] for metaval in meta_values])
+    
+    
+    return design_space
+        
