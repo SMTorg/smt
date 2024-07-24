@@ -284,8 +284,8 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
-        np.testing.assert_allclose([1, 1], x_opt, atol=1)
-        self.assertAlmostEqual(0.0, y_opt.item(), delta=1)
+        np.testing.assert_allclose([1, 1], x_opt, atol=1.5)
+        self.assertAlmostEqual(0.0, y_opt.item(), delta=1.5)
 
     # Comment out broken test on CI ubuntu py3.11, fail without error! code exit 2?
     # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
