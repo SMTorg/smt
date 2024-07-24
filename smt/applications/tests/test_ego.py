@@ -124,6 +124,7 @@ class TestEGO(SMTestCase):
             n_doe=3,
             surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
+            is_ri=True,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=TestEGO.function_test_1d)
@@ -152,6 +153,54 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(18.9, x_opt.item(), delta=1)
         self.assertAlmostEqual(-15.1, y_opt.item(), delta=1)
+
+    def test_EGO_free_vs_noisy(self):
+        # Ajouter les points DOE
+        xdoe = np.atleast_2d([0, 7, 25]).T
+
+        n_iter = 8  # the number of points one wants to infill to find the minimum
+        xlimits = np.array([[0.0, 25.0]])
+        random_state = 42  # for reproducibility
+        noise0 = [2e-1]
+        criterion = "EI"  #'EI' or 'SBO' or 'LCB'
+        n_start = 20
+        # Model
+        design_space = DesignSpace(xlimits, random_state=random_state)
+        surrogate = KRG(
+            design_space=design_space,
+            print_global=False,
+            noise0=noise0,
+        )
+        ego = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            surrogate=surrogate,
+            random_state=random_state,
+            n_start=n_start,
+        )
+
+        ego_ri = EGO(
+            n_iter=n_iter,
+            criterion=criterion,
+            xdoe=xdoe,
+            surrogate=surrogate,
+            random_state=random_state,
+            n_start=n_start,
+            is_ri=True,
+        )
+
+        x_opt, y_opt, _, _, _ = ego.optimize(fun=self.function_test_1d)
+        x_opt_ri, y_opt_ri, _, _, _ = ego_ri.optimize(fun=self.function_test_1d)
+
+        # The optimum found is far from the expected result without re-interpolation
+        self.assertNotAlmostEqual(18.9, x_opt.item(), delta=1)
+        self.assertNotAlmostEqual(-15.1, y_opt.item(), delta=1)
+        # The minimum found here is y =~ 0 instead of -15.1
+
+        # The optimum found is pretty close to the expected result with re-interpolation
+        self.assertAlmostEqual(18.9, x_opt_ri.item(), delta=1)
+        self.assertAlmostEqual(-15.1, y_opt_ri.item(), delta=1)
 
     @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_rosenbrock_2D(self):
@@ -231,6 +280,7 @@ class TestEGO(SMTestCase):
             n_doe=3,
             surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             random_state=42,
+            is_ri=True,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)
