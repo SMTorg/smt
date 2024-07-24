@@ -1306,22 +1306,26 @@ class FixedIntegerParam(UniformIntegerHyperparameter):
 
 def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
     """Interface to turn adsg input formats into legacy DesignSpace"""
-
     # Define the mixed hierarchical design space
-    from adsg_core import SelectionChoiceNode
-    from adsg_core import GraphProcessor
+    from adsg_core.graph.graph_edges import EdgeType
+    from adsg_core import GraphProcessor, SelectionChoiceNode
 
     gp = GraphProcessor(adsg)
     listvar = []
     gvars = gp._all_des_var_data[0]
     varnames = [ii.name for ii in gvars]
-
     for i in gvars:
-        print(i._bounds, i.n_opts, type(i.node))
         if i._bounds is not None:
             listvar.append(FloatVariable(lower=i._bounds[0], upper=i._bounds[1]))
         elif type(i.node) is SelectionChoiceNode:
-            a = str(i._opts).replace("[", "").replace("]", "").split(",")
+            a = (
+                str(i._opts)
+                .replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .replace("'", "")
+                .split(",")
+            )
             listvar.append(CategoricalVariable(a))
         else:
             a = (
@@ -1335,7 +1339,6 @@ def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
             listvar.append(OrdinalVariable(a))
 
     design_space = DesignSpace(listvar)
-    # Define the mixed hierarchical design space
 
     active_vars = [i for i, x in enumerate(gp.dv_is_conditionally_active) if x]
     nodelist = list(adsg._graph.nodes)
@@ -1377,5 +1380,64 @@ def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
             meta_var=varnames.index(namemetavar),
             meta_value=[str(metaval)[1:-1] for metaval in meta_values],
         )
+
+    edges = np.array(list(adsg._graph.edges.data()))
+    edgestype = [edge["type"] for edge in edges[:, 2]]
+    incomp_nodes = []
+    for i, edge in enumerate(edges):
+        if edgestype[i] == EdgeType.INCOMPATIBILITY:
+            incomp_nodes.append([edges[i][0], edges[i][1]])
+
+    def remove_symmetry(lst):
+        unique_pairs = set()
+
+        for pair in lst:
+            # Sort the pair based on the _id attribute of NamedNode
+            sorted_pair = tuple(sorted(pair, key=lambda node: node._id))
+            unique_pairs.add(sorted_pair)
+
+        # Convert set of tuples back to list of lists if needed
+        return [list(pair) for pair in unique_pairs]
+
+    incomp_nodes = remove_symmetry(incomp_nodes)
+
+    for pair in incomp_nodes:
+        node1, node2 = pair
+        vars1 = next(iter(adsg._graph.predecessors(node1)))
+        while str(vars1).split("[")[0] != "D":
+            vars1 = next(iter(adsg._graph.predecessors(node1)))
+        vars2 = next(iter(adsg._graph.predecessors(node2)))
+        while str(vars1).split("[")[0] != "D":
+            vars2 = next(iter(adsg._graph.predecessors(node2)))
+    for pair in incomp_nodes:
+        node1, node2 = pair
+        vars1 = next(iter(adsg._graph.predecessors(node1)))
+        while str(vars1).split("[")[0] != "D":
+            vars1 = next(iter(adsg._graph.predecessors(node1)))
+        vars2 = next(iter(adsg._graph.predecessors(node2)))
+        while str(vars1).split("[")[0] != "D":
+            vars2 = next(iter(adsg._graph.predecessors(node2)))
+        namevar1 = (
+            str(vars1)
+            .replace("D[Sel:", "")
+            .replace("DV[", "")
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+        namevar2 = (
+            str(vars2)
+            .replace("D[Sel:", "")
+            .replace("DV[", "")
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+        design_space.add_value_constraint(
+            var1=varnames.index(namevar1),
+            value1=[str(node1)[1:-1]],
+            var2=varnames.index(namevar2),
+            value2=[str(node2)[1:-1]],
+        )  # Forbid more than 35 neurons with ASGD
 
     return design_space
