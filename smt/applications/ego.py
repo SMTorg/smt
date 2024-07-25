@@ -153,7 +153,10 @@ class EGO(SurrogateBasedApplication):
             for p in range(n_parallel):
                 # find next best x-coord point to evaluate
                 x_et_k, success = self._find_best_point(
-                    x_data, y_data, self.options["enable_tunneling"]
+                    x_data,
+                    y_data,
+                    self.options["enable_tunneling"],
+                    normalize,
                 )
                 if not success:
                     self.log(
