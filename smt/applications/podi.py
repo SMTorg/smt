@@ -243,7 +243,6 @@ class SubspacesInterpolation:
         u, s, _ = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
         self.n_B = np.argwhere(s.cumsum() / s.sum() >= 1 - epsilon)[0, 0] + 1
-
         if self.print_global:
             print(
                 "The Grassmann manifold of interest is of dimension "
@@ -667,7 +666,7 @@ class PODI(SurrogateBasedApplication):
                     "the number of kept modes can't be superior to the number of data values (snapshots)"
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
-
+        self.EV_list = EV_list
         self.basis = self.singular_vectors[:, : self.n_modes]
 
     def compute_pod(
@@ -740,7 +739,8 @@ class PODI(SurrogateBasedApplication):
         self.pod_computed = True
         self.interp_options_set = False
 
-    def compute_pod_errors(self, xt, database) -> list:
+    @staticmethod
+    def compute_pod_errors(xt, database) -> list:
         """
         Calculates different errors for the POD.
 
@@ -811,7 +811,7 @@ class PODI(SurrogateBasedApplication):
             max_total_error = max(max_total_error, rms_total_error)
 
         return [max_interp_error, max_proj_error, max_total_error]
-        #########verify if list of 3 values ??
+
 
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -846,6 +846,17 @@ class PODI(SurrogateBasedApplication):
             Singular values of the POD.
         """
         return self.singular_values
+
+    def get_ev_list(self) -> float:
+        """
+        Getter for the explained variance list.
+
+        Returns
+        -------
+        EV_ratio : float
+            Explained variance ratio with the current kept modes.
+        """
+        return self.EV_list
 
     def get_ev_ratio(self) -> float:
         """
