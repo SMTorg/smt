@@ -17,7 +17,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
+from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP, SGP
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
@@ -99,6 +99,12 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
+        declare(
+            "normalize",
+            False,
+            types=bool,
+            desc=" When Z is given, whether values should be normalized",
+        )
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -109,7 +115,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX, SGP),
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(
@@ -136,7 +142,9 @@ class EGO(SurrogateBasedApplication):
         [ndoe + n_iter, nx]: coord-x data
         [ndoe + n_iter, 1]: coord-y data
         """
+        self.Z = None
         x_data, y_data = self._setup_optimizer(fun)
+        normalize = self.options["normalize"]
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
 
@@ -313,16 +321,26 @@ class EGO(SurrogateBasedApplication):
 
         return x_doe, y_doe
 
-    def _train_gpr(self, x_data, y_data):
+    def _train_gpr(self, x_data, y_data, normalize):
         self.gpr.set_training_values(x_data, y_data)
         if self.gpr.supports["training_derivatives"]:
             for kx in range(self.gpr.nx):
                 self.gpr.set_training_derivatives(
                     x_data, y_data[:, 1 + kx].reshape((y_data.shape[0], 1)), kx
                 )
+        if isinstance(self.options["surrogate"], SGP):
+            if self.Z is None:
+                self.gpr.set_inducing_inputs(self.Z, normalize)
+                self.Z = self.gpr.Z
         self.gpr.train()
 
-    def _find_best_point(self, x_data=None, y_data=None, enable_tunneling=False):
+    def _find_best_point(
+        self,
+        x_data=None,
+        y_data=None,
+        enable_tunneling=False,
+        normalize=False,
+    ):
         """
         Function that analyse a set of x_data and y_data and give back the
         more interesting point to evaluates according to the selected criterion
@@ -340,7 +358,7 @@ class EGO(SurrogateBasedApplication):
         boolean: success flag
 
         """
-        self._train_gpr(x_data, y_data)
+        self._train_gpr(x_data, y_data, normalize)
 
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
