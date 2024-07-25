@@ -1095,7 +1095,17 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
+        grad_red = 1
+        par = {}
         red, par = self._reduced_likelihood_function(theta)
+        try:
+            C = par["C"]
+            gamma = par["gamma"]
+            Q = par["Q"]
+            G = par["G"]
+            sigma_2 = par["sigma2"] + self.options["nugget"]
+        except KeyError:
+            return grad_red, par
 
         C = par["C"]
         gamma = par["gamma"]
