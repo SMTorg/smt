@@ -812,7 +812,6 @@ class PODI(SurrogateBasedApplication):
 
         return [max_interp_error, max_proj_error, max_total_error]
 
-
     def get_singular_vectors(self) -> np.ndarray:
         """
         Getter for the singular vectors of the global POD.

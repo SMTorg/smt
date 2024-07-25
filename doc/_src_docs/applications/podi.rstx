@@ -72,7 +72,7 @@ The local POD equation is :
 
 .. math ::
 	\begin{equation}\label{e:localPOD}
-	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x^(j)_k)\phi_i
+	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x^{(j)}_k)\phi_i
 	\end{equation}
 
 Singular Values Decomposition (SVD)
