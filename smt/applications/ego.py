@@ -324,7 +324,7 @@ class EGO(SurrogateBasedApplication):
 
         return x_doe, y_doe
 
-    def _train_gpr(self, x_data, y_data, normalize):
+    def _train_gpr(self, x_data, y_data, normalize=False):
         self.gpr.set_training_values(x_data, y_data)
         if self.gpr.supports["training_derivatives"]:
             for kx in range(self.gpr.nx):
