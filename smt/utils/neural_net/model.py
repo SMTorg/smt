@@ -445,7 +445,7 @@ class Model(object):
         assert Y_test.shape[0] == Y_test.shape[0]
         assert X_test.shape[0] == self.number_of_inputs
         assert Y_test.shape[0] == self.number_of_outputs
-        if type(J_test) == np.ndarray:
+        if isinstance(J_test, np.ndarray):
             assert X_test.shape[1] == J_test.shape[2]
             assert X_test.shape[0] == J_test.shape[1]
 
@@ -459,7 +459,7 @@ class Model(object):
         Y_pred_train = self.evaluate(X_train)
         J_pred_train = self.gradient(X_train)
 
-        if type(J_test) == np.ndarray:
+        if isinstance(J_test, np.ndarray):
             test = J_test[response, partial, :].reshape((1, number_test_examples))
             test_pred = J_pred_test[response, partial, :].reshape(
                 (1, number_test_examples)
