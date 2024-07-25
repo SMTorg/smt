@@ -99,12 +99,6 @@ class EGO(SurrogateBasedApplication):
         )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
-        declare(
-            "normalize",
-            False,
-            types=bool,
-            desc=" When Z is given, whether values should be normalized",
-        )
         declare("verbose", False, types=bool, desc="Print computation information")
         declare(
             "enable_tunneling",
@@ -144,7 +138,6 @@ class EGO(SurrogateBasedApplication):
         """
         self.Z = None
         x_data, y_data = self._setup_optimizer(fun)
-        normalize = self.options["normalize"]
         n_iter = self.options["n_iter"]
         n_parallel = self.options["n_parallel"]
 
@@ -156,7 +149,6 @@ class EGO(SurrogateBasedApplication):
                     x_data,
                     y_data,
                     self.options["enable_tunneling"],
-                    normalize,
                 )
                 if not success:
                     self.log(
@@ -324,7 +316,7 @@ class EGO(SurrogateBasedApplication):
 
         return x_doe, y_doe
 
-    def _train_gpr(self, x_data, y_data, normalize=False):
+    def _train_gpr(self, x_data, y_data):
         self.gpr.set_training_values(x_data, y_data)
         if self.gpr.supports["training_derivatives"]:
             for kx in range(self.gpr.nx):
@@ -333,7 +325,7 @@ class EGO(SurrogateBasedApplication):
                 )
         if isinstance(self.options["surrogate"], SGP):
             if self.Z is None:
-                self.gpr.set_inducing_inputs(self.Z, normalize)
+                self.gpr.set_inducing_inputs(self.Z)
                 self.Z = self.gpr.Z
         self.gpr.train()
 
@@ -342,7 +334,6 @@ class EGO(SurrogateBasedApplication):
         x_data=None,
         y_data=None,
         enable_tunneling=False,
-        normalize=False,
     ):
         """
         Function that analyse a set of x_data and y_data and give back the
@@ -361,7 +352,7 @@ class EGO(SurrogateBasedApplication):
         boolean: success flag
 
         """
-        self._train_gpr(x_data, y_data, normalize)
+        self._train_gpr(x_data, y_data)
 
         criterion = self.options["criterion"]
         n_start = self.options["n_start"]
