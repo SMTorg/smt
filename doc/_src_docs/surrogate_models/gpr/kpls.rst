@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0998423
+     Training - done. Time (sec):  0.0974965
   ___________________________________________________________________________
      
    Evaluation
@@ -159,7 +159,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 13.2172527
+     Training - done. Time (sec): 15.4320111
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -173,8 +173,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[20.59910277]]
-  [[1075.83008026]]
+  [[20.5991018]]
+  [[1075.83015182]]
   
 
 Options

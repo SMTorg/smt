@@ -26,19 +26,20 @@ Each column of the matrix corresponds to a snapshot output :math:`u(\mathbf{x_k}
 
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
-
-The vectorial output :math:`u` is a vector of dimension :math:`p`. Its POD is this decomposition:
+Global POD
+----------
+The vectorial output :math:`u` is a vector of dimension :math:`p`. Its global POD is the decomposition of each snapshot:
 
 .. math ::
 	\begin{equation}\label{e:pod}
-	u({\mathbf x})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x)\phi_i
+	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x_k)\phi_i
 	\end{equation}
 
 * :math:`u` is decomposed as a sum of :math:`M` modes and :math:`u_0` corresponds to the mean value of :math:`u`.
 
 * each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**.
+* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**. They are independant of :math:`x` so that the POD basis is global to all the :math:`x_k` inputs.
 
 We can also define the matricial POD equation:
 
@@ -62,6 +63,19 @@ where :math:`U_0` is composed of the :math:`u_0` vector on each column,
 		\vdots & \ddots & \vdots \\
 		(\phi_1)_p & \dots & (\phi_M)_p \\
 	\end{bmatrix}
+
+Local POD
+---------
+In the local POD, the :math:`\phi_{i}` vectors do depend of each input :math:`x_k`.
+To be more precise, each input is composed of :math:`l` elements: :math:`x_k = (x^{(1)}_k,\dots,x^{(l)}_k)`, the :math:`\phi_{i}` vectors depend of one of them, noted :math:`x^{(j)}_k`.
+With :math:`j \in [\![1,l]\!]`.
+
+The local POD equation is:
+
+.. math ::
+	\begin{equation}\label{e:local_pod}
+	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x_k)\phi_i(x^{(j)}_k)
+	\end{equation}
 
 Singular Values Decomposition (SVD)
 -------------------------------------
@@ -148,8 +162,13 @@ NB: The variance equation takes in consideration that:
 
 Usage
 -----
+Example 1: global POD case for 1D function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_1d_global , 80
 
-.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_1d , 80
+Example 2: local POD case for 2D function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_2d_local , 80
 
 PODI class API
 --------------
@@ -168,6 +187,8 @@ PODI class API
 
 	.. automethod:: smt.applications.podi.PODI.get_singular_values
 
+	.. automethod:: mst.applications.podi.PODI.get_ev_list
+
 	.. automethod:: smt.applications.podi.PODI.get_ev_ratio
 
 	.. automethod:: smt.applications.podi.PODI.get_n_modes
@@ -185,3 +206,5 @@ PODI class API
 	.. automethod:: smt.applications.podi.PODI.predict_variances
 
 	.. automethod:: smt.applications.podi.PODI.predict_derivatives
+
+	.. automethod:: smt.applications.podi.PODI.predict_variance_derivativess
