@@ -90,7 +90,18 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0080330
+     Training - done. Time (sec):  0.0080457
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
+     
   ___________________________________________________________________________
      
    Evaluation
@@ -180,3 +191,8 @@ Options
      -  None
      -  ['int']
      -  Seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  design_space
+     -  None
+     -  None
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds

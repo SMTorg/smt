@@ -27,7 +27,7 @@ Each column of the matrix corresponds to a snapshot output :math:`u(\mathbf{x_k}
 Proper Orthogonal Decomposition (POD)
 -------------------------------------
 Global POD
-==========
+----------
 The vectorial output :math:`u` is a vector of dimension :math:`p`. Its global POD is the decomposition of each snapshot:
 
 .. math ::
@@ -65,14 +65,16 @@ where :math:`U_0` is composed of the :math:`u_0` vector on each column,
 	\end{bmatrix}
 
 Local POD
-=========
+---------
 In the local POD, the :math:`\phi_{i}` vectors do depend of each input :math:`x_k`.
-To be more precise, each input is composed of l elements : :math:`x_k = (x^(1)_k,\dots,x^(l)_k)`, the :math:`\phi_{i}` vectors depend of one of them, noted :math:`x^(j)_k`.
-The local POD equation is :
+To be more precise, each input is composed of :math:`l` elements: :math:`x_k = (x^{(1)}_k,\dots,x^{(l)}_k)`, the :math:`\phi_{i}` vectors depend of one of them, noted :math:`x^{(j)}_k`.
+With :math:`j \in [\![1,l]\!]`.
+
+The local POD equation is:
 
 .. math ::
-	\begin{equation}\label{e:localPOD}
-	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x^{(j)}_k)\phi_i
+	\begin{equation}\label{e:local_pod}
+	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x_k)\phi_i(x^{(j)}_k)
 	\end{equation}
 
 Singular Values Decomposition (SVD)

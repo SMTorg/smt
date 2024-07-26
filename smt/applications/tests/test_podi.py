@@ -473,7 +473,7 @@ class Test(SMTestCase):
         nt = 40
         xt = sampling(nt)
 
-        nv = 400
+        nv = 50
         xv = sampling(nv)
 
         x = np.concatenate((xt, xv))
