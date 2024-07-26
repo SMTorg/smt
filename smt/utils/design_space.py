@@ -32,6 +32,13 @@ try:
 
 except ImportError:
     HAS_CONFIG_SPACE = False
+try:
+    from adsg_core.graph.graph_edges import EdgeType
+    from adsg_core import GraphProcessor, SelectionChoiceNode
+
+    HAS_ADSG = True
+except ImportError:
+    HAS_ADSG = False
 
     class Configuration:
         pass
@@ -1306,10 +1313,6 @@ class FixedIntegerParam(UniformIntegerHyperparameter):
 
 def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
     """Interface to turn adsg input formats into legacy DesignSpace"""
-    # Define the mixed hierarchical design space
-    from adsg_core.graph.graph_edges import EdgeType
-    from adsg_core import GraphProcessor, SelectionChoiceNode
-
     gp = GraphProcessor(adsg)
     listvar = []
     gvars = gp._all_des_var_data[0]
@@ -1374,7 +1377,6 @@ def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
             .replace("[", "")
             .replace("]", "")
         )
-        print([str(metaval)[1:-1] for metaval in meta_values])
         design_space.declare_decreed_var(
             decreed_var=active_vars[i],
             meta_var=varnames.index(namemetavar),

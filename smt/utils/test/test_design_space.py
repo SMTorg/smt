@@ -12,6 +12,7 @@ import smt.utils.design_space as ds
 from smt.sampling_methods import LHS
 from smt.utils.design_space import (
     HAS_CONFIG_SPACE,
+    HAS_ADSG,
     BaseDesignSpace,
     CategoricalVariable,
     DesignSpace,
@@ -677,6 +678,141 @@ class Test(unittest.TestCase):
                 [[0, 0], [0, 1], [0, 2], [1, 0], [0, 1], [1, 2], [2, 0], [2, 1], [2, 2]]
             ),
             x_cartesian2,
+        )
+
+    @unittest.skipIf(
+        not (HAS_CONFIG_SPACE and HAS_ADSG),
+        "Architecture Design Space Graph or ConfigSpace not installed.",
+    )
+    def test_adsg_to_legacy(self):
+        from adsg_core import BasicADSG, NamedNode, DesignVariableNode
+        from smt.utils.design_space import convert_adsg_to_legacy
+        from adsg_core import GraphProcessor
+
+        # Create the ADSG
+        adsg = BasicADSG()
+        ndv = 13
+        # Create nodes
+        n = [NamedNode(f"N{i}") for i in range(ndv)]
+        n = [
+            NamedNode("MLP"),
+            NamedNode("Learning_rate"),
+            NamedNode("Activation_function"),
+            NamedNode("Optimizer"),
+            NamedNode("Decay"),
+            NamedNode("Power_update"),
+            NamedNode("Average_start"),
+            NamedNode("Running_Average_1"),
+            NamedNode("Running_Average_2"),
+            NamedNode("Numerical_Stability"),
+            NamedNode("Nb_layers"),
+            NamedNode("Layer_1"),
+            NamedNode("Layer_2"),
+            NamedNode("Layer_3"),  # NamedNode("Dropout"),
+            NamedNode("ASGD"),
+            NamedNode("Adam"),
+            NamedNode("20...40"),
+            NamedNode("40"),
+            NamedNode("45"),
+            NamedNode("20...40"),
+            NamedNode("40"),
+            NamedNode("45"),
+            NamedNode("20...40"),
+            NamedNode("40"),
+            NamedNode("45"),
+        ]
+        adsg.add_node(n[1])
+        adsg.add_node(n[2])
+        adsg.add_edges(
+            [
+                (n[3], n[10]),
+                (n[14], n[4]),
+                (n[14], n[5]),
+                (n[14], n[6]),
+                (n[15], n[7]),
+                (n[15], n[8]),
+                (n[15], n[9]),
+            ]
+        )
+        adsg.add_selection_choice("Optimizer_Choice", n[3], [n[14], n[15]])
+        adsg.add_selection_choice("#layers", n[10], [n[11], n[12], n[13]])
+        a = []
+        for i in range(3):
+            a.append(NamedNode(str(25 + 5 * i)))
+        b = a.copy()
+        b.append(n[17])
+        b.append(n[18])
+        choicel1 = adsg.add_selection_choice("#neurons_1", n[11], b)
+        adsg.add_edges([(n[12], choicel1), (n[13], choicel1)])
+
+        a = []
+        for i in range(3):
+            a.append(NamedNode(str(25 + 5 * i)))
+        b = a.copy()
+        b.append(n[20])
+        b.append(n[21])
+        choicel1 = adsg.add_selection_choice("#neurons_2", n[12], b)
+        adsg.add_edges([(n[13], choicel1)])
+
+        a = []
+        for i in range(3):
+            a.append(NamedNode(str(25 + 5 * i)))
+        b = a.copy()
+        b.append(n[23])
+        b.append(n[24])
+        choicel1 = adsg.add_selection_choice("#neurons_3", n[13], b)
+
+        adsg.add_incompatibility_constraint([n[15], n[13]])
+        adsg.add_incompatibility_constraint([n[14], n[17]])
+        adsg.add_incompatibility_constraint([n[14], n[18]])
+        adsg.add_incompatibility_constraint([n[14], n[20]])
+        adsg.add_incompatibility_constraint([n[14], n[21]])
+        adsg.add_incompatibility_constraint([n[14], n[23]])
+        adsg.add_incompatibility_constraint([n[14], n[24]])
+        start_nodes = set()
+        start_nodes.add(n[3])
+        start_nodes.add(n[2])
+        start_nodes.add(n[1])
+        adsg.add_edges(
+            [
+                (n[1], DesignVariableNode("x0", bounds=(0, 1))),
+                (n[4], DesignVariableNode("x1", bounds=(0, 1))),
+                (n[5], DesignVariableNode("x2", bounds=(0, 1))),
+                (n[6], DesignVariableNode("x3", bounds=(0, 1))),
+                (n[7], DesignVariableNode("x4", bounds=(0, 1))),
+                (n[8], DesignVariableNode("x5", bounds=(0, 1))),
+                (n[9], DesignVariableNode("x6", bounds=(0, 1))),
+            ]
+        )
+        adsg.add_selection_choice(
+            "Activation_Choice",
+            n[2],
+            [NamedNode("ReLU"), NamedNode("Sigmoid"), NamedNode("Tanh")],
+        )
+        adsg = adsg.set_start_nodes(start_nodes)
+        adsg.render()
+        gp = GraphProcessor(adsg)
+        gp.get_statistics()
+        design_space = convert_adsg_to_legacy(adsg)
+        np.testing.assert_array_equal(
+            np.array(
+                [
+                    False,
+                    False,
+                    False,
+                    True,
+                    True,
+                    True,
+                    False,
+                    True,
+                    True,
+                    True,
+                    True,
+                    True,
+                    True,
+                ]
+            ),
+            design_space.is_conditionally_acting,
         )
 
 
