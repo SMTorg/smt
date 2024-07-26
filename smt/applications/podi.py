@@ -740,7 +740,7 @@ class PODI(SurrogateBasedApplication):
         self.interp_options_set = False
 
     @staticmethod
-    def compute_pod_errors(xt, database) -> list:
+    def compute_pod_errors(xt: np.ndarray, database: np.ndarray, interp_type: str = "KRG", interp_options: list = [{}]) -> list:
         """
         Calculates different errors for the POD.
 
@@ -748,6 +748,20 @@ class PODI(SurrogateBasedApplication):
         ----------
         xt : np.ndarray[n_snapshot, nx]
             The input values for the n_snapshot training points.
+        
+        database : np.ndarray[ny, n_snapshot]
+            Snapshot matrix. Each column corresponds to a snapshot.
+        
+        interp_type : str
+            Name of the type of surrogate model that will be used for the whole set.
+            By default, the Kriging model is used (KRG).
+
+        interp_options : list[dict]
+            List containing dictionnaries for the options.
+            The k-th dictionnary corresponds to the options of the k-th interpolation model.
+            If the options are common to all surogate models, only a single dictionnary is required in the list.
+            The available options can be found in the documentation of the corresponding surrogate models.
+            By default, the print_global options are set to 'False'.
 
         Returns
         -------
@@ -792,6 +806,7 @@ class PODI(SurrogateBasedApplication):
             rms_proj_error = np.sqrt(np.mean(proj_error**2))
             max_proj_error = max(max_proj_error, rms_proj_error)
 
+            podi.set_interp_options(interp_type = interp_type, interp_options = interp_options)
             podi.set_training_values(xt=reduced_xt)
             podi.train()
             reduced_interp_coeff = podi.get_interp_coeff()
