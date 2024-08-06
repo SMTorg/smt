@@ -13,6 +13,7 @@ from smt.sampling_methods import LHS
 from smt.utils.design_space import (
     HAS_CONFIG_SPACE,
     HAS_ADSG,
+    ArchDesignSpaceGraph,
     BaseDesignSpace,
     CategoricalVariable,
     DesignSpace,
@@ -813,6 +814,27 @@ class Test(unittest.TestCase):
                 ]
             ),
             design_space.is_conditionally_acting,
+        )
+        design_space2 = ArchDesignSpaceGraph(adsg=adsg)
+        np.testing.assert_array_equal(
+            np.array(
+                [
+                    False,
+                    False,
+                    False,
+                    True,
+                    True,
+                    True,
+                    False,
+                    True,
+                    True,
+                    True,
+                    True,
+                    True,
+                    True,
+                ]
+            ),
+            design_space2.is_conditionally_acting,
         )
 
 

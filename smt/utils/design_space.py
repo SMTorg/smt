@@ -587,10 +587,10 @@ class BaseDesignSpace:
             seed = random_state.get_state()[1][0]
         return seed
 
-    """IMPLEMENT FUNCTIONS BELOW"""
-
     def _get_design_variables(self) -> List[DesignVariable]:
         """Return the design variables defined in this design space if not provided upon initialization of the class"""
+
+    """IMPLEMENT FUNCTIONS BELOW"""
 
     def _is_conditionally_acting(self) -> np.ndarray:
         """
@@ -1306,6 +1306,7 @@ class ArchDesignSpaceGraph(DesignSpace):
         super().__init__(design_variables=self._design_variables, random_state=seed)
         self._cs = design_space._cs
         self._cs_cate = design_space._cs_cate
+        self._is_decreed = design_space._is_decreed
 
     def _sample_valid_x(
         self, n: int, random_state=None
@@ -1322,6 +1323,10 @@ class ArchDesignSpaceGraph(DesignSpace):
                 self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[2]
             )
         return np.array(configs1), np.array(configs2)
+
+    def _is_conditionally_acting(self) -> np.ndarray:
+        # Decreed variables are the conditionally acting variables
+        return np.array(self.graph_proc.dv_is_conditionally_active)
 
 
 class NoDefaultConfigurationSpace(ConfigurationSpace):
