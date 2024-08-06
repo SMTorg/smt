@@ -32,6 +32,14 @@ try:
 
 except ImportError:
     HAS_CONFIG_SPACE = False
+try:
+    from adsg_core.graph.graph_edges import EdgeType
+    from adsg_core import GraphProcessor, SelectionChoiceNode
+    from adsg_core.graph.adsg import ADSG
+
+    HAS_ADSG = True
+except ImportError:
+    HAS_ADSG = False
 
     class Configuration:
         pass
@@ -48,6 +56,8 @@ def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesign
 
     if design_space is not None and isinstance(design_space, BaseDesignSpace):
         return design_space
+    if HAS_ADSG and design_space is not None and isinstance(design_space, ADSG):
+        return _convert_adsg_to_legacy(design_space)
 
     if xlimits is not None:
         return DesignSpace(xlimits)
@@ -194,11 +204,13 @@ class BaseDesignSpace:
     (`correct_get_acting`), as usually these operations are tightly related.
     """
 
-    def __init__(self, design_variables: List[DesignVariable] = None):
+    def __init__(
+        self, design_variables: List[DesignVariable] = None, random_state=None
+    ):
         self._design_variables = design_variables
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
-        self.seed = None
+        self.seed = random_state
         self.has_valcons_ord_int = False
 
     @property
@@ -567,10 +579,18 @@ class BaseDesignSpace:
         x_stretched = (x_cont - lower) * ((diff + 0.9999) / (diff + 1e-16)) - 0.5
         return np.round(x_stretched) + lower
 
-    """IMPLEMENT FUNCTIONS BELOW"""
+    def _to_seed(self, random_state=None):
+        seed = None
+        if isinstance(random_state, int):
+            seed = random_state
+        elif isinstance(random_state, np.random.RandomState):
+            seed = random_state.get_state()[1][0]
+        return seed
 
     def _get_design_variables(self) -> List[DesignVariable]:
         """Return the design variables defined in this design space if not provided upon initialization of the class"""
+
+    """IMPLEMENT FUNCTIONS BELOW"""
 
     def _is_conditionally_acting(self) -> np.ndarray:
         """
@@ -733,7 +753,7 @@ class DesignSpace(BaseDesignSpace):
             design_variables = converted_dvs
 
         self.random_state = random_state  # For testing
-
+        seed = self.random_state
         self._cs = None
         self._cs_cate = None
         if HAS_CONFIG_SPACE:
@@ -785,7 +805,7 @@ class DesignSpace(BaseDesignSpace):
         self._meta_vars = {}
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
-        super().__init__(design_variables)
+        super().__init__(design_variables=design_variables, random_state=seed)
 
     def declare_decreed_var(
         self, decreed_var: int, meta_var: int, meta_value: VarValueType
@@ -1017,7 +1037,9 @@ class DesignSpace(BaseDesignSpace):
                 configs.append(self._get_correct_config(xi[inv_cs_var_idx]))
 
             # Convert Configuration objects to design vectors and get the is_active matrix
-            return self._configs_to_x(configs)
+            x_out, is_act = self._configs_to_x(configs)
+            self._impute_non_acting(x_out, is_act)
+            return x_out, is_act
 
         # Simplified implementation
         # Correct discrete variables
@@ -1038,14 +1060,6 @@ class DesignSpace(BaseDesignSpace):
         self._impute_non_acting(x_corr, is_acting)
 
         return x_corr, is_acting
-
-    def _to_seed(self, random_state=None):
-        seed = None
-        if isinstance(random_state, int):
-            seed = random_state
-        elif isinstance(random_state, np.random.RandomState):
-            seed = random_state.get_state()[1][0]
-        return seed
 
     def _sample_valid_x(
         self, n: int, random_state=None
@@ -1190,7 +1204,7 @@ class DesignSpace(BaseDesignSpace):
         for i, dv in enumerate(self.design_variables):
             if isinstance(dv, FloatVariable):
                 # Impute continuous variables to the mid of their bounds
-                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower)
+                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower) + dv.lower
 
             else:
                 # Impute discrete variables to their lower bounds
@@ -1269,6 +1283,52 @@ class DesignSpace(BaseDesignSpace):
         return f"{self.__class__.__name__}({self.design_variables!r})"
 
 
+class ArchDesignSpaceGraph(DesignSpace):
+    """ """
+
+    def __init__(
+        self,
+        adsg,
+        random_state=None,
+    ):
+        self.random_state = random_state  # For testing
+        seed = self._to_seed(random_state)
+        self.adsg = adsg
+        self.graph_proc = GraphProcessor(graph=adsg)
+
+        if not (HAS_ADSG):
+            raise ImportError("ADSG is not installed")
+        if not (HAS_CONFIG_SPACE):
+            raise ImportError("ConfigSpace is not installed")
+
+        design_space = ensure_design_space(design_space=adsg)
+        self._design_variables = design_space.design_variables
+        super().__init__(design_variables=self._design_variables, random_state=seed)
+        self._cs = design_space._cs
+        self._cs_cate = design_space._cs_cate
+        self._is_decreed = design_space._is_decreed
+
+    def _sample_valid_x(
+        self, n: int, random_state=None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Sample design vectors"""
+        # Get design vectors and get the is_active matrix
+        configs1 = []
+        configs2 = []
+        for i in range(n):
+            configs1.append(
+                self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[1]
+            )
+            configs2.append(
+                self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[2]
+            )
+        return np.array(configs1), np.array(configs2)
+
+    def _is_conditionally_acting(self) -> np.ndarray:
+        # Decreed variables are the conditionally acting variables
+        return np.array(self.graph_proc.dv_is_conditionally_active)
+
+
 class NoDefaultConfigurationSpace(ConfigurationSpace):
     """ConfigurationSpace that supports no default configuration"""
 
@@ -1300,3 +1360,137 @@ class FixedIntegerParam(UniformIntegerHyperparameter):
         return super().get_neighbors(
             value, rs, number=number, transform=transform, std=std
         )
+
+
+def _convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
+    """Interface to turn adsg input formats into legacy DesignSpace"""
+    gp = GraphProcessor(adsg)
+    listvar = []
+    gvars = gp._all_des_var_data[0]
+    varnames = [ii.name for ii in gvars]
+    for i in gvars:
+        if i._bounds is not None:
+            listvar.append(FloatVariable(lower=i._bounds[0], upper=i._bounds[1]))
+        elif type(i.node) is SelectionChoiceNode:
+            a = (
+                str(i._opts)
+                .replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .replace("'", "")
+                .split(",")
+            )
+            listvar.append(CategoricalVariable(a))
+        else:
+            a = (
+                str(i._opts)
+                .replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .replace("'", "")
+                .split(",")
+            )
+            listvar.append(OrdinalVariable(a))
+
+    design_space = DesignSpace(listvar)
+
+    active_vars = [i for i, x in enumerate(gp.dv_is_conditionally_active) if x]
+    nodelist = list(adsg._graph.nodes)
+    nodenamelist = [
+        element.strip()[1:-1]
+        for element in str(list(adsg._graph.nodes))[1:-1]
+        .replace("D[Sel:", "[")
+        .replace("DV[", "[")
+        .replace(" ", "")
+        .split(",")
+        if element.strip().startswith("[") and element.strip().endswith("]")
+    ]
+    for i in range(np.sum(gp.dv_is_conditionally_active)):
+        meta_values = [
+            metav
+            for metav in iter(
+                adsg._graph.predecessors(
+                    nodelist[nodenamelist.index(gvars[active_vars[i]].name)]
+                )
+            )
+        ]
+        meta_variable = next(iter(adsg._graph.predecessors(meta_values[0])))
+        while str(meta_variable).split("[")[0] != "D":
+            meta_values = [
+                metav for metav in iter((adsg._graph.predecessors(meta_values[0])))
+            ]
+            meta_variable = next(iter(adsg._graph.predecessors(meta_values[0])))
+        namemetavar = (
+            str(meta_variable)
+            .replace("D[Sel:", "")
+            .replace("DV[", "")
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+        design_space.declare_decreed_var(
+            decreed_var=active_vars[i],
+            meta_var=varnames.index(namemetavar),
+            meta_value=[str(metaval)[1:-1] for metaval in meta_values],
+        )
+
+    edges = np.array(list(adsg._graph.edges.data()))
+    edgestype = [edge["type"] for edge in edges[:, 2]]
+    incomp_nodes = []
+    for i, edge in enumerate(edges):
+        if edgestype[i] == EdgeType.INCOMPATIBILITY:
+            incomp_nodes.append([edges[i][0], edges[i][1]])
+
+    def remove_symmetry(lst):
+        unique_pairs = set()
+
+        for pair in lst:
+            # Sort the pair based on the _id attribute of NamedNode
+            sorted_pair = tuple(sorted(pair, key=lambda node: node._id))
+            unique_pairs.add(sorted_pair)
+
+        # Convert set of tuples back to list of lists if needed
+        return [list(pair) for pair in unique_pairs]
+
+    incomp_nodes = remove_symmetry(incomp_nodes)
+
+    for pair in incomp_nodes:
+        node1, node2 = pair
+        vars1 = next(iter(adsg._graph.predecessors(node1)))
+        while str(vars1).split("[")[0] != "D":
+            vars1 = next(iter(adsg._graph.predecessors(node1)))
+        vars2 = next(iter(adsg._graph.predecessors(node2)))
+        while str(vars1).split("[")[0] != "D":
+            vars2 = next(iter(adsg._graph.predecessors(node2)))
+    for pair in incomp_nodes:
+        node1, node2 = pair
+        vars1 = next(iter(adsg._graph.predecessors(node1)))
+        while str(vars1).split("[")[0] != "D":
+            vars1 = next(iter(adsg._graph.predecessors(node1)))
+        vars2 = next(iter(adsg._graph.predecessors(node2)))
+        while str(vars1).split("[")[0] != "D":
+            vars2 = next(iter(adsg._graph.predecessors(node2)))
+        namevar1 = (
+            str(vars1)
+            .replace("D[Sel:", "")
+            .replace("DV[", "")
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+        namevar2 = (
+            str(vars2)
+            .replace("D[Sel:", "")
+            .replace("DV[", "")
+            .replace(" ", "")
+            .replace("[", "")
+            .replace("]", "")
+        )
+        design_space.add_value_constraint(
+            var1=varnames.index(namevar1),
+            value1=[str(node1)[1:-1]],
+            var2=varnames.index(namevar2),
+            value2=[str(node2)[1:-1]],
+        )  # Forbid more than 35 neurons with ASGD
+
+    return design_space
