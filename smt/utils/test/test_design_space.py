@@ -686,7 +686,7 @@ class Test(unittest.TestCase):
     )
     def test_adsg_to_legacy(self):
         from adsg_core import BasicADSG, NamedNode, DesignVariableNode
-        from smt.utils.design_space import convert_adsg_to_legacy
+        from smt.utils.design_space import ensure_design_space
         from adsg_core import GraphProcessor
 
         # Create the ADSG
@@ -793,7 +793,7 @@ class Test(unittest.TestCase):
         adsg.render()
         gp = GraphProcessor(adsg)
         gp.get_statistics()
-        design_space = convert_adsg_to_legacy(adsg)
+        design_space = ensure_design_space(design_space=adsg)
         np.testing.assert_array_equal(
             np.array(
                 [

@@ -35,6 +35,7 @@ except ImportError:
 try:
     from adsg_core.graph.graph_edges import EdgeType
     from adsg_core import GraphProcessor, SelectionChoiceNode
+    from adsg_core.graph.adsg import ADSG
 
     HAS_ADSG = True
 except ImportError:
@@ -55,6 +56,8 @@ def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesign
 
     if design_space is not None and isinstance(design_space, BaseDesignSpace):
         return design_space
+    if HAS_ADSG and design_space is not None and isinstance(design_space, ADSG):
+        return _convert_adsg_to_legacy(design_space)
 
     if xlimits is not None:
         return DesignSpace(xlimits)
@@ -201,11 +204,13 @@ class BaseDesignSpace:
     (`correct_get_acting`), as usually these operations are tightly related.
     """
 
-    def __init__(self, design_variables: List[DesignVariable] = None):
+    def __init__(
+        self, design_variables: List[DesignVariable] = None, random_state=None
+    ):
         self._design_variables = design_variables
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
-        self.seed = None
+        self.seed = random_state
         self.has_valcons_ord_int = False
 
     @property
@@ -574,6 +579,14 @@ class BaseDesignSpace:
         x_stretched = (x_cont - lower) * ((diff + 0.9999) / (diff + 1e-16)) - 0.5
         return np.round(x_stretched) + lower
 
+    def _to_seed(self, random_state=None):
+        seed = None
+        if isinstance(random_state, int):
+            seed = random_state
+        elif isinstance(random_state, np.random.RandomState):
+            seed = random_state.get_state()[1][0]
+        return seed
+
     """IMPLEMENT FUNCTIONS BELOW"""
 
     def _get_design_variables(self) -> List[DesignVariable]:
@@ -740,7 +753,7 @@ class DesignSpace(BaseDesignSpace):
             design_variables = converted_dvs
 
         self.random_state = random_state  # For testing
-
+        seed = self.random_state
         self._cs = None
         self._cs_cate = None
         if HAS_CONFIG_SPACE:
@@ -792,7 +805,7 @@ class DesignSpace(BaseDesignSpace):
         self._meta_vars = {}
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
 
-        super().__init__(design_variables)
+        super().__init__(design_variables=design_variables, random_state=seed)
 
     def declare_decreed_var(
         self, decreed_var: int, meta_var: int, meta_value: VarValueType
@@ -1048,14 +1061,6 @@ class DesignSpace(BaseDesignSpace):
 
         return x_corr, is_acting
 
-    def _to_seed(self, random_state=None):
-        seed = None
-        if isinstance(random_state, int):
-            seed = random_state
-        elif isinstance(random_state, np.random.RandomState):
-            seed = random_state.get_state()[1][0]
-        return seed
-
     def _sample_valid_x(
         self, n: int, random_state=None
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -1278,6 +1283,47 @@ class DesignSpace(BaseDesignSpace):
         return f"{self.__class__.__name__}({self.design_variables!r})"
 
 
+class ArchDesignSpaceGraph(DesignSpace):
+    """ """
+
+    def __init__(
+        self,
+        adsg,
+        random_state=None,
+    ):
+        self.random_state = random_state  # For testing
+        seed = self._to_seed(random_state)
+        self.adsg = adsg
+        self.graph_proc = GraphProcessor(graph=adsg)
+
+        if not (HAS_ADSG):
+            raise ImportError("ADSG is not installed")
+        if not (HAS_CONFIG_SPACE):
+            raise ImportError("ConfigSpace is not installed")
+
+        design_space = ensure_design_space(design_space=adsg)
+        self._design_variables = design_space.design_variables
+        super().__init__(design_variables=self._design_variables, random_state=seed)
+        self._cs = design_space._cs
+        self._cs_cate = design_space._cs_cate
+
+    def _sample_valid_x(
+        self, n: int, random_state=None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Sample design vectors"""
+        # Get design vectors and get the is_active matrix
+        configs1 = []
+        configs2 = []
+        for i in range(n):
+            configs1.append(
+                self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[1]
+            )
+            configs2.append(
+                self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[2]
+            )
+        return np.array(configs1), np.array(configs2)
+
+
 class NoDefaultConfigurationSpace(ConfigurationSpace):
     """ConfigurationSpace that supports no default configuration"""
 
@@ -1311,7 +1357,7 @@ class FixedIntegerParam(UniformIntegerHyperparameter):
         )
 
 
-def convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
+def _convert_adsg_to_legacy(adsg) -> "BaseDesignSpace":
     """Interface to turn adsg input formats into legacy DesignSpace"""
     gp = GraphProcessor(adsg)
     listvar = []
