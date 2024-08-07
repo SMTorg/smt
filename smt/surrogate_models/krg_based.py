@@ -961,23 +961,39 @@ class KrgBased(SurrogateModel):
                         _,
                     ) = standardization(X2, self.training_points[None][0][1])
                     dx, _ = cross_distances(self.X2_norma)
-
-            r = self._matrix_data_corr(
-                corr=self.options["corr"],
-                design_space=self.design_space,
-                power=self.options["pow_exp_power"],
-                theta=theta,
-                theta_bounds=self.options["theta_bounds"],
-                dx=dx,
-                Lij=self.Lij,
-                n_levels=self.n_levels,
-                cat_features=self.cat_features,
-                cat_kernel=self.options["categorical_kernel"],
-                kplsk_second_loop=self.kplsk_second_loop,
-            ).reshape(-1, 1)
+            try:
+                r = self._matrix_data_corr(
+                    corr=self.options["corr"],
+                    design_space=self.design_space,
+                    power=self.options["pow_exp_power"],
+                    theta=theta,
+                    theta_bounds=self.options["theta_bounds"],
+                    dx=dx,
+                    Lij=self.Lij,
+                    n_levels=self.n_levels,
+                    cat_features=self.cat_features,
+                    cat_kernel=self.options["categorical_kernel"],
+                    kplsk_second_loop=self.kplsk_second_loop,
+                ).reshape(-1, 1)
+                if np.isnan(r).any():
+                    return reduced_likelihood_function_value, par
+            except FloatingPointError:
+                warnings.warn(
+                    "Theta upper bound is too high.  please reduced it in the parameter theta_bounds."
+                )
+                return reduced_likelihood_function_value, par
         else:
             self.corr.theta = theta
-            r = self.corr(self.D).reshape(-1, 1)
+            try:
+                r = self.corr(self.D).reshape(-1, 1)
+                if np.isnan(r).any():
+                    return reduced_likelihood_function_value, par
+            except FloatingPointError:
+                warnings.warn(
+                    "Theta upper bound is too high.  please reduced it in the parameter theta_bounds."
+                )
+                return reduced_likelihood_function_value, par
+
         R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
@@ -1095,7 +1111,17 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
+        grad_red = 1
+        par = {}
         red, par = self._reduced_likelihood_function(theta)
+        try:
+            C = par["C"]
+            gamma = par["gamma"]
+            Q = par["Q"]
+            G = par["G"]
+            sigma_2 = par["sigma2"] + self.options["nugget"]
+        except KeyError:
+            return grad_red, par
 
         C = par["C"]
         gamma = par["gamma"]
