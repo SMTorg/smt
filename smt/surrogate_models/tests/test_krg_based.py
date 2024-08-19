@@ -484,7 +484,7 @@ class TestKrgBased(unittest.TestCase):
             ]
         )
 
-        sm = KRG()
+        sm = KRG(n_start=25, hyper_opt="Cobyla", random_state=np.random.RandomState(0))
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -506,10 +506,10 @@ class TestKrgBased(unittest.TestCase):
                     sm.predict_variances(x)
                     - np.array(
                         [
-                            [3722.34772745],
-                            [3718.54100553],
-                            [3706.06168764],
-                            [3693.93159315],
+                            [3737.78504444],
+                            [3731.89718163],
+                            [2259.84680233],
+                            [3708.19785073],
                         ]
                     )
                 )
@@ -522,10 +522,10 @@ class TestKrgBased(unittest.TestCase):
                     sm.predict_values(x)
                     - np.array(
                         [
-                            [ 90.99900071],
-                            [ 89.92835475],
-                            [ 89.14618673],
-                            [107.78360168],
+                            [91.22522684],
+                            [90.78056507],
+                            [71.31463571],
+                            [108.17121769],
                         ]
                     )
                 )
