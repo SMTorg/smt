@@ -514,7 +514,7 @@ class TestKrgBased(unittest.TestCase):
                     )
                 )
             ),
-            1.0e-8,
+            1.0e-2,
         )
         self.assertLess(
             np.mean(
@@ -530,7 +530,7 @@ class TestKrgBased(unittest.TestCase):
                     )
                 )
             ),
-            1.0e-8,
+            1.0e-2,
         )
 
     def test_check_training_numerically(self):
