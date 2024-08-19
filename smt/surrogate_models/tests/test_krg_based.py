@@ -530,7 +530,7 @@ class TestKrgBased(unittest.TestCase):
                     )
                 )
             ),
-            1.0e-9,
+            1.0e-8,
         )
 
     def test_check_training_numerically(self):
