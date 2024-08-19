@@ -424,7 +424,10 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        assert len(seen_x) == 42
+        if HAS_ADSG :
+            assert len(seen_x) == 49
+        else :
+            assert len(seen_x) == 42
         assert len(seen_is_acting) == 2
 
     @unittest.skipIf(
@@ -630,7 +633,7 @@ class Test(unittest.TestCase):
             ),
             x_cartesian2,
         )
-
+ConfigSpace               
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
