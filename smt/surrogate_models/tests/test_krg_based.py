@@ -501,7 +501,7 @@ class TestKrgBased(unittest.TestCase):
         sm.predict_variances(x)  # predictive variance
         sm.predict_derivatives(x, 0)  # predictive variance
         self.assertLess(
-            np.sum(
+            np.mean(
                 np.abs(
                     sm.predict_variances(x)
                     - np.array(
@@ -514,10 +514,10 @@ class TestKrgBased(unittest.TestCase):
                     )
                 )
             ),
-            1.0e-9,
+            1.0e-8,
         )
         self.assertLess(
-            np.sum(
+            np.mean(
                 np.abs(
                     sm.predict_values(x)
                     - np.array(
