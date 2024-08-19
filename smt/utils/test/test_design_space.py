@@ -633,7 +633,7 @@ class Test(unittest.TestCase):
             ),
             x_cartesian2,
         )
-ConfigSpace               
+
     @unittest.skipIf(
         not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
     )
