@@ -1330,7 +1330,7 @@ class ArchDesignSpaceGraph(DesignSpace):
             return np.array(configs1), np.array(configs2), np.array(configs0)
         else :
             return np.array(configs1), np.array(configs2)
-        
+
     def _is_conditionally_acting(self) -> np.ndarray:
         # Decreed variables are the conditionally acting variables
         return np.array(self.graph_proc.dv_is_conditionally_active)
