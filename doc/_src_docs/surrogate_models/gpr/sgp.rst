@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5941231
+     Training - done. Time (sec):  0.6393216
   ___________________________________________________________________________
      
    Evaluation
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5157521
+     Training - done. Time (sec):  0.5364490
   ___________________________________________________________________________
      
    Evaluation
