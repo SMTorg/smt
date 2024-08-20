@@ -604,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000157C2412050>
+     -  <smt.applications.ego.Evaluator object at 0x000001FC214379D0>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -634,9 +634,9 @@ Options
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000157C2798AD0>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001FC1FE11950>
      -  None
-     -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP']
+     -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly
   *  -  random_state
      -  None
