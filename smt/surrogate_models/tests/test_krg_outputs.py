@@ -9,6 +9,7 @@ import numpy as np
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GPX, KRG
+from smt.surrogate_models.gpx import GPX_AVAILABLE
 
 
 class TestKRG(unittest.TestCase):
@@ -45,6 +46,7 @@ class TestKRG(unittest.TestCase):
             var_deriv = kriging.predict_variance_derivatives(x, 0)
             self.assertEqual((n, n_s), var_deriv.shape)
 
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_predict_var_derivs_GPX(self):
         def target_fun(x):
             return np.cos(5 * x)
