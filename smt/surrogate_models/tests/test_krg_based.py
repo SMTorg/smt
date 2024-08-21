@@ -10,7 +10,7 @@ import numpy as np
 
 from smt.problems import Rosenbrock
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG
+from smt.surrogate_models import KRG, SGP
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.misc import compute_rms_error
 
@@ -484,10 +484,14 @@ class TestKrgBased(unittest.TestCase):
             ]
         )
 
+        sm = SGP(n_start=25, hyper_opt="Cobyla", random_state=np.random.RandomState(0))
+        sm.set_training_values(xt, yt)
+        sm.train()
+        sm.predict_values(x)  # predictive mean
+        sm.predict_variances(x)  # predictive variance
         sm = KRG(n_start=25, hyper_opt="Cobyla", random_state=np.random.RandomState(0))
         sm.set_training_values(xt, yt)
         sm.train()
-
         # predictions
         x = np.array(
             [
