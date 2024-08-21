@@ -82,10 +82,15 @@ class SGP(KRG):
             desc="Method used by sparse GP model",
             types=(str),
         )
-        declare("n_inducing", 10, desc="Number of inducing inputs", types=int)
+        declare(
+            "n_inducing",
+            10,
+            desc="Number of inducing inputs when inducing_method is set",
+            types=int,
+        )
         declare(
             "inducing_method",
-            "random",
+            None,
             types=str,
             values=["random", "kmeans"],
             desc="The chosen method to induce points",
@@ -120,14 +125,18 @@ class SGP(KRG):
         y = self.training_points[None][0][1]
         if Z is None:
             self.nz = self.options["n_inducing"]
-            # We randomly induce points
             if self.options["inducing_method"] == "random":
+                # We pick inducing points among training data
                 idx = np.random.permutation(self.nt)[: self.nz]
                 self.Z = X[idx].copy()  # [nz,nx]
-            # We induce points with the kmeans method
-            else:
+            elif self.options["inducing_method"] == "kmeans":
+                # We pick inducing points as kmeans centroids
                 data = np.hstack((X, y))
                 self.Z = kmeans(data, self.nz)[0][:, :-1]
+            else:
+                raise ValueError(
+                    "Specify inducing points with set_inducing_inputs() or set inducing_method option"
+                )
         else:
             Z = ensure_2d_array(Z, "Z")
             if self.nx != Z.shape[1]:
