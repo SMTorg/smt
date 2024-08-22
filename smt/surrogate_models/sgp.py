@@ -10,6 +10,8 @@ Sparse GP implementations of GPy project. See https://github.com/SheffieldML/GPy
 
 import numpy as np
 from scipy import linalg
+from scipy.cluster.vq import kmeans
+
 
 from smt.surrogate_models.krg import KRG
 from smt.utils.checks import ensure_2d_array
@@ -82,7 +84,19 @@ class SGP(KRG):
             desc="Method used by sparse GP model",
             types=(str),
         )
-        declare("n_inducing", 10, desc="Number of inducing inputs", types=int)
+        declare(
+            "n_inducing",
+            10,
+            desc="Number of inducing inputs when inducing_method is set",
+            types=int,
+        )
+        declare(
+            "inducing_method",
+            None,
+            types=str,
+            values=["random", "kmeans"],
+            desc="The chosen method to induce points",
+        )
 
         supports = self.supports
         supports["derivatives"] = False
@@ -98,7 +112,8 @@ class SGP(KRG):
     def set_inducing_inputs(self, Z=None, normalize=False):
         """
         Define number of inducing inputs or set the locations manually.
-        When Z is not specified then points are picked randomly amongst the inputs training set.
+        When Z is not specified then points are picked either randomly or with the kmeans method
+        amongst the inputs training set.
 
         Parameters
         ----------
@@ -108,19 +123,28 @@ class SGP(KRG):
             Inducing inputs.
         normalize : When Z is given, whether values should be normalized
         """
+        X = self.training_points[None][0][0]  # [nt,nx]
+        y = self.training_points[None][0][1]
         if Z is None:
             self.nz = self.options["n_inducing"]
-            X = self.training_points[None][0][0]  # [nt,nx]
-            random_idx = np.random.permutation(self.nt)[: self.nz]
-            self.Z = X[random_idx].copy()  # [nz,nx]
+            if self.options["inducing_method"] == "random":
+                # We pick inducing points among training data
+                idx = np.random.permutation(self.nt)[: self.nz]
+                self.Z = X[idx].copy()  # [nz,nx]
+            elif self.options["inducing_method"] == "kmeans":
+                # We pick inducing points as kmeans centroids
+                data = np.hstack((X, y))
+                self.Z = kmeans(data, self.nz)[0][:, :-1]
+            else:
+                raise ValueError(
+                    "Specify inducing points with set_inducing_inputs() or set inducing_method option"
+                )
         else:
             Z = ensure_2d_array(Z, "Z")
             if self.nx != Z.shape[1]:
                 raise ValueError("DimensionError: Z.shape[1] != X.shape[1]")
             self.Z = Z  # [nz,nx]
             if normalize:
-                X = self.training_points[None][0][0]  # [nt,nx]
-                y = self.training_points[None][0][1]
                 self.normalize = True
                 (
                     _,
