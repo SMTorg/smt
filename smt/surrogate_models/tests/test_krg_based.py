@@ -491,7 +491,12 @@ class TestKrgBased(unittest.TestCase):
                 [4.6e03, 2.1e-01, -1.00000000e00, 8.2e-01],
             ]
         )
-        sm = SGP(n_start=25, hyper_opt="Cobyla", random_state=np.random.RandomState(0))
+        sm = SGP(
+            n_start=25,
+            hyper_opt="Cobyla",
+            random_state=np.random.RandomState(0),
+            inducing_method="kmeans",
+        )
         sm.set_training_values(xt, yt)
         sm.train()
         # predictions
