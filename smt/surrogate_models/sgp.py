@@ -18,6 +18,8 @@ from smt.utils.checks import ensure_2d_array
 from smt.utils.kriging import differences
 from smt.utils.misc import standardization
 
+import warnings
+
 
 class SGP(KRG):
     name = "SGP"
@@ -184,6 +186,8 @@ class SGP(KRG):
 
     # overload kriging based implementation
     def _reduced_likelihood_function(self, theta):
+        likelihood = -np.inf
+        params = {}
         X = self.training_points[None][0][0]
         Y = self.training_points[None][0][1]
         Z = self.Z
@@ -198,11 +202,20 @@ class SGP(KRG):
             theta = theta[0:-1]
 
         nugget = self.options["nugget"]
-
-        if self.options["method"] == "VFE":
-            likelihood, w_vec, w_inv = self._vfe(X, Y, Z, theta, sigma2, noise, nugget)
-        else:
-            likelihood, w_vec, w_inv = self._fitc(X, Y, Z, theta, sigma2, noise, nugget)
+        try:
+            if self.options["method"] == "VFE":
+                likelihood, w_vec, w_inv = self._vfe(
+                    X, Y, Z, theta, sigma2, noise, nugget
+                )
+            else:
+                likelihood, w_vec, w_inv = self._fitc(
+                    X, Y, Z, theta, sigma2, noise, nugget
+                )
+        except FloatingPointError:
+            warnings.warn(
+                "Theta upper bound is too high and/or data are not normalized."
+            )
+            return likelihood, params
 
         self.woodbury_data["vec"] = w_vec
         self.woodbury_data["inv"] = w_inv
