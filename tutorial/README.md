@@ -6,6 +6,10 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_Tutorial.ipynb)
 
+## Efficient Global Optimization: How to start?
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_SBO_EGO_Educational.ipynb)
+
 ## Noisy Gaussian process
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_Noise.ipynb)
