@@ -1309,7 +1309,10 @@ class ArchDesignSpaceGraph(DesignSpace):
         self._is_decreed = design_space._is_decreed
 
     def _sample_valid_x(
-        self, n: int, random_state=None, return_render=False,
+        self,
+        n: int,
+        random_state=None,
+        return_render=False,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Sample design vectors"""
         # Get design vectors and get the is_active matrix
@@ -1326,9 +1329,9 @@ class ArchDesignSpaceGraph(DesignSpace):
             configs2.append(
                 self.graph_proc.get_graph(self.graph_proc.get_random_design_vector())[2]
             )
-        if return_render :
+        if return_render:
             return np.array(configs1), np.array(configs2), np.array(configs0)
-        else :
+        else:
             return np.array(configs1), np.array(configs2)
 
     def _is_conditionally_acting(self) -> np.ndarray:

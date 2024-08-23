@@ -424,9 +424,9 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        if HAS_ADSG :
+        if HAS_ADSG:
             assert len(seen_x) == 49
-        else :
+        else:
             assert len(seen_x) == 42
         assert len(seen_is_acting) == 2
 
