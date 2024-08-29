@@ -5,12 +5,14 @@ from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI
+from .mfck import MFCK
 
 __all__ = [
     "VFM",
     "MOE",
     "MOESurrogateModel",
     "MFK",
+    "MFCK",
     "NestedLHS",
     "MFKPLS",
     "MFKPLSK",
