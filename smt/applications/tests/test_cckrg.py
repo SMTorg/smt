@@ -48,12 +48,12 @@ class TestCCKRG(SMTestCase):
         random.shuffle(vars)
         comp_var = np.full((ndim, ncomp), False)
         for c in comps:
-            comp_size = int(ndim/ncomp)
-            start = c*comp_size
-            end = (c+1)*comp_size
-            if c+1 == ncomp:
-                end = max((c+1)*comp_size, ndim)
-            comp_var[vars[start:end],c] = True
+            comp_size = int(ndim / ncomp)
+            start = c * comp_size
+            end = (c + 1) * comp_size
+            if c + 1 == ncomp:
+                end = max((c + 1) * comp_size, ndim)
+            comp_var[vars[start:end], c] = True
 
         # Cooperative components Kriging model fit
         sm = CoopCompKRG()

@@ -74,9 +74,7 @@ class CoopCompKRG(KrgBased):
         declare(
             "hyper_opt",
             "Cobyla",
-            values=(
-                "Cobyla",
-            ),
+            values=("Cobyla",),
             desc="Correlation function type",
             types=(str),
         )
@@ -85,7 +83,6 @@ class CoopCompKRG(KrgBased):
         supports["derivatives"] = False
         supports["variance_derivatives"] = False
         supports["x_hierarchy"] = False
-
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         d = componentwise_distance(
@@ -98,13 +95,11 @@ class CoopCompKRG(KrgBased):
         )
         return d
 
-
     def _compute_pls(self, X, y):
         """
         Workaround for function call in _new_train()
         """
         return X, y
-
 
     def train(self, active_coop_comp, comp_var) -> None:
         """
@@ -114,20 +109,19 @@ class CoopCompKRG(KrgBased):
 
         # Set allocations of design variables to components
         if not isinstance(comp_var, np.ndarray) or comp_var.shape[0] != self.nx:
-            raise ValueError('comp_var has the wrong data type or shape.')
+            raise ValueError("comp_var has the wrong data type or shape.")
         self.comp_var = [var for var in comp_var.T]
 
         # Set context vector to current best hyperparameter (used for inactive components)
         try:
             self.coop_theta = self.optimal_theta
-        except:
-            self.coop_theta = self.options["theta0"]*np.ones((self.nx))
+        except AttributeError:
+            self.coop_theta = self.options["theta0"] * np.ones((self.nx))
 
         # Hyperparameter optimization for active components
         self.active_comp_var = self.comp_var[active_coop_comp]
         self.num_active = np.count_nonzero(self.active_comp_var)
         super().train()
-
 
     def _optimize_hyperparam(self, D):
         """
@@ -174,12 +168,12 @@ class CoopCompKRG(KrgBased):
 
             def minus_cooperative_reduced_likelihood_function(active_log10t):
                 theta = self.coop_theta
-                theta[self.active_comp_var] = 10.0 ** active_log10t
+                theta[self.active_comp_var] = 10.0**active_log10t
                 return -self._reduced_likelihood_function(theta)[0]
 
             def grad_minus_cooperative_reduced_likelihood_function(active_log10t):
                 theta = self.coop_theta
-                theta[self.active_comp_var] = 10.0 ** active_log10t
+                theta[self.active_comp_var] = 10.0**active_log10t
                 theta_2d = np.atleast_2d(theta).T
                 res = (
                     -np.log(10.0)
@@ -188,7 +182,7 @@ class CoopCompKRG(KrgBased):
                 )
                 return res
 
-        limit, _rhobeg = 10 * self.num_active, 0.5 # consider only active dimensions
+        limit, _rhobeg = 10 * self.num_active, 0.5  # consider only active dimensions
         exit_function = False
         if "KPLSK" in self.name:
             n_iter = 1
@@ -211,7 +205,9 @@ class CoopCompKRG(KrgBased):
             bounds_hyp = []
 
             self.theta0 = deepcopy(self.options["theta0"])
-            for i in range(self.num_active): # range(len(self.theta0)): # set only active constraints
+            for i in range(
+                self.num_active
+            ):  # range(len(self.theta0)): # set only active constraints
                 # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
                 # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
                 # By standardising X in R, X_norm = (X-X_mean)/X_std, then
@@ -308,12 +304,17 @@ class CoopCompKRG(KrgBased):
 
                 optimal_theta_res = {"fun": float("inf")}
                 try:
-                    if self.options["hyper_opt"] == "Cobyla" and self.options["n_start"] >= 1:
+                    if (
+                        self.options["hyper_opt"] == "Cobyla"
+                        and self.options["n_start"] >= 1
+                    ):
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
-                                minus_cooperative_reduced_likelihood_function, # adjusted likelihood function
-                                theta0_loop[self.active_comp_var], # only optimize part of theta
-                                constraints=[ # only consider part of the constraints
+                                minus_cooperative_reduced_likelihood_function,  # adjusted likelihood function
+                                theta0_loop[
+                                    self.active_comp_var
+                                ],  # only optimize part of theta
+                                constraints=[  # only consider part of the constraints
                                     {"fun": con, "type": "ineq"} for con in constraints
                                 ],
                                 method="COBYLA",
@@ -327,18 +328,25 @@ class CoopCompKRG(KrgBased):
                                 optimal_coop_theta = np.log10(self.coop_theta)
                             else:
                                 optimal_coop_theta = self.coop_theta
-                            optimal_coop_theta[self.active_comp_var] = optimal_theta_res_loop["x"]
+                            optimal_coop_theta[self.active_comp_var] = (
+                                optimal_theta_res_loop["x"]
+                            )
                             # augment "x" in optimal_theta_res_loop with theta_best of other indices
                             optimal_theta_res_loop["x"] = optimal_coop_theta
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
                         optimal_theta = optimal_theta_res["x"]
-                    elif self.options["hyper_opt"] == "TNC" and self.options["n_start"] >= 1:
-                        theta_all_loops = 10 ** theta_all_loops
+                    elif (
+                        self.options["hyper_opt"] == "TNC"
+                        and self.options["n_start"] >= 1
+                    ):
+                        theta_all_loops = 10**theta_all_loops
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
-                                minus_cooperative_reduced_likelihood_function, # adjusted likelihood function
-                                theta0_loop[self.active_comp_var], # only optimize part of theta
+                                minus_cooperative_reduced_likelihood_function,  # adjusted likelihood function
+                                theta0_loop[
+                                    self.active_comp_var
+                                ],  # only optimize part of theta
                                 method="TNC",
                                 jac=grad_minus_cooperative_reduced_likelihood_function,
                                 bounds=bounds_hyp,
@@ -348,7 +356,9 @@ class CoopCompKRG(KrgBased):
                                 optimal_coop_theta = np.log10(self.coop_theta)
                             else:
                                 optimal_coop_theta = self.coop_theta
-                            optimal_coop_theta[self.active_comp_var] = optimal_theta_res_loop["x"]
+                            optimal_coop_theta[self.active_comp_var] = (
+                                optimal_theta_res_loop["x"]
+                            )
                             optimal_theta_res_loop["x"] = optimal_coop_theta
                             # augment "x" in optimal_theta_res_loop with theta_best of other indices
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
@@ -357,9 +367,8 @@ class CoopCompKRG(KrgBased):
                     else:
                         optimal_theta = theta0
 
-
                     if self.name not in ["MGP"]:
-                        optimal_theta = 10 ** optimal_theta
+                        optimal_theta = 10**optimal_theta
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
                     )
@@ -438,7 +447,7 @@ class CoopCompKRG(KrgBased):
                     return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
                 if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls ** 2).sum(1)
+                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
                 else:
                     self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
 
@@ -448,18 +457,20 @@ class CoopCompKRG(KrgBased):
                 exit_function = True
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
-
     def _predict_derivatives(self, x, kx):
         """
         Not implemented yet.
         Evaluates the derivatives at a set of points.
         """
-        raise NotImplementedError('Derivative prediction is not available for cooperative Kriging.')
-
+        raise NotImplementedError(
+            "Derivative prediction is not available for cooperative Kriging."
+        )
 
     def _predict_variance_derivatives(self, x):
         """
         Not implemented yet.
         Provide the derivative of the variance of the model at a set of points.
         """
-        raise NotImplementedError('Derivative prediction is not available for cooperative Kriging.')
+        raise NotImplementedError(
+            "Derivative prediction is not available for cooperative Kriging."
+        )
