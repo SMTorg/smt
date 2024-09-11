@@ -14,8 +14,6 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-from smt.problems import TensorProduct
-from smt.sampling_methods import LHS
 from smt.utils.sm_test_case import SMTestCase
 
 
@@ -24,6 +22,9 @@ class TestCCKRG(SMTestCase):
     def run_cckrg_example():
         import numpy as np
         import random
+
+        from smt.problems import TensorProduct
+        from smt.sampling_methods import LHS
 
         from smt.applications import CoopCompKRG
 

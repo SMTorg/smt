@@ -7,7 +7,7 @@ Cooperative Components Kriging is a way of fitting a high-dimensional ordinary K
 
 This application contains the single component model fits. The loop over the components has to be implemented individually, as shown in the usage example below.
 
-The cooperative components model fit was developed as part of a high-dimensional surrogate-based optimization process. It is inspired by distributed multi-disciplinary design optimization (MDO) approaches and the cooperative EGO by Zhan et al. [1].
+The cooperative components model fit was developed as part of a high-dimensional surrogate-based optimization process. It is inspired by distributed multi-disciplinary design optimization (MDO) approaches and the cooperative EGO by Zhan et al. [1]_.
 
 
 References
@@ -17,7 +17,7 @@ References
 Usage
 -----
 
-.. embed-test-print-plot :: smt.applications.test_cckrg , Test , run_cckrg_example , 80
+.. embed-test-print :: smt.applications.tests.test_cckrg , TestCCKRG , run_cckrg_example
 
 Options
 -------
