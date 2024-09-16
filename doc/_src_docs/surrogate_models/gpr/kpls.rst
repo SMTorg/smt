@@ -140,8 +140,8 @@ Usage with an automatic number of components
   print("\n The model automatically choose " + str(ncomp) + " components.")
   
   ## You can predict a 10-dimension point from the 3-dimensional model
-  print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-  print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+  print(sm.predict_values(np.array([[-0.9, -0.7, -0.5, -0.3, -0.1,  0.1,  0.3,  0.5,  0.7,  0.9]])))
+  print(sm.predict_variances(np.array([[-0.9, -0.7, -0.5, -0.3, -0.1,  0.1,  0.3,  0.5,  0.7,  0.9]])))
   
 ::
 
@@ -159,7 +159,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 15.4320111
+     Training - done. Time (sec): 32.4833167
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -169,12 +169,12 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0019555
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0019555
      
-  [[20.5991018]]
-  [[1075.83015182]]
+  [[7.89613102]]
+  [[64.47734196]]
   
 
 Options
