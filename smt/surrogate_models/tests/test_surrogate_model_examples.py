@@ -407,8 +407,16 @@ class Test(unittest.TestCase):
         print("\n The model automatically choose " + str(ncomp) + " components.")
 
         ## You can predict a 10-dimension point from the 3-dimensional model
-        print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-        print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+        print(
+            sm.predict_values(
+                np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+            )
+        )
+        print(
+            sm.predict_variances(
+                np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+            )
+        )
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_kpls(self):
