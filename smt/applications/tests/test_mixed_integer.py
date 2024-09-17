@@ -1040,6 +1040,8 @@ class TestMixedInteger(unittest.TestCase):
         for mixint_kernel in [
             MixIntKernelType.CONT_RELAX,
             MixIntKernelType.GOWER,
+            MixIntKernelType.COMPOUND_SYMMETRY,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
             MixIntKernelType.HOMO_HSPHERE,
         ]:
             sm = MixedIntegerKrigingModel(
@@ -1057,10 +1059,10 @@ class TestMixedInteger(unittest.TestCase):
             sm.train()
             y_s = sm.predict_values(Xt)[:, 0]
             _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-
+            self.assertTrue(_pred_RMSE < 1e-7)
             y_sv = sm.predict_variances(Xt)[:, 0]
             _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-
+            self.assertTrue(_var_RMSE < 1e-7)
             np.testing.assert_almost_equal(
                 sm.predict_values(
                     np.array(

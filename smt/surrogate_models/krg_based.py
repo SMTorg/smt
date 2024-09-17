@@ -463,14 +463,6 @@ class KrgBased(SurrogateModel):
                 listcatdecreed = self.design_space.is_conditionally_acting[
                     self.cat_features
                 ]
-                if np.any(listcatdecreed):
-                    D = self._correct_distances_cat_decreed(
-                        D,
-                        is_acting,
-                        listcatdecreed,
-                        self.ij,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
 
             # Center and scale X_cont and y
             (
@@ -1485,15 +1477,6 @@ class KrgBased(SurrogateModel):
                 listcatdecreed = self.design_space.is_conditionally_acting[
                     self.cat_features
                 ]
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
 
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
