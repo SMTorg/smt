@@ -118,9 +118,6 @@ metadata = dict(
         "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
         ],
-        "cs": [  # pip install smt[cs]
-            "ConfigSpace~=0.6.1",
-        ],
         "gpx": ["egobox~=0.20"],  # pip install smt[gpx]
     },
     python_requires=">=3.8",

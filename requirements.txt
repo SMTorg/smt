@@ -11,3 +11,4 @@ pytest-cov      # allows to get coverage report
 ruff            # format and lint code
 jenn >= 1.0.2, <2.0
 egobox ~= 0.20.0
+git+https://github.com/SMTorg/smt-design-space
