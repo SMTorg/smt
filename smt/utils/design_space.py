@@ -623,3 +623,5 @@ class BaseDesignSpace:
 
     def __repr__(self):
         raise NotImplementedError
+class DesignSpace(BaseDesignSpace):
+    pass
