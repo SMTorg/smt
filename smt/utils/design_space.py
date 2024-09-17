@@ -626,5 +626,323 @@ class BaseDesignSpace:
         raise NotImplementedError
 
 
+VarValueType = Union[int, str, List[Union[int, str]]]
+
+
+def raise_config_space():
+    raise RuntimeError(
+        "Dependencies are not installed, run: pip install smt[SMTDesignSpace]"
+    )
+
+
 class DesignSpace(BaseDesignSpace):
-    pass
+    """
+    Class for defining a (hierarchical) design space by defining design variables, defining decreed variables
+    (optional), and adding value constraints (optional).
+
+    Numerical bounds can be requested using `get_num_bounds()`.
+    If needed, it is possible to get the legacy SMT < 2.0 `xlimits` format using `get_x_limits()`.
+
+    Parameters
+    ----------
+    design_variables: list[DesignVariable]
+       - The list of design variables: FloatVariable, IntegerVariable, OrdinalVariable, or CategoricalVariable
+
+    Examples
+    --------
+    Instantiate the design space with all its design variables:
+
+    >>> from smt.utils.design_space import *
+    >>> ds = DesignSpace([
+    >>>     CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
+    >>>     OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant
+    >>>     IntegerVariable(0, 2),  # x2 integer between 0 and 2 (inclusive): 0, 1, 2
+    >>>     FloatVariable(0, 1),  # c3 continuous between 0 and 1
+    >>> ])
+    >>> assert len(ds.design_variables) == 4
+
+    You can define decreed variables (conditional activation):
+
+    >>> ds.declare_decreed_var(decreed_var=1, meta_var=0, meta_value='A')  # Activate x1 if x0 == A
+
+
+    After defining everything correctly, you can then use the design space object to correct design vectors and get
+    information about which design variables are acting:
+
+    >>> x_corr, is_acting = ds.correct_get_acting(np.array([
+    >>>     [0, 0, 2, .25],
+    >>>     [0, 2, 1, .75],
+    >>> ]))
+    >>> assert np.all(x_corr == np.array([
+    >>>     [0, 0, 2, .25],
+    >>>     [0, 2, 0, .75],
+    >>> ]))
+    >>> assert np.all(is_acting == np.array([
+    >>>     [True, True, True, True],
+    >>>     [True, True, False, True],  # x2 is not acting if x1 != C or D (0 or 1)
+    >>> ]))
+
+    It is also possible to randomly sample design vectors conforming to the constraints:
+
+    >>> x_sampled, is_acting_sampled = ds.sample_valid_x(100)
+
+    You can also instantiate a purely-continuous design space from bounds directly:
+
+    >>> continuous_design_space = DesignSpace([(0, 1), (0, 2), (.5, 5.5)])
+    >>> assert continuous_design_space.n_dv == 3
+
+    If needed, it is possible to get the legacy design space definition format:
+
+    >>> xlimits = ds.get_x_limits()
+    >>> cont_bounds = ds.get_num_bounds()
+    >>> unfolded_cont_bounds = ds.get_unfolded_num_bounds()
+
+    """
+
+    def __init__(
+        self,
+        design_variables: Union[List[DesignVariable], list, np.ndarray],
+        random_state=None,
+    ):
+        self.sampler = None
+
+        # Assume float variable bounds as inputs
+        def _is_num(val):
+            try:
+                float(val)
+                return True
+            except ValueError:
+                return False
+
+        if len(design_variables) > 0 and not isinstance(
+            design_variables[0], DesignVariable
+        ):
+            converted_dvs = []
+            for bounds in design_variables:
+                if len(bounds) != 2 or not _is_num(bounds[0]) or not _is_num(bounds[1]):
+                    raise RuntimeError(
+                        f"Expecting either a list of DesignVariable objects or float variable "
+                        f"bounds! Unrecognized: {bounds!r}"
+                    )
+                converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
+            design_variables = converted_dvs
+
+        self.random_state = random_state  # For testing
+        seed = self.random_state
+        # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
+        self._meta_vars = {}
+        self._is_decreed = np.zeros((len(design_variables),), dtype=bool)
+
+        super().__init__(design_variables=design_variables, random_state=seed)
+
+    def declare_decreed_var(
+        self, decreed_var: int, meta_var: int, meta_value: VarValueType
+    ):
+        """
+        Define a conditional (decreed) variable to be active when the meta variable has (one of) the provided values.
+
+        Parameters
+        ----------
+        decreed_var: int
+           - Index of the conditional variable (the variable that is conditionally active)
+        meta_var: int
+           - Index of the meta variable (the variable that determines whether the conditional var is active)
+        meta_value: int | str | list[int|str]
+           - The value or list of values that the meta variable can have to activate the decreed var
+        """
+
+        # Variables cannot be both meta and decreed at the same time
+        if self._is_decreed[meta_var]:
+            raise RuntimeError(
+                f"Variable cannot be both meta and decreed ({meta_var})!"
+            )
+
+        # Variables can only be decreed by one meta var
+        if self._is_decreed[decreed_var]:
+            raise RuntimeError(f"Variable is already decreed: {decreed_var}")
+
+        # Define meta-decreed relationship
+        if meta_var not in self._meta_vars:
+            self._meta_vars[meta_var] = {}
+
+        meta_var_obj = self.design_variables[meta_var]
+        for value in meta_value if isinstance(meta_value, Sequence) else [meta_value]:
+            encoded_value = value
+            if isinstance(meta_var_obj, (OrdinalVariable, CategoricalVariable)):
+                if value in meta_var_obj.values:
+                    encoded_value = meta_var_obj.values.index(value)
+
+            if encoded_value not in self._meta_vars[meta_var]:
+                self._meta_vars[meta_var][encoded_value] = []
+            self._meta_vars[meta_var][encoded_value].append(decreed_var)
+
+        # Mark as decreed (conditionally acting)
+        self._is_decreed[decreed_var] = True
+
+    def add_value_constraint(
+        self, var1: int, value1: VarValueType, var2: int, value2: VarValueType
+    ):
+        """
+        Define a constraint where two variables cannot have the given values at the same time.
+
+        Parameters
+        ----------
+        var1: int
+           - Index of the first variable
+        value1: int | str | list[int|str]
+           - Value or values that the first variable is checked against
+        var2: int
+           - Index of the second variable
+        value2: int | str | list[int|str]
+           - Value or values that the second variable is checked against
+        """
+        raise_config_space()
+
+    def _get_param(self, idx):
+        raise KeyError(f"Variable not found: {idx}")
+
+    def _get_param2(self, idx):
+        raise KeyError(f"Variable not found: {idx}")
+
+    @property
+    def _cs_var_idx(self):
+        """
+        ConfigurationSpace applies topological sort when adding conditions, so compared to what we expect the order of
+        parameters might have changed.
+
+        This property contains the indices of the params in the ConfigurationSpace.
+        """
+        raise_config_space()
+
+    @property
+    def _inv_cs_var_idx(self):
+        """
+        See _cs_var_idx. This function returns the opposite mapping: the positions of our design variables for each
+        param.
+        """
+        raise_config_space()
+
+    def _is_conditionally_acting(self) -> np.ndarray:
+        # Decreed variables are the conditionally acting variables
+        return self._is_decreed
+
+    def _correct_get_acting(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """Correct and impute design vectors"""
+        x = x.astype(float)
+        # Simplified implementation
+        # Correct discrete variables
+        x_corr = x.copy()
+        self._normalize_x(x_corr, cs_normalize=False)
+
+        # Determine which variables are acting
+        is_acting = np.ones(x_corr.shape, dtype=bool)
+        is_acting[:, self._is_decreed] = False
+        for i, xi in enumerate(x_corr):
+            for i_meta, decrees in self._meta_vars.items():
+                meta_var_value = xi[i_meta]
+                if meta_var_value in decrees:
+                    i_decreed_vars = decrees[meta_var_value]
+                    is_acting[i, i_decreed_vars] = True
+
+        # Impute non-acting variables
+        self._impute_non_acting(x_corr, is_acting)
+
+        return x_corr, is_acting
+
+    def _sample_valid_x(
+        self, n: int, random_state=None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Sample design vectors"""
+        # Simplified implementation: sample design vectors in unfolded space
+        x_limits_unfolded = self.get_unfolded_num_bounds()
+        if self.random_state is None:
+            self.random_state = random_state
+
+        if self.sampler is None:
+            self.sampler = LHS(
+                xlimits=x_limits_unfolded,
+                random_state=random_state,
+                criterion="ese",
+            )
+        x = self.sampler(n)
+        # Fold and cast to discrete
+        x, _ = self.fold_x(x)
+        self._normalize_x(x, cs_normalize=False)
+        # Get acting information and impute
+        return self.correct_get_acting(x)
+
+    def _get_correct_config(self, vector: np.ndarray) -> Configuration:
+        raise_config_space()
+
+    def _configs_to_x(
+        self, configs: List["Configuration"]
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        raise_config_space()
+
+    def _impute_non_acting(self, x: np.ndarray, is_acting: np.ndarray):
+        for i, dv in enumerate(self.design_variables):
+            if isinstance(dv, FloatVariable):
+                # Impute continuous variables to the mid of their bounds
+                x[~is_acting[:, i], i] = 0.5 * (dv.upper - dv.lower) + dv.lower
+
+            else:
+                # Impute discrete variables to their lower bounds
+                lower = 0
+                if isinstance(dv, (IntegerVariable, OrdinalVariable)):
+                    lower = dv.lower
+
+                x[~is_acting[:, i], i] = lower
+
+    def _normalize_x(self, x: np.ndarray, cs_normalize=True):
+        for i, dv in enumerate(self.design_variables):
+            if isinstance(dv, FloatVariable):
+                if cs_normalize:
+                    dv.lower = min(np.min(x[:, i]), dv.lower)
+                    dv.upper = max(np.max(x[:, i]), dv.upper)
+                    x[:, i] = np.clip(
+                        (x[:, i] - dv.lower) / (dv.upper - dv.lower + 1e-16), 0, 1
+                    )
+
+            elif isinstance(dv, IntegerVariable):
+                x[:, i] = self._round_equally_distributed(x[:, i], dv.lower, dv.upper)
+
+                if cs_normalize:
+                    # After rounding, normalize between 0 and 1, where 0 and 1 represent the stretched bounds
+                    x[:, i] = (x[:, i] - dv.lower + 0.49999) / (
+                        dv.upper - dv.lower + 0.9999
+                    )
+
+    def _normalize_x_no_integer(self, x: np.ndarray, cs_normalize=True):
+        raise_config_space()
+
+    def _cs_denormalize_x(self, x: np.ndarray):
+        for i, dv in enumerate(self.design_variables):
+            if isinstance(dv, FloatVariable):
+                x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
+
+            elif isinstance(dv, IntegerVariable):
+                # Integer values are normalized similarly to what is done in _round_equally_distributed
+                x[:, i] = np.round(
+                    x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
+                )
+
+    def _cs_denormalize_x_ordered(self, x: np.ndarray):
+        ordereddesign_variables = [
+            self.design_variables[i] for i in self._inv_cs_var_idx
+        ]
+        for i, dv in enumerate(ordereddesign_variables):
+            if isinstance(dv, FloatVariable):
+                x[:, i] = x[:, i] * (dv.upper - dv.lower) + dv.lower
+
+            elif isinstance(dv, IntegerVariable):
+                # Integer values are normalized similarly to what is done in _round_equally_distributed
+                x[:, i] = np.round(
+                    x[:, i] * (dv.upper - dv.lower + 0.9999) + dv.lower - 0.49999
+                )
+
+    def __str__(self):
+        dvs = "\n".join([f"x{i}: {dv!s}" for i, dv in enumerate(self.design_variables)])
+        return f"Design space:\n{dvs}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.design_variables!r})"
