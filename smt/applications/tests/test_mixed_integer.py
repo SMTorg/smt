@@ -1058,10 +1058,10 @@ class TestMixedInteger(unittest.TestCase):
             sm.train()
             y_s = sm.predict_values(Xt)[:, 0]
             _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-            self.assertTrue(_pred_RMSE < 1e-7)
+            self.assertLess(_pred_RMSE, 1e-7)
             y_sv = sm.predict_variances(Xt)[:, 0]
             _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-            self.assertTrue(_var_RMSE < 1e-7)
+            self.assertLess(_var_RMSE, 1e-7)
             np.testing.assert_almost_equal(
                 sm.predict_values(
                     np.array(
@@ -1324,9 +1324,8 @@ class TestMixedInteger(unittest.TestCase):
 
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-        self.assertTrue(pred_RMSE < 1e-7)
-        print("Pred_RMSE", pred_RMSE)
-        self.assertTrue(var_RMSE < 1e-7)
+        self.assertLess(pred_RMSE, 1e-7)
+        self.assertLess(var_RMSE, 1e-7)
         np.testing.assert_almost_equal(
             sm.predict_values(
                 np.array(
