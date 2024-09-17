@@ -663,9 +663,8 @@ class TestMixedInteger(unittest.TestCase):
 
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-        self.assertTrue(pred_RMSE < 1e-7)
-        print("Pred_RMSE", pred_RMSE)
-        self.assertTrue(var_RMSE < 1e-7)
+        self.assertLess(pred_RMSE, 1e-7)
+        self.assertLess(var_RMSE, 1e-7)
         self.assertTrue(
             np.linalg.norm(
                 sm.predict_values(
