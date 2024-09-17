@@ -9,7 +9,6 @@ except ImportError:
     NO_MATPLOTLIB = True
 
 
-
 class Test(unittest.TestCase):
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_cantilever_beam(self):
