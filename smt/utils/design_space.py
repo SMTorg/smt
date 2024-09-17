@@ -13,9 +13,12 @@ try:
     from SMTDesignSpace import *
 
     HAS_SMTDesignSpace = True
-
+    HAS_CONFIG_SPACE = True
+    HAS_ADSG = True
 except ImportError:
     HAS_SMTDesignSpace = False
+    HAS_CONFIG_SPACE = False
+    HAS_ADSG = False
 
 
 class Configuration:
@@ -35,8 +38,6 @@ def ensure_design_space(xt=None, xlimits=None, design_space=None) -> "BaseDesign
 
     if design_space is not None and isinstance(design_space, BaseDesignSpace):
         return design_space
-    if HAS_ADSG and design_space is not None and isinstance(design_space, ADSG):
-        return _convert_adsg_to_legacy(design_space)
 
     if xlimits is not None:
         return DesignSpace(xlimits)
@@ -623,5 +624,7 @@ class BaseDesignSpace:
 
     def __repr__(self):
         raise NotImplementedError
+
+
 class DesignSpace(BaseDesignSpace):
     pass
