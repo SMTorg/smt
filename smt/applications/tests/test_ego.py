@@ -1139,7 +1139,10 @@ class TestEGO(SMTestCase):
             LHS, design_space, criterion="ese", random_state=random_state
         )
         Xt = sampling(n_doe)
-        self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(Xt), 24.811925491708156, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
         Xt = np.array(
             [
                 [0.37454012, 1.0],
@@ -1171,8 +1174,12 @@ class TestEGO(SMTestCase):
             n_start=25,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-        self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
-        self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
+        if ds.HAS_CONFIG_SPACE:  # results differs wrt config_space impl
+            self.assertAlmostEqual(np.sum(y_data), 8.846225704750577, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 41.811925504901374, delta=1e-4)
+        else:
+            self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
+            self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()

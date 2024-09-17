@@ -249,8 +249,18 @@ class Test(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import KRG
-        from SMTDesignSpace.design_space import DesignSpace, IntegerVariable
-
+        from smt.utils.design_space import HAS_SMTDesignSpace
+        
+        if HAS_SMTDesignSpace:
+            from SMTDesignSpace.design_space import (
+                DesignSpace,
+                IntegerVariable
+            )
+        else:
+            from smt.utils.design_space import (
+                DesignSpace,
+                IntegerVariable
+            )
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])
 
