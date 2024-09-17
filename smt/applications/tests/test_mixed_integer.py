@@ -17,7 +17,17 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-import smt.utils.design_space as ds
+from SMTDesignSpace import design_space as ds
+from SMTDesignSpace.design_space import (
+    HAS_CONFIG_SPACE,
+    CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+)
+
+
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerKrigingModel,
@@ -32,14 +42,6 @@ from smt.surrogate_models import (
     QP,
     MixHrcKernelType,
     MixIntKernelType,
-)
-from smt.utils.design_space import (
-    HAS_CONFIG_SPACE,
-    CategoricalVariable,
-    DesignSpace,
-    FloatVariable,
-    IntegerVariable,
-    OrdinalVariable,
 )
 
 
@@ -474,7 +476,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-        from smt.utils.design_space import (
+        from SMTDesignSpace import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -539,7 +541,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import KRG
-        from smt.utils.design_space import (
+        from SMTDesignSpace.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -799,7 +801,7 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-        from smt.utils.design_space import (
+        from SMTDesignSpace import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,

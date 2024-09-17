@@ -10,7 +10,7 @@ from .mgp import MGP
 from .sgp import SGP
 
 from .krg_based import MixIntKernelType
-from smt.utils.design_space import (
+from SMTDesignSpace.design_space import (
     DesignSpace,
     FloatVariable,
     IntegerVariable,

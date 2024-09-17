@@ -10,7 +10,7 @@ for gaussian process, 2022
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import (
+from SMTDesignSpace.design_space import (
     CategoricalVariable,
     DesignSpace,
     FloatVariable,

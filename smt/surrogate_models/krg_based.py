@@ -23,7 +23,7 @@ from smt.utils.kernels import (
     ActExp,
 )
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.design_space import (
+from SMTDesignSpace.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,

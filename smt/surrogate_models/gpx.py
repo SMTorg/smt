@@ -1,7 +1,7 @@
 import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils.design_space import (
+from SMTDesignSpace.design_space import (
     BaseDesignSpace,
     ensure_design_space,
 )
