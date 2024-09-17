@@ -22,7 +22,6 @@ import warnings
 from smt.sampling_methods import LHS
 from scipy import optimize
 
-import warnings
 
 
 class SGP(KRG):
