@@ -32,7 +32,7 @@ from smt.surrogate_models import (
     KRG,
     MixIntKernelType,
 )
-from smt.utils.design_space import (
+from SMTDesignSpace.design_space import (
     CategoricalVariable,
     DesignSpace,
     FloatVariable,

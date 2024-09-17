@@ -21,7 +21,8 @@ jobs:
         pip install --upgrade pip
         pip install numpy cython
         pip install -e .
-
+        pip install -r requirements.txt
+        
     - name: Test with pytest
       run: |
         pip install pytest
