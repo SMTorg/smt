@@ -55,6 +55,7 @@ from smt.surrogate_models import (
     MixHrcKernelType,
     MixIntKernelType,
 )
+from typing import List, Optional, Sequence, Tuple, Union
 
 
 class TestMixedInteger(unittest.TestCase):
@@ -488,11 +489,27 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-        from SMTDesignSpace.design_space import (
-            CategoricalVariable,
-            DesignSpace,
-            FloatVariable,
-        )
+               
+        if HAS_SMTDesignSpace:
+            from SMTDesignSpace import design_space as ds
+            from SMTDesignSpace.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
+        else:
+            from smt.utils import design_space as ds
+            from smt.utils.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
 
         float_var = FloatVariable(0, 4)
         cat_var = CategoricalVariable(["blue", "red"])
@@ -553,12 +570,27 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import KRG
-        from SMTDesignSpace.design_space import (
-            CategoricalVariable,
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-        )
+        if HAS_SMTDesignSpace:
+            from SMTDesignSpace import design_space as ds
+            from SMTDesignSpace.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
+        else:
+            from smt.utils import design_space as ds
+            from smt.utils.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
+
 
         design_space = DesignSpace(
             [
@@ -813,13 +845,26 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-        from SMTDesignSpace.design_space import (
-            CategoricalVariable,
-            DesignSpace,
-            FloatVariable,
-            IntegerVariable,
-            OrdinalVariable,
-        )
+        if HAS_SMTDesignSpace:
+            from SMTDesignSpace import design_space as ds
+            from SMTDesignSpace.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
+        else:
+            from smt.utils import design_space as ds
+            from smt.utils.design_space import (
+                HAS_CONFIG_SPACE,
+                CategoricalVariable,
+                DesignSpace,
+                FloatVariable,
+                IntegerVariable,
+                OrdinalVariable,
+            )
 
         ds = DesignSpace(
             [
