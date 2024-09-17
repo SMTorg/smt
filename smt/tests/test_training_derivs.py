@@ -12,7 +12,16 @@ import numpy as np
 
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import FullFactorial
-from SMTDesignSpace.design_space import DesignSpace
+from smt.utils.design_space import HAS_SMTDesignSpace
+
+if HAS_SMTDesignSpace:
+    from SMTDesignSpace.design_space import (
+        DesignSpace,
+    )
+else:
+    from smt.utils.design_space import (
+        DesignSpace,
+    )
 from smt.utils.misc import compute_rms_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase

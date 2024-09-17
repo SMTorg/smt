@@ -11,7 +11,26 @@ from sys import argv
 
 import numpy as np
 
-from SMTDesignSpace import design_space as ds
+from smt.utils.design_space import HAS_SMTDesignSpace
+
+if HAS_SMTDesignSpace:
+    from SMTDesignSpace import design_space as ds
+    from SMTDesignSpace.design_space import (
+        CategoricalVariable,
+        DesignSpace,
+        FloatVariable,
+        IntegerVariable,
+        OrdinalVariable,
+    )
+else:
+    from smt.utils import design_space as ds
+    from smt.utils.design_space import (
+        CategoricalVariable,
+        DesignSpace,
+        FloatVariable,
+        IntegerVariable,
+        OrdinalVariable,
+    )
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.applications.mixed_integer import (

@@ -11,7 +11,18 @@ from typing import Optional
 import numpy as np
 
 from smt.utils.checks import ensure_2d_array
-from SMTDesignSpace.design_space import BaseDesignSpace, DesignSpace
+from smt.utils.design_space import HAS_SMTDesignSpace
+
+if HAS_SMTDesignSpace:
+    from SMTDesignSpace.design_space import (
+        BaseDesignSpace,
+        DesignSpace,
+    )
+else:
+    from smt.utils.design_space import (
+        DesignSpace,
+        BaseDesignSpace,
+    )
 from smt.utils.options_dictionary import OptionsDictionary
 
 
