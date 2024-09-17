@@ -243,7 +243,6 @@ class SubspacesInterpolation:
         u, s, _ = randomized_svd(Z_centered, n_components=self.n_DoE, random_state=0)
         # Information about the truncature
         self.n_B = np.argwhere(s.cumsum() / s.sum() >= 1 - epsilon)[0, 0] + 1
-
         if self.print_global:
             print(
                 "The Grassmann manifold of interest is of dimension "
@@ -667,7 +666,7 @@ class PODI(SurrogateBasedApplication):
                     "the number of kept modes can't be superior to the number of data values (snapshots)"
                 )
         self.EV_ratio = sum(EV_list[: self.n_modes]) / sum(EV_list)
-
+        self.EV_list = EV_list
         self.basis = self.singular_vectors[:, : self.n_modes]
 
     def compute_pod(
@@ -740,7 +739,13 @@ class PODI(SurrogateBasedApplication):
         self.pod_computed = True
         self.interp_options_set = False
 
-    def compute_pod_errors(self, xt, database) -> list:
+    @staticmethod
+    def compute_pod_errors(
+        xt: np.ndarray,
+        database: np.ndarray,
+        interp_type: str = "KRG",
+        interp_options: list = [{}],
+    ) -> list:
         """
         Calculates different errors for the POD.
 
@@ -748,6 +753,20 @@ class PODI(SurrogateBasedApplication):
         ----------
         xt : np.ndarray[n_snapshot, nx]
             The input values for the n_snapshot training points.
+
+        database : np.ndarray[ny, n_snapshot]
+            Snapshot matrix. Each column corresponds to a snapshot.
+
+        interp_type : str
+            Name of the type of surrogate model that will be used for the whole set.
+            By default, the Kriging model is used (KRG).
+
+        interp_options : list[dict]
+            List containing dictionnaries for the options.
+            The k-th dictionnary corresponds to the options of the k-th interpolation model.
+            If the options are common to all surogate models, only a single dictionnary is required in the list.
+            The available options can be found in the documentation of the corresponding surrogate models.
+            By default, the print_global options are set to 'False'.
 
         Returns
         -------
@@ -792,6 +811,9 @@ class PODI(SurrogateBasedApplication):
             rms_proj_error = np.sqrt(np.mean(proj_error**2))
             max_proj_error = max(max_proj_error, rms_proj_error)
 
+            podi.set_interp_options(
+                interp_type=interp_type, interp_options=interp_options
+            )
             podi.set_training_values(xt=reduced_xt)
             podi.train()
             reduced_interp_coeff = podi.get_interp_coeff()
@@ -811,7 +833,6 @@ class PODI(SurrogateBasedApplication):
             max_total_error = max(max_total_error, rms_total_error)
 
         return [max_interp_error, max_proj_error, max_total_error]
-        #########verify if list of 3 values ??
 
     def get_singular_vectors(self) -> np.ndarray:
         """
@@ -846,6 +867,17 @@ class PODI(SurrogateBasedApplication):
             Singular values of the POD.
         """
         return self.singular_values
+
+    def get_ev_list(self) -> float:
+        """
+        Getter for the explained variance list.
+
+        Returns
+        -------
+        EV_ratio : float
+            Explained variance ratio with the current kept modes.
+        """
+        return self.EV_list
 
     def get_ev_ratio(self) -> float:
         """

@@ -75,6 +75,31 @@ class TestSGP(SMTestCase):
         self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.2)
         self.assertAlmostEqual(sgp.optimal_noise, self.eta[0], delta=2.9e-2)
 
+    def test_fitc_with_kmeans(self):
+        sgp = SGP(n_inducing=30, inducing_method="kmeans")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.train()
+
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.2)
+
+    def test_vfe_with_random(self):
+        sgp = SGP(method="VFE", n_inducing=30, inducing_method="random")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.train()
+
+        Ypred = sgp.predict_values(self.Xtest)
+        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.2)
+
+    def test_inducing_error(self):
+        sgp = SGP()
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        with self.assertRaises(
+            ValueError,
+            msg="Specify inducing points with set_inducing_inputs() or set inducing_method option",
+        ):
+            sgp.train()
+
 
 if __name__ == "__main__":
     unittest.main()
