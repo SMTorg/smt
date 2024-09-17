@@ -4,10 +4,9 @@ Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 This package is distributed under New BSD license.
 """
 
-from typing import List, Optional, Tuple, Union
-
 import numpy as np
 from smt.sampling_methods.lhs import LHS
+from typing import List, Optional, Sequence, Tuple, Union
 
 try:
     from SMTDesignSpace import *

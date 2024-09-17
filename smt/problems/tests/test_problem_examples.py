@@ -8,7 +8,7 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-from typing import List, Optional, Sequence, Tuple, Union
+
 
 class Test(unittest.TestCase):
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
