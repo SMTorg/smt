@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt numpy==1.26.4 git+https://github.com/SMTorg/smt-design-space
+        pip install -r requirements.txt numpy==1.26.4 ConfigSpace==0.6.1 adsg-core==1.1.1 git+https://github.com/SMTorg/smt-design-space
         pip list
         pip install -e .
 
