@@ -15,7 +15,7 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
-from smt.utils.kernels import (
+from smt.kernels import (
     SquarSinExp,
     PowExp,
     Matern52,
