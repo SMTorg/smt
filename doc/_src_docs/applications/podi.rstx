@@ -151,11 +151,11 @@ Usage
 -----
 Example 1: global POD case for 1D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_1d_global , 80
 
 Example 2: local POD case for 2D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_2d_local , 80
 
 PODI class API
 --------------

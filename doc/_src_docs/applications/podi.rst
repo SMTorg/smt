@@ -147,14 +147,367 @@ NB: The variance equation takes in consideration that:
 
 - the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(\mathbf{x}_*)`.
 
+
 Usage
 -----
 Example 1: global POD case for 1D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
 
+  import matplotlib.pyplot as plt
+  import numpy as np
+  from smt.applications import PODI
+  from smt.sampling_methods import LHS
+  
+  light_pink = np.array((250, 233, 232)) / 255
+  
+  p = 100
+  t = np.linspace(-1, 1, p)
+  n_modes_test = 10
+  
+  def function_test_1d(x, t, n_modes_test, p):
+      import numpy as np  # Note: only required by SMT doc testing toolchain
+  
+      def cos_coeff(i: int, x: np.ndarray):
+          a = 2 * i % 2 - 1
+          return a * x[:, 0] * np.cos(i * x[:, 0])
+  
+      def Legendre(i: int, t: np.ndarray):
+          from scipy import special
+  
+          return special.legendre(i)(t)
+  
+      def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
+          """To perform the  Gram-Schmidt's algorithm."""
+  
+          basis = np.zeros_like(input_array)
+          for i in range(len(input_array)):
+              basis[i] = input_array[i]
+              for j in range(i):
+                  basis[i] -= (
+                      np.dot(input_array[i], basis[j])
+                      / np.dot(basis[j], basis[j])
+                      * basis[j]
+                  )
+              basis[i] /= np.linalg.norm(basis[i])
+          return basis
+  
+      u0 = np.zeros((p, 1))
+  
+      alpha = np.zeros((x.shape[0], n_modes_test))
+      for i in range(n_modes_test):
+          alpha[:, i] = cos_coeff(i, x)
+  
+      V_init = np.zeros((p, n_modes_test))
+      for i in range(n_modes_test):
+          V_init[:, i] = Legendre(i, t)
+  
+      V = gram_schmidt(V_init.T).T
+      database = u0 + np.dot(V, alpha.T)
+  
+      return database
+  
+  seed_sampling = 42
+  xlimits = np.array([[0, 4]])
+  sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+  
+  nt = 40
+  xt = sampling(nt)
+  
+  nv = 50
+  xv = sampling(nv)
+  
+  x = np.concatenate((xt, xv))
+  dbfull = function_test_1d(x, t, n_modes_test, p)
+  
+  # Training data
+  dbt = dbfull[:, :nt]
+  
+  # Validation data
+  dbv = dbfull[:, nt:]
+  
+  podi = PODI()
+  seed_pod = 42
+  podi.compute_pod(dbt, tol=0.9999, seed=seed_pod)
+  podi.set_training_values(xt)
+  podi.train()
+  
+  values = podi.predict_values(xv)
+  variances = podi.predict_variances(xv)
+  
+  # computing the POD errors:
+  # [max_interp_error, max_proj_error, max_total_error] = PODI.compute_pod_errors(xt = xt, database = dbt)
+  # print("interpolation error: ", max_interp_error)
+  # print("projection error: ", max_proj_error)
+  # print("total error: ", max_total_error)
+  
+  # Choosing a value from the validation inputs
+  i = nv // 2
+  
+  diff = dbv[:, i] - values[:, i]
+  rms_error = np.sqrt(np.mean(diff**2))
+  plt.figure(figsize=(8, 5))
+  light_pink = np.array((250, 233, 232)) / 255
+  plt.fill_between(
+      np.ravel(t),
+      np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
+      np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
+      color=light_pink,
+      label="confiance interval (99%)",
+  )
+  plt.scatter(
+      t,
+      values[:, i],
+      color="r",
+      marker="x",
+      s=15,
+      alpha=1.0,
+      label="prediction (mean)",
+  )
+  plt.scatter(
+      t,
+      dbv[:, i],
+      color="b",
+      marker="*",
+      s=5,
+      alpha=1.0,
+      label="reference",
+  )
+  plt.plot([], [], color="w", label="rms = " + str(round(rms_error, 9)))
+  
+  ax = plt.gca()
+  ax.axes.xaxis.set_visible(False)
+  
+  plt.ylabel("u(x = " + str(xv[i, 0])[:4] + ")")
+  plt.title("Estimation of u at x = " + str(xv[i, 0])[:4])
+  plt.legend()
+  plt.show()
+  
+.. figure:: podi_Test_run_podi_example_1d_global.png
+  :scale: 80 %
+  :align: center
 
 Example 2: local POD case for 2D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+  import matplotlib.pyplot as plt
+  import numpy as np
+  from smt.applications import PODI
+  from smt.sampling_methods import LHS
+  
+  p = 100
+  y = np.linspace(-1, 1, p)
+  n_modes_test = 10
+  
+  def function_test_2d_local(x, y, n_modes_test, p):
+      import numpy as np  # Note: only required by SMT doc testing toolchain
+  
+      def cos_coeff_nd(i: int, x: np.ndarray):
+          a = 2 * i % 2 - 1
+          return a * sum(x.T) * np.cos(i * sum(x.T))
+  
+      def Legendre(i: int, y: np.ndarray):
+          from scipy import special
+  
+          return special.legendre(i)(y)
+  
+      def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
+          """To perform the  Gram-Schmidt's algorithm."""
+  
+          basis = np.zeros_like(input_array)
+          for i in range(len(input_array)):
+              basis[i] = input_array[i]
+              for j in range(i):
+                  basis[i] -= (
+                      np.dot(input_array[i], basis[j])
+                      / np.dot(basis[j], basis[j])
+                      * basis[j]
+                  )
+              basis[i] /= np.linalg.norm(basis[i])
+          return basis
+  
+      u0 = np.zeros((p, 1))
+  
+      alpha = np.zeros((x.shape[0], n_modes_test))
+      for i in range(n_modes_test):
+          alpha[:, i] = cos_coeff_nd(i, x)
+  
+      V_init = np.zeros((p, n_modes_test))
+      for i in range(n_modes_test):
+          V_init[:, i] = Legendre(i, y)
+  
+      V = gram_schmidt(V_init.T).T
+      database = u0 + np.dot(V, alpha.T)
+  
+      return database
+  
+  seed = 42
+  xlimits = [[0, 1], [0, 4]]
+  sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=seed)
+  sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=seed + 1)
+  
+  nt1 = 25
+  nt2 = 10
+  nt = nt1 * nt2
+  xt1 = sampling_x1(nt1)
+  xt2 = sampling_x2(nt)
+  xt = np.zeros((nt, 2))
+  xt[:, 1] = xt2[:, 0]
+  for i, elt in enumerate(xt1):
+      xt[i * nt2 : (i + 1) * nt2, 0] = elt
+  
+  sampling_new = LHS(xlimits=np.array(xlimits), random_state=seed)
+  
+  nv = 15
+  xv = sampling_new(nv)
+  xv1 = np.atleast_2d(xv[:, 0]).T
+  x = np.concatenate((xt, xv))
+  
+  dbfull = function_test_2d_local(x, y, n_modes_test, p)
+  
+  # Training data
+  dbt = dbfull[:, :nt]
+  
+  # Validation data
+  dbv = dbfull[:, nt:]
+  
+  plt.figure(figsize=(8, 5))
+  axes = plt.gca()
+  axes.tick_params(axis="x", labelsize=14)
+  axes.tick_params(axis="y", labelsize=14)
+  plt.scatter(xt[:, 1], xt[:, 0], marker="x", label="Training points", color="g")
+  plt.scatter(
+      xv[:, 1], xv[:, 0], marker="*", label="Validation points", color="r"
+  )
+  plt.xlabel(r"$x^{(2)}$", fontsize=18)
+  plt.ylabel(r"$x^{(1)}$", fontsize=18)
+  plt.legend(loc="lower left", fontsize=14)
+  
+  tol = 0.9999  # SVD tolerance for each line's POD basis
+  local_pod_bases = []  # list of each line's POD bases
+  n_modes_list = []
+  
+  podi = PODI()
+  for i in range(nt1):
+      db_loc = dbt[:, i * nt2 : (i + 1) * nt2]
+      podi.compute_pod(
+          db_loc, pod_type="global", n_modes=min(db_loc.shape), seed=i
+      )
+      ev_list = podi.get_ev_list()
+  
+      n_modes = PODI.choice_n_modes_tol(ev_list, tol)
+      n_modes_list.append(n_modes)
+  
+      local_basis = podi.get_basis()
+      local_pod_bases.append(local_basis)
+  
+  # Function that choose the 'n_bases' closest bases (closest value of x^(1))
+  # and use 'interp_subspaces' to estimate a new basis
+  n_bases = 10
+  
+  def choose_local_bases(local_pod_bases, n_bases, modes_list, xt1, xv1):
+      import numpy as np
+      from smt.applications import PODI
+  
+      interpolated_bases = []
+      keep_index_list = []
+      max_modes_list = []
+  
+      for value in xv1:
+          sorted_ind = sorted(
+              range(xt1.shape[0]), key=lambda k: abs(xt1[:, 0] - value)[k]
+          )
+          keep_index = sorted_ind[:n_bases]
+          keep_index_list.append(keep_index)
+          input_matrices = []
+          keep_xt1 = []
+          max_modes = max(modes_list[keep_index])
+          max_modes_list.append(max_modes)
+          for i in keep_index:
+              input_matrices.append(local_pod_bases[i][:, :max_modes])
+              keep_xt1.append(xt1[i, 0])
+          basis = PODI.interp_subspaces(
+              xt1=np.atleast_2d(keep_xt1).T,
+              input_matrices=input_matrices,
+              xn1=np.atleast_2d(value),
+              frechet=True,
+              print_global=False,
+          )
+          interpolated_bases.append(basis[0])
+      return interpolated_bases, keep_index_list
+  
+  interpolated_bases, keep_index_list = choose_local_bases(
+      local_pod_bases,
+      n_bases=n_bases,
+      modes_list=np.array(n_modes_list),
+      xt1=xt1,
+      xv1=xv1,
+  )
+  
+  # Choosing a value from the validation inputs
+  i = 0
+  
+  podi = PODI()
+  j = []
+  for ind in keep_index_list[i]:
+      j += list(range(ind * nt2, (ind + 1) * nt2))
+  podi.compute_pod(
+      database=dbt[:, j], pod_type="local", local_basis=interpolated_bases[i]
+  )
+  n_modes = podi.get_n_modes()
+  print(f"{n_modes} modes were kept.")
+  
+  # Choosing the default interp options
+  # Setting the training values
+  podi.set_training_values(xt=np.atleast_2d(xt[j]))
+  
+  # Training the models
+  podi.train()
+  
+  # predicting the desired values with inputs
+  values = podi.predict_values(np.atleast_2d(xv[i]))
+  
+  diff = dbv[:, i] - values[:, 0]
+  
+  rms_error = np.sqrt(np.mean(diff**2))
+  plt.figure(figsize=(8, 5))
+  plt.scatter(
+      y,
+      values,
+      color="r",
+      marker="x",
+      s=15,
+      alpha=1.0,
+      label="prediction (mean)",
+  )
+  plt.scatter(
+      y,
+      dbv[:, i],
+      color="b",
+      marker="*",
+      s=5,
+      alpha=1.0,
+      label="reference",
+  )
+  plt.plot([], [], color="w", label="rmse = " + str(round(rms_error, 5)))
+  
+  ax = plt.gca()
+  ax.axes.xaxis.set_visible(False)
+  
+  plt.ylabel("u(x = " + str(xv[i, 0])[:4] + ")")
+  plt.title(f"Estimation of u at x = ({str(xv[i, 0])[:4]}, {str(xv[i, 1])[:4]})")
+  plt.legend()
+  plt.show()
+  
+::
+
+  8 modes were kept.
+  
+.. figure:: podi_Test_run_podi_example_2d_local.png
+  :scale: 80 %
+  :align: center
+
 
 
 PODI class API
