@@ -240,6 +240,21 @@ class MixedIntegerKrigingModel(KrgBased):
 
     def _initialize(self):
         super()._initialize()
+        declare = self.options.declare
+        declare(
+            "corr",
+            "squar_exp",
+            values=(
+                "pow_exp",
+                "abs_exp",
+                "squar_exp",
+                "squar_sin_exp",
+                "matern52",
+                "matern32",
+            ),
+            desc="Correlation function type",
+            types=(str),
+        )
         self.supports["derivatives"] = False
 
     def set_training_values(self, xt, yt, name=None, is_acting=None):
