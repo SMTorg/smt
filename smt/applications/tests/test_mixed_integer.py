@@ -534,7 +534,7 @@ class TestMixedInteger(unittest.TestCase):
         if HAS_SMTDesignSpace:
             from SMTDesignSpace.design_space import DesignSpace, IntegerVariable
         else:
-            from smt.utils.design_space import HAS_SMTDesignSpace
+            from smt.utils.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
