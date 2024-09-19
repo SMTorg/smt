@@ -238,9 +238,6 @@ class KrgBased(SurrogateModel):
         # initialize kernel or link model with user defined kernel
         if isinstance(self.options["corr"], Kernel):
             if isinstance(self.options["corr"], Operator):
-                print("nbaddition=", self.options["corr"].nbaddition)
-                k_test = _Constant(1 / (self.options["corr"].nbaddition + 1))
-                print(k_test.param)
                 self.corr = self.options["corr"] * _Constant(
                     1 / (self.options["corr"].nbaddition + 1)
                 )
