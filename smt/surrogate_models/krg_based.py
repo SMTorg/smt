@@ -21,7 +21,10 @@ from smt.kernels import (
     Matern52,
     Matern32,
     ActExp,
+	Kernel,
+    Operator,
 )
+from smt.kernels.kernels import _Constant
 from smt.utils.checks import check_support, ensure_2d_array
 from smt.utils.design_space import (
     BaseDesignSpace,
@@ -94,6 +97,7 @@ class KrgBased(SurrogateModel):
                 "matern52",
                 "matern32",
             ),
+            types=(str, Kernel),
             desc="Correlation function type",
         )
         declare(
@@ -229,11 +233,27 @@ class KrgBased(SurrogateModel):
             "squar_sin_exp",
             "matern32",
             "matern52",
-        ]:
+        ] or isinstance(self.options["corr"], Kernel):
             self.options["pow_exp_power"] = 1.0
-        self.corr = self._correlation_class[self.options["corr"]](
-            self.options["theta0"]
-        )
+        # initialize kernel or link model with user defined kernel
+        if isinstance(self.options["corr"], Kernel):
+            if isinstance(self.options["corr"],Operator):
+                print("nbaddition=",self.options["corr"].nbaddition)
+                k_test=_Constant(1/(self.options["corr"].nbaddition+1))
+                print(k_test.param)
+                self.corr = self.options["corr"] * _Constant(1/(self.options["corr"].nbaddition+1))
+            else:
+                self.corr = self.options["corr"]
+            self.options["theta0"] = self.corr.theta
+        elif (
+            type(self.options["corr"]) is str
+            and self.options["corr"] in self._correlation_class
+        ):
+            self.corr = self._correlation_class[self.options["corr"]](
+                self.options["theta0"]
+            )
+        else:
+            raise ValueError("The correlation kernel has not been correctly defined.")
         # Check the pow_exp_power is >0 and <=2
         assert (
             self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
@@ -1616,7 +1636,9 @@ class KrgBased(SurrogateModel):
 
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"] == "squar_sin_exp":
+        if self.options["corr"] == "squar_sin_exp" or isinstance(
+            self.options["corr"], Kernel
+        ):
             dd = 0
         else:
             dd = self._componentwise_distance(
@@ -1798,7 +1820,9 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"] == "squar_sin_exp":
+        if self.options["corr"] == "squar_sin_exp" or isinstance(
+            self.options["corr"], Kernel
+        ):
             dd = 0
         else:
             dd = self._componentwise_distance(
@@ -2279,19 +2303,19 @@ class KrgBased(SurrogateModel):
             n_comp,
             mat_dim,
         )
+        if type(self.options["corr"]) is str:
+            if self.options["corr"] == "squar_sin_exp":
+                if (
+                    self.is_continuous
+                    or self.options["categorical_kernel"] == MixIntKernelType.GOWER
+                ):
+                    self.options["theta0"] *= np.ones(2 * self.n_param)
+                else:
+                    self.n_param += len([self.design_space.is_cat_mask])
+                    self.options["theta0"] *= np.ones(self.n_param)
 
-        if self.options["corr"] == "squar_sin_exp":
-            if (
-                self.is_continuous
-                or self.options["categorical_kernel"] == MixIntKernelType.GOWER
-            ):
-                self.options["theta0"] *= np.ones(2 * self.n_param)
             else:
-                self.n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(self.n_param)
-
-        else:
-            self.options["theta0"] *= np.ones(self.n_param)
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
@@ -2314,7 +2338,14 @@ class KrgBased(SurrogateModel):
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
-                if self.options["corr"] != "squar_sin_exp":
+                if self.options["corr"] in (
+                    "pow_exp",
+                    "abs_exp",
+                    "squar_exp",
+                    "act_exp",
+                    "matern52",
+                    "matern32",
+                ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
                         % (len(self.options["theta0"]), d)
