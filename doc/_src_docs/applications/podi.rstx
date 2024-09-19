@@ -2,16 +2,18 @@ Proper Orthogonal Decomposition + Interpolation (PODI)
 ======================================================
 
 PODI is an application used to predict vectorial outputs.
-It combines Proper Orthogonal Decomposition (POD) and kriging based surrogate models to perform the estimations.
+It combines Proper Orthogonal Decomposition (POD) and Kriging based surrogate models to perform the estimations.
 
 Context
 -------
 
-We consider a problem in which the estimation of a vectorial output :math:`u\in\mathbb{R}^p` is desired.
-This vector depends of an input variable :math:`\mathbf{x}=(\mathbf{x_1},\dots,\mathbf{x_N})\in\mathbb{R}^N` representing the caracteristics of :math:`N` configurations of the problem.
-With :math:`k \in [\![1,N]\!]`, :math:`u(\mathbf{x_k})` corresponds to output values at a specific configuration. It is called a **snapshot**.
+We seek for an approximation of a vector :math:`u(\mathbf{x}) \in \mathbb{R}^p`, with :math:`p>>1` and :math:`\mathbf{x}= \in \mathcal{X} \subset \mathbb{R}^d` an input vector. 
+PODI being a supervised learning approach we assume that a Design of Experiments of size :math:`N` is available, i.e. :math:`u(\mathbf{x_k})` for  :math:`k \in [\![1,N]\!]`.    
+In the model order reduction, a vector :math:`u(\mathbf{x_k})` is called a **snapshot**.
+The PODI application aims at building an approximation :math:`\hat{u}(\mathbf{x})` of :math:`u(\mathbf{x})` for any :math:`\mathbf{x}\in\mathcal{X}`. 
 
-The :math:`N` snapshots are gathered in a database called the **snapshot matrix**:
+
+To construct this approximation, the :math:`N` snapshots are first gathered in a database called the **snapshot matrix**:
 
 .. math ::
 	S=
@@ -28,54 +30,39 @@ Proper Orthogonal Decomposition (POD)
 -------------------------------------
 Global POD
 ----------
-The vectorial output :math:`u` is a vector of dimension :math:`p`. Its global POD is the decomposition of each snapshot:
+The Proper Orthogonal Decomposition of :math:`u` reads, 
 
 .. math ::
 	\begin{equation}\label{e:pod}
-	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x_k)\phi_i
+	u({\mathbf x})\approx \hat{u}({\mathbf{x}}) =u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x)\phi_i
 	\end{equation}
 
 * :math:`u` is decomposed as a sum of :math:`M` modes and :math:`u_0` corresponds to the mean value of :math:`u`.
 
-* each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i` and  a vector :math:`\phi_{i}` of dimension :math:`p`.
+* each mode :math:`i` is defined by a scalar coefficient :math:`\alpha_i`, called generalized coordinate, and  a vector :math:`\phi_{i}` of dimension :math:`p`.
 
-* the :math:`\phi_i` vectors are orthogonal and form the **POD basis**. They are independant of :math:`x` so that the POD basis is global to all the :math:`x_k` inputs.
+* the :math:`\phi_i` vectors are orthogonal and form the **POD basis** :math:`\Phi`. Note that they are independent of :math:`x`, hence the name "global" POD basis. 
 
-We can also define the matricial POD equation:
 
-.. math ::
-	\begin{equation}\label{e:matrixPOD}
-	S=U_0+\Phi A
-	\end{equation}
 
-where :math:`U_0` is composed of the :math:`u_0` vector on each column,
-
-.. math ::
-	A=
-	\begin{bmatrix}
-		\alpha_1( \mathbf{x}_1) & \dots & \alpha_1( \mathbf{x}_N) \\
-		\vdots & \ddots & \vdots \\
-		\alpha_M( \mathbf{x}_1) & \dots & \alpha_M( \mathbf{x}_N) \\
-	\end{bmatrix}
-	\text{, } \Phi=
-	\begin{bmatrix}
-		(\phi_1)_1 & \dots & (\phi_M)_1 \\
-		\vdots & \ddots & \vdots \\
-		(\phi_1)_p & \dots & (\phi_M)_p \\
-	\end{bmatrix}
+In practice, the mean value :math:`u_0` of :math:`u` is not available and will be estimated by the mean value of the :math:`N` snapshots. It can be shown that the basis :math:`\Phi` that leads to the best approximation in the mean square error sense is the singular vector of the matrix :math:`S-u_0`.
+The generalized coordinates :math:`\alpha_i(\mathbf{x}), i = 1,\cdots,M` will be interpolated by GP.  
 
 Local POD
 ---------
-In the local POD, the :math:`\phi_{i}` vectors do depend of each input :math:`x_k`.
-To be more precise, each input is composed of :math:`l` elements: :math:`x_k = (x^{(1)}_k,\dots,x^{(l)}_k)`, the :math:`\phi_{i}` vectors depend of one of them, noted :math:`x^{(j)}_k`.
-With :math:`j \in [\![1,l]\!]`.
 
-The local POD equation is:
+Local POD starts by assuming that the input vector :math:`\mathbf{x}` can be splitted into two subsets of variables i.e. :math:`\mathbf{x}=\left\lbrace \mathbf{x_1},\mathbf{x_2}\right\rbrace`. The spliting is not automatic and left to the user.
+Then, the local POD approximation reads
 
 .. math ::
 	\begin{equation}\label{e:local_pod}
-	u({\mathbf x_k})=u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf x_k)\phi_i(x^{(j)}_k)
+	u({\mathbf x})\approx u_0 + \sum_{i=1}^{M} \alpha_i(\mathbf{x_1},\mathbf{x_2})\phi_i(\mathbf{x_1})
 	\end{equation}
+
+where :math:`\phi_i` is the local POD basis at input point :math:`\mathbf{x_1}`. In practice this POD basis must be approximated by interpolation on the Grassmann manifold of a database of local POD bases. Hence this approach further assumes that a DoE of local POD bases is provided. More information on this interpolation can be found in ref [1]. The generalized coordinates :math:`\alpha_i(\mathbf{x_1},\mathbf{x_2})` are interpolated by GPs as for the global POD case. 
+
+[1] Porrello, C., Dubreuil, S., and Farhat, C. Bayesian framework with projection-based model order reduction for efficient global optimization. In AIAA AVIATION FORUM AND ASCEND 2024 (2024)
+
 
 Singular Values Decomposition (SVD)
 -------------------------------------
@@ -103,7 +90,7 @@ If :math:`m` modes are kept, their explained variance :math:`EV_m` is:
 
 .. math ::
 	\begin{equation}\label{e:ev_m}
-	EV_m=\frac{\sum_{i=1}^{m} \sigma_i}{\sum_{i=1}^{N} \sigma_i}
+	EV_m=\frac{\sum_{i=1}^{m} \sigma_i^2}{\sum_{i=1}^{N} \sigma_i^2}
 	\end{equation}
 
 The number of kept modes is defined by a tolerance :math:`\eta \in ]0,1]` that represents the minimum variance we desire to explain during the SVD:
@@ -126,7 +113,7 @@ Use of Surrogate models
 
 To compute :math:`u` at a new value :math:`\mathbf{x}_*`, the values of :math:`\alpha_i(\mathbf{x}_*)` at each mode :math:`i` are needed.
 
-To estimate them, **kriging based surrogate models** are used:
+To estimate them, **Kriging based surrogate models** are used:
 
 
 .. math ::
@@ -164,11 +151,11 @@ Usage
 -----
 Example 1: global POD case for 1D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_1d_global , 80
+
 
 Example 2: local POD case for 2D function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. embed-test-print-plot :: smt.applications.tests.test_podi , Test , run_podi_example_2d_local , 80
+
 
 PODI class API
 --------------
