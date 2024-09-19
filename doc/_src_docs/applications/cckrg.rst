@@ -62,8 +62,9 @@ Usage
       sm.train(active_coop_comp, comp_var)
   
   # Prediction as for ordinary Kriging
-  print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-  print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+  xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
+  print(sm.predict_values(xpoint))
+  print(sm.predict_variances(xpoint))
   
 ::
 
@@ -81,7 +82,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1378100
+     Training - done. Time (sec):  0.1147861
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -96,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1171367
+     Training - done. Time (sec):  0.1003253
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -111,7 +112,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1657698
+     Training - done. Time (sec):  0.1636684
   ___________________________________________________________________________
      
    Evaluation
@@ -123,8 +124,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[8.80431122]]
-  [[414.80125587]]
+  [[5.01799698]]
+  [[5.74486667]]
   
 
 Options
@@ -245,6 +246,11 @@ Options
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
      -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None

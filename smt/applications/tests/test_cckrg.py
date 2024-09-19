@@ -63,8 +63,9 @@ class TestCCKRG(SMTestCase):
             sm.train(active_coop_comp, comp_var)
 
         # Prediction as for ordinary Kriging
-        print(sm.predict_values(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
-        print(sm.predict_variances(np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])))
+        xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
+        print(sm.predict_values(xpoint))
+        print(sm.predict_variances(xpoint))
 
     # run scripts are used in documentation as documentation is not always rebuild
     # make a test run by pytest to test the run scripts
