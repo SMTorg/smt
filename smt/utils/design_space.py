@@ -9,7 +9,7 @@ from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union
 
 try:
-    from SMTDesignSpace import BaseDesignSpace
+    from SMTDesignSpace.design_space import BaseDesignSpace
 
     HAS_SMTDesignSpace = True
     HAS_CONFIG_SPACE = True

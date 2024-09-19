@@ -12,6 +12,7 @@ from smt.sampling_methods import LHS
 
 from smt.utils.design_space import HAS_SMTDesignSpace
 
+
 if HAS_SMTDesignSpace:
     from SMTDesignSpace import design_space as ds
     from SMTDesignSpace.design_space import (
