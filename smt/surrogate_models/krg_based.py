@@ -1795,10 +1795,7 @@ class KrgBased(SurrogateModel):
             # Compute the correlation function
             r = self.corr(d).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
-        if is_ri:
-            C = self.optimal_par["C"]
-        else:
-            C = self.optimal_par["C_noisy"]
+        C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
