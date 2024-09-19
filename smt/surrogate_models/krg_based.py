@@ -21,7 +21,7 @@ from smt.kernels import (
     Matern52,
     Matern32,
     ActExp,
-	Kernel,
+    Kernel,
     Operator,
 )
 from smt.kernels.kernels import _Constant
@@ -237,11 +237,13 @@ class KrgBased(SurrogateModel):
             self.options["pow_exp_power"] = 1.0
         # initialize kernel or link model with user defined kernel
         if isinstance(self.options["corr"], Kernel):
-            if isinstance(self.options["corr"],Operator):
-                print("nbaddition=",self.options["corr"].nbaddition)
-                k_test=_Constant(1/(self.options["corr"].nbaddition+1))
+            if isinstance(self.options["corr"], Operator):
+                print("nbaddition=", self.options["corr"].nbaddition)
+                k_test = _Constant(1 / (self.options["corr"].nbaddition + 1))
                 print(k_test.param)
-                self.corr = self.options["corr"] * _Constant(1/(self.options["corr"].nbaddition+1))
+                self.corr = self.options["corr"] * _Constant(
+                    1 / (self.options["corr"].nbaddition + 1)
+                )
             else:
                 self.corr = self.options["corr"]
             self.options["theta0"] = self.corr.theta
