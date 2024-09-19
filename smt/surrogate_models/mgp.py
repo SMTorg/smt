@@ -152,7 +152,9 @@ class MGP(KrgBased):
 
         return MSE, dy, dMSE
 
-    def _predict_variances(self, x: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, x: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Predict the variance of a specific point
 
