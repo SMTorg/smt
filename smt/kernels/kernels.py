@@ -527,7 +527,6 @@ class ActExp(Kernel):
 
         if derivative_params is not None:
             raise ValueError("Jacobians are not available for this correlation kernel")
-        print(r)
         return r
 
 
