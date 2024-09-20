@@ -200,6 +200,9 @@ class KrgBased(SurrogateModel):
             desc="definition of the (hierarchical) design space: "
             "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
+        declare(
+            "is_ri", False, types=bool, desc="activate reinterpolation for noisy cases"
+        )
         self.options.declare(
             "random_state",
             default=41,
@@ -932,8 +935,10 @@ class KrgBased(SurrogateModel):
         nugget = self.options["nugget"]
         # Nugget to ensure that the Cholesky decomposition can be performed
         if self.options["eval_noise"]:
-            nugget = 100.0 * np.finfo(np.double).eps
-
+            if self.options["is_ri"]:
+                nugget = 100.0 * np.finfo(np.double).eps
+            else:
+                nugget = 0
         noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
@@ -1007,10 +1012,14 @@ class KrgBased(SurrogateModel):
                 )
                 return reduced_likelihood_function_value, par
 
-        R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
-        R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-        R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-        R = np.eye(self.nt) * (1.0 + nugget)
+        if self.options["is_ri"]:
+            R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
+            R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+            R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+            R = np.eye(self.nt) * (1.0 + nugget)
+        else:
+            R = np.eye(self.nt) * (1.0 + nugget + noise)
+
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -1029,45 +1038,105 @@ class KrgBased(SurrogateModel):
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
-        # Computation of R_ri for the reinterpolation case
-        C_inv = np.linalg.inv(C)
-        R_inv = np.dot(C_inv.T, C_inv)
-        R_ri = R_noisy @ R_inv @ R_noisy
-        par["C"] = C
+        if self.options["is_ri"]:
+            # Computation of R_ri for the reinterpolation case
+            C_inv = np.linalg.inv(C)
+            R_inv = np.dot(C_inv.T, C_inv)
+            R_ri = R_noisy @ R_inv @ R_noisy
+            par["C"] = C
 
-        par["sigma2"] = None
-        par["sigma2_ri"] = None
-        _, _, sigma2_ri = self._compute_sigma2(
-            R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
-        )
-        if sigma2_ri is not None:
-            par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
+            par["sigma2"] = None
+            par["sigma2_ri"] = None
+            _, _, sigma2_ri = self._compute_sigma2(
+                R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
+            )
+            if sigma2_ri is not None:
+                par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
 
-        reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
-            R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
-        )
-        if sigma2 is not None:
-            par["sigma2"] = sigma2 * self.y_std**2.0
+            reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
+                R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
+            )
+            if sigma2 is not None:
+                par["sigma2"] = sigma2 * self.y_std**2.0
 
-        if self.name in ["MGP"]:
-            reduced_likelihood_function_value += self._reduced_log_prior(theta)
+            if self.name in ["MGP"]:
+                reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
-        # A particular case when f_min_cobyla fail
-        if (self.best_iteration_fail is not None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            if reduced_likelihood_function_value > self.best_iteration_fail:
+            # A particular case when f_min_cobyla fail
+            if (self.best_iteration_fail is not None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                if reduced_likelihood_function_value > self.best_iteration_fail:
+                    self.best_iteration_fail = reduced_likelihood_function_value
+                    self._thetaMemory = np.array(tmp_var)
+
+            elif (self.best_iteration_fail is None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
                 self.best_iteration_fail = reduced_likelihood_function_value
                 self._thetaMemory = np.array(tmp_var)
+            if reduced_likelihood_function_value > 1e15:
+                reduced_likelihood_function_value = 1e15
+            return reduced_likelihood_function_value, par
+        else:
+            # Get generalized least squared solution
+            Ft = linalg.solve_triangular(C, self.F, lower=True)
+            Q, G = linalg.qr(Ft, mode="economic")
+            sv = linalg.svd(G, compute_uv=False)
+            rcondG = sv[-1] / sv[0]
+            if rcondG < 1e-10:
+                # Check F
+                sv = linalg.svd(self.F, compute_uv=False)
+                condF = sv[0] / sv[-1]
+                if condF > 1e15:
+                    raise Exception(
+                        "F is too ill conditioned. Poor combination "
+                        "of regression model and observations."
+                    )
 
-        elif (self.best_iteration_fail is None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            self.best_iteration_fail = reduced_likelihood_function_value
-            self._thetaMemory = np.array(tmp_var)
-        if reduced_likelihood_function_value > 1e15:
-            reduced_likelihood_function_value = 1e15
-        return reduced_likelihood_function_value, par
+                else:
+                    # Ft is too ill conditioned, get out (try different theta)
+                    return reduced_likelihood_function_value, par
+
+            Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
+            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
+            rho = Yt - np.dot(Ft, beta)
+
+            # The determinant of R is equal to the squared product of the diagonal
+            # elements of its Cholesky decomposition C
+            detR = (np.diag(C) ** (2.0 / self.nt)).prod()
+
+            sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
+            reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
+                sigma2.sum()
+            ) - self.nt * np.log10(detR)
+            par["sigma2"] = sigma2 * self.y_std**2.0
+            par["beta"] = beta
+            par["gamma"] = linalg.solve_triangular(C.T, rho)
+            par["C"] = C
+            par["Ft"] = Ft
+            par["G"] = G
+            par["Q"] = Q
+
+            if self.name in ["MGP"]:
+                reduced_likelihood_function_value += self._reduced_log_prior(theta)
+
+            # A particular case when f_min_cobyla fail
+            if (self.best_iteration_fail is not None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                if reduced_likelihood_function_value > self.best_iteration_fail:
+                    self.best_iteration_fail = reduced_likelihood_function_value
+                    self._thetaMemory = np.array(tmp_var)
+
+            elif (self.best_iteration_fail is None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                self.best_iteration_fail = reduced_likelihood_function_value
+                self._thetaMemory = np.array(tmp_var)
+            if reduced_likelihood_function_value > 1e15:
+                reduced_likelihood_function_value = 1e15
+            return reduced_likelihood_function_value, par
 
     def _compute_sigma2(
         self, R, reduced_likelihood_function_value, par, p, q, is_ri=False
@@ -1747,10 +1816,7 @@ class KrgBased(SurrogateModel):
             # Compute the correlation function
             r = self.corr(d).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
-        if is_ri:
-            C = self.optimal_par["C"]
-        else:
-            C = self.optimal_par["C_noisy"]
+        C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
