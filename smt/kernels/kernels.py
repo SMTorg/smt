@@ -31,7 +31,7 @@ class Kernel(metaclass=ABCMeta):
             return Product(self, k)
 
     def __eq__(self, k):
-        if type(self) == type(k):
+        if type(self) is type(k):
             return np.all(self.theta, k.theta)
         else:
             return False
@@ -698,7 +698,6 @@ class Product(Operator):
                 d, grad_ind, hess_ind, derivative_params
             )
         if derivative_params is not None:  # computation of the spatial derivatives
-            dx = derivative_params["dx"]
             return self.corr1(d, grad_ind, hess_ind, derivative_params) * self.corr2(
                 d, grad_ind, hess_ind, None
             ) + self.corr1(d, grad_ind, hess_ind, None) * self.corr2(
