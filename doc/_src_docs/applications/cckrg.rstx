@@ -1,0 +1,25 @@
+.. _cckrg-ref-label:
+
+Cooperative Components Kriging (CoopCompKRG)
+================================
+
+Cooperative Components Kriging is a way of fitting a high-dimensional ordinary Kriging model by sequential lower-dimensional component model fits. For each component, only the associated hyperparameters are optimized. All other hyperparameters are set to a so-called cooperative context vector, which contains the current best hyperparameter values.
+
+This application contains the single component model fits. The loop over the components has to be implemented individually, as shown in the usage example below.
+
+The cooperative components model fit was developed as part of a high-dimensional surrogate-based optimization process. It is inspired by distributed multi-disciplinary design optimization (MDO) approaches and the cooperative EGO by Zhan et al. [1]_.
+
+
+References
+----------
+.. [1] Zhan, D., Wu, J., Xing, H. et al., A cooperative approach to efficient global optimization. J Glob Optim 88, 327–357 (2024).
+
+Usage
+-----
+
+.. embed-test-print :: smt.applications.tests.test_cckrg , TestCCKRG , run_cckrg_example
+
+Options
+-------
+
+.. embed-options-table :: smt.applications , CoopCompKRG , options
