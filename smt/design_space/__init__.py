@@ -1,6 +1,7 @@
 import importlib
-spec = importlib.util.find_spec('SMTDesignSpace')
-if spec : 
+
+spec = importlib.util.find_spec("SMTDesignSpace")
+if spec:
     HAS_SMTDesignSpace = True
     HAS_CONFIG_SPACE = True
     HAS_ADSG = True
@@ -36,11 +37,13 @@ else:
         BaseDesignSpace,
     )
 
-if HAS_SMTDesignSpace : 
+if HAS_SMTDesignSpace:
     from SMTDesignSpace.design_space import ArchDesignSpaceGraph
-else :
-    class ArchDesignSpaceGraph : 
+else:
+
+    class ArchDesignSpaceGraph:
         pass
+
 
 __all__ = [
     "HAS_SMTDesignSpace",
