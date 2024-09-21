@@ -4,6 +4,29 @@ Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 This package is distributed under New BSD license.
 """
 
+import importlib
+
+spec = importlib.util.find_spec("SMTDesignSpace")
+if spec:
+    HAS_SMTDesignSpace = True
+    HAS_CONFIG_SPACE = True
+    HAS_ADSG = True
+else:
+    HAS_SMTDesignSpace = False
+    HAS_CONFIG_SPACE = False
+    HAS_ADSG = False
+spec = importlib.util.find_spec("adsg-core")
+if spec:
+    HAS_ADSG = True
+else:
+    HAS_ADSG = False
+spec = importlib.util.find_spec("configspace")
+if spec:
+    HAS_CONFIG_SPACE = True
+else:
+    HAS_CONFIG_SPACE = False
+
+
 import numpy as np
 from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union

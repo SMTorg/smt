@@ -2,9 +2,10 @@ import unittest
 import os
 
 os.environ["FORCE_RUN_LOCAL"] = "1"
+from test_design_space import Test  # Import the existing test class
 
 
-class TestDSLocal(unittest.TestCase):
+class TestDSLocal(Test):
     def test_design_variables(self):
         os.environ["FORCE_RUN_LOCAL"] = "1"
         # Load all tests from test_design_space.py
