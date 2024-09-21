@@ -8,17 +8,9 @@ import numpy as np
 from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union
 
-try:
-    from SMTDesignSpace.design_space import BaseDesignSpace
+from smt.design_space import BaseDesignSpace,HAS_SMTDesignSpace,HAS_CONFIG_SPACE, HAS_ADSG
 
-    HAS_SMTDesignSpace = True
-    HAS_CONFIG_SPACE = True
-    HAS_ADSG = True
-except ImportError:
-    HAS_SMTDesignSpace = False
-    HAS_CONFIG_SPACE = False
-    HAS_ADSG = False
-
+  
 
 class Configuration:
     pass
