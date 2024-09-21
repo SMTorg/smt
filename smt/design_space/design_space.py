@@ -5,6 +5,9 @@ This package is distributed under New BSD license.
 """
 
 import importlib
+import numpy as np
+from smt.sampling_methods.lhs import LHS
+from typing import List, Optional, Sequence, Tuple, Union
 
 spec = importlib.util.find_spec("SMTDesignSpace")
 if spec:
@@ -25,11 +28,6 @@ if spec:
     HAS_CONFIG_SPACE = True
 else:
     HAS_CONFIG_SPACE = False
-
-
-import numpy as np
-from smt.sampling_methods.lhs import LHS
-from typing import List, Optional, Sequence, Tuple, Union
 
 
 class Configuration:
