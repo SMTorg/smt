@@ -13,8 +13,6 @@ else:
 
 if HAS_SMTDesignSpace:
     from SMTDesignSpace.design_space import (
-        HAS_CONFIG_SPACE,
-        HAS_ADSG,
         CategoricalVariable,
         DesignSpace,
         BaseDesignSpace,
@@ -26,8 +24,6 @@ if HAS_SMTDesignSpace:
 
 else:
     from smt.design_space.design_space import (
-        HAS_CONFIG_SPACE,
-        HAS_ADSG,
         CategoricalVariable,
         DesignSpace,
         FloatVariable,
