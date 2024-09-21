@@ -16,6 +16,9 @@ from smt.design_space import (
     BaseDesignSpace,
     DesignSpace,
     CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
     ensure_design_space,
 )
 from smt.utils.kriging import MixHrcKernelType
