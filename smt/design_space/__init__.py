@@ -27,8 +27,8 @@ if HAS_SMTDesignSpace:
     )
 
 else:
-    from smt.utils import design_space as ds
-    from smt.utils.design_space import (
+    from smt.design_space import design_space as ds
+    from smt.design_space.design_space import (
         HAS_CONFIG_SPACE,
         HAS_ADSG,
         BaseDesignSpace,
