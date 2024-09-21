@@ -10,24 +10,14 @@ for gaussian process, 2022
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
-else:
-    from smt.utils.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
+from smt.design_space import (
+    OrdinalVariable,
+    FloatVariable,
+    IntegerVariable,
+    DesignSpace,
+    CategoricalVariable,
+)
 
 
 class HierarchicalGoldstein(Problem):

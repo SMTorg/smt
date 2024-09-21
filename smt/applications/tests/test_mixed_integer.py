@@ -17,28 +17,17 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-from smt.utils.design_space import HAS_SMTDesignSpace
+import smt.design_space as ds
+from smt.design_space import (
+    HAS_SMTDesignSpace,
+    HAS_CONFIG_SPACE,
+    DesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+)
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace import design_space as ds
-    from SMTDesignSpace.design_space import (
-        HAS_CONFIG_SPACE,
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
-else:
-    from smt.utils import design_space as ds
-    from smt.utils.design_space import (
-        HAS_CONFIG_SPACE,
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
 
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -489,18 +478,11 @@ class TestMixedInteger(unittest.TestCase):
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
 
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
+        from smt.design_space import (
+            FloatVariable,
+            DesignSpace,
+            CategoricalVariable,
+        )
 
         float_var = FloatVariable(0, 4)
         cat_var = CategoricalVariable(["blue", "red"])

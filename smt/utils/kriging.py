@@ -12,16 +12,10 @@ from pyDOE3 import bbdesign
 from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        CategoricalVariable,
-    )
-else:
-    from smt.utils.design_space import (
-        CategoricalVariable,
-    )
+from smt.design_space import (
+    CategoricalVariable,
+)
 
 USE_NUMBA_JIT = int(os.getenv("USE_NUMBA_JIT", 0))
 prange = range

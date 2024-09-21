@@ -23,20 +23,11 @@ from smt.utils.kernels import (
     ActExp,
 )
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.design_space import HAS_SMTDesignSpace
-
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        CategoricalVariable,
-        BaseDesignSpace,
-        ensure_design_space,
-    )
-else:
-    from smt.utils.design_space import (
-        CategoricalVariable,
-        BaseDesignSpace,
-        ensure_design_space,
-    )
+from smt.design_space import (
+    BaseDesignSpace,
+    CategoricalVariable,
+    ensure_design_space,
+)
 
 from smt.utils.kriging import (
     MixHrcKernelType,

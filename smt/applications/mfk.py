@@ -23,17 +23,10 @@ from smt.surrogate_models.krg_based import (
     MixIntKernelType,
     compute_n_param,
 )
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        ensure_design_space,
-    )
-else:
-    from smt.utils.design_space import (
-        ensure_design_space,
-    )
-
+from smt.design_space import (
+    ensure_design_space,
+)
 
 from smt.utils.kriging import (
     componentwise_distance,

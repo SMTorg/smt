@@ -1,18 +1,11 @@
 import numpy as np
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        BaseDesignSpace,
-        ensure_design_space,
-    )
-else:
-    from smt.utils.design_space import (
-        BaseDesignSpace,
-        ensure_design_space,
-    )
+from smt.design_space import (
+    BaseDesignSpace,
+    ensure_design_space,
+)
 
 try:
     import egobox as egx

@@ -10,25 +10,14 @@ from .mgp import MGP
 from .sgp import SGP
 
 from .krg_based import MixIntKernelType
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
-else:
-    from smt.utils.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
-
+from smt.design_space import (
+    HAS_SMTDesignSpace,
+    BaseDesignSpace,
+    DesignSpace,
+    CategoricalVariable,
+    ensure_design_space,
+)
 from smt.utils.kriging import MixHrcKernelType
 
 __all__ = [

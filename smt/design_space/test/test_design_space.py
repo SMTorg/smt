@@ -10,35 +10,20 @@ import numpy as np
 
 from smt.sampling_methods import LHS
 
-from smt.utils.design_space import HAS_SMTDesignSpace
+import smt.design_space as ds
+from smt.design_space import (
+    HAS_CONFIG_SPACE,
+    HAS_ADSG,
+    BaseDesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+    DesignSpace,
+)
 
-
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace import design_space as ds
-    from SMTDesignSpace.design_space import (
-        HAS_CONFIG_SPACE,
-        HAS_ADSG,
-        ArchDesignSpaceGraph,
-        BaseDesignSpace,
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
-
-else:
-    from smt.utils import design_space as ds
-    from smt.utils.design_space import (
-        HAS_CONFIG_SPACE,
-        HAS_ADSG,
-        BaseDesignSpace,
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-    )
+if ds.HAS_CONFIG_SPACE:
+    from smt.design_space import ArchDesignSpaceGraph
 
 
 @contextlib.contextmanager

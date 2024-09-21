@@ -32,22 +32,13 @@ from smt.surrogate_models import (
     KRG,
     MixIntKernelType,
 )
-from smt.utils.design_space import HAS_SMTDesignSpace
 
-if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-    )
-else:
-    from smt.utils.design_space import (
-        CategoricalVariable,
-        DesignSpace,
-        FloatVariable,
-        IntegerVariable,
-    )
+from smt.design_space import (
+    DesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+)
 
 
 class TestMFKmixed(unittest.TestCase):
