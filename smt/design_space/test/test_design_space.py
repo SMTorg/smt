@@ -9,20 +9,35 @@ import unittest
 import numpy as np
 
 from smt.sampling_methods import LHS
+import os
 
-import smt.design_space as ds
-from smt.design_space import (
-    HAS_CONFIG_SPACE,
-    HAS_ADSG,
-    HAS_SMTDesignSpace,
-    BaseDesignSpace,
-    CategoricalVariable,
-    FloatVariable,
-    IntegerVariable,
-    OrdinalVariable,
-    DesignSpace,
-    ArchDesignSpaceGraph,
-)
+if os.getenv("FORCE_RUN_LOCAL"):
+    HAS_ADSG = False
+    HAS_SMTDesignSpace = False
+    HAS_CONFIG_SPACE = False
+    import smt.design_space.design_space as ds
+    from smt.design_space.design_space import (
+        BaseDesignSpace,
+        CategoricalVariable,
+        FloatVariable,
+        IntegerVariable,
+        OrdinalVariable,
+        DesignSpace,
+    )
+else:
+    import smt.design_space as ds
+    from smt.design_space import (
+        HAS_CONFIG_SPACE,
+        HAS_ADSG,
+        HAS_SMTDesignSpace,
+        BaseDesignSpace,
+        CategoricalVariable,
+        FloatVariable,
+        IntegerVariable,
+        OrdinalVariable,
+        DesignSpace,
+        ArchDesignSpaceGraph,
+    )
 
 
 @contextlib.contextmanager
