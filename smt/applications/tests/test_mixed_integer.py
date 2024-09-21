@@ -19,7 +19,6 @@ except ImportError:
 
 import smt.design_space as ds
 from smt.design_space import (
-    HAS_SMTDesignSpace,
     HAS_CONFIG_SPACE,
     DesignSpace,
     CategoricalVariable,
@@ -27,7 +26,6 @@ from smt.design_space import (
     IntegerVariable,
     OrdinalVariable,
 )
-
 
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
@@ -477,7 +475,6 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-
         from smt.design_space import (
             FloatVariable,
             DesignSpace,
@@ -511,12 +508,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
         from smt.surrogate_models import QP
-        from smt.utils.design_space import HAS_SMTDesignSpace
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import DesignSpace, IntegerVariable
-        else:
-            from smt.utils.design_space import DesignSpace, IntegerVariable
+        from smt.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -548,21 +540,12 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import KRG
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+        )
 
         design_space = DesignSpace(
             [
@@ -765,23 +748,13 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-                OrdinalVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-                OrdinalVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            OrdinalVariable,
+        )
 
         ds = DesignSpace(
             [
@@ -826,25 +799,13 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace import design_space as ds
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-                OrdinalVariable,
-            )
-        else:
-            from smt.utils import design_space as ds
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-                OrdinalVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+            OrdinalVariable,
+        )
 
         ds = DesignSpace(
             [
@@ -1139,21 +1100,12 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-                IntegerVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+            IntegerVariable,
+        )
 
         def f_hv(X):
             import numpy as np
@@ -2054,19 +2006,12 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerKrigingModel,
         )
         from smt.surrogate_models import KRG, MixIntKernelType
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+        )
 
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
@@ -2192,19 +2137,12 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerKrigingModel,
         )
         from smt.surrogate_models import KRG, MixIntKernelType
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+        )
 
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
         xt3 = np.array([[2, 1.0], [2, 2.0], [2, 4.0]])
@@ -2328,19 +2266,11 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import KRG, MixIntKernelType
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+        )
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -2465,19 +2395,11 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import KRG, MixIntKernelType
-
-        if HAS_SMTDesignSpace:
-            from SMTDesignSpace.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
-        else:
-            from smt.utils.design_space import (
-                CategoricalVariable,
-                DesignSpace,
-                FloatVariable,
-            )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+        )
 
         xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
         xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
