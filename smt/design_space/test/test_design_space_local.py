@@ -14,6 +14,7 @@ class TestDSLocal(Test):
         # Run the tests
         runner = unittest.TextTestRunner()
         runner.run(suite)
+        del os.environ["FORCE_RUN_LOCAL"]
 
 
 if __name__ == "__main__":
