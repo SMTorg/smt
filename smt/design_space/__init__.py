@@ -1,45 +1,46 @@
-try:
-    from SMTDesignSpace.design_space import BaseDesignSpace
-
+import importlib
+spec = importlib.util.find_spec('SMTDesignSpace')
+if spec : 
     HAS_SMTDesignSpace = True
     HAS_CONFIG_SPACE = True
     HAS_ADSG = True
-except ImportError:
+else:
     HAS_SMTDesignSpace = False
     HAS_CONFIG_SPACE = False
     HAS_ADSG = False
 
 
 if HAS_SMTDesignSpace:
-    from SMTDesignSpace import design_space as ds
     from SMTDesignSpace.design_space import (
         HAS_CONFIG_SPACE,
         HAS_ADSG,
-        ArchDesignSpaceGraph,
-        BaseDesignSpace,
         CategoricalVariable,
         DesignSpace,
+        BaseDesignSpace,
         FloatVariable,
         IntegerVariable,
         OrdinalVariable,
         ensure_design_space,
-        _convert_adsg_to_legacy,
     )
 
 else:
-    from smt.design_space import design_space as ds
     from smt.design_space.design_space import (
         HAS_CONFIG_SPACE,
         HAS_ADSG,
-        BaseDesignSpace,
         CategoricalVariable,
         DesignSpace,
         FloatVariable,
         IntegerVariable,
         OrdinalVariable,
         ensure_design_space,
+        BaseDesignSpace,
     )
 
+if HAS_SMTDesignSpace : 
+    from SMTDesignSpace.design_space import ArchDesignSpaceGraph
+else :
+    class ArchDesignSpaceGraph : 
+        pass
 
 __all__ = [
     "HAS_SMTDesignSpace",

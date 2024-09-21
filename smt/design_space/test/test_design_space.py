@@ -14,16 +14,15 @@ import smt.design_space as ds
 from smt.design_space import (
     HAS_CONFIG_SPACE,
     HAS_ADSG,
+    HAS_SMTDesignSpace,
     BaseDesignSpace,
     CategoricalVariable,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
     DesignSpace,
+    ArchDesignSpaceGraph,
 )
-
-if ds.HAS_CONFIG_SPACE:
-    from smt.design_space import ArchDesignSpaceGraph
 
 
 @contextlib.contextmanager
@@ -688,7 +687,7 @@ class Test(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        not (HAS_CONFIG_SPACE and HAS_ADSG),
+        not (HAS_SMTDesignSpace),
         "Architecture Design Space Graph or ConfigSpace not installed.",
     )
     def test_adsg_to_legacy(self):

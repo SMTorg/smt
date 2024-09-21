@@ -12,14 +12,11 @@ from .sgp import SGP
 from .krg_based import MixIntKernelType
 
 from smt.design_space import (
-    HAS_SMTDesignSpace,
-    BaseDesignSpace,
     DesignSpace,
     CategoricalVariable,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
-    ensure_design_space,
 )
 from smt.utils.kriging import MixHrcKernelType
 
