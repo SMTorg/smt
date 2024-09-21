@@ -7,10 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union
-
-from smt.design_space import BaseDesignSpace,HAS_SMTDesignSpace,HAS_CONFIG_SPACE, HAS_ADSG
-
-  
+ 
 
 class Configuration:
     pass
