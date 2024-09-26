@@ -23,6 +23,7 @@ SMT has been developed thanks to contributions from:
 * Jasper Bussemaker
 * Julien Schueller
 * Laurent Wilkens
+* Lisa Pretsch
 * Lucas Alber
 * Maël Tremouille
 * Mostafa Meliani
@@ -38,6 +39,7 @@ SMT has been developed thanks to contributions from:
 * Robert Wenink
 * Ruben Conde
 * Steven Berguin
+* Sylvain Dubreuil
 * Vincent Drouet
 * Yingqian Liao
 * Zhou Tianxun
