@@ -34,10 +34,10 @@ else:
     )
 
 if HAS_SMTDesignSpace:
-    from SMTDesignSpace.design_space import ArchDesignSpaceGraph
+    from SMTDesignSpace.design_space import DesignSpaceGraph
 else:
 
-    class ArchDesignSpaceGraph:
+    class DesignSpaceGraph:
         pass
 
 
