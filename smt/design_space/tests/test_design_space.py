@@ -23,7 +23,7 @@ if os.getenv("FORCE_RUN_LOCAL"):
         IntegerVariable,
         OrdinalVariable,
         DesignSpace,
-        ArchDesignSpaceGraph,
+        DesignSpaceGraph,
     )
 else:
     HAS_ADSG = False
@@ -835,7 +835,7 @@ class Test(unittest.TestCase):
             ),
             design_space.is_conditionally_acting,
         )
-        design_space2 = ArchDesignSpaceGraph(adsg=adsg)
+        design_space2 = DesignSpaceGraph(adsg=adsg)
         np.testing.assert_array_equal(
             np.array(
                 [
