@@ -14,7 +14,7 @@ import numpy as np
 
 from smt.sampling_methods.lhs import LHS
 from smt.surrogate_models import KRG, MGP
-from smt.utils.kernels import (
+from smt.kernels import (
     ActExp,
     Matern32,
     Matern52,
