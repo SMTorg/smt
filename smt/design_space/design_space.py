@@ -9,7 +9,7 @@ import numpy as np
 from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union
 
-spec = importlib.util.find_spec("SMTDesignSpace")
+spec = importlib.util.find_spec("smt_design_space")
 if spec:
     HAS_SMTDesignSpace = True
     HAS_CONFIG_SPACE = True
@@ -639,7 +639,9 @@ VarValueType = Union[int, str, List[Union[int, str]]]
 
 
 def raise_config_space():
-    raise RuntimeError("Dependencies are not installed, please install SMTDesignSpace.")
+    raise RuntimeError(
+        "Dependencies are not installed, please install smt_design_space."
+    )
 
 
 class DesignSpace(BaseDesignSpace):

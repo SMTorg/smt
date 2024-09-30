@@ -707,7 +707,7 @@ class Test(unittest.TestCase):
     )
     def test_adsg_to_legacy(self):
         from adsg_core import BasicADSG, NamedNode, DesignVariableNode
-        from SMTDesignSpace.design_space import ensure_design_space
+        from smt_design_space.design_space import ensure_design_space
         from adsg_core import GraphProcessor
 
         # Create the ADSG
