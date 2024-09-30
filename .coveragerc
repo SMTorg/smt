@@ -12,6 +12,3 @@ omit =
 	*/examples/*
 	*/__init__.py
 	*/setup.py
- 
-[report]
-show_missing = True

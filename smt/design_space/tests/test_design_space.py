@@ -11,7 +11,7 @@ import numpy as np
 from smt.sampling_methods import LHS
 import os
 
-if os.getenv("FORCE_RUN_LOCAL"):
+if os.getenv("FORCE_RUN_PLAIN_BASICS"):
     import smt.design_space as ds
     from smt.design_space import (
         HAS_CONFIG_SPACE,
