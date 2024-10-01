@@ -15,7 +15,7 @@ from smt.sampling_methods import LHS
 #from smt.utils.misc import compute_rms_error
 #from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-from mfck import MFCK
+from smt.applications.mfck import MFCK
 
 print_output = False
 
@@ -44,23 +44,18 @@ class TestMFKOneFidelity(SMTestCase):
             #yv = prob(xv)
             
             sm1 = MFCK(
-                theta0=[2.],
-                theta_bounds = [1e-1, 5],
+                theta0=[1.],
+                theta_bounds = [1e-1, 13],
                 hyper_opt='Cobyla'
             )
             
-            
-            doe = np.vstack([np.hstack([xt, np.zeros((xt.shape[0],1))])])
-            doe_response = np.vstack([yt[:,0].reshape(-1,1)])
-            
-            sm1.set_training_values(doe, doe_response)
-            
+            sm1.set_training_values(xt, yt[:,0])
             sm1.train()
             
             mean, cov = sm1.predict(xt)
             
-            num = np.linalg.norm( mean - doe_response)
-            den = np.linalg.norm(doe_response)
+            num = np.linalg.norm( mean[:,0] - yt[:,0])
+            den = np.linalg.norm(yt[:,0])
             
             t_error = num / den
             
@@ -72,7 +67,7 @@ class TestMFKOneFidelity(SMTestCase):
         import numpy as np
 
         from smt.applications.mfk import NestedLHS
-        from mfck import MFCK
+        from smt.applications.mfck import MFCK
         
         # Consider only 1 fidelity level
         # high fidelity model
@@ -91,19 +86,14 @@ class TestMFKOneFidelity(SMTestCase):
 
         sm1 = MFCK(theta0=[1.0], hyper_opt='Cobyla')
         
-        doe = np.vstack([np.hstack([xt_e, np.zeros((xt_e.shape[0],1))])])
-        doe_response = np.vstack([yt_e])
-        
-        
         # High-fidelity dataset without name
-        sm1.set_training_values(doe, doe_response)
-        
+        sm1.set_training_values(xt_e, yt_e)
         
         # Train the model
         sm1.train()
 
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
-
+        
         # Query the outputs
         y, cov = sm1.predict(x)
         #_mse = sm.predict_variances(x)
