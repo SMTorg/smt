@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased

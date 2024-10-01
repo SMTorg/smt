@@ -39,12 +39,13 @@ Install the test runner: ``pip install pytest`` then run: ``pytest``
 Building the documentation
 --------------------------
 
-Users can read the docs online at ``smt.readthedocs.io``, but developers who contribute to the docs should build the docs locally to view the output.
+Users can read the docs online at `smt.readthedocs.io <https://smt.readthedocs.io>`_, but developers who contribute to the docs should build the docs locally to view the output.
 This is especially necessary because most of the docs in SMT contain code, code print output, and plots that are dynamically generated and embedded during the doc building process.
 The docs are written using reStructuredText, and there are a few custom directives we have added for this embedding of dynamically-generated content.
 
-First, install *sphinx_auto_embed* by running ``pip install git+https://github.com/hwangjt/sphinx_auto_embed.git``.
+First, install the required dependencies to build the doc with: ``pip install -r doc/requirements.txt``
 
-To build the docs, the developer should go to the ``doc`` directory and run ``sphinx_auto_embed`` and ``make html`` to build the html docs.
+Then to generate the doc, the developer should go to the ``doc`` directory and run ``sphinx_auto_embed``, then ``make html``.
+
 This is a 2-step process because ``sphinx_auto_embed`` converts rstx files to rst files and ``make html`` generates the html docs from the rst files.
-The landing page for the built docs can then be found at ``doc/_build/html/index.html``, and this is the same page that readers first see when they load ``smt.readthedocs.io``.
+The landing page for the built docs can then be found at ``doc/_build/html/index.html``.

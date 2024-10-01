@@ -4,22 +4,16 @@ Surrogate modeling methods
 SMT contains the surrogate modeling methods listed below.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :titlesonly:
 
+   surrogate_models/ls
+   surrogate_models/qp
+   surrogate_models/gpr
    surrogate_models/rbf
    surrogate_models/idw
    surrogate_models/rmts
-   surrogate_models/ls
-   surrogate_models/qp
-   surrogate_models/krg
-   surrogate_models/kpls
-   surrogate_models/kplsk
-   surrogate_models/gekpls
-   surrogate_models/gpx
    surrogate_models/genn
-   surrogate_models/mgp
-   surrogate_models/sgp
 
 
 Usage
@@ -27,8 +21,8 @@ Usage
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import RBF
   
@@ -113,6 +107,10 @@ All surrogate modeling methods implement the following API, though some of the f
   .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_output_derivatives
 
   .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variances
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_gradient
 
 
 How to save and load trained surrogate models

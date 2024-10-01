@@ -35,7 +35,7 @@ Several notebooks are available to get up to speed with SMT:
 
 * `General <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_Tutorial.ipynb>`_
 * `Handling of Noise <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_Noise.ipynb>`_
-* `Handling of Mixed Integer variables <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_
+* `Handling of Mixed Integer variables <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_Engineering_applications.ipynb>`_
 * `Efficient Global Optimization application <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_EGO_application.ipynb>`_
 
 Uninstalling

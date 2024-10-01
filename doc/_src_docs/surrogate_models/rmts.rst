@@ -50,7 +50,7 @@ and :math:`\alpha` and :math:`\beta` are regularization coefficients.
 
 In problems with a large number of training points relative to the number of spline coefficients,
 the energy minimization term is not necessary;
-this term can be zero-ed by setting the reg_cons option to zero.
+this term can be zero-ed by setting the ``energy_weight`` option to zero.
 In problems with a small dataset, the energy minimization is necessary.
 When the true function has high curvature, the energy minimization can be counterproductive
 in the regions of high curvature.
@@ -85,7 +85,13 @@ The number of elements in each dimension is an option that trades off efficiency
 
 In general, RMTB is the better choice when training time is the most important,
 while RMTC is the better choice when accuracy of the interpolant is the most important.
-More details of these methods are given in [1]_.
+
+More details of these methods are given in [1]_. 
+
+Specially with regard to the implementation, the above functions to minimize are multiplied by :math:`\alpha` 
+which does not change the minimum result.
+Then the ``energy_weight`` and ``regularization_weight`` controlling options used below are respectively defined 
+as :math:`\alpha'=\alpha` and :math:`\beta'=\alpha\beta`. See the section `3.5 - Summary and implementation` in [1]_ for further details.
 
 .. [1] Hwang, J. T., & Martins, J. R. (2018). A fast-prediction surrogate model for large datasets. Aerospace Science and Technology, 75, 74-87.
 
@@ -94,8 +100,8 @@ Usage (RMTB)
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import RMTB
   
@@ -143,28 +149,28 @@ Usage (RMTB)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0000007
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0001690
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0003760
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0001290
-        Pre-computing matrices - done. Time (sec):  0.0006931
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
            Solving initial startup problem (n=20) ...
               Solving for output 0 ...
                  Iteration (num., iy, grad. norm, func.) :   0   0 1.549745600e+00 2.530000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.698247986e-15 4.462619163e-16
-              Solving for output 0 - done. Time (sec):  0.0010281
-           Solving initial startup problem (n=20) - done. Time (sec):  0.0010440
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.335214920e-15 4.462940661e-16
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving initial startup problem (n=20) - done. Time (sec):  0.0000000
            Solving nonlinear problem (n=20) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 1.532066659e-15 4.462619163e-16
-              Solving for output 0 - done. Time (sec):  0.0000570
-           Solving nonlinear problem (n=20) - done. Time (sec):  0.0000751
-        Solving for degrees of freedom - done. Time (sec):  0.0011392
-     Training - done. Time (sec):  0.0019877
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.532028362e-15 4.462940661e-16
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving nonlinear problem (n=20) - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -172,9 +178,9 @@ Usage (RMTB)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000970
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000010
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: rmts_Test_test_rmtb.png
@@ -186,8 +192,8 @@ Usage (RMTC)
 
 .. code-block:: python
 
-  import numpy as np
   import matplotlib.pyplot as plt
+  import numpy as np
   
   from smt.surrogate_models import RMTC
   
@@ -198,7 +204,7 @@ Usage (RMTC)
   
   sm = RMTC(
       xlimits=xlimits,
-      num_elements=20,
+      num_elements=6,
       energy_weight=1e-15,
       regularization_weight=0.0,
   )
@@ -234,28 +240,28 @@ Usage (RMTC)
      Training ...
         Pre-computing matrices ...
            Computing dof2coeff ...
-           Computing dof2coeff - done. Time (sec):  0.0002878
+           Computing dof2coeff - done. Time (sec):  0.0000000
            Initializing Hessian ...
-           Initializing Hessian - done. Time (sec):  0.0001020
+           Initializing Hessian - done. Time (sec):  0.0000000
            Computing energy terms ...
-           Computing energy terms - done. Time (sec):  0.0003712
+           Computing energy terms - done. Time (sec):  0.0000000
            Computing approximation terms ...
-           Computing approximation terms - done. Time (sec):  0.0001543
-        Pre-computing matrices - done. Time (sec):  0.0009301
+           Computing approximation terms - done. Time (sec):  0.0000000
+        Pre-computing matrices - done. Time (sec):  0.0000000
         Solving for degrees of freedom ...
-           Solving initial startup problem (n=42) ...
+           Solving initial startup problem (n=14) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.249444376e+00 2.530000000e+00
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.079822643e-15 4.346868680e-16
-              Solving for output 0 - done. Time (sec):  0.0012138
-           Solving initial startup problem (n=42) - done. Time (sec):  0.0012312
-           Solving nonlinear problem (n=42) ...
+                 Iteration (num., iy, grad. norm, func.) :   0   0 2.093143569e+00 2.530000000e+00
+                 Iteration (num., iy, grad. norm, func.) :   0   0 8.473462530e-16 4.399398551e-16
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving initial startup problem (n=14) - done. Time (sec):  0.0000000
+           Solving nonlinear problem (n=14) ...
               Solving for output 0 ...
-                 Iteration (num., iy, grad. norm, func.) :   0   0 2.956393318e-15 4.346868680e-16
-              Solving for output 0 - done. Time (sec):  0.0000536
-           Solving nonlinear problem (n=42) - done. Time (sec):  0.0000660
-        Solving for degrees of freedom - done. Time (sec):  0.0013151
-     Training - done. Time (sec):  0.0023849
+                 Iteration (num., iy, grad. norm, func.) :   0   0 1.755801305e-15 4.399398551e-16
+              Solving for output 0 - done. Time (sec):  0.0000000
+           Solving nonlinear problem (n=14) - done. Time (sec):  0.0000000
+        Solving for degrees of freedom - done. Time (sec):  0.0000000
+     Training - done. Time (sec):  0.0000000
   ___________________________________________________________________________
      
    Evaluation
@@ -263,9 +269,9 @@ Usage (RMTC)
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000930
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000009
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: rmts_Test_test_rmtc.png

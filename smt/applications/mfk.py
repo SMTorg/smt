@@ -73,9 +73,9 @@ class NestedLHS(object):
     def __call__(self, nb_samples_hifi):
         """
         Builds nlevel nested design of experiments of dimension dim and size n_samples.
-        Each doe sis built with the optmized lhs procedure.
-        Builds the highest level first; nested properties are ensured by deleting
-        the nearest neighbours in lower levels of fidelity.
+        Each doe is built with an optmized LHS procedure.
+        The method builds the highest level first and
+        nested properties are ensured by deleting the nearest neighbours in lower levels of fidelity.
 
         Parameters
         ----------
@@ -445,6 +445,7 @@ class MFK(KrgBased):
         self.nt = self.nt_all[lvl]
         self.q = self.q_all[lvl]
         self.p = self.p_all[lvl]
+        self.kplsk_second_loop = False
         (
             self.optimal_rlf_value[lvl],
             self.optimal_par[lvl],
@@ -513,9 +514,8 @@ class MFK(KrgBased):
         if self.is_continuous:
             dx = self._differences(X, Y=self.X_norma_all[0])
             d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[0], d
-            ).reshape(n_eval, self.nt_all[0])
+            self.corr.theta = self.optimal_theta[0]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
         else:
             _, x_is_acting = self.design_space.correct_get_acting(X_usc)
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
@@ -571,9 +571,8 @@ class MFK(KrgBased):
             if self.is_continuous:
                 dx = self._differences(X, Y=self.X_norma_all[i])
                 d = self._componentwise_distance(dx)
-                r_ = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta[i], d
-                ).reshape(n_eval, self.nt_all[i])
+                self.corr.theta = self.optimal_theta[i]
+                r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             else:
                 _, x_is_acting = self.design_space.correct_get_acting(X_usc)
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
@@ -646,7 +645,9 @@ class MFK(KrgBased):
 
         return self._predict_intermediate_values(X, self.nlvl)
 
-    def _predict_variances(self, X: np.ndarray, is_acting=None) -> np.ndarray:
+    def _predict_variances(
+        self, X: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 
@@ -702,9 +703,8 @@ class MFK(KrgBased):
         if self.is_continuous:
             dx = self._differences(X, Y=self.X_norma_all[0])
             d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[0], d
-            ).reshape(n_eval, self.nt_all[0])
+            self.corr.theta = self.optimal_theta[0]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
         else:
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             _, x_is_acting = self.design_space.correct_get_acting(X)
@@ -775,9 +775,8 @@ class MFK(KrgBased):
             if self.is_continuous:
                 dx = self._differences(X, Y=self.X_norma_all[i])
                 d = self._componentwise_distance(dx)
-                r_ = self._correlation_types[self.options["corr"]](
-                    self.optimal_theta[i], d
-                ).reshape(n_eval, self.nt_all[i])
+                self.corr.theta = self.optimal_theta[i]
+                r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             else:
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 _, x_is_acting = self.design_space.correct_get_acting(X)
@@ -915,9 +914,8 @@ class MFK(KrgBased):
         dx = self._differences(x, Y=self.X_norma_all[0])
         d = self._componentwise_distance(dx)
         # Compute the correlation function
-        r_ = self._correlation_types[self.options["corr"]](
-            self.optimal_theta[0], d
-        ).reshape(n_eval, self.nt_all[0])
+        self.corr.theta = self.optimal_theta[0]
+        r_ = self.corr(d).reshape(n_eval, self.nt_all[0])
 
         # Beta and gamma = R^-1(y-FBeta)
         beta = self.optimal_par[0]["beta"]
@@ -936,9 +934,8 @@ class MFK(KrgBased):
             g = self._regression_types[self.options["rho_regr"]](x)
             dx = self._differences(x, Y=self.X_norma_all[i])
             d = self._componentwise_distance(dx)
-            r_ = self._correlation_types[self.options["corr"]](
-                self.optimal_theta[i], d
-            ).reshape(n_eval, self.nt_all[i])
+            self.corr.theta = self.optimal_theta[i]
+            r_ = self.corr(d).reshape(n_eval, self.nt_all[i])
             df = np.vstack((g.T * dy_dx[:, i - 1], df0.T))
 
             beta = self.optimal_par[i]["beta"]
@@ -954,7 +951,8 @@ class MFK(KrgBased):
             # scaled predictor
             dy_dx[:, i] = np.ravel(df_dx - 2 * theta[kx] * np.dot(d_dx * r_, gamma))
 
-        return dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        deriv = dy_dx[:, -1] * self.y_std / self.X_scale[kx]
+        return deriv.reshape((x.shape[0], self.ny))
 
     def _get_theta(self, i):
         return self.optimal_theta[i]
@@ -983,9 +981,11 @@ class MFK(KrgBased):
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
-        if (
-            self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12
-        ) and self.options["hyper_opt"] == "TNC":
+        # noise0 may be a list of noise values for various fi levels with various length
+        max_noise = np.max([np.max(row) for row in self.options["noise0"]])
+        if (self.options["eval_noise"] or max_noise > 1e-12) and self.options[
+            "hyper_opt"
+        ] == "TNC":
             self.options["hyper_opt"] = "Cobyla"
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"

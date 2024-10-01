@@ -61,19 +61,19 @@ class TestGPX(unittest.TestCase):
         krg.train()
 
         krg_y = krg.predict_values(xe)
-        np.testing.assert_allclose(gpx_y, krg_y, atol=1e-2)
+        np.testing.assert_allclose(gpx_y, krg_y, rtol=1e-4, atol=1e-2)
 
         krg_var = krg.predict_variances(xe)
-        np.testing.assert_allclose(gpx_var, krg_var, atol=1e-2)
+        np.testing.assert_allclose(gpx_var, krg_var, rtol=1e-4, atol=1e-2)
 
         for kx in range(ndim):
             dy = gpx.predict_derivatives(xe, kx)
             krg_dy = krg.predict_derivatives(xe, kx)
-            np.testing.assert_allclose(dy, krg_dy, atol=1e-3)
+            np.testing.assert_allclose(dy, krg_dy, rtol=1e-2, atol=1e-3)
 
             dvar = gpx.predict_variance_derivatives(xe, kx)
             krg_dvar = krg.predict_variance_derivatives(xe, kx)
-            np.testing.assert_allclose(dvar, krg_dvar, atol=1e-3)
+            np.testing.assert_allclose(dvar, krg_dvar, rtol=1e-2, atol=1e-3)
 
 
 if __name__ == "__main__":

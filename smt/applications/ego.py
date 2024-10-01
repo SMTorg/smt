@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 """
 
 from types import FunctionType
+import time
 
 import numpy as np
 from scipy.optimize import minimize
@@ -17,7 +18,7 @@ from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, MGP
+from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
 from smt.utils.design_space import (
     BaseDesignSpace,
     DesignSpace,
@@ -107,9 +108,15 @@ class EGO(SurrogateBasedApplication):
             desc="Enable the penalization of points that have been already evaluated in EI criterion",
         )
         declare(
+            "is_ri",
+            False,
+            types=bool,
+            desc="Enable to re interpolate the variance for training points",
+        )
+        declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, GEKPLS, MGP),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX),
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(
@@ -141,6 +148,7 @@ class EGO(SurrogateBasedApplication):
         n_parallel = self.options["n_parallel"]
 
         for k in range(n_iter):
+            start_time = time.time()
             # Virtual enrichement loop
             for p in range(n_parallel):
                 # find next best x-coord point to evaluate
@@ -173,7 +181,10 @@ class EGO(SurrogateBasedApplication):
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
             y = self._evaluator.run(fun, x_to_compute)
             y_data[-n_parallel:] = y
-
+            end_time = time.time()
+            iteration_time = end_time - start_time
+            if self.options["verbose"]:
+                print(f"iteration {k+1} took {iteration_time:.2f} seconds")
         # Find the optimal point
         ind_best = np.argmin(y_data if y_data.ndim == 1 else y_data[:, 0])
         x_opt = x_data[ind_best]
@@ -189,12 +200,31 @@ class EGO(SurrogateBasedApplication):
         y_data = np.atleast_2d(self.gpr.training_points[None][0][1])
         f_min = y_data[np.argmin(y_data[:, 0])]
         pred = self.gpr.predict_values(points)
-        sig = np.sqrt(self.gpr.predict_variances(points))
-        args0 = (f_min - pred) / sig
-        args1 = (f_min - pred) * norm.cdf(args0)
-        args2 = sig * norm.pdf(args0)
-        if sig.size == 1 and sig == 0.0:  # can be use only if one point is computed
+        is_ri = self.options["is_ri"]
+
+        # Check to apply a reinterpolation only when it's possible
+        if isinstance(self.gpr, KRG) and is_ri:
+            sig = np.sqrt(self.gpr.predict_variances(points, is_ri=True))
+        else:
+            sig = np.sqrt(self.gpr.predict_variances(points))
+
+        # initialization good format (array or scalar)
+        args0 = (f_min - pred) * 0.0
+        args1 = (f_min - pred) * 0.0
+
+        if sig.size == 1 and np.abs(sig) > 1e-12:
+            args0 = (f_min - pred) / sig
+            args1 = (f_min - pred) * norm.cdf(args0)
+        elif sig.size > 1:
+            for i, sigma in enumerate(list(sig.T[0])):
+                if np.abs(sigma) > 1e-12:
+                    args0[i][0] = (f_min[0] - pred[i][0]) / sigma
+                    args1[i][0] = (f_min[0] - pred[i][0]) * norm.cdf(args0[i][0])
+        if (
+            sig.size == 1 and np.abs(sig) < 1e-12
+        ):  # can be use only if one point is computed
             return 0.0
+        args2 = sig * norm.pdf(args0)
         ei = args1 + args2
         # penalize the points already evaluated with tunneling
         if enable_tunneling:
@@ -244,6 +274,8 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
+        if "is_ri" in self.gpr.options:
+            self.gpr.options["is_ri"] = self.options["is_ri"]
         self.design_space: BaseDesignSpace = self.gpr.design_space
         if isinstance(self.design_space, DesignSpace):
             self.design_space.seed = self.options["random_state"]

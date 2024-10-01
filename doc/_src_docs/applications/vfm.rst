@@ -31,9 +31,9 @@ Usage
   import matplotlib.pyplot as plt
   import numpy as np
   
-  from smt.problems import WaterFlowLFidelity, WaterFlow
-  from smt.sampling_methods import LHS
   from smt.applications import VFM
+  from smt.problems import WaterFlow, WaterFlowLFidelity
+  from smt.sampling_methods import LHS
   
   # Problem set up
   ndim = 8
@@ -121,7 +121,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1210840
+     Training - done. Time (sec):  0.2855706
   
 .. figure:: vfm_TestVFM_run_vfm_example.png
   :scale: 80 %

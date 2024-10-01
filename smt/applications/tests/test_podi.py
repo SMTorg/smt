@@ -4,18 +4,23 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 
 import unittest
 from smt.utils.sm_test_case import SMTestCase
-
 import numpy as np
 from scipy import special
-from smt.sampling_methods import LHS
 from smt.applications import PODI
+from smt.sampling_methods import LHS
 
 
 def cos_coeff(i: int, x: np.ndarray):
     """Generates the i-th coefficient for the one-dimension problem."""
 
-    a = 2 * i // 2 - 1
+    a = 2 * i % 2 - 1
     return a * x[:, 0] * np.cos(i * x[:, 0])
+
+
+def cos_coeff_nd(i: int, x: np.ndarray):
+    """Generates the i-th coefficient for the multi dimensions problem."""
+    a = 2 * i % 2 - 1
+    return a * sum(x.T) * np.cos(i * sum(x.T))
 
 
 def Legendre(i: int, t: np.ndarray):
@@ -30,58 +35,8 @@ class Test(SMTestCase):
     def setUp(self):
         """Sets up the test case for the tests."""
 
-        self.seed = 42
-        self.nt = 40
-        xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=self.seed)
-        self.xt = sampling(self.nt)
-
-        self.ny = 100
-        self.t = np.linspace(-1, 1, self.ny)
-
-        self.n_modes_test = 10
-
-        self.nn = 15
-        self.xn = sampling(self.nn)
-
-        self.nv = 10 * self.nt
-        self.xv = sampling(self.nv)
-
-        self.x = np.concatenate((self.xt, self.xv))
-
-        def pb_1d(x: np.ndarray) -> np.ndarray:
-            """
-            Constructs the one-dimension problem
-
-            Parameters
-            ----------
-            x : np.ndarray
-                Array containing the snapshot values : each row corresponds to a specific snapshot.
-
-            Returns
-            -------
-            database : np.ndarray
-                Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
-            """
-
-            u0 = np.zeros((1, self.ny))
-
-            alpha = np.zeros((x.shape[0], self.n_modes_test))
-            for i in range(self.n_modes_test):
-                alpha[:, i] = cos_coeff(i, x)
-
-            V_init = np.zeros((self.ny, self.n_modes_test))
-            for i in range(self.n_modes_test):
-                V_init[:, i] = Legendre(i, self.t)
-
-            V = Test.gram_schmidt(V_init.T).T
-            database = u0 + np.dot(alpha, V.T)
-            self.basis_original = V.T
-
-            return database
-
-        self.full_database = pb_1d(self.x)
-        self.database = self.full_database[: self.nt]
+        self.full_database = self.pb_1d()
+        self.database = self.full_database[:, : self.nt]
 
     @staticmethod
     def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
@@ -118,14 +73,122 @@ class Test(SMTestCase):
             norm of the left residue
         """
 
-        norm_residue = np.zeros(len(basis_pod))
+        norm_residue = np.zeros(basis_pod.shape[1])
 
-        projection = np.dot(basis_pod, basis_original.T).dot(basis_original)
+        projection = basis_original.dot(np.dot(basis_original.T, basis_pod))
 
-        for i in range(len(projection)):
-            proj = projection[i]
-            norm_residue[i] = np.linalg.norm(basis_pod[i] - proj)
+        for i in range(projection.shape[1]):
+            proj = projection[:, i]
+            norm_residue[i] = np.linalg.norm(basis_pod[:, i] - proj)
         return norm_residue
+
+    def pb_1d(self, nt=40, nv=20) -> np.ndarray:
+        """
+        Constructs the one-dimension problem
+
+        Parameters
+        ----------
+        nt : int
+            Number of training values desired (number of snapshot).
+
+        Returns
+        -------
+        database : np.ndarray
+            Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
+        """
+        self.seed = 42
+
+        self.ny = 100
+        self.t = np.linspace(-1, 1, self.ny)
+        self.n_modes_test = 10
+
+        xlimits = np.array([[0, 4]])
+        sampling = LHS(xlimits=xlimits, random_state=self.seed)
+        self.nt = nt
+        self.xt = sampling(self.nt)
+        self.nn = 15
+        self.xn = sampling(self.nn)
+        self.nv = nv
+        sampling_new = LHS(xlimits=xlimits, random_state=self.seed + 1)
+        self.xv = sampling_new(self.nv)
+        self.x = np.concatenate((self.xt, self.xv))
+
+        u0 = np.zeros((self.ny, 1))
+
+        alpha = np.zeros((self.x.shape[0], self.n_modes_test))
+        for i in range(self.n_modes_test):
+            alpha[:, i] = cos_coeff(i, self.x)
+
+        V_init = np.zeros((self.ny, self.n_modes_test))
+        for i in range(self.n_modes_test):
+            V_init[:, i] = Legendre(i, self.t)
+
+        V = Test.gram_schmidt(V_init.T).T
+        database = u0 + np.dot(V, alpha.T)
+        self.basis_original = V
+
+        return database
+
+    def pb_2d_local(self, nt1=10, nt2=10) -> np.ndarray:
+        """
+        Constructs the two-dimension problem adapted for local POD (can be used for global POD as well).
+
+        Parameters
+        ----------
+        nt1 : int
+            Number of values for the first dimension of the inputs.
+            Each one of these values will correspond to a line in the DoE.
+        nt2 : int
+            Number of values for the second dimension of the inputs.
+
+        Returns
+        -------
+        database : np.ndarray
+            Snapshot matrix, each row corresponds to the values of our problem at a specific snapshot.
+        """
+        self.seed = 42
+
+        self.ny = 100
+        self.t = np.linspace(-1, 1, self.ny)
+        self.n_modes_test = 10
+
+        xlimits = [[0, 1], [0, 4]]
+        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
+        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed + 1)
+
+        self.nt1 = nt1
+        self.nt2 = nt2
+        self.nt = self.nt1 * self.nt2
+        self.xt1 = sampling_x1(self.nt1)
+        self.xt2 = sampling_x2(self.nt)
+        self.xt = np.zeros((self.nt, 2))
+        self.xt[:, 1] = self.xt2[:, 0]
+        for i, elt in enumerate(self.xt1):
+            self.xt[i * self.nt2 : (i + 1) * self.nt2, 0] = elt
+
+        sampling_new = LHS(xlimits=np.array(xlimits), random_state=self.seed)
+
+        self.nn = 15
+        self.xn = sampling_new(self.nn)
+        self.nv = 10
+        self.xv = sampling_new(self.nv)
+        self.x = np.concatenate((self.xt, self.xv))
+
+        u0 = np.zeros((self.ny, 1))
+
+        alpha = np.zeros((self.x.shape[0], self.n_modes_test))
+        for i in range(self.n_modes_test):
+            alpha[:, i] = cos_coeff_nd(i, self.x)
+
+        V_init = np.zeros((self.ny, self.n_modes_test))
+        for i in range(self.n_modes_test):
+            V_init[:, i] = Legendre(i, self.t)
+
+        V = Test.gram_schmidt(V_init.T).T
+        database = u0 + np.dot(V, alpha.T)
+        self.basis_original = V
+
+        return database
 
     def test_predict(self):
         """Tests the predict methods."""
@@ -141,23 +204,26 @@ class Test(SMTestCase):
             with self.assertRaises(RuntimeError, msg=error_msg):
                 predict_method(self.xn)
 
-        error_msg = "It should not be possible to execute predict_derivatives before training the model."
-        with self.assertRaises(RuntimeError, msg=error_msg):
-            sm.predict_derivatives(self.xn, 0)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            error_msg = f"It should not be possible to call {predict_method.__name__} before the training."
+            with self.assertRaises(RuntimeError, msg=error_msg):
+                predict_method(self.xn, 0)
 
         sm.train()
 
         error_msg = "It should not be possible to make a prediction with incorrect dimension input."
         for predict_method in [sm.predict_values, sm.predict_variances]:
             with self.assertRaises(ValueError, msg=error_msg):
-                predict_method(np.array([[1, 1]]))
+                predict_method(np.ones((1, self.xn.shape[1] + 1)))
 
-        with self.assertRaises(ValueError, msg=error_msg):
-            sm.predict_derivatives(np.array([[1, 1]]), 0)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            with self.assertRaises(ValueError, msg=error_msg):
+                predict_method(np.ones((1, self.xn.shape[1] + 1)), 0)
 
         error_msg = "It should not be possible to predict a derivative out of the input's dimensions."
-        with self.assertRaises(ValueError, msg=error_msg):
-            sm.predict_derivatives(self.xn, self.xn.shape[1] + 1)
+        for predict_method in [sm.predict_derivatives, sm.predict_variance_derivatives]:
+            with self.assertRaises(ValueError, msg=error_msg):
+                predict_method(self.xn, self.xn.shape[1] + 1)
 
         var_xt = sm.predict_variances(self.xt)
 
@@ -166,15 +232,17 @@ class Test(SMTestCase):
         mean_xn = sm.predict_values(self.xn)
         var_xn = sm.predict_variances(self.xn)
         deriv_xn = sm.predict_derivatives(self.xn, 0)
+        var_deriv_xn = sm.predict_variance_derivatives(self.xn, 0)
 
-        self.assertEqual(mean_xn.shape, (self.nn, self.ny))
-        self.assertEqual(var_xn.shape, (self.nn, self.ny))
-        self.assertEqual(deriv_xn.shape, (self.nn, self.ny))
+        self.assertEqual(mean_xn.shape, (self.ny, self.nn))
+        self.assertEqual(var_xn.shape, (self.ny, self.nn))
+        self.assertEqual(deriv_xn.shape, (self.ny, self.nn))
+        self.assertEqual(var_deriv_xn.shape, (self.ny, self.nn))
 
         mean_xv = sm.predict_values(self.xv)
 
-        diff = self.full_database[self.nt :] - mean_xv
-        rms_error = [np.sqrt(np.mean(diff[i] ** 2)) for i in range(diff.shape[0])]
+        diff = self.full_database[:, self.nt :] - mean_xv
+        rms_error = [np.sqrt(np.mean(diff[:, i] ** 2)) for i in range(diff.shape[1])]
 
         np.testing.assert_allclose(rms_error, np.zeros(self.nv), atol=1e-2)
 
@@ -211,7 +279,7 @@ class Test(SMTestCase):
         ]
         sm.set_interp_options("KRG", options_global)
 
-        sm_list = sm.get_interp_coef()
+        sm_list = sm.get_interp_coeff()
         for interp_coeff in sm_list:
             for key in options_global[0].keys():
                 self.assertEqual(interp_coeff.options[key], options_global[0][key])
@@ -219,13 +287,13 @@ class Test(SMTestCase):
         options_local = [{"poly": "quadratic"}, {"corr": "matern52"}]
         sm.set_interp_options("KRG", options_local)
 
-        sm_list = sm.get_interp_coef()
+        sm_list = sm.get_interp_coeff()
         for i, interp_coeff in enumerate(sm_list):
             for key in options_local[i].keys():
                 self.assertEqual(interp_coeff.options[key], options_local[i][key])
 
     def test_pod(self):
-        """Tests the computing of the pod."""
+        """Tests the computing of the global pod."""
 
         sm = PODI()
 
@@ -247,17 +315,71 @@ class Test(SMTestCase):
         n_modes = sm.get_n_modes()
         self.assertLessEqual(n_modes, self.n_modes_test)
 
-        basis_pod = sm.get_left_basis()
-        self.assertEqual(basis_pod.shape, (self.nt, self.ny))
+        basis_pod = sm.get_singular_vectors()
+
+        self.assertEqual(basis_pod.shape, (self.ny, min(self.nt, self.ny)))
 
         singular_values = sm.get_singular_values()
-        self.assertEqual(len(singular_values), self.nt)
+        self.assertEqual(len(singular_values), min(self.nt, self.ny))
         np.testing.assert_allclose(
-            singular_values[n_modes:], np.zeros(self.nt - n_modes), atol=1e-6
+            singular_values[n_modes:],
+            np.zeros(min(self.nt, self.ny) - n_modes),
+            atol=1e-6,
         )
 
         norm_residue = Test.check_projection(self.basis_original, basis_pod)
         np.testing.assert_allclose(norm_residue[:n_modes], np.zeros(n_modes), atol=1e-6)
+
+        # local pod
+        error_msg = "It should not be possible to compute the local pod with a local basis with incorrect dimensions."
+        with self.assertRaises(ValueError, msg=error_msg):
+            sm.compute_pod(
+                database=self.database, pod_type="local", local_basis=basis_pod[1:, :]
+            )
+        sm.compute_pod(database=self.database, pod_type="local", local_basis=basis_pod)
+
+    def test_interp_subspaces(self):
+        xt1 = np.array([[1], [2]])
+
+        m1 = np.array([[1, 1], [1, 2]])
+        m2 = np.array([[1, 1], [2, 1]])
+        input_matrices = [m1, m2]
+
+        xn1 = np.array([[1.5]])
+
+        error_msg = "It should not be possible to interpolate subspaces if the bases don't have the same dimensions."
+        with self.assertRaises(ValueError, msg=error_msg):
+            PODI.interp_subspaces(xt1=xt1, input_matrices=[m1, m2[:1]], xn1=xn1)
+
+        error_msg = "It should not be possible to interpolate if there are not as much bases than assiociated values."
+        with self.assertRaises(ValueError, msg=error_msg):
+            PODI.interp_subspaces(xt1=xt1[0], input_matrices=input_matrices, xn1=xn1)
+
+        output_list = PODI.interp_subspaces(
+            xt1=xt1, input_matrices=input_matrices, xn1=xn1, print_global=False
+        )
+        self.assertEqual(len(output_list), xn1.shape[0])
+        for basis in output_list:
+            self.assertEqual(basis.shape, input_matrices[0].shape)
+
+        # with realizations
+        n_realizations = 10
+        output_list, realization_list = PODI.interp_subspaces(
+            xt1=xt1,
+            input_matrices=input_matrices,
+            xn1=xn1,
+            compute_realizations=True,
+            n_realizations=n_realizations,
+            print_global=False,
+        )
+        self.assertEqual(len(output_list), xn1.shape[0])
+        for basis in output_list:
+            self.assertEqual(basis.shape, input_matrices[0].shape)
+        self.assertEqual(len(realization_list), xn1.shape[0])
+        for realization in realization_list:
+            self.assertEqual(len(realization), n_realizations)
+            for basis in realization:
+                self.assertEqual(basis.shape, input_matrices[0].shape)
 
     def test_set_training_train(self):
         """Tests the set_training_values and train methods."""
@@ -288,6 +410,348 @@ class Test(SMTestCase):
         )
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
+
+    @staticmethod
+    def run_podi_example_1d_global():
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from smt.applications import PODI
+        from smt.sampling_methods import LHS
+
+        light_pink = np.array((250, 233, 232)) / 255
+
+        p = 100
+        t = np.linspace(-1, 1, p)
+        n_modes_test = 10
+
+        def function_test_1d(x, t, n_modes_test, p):
+            import numpy as np  # Note: only required by SMT doc testing toolchain
+
+            def cos_coeff(i: int, x: np.ndarray):
+                a = 2 * i % 2 - 1
+                return a * x[:, 0] * np.cos(i * x[:, 0])
+
+            def Legendre(i: int, t: np.ndarray):
+                from scipy import special
+
+                return special.legendre(i)(t)
+
+            def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
+                """To perform the  Gram-Schmidt's algorithm."""
+
+                basis = np.zeros_like(input_array)
+                for i in range(len(input_array)):
+                    basis[i] = input_array[i]
+                    for j in range(i):
+                        basis[i] -= (
+                            np.dot(input_array[i], basis[j])
+                            / np.dot(basis[j], basis[j])
+                            * basis[j]
+                        )
+                    basis[i] /= np.linalg.norm(basis[i])
+                return basis
+
+            u0 = np.zeros((p, 1))
+
+            alpha = np.zeros((x.shape[0], n_modes_test))
+            for i in range(n_modes_test):
+                alpha[:, i] = cos_coeff(i, x)
+
+            V_init = np.zeros((p, n_modes_test))
+            for i in range(n_modes_test):
+                V_init[:, i] = Legendre(i, t)
+
+            V = gram_schmidt(V_init.T).T
+            database = u0 + np.dot(V, alpha.T)
+
+            return database
+
+        seed_sampling = 42
+        xlimits = np.array([[0, 4]])
+        sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+
+        nt = 40
+        xt = sampling(nt)
+
+        nv = 50
+        xv = sampling(nv)
+
+        x = np.concatenate((xt, xv))
+        dbfull = function_test_1d(x, t, n_modes_test, p)
+
+        # Training data
+        dbt = dbfull[:, :nt]
+
+        # Validation data
+        dbv = dbfull[:, nt:]
+
+        podi = PODI()
+        seed_pod = 42
+        podi.compute_pod(dbt, tol=0.9999, seed=seed_pod)
+        podi.set_training_values(xt)
+        podi.train()
+
+        values = podi.predict_values(xv)
+        variances = podi.predict_variances(xv)
+
+        # computing the POD errors:
+        # [max_interp_error, max_proj_error, max_total_error] = PODI.compute_pod_errors(xt = xt, database = dbt)
+        # print("interpolation error: ", max_interp_error)
+        # print("projection error: ", max_proj_error)
+        # print("total error: ", max_total_error)
+
+        # Choosing a value from the validation inputs
+        i = nv // 2
+
+        diff = dbv[:, i] - values[:, i]
+        rms_error = np.sqrt(np.mean(diff**2))
+        plt.figure(figsize=(8, 5))
+        light_pink = np.array((250, 233, 232)) / 255
+        plt.fill_between(
+            np.ravel(t),
+            np.ravel(values[:, i] - 3 * np.sqrt(variances[:, i])),
+            np.ravel(values[:, i] + 3 * np.sqrt(variances[:, i])),
+            color=light_pink,
+            label="confiance interval (99%)",
+        )
+        plt.scatter(
+            t,
+            values[:, i],
+            color="r",
+            marker="x",
+            s=15,
+            alpha=1.0,
+            label="prediction (mean)",
+        )
+        plt.scatter(
+            t,
+            dbv[:, i],
+            color="b",
+            marker="*",
+            s=5,
+            alpha=1.0,
+            label="reference",
+        )
+        plt.plot([], [], color="w", label="rms = " + str(round(rms_error, 9)))
+
+        ax = plt.gca()
+        ax.axes.xaxis.set_visible(False)
+
+        plt.ylabel("u(x = " + str(xv[i, 0])[:4] + ")")
+        plt.title("Estimation of u at x = " + str(xv[i, 0])[:4])
+        plt.legend()
+        plt.show()
+
+    @staticmethod
+    def run_podi_example_2d_local():
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from smt.applications import PODI
+        from smt.sampling_methods import LHS
+
+        p = 100
+        y = np.linspace(-1, 1, p)
+        n_modes_test = 10
+
+        def function_test_2d_local(x, y, n_modes_test, p):
+            import numpy as np  # Note: only required by SMT doc testing toolchain
+
+            def cos_coeff_nd(i: int, x: np.ndarray):
+                a = 2 * i % 2 - 1
+                return a * sum(x.T) * np.cos(i * sum(x.T))
+
+            def Legendre(i: int, y: np.ndarray):
+                from scipy import special
+
+                return special.legendre(i)(y)
+
+            def gram_schmidt(input_array: np.ndarray) -> np.ndarray:
+                """To perform the  Gram-Schmidt's algorithm."""
+
+                basis = np.zeros_like(input_array)
+                for i in range(len(input_array)):
+                    basis[i] = input_array[i]
+                    for j in range(i):
+                        basis[i] -= (
+                            np.dot(input_array[i], basis[j])
+                            / np.dot(basis[j], basis[j])
+                            * basis[j]
+                        )
+                    basis[i] /= np.linalg.norm(basis[i])
+                return basis
+
+            u0 = np.zeros((p, 1))
+
+            alpha = np.zeros((x.shape[0], n_modes_test))
+            for i in range(n_modes_test):
+                alpha[:, i] = cos_coeff_nd(i, x)
+
+            V_init = np.zeros((p, n_modes_test))
+            for i in range(n_modes_test):
+                V_init[:, i] = Legendre(i, y)
+
+            V = gram_schmidt(V_init.T).T
+            database = u0 + np.dot(V, alpha.T)
+
+            return database
+
+        seed = 42
+        xlimits = [[0, 1], [0, 4]]
+        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=seed)
+        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=seed + 1)
+
+        nt1 = 25
+        nt2 = 10
+        nt = nt1 * nt2
+        xt1 = sampling_x1(nt1)
+        xt2 = sampling_x2(nt)
+        xt = np.zeros((nt, 2))
+        xt[:, 1] = xt2[:, 0]
+        for i, elt in enumerate(xt1):
+            xt[i * nt2 : (i + 1) * nt2, 0] = elt
+
+        sampling_new = LHS(xlimits=np.array(xlimits), random_state=seed)
+
+        nv = 15
+        xv = sampling_new(nv)
+        xv1 = np.atleast_2d(xv[:, 0]).T
+        x = np.concatenate((xt, xv))
+
+        dbfull = function_test_2d_local(x, y, n_modes_test, p)
+
+        # Training data
+        dbt = dbfull[:, :nt]
+
+        # Validation data
+        dbv = dbfull[:, nt:]
+
+        plt.figure(figsize=(8, 5))
+        axes = plt.gca()
+        axes.tick_params(axis="x", labelsize=14)
+        axes.tick_params(axis="y", labelsize=14)
+        plt.scatter(xt[:, 1], xt[:, 0], marker="x", label="Training points", color="g")
+        plt.scatter(
+            xv[:, 1], xv[:, 0], marker="*", label="Validation points", color="r"
+        )
+        plt.xlabel(r"$x^{(2)}$", fontsize=18)
+        plt.ylabel(r"$x^{(1)}$", fontsize=18)
+        plt.legend(loc="lower left", fontsize=14)
+
+        tol = 0.9999  # SVD tolerance for each line's POD basis
+        local_pod_bases = []  # list of each line's POD bases
+        n_modes_list = []
+
+        podi = PODI()
+        for i in range(nt1):
+            db_loc = dbt[:, i * nt2 : (i + 1) * nt2]
+            podi.compute_pod(
+                db_loc, pod_type="global", n_modes=min(db_loc.shape), seed=i
+            )
+            ev_list = podi.get_ev_list()
+
+            n_modes = PODI.choice_n_modes_tol(ev_list, tol)
+            n_modes_list.append(n_modes)
+
+            local_basis = podi.get_basis()
+            local_pod_bases.append(local_basis)
+
+        # Function that choose the 'n_bases' closest bases (closest value of x^(1))
+        # and use 'interp_subspaces' to estimate a new basis
+        n_bases = 10
+
+        def choose_local_bases(local_pod_bases, n_bases, modes_list, xt1, xv1):
+            import numpy as np
+            from smt.applications import PODI
+
+            interpolated_bases = []
+            keep_index_list = []
+            max_modes_list = []
+
+            for value in xv1:
+                sorted_ind = sorted(
+                    range(xt1.shape[0]), key=lambda k: abs(xt1[:, 0] - value)[k]
+                )
+                keep_index = sorted_ind[:n_bases]
+                keep_index_list.append(keep_index)
+                input_matrices = []
+                keep_xt1 = []
+                max_modes = max(modes_list[keep_index])
+                max_modes_list.append(max_modes)
+                for i in keep_index:
+                    input_matrices.append(local_pod_bases[i][:, :max_modes])
+                    keep_xt1.append(xt1[i, 0])
+                basis = PODI.interp_subspaces(
+                    xt1=np.atleast_2d(keep_xt1).T,
+                    input_matrices=input_matrices,
+                    xn1=np.atleast_2d(value),
+                    frechet=True,
+                    print_global=False,
+                )
+                interpolated_bases.append(basis[0])
+            return interpolated_bases, keep_index_list
+
+        interpolated_bases, keep_index_list = choose_local_bases(
+            local_pod_bases,
+            n_bases=n_bases,
+            modes_list=np.array(n_modes_list),
+            xt1=xt1,
+            xv1=xv1,
+        )
+
+        # Choosing a value from the validation inputs
+        i = 0
+
+        podi = PODI()
+        j = []
+        for ind in keep_index_list[i]:
+            j += list(range(ind * nt2, (ind + 1) * nt2))
+        podi.compute_pod(
+            database=dbt[:, j], pod_type="local", local_basis=interpolated_bases[i]
+        )
+        n_modes = podi.get_n_modes()
+        print(f"{n_modes} modes were kept.")
+
+        # Choosing the default interp options
+        # Setting the training values
+        podi.set_training_values(xt=np.atleast_2d(xt[j]))
+
+        # Training the models
+        podi.train()
+
+        # predicting the desired values with inputs
+        values = podi.predict_values(np.atleast_2d(xv[i]))
+
+        diff = dbv[:, i] - values[:, 0]
+
+        rms_error = np.sqrt(np.mean(diff**2))
+        plt.figure(figsize=(8, 5))
+        plt.scatter(
+            y,
+            values,
+            color="r",
+            marker="x",
+            s=15,
+            alpha=1.0,
+            label="prediction (mean)",
+        )
+        plt.scatter(
+            y,
+            dbv[:, i],
+            color="b",
+            marker="*",
+            s=5,
+            alpha=1.0,
+            label="reference",
+        )
+        plt.plot([], [], color="w", label="rmse = " + str(round(rms_error, 5)))
+
+        ax = plt.gca()
+        ax.axes.xaxis.set_visible(False)
+
+        plt.ylabel("u(x = " + str(xv[i, 0])[:4] + ")")
+        plt.title(f"Estimation of u at x = ({str(xv[i, 0])[:4]}, {str(xv[i, 1])[:4]})")
+        plt.legend()
+        plt.show()
 
 
 if __name__ == "__main__":

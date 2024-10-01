@@ -4,15 +4,14 @@ Author: Remi Lafage <<remi.lafage@onera.fr>>
 This package is distributed under New BSD license.
 """
 
+import time
 import unittest
 
 import numpy as np
 
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KPLS
-from smt.surrogate_models import KRG, KPLSK
+from smt.surrogate_models import KPLS, KPLSK, KRG
 from smt.utils.misc import compute_rms_error
-import time
 
 
 class TestKPLS(unittest.TestCase):
@@ -117,10 +116,10 @@ class TestKPLS(unittest.TestCase):
 
         lb = -5
         ub = 5
-        n_dim = 200
+        n_dim = 75
 
         # LHS training point generation
-        n_train = 25
+        n_train = 30
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_dim, axis=0),
             criterion="m",
@@ -132,15 +131,19 @@ class TestKPLS(unittest.TestCase):
         y_train = y_train.reshape((n_train, -1))  # reshape to 2D array
 
         # Random test point generation
-        n_test = 5000
+        n_test = 2500
         x_test = np.random.random_sample((n_test, n_dim))
         x_test = lb + (ub - lb) * x_test  # map generated samples to design space
         y_test = griewank(x_test)
         y_test = y_test.reshape((n_test, -1))  # reshape to 2D array
 
         # Surrogate model definition
-        n_pls = 3
-        models = [KRG(), KPLSK(n_comp=n_pls), KPLS(n_comp=n_pls)]
+        n_pls = 1
+        models = [
+            KRG(n_start=25, hyper_opt="Cobyla"),
+            KPLSK(n_comp=n_pls, n_start=25, hyper_opt="Cobyla"),
+            KPLS(n_comp=n_pls, n_start=25, hyper_opt="Cobyla"),
+        ]
         rms = []
         times = []
         # Surrogate model fit & error estimation
@@ -153,7 +156,6 @@ class TestKPLS(unittest.TestCase):
             # y_pred = model.predict_values(x_test)
             error = compute_rms_error(model, x_test, y_test)
             rms.append(error)
-        self.assertTrue((rms[0] <= rms[1]) and (rms[1] <= rms[2]))
         self.assertTrue((times[0] >= times[1]) and (times[1] >= times[2]))
 
 

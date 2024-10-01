@@ -4,7 +4,8 @@ from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
-from .podi import PODI
+from .podi import PODI, SubspacesInterpolation
+from .cckrg import CoopCompKRG
 from .mfck import MFCK
 
 __all__ = [
@@ -19,4 +20,6 @@ __all__ = [
     "EGO",
     "Evaluator",
     "PODI",
+    "SubspacesInterpolation",
+    "CoopCompKRG",
 ]

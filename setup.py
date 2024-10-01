@@ -8,10 +8,11 @@ Author: John T. Hwang <hwangjt@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from setuptools import setup, Extension
 import sys
+
 import numpy as np
 from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 from smt import __version__
 
@@ -23,7 +24,7 @@ License :: OSI Approved :: BSD License
 Programming Language :: C++
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -120,9 +121,9 @@ metadata = dict(
         "cs": [  # pip install smt[cs]
             "ConfigSpace~=0.6.1",
         ],
-        "gpx": ["egobox~=0.18"],  # pip install smt[gpx]
+        "gpx": ["egobox~=0.22"],  # pip install smt[gpx]
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo
