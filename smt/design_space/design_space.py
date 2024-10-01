@@ -11,11 +11,11 @@ from typing import List, Optional, Sequence, Tuple, Union
 
 spec = importlib.util.find_spec("smt_design_space")
 if spec:
-    HAS_SMTDesignSpace = True
+    HAS_DESIGN_SPACE_EXT = True
     HAS_CONFIG_SPACE = True
     HAS_ADSG = True
 else:
-    HAS_SMTDesignSpace = False
+    HAS_DESIGN_SPACE_EXT = False
     HAS_CONFIG_SPACE = False
     HAS_ADSG = False
 spec = importlib.util.find_spec("adsg-core")

@@ -16,7 +16,7 @@ if os.getenv("FORCE_RUN_PLAIN_BASICS"):
     from smt.design_space import (
         HAS_CONFIG_SPACE,
         HAS_ADSG,
-        HAS_SMTDesignSpace,
+        HAS_DESIGN_SPACE_EXT,
         BaseDesignSpace,
         CategoricalVariable,
         FloatVariable,
@@ -27,7 +27,7 @@ if os.getenv("FORCE_RUN_PLAIN_BASICS"):
     )
 else:
     HAS_ADSG = False
-    HAS_SMTDesignSpace = False
+    HAS_DESIGN_SPACE_EXT = False
     HAS_CONFIG_SPACE = False
     import smt.design_space.design_space as ds
     from smt.design_space.design_space import (
@@ -702,7 +702,7 @@ class Test(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        not (HAS_SMTDesignSpace),
+        not (HAS_DESIGN_SPACE_EXT),
         "Architecture Design Space Graph or ConfigSpace not installed.",
     )
     def test_adsg_to_legacy(self):

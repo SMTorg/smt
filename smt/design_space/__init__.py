@@ -2,16 +2,16 @@ import importlib
 
 spec = importlib.util.find_spec("smt_design_space")
 if spec:
-    HAS_SMTDesignSpace = True
+    HAS_DESIGN_SPACE_EXT = True
     HAS_CONFIG_SPACE = True
     HAS_ADSG = True
 else:
-    HAS_SMTDesignSpace = False
+    HAS_DESIGN_SPACE_EXT = False
     HAS_CONFIG_SPACE = False
     HAS_ADSG = False
 
 
-if HAS_SMTDesignSpace:
+if HAS_DESIGN_SPACE_EXT:
     from smt_design_space.design_space import (
         CategoricalVariable,
         DesignSpace,
@@ -33,7 +33,7 @@ else:
         BaseDesignSpace,
     )
 
-if HAS_SMTDesignSpace:
+if HAS_DESIGN_SPACE_EXT:
     from smt_design_space.design_space import DesignSpaceGraph
 else:
 
@@ -42,7 +42,7 @@ else:
 
 
 __all__ = [
-    "HAS_SMTDesignSpace",
+    "HAS_DESIGN_SPACE_EXT",
     "HAS_CONFIG_SPACE",
     "HAS_ADSG",
     "BaseDesignSpace",
