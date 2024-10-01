@@ -1,4 +1,5 @@
 import glob
+from os.path import join
 
 __version__ = "2.7.0"
 
