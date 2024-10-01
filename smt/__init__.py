@@ -1,5 +1,5 @@
 import glob
-from os.path import join
+from os.path import join, dirname
 
 __version__ = "2.7.0"
 
