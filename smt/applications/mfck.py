@@ -299,7 +299,7 @@ class MFCK(KrgBased):
             params_gamma=self.theta[2:4]
             rhoc=rhos[0]
             self.K = self.compute_K(self.theta)
-            jitter = self.options["nugget"]  # small number to ensure numerical stability. tao of smt implementation?.
+            jitter = self.options["nugget"]  #small number to ensure numerical stability
             L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
             k1as = self._compute_K(x,self.X[1],param)
             k2as = self._compute_K(x,self.X[1],params_gamma)
