@@ -107,6 +107,8 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.applications",
+        "smt.design_space",
+        "smt.kernels",
     ],
     install_requires=[
         "scikit-learn",
