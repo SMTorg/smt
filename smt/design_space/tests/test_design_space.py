@@ -11,7 +11,20 @@ import numpy as np
 from smt.sampling_methods import LHS
 import os
 
-if os.getenv("FORCE_RUN_PLAIN_BASICS"):
+if not (os.getenv("RUN_PLAIN_DESIGN_SPACE_TEST")):
+    HAS_ADSG = False
+    HAS_DESIGN_SPACE_EXT = False
+    HAS_CONFIG_SPACE = False
+    import smt.design_space.design_space as ds
+    from smt.design_space.design_space import (
+        BaseDesignSpace,
+        CategoricalVariable,
+        FloatVariable,
+        IntegerVariable,
+        OrdinalVariable,
+        DesignSpace,
+    )
+else:
     import smt.design_space as ds
     from smt.design_space import (
         HAS_CONFIG_SPACE,
@@ -24,19 +37,6 @@ if os.getenv("FORCE_RUN_PLAIN_BASICS"):
         OrdinalVariable,
         DesignSpace,
         DesignSpaceGraph,
-    )
-else:
-    HAS_ADSG = False
-    HAS_DESIGN_SPACE_EXT = False
-    HAS_CONFIG_SPACE = False
-    import smt.design_space.design_space as ds
-    from smt.design_space.design_space import (
-        BaseDesignSpace,
-        CategoricalVariable,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-        DesignSpace,
     )
 
 
