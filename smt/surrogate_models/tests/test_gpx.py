@@ -51,7 +51,7 @@ class TestGPX(unittest.TestCase):
         gpx.set_training_values(xt, yt)
         gpx.train()
 
-        with tempfile.TemporaryFile(suffix=".json") as fp:
+        with tempfile.NamedTemporaryFile(suffix=".json") as fp:
             gpx.save(fp.name)
             gpx2 = GPX.load(fp.name)
 
