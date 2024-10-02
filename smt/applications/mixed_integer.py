@@ -12,7 +12,8 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.checks import ensure_2d_array
-from smt.utils.design_space import (
+
+from smt.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,

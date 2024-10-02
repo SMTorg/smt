@@ -19,10 +19,7 @@ from smt.applications.mixed_integer import (
 )
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
-from smt.utils.design_space import (
-    BaseDesignSpace,
-    DesignSpace,
-)
+from smt.design_space import BaseDesignSpace, DesignSpace
 
 
 class Evaluator(object):

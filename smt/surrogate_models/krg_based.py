@@ -26,11 +26,12 @@ from smt.kernels import (
 )
 from smt.kernels.kernels import _Constant
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.design_space import (
+from smt.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,
 )
+
 from smt.utils.kriging import (
     MixHrcKernelType,
     differences,

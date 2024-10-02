@@ -11,7 +11,7 @@ from sys import argv
 
 import numpy as np
 
-import smt.utils.design_space as ds
+import smt.design_space as ds
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.applications.mixed_integer import (

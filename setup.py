@@ -107,6 +107,8 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.applications",
+        "smt.design_space",
+        "smt.kernels",
     ],
     install_requires=[
         "scikit-learn",
@@ -117,9 +119,6 @@ metadata = dict(
     extras_require={
         "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
-        ],
-        "cs": [  # pip install smt[cs]
-            "ConfigSpace~=0.6.1",
         ],
         "gpx": ["egobox~=0.22"],  # pip install smt[gpx]
     },
