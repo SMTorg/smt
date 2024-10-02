@@ -9,7 +9,6 @@ from smt.utils.kriging import componentwise_distance
 from smt.kernels import Kernel
 
 
-
 class KRG(KrgBased):
     name = "Kriging"
 
