@@ -25,7 +25,7 @@ class MFCK(KrgBased):
         )
         declare(
             "rho_bounds",
-            [-5., 5.],
+            [0.1, 5.],
             types=(list, np.ndarray),
             desc="bounds for rho value, autoregressive model",
         )
@@ -183,18 +183,13 @@ class MFCK(KrgBased):
                 constraints.append(lambda theta0, i=i: theta0[i] - lower_bounds[i])
                 constraints.append(lambda theta0, i=i: upper_bounds[i] - theta0[i])
             for j in range(self.options["n_start"]):
+                
+                bounds = [(low, high) for low, high in zip(lower_bounds, upper_bounds)]
                 optimal_theta_res_loop = optimize.minimize(
                     self.neg_log_likelihooda,
                     theta0[j,:],
-                    method="BFGS",
-                    constraints=[
-                        {"fun": con, "type": "ineq"} for con in constraints
-                    ],
-                    options={
-                        "rhobeg": 0.5,
-                        "tol": 1e-6,
-                        "maxiter": 100,
-                    },
+                    method="L-BFGS-B",
+                    bounds=bounds
                 )
                 x_opt_iter = optimal_theta_res_loop.x
                 if j==0:
@@ -281,31 +276,31 @@ class MFCK(KrgBased):
             Returns the conditional covariance matrixes per level.
         """
         param0 = self.theta[0:2]
-        sigmas_gamma = self.theta[2::3]
-        ls_gamma = self.theta[3::3]
+        v_gm = self.theta[2::3]
+        ls_gm = self.theta[3::3]
         rhos=self.theta[4::3]
         Y= self.y
+        jitter = self.options["nugget"]  #small number to ensure numerical stability
         if self.lvl==1:
             k_XX = self._compute_K(self.X[0],self.X[0],param0)
             k_xX = self._compute_K(x,self.X[0],param0)
             k_xx = self._compute_K(x,x,param0)
-            mean1 = np.dot(k_xX, np.matmul(np.linalg.inv(k_XX + 1e-9*np.eye(k_XX.shape[0])), Y))
-            covariance1 =  k_xx - np.matmul(k_xX,
-                                            np.matmul(np.linalg.inv(k_XX+1e-9*np.eye(k_XX.shape[0])),
-                                                      k_xX.transpose()))
+            L = np.linalg.cholesky(k_XX+ jitter*np.eye(self.K.shape[0]))
+            beta1 = solve_triangular(L, k_xX.T,lower=True)
+            alpha1 = solve_triangular(L,Y,lower=True)
+            mean1 = np.dot(beta1.T,alpha1)
+            covariance1 =  k_xx - np.dot(beta1.T,beta1)
             return mean1,covariance1
         elif self.lvl==2:
-            param=self.theta[0:2]
             params_gamma=self.theta[2:4]
             rhoc=rhos[0]
             self.K = self.compute_K(self.theta)
-            jitter = self.options["nugget"]  #small number to ensure numerical stability
             L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
-            k1as = self._compute_K(x,self.X[1],param)
+            k1as = self._compute_K(x,self.X[1],param0)
             k2as = self._compute_K(x,self.X[1],params_gamma)
-            k3as = self._compute_K(x,self.X[0],param)
+            k3as = self._compute_K(x,self.X[0],param0)
 
-            kxxas = self._compute_K(x,x,param)
+            kxxas = self._compute_K(x,x,param0)
             kxxas1 = self._compute_K(x,x,params_gamma)
             k11_ast = rhoc*rhoc*k1as + k2as
             k10_ast = rhoc * k3as
@@ -330,8 +325,11 @@ class MFCK(KrgBased):
             X2=self.X[2]
             X1=self.X[1]
             X0=self.X[0]
+            kxx=self._compute_K(x,x,self.theta[0:2])
+            kxxg1=self._compute_K(x,x,[v_gm[0],ls_gm[0]])
+            kxxg2=self._compute_K(x,x,[v_gm[1],ls_gm[1]])
             self.K = self.compute_K(self.theta)
-            jitter = self.options["nugget"]  # small number to ensure numerical stability
+            jitter = self.options["nugget"]
             L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
             k00ast=self._compute_K(x,X0,self.theta[0:2])
             k01ast=rhos[0]*self._compute_K(x,X1,self.theta[0:2])
@@ -340,31 +338,27 @@ class MFCK(KrgBased):
             beta0 = solve_triangular(L, k_xX.T,lower=True)
             alpha0 = solve_triangular(L,Y,lower=True)
             mean1 = np.dot(beta0.T,alpha0)
-            covariance1 = self._compute_K(x,x,self.theta[0:2]) - np.dot(beta0.T,beta0)
+            covariance1 = kxx - np.dot(beta0.T,beta0)
             k01ast=rhos[0]*self._compute_K(x,X0,self.theta[0:2])
             k11ast=((rhos[0]**2)*self._compute_K(x,X1,self.theta[0:2])
-            +self._compute_K(x,X1,[sigmas_gamma[0],ls_gamma[0]]))
+            +self._compute_K(x,X1,[v_gm[0],ls_gm[0]]))
             k12ast = ((rhos[1]) * (rhos[0]**2) * self._compute_K(x,X2,self.theta[0:2])+
-            (rhos[1] * self._compute_K(x,X2,[sigmas_gamma[0],ls_gamma[0]])))
-            k_xX = np.concatenate((k01ast.T, k11ast.T,k12ast.T)).T
-            beta1 = solve_triangular(L, k_xX.T,lower=True)
+            (rhos[1] * self._compute_K(x,X2,[v_gm[0],ls_gm[0]])))
+            k_xX1 = np.concatenate((k01ast.T, k11ast.T,k12ast.T)).T
+            beta1 = solve_triangular(L, k_xX1.T,lower=True)
             alpha1 = solve_triangular(L,Y,lower=True)
             mean2 = np.dot(beta1.T,alpha1)
-            covariance2 = ((rhos[0]**2)*self._compute_K(x,x,self.theta[0:2])
-            +self._compute_K(x,x,[sigmas_gamma[0],ls_gamma[0]]) - np.dot(beta1.T,beta1))
-            k02ast = (rhos[1]) * (rhos[0]) * self._compute_K(x,X0,self.theta[0:2])
-            k12ast = ((rhos[1]) * (rhos[0]**2) * self._compute_K(x,X1,self.theta[0:2])+
-            (rhos[1] * self._compute_K(x,X1,[sigmas_gamma[0],ls_gamma[0]])))
-            k22ast = (rhos[1]**2) * ((rhos[0]**2)*self._compute_K(x,X2,self.theta[0:2])
-                                     +self._compute_K(x,X2,[sigmas_gamma[0],ls_gamma[0]]))
-            +self._compute_K(x,X2,[sigmas_gamma[1],ls_gamma[1]])
-            k_xX = np.concatenate((k02ast.T, k12ast.T,k22ast.T)).T
-            beta2 = solve_triangular(L, k_xX.T,lower=True)
+            covariance2 = ((rhos[0]**2)*kxx+kxxg1-np.dot(beta1.T,beta1))
+            k02ast =rhos[1]*rhos[0]*self._compute_K(x,X0,self.theta[0:2])
+            temp=rhos[0]**2*self._compute_K(x,X1,self.theta[0:2])
+            k12ast=rhos[1]*(temp+self._compute_K(x,X1,[v_gm[0],ls_gm[0]]))
+            temp=(rhos[0]**2)*self._compute_K(x,X2,self.theta[0:2])+self._compute_K(x,X2,[v_gm[0],ls_gm[0]])
+            k22ast = ((rhos[1]**2)*(temp))+self._compute_K(x,X2,[v_gm[1],ls_gm[1]])
+            k_xX2 = np.concatenate((k02ast.T, k12ast.T,k22ast.T)).T
+            beta2 = solve_triangular(L, k_xX2.T,lower=True)
             alpha2 = solve_triangular(L,Y,lower=True)
             mean3 = np.dot(beta2.T,alpha2)
-            covariance3 = ((rhos[1]**2) * ((rhos[0]**2)*self._compute_K(x,x,self.theta[0:2])
-                                          +self._compute_K(x,x,[sigmas_gamma[0],ls_gamma[0]]))
-            +self._compute_K(x,x,[sigmas_gamma[1],ls_gamma[1]]) - np.dot(beta2.T,beta2))
+            covariance3 = ((rhos[1]**2)*((rhos[0]**2)*kxx+kxxg1)+kxxg2 - np.dot(beta2.T,beta2))
 
             return mean1,covariance1,mean2,covariance2,mean3,covariance3
         else:
