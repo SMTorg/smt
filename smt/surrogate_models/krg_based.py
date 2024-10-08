@@ -499,7 +499,9 @@ class KrgBased(SurrogateModel):
                             mixint_type=MixIntKernelType.GOWER,
                         )
                     if np.any(self.design_space.is_conditionally_acting):
-                        D[:, np.logical_not(self.unfolded_cat)] = D_num
+                        D[:, np.logical_not(self.unfolded_cat)] = (
+                            D_num / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                        )
             # Center and scale X_cont and y
             (
                 self.X_norma,
