@@ -483,18 +483,22 @@ class KrgBased(SurrogateModel):
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, design_space=self.design_space
                 )
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    D = self._correct_distances_cat_decreed(
-                        D,
-                        is_acting,
-                        listcatdecreed,
-                        self.ij,
-                        mixint_type=MixIntKernelType.GOWER,
-                    )
-                D[:, np.logical_not(self.unfolded_cat)] = D_num
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        D = self._correct_distances_cat_decreed(
+                            D,
+                            is_acting,
+                            listcatdecreed,
+                            self.ij,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                    D[:, np.logical_not(self.unfolded_cat)] = D_num
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -1573,19 +1577,24 @@ class KrgBased(SurrogateModel):
                 Xpred, _, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.GOWER,
-                    )
-                dx[:, np.logical_not(self.unfolded_cat)] = dnum
+
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        dx = self._correct_distances_cat_decreed(
+                            dx,
+                            is_acting,
+                            listcatdecreed,
+                            ij,
+                            is_acting_y=self.is_acting_train,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                    dx[:, np.logical_not(self.unfolded_cat)] = dnum
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )

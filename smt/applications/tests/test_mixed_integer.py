@@ -278,7 +278,7 @@ class TestMixedInteger(unittest.TestCase):
                 CategoricalVariable(["A", "B"]),
             ]
         )
-        x_unfolded, _ = design_space.unfold_x(x)
+        x_unfolded, _, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_unfold_with_enum_mask_with_enum_first(self):
@@ -291,7 +291,7 @@ class TestMixedInteger(unittest.TestCase):
                 FloatVariable(1, 2),
             ]
         )
-        x_unfolded, _ = design_space.unfold_x(x)
+        x_unfolded, _, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_fold_with_enum_index(self):

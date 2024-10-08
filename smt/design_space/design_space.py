@@ -372,7 +372,7 @@ class BaseDesignSpace:
 
         # Unfold if needed
         if unfolded:
-            x, is_acting = self.unfold_x(x, is_acting)
+            x, is_acting, _ = self.unfold_x(x, is_acting)
 
         return x, is_acting
 

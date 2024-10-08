@@ -294,9 +294,10 @@ class Test(unittest.TestCase):
         )
         self.assertTrue(np.all(is_acting_corr))
 
-        x_unfolded, is_acting_unfolded, _ = ds.sample_valid_x(
-            3, unfolded=True, random_state=42
-        )
+        (
+            x_unfolded,
+            is_acting_unfolded,
+        ) = ds.sample_valid_x(3, unfolded=True, random_state=42)
         self.assertEqual(x_unfolded.shape, (3, 6))
         if HAS_CONFIG_SPACE:
             np.testing.assert_allclose(
@@ -328,7 +329,7 @@ class Test(unittest.TestCase):
 
         self.assertEqual(ds._get_n_dim_unfolded(), 6)
 
-        x_unfolded, is_act_unfolded = ds.unfold_x(x, is_act, np.array([True, False]))
+        x_unfolded, is_act_unfolded, _ = ds.unfold_x(x, is_act, np.array([True, False]))
         self.assertTrue(np.all(x_unfolded == np.array([[0, 1, 0, 2]])))
         self.assertTrue(
             np.all(is_act_unfolded == np.array([[True, True, True, False]]))

@@ -133,7 +133,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xt, _ = design_space.correct_get_acting(xt)
 
         if self._input_in_folded_space:
-            xt_apply, _ = design_space.unfold_x(xt)
+            xt_apply, _, _ = design_space.unfold_x(xt)
         else:
             xt_apply = xt
 
@@ -168,7 +168,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
         x_corr, is_acting = self.design_space.correct_get_acting(xp)
         if self._input_in_folded_space:
-            x_corr, is_acting = self.design_space.unfold_x(x_corr, is_acting=is_acting)
+            x_corr, is_acting, _ = self.design_space.unfold_x(
+                x_corr, is_acting=is_acting
+            )
         return x_corr, is_acting
 
     def _predict_values(self, x: np.ndarray) -> np.ndarray:
