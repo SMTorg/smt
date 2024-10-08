@@ -498,7 +498,8 @@ class KrgBased(SurrogateModel):
                             self.ij,
                             mixint_type=MixIntKernelType.GOWER,
                         )
-                    D[:, np.logical_not(self.unfolded_cat)] = D_num
+                    if np.any(self.design_space.is_conditionally_acting):
+                        D[:, np.logical_not(self.unfolded_cat)] = D_num
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -974,7 +975,7 @@ class KrgBased(SurrogateModel):
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
                     elif self._lvl < self.nlvl - 1:
-                        X2, _ = self.design_space.unfold_x(
+                        X2, _, _ = self.design_space.unfold_x(
                             self.training_points[self._lvl][0][0]
                         )
                         self.X2_norma[str(self._lvl)] = (
@@ -1594,7 +1595,8 @@ class KrgBased(SurrogateModel):
                             is_acting_y=self.is_acting_train,
                             mixint_type=MixIntKernelType.GOWER,
                         )
-                    dx[:, np.logical_not(self.unfolded_cat)] = dnum
+                    if np.any(self.design_space.is_conditionally_acting):
+                        dx[:, np.logical_not(self.unfolded_cat)] = dnum
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
