@@ -1596,7 +1596,7 @@ class KrgBased(SurrogateModel):
                             mixint_type=MixIntKernelType.GOWER,
                         )
                     if np.any(self.design_space.is_conditionally_acting):
-                        dx[:, np.logical_not(self.unfolded_cat)] = dnum
+                        dx[:, np.logical_not(self.unfolded_cat)] = dnum / self.X_scale
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
