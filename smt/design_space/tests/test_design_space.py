@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
             ]
         )
 
-        x_unfolded, is_acting_unfolded = ds.unfold_x(x, is_acting)
+        x_unfolded, is_acting_unfolded, is_cat_unfolded = ds.unfold_x(x, is_acting)
         self.assertTrue(
             np.all(
                 x_unfolded
@@ -188,12 +188,15 @@ class Test(unittest.TestCase):
                 [False, False, True, True],
             ],
         )
+        self.assertEqual(is_cat_unfolded.dtype, bool)
+
+        np.testing.assert_array_equal(is_cat_unfolded, [True, True, False, False])
 
         x_folded, is_acting_folded = ds.fold_x(x_unfolded, is_acting_unfolded)
         np.testing.assert_array_equal(x_folded, x)
         np.testing.assert_array_equal(is_acting_folded, is_acting)
 
-        x_unfold_mask, is_act_unfold_mask = ds.unfold_x(
+        x_unfold_mask, is_act_unfold_mask, _ = ds.unfold_x(
             x, is_acting, fold_mask=np.array([False] * 3)
         )
         np.testing.assert_array_equal(x_unfold_mask, x)
@@ -291,7 +294,7 @@ class Test(unittest.TestCase):
         )
         self.assertTrue(np.all(is_acting_corr))
 
-        x_unfolded, is_acting_unfolded = ds.sample_valid_x(
+        x_unfolded, is_acting_unfolded, _ = ds.sample_valid_x(
             3, unfolded=True, random_state=42
         )
         self.assertEqual(x_unfolded.shape, (3, 6))

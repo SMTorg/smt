@@ -330,9 +330,9 @@ def gower_componentwise_distances(
     D[:, np.logical_not(cat_features)] = D_num
     D[:, cat_features] = D_cat
     if y is not None:
-        return D
+        return D, D_num
     else:
-        return D, ij.astype(np.int32), X_cont
+        return D, ij.astype(np.int32), X_cont, D_num
 
 
 @njit_use(parallel=True)

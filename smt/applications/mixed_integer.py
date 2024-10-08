@@ -235,6 +235,10 @@ class MixedIntegerKrigingModel(KrgBased):
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False
 
+        for key, value in self._surrogate.options._dict.items():
+            if key in self.options._dict:
+                self.options._dict[key] = value
+
     @property
     def name(self):
         return "MixedInteger" + self._surrogate.name
