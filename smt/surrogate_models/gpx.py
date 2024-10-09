@@ -161,3 +161,30 @@ class GPX(SurrogateModel):
         at n points given as [n, nx] matrix where nx is the dimension of x.
         Returns all variance gradients at the given x points as a [n, nx] matrix"""
         return self._gpx.predict_var_gradients(x)
+
+    def save(self, filepath):
+        """Save the trained model in the given filepath
+
+        Arguments
+        ---------
+            filename (string): path to the json file
+        """
+        self._gpx.save(filepath)
+
+    @staticmethod
+    def load(filepath):
+        """Load the model from a previously saved GPX model.
+
+        Arguments
+        ---------
+            filename (string): path to the json file to load the model from
+
+        Returns
+        -------
+            the trained GPX model instanciation
+        """
+        gpx = GPX()
+        gpx._gpx = egx.Gpx.load(filepath)
+        (gpx.nx, gpx.ny) = gpx._gpx.dims()
+        gpx.training_points[None][0] = gpx._gpx.training_data()
+        return gpx

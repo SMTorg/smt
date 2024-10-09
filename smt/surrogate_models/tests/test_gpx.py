@@ -1,4 +1,5 @@
 import unittest
+import tempfile
 
 import numpy as np
 
@@ -34,6 +35,32 @@ class TestGPX(unittest.TestCase):
 
         gpx_var = gpx.predict_variances(xe)
         self.assertLessEqual(np.linalg.norm(gpx_var), 1e-3)
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_save_load(self):
+        ndim = 2
+        num = 20
+        problem = Sphere(ndim=ndim)
+        xlimits = problem.xlimits
+        sampling = LHS(xlimits=xlimits, criterion="ese")
+
+        xt = sampling(num)
+        yt = problem(xt)
+
+        gpx = GPX(print_global=False, seed=42)
+        gpx.set_training_values(xt, yt)
+        gpx.train()
+
+        with tempfile.NamedTemporaryFile(suffix=".json") as fp:
+            gpx.save(fp.name)
+            gpx2 = GPX.load(fp.name)
+
+        xe = sampling(10)
+        ye = problem(xe)
+
+        gpx_y = gpx2.predict_values(xe)
+        e_error = np.linalg.norm(gpx_y - ye) / np.linalg.norm(ye)
+        self.assertLessEqual(e_error, 1e-3)
 
     @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_gpx_vs_krg(self):
