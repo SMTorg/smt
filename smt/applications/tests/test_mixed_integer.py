@@ -2520,4 +2520,5 @@ class TestMixedInteger(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestMixedInteger().test_hierarchical_design_space_example_all_categorical_decreed()
+    TestMixedInteger().run_mixed_integer_context_example()
+    unittest.main()
