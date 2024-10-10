@@ -134,38 +134,6 @@ class MFCK(KrgBased):
                     if optimal_theta_res_loop["fun"] < nll:
                         x_opt=x_opt_iter
                         nll=optimal_theta_res_loop["fun"]
-        elif self.options["hyper_opt"]=="TNC":
-            if self.options["n_start"] > 1:
-                sampling = LHS(
-                    xlimits = np.stack((lower_bounds,upper_bounds),axis=1),
-                    criterion="maximin",
-                    random_state=0,
-                )
-                theta_lhs_loops = sampling(self.options["n_start"])
-                theta0 = np.vstack((theta_ini, theta_lhs_loops))
-            theta0[:,:(len(self.options["theta0"]))] = np.log10(theta0[:,:(len(self.options["theta0"]))])
-            lower_bounds[:(len(lower_bounds))]=np.log10(lower_bounds[:(len(lower_bounds))])
-            upper_bounds[:(len(upper_bounds))]=np.log10(upper_bounds[:(len(upper_bounds))])
-            constraints=[]
-            for i in range(len(theta_ini)):
-                constraints.append(lambda theta0, i=i: theta0[i] - lower_bounds[i])
-                constraints.append(lambda theta0, i=i: upper_bounds[i] - theta0[i])
-            for j in range(self.options["n_start"]):
-                optimal_theta_res_loop = optimize.minimize(
-                    self.neg_log_likelihooda,
-                    theta0[j,:],
-                    method="TNC",
-                    jac=self.log_likelihood_gradient
-                )
-                x_opt_iter = optimal_theta_res_loop.x
-                x_opt_iter[:(len(x_opt_iter)-1)] = 10**(x_opt_iter[:(len(x_opt_iter)-1)])
-                if j==0:
-                    x_opt=x_opt_iter
-                    nll=optimal_theta_res_loop["fun"]
-                else:
-                    if optimal_theta_res_loop["fun"] < nll:
-                        x_opt=x_opt_iter
-                        nll=optimal_theta_res_loop["fun"]
         else:
             if self.options["n_start"] > 1:
                 sampling = LHS(
@@ -175,21 +143,23 @@ class MFCK(KrgBased):
                 )
                 theta_lhs_loops = sampling(self.options["n_start"])
                 theta0 = np.vstack((theta_ini, theta_lhs_loops))
-            theta0[:,:(len(self.options["theta0"]))] = np.log10(theta0[:,:(len(self.options["theta0"]))])
-            lower_bounds[:(len(lower_bounds))]=np.log10(lower_bounds[:(len(lower_bounds))])
-            upper_bounds[:(len(upper_bounds))]=np.log10(upper_bounds[:(len(upper_bounds))])
             constraints=[]
             for i in range(len(theta_ini)):
                 constraints.append(lambda theta0, i=i: theta0[i] - lower_bounds[i])
                 constraints.append(lambda theta0, i=i: upper_bounds[i] - theta0[i])
             for j in range(self.options["n_start"]):
-                
-                bounds = [(low, high) for low, high in zip(lower_bounds, upper_bounds)]
                 optimal_theta_res_loop = optimize.minimize(
                     self.neg_log_likelihooda,
                     theta0[j,:],
-                    method="L-BFGS-B",
-                    bounds=bounds
+                    method="COBYLA",
+                    constraints=[
+                        {"fun": con, "type": "ineq"} for con in constraints
+                    ],
+                    options={
+                        "rhobeg": 0.5,
+                        "tol": 1e-6,
+                        "maxiter": 100,
+                    },
                 )
                 x_opt_iter = optimal_theta_res_loop.x
                 if j==0:
@@ -203,8 +173,8 @@ class MFCK(KrgBased):
         x_opt[0:2]=10**(x_opt[0:2])
         x_opt[2:8:3]=10**(x_opt[2:8:3])
         x_opt[3:8:3]=10**(x_opt[3:8:3])
-        self.theta = x_opt#10**(x_opt[:(len(x_opt))])
-
+        self.theta = x_opt
+        
     def predict_multi_lvl(self,x):
         """
         Generalized prediction function for the multi-fidelity co-kriging
@@ -366,12 +336,10 @@ class MFCK(KrgBased):
 
     def neg_log_likelihood(self,param1,grad):
         if self.lvl == 1:
-            K=self._compute_K(self.X[0],self.X[0],param1[0:2])
+            self.K=self._compute_K(self.X[0],self.X[0],param1[0:2])
         else:
-            K = self.compute_K(param1)
-        self.K = np.copy(K)
-        #print(self.is_invertible(self.K))
-        jitter = 1e-4#self.options["nugget"]  # small number to ensure numerical stability.
+            self.K = self.compute_K(param1)
+        jitter = 1e-4#self.options["nugget"]#small number to ensure numerical stability.
         L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
         beta = solve_triangular(L, self.y,lower=True)
         N=np.shape(self.y)[0]
@@ -384,54 +352,7 @@ class MFCK(KrgBased):
         param1[2:8:3]=10**(param1[2:8:3])
         param1[3:8:3]=10**(param1[3:8:3])
         return self.neg_log_likelihood(param1,1)
-
-    def log_likelihood_gradient(self,param1):
-          X2 = np.copy(self.X0)
-          X1 = np.copy(self.X1)
-          param=param1[0:2]
-          params_gamma=param1[2:4]
-          rho=param1[4::][0]
-          jitter = self.options["nugget"]  # small number to ensure numerical stability.
-          L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
-          y=np.copy(self.y)
-          betaa = solve_triangular(L,np.identity(np.shape(L)[0]),lower=True)
-          InverseK = np.dot(betaa.T,betaa)
-          alpha0 = solve_triangular(L,y,lower=True)
-          alphaa = np.dot(betaa.T,alpha0)
-          # Partial derivatives of the likelihood with respect to the hyperparameters
-          k1,grad = self.SEKernel(X1,X1,param)
-          k2,grad1 = self.SEKernel(X1,X2,param)
-          _,grad2 = self.SEKernel(X2,X2,param)
-          _,grad3 = self.SEKernel(X1, X1, params_gamma)
-
-          a = rho* rho* ( grad[1] )
-          b = rho*(  grad1[1] )
-          c = grad2[1]
-          dK_dl0 = np.vstack((np.concatenate((a,b.T)).T, np.concatenate((b,c)).T))
-          a = rho*rho*grad[0]
-          b = rho*grad1[0]
-          c = grad2[0]
-          dK_dv0 = np.vstack((np.concatenate((a,b.T)).T,
-                              np.concatenate((b,c)).T))
-          a = grad3[1]
-          dK_dlg =  np.vstack((np.concatenate((a,np.zeros_like(b).T)).T,
-                               np.concatenate((np.zeros_like(b),np.zeros_like(c))).T))
-          a = grad3[0]
-          dK_dvg = np.vstack((np.concatenate((a,np.zeros_like(b).T)).T,
-                              np.concatenate((np.zeros_like(b),np.zeros_like(c))).T))
-          a = 2*rho*k1
-          b = k2
-          dK_drho = np.vstack((np.concatenate((a,b.T)).T, np.concatenate((b,np.zeros_like(c))).T))
-          mid_term = np.dot(alphaa,alphaa.T) - InverseK
-
-          dL_dl0 = -0.5 * np.trace(np.dot(mid_term , dK_dl0))
-          dL_dv0 = -0.5 * np.trace(np.dot(mid_term , dK_dv0))
-          dL_dlg = -0.5 * np.trace(np.dot(mid_term , dK_dlg))
-          dL_dvg = -0.5 * np.trace(np.dot(mid_term , dK_dvg))
-          dL_drho = -0.5 * np.trace(np.dot(mid_term , dK_drho))
-
-          return np.array([dL_dv0, dL_dl0, dL_dvg, dL_dlg, dL_drho])
-
+    
     def compute_K(self, param1):
         """
         Compute the co-kriging piece-wise matrix with correct handling of non-symmetric cross-correlations.
