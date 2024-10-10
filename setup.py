@@ -120,7 +120,7 @@ metadata = dict(
         "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
         ],
-        "gpx": ["egobox~=0.22"],  # pip install smt[gpx]
+        "gpx": ["egobox~=0.23"],  # pip install smt[gpx]
     },
     python_requires=">=3.9",
     zip_safe=False,
