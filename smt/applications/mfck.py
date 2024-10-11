@@ -174,7 +174,7 @@ class MFCK(KrgBased):
         x_opt[2:8:3]=10**(x_opt[2:8:3])
         x_opt[3:8:3]=10**(x_opt[3:8:3])
         self.theta = x_opt
-        
+
     def predict_multi_lvl(self,x):
         """
         Generalized prediction function for the multi-fidelity co-kriging
@@ -352,7 +352,7 @@ class MFCK(KrgBased):
         param1[2:8:3]=10**(param1[2:8:3])
         param1[3:8:3]=10**(param1[3:8:3])
         return self.neg_log_likelihood(param1,1)
-    
+
     def compute_K(self, param1):
         """
         Compute the co-kriging piece-wise matrix with correct handling of non-symmetric cross-correlations.
