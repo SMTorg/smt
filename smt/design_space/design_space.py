@@ -534,8 +534,6 @@ class BaseDesignSpace:
                     is_acting_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] = (
                         np.tile(is_acting[:, [i]], (1, n_dim_cat))
                     )
-                is_categorical_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] *= True
-
                 i_x_unfold += n_dim_cat
 
             else:
