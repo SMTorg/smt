@@ -4,6 +4,7 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
+import sys
 import warnings
 from copy import deepcopy
 from enum import Enum
@@ -2328,7 +2329,16 @@ class KrgBased(SurrogateModel):
                                 )
                     # Optimization fail
                     elif np.size(best_optimal_par) == 0:
-                        print("Optimization failed. Try increasing the ``nugget``")
+                        nugget = self.options["nugget"]
+                        print(
+                            "\033[91mOptimization failed.\033[0m",
+                            end="",
+                            file=sys.stderr,
+                        )
+                        print(
+                            f" Try increasing the 'nugget' above its current value of {nugget}.",
+                            file=sys.stderr,
+                        )
                         raise ve
                     # Break the while loop
                     else:
