@@ -288,7 +288,7 @@ class BaseDesignSpace:
 
         # Unfold if needed
         if x_is_unfolded:
-            x_corrected, is_acting = self.unfold_x(x_corrected, is_acting)
+            x_corrected, is_acting, _ = self.unfold_x(x_corrected, is_acting)
 
         return x_corrected, is_acting
 
@@ -372,7 +372,7 @@ class BaseDesignSpace:
 
         # Unfold if needed
         if unfolded:
-            x, is_acting = self.unfold_x(x, is_acting)
+            x, is_acting, _ = self.unfold_x(x, is_acting)
 
         return x, is_acting
 
@@ -480,7 +480,7 @@ class BaseDesignSpace:
 
     def unfold_x(
         self, x: np.ndarray, is_acting: np.ndarray = None, fold_mask: np.ndarray = None
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Unfold x and optionally is_acting. Unfolding creates one extra dimension for each categorical variable using
         one-hot encoding.
@@ -500,6 +500,9 @@ class BaseDesignSpace:
            - Unfolded samples
         is_acting_unfolded: np.ndarray [n, dim_unfolded]
            - (Optional) boolean matrix specifying for each unfolded variable whether it is acting or non-acting
+        is_categorical_unfolded: np.ndarray [n, dim_unfolded]
+           - (Optional) boolean matrix specifying for each unfolded variable whether it is categorical or not
+
         """
 
         # Get number of unfolded dimension
@@ -509,6 +512,7 @@ class BaseDesignSpace:
         is_acting_unfolded = (
             np.ones(x_unfolded.shape, dtype=bool) if is_acting is not None else None
         )
+        is_categorical_unfolded = np.ones(x_unfolded.shape, dtype=bool)
 
         i_x_unfold = 0
         for i, dv in enumerate(self.design_variables):
@@ -530,20 +534,21 @@ class BaseDesignSpace:
                     is_acting_unfolded[:, i_x_unfold : i_x_unfold + n_dim_cat] = (
                         np.tile(is_acting[:, [i]], (1, n_dim_cat))
                     )
-
                 i_x_unfold += n_dim_cat
 
             else:
                 x_unfolded[:, i_x_unfold] = x[:, i]
                 if is_acting is not None:
                     is_acting_unfolded[:, i_x_unfold] = is_acting[:, i]
+                is_categorical_unfolded[:, i_x_unfold] *= False
+
                 i_x_unfold += 1
 
         x_unfolded = x_unfolded[:, :i_x_unfold]
         if is_acting is not None:
             is_acting_unfolded = is_acting_unfolded[:, :i_x_unfold]
 
-        return x_unfolded, is_acting_unfolded
+        return x_unfolded, is_acting_unfolded, is_categorical_unfolded[0]
 
     def _get_n_dim_unfolded(self) -> int:
         return sum(

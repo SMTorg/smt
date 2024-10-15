@@ -4,6 +4,7 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
+import sys
 import warnings
 from copy import deepcopy
 from enum import Enum
@@ -449,7 +450,7 @@ class KrgBased(SurrogateModel):
             self.y_norma = y_norma_unique
 
         if not (self.is_continuous):
-            D, self.ij, X_cont = gower_componentwise_distances(
+            D, self.ij, X_cont, D_num = gower_componentwise_distances(
                 X=X,
                 x_is_acting=is_acting,
                 design_space=self.design_space,
@@ -470,7 +471,7 @@ class KrgBased(SurrogateModel):
                     mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                X2, _ = self.design_space.unfold_x(X)
+                X2, _, self.unfolded_cat = self.design_space.unfold_x(X)
                 (
                     self.X2_norma,
                     _,
@@ -483,10 +484,25 @@ class KrgBased(SurrogateModel):
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, design_space=self.design_space
                 )
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        D = self._correct_distances_cat_decreed(
+                            D,
+                            is_acting,
+                            listcatdecreed,
+                            self.ij,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                    if np.any(self.design_space.is_conditionally_acting):
+                        D[:, np.logical_not(self.unfolded_cat)] = (
+                            D_num / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                        )
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -708,7 +724,7 @@ class KrgBased(SurrogateModel):
             y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
-            X_pls_space, _ = design_space.unfold_x(X)
+            X_pls_space, _, _ = design_space.unfold_x(X)
             nx = len(theta)
 
         elif cat_kernel == MixIntKernelType.GOWER:
@@ -954,7 +970,7 @@ class KrgBased(SurrogateModel):
                     if (
                         self._lvl == self.nlvl - 1
                     ):  # highest fidelity identified by the key None
-                        X2, _ = self.design_space.unfold_x(
+                        X2, _, _ = self.design_space.unfold_x(
                             self.training_points[None][0][0]
                         )
                         self.X2_norma[str(self._lvl)] = (
@@ -962,7 +978,7 @@ class KrgBased(SurrogateModel):
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
                     elif self._lvl < self.nlvl - 1:
-                        X2, _ = self.design_space.unfold_x(
+                        X2, _, _ = self.design_space.unfold_x(
                             self.training_points[self._lvl][0][0]
                         )
                         self.X2_norma[str(self._lvl)] = (
@@ -970,7 +986,9 @@ class KrgBased(SurrogateModel):
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
                 else:
-                    X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
+                    X2, _, _ = self.design_space.unfold_x(
+                        self.training_points[None][0][0]
+                    )
                     (
                         self.X2_norma,
                         _,
@@ -1539,7 +1557,7 @@ class KrgBased(SurrogateModel):
                 x, is_acting = self.design_space.correct_get_acting(x)
             n_eval, _ = x.shape
             _, ij = cross_distances(x, self.X_train)
-            dx = gower_componentwise_distances(
+            dx, dnum = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
                 design_space=self.design_space,
@@ -1560,13 +1578,28 @@ class KrgBased(SurrogateModel):
                     mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred, _, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
 
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        dx = self._correct_distances_cat_decreed(
+                            dx,
+                            is_acting,
+                            listcatdecreed,
+                            ij,
+                            is_acting_y=self.is_acting_train,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                    if np.any(self.design_space.is_conditionally_acting):
+                        dx[:, np.logical_not(self.unfolded_cat)] = dnum / self.X_scale
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -2296,7 +2329,16 @@ class KrgBased(SurrogateModel):
                                 )
                     # Optimization fail
                     elif np.size(best_optimal_par) == 0:
-                        print("Optimization failed. Try increasing the ``nugget``")
+                        nugget = self.options["nugget"]
+                        print(
+                            "\033[91mOptimization failed.\033[0m",
+                            end="",
+                            file=sys.stderr,
+                        )
+                        print(
+                            f" Try increasing the 'nugget' above its current value of {nugget}.",
+                            file=sys.stderr,
+                        )
                         raise ve
                     # Break the while loop
                     else:
