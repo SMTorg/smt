@@ -9,35 +9,17 @@ import unittest
 import numpy as np
 
 from smt.sampling_methods import LHS
-import os
 
-if not (os.getenv("RUN_PLAIN_DESIGN_SPACE_TEST")):
-    HAS_ADSG = False
-    HAS_DESIGN_SPACE_EXT = False
-    HAS_CONFIG_SPACE = False
-    import smt.design_space.design_space as ds
-    from smt.design_space.design_space import (
-        BaseDesignSpace,
-        CategoricalVariable,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-        DesignSpace,
-    )
-else:
-    import smt.design_space as ds
-    from smt.design_space import (
-        HAS_CONFIG_SPACE,
-        HAS_ADSG,
-        HAS_DESIGN_SPACE_EXT,
-        BaseDesignSpace,
-        CategoricalVariable,
-        FloatVariable,
-        IntegerVariable,
-        OrdinalVariable,
-        DesignSpace,
-        DesignSpaceGraph,
-    )
+
+import smt.design_space.design_space as ds
+from smt.design_space.design_space import (
+    BaseDesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+    DesignSpace,
+)
 
 
 @contextlib.contextmanager
@@ -225,33 +207,16 @@ class Test(unittest.TestCase):
             random_state=42,
         )
         self.assertEqual(len(ds.design_variables), 4)
-        if HAS_CONFIG_SPACE:
-            self.assertEqual(len(list(ds._cs.values())), 4)
         self.assertTrue(np.all(~ds.is_conditionally_acting))
-        if HAS_CONFIG_SPACE:
-            x, is_acting = ds.sample_valid_x(3, random_state=42)
-            self.assertEqual(x.shape, (3, 4))
-            np.testing.assert_allclose(
-                x,
-                np.array(
-                    [
-                        [1.0, 0.0, -0.0, 0.83370861],
-                        [2.0, 0.0, -1.0, 0.64286682],
-                        [2.0, 0.0, -0.0, 1.15088847],
-                    ]
-                ),
-                atol=1e-8,
-            )
-        else:
-            ds.sample_valid_x(3, random_state=42)
-            x = np.array(
-                [
-                    [1, 0, 0, 0.834],
-                    [2, 0, -1, 0.6434],
-                    [2, 0, 0, 1.151],
-                ]
-            )
-            x, is_acting = ds.correct_get_acting(x)
+        ds.sample_valid_x(3, random_state=42)
+        x = np.array(
+            [
+                [1, 0, 0, 0.834],
+                [2, 0, -1, 0.6434],
+                [2, 0, 0, 1.151],
+            ]
+        )
+        x, is_acting = ds.correct_get_acting(x)
 
         self.assertEqual(x.shape, (3, 4))
         self.assertEqual(is_acting.shape, x.shape)
@@ -299,18 +264,6 @@ class Test(unittest.TestCase):
             is_acting_unfolded,
         ) = ds.sample_valid_x(3, unfolded=True, random_state=42)
         self.assertEqual(x_unfolded.shape, (3, 6))
-        if HAS_CONFIG_SPACE:
-            np.testing.assert_allclose(
-                x_unfolded,
-                np.array(
-                    [
-                        [1.0, 0.0, 0.0, 0.0, 2.0, 1.11213215],
-                        [0.0, 1.0, 0.0, 1.0, -1.0, 1.09482857],
-                        [1.0, 0.0, 0.0, 1.0, -1.0, 0.75061044],
-                    ]
-                ),
-                atol=1e-8,
-            )
 
         self.assertTrue(str(ds))
         self.assertTrue(repr(ds))
@@ -445,86 +398,9 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        if HAS_ADSG:
-            assert len(seen_x) == 49
-        else:
-            assert len(seen_x) == 42
+
+        assert len(seen_x) == 42
         assert len(seen_is_acting) == 2
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_design_space_hierarchical_config_space(self):
-        ds = DesignSpace(
-            [
-                CategoricalVariable(["A", "B", "Cc"]),  # x0
-                CategoricalVariable(["E", "F"]),  # x1
-                IntegerVariable(0, 1),  # x2
-                FloatVariable(0, 1),  # x3
-            ],
-            random_state=42,
-        )
-        ds.declare_decreed_var(
-            decreed_var=3, meta_var=0, meta_value="A"
-        )  # Activate x3 if x0 == A
-        ds.add_value_constraint(
-            var1=0, value1=["Cc"], var2=1, value2="F"
-        )  # Prevent a == C and b == F
-
-        x_cartesian = np.array(
-            list(itertools.product([0, 1, 2], [0, 1], [0, 1], [0.25, 0.75]))
-        )
-        self.assertEqual(x_cartesian.shape, (24, 4))
-
-        self.assertTrue(
-            np.all(ds.is_conditionally_acting == [False, False, False, True])
-        )
-
-        x, is_acting = ds.correct_get_acting(x_cartesian)
-        _, is_unique = np.unique(x, axis=0, return_index=True)
-        self.assertEqual(len(is_unique), 14)
-        np.testing.assert_array_equal(
-            x[is_unique, :],
-            np.array(
-                [
-                    [0, 0, 0, 0.25],
-                    [0, 0, 0, 0.75],
-                    [0, 0, 1, 0.25],
-                    [0, 0, 1, 0.75],
-                    [0, 1, 0, 0.25],
-                    [0, 1, 0, 0.75],
-                    [0, 1, 1, 0.25],
-                    [0, 1, 1, 0.75],
-                    [1, 0, 0, 0.5],
-                    [1, 0, 1, 0.5],
-                    [1, 1, 0, 0.5],
-                    [1, 1, 1, 0.5],
-                    [2, 0, 0, 0.5],
-                    [2, 0, 1, 0.5],
-                ]
-            ),
-        )
-        np.testing.assert_array_equal(
-            is_acting[is_unique, :],
-            np.array(
-                [
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, True],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                    [True, True, True, False],
-                ]
-            ),
-        )
 
         x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
         assert x_sampled.shape == (100, 4)
@@ -541,77 +417,8 @@ class Test(unittest.TestCase):
         for i, xi in enumerate(x_sampled):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
-        assert len(seen_x) == 14
+        assert len(seen_x) == 16
         assert len(seen_is_acting) == 2
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_design_space_continuous(self):
-        ds = DesignSpace(
-            [
-                FloatVariable(0, 1),  # x0
-                FloatVariable(0, 1),  # x1
-                FloatVariable(0, 1),  # x2
-            ],
-            random_state=42,
-        )
-        ds.add_value_constraint(
-            var1=0, value1="<", var2=1, value2=">"
-        )  # Prevent x0 < x1
-        ds.add_value_constraint(
-            var1=1, value1="<", var2=2, value2=">"
-        )  # Prevent x1 < x2
-
-        # correct_get_acting
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-        self.assertTrue(np.min(x_sampled[:, 0] - x_sampled[:, 1]) > 0)
-        self.assertTrue(np.min(x_sampled[:, 1] - x_sampled[:, 2]) > 0)
-        ds = DesignSpace(
-            [
-                IntegerVariable(0, 2),  # x0
-                FloatVariable(0, 2),  # x1
-                IntegerVariable(0, 2),  # x2
-            ],
-            random_state=42,
-        )
-        ds.add_value_constraint(
-            var1=0, value1="<", var2=1, value2=">"
-        )  # Prevent x0 < x1
-        ds.add_value_constraint(
-            var1=1, value1="<", var2=2, value2=">"
-        )  # Prevent x0 < x1
-
-        # correct_get_acting
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
-        self.assertTrue(np.min(x_sampled[:, 0] - x_sampled[:, 1]) > 0)
-        self.assertTrue(np.min(x_sampled[:, 1] - x_sampled[:, 2]) > 0)
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_check_conditionally_acting(self):
-        class WrongDesignSpace(DesignSpace):
-            def _is_conditionally_acting(self) -> np.ndarray:
-                return np.zeros((self.n_dv,), dtype=bool)
-
-        for simulate_no_cs in [True, False]:
-            with simulate_no_config_space(simulate_no_cs):
-                ds = WrongDesignSpace(
-                    [
-                        CategoricalVariable(["A", "B", "C"]),  # x0
-                        CategoricalVariable(["E", "F"]),  # x1
-                        IntegerVariable(0, 1),  # x2
-                        FloatVariable(0, 1),  # x3
-                    ],
-                    random_state=42,
-                )
-                ds.declare_decreed_var(
-                    decreed_var=3, meta_var=0, meta_value="A"
-                )  # Activate x3 if x0 == A
-                self.assertRaises(
-                    RuntimeError, lambda: ds.sample_valid_x(10, random_state=42)
-                )
 
     def test_check_conditionally_acting_2(self):
         for simulate_no_cs in [True, False]:
@@ -630,236 +437,6 @@ class Test(unittest.TestCase):
                 )  # Activate x3 if x0 == A
 
                 ds.sample_valid_x(10, random_state=42)
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_restrictive_value_constraint_ordinal(self):
-        ds = DesignSpace(
-            [
-                OrdinalVariable(["0", "1", "2"]),
-                OrdinalVariable(["0", "1", "2"]),
-            ]
-        )
-        assert list(ds._cs.values())[0].default_value == "0"
-
-        ds.add_value_constraint(var1=0, value1="1", var2=1, value2="1")
-        ds.sample_valid_x(100, random_state=42)
-
-        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
-        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
-        np.testing.assert_array_equal(
-            np.array(
-                [[0, 0], [0, 1], [0, 2], [1, 0], [0, 1], [1, 2], [2, 0], [2, 1], [2, 2]]
-            ),
-            x_cartesian2,
-        )
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_restrictive_value_constraint_integer(self):
-        ds = DesignSpace(
-            [
-                IntegerVariable(0, 2),
-                IntegerVariable(0, 2),
-            ]
-        )
-        assert list(ds._cs.values())[0].default_value == 1
-
-        ds.add_value_constraint(var1=0, value1=1, var2=1, value2=1)
-        ds.sample_valid_x(100, random_state=42)
-
-        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
-        ds.correct_get_acting(x_cartesian)
-        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
-        np.testing.assert_array_equal(
-            np.array(
-                [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0], [1, 2], [2, 0], [2, 1], [2, 2]]
-            ),
-            x_cartesian2,
-        )
-
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
-    )
-    def test_restrictive_value_constraint_categorical(self):
-        ds = DesignSpace(
-            [
-                CategoricalVariable(["a", "b", "c"]),
-                CategoricalVariable(["a", "b", "c"]),
-            ]
-        )
-        assert list(ds._cs.values())[0].default_value == "a"
-
-        ds.add_value_constraint(var1=0, value1="b", var2=1, value2="b")
-        ds.sample_valid_x(100, random_state=42)
-
-        x_cartesian = np.array(list(itertools.product([0, 1, 2], [0, 1, 2])))
-        ds.correct_get_acting(x_cartesian)
-        x_cartesian2, _ = ds.correct_get_acting(x_cartesian)
-        np.testing.assert_array_equal(
-            np.array(
-                [[0, 0], [0, 1], [0, 2], [1, 0], [0, 1], [1, 2], [2, 0], [2, 1], [2, 2]]
-            ),
-            x_cartesian2,
-        )
-
-    @unittest.skipIf(
-        not (HAS_DESIGN_SPACE_EXT),
-        "Architecture Design Space Graph or ConfigSpace not installed.",
-    )
-    def test_adsg_to_legacy(self):
-        from adsg_core import BasicADSG, NamedNode, DesignVariableNode
-        from smt_design_space.design_space import ensure_design_space
-        from adsg_core import GraphProcessor
-
-        # Create the ADSG
-        adsg = BasicADSG()
-        ndv = 13
-        # Create nodes
-        n = [NamedNode(f"N{i}") for i in range(ndv)]
-        n = [
-            NamedNode("MLP"),
-            NamedNode("Learning_rate"),
-            NamedNode("Activation_function"),
-            NamedNode("Optimizer"),
-            NamedNode("Decay"),
-            NamedNode("Power_update"),
-            NamedNode("Average_start"),
-            NamedNode("Running_Average_1"),
-            NamedNode("Running_Average_2"),
-            NamedNode("Numerical_Stability"),
-            NamedNode("Nb_layers"),
-            NamedNode("Layer_1"),
-            NamedNode("Layer_2"),
-            NamedNode("Layer_3"),  # NamedNode("Dropout"),
-            NamedNode("ASGD"),
-            NamedNode("Adam"),
-            NamedNode("20...40"),
-            NamedNode("40"),
-            NamedNode("45"),
-            NamedNode("20...40"),
-            NamedNode("40"),
-            NamedNode("45"),
-            NamedNode("20...40"),
-            NamedNode("40"),
-            NamedNode("45"),
-        ]
-        adsg.add_node(n[1])
-        adsg.add_node(n[2])
-        adsg.add_edges(
-            [
-                (n[3], n[10]),
-                (n[14], n[4]),
-                (n[14], n[5]),
-                (n[14], n[6]),
-                (n[15], n[7]),
-                (n[15], n[8]),
-                (n[15], n[9]),
-            ]
-        )
-        adsg.add_selection_choice("Optimizer_Choice", n[3], [n[14], n[15]])
-        adsg.add_selection_choice("#layers", n[10], [n[11], n[12], n[13]])
-        a = []
-        for i in range(3):
-            a.append(NamedNode(str(25 + 5 * i)))
-        b = a.copy()
-        b.append(n[17])
-        b.append(n[18])
-        choicel1 = adsg.add_selection_choice("#neurons_1", n[11], b)
-        adsg.add_edges([(n[12], choicel1), (n[13], choicel1)])
-
-        a = []
-        for i in range(3):
-            a.append(NamedNode(str(25 + 5 * i)))
-        b = a.copy()
-        b.append(n[20])
-        b.append(n[21])
-        choicel1 = adsg.add_selection_choice("#neurons_2", n[12], b)
-        adsg.add_edges([(n[13], choicel1)])
-
-        a = []
-        for i in range(3):
-            a.append(NamedNode(str(25 + 5 * i)))
-        b = a.copy()
-        b.append(n[23])
-        b.append(n[24])
-        choicel1 = adsg.add_selection_choice("#neurons_3", n[13], b)
-
-        adsg.add_incompatibility_constraint([n[15], n[13]])
-        adsg.add_incompatibility_constraint([n[14], n[17]])
-        adsg.add_incompatibility_constraint([n[14], n[18]])
-        adsg.add_incompatibility_constraint([n[14], n[20]])
-        adsg.add_incompatibility_constraint([n[14], n[21]])
-        adsg.add_incompatibility_constraint([n[14], n[23]])
-        adsg.add_incompatibility_constraint([n[14], n[24]])
-        start_nodes = set()
-        start_nodes.add(n[3])
-        start_nodes.add(n[2])
-        start_nodes.add(n[1])
-        adsg.add_edges(
-            [
-                (n[1], DesignVariableNode("x0", bounds=(0, 1))),
-                (n[4], DesignVariableNode("x1", bounds=(0, 1))),
-                (n[5], DesignVariableNode("x2", bounds=(0, 1))),
-                (n[6], DesignVariableNode("x3", bounds=(0, 1))),
-                (n[7], DesignVariableNode("x4", bounds=(0, 1))),
-                (n[8], DesignVariableNode("x5", bounds=(0, 1))),
-                (n[9], DesignVariableNode("x6", bounds=(0, 1))),
-            ]
-        )
-        adsg.add_selection_choice(
-            "Activation_Choice",
-            n[2],
-            [NamedNode("ReLU"), NamedNode("Sigmoid"), NamedNode("Tanh")],
-        )
-        adsg = adsg.set_start_nodes(start_nodes)
-        adsg.render()
-        gp = GraphProcessor(adsg)
-        gp.get_statistics()
-        design_space = ensure_design_space(design_space=adsg)
-        np.testing.assert_array_equal(
-            np.array(
-                [
-                    False,
-                    False,
-                    False,
-                    True,
-                    True,
-                    True,
-                    False,
-                    True,
-                    True,
-                    True,
-                    True,
-                    True,
-                    True,
-                ]
-            ),
-            design_space.is_conditionally_acting,
-        )
-        design_space2 = DesignSpaceGraph(adsg=adsg)
-        np.testing.assert_array_equal(
-            np.array(
-                [
-                    False,
-                    False,
-                    False,
-                    True,
-                    True,
-                    True,
-                    False,
-                    True,
-                    True,
-                    True,
-                    True,
-                    True,
-                    True,
-                ]
-            ),
-            design_space2.is_conditionally_acting,
-        )
 
 
 if __name__ == "__main__":
