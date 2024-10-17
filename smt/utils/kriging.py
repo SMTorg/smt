@@ -303,6 +303,7 @@ def gower_componentwise_distances(
     z_num_is_acting = z_is_acting[:, ~cat_features]
     num_is_decreed = is_decreed[~cat_features]
     num_bounds = design_space.get_num_bounds()[~cat_features, :]
+    Z_scale = 1
     if num_bounds.shape[0] > 0:
         Z_offset = num_bounds[:, 0]
         Z_max = num_bounds[:, 1]
