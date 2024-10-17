@@ -481,6 +481,7 @@ class KrgBased(SurrogateModel):
                     _,
                 ) = standardization(X2.copy(), y.copy())
                 D, _ = cross_distances(self.X2_norma)
+                D = np.abs(D)
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, design_space=self.design_space
                 )
@@ -985,19 +986,7 @@ class KrgBased(SurrogateModel):
                             X2 - self.X2_offset
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-                else:
-                    X2, _, _ = self.design_space.unfold_x(
-                        self.training_points[None][0][0]
-                    )
-                    (
-                        self.X2_norma,
-                        _,
-                        self.X2_offset,
-                        _,
-                        self.X2_scale,
-                        _,
-                    ) = standardization(X2, self.training_points[None][0][1])
-                    dx, _ = cross_distances(self.X2_norma)
+
             try:
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
@@ -1012,6 +1001,7 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     kplsk_second_loop=self.kplsk_second_loop,
                 ).reshape(-1, 1)
+
                 if np.isnan(r).any():
                     return reduced_likelihood_function_value, par
             except FloatingPointError:
@@ -1580,7 +1570,7 @@ class KrgBased(SurrogateModel):
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
                 Xpred, _, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
+                dx = np.abs(differences(Xpred_norma, Y=self.X2_norma.copy()))
 
                 if (
                     "n_comp" not in self.options._dict.keys()
@@ -1598,8 +1588,10 @@ class KrgBased(SurrogateModel):
                             is_acting_y=self.is_acting_train,
                             mixint_type=MixIntKernelType.GOWER,
                         )
-                    if np.any(self.design_space.is_conditionally_acting):
-                        dx[:, np.logical_not(self.unfolded_cat)] = dnum / self.X_scale
+                if np.any(self.design_space.is_conditionally_acting):
+                    dx[:, np.logical_not(self.unfolded_cat)] = (
+                        dnum / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                    )
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -1680,7 +1672,6 @@ class KrgBased(SurrogateModel):
         # Initialization
         if not (self.is_continuous):
             x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
-
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
