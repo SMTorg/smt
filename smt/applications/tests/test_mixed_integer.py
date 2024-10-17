@@ -1040,9 +1040,9 @@ class TestMixedInteger(unittest.TestCase):
         for mixint_kernel in [
             MixIntKernelType.CONT_RELAX,
             MixIntKernelType.GOWER,
-            #        MixIntKernelType.COMPOUND_SYMMETRY,
-            #       MixIntKernelType.EXP_HOMO_HSPHERE,
-            #      MixIntKernelType.HOMO_HSPHERE,
+            MixIntKernelType.COMPOUND_SYMMETRY,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
+            MixIntKernelType.HOMO_HSPHERE,
         ]:
             sm = MixedIntegerKrigingModel(
                 surrogate=KRG(
@@ -2520,5 +2520,4 @@ class TestMixedInteger(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestMixedInteger().test_hierarchical_design_space_example_all_categorical_decreed()
-#    unittest.main()
+    unittest.main()
