@@ -302,8 +302,8 @@ def gower_componentwise_distances(
     Z_num = Z[:, ~cat_features]
     z_num_is_acting = z_is_acting[:, ~cat_features]
     num_is_decreed = is_decreed[~cat_features]
-    X_num_out = Z_num[x_index,]
-    Y_num_out = Z_num[y_index,]
+    Z_num[x_index,]
+    Z_num[y_index,]
     num_bounds = design_space.get_num_bounds()[~cat_features, :]
     if num_bounds.shape[0] > 0:
         Z_offset = num_bounds[:, 0]
@@ -327,7 +327,7 @@ def gower_componentwise_distances(
         y,
         hierarchical_kernel,
     )
-    D_num_out= D_num*Z_scale
+    D_num_out = D_num * Z_scale
     D = np.concatenate((D_cat, D_num), axis=1) * 0
     D[:, np.logical_not(cat_features)] = D_num
     D[:, cat_features] = D_cat

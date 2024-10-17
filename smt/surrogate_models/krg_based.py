@@ -986,7 +986,7 @@ class KrgBased(SurrogateModel):
                             X2 - self.X2_offset
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-              
+
             try:
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
@@ -1001,7 +1001,7 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     kplsk_second_loop=self.kplsk_second_loop,
                 ).reshape(-1, 1)
-                
+
                 if np.isnan(r).any():
                     return reduced_likelihood_function_value, par
             except FloatingPointError:
@@ -1590,7 +1590,7 @@ class KrgBased(SurrogateModel):
                         )
                 if np.any(self.design_space.is_conditionally_acting):
                     dx[:, np.logical_not(self.unfolded_cat)] = (
-                        dnum  / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                        dnum / self.X2_scale[np.logical_not(self.unfolded_cat)]
                     )
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
