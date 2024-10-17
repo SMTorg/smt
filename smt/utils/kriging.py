@@ -302,8 +302,6 @@ def gower_componentwise_distances(
     Z_num = Z[:, ~cat_features]
     z_num_is_acting = z_is_acting[:, ~cat_features]
     num_is_decreed = is_decreed[~cat_features]
-    Z_num[x_index,]
-    Z_num[y_index,]
     num_bounds = design_space.get_num_bounds()[~cat_features, :]
     if num_bounds.shape[0] > 0:
         Z_offset = num_bounds[:, 0]
