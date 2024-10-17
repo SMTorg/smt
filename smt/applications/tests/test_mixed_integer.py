@@ -2520,4 +2520,5 @@ class TestMixedInteger(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    TestMixedInteger().run_mixed_integer_context_example()
     unittest.main()
