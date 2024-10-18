@@ -2,7 +2,6 @@
 Author: Jasper Bussemaker <jasper.bussemaker@dlr.de>
 """
 
-import contextlib
 import itertools
 import unittest
 
@@ -11,7 +10,6 @@ import numpy as np
 from smt.sampling_methods import LHS
 
 
-import smt.design_space.design_space as ds
 from smt.design_space.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
@@ -20,16 +18,6 @@ from smt.design_space.design_space import (
     OrdinalVariable,
     DesignSpace,
 )
-
-
-@contextlib.contextmanager
-def simulate_no_config_space(do_simulate=True):
-    if ds.HAS_CONFIG_SPACE and do_simulate:
-        ds.HAS_CONFIG_SPACE = False
-        yield
-        ds.HAS_CONFIG_SPACE = True
-    else:
-        yield
 
 
 class Test(unittest.TestCase):
@@ -193,8 +181,6 @@ class Test(unittest.TestCase):
 
     def test_create_design_space(self):
         DesignSpace([FloatVariable(0, 1)])
-        with simulate_no_config_space():
-            DesignSpace([FloatVariable(0, 1)])
 
     def test_design_space(self):
         ds = DesignSpace(
@@ -421,22 +407,20 @@ class Test(unittest.TestCase):
         assert len(seen_is_acting) == 2
 
     def test_check_conditionally_acting_2(self):
-        for simulate_no_cs in [True, False]:
-            with simulate_no_config_space(simulate_no_cs):
-                ds = DesignSpace(
-                    [
-                        CategoricalVariable(["A", "B", "C"]),  # x0
-                        CategoricalVariable(["E", "F"]),  # x1
-                        IntegerVariable(0, 1),  # x2
-                        FloatVariable(0, 1),  # x3
-                    ],
-                    random_state=42,
-                )
-                ds.declare_decreed_var(
-                    decreed_var=0, meta_var=1, meta_value="E"
-                )  # Activate x3 if x0 == A
+        ds = DesignSpace(
+            [
+                CategoricalVariable(["A", "B", "C"]),  # x0
+                CategoricalVariable(["E", "F"]),  # x1
+                IntegerVariable(0, 1),  # x2
+                FloatVariable(0, 1),  # x3
+            ],
+            random_state=42,
+        )
+        ds.declare_decreed_var(
+            decreed_var=0, meta_var=1, meta_value="E"
+        )  # Activate x3 if x0 == A
 
-                ds.sample_valid_x(10, random_state=42)
+        ds.sample_valid_x(10, random_state=42)
 
 
 if __name__ == "__main__":

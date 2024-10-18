@@ -17,9 +17,8 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-import smt.design_space as ds
 from smt.design_space import (
-    HAS_CONFIG_SPACE,
+    HAS_DESIGN_SPACE_EXT,
     DesignSpace,
     CategoricalVariable,
     FloatVariable,
@@ -464,7 +463,7 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_gower_example()
         self.run_mixed_homo_gaussian_example()
         self.run_mixed_homo_hyp_example()
-        if ds.HAS_CONFIG_SPACE:
+        if HAS_DESIGN_SPACE_EXT:
             self.run_mixed_cs_example()
             self.run_hierarchical_design_space_example()  # works only with config space impl
 
@@ -918,7 +917,7 @@ class TestMixedInteger(unittest.TestCase):
         self._sm = sm  # to be ignored: just used for automated test
 
     @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+        not HAS_DESIGN_SPACE_EXT, "Hierarchy ConfigSpace dependency not installed"
     )
     def test_hierarchical_design_space_example(self):
         self.run_hierarchical_design_space_example()
@@ -951,7 +950,7 @@ class TestMixedInteger(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+        not HAS_DESIGN_SPACE_EXT, "Hierarchy ConfigSpace dependency not installed"
     )
     def test_hierarchical_design_space_example_all_categorical_decreed(self):
         ds = DesignSpace(
