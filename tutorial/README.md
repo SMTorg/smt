@@ -68,6 +68,10 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ## Mixed-integer and mixed-hierarchical surrogate models
 
+### Warning: The Design Space usage tutorial has been moved to SMTorg/smt-design-space-ext](https://github.com/SMTorg/smt-design-space-ext)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg//smt-design-space-ext/blob/main/smt_design_space/SMT_DesignSpace_example.ipynb)
+
 ### Specific notebook associated to the SMT 2.0 Journal Paper (submitted) with a focus on mixed integer and mixed hierarchical surrogate models (continuous, discrete, categorical)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MixedInteger/RunTestCases_Paper_SMT_v2.ipynb)
