@@ -6,12 +6,14 @@ from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI, SubspacesInterpolation
 from .cckrg import CoopCompKRG
+from .mfck import MFCK
 
 __all__ = [
     "VFM",
     "MOE",
     "MOESurrogateModel",
     "MFK",
+    "MFCK",
     "NestedLHS",
     "MFKPLS",
     "MFKPLSK",
