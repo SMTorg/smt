@@ -74,7 +74,7 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_SGP_analytic.ipynb)
 
-### Conformal_prediction
+### Conformal prediction
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/Split_Conformal_prediction_SMT.ipynb)
 
