@@ -2,6 +2,7 @@
 
 These tutorials introduce to use the opensource Surrogate Modeling Toolbox where different surrogate models are available.
 
+
 ## SMT Tutorial (linear, quadratic, gaussian process, ...)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SMT_Tutorial.ipynb)
@@ -44,6 +45,17 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
 
 
+## Kernel Engineering
+
+### K1
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
+
+### K2
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
+
+
 ## Other Gaussian Process Models and Sampling Methods
 
 ### LHS sampling (initial and expanded)
@@ -62,9 +74,14 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_SGP_analytic.ipynb)
 
+### Conformal_prediction
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/Split_Conformal_prediction_SMT.ipynb)
+
 ### Cooperative Components Kriging
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_CoopCompKRG.ipynb)
+
 
 ## Mixed-integer and mixed-hierarchical surrogate models
 
