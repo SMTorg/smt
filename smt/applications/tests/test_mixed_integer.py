@@ -462,6 +462,11 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_gower_example()
         self.run_mixed_homo_gaussian_example()
         self.run_mixed_homo_hyp_example()
+        # FIXME: this test should belong to smt_design_space_ext
+        # but at the moment run_* code is used here to generate doc here in smt
+        # if HAS_DESIGN_SPACE_EXT:
+        #     self.run_mixed_cs_example()
+        #     self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
         import matplotlib.pyplot as plt
@@ -2124,6 +2129,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_cs_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -2255,6 +2261,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_homo_gaussian_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
