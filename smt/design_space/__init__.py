@@ -5,6 +5,7 @@ from smt.design_space.design_space import (
     IntegerVariable,
     OrdinalVariable,
     DesignSpace,
+    DesignVariable,
     ensure_design_space,
 )
 
@@ -15,6 +16,6 @@ __all__ = [
     "OrdinalVariable",
     "CategoricalVariable",
     "DesignSpace",
+    "DesignVariable",
     "ensure_design_space",
-    "HAS_DESIGN_SPACE_EXT",
 ]
