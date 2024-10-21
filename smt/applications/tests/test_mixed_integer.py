@@ -17,9 +17,7 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-import smt.design_space as ds
 from smt.design_space import (
-    HAS_CONFIG_SPACE,
     DesignSpace,
     CategoricalVariable,
     FloatVariable,
@@ -464,9 +462,11 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_gower_example()
         self.run_mixed_homo_gaussian_example()
         self.run_mixed_homo_hyp_example()
-        if ds.HAS_CONFIG_SPACE:
-            self.run_mixed_cs_example()
-            self.run_hierarchical_design_space_example()  # works only with config space impl
+        # FIXME: this test should belong to smt_design_space_ext
+        # but at the moment run_* code is used here to generate doc here in smt
+        # if HAS_DESIGN_SPACE_EXT:
+        #     self.run_mixed_cs_example()
+        #     self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
         import matplotlib.pyplot as plt
@@ -917,8 +917,8 @@ class TestMixedInteger(unittest.TestCase):
 
         self._sm = sm  # to be ignored: just used for automated test
 
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    @unittest.skip(
+        "Use smt design space extension capability, this test should be moved in smt_design_space_ext"
     )
     def test_hierarchical_design_space_example(self):
         self.run_hierarchical_design_space_example()
@@ -950,8 +950,8 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    @unittest.skip(
+        "Use smt design space extension capability, this test should be moved in smt_design_space_ext"
     )
     def test_hierarchical_design_space_example_all_categorical_decreed(self):
         ds = DesignSpace(
@@ -2129,6 +2129,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_cs_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -2260,6 +2261,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_homo_gaussian_example(self):
         import matplotlib.pyplot as plt
         import numpy as np

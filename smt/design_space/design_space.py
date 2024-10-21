@@ -9,11 +9,6 @@ from smt.sampling_methods.lhs import LHS
 from typing import List, Optional, Sequence, Tuple, Union
 
 
-HAS_DESIGN_SPACE_EXT = False
-HAS_CONFIG_SPACE = False
-HAS_ADSG = False
-
-
 class Configuration:
     pass
 
