@@ -47,13 +47,13 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ## Kernel Engineering
 
-### K1
+### Kernel engineering tutorial in SMT
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Kernels/SMT_Kernel_tutorial.ipynb)
 
-### K2
+### Kernel engineering application to aeroelasticity prediction
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/PODI/SMT_PODI_Airfoil.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Kernels/SMT_Kernel_Hale.ipynb)
 
 
 ## Other Gaussian Process Models and Sampling Methods
