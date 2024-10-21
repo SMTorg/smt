@@ -11,7 +11,6 @@ from sys import argv
 
 import numpy as np
 
-import smt.design_space as ds
 from smt.applications import EGO
 from smt.applications.ego import Evaluator
 from smt.applications.mixed_integer import (
@@ -1120,10 +1119,7 @@ class TestEGO(SMTestCase):
             LHS, design_space, criterion="ese", random_state=random_state
         )
         Xt = sampling(n_doe)
-        if ds.HAS_DESIGN_SPACE_EXT:  # results differs wrt config_space impl
-            self.assertAlmostEqual(np.sum(Xt), 24.811925491708156, delta=1e-4)
-        else:
-            self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
+        self.assertAlmostEqual(np.sum(Xt), 28.568852027679586, delta=1e-4)
         Xt = np.array(
             [
                 [0.37454012, 1.0],
@@ -1155,12 +1151,8 @@ class TestEGO(SMTestCase):
             n_start=25,
         )
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_obj)
-        if ds.HAS_DESIGN_SPACE_EXT:  # results differs wrt config_space impl
-            self.assertAlmostEqual(np.sum(y_data), 8.846225704750577, delta=1e-4)
-            self.assertAlmostEqual(np.sum(x_data), 41.811925504901374, delta=1e-4)
-        else:
-            self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
-            self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
+        self.assertAlmostEqual(np.sum(y_data), 7.8471910288712, delta=1e-4)
+        self.assertAlmostEqual(np.sum(x_data), 34.81192549, delta=1e-4)
 
     def test_ego_gek(self):
         ego, fun = self.initialize_ego_gek()
@@ -1237,7 +1229,7 @@ class TestEGO(SMTestCase):
 
         from smt.applications import EGO
         from smt.surrogate_models import KRG
-        from smt.utils.design_space import DesignSpace
+        from smt.design_space import DesignSpace
 
         def function_test_1d(x):
             # function xsinx
@@ -1328,7 +1320,7 @@ class TestEGO(SMTestCase):
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
