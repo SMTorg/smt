@@ -806,8 +806,9 @@ class TestMixedInteger(unittest.TestCase):
             IntegerVariable,
             OrdinalVariable,
         )
-
-        ds = DesignSpace(
+        from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
+        
+        ds = ConfigSpaceDesignSpaceImpl(
             [
                 CategoricalVariable(
                     ["A", "B"]
