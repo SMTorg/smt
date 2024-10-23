@@ -801,13 +801,12 @@ class TestMixedInteger(unittest.TestCase):
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
         from smt.design_space import (
             CategoricalVariable,
-            DesignSpace,
             FloatVariable,
             IntegerVariable,
             OrdinalVariable,
         )
         from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
-        
+
         ds = ConfigSpaceDesignSpaceImpl(
             [
                 CategoricalVariable(
