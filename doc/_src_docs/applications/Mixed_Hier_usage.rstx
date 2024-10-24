@@ -39,15 +39,16 @@ The design space is then defined from a list of design variables and implements 
 Hierarchical variables
 ----------------------
 
-The design space definition uses the framework of Audet et al. [2]_ to manage both mixed-discrete variables and
+The design space definition uses the framework of [2]_ to manage both mixed-discrete variables and
 hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may
 affect the dimension of the problem and decide if some other decreed variables are acting or non-acting.
 
 Additionally, it is also possible to define value constraints that explicitly forbid two variables from having some
 values simultaneously or for a continuous variable to be greater than another. 
 This can be useful for modeling incompatibility relationships: for example, engines can't be 
-installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected. Note: this feature
-is only available if ConfigSpace has been installed: `pip install smt[cs]`
+installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected.
+
+Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext`
 
 The hierarchy relationships are specified after instantiating the design space:
 
@@ -103,6 +104,6 @@ Example of mixed integer context usage
 References
 ----------
 
-.. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
+.. [1] Saves, P. and Lafage, R. and Bartoli, N. and Diouane, Y. and Bussemaker, J. and Lefebvre, T. and Hwang, J. and Morlier, J. and Martins, J. (2024). SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes. Advances in Engineering Sofware.
 
-.. [2] Audet, C., Hallé-Hannan, E. and Le Digabel, S. A General Mathematical Framework for Constrained Mixed-variable Blackbox Optimization Problems with Meta and Categorical Variables. Oper. Res. Forum 4, 12 (2023). 
+.. [2] Hallé-Hannan, E. and  Audet, C., and Diouane, Y. and  Le Digabel, S. and Saves, P. (2024). A graph-structured distance for heterogeneous datasets with meta variable, Neurocomputing.

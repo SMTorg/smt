@@ -40,7 +40,7 @@ The design space is then defined from a list of design variables and implements 
   
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   from smt.sampling_methods import LHS
-  from smt.utils.design_space import (
+  from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
@@ -91,15 +91,16 @@ The design space is then defined from a list of design variables and implements 
 Hierarchical variables
 ----------------------
 
-The design space definition uses the framework of Audet et al. [2]_ to manage both mixed-discrete variables and
+The design space definition uses the framework of [2]_ to manage both mixed-discrete variables and
 hierarchical variables. We distinguish dimensional (or meta) variables which are a special type of variables that may
 affect the dimension of the problem and decide if some other decreed variables are acting or non-acting.
 
 Additionally, it is also possible to define value constraints that explicitly forbid two variables from having some
 values simultaneously or for a continuous variable to be greater than another. 
 This can be useful for modeling incompatibility relationships: for example, engines can't be 
-installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected. Note: this feature
-is only available if ConfigSpace has been installed: `pip install smt[cs]`
+installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected.
+
+Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext`
 
 The hierarchy relationships are specified after instantiating the design space:
 
@@ -114,15 +115,15 @@ The hierarchy relationships are specified after instantiating the design space:
   )
   from smt.sampling_methods import LHS
   from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-  from smt.utils.design_space import (
+  from smt.design_space import (
       CategoricalVariable,
-      DesignSpace,
       FloatVariable,
       IntegerVariable,
       OrdinalVariable,
   )
+  from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
   
-  ds = DesignSpace(
+  ds = ConfigSpaceDesignSpaceImpl(
       [
           CategoricalVariable(
               ["A", "B"]
@@ -236,16 +237,31 @@ The hierarchy relationships are specified after instantiating the design space:
 
   ___________________________________________________________________________
      
+                              MixedIntegerKriging
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 100
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  2.9558113
+  ___________________________________________________________________________
+     
    Evaluation
      
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.2563262
+     Predicting - done. Time (sec):  0.2929027
      
-     Prediction time/pt. (sec) :  0.0025633
+     Prediction time/pt. (sec) :  0.0029290
      
-  Pred_RMSE 4.089304906792809e-13
+  Pred_RMSE 4.0000324624835547e-13
   
 
 Design space and variable class references
@@ -281,10 +297,10 @@ Example of sampling a mixed-discrete design space
   
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
   from smt.sampling_methods import LHS
-  from smt.utils.design_space import (
-      CategoricalVariable,
-      DesignSpace,
+  from smt.design_space import (
       FloatVariable,
+      DesignSpace,
+      CategoricalVariable,
   )
   
   float_var = FloatVariable(0, 4)
@@ -335,7 +351,7 @@ Example of mixed integer context usage
   
   from smt.applications.mixed_integer import MixedIntegerContext
   from smt.surrogate_models import KRG
-  from smt.utils.design_space import (
+  from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
@@ -386,14 +402,29 @@ Example of mixed integer context usage
   DOE point nb = 30
   ___________________________________________________________________________
      
+                              MixedIntegerKriging
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 30
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.4647245
+  ___________________________________________________________________________
+     
    Evaluation
      
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0108135
+     Predicting - done. Time (sec):  0.0116608
      
-     Prediction time/pt. (sec) :  0.0002163
+     Prediction time/pt. (sec) :  0.0002332
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png
@@ -403,6 +434,6 @@ Example of mixed integer context usage
 References
 ----------
 
-.. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
+.. [1] Saves, P. and Lafage, R. and Bartoli, N. and Diouane, Y. and Bussemaker, J. and Lefebvre, T. and Hwang, J. and Morlier, J. and Martins, J. (2024). SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes. Advances in Engineering Sofware.
 
-.. [2] Audet, C., Hallé-Hannan, E. and Le Digabel, S. A General Mathematical Framework for Constrained Mixed-variable Blackbox Optimization Problems with Meta and Categorical Variables. Oper. Res. Forum 4, 12 (2023). 
+.. [2] Hallé-Hannan, E. and  Audet, C., and Diouane, Y. and  Le Digabel, S. and Saves, P. (2024). A graph-structured distance for heterogeneous datasets with meta variable, Neurocomputing.

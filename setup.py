@@ -107,6 +107,7 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.applications",
+        "smt.applications.tests",
         "smt.design_space",
         "smt.kernels",
     ],
