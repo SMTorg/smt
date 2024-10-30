@@ -5,6 +5,8 @@ Mauricio CASTANO AGUIRRE
 ONERA- UPHF
 2024
 """
+#import warnings
+
 import numpy as np
 from scipy.linalg import solve_triangular
 from scipy import optimize
@@ -19,15 +21,29 @@ class MFCK(KrgBased):
         self.name = "MFCK"
         declare(
             "sigma_bounds",
-            [1e-2, 100],
+            [1e-1, 100],
             types=(list, np.ndarray),
             desc="bounds for variance hyperparameters",
         )
         declare(
             "rho_bounds",
-            [0.1, 5.],
+            [-5., 5.],
             types=(list, np.ndarray),
             desc="bounds for rho value, autoregressive model",
+        )
+        declare(
+            "rho0",
+            1.5,
+            types=(float),
+            desc="Power for the pow_exp kernel function (valid values in (0.0, 2.0]). \
+                This option is set automatically when corr option is squar, abs, or matern.",
+        )
+        declare(
+            "sigma0",
+            1.0,
+            types=(float),
+            desc="Power for the pow_exp kernel function (valid values in (0.0, 2.0]). \
+                This option is set automatically when corr option is squar, abs, or matern.",
         )
         self.params = {}
         self.K = None
@@ -38,7 +54,8 @@ class MFCK(KrgBased):
 
     def train(self):
         """
-        Function for train the Hyper-parameters of the MFCK model
+        Overrides MFK implementation
+        Trains the Multi-Fidelity co-Kriging model
         Returns
         -------
         None.
@@ -57,20 +74,20 @@ class MFCK(KrgBased):
         self.y = np.vstack(yt)
         self._check_param()
         self.nx=1
-        self.options["theta0"]=[1.0]
         if self.lvl == 1:
             # For a single level, initialize theta_ini, lower_bounds, and upper_bounds with consistent shapes
-            theta_ini = np.hstack((1.0, self.options["theta0"]))  # Kernel variance + theta0
+            theta_ini = np.hstack((self.options["sigma0"], self.options["theta0"][0]))  # Kernel variance + theta0
             lower_bounds = np.hstack((self.options["sigma_bounds"][0], self.options["theta_bounds"][0]))
             upper_bounds = np.hstack((self.options["sigma_bounds"][1], self.options["theta_bounds"][1]))
             theta_ini = np.log10(theta_ini)
             lower_bounds = np.log10(lower_bounds)
             upper_bounds = np.log10(upper_bounds)
+            x_opt=theta_ini
         else:
-            for lvel in range(self.lvl):
-                if lvel == 0:
+            for lvl in range(self.lvl):
+                if lvl == 0:
                     # Initialize theta_ini for level 0
-                    theta_ini = np.hstack((1.0, self.options["theta0"]))  # Variance + initial theta values
+                    theta_ini = np.hstack((self.options["sigma0"], self.options["theta0"][0]))  # Variance + initial theta values
                     lower_bounds = np.hstack((self.options["sigma_bounds"][0],
                                               np.full(self.nx, self.options["theta_bounds"][0])))
                     upper_bounds = np.hstack((self.options["sigma_bounds"][1],
@@ -80,9 +97,9 @@ class MFCK(KrgBased):
                     lower_bounds[:len(self.options["theta0"])+1]=np.log10(lower_bounds[:len(self.options["theta0"])+1])
                     upper_bounds[:len(self.options["theta0"])+1]=np.log10(upper_bounds[:len(self.options["theta0"])+1])
 
-                elif lvel > 0:
+                elif lvl > 0:
                     # For additional levels, append to theta_ini, lower_bounds, and upper_bounds
-                    thetat = np.hstack((1.0, self.options["theta0"]))  # Variance + theta0
+                    thetat = np.hstack((self.options["sigma0"], self.options["theta0"][0]))  # Variance + theta0
                     lower_boundst = np.hstack((self.options["sigma_bounds"][0],
                                                np.full(self.nx, self.options["theta_bounds"][0])))
                     upper_boundst = np.hstack((self.options["sigma_bounds"][1],
@@ -92,13 +109,14 @@ class MFCK(KrgBased):
                     lower_boundst = np.log10(lower_boundst)
                     upper_boundst = np.log10(upper_boundst)
                     # Append to theta_ini, lower_bounds, and upper_bounds
-                    theta_ini = np.hstack([theta_ini, thetat,1.0])
+                    theta_ini = np.hstack([theta_ini, thetat,self.options["rho0"]])
                     lower_bounds = np.hstack([lower_bounds, lower_boundst])
                     upper_bounds = np.hstack([upper_bounds, upper_boundst])
                     # Finally, append the rho bounds
                     lower_bounds = np.hstack([lower_bounds, self.options["rho_bounds"][0]])
                     upper_bounds = np.hstack([upper_bounds, self.options["rho_bounds"][1]])
         theta_ini = theta_ini[:].T
+        x_opt= theta_ini
         if self.options["hyper_opt"] == "Cobyla":
             if self.options["n_start"] > 1:
                 sampling = LHS(
@@ -121,9 +139,9 @@ class MFCK(KrgBased):
                         {"fun": con, "type": "ineq"} for con in constraints
                     ],
                     options={
-                        "rhobeg": 0.5,
+                        "rhobeg": 0.2,
                         "tol": 1e-6,
-                        "maxiter": 100,
+                        "maxiter": 500,
                     },
                 )
                 x_opt_iter = optimal_theta_res_loop.x
@@ -134,213 +152,141 @@ class MFCK(KrgBased):
                     if optimal_theta_res_loop["fun"] < nll:
                         x_opt=x_opt_iter
                         nll=optimal_theta_res_loop["fun"]
-        else:
-            if self.options["n_start"] > 1:
-                sampling = LHS(
-                    xlimits = np.stack((lower_bounds,upper_bounds),axis=1),
-                    criterion="maximin",
-                    random_state=0,
-                )
-                theta_lhs_loops = sampling(self.options["n_start"])
-                theta0 = np.vstack((theta_ini, theta_lhs_loops))
-            constraints=[]
-            for i in range(len(theta_ini)):
-                constraints.append(lambda theta0, i=i: theta0[i] - lower_bounds[i])
-                constraints.append(lambda theta0, i=i: upper_bounds[i] - theta0[i])
-            for j in range(self.options["n_start"]):
-                optimal_theta_res_loop = optimize.minimize(
-                    self.neg_log_likelihooda,
-                    theta0[j,:],
-                    method="COBYLA",
-                    constraints=[
-                        {"fun": con, "type": "ineq"} for con in constraints
-                    ],
-                    options={
-                        "rhobeg": 0.5,
-                        "tol": 1e-6,
-                        "maxiter": 100,
-                    },
-                )
-                x_opt_iter = optimal_theta_res_loop.x
-                if j==0:
-                    x_opt=x_opt_iter
-                    nll=optimal_theta_res_loop["fun"]
-                else:
-                    if optimal_theta_res_loop["fun"] < nll:
-                        x_opt=x_opt_iter
-                        nll=optimal_theta_res_loop["fun"]
-
+        elif self.options["hyper_opt"]=="MMA":        
+            try:
+                import nlopt
+            except ImportError:
+                print("nlopt library is not installed or available on this system")
+                
+            opt = nlopt.opt(nlopt.LN_COBYLA, theta_ini.shape[0])
+            opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
+            opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension
+            opt.set_min_objective(self.neg_log_likelihoodb)
+            opt.set_maxeval(2000)
+            opt.set_xtol_rel(1e-6)
+            x0 = np.copy(theta_ini) 
+            x_opt = opt.optimize(x0)
+            
         x_opt[0:2]=10**(x_opt[0:2])
-        x_opt[2:8:3]=10**(x_opt[2:8:3])
-        x_opt[3:8:3]=10**(x_opt[3:8:3])
+        x_opt[2::3]=10**(x_opt[2:8:3])
+        x_opt[3::3]=10**(x_opt[3:8:3])
         self.optimal_theta = x_opt
-
-    def predict_multi_lvl(self,x):
+        self.K = self.compute_block_wise_K(self.optimal_theta)
+    
+    def eta(self,j, l, rho):
+        """Compute eta_{j,l} based on the given rho values."""
+        if j < l:
+            return np.prod(rho[j:l])  # Product of rho[j+1] to rho[l]
+        elif j == l:
+            return 1
+        else:
+            return 0  # Should not occur, as j <= l' in the main covariance expression
+    
+    # Covariance between y_l(x) and y_l'(x')
+    def covariance_yl_ylprime(self,x, x_prime, l, l_prime,param):
         """
-        Generalized prediction function for the multi-fidelity co-kriging
+        Calculation Cov(y_l(x), y_{l'}(x')) using the autoregressive formulation.
+        
+        Parmeters:
+        - x: First input for the covariannce (vector)
+        - x_prime: Second input for the covariannce (vector)
+        - l: Index of the first output
+        - l_prime: Index of the second output
+        - param: Set of Hyper-parameters
+        
+        Returns:
+        - Value of caovariance between y_l(x) and y_{l'}(x')
+        """
+        cov_value = 0.0
+        
+        param0 = param[0:2]
+        sigmas_gamma = param[2::3]
+        ls_gamma = param[3::3]
+        rho_values = param[4::3]
+        
+        # Sum of j=0 until l_^prime
+        for j in range(l_prime + 1):
+            eta_j_l = self.eta(j, l, rho_values)
+            eta_j_lprime = self.eta(j, l_prime, rho_values)
+            
+            if j==0:
+                cov_gamma_j = self._compute_K(x, x_prime,param0)
+            else:
+                # Cov(γ_j(x), γ_j(x')) using the kernel
+                cov_gamma_j = self._compute_K(x, x_prime,[sigmas_gamma[j-1],ls_gamma[j-1]])
+            
+            # Add to the value of the covariance
+            cov_value += eta_j_l * eta_j_lprime * cov_gamma_j
+        return cov_value
+    
+    def predict_all_levels(self,x):
+        """
+        Generalized prediction function for the multi-fidelity co-Kriging
         Parameters
         ----------
         x : np.ndarray
             Array with the inputs for make the prediction.
         Returns
         -------
-        means : np.array
+        means : (list, np.array)
             Returns the conditional means per level.
-        covariances: np.ndarray
+        covariances: (list, np.array)
             Returns the conditional covariance matrixes per level.
         """
-        param0 = self.optimal_theta[0:2]
-        sigmas_gamma = self.optimal_theta[2::3]
-        ls_gamma = self.optimal_theta[3::3]
-        rhos=self.optimal_theta[4::3]
-        Y= self.y
         means=[]
         covariances=[]
         if self.lvl==1:
-            k_XX = self._compute_K(self.X[0],self.X[0],param0)
-            k_xX = self._compute_K(x,self.X[0],param0)
-            k_xx = self._compute_K(x,x,param0)
-            means.append( np.dot(k_xX, np.matmul(np.linalg.inv(k_XX + 1e-9*np.eye(k_XX.shape[0])), Y)))
+            k_XX = self._compute_K(self.X[0],self.X[0],self.optimal_theta[0:2])
+            k_xX = self._compute_K(x,self.X[0],self.optimal_theta[0:2])
+            k_xx = self._compute_K(x,x,self.optimal_theta[0:2])
+            means.append( np.dot(k_xX, np.matmul(np.linalg.inv(k_XX + 1e-9*np.eye(k_XX.shape[0])), self.y)))
             covariances.append(k_xx - np.matmul(k_xX,
                                                 np.matmul(np.linalg.inv(k_XX+1e-9*np.eye(k_XX.shape[0])),
                                                           k_xX.transpose())))
         else:
-            Kernels_xX = []
-            K_xX_gamma = []
-            k_xx = self._compute_K(x,x,param0)
+            nugget = self.options["nugget"]
+            L = np.linalg.cholesky(self.K+ nugget*np.eye(self.K.shape[0]))
+            k_xX = []
             for ind in range(self.lvl):
-                Kernels_xX.append(self._compute_K(self.X[ind], x, param0))
-                if ind > 0:
-                    K_xX_gamma.append(self._compute_K(self.X[ind], x, [sigmas_gamma[ind-1],ls_gamma[ind-1]]))
-            K_ast = []
-            K_ast.append( np.vstack(( Kernels_xX[0] , rhos[0] * Kernels_xX[1]  ))   )
-
-            for ind in range(self.lvl):
-                 if ind > 0:
-                     K_ast.append( np.vstack((rhos[ind-1]* K_ast[ind-1][0:self.X[ind-1].shape[0]] ,
-                    rhos[ind-1] * K_ast[ind-1][self.X[ind-1].shape[0]:self.X[ind-1].shape[0]+self.X[ind].shape[0]]
-                    + K_xX_gamma[ind-1])) )
-            for lvel in range(self.lvl):
-                jitter = self.options["nugget"]
-                self.K = self.compute_K(self.optimal_theta)
-                L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
-                beta1 = solve_triangular(L, K_ast[lvel],lower=True)
-                alpha1 = solve_triangular(L,Y,lower=True)
+                k_xx = self.covariance_yl_ylprime(x, x, ind, ind,self.optimal_theta)
+                for j in range(self.lvl):  
+                    if ind >= j:
+                        k_xX.append(self.covariance_yl_ylprime(self.X[j], x, ind, j,self.optimal_theta))    
+                    else:
+                        k_xX.append(self.covariance_yl_ylprime(self.X[j], x, j, ind,self.optimal_theta)) 
+                beta1 = solve_triangular(L, np.vstack(k_xX),lower=True)
+                alpha1 = solve_triangular(L,self.y,lower=True)
                 means.append( np.dot(beta1.T,alpha1) )
                 covariances.append(  k_xx - np.dot(beta1.T,beta1) )
+                k_xX.clear()
         return means,covariances
 
-    def predict(self,x):
+    def _predict(self,x):
         """
-        Prediction function with the exact math formulation for 1,2 and 3 levels
-        (Temporal function, just for comparison with predict_multilvl)
+        Prediction function for the highest fidelity level
         Parameters
         ----------
         x : array
             Array with the inputs for make the prediction.
         Returns
         -------
-        means : np.array
+        mean : np.array
             Returns the conditional means per level.
-        covariances: np.ndarray
+        covariance: np.ndarray
             Returns the conditional covariance matrixes per level.
         """
-        param0 = self.optimal_theta[0:2]
-        v_gm = self.optimal_theta[2::3]
-        ls_gm = self.optimal_theta[3::3]
-        rhos=self.optimal_theta[4::3]
-        Y= self.y
-        jitter = self.options["nugget"]  #small number to ensure numerical stability
-        if self.lvl==1:
-            k_XX = self._compute_K(self.X[0],self.X[0],param0)
-            k_xX = self._compute_K(x,self.X[0],param0)
-            k_xx = self._compute_K(x,x,param0)
-            L = np.linalg.cholesky(k_XX+ jitter*np.eye(self.K.shape[0]))
-            beta1 = solve_triangular(L, k_xX.T,lower=True)
-            alpha1 = solve_triangular(L,Y,lower=True)
-            mean1 = np.dot(beta1.T,alpha1)
-            covariance1 =  k_xx - np.dot(beta1.T,beta1)
-            return mean1,covariance1
-        elif self.lvl==2:
-            params_gamma=self.optimal_theta[2:4]
-            rhoc=rhos[0]
-            self.K = self.compute_K(self.optimal_theta)
-            L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
-            k1as = self._compute_K(x,self.X[1],param0)
-            k2as = self._compute_K(x,self.X[1],params_gamma)
-            k3as = self._compute_K(x,self.X[0],param0)
-
-            kxxas = self._compute_K(x,x,param0)
-            kxxas1 = self._compute_K(x,x,params_gamma)
-            k11_ast = rhoc*rhoc*k1as + k2as
-            k10_ast = rhoc * k3as
-            k_xX=np.concatenate((k10_ast.T, k11_ast.T)).T
-            k_xx = rhoc*rhoc* kxxas + kxxas1
-            beta0 = solve_triangular(L, k_xX.T,lower=True)
-            alpha0 = solve_triangular(L,Y,lower=True)
-            meanhf = np.dot(beta0.T,alpha0)
-            covariancehf = k_xx-np.dot(beta0.T,beta0)
-
-            k01_ast = rhoc*k1as
-            k00_ast = k3as
-            k_xX = np.concatenate((k00_ast.T, k01_ast.T)).T
-            k_xx = kxxas
-            beta1 = solve_triangular(L, k_xX.T,lower=True)
-            alpha1 = solve_triangular(L,Y,lower=True)
-            meanlf = np.dot(beta1.T,alpha1)
-            covariancelf = k_xx - np.dot(beta1.T,beta1)
-
-            return meanhf,covariancehf,meanlf,covariancelf
-        elif self.lvl==3:
-            X2=self.X[2]
-            X1=self.X[1]
-            X0=self.X[0]
-            kxx=self._compute_K(x,x,self.optimal_theta[0:2])
-            kxxg1=self._compute_K(x,x,[v_gm[0],ls_gm[0]])
-            kxxg2=self._compute_K(x,x,[v_gm[1],ls_gm[1]])
-            self.K = self.compute_K(self.optimal_theta)
-            jitter = self.options["nugget"]
-            L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
-            k00ast=self._compute_K(x,X0,self.optimal_theta[0:2])
-            k01ast=rhos[0]*self._compute_K(x,X1,self.optimal_theta[0:2])
-            k02ast = (rhos[1]) * (rhos[0]) * self._compute_K(x,X2,self.optimal_theta[0:2])
-            k_xX=np.concatenate((k00ast.T, k01ast.T, k02ast.T)).T
-            beta0 = solve_triangular(L, k_xX.T,lower=True)
-            alpha0 = solve_triangular(L,Y,lower=True)
-            mean1 = np.dot(beta0.T,alpha0)
-            covariance1 = kxx - np.dot(beta0.T,beta0)
-            k01ast=rhos[0]*self._compute_K(x,X0,self.optimal_theta[0:2])
-            k11ast=((rhos[0]**2)*self._compute_K(x,X1,self.optimal_theta[0:2])
-            +self._compute_K(x,X1,[v_gm[0],ls_gm[0]]))
-            k12ast = ((rhos[1]) * (rhos[0]**2) * self._compute_K(x,X2,self.optimal_theta[0:2])+
-            (rhos[1] * self._compute_K(x,X2,[v_gm[0],ls_gm[0]])))
-            k_xX1 = np.concatenate((k01ast.T, k11ast.T,k12ast.T)).T
-            beta1 = solve_triangular(L, k_xX1.T,lower=True)
-            alpha1 = solve_triangular(L,Y,lower=True)
-            mean2 = np.dot(beta1.T,alpha1)
-            covariance2 = ((rhos[0]**2)*kxx+kxxg1-np.dot(beta1.T,beta1))
-            k02ast =rhos[1]*rhos[0]*self._compute_K(x,X0,self.optimal_theta[0:2])
-            temp=rhos[0]**2*self._compute_K(x,X1,self.optimal_theta[0:2])
-            k12ast=rhos[1]*(temp+self._compute_K(x,X1,[v_gm[0],ls_gm[0]]))
-            temp=(rhos[0]**2)*self._compute_K(x,X2,self.optimal_theta[0:2])+self._compute_K(x,X2,[v_gm[0],ls_gm[0]])
-            k22ast = ((rhos[1]**2)*(temp))+self._compute_K(x,X2,[v_gm[1],ls_gm[1]])
-            k_xX2 = np.concatenate((k02ast.T, k12ast.T,k22ast.T)).T
-            beta2 = solve_triangular(L, k_xX2.T,lower=True)
-            alpha2 = solve_triangular(L,Y,lower=True)
-            mean3 = np.dot(beta2.T,alpha2)
-            covariance3 = ((rhos[1]**2)*((rhos[0]**2)*kxx+kxxg1)+kxxg2 - np.dot(beta2.T,beta2))
-
-            return mean1,covariance1,mean2,covariance2,mean3,covariance3
-        else:
-            self.predict_multi_lvl(x)
+        means,covariances=self.predict_all_levels(x)
+        return means[self.lvl-1],covariances[self.lvl-1]
 
     def neg_log_likelihood(self,param1,grad):
+        
         if self.lvl == 1:
             self.K=self._compute_K(self.X[0],self.X[0],param1[0:2])
         else:
-            self.K = self.compute_K(param1)
-        jitter = 1e-4#self.options["nugget"]#small number to ensure numerical stability.
-        L = np.linalg.cholesky(self.K+ jitter*np.eye(self.K.shape[0]))
+            self.K = self.compute_block_wise_K(param1)
+        nugget = 1e-4#self.options["nugget"]#small number to ensure numerical stability.
+        
+        L = np.linalg.cholesky(self.K+ nugget*np.eye(self.K.shape[0]))
         beta = solve_triangular(L, self.y,lower=True)
         N=np.shape(self.y)[0]
         NMLL=1/2*(2*np.sum(np.log(np.diag(L)))+np.dot(beta.T,beta)+N*np.log(2*np.pi))
@@ -348,12 +294,26 @@ class MFCK(KrgBased):
         return nmll
 
     def neg_log_likelihooda(self,param1):
+        """
+        Likelihood for Cobyla optimizer
+        """
+        param1 = np.array(param1, copy=True)
         param1[0:2]=10**(param1[0:2])
-        param1[2:8:3]=10**(param1[2:8:3])
-        param1[3:8:3]=10**(param1[3:8:3])
+        param1[2::3]=10**(param1[2:8:3])
+        param1[3::3]=10**(param1[3:8:3])
+        return self.neg_log_likelihood(param1,1)
+    
+    def neg_log_likelihoodb(self,param1,grad):
+        """
+        Likelihood for nlopt optimizers
+        """
+        param1 = np.array(param1, copy=True)
+        param1[0:2]=10**(param1[0:2])
+        param1[2::3]=10**(param1[2:8:3])
+        param1[3::3]=10**(param1[3:8:3])
         return self.neg_log_likelihood(param1,1)
 
-    def compute_K(self, param1):
+    def compute_block_wise_K(self, param1):
         """
         Compute the co-kriging piece-wise matrix with correct handling of non-symmetric cross-correlations.
         Parameters

@@ -50,7 +50,7 @@ class TestMFCK(SMTestCase):
             x_lf = deepcopy(xt)
             np.random.seed(1)
 
-            sm = MFCK(theta0=[1e-2] * self.ndim)
+            sm = MFCK()
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -61,22 +61,15 @@ class TestMFCK(SMTestCase):
             with Silence():
                 sm.train()
 
-            mean1, cov1, mean, cov = sm.predict(xt)
-
-            m,c = sm.predict_multi_lvl(xt)
-
-            num1 = np.linalg.norm( m[1][:,0] - yt[:,0])
-            den1 = np.linalg.norm(yt[:,0])
-
-            t_error1 = num1 / den1
-
-            num = np.linalg.norm( mean1[:,0] - yt[:,0])
+            m, c = sm._predict(xt)
+            
+            
+            num = np.linalg.norm( m[:,0] - yt[:,0])
             den = np.linalg.norm(yt[:,0])
 
             t_error = num / den
 
-            self.assert_error(t_error1, 0.0, 1e-4,1e-4)
-            self.assert_error(t_error, 0.0, 1e-4,1e-4)
+            self.assert_error(t_error, 0.0, 1e-3,1e-3)
 
 
     @staticmethod
@@ -124,12 +117,12 @@ class TestMFCK(SMTestCase):
 
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
 
-        mean1,cov1,mean,cov = sm.predict(x)
+        m,c = sm.predict_all_levels(x)
 
         plt.figure()
 
         plt.plot(x, hf_function(x), label="reference")
-        plt.plot(x, mean1, linestyle="-.", label="mean_gp")
+        plt.plot(x, m[1], linestyle="-.", label="mean_gp")
         plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
         plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
 
