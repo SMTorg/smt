@@ -55,6 +55,12 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Kernels/SMT_Kernel_Hale.ipynb)
 
+## Explainability and conformal prediction
+
+### Warning: [The explainability usage tutorial has been moved to SMTorg/smt-explainability](https://github.com/SMTorg/smt-explainability)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt-explainability/blob/master/tutorial/Explainability_tools.ipynb)
+
 
 ## Other Gaussian Process Models and Sampling Methods
 
@@ -74,9 +80,6 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/SMT_SGP_analytic.ipynb)
 
-### Conformal prediction
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/Misc/Split_Conformal_prediction_SMT.ipynb)
 
 ### Cooperative Components Kriging
 
@@ -87,7 +90,7 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ### Warning: [The Design Space usage tutorial has been moved to SMTorg/smt-design-space-ext](https://github.com/SMTorg/smt-design-space-ext)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg//smt-design-space-ext/blob/main/smt_design_space/SMT_DesignSpace_example.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt-design-space-ext/blob/master/tutorial/SMT_DesignSpace_example.ipynb)
 
 ### Specific notebook associated to the SMT 2.0 Journal Paper (submitted) with a focus on mixed integer and mixed hierarchical surrogate models (continuous, discrete, categorical)
 
