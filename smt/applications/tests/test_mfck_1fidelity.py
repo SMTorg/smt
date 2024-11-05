@@ -40,14 +40,8 @@ class TestMFKOneFidelity(SMTestCase):
                 yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
             sampling = LHS(xlimits=prob.xlimits, random_state=0)
-            #xv = sampling(self.ne)
-            #yv = prob(xv)
 
-            sm1 = MFCK(
-                theta0=[1.],
-                theta_bounds = [1e-1, 13],
-                hyper_opt='Cobyla'
-            )
+            sm1 = MFCK(hyper_opt='Cobyla')
 
             sm1.set_training_values(xt, yt[:,0])
             sm1.train()

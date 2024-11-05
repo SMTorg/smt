@@ -50,7 +50,7 @@ class TestMFCK(SMTestCase):
             x_lf = deepcopy(xt)
             np.random.seed(1)
 
-            sm = MFCK()
+            sm = MFCK(hyper_opt='Cobyla')
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -62,14 +62,14 @@ class TestMFCK(SMTestCase):
                 sm.train()
 
             m, c = sm._predict(xt)
-            
-            
+
+
             num = np.linalg.norm( m[:,0] - yt[:,0])
             den = np.linalg.norm(yt[:,0])
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-3,1e-3)
+            self.assert_error(t_error, 0.0, 1e-6,1e-6)
 
 
     @staticmethod
