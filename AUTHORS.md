@@ -26,6 +26,7 @@ SMT has been developed thanks to contributions from:
 * Lisa Pretsch
 * Lucas Alber
 * Maël Tremouille
+* Mauricio Castano Aguirre
 * Mostafa Meliani
 * Nick Thompson
 * Nicolas Gonel
