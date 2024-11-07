@@ -624,7 +624,7 @@ VarValueType = Union[int, str, List[Union[int, str]]]
 
 def raise_config_space():
     raise RuntimeError(
-        "Dependencies are not installed, please install smt_design_space."
+        "Dependencies are not installed, please install smt_design_space_ext."
     )
 
 
