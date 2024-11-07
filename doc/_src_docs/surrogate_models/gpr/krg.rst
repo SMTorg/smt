@@ -55,6 +55,8 @@ In the implementations, data are normalized by substracting the mean from each v
 .. math ::
   X_{\text{norm}} = \frac{X - X_{\text{mean}}}{X_{\text{std}}}
 
+All SMT kriging implementations work with only one-dimensional output (ie output training data must be vector-like).
+
 More details about the Kriging approach could be found in [1]_.
 
 Kriging with categorical or integer variables 
@@ -83,7 +85,7 @@ Usage
 -----
 
 Example 1
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
 
 .. code-block:: python
 
