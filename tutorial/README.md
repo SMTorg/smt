@@ -22,17 +22,21 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/SBO/SMT_EGO_noisyGP.ipynb)
 
-
 ## Multi-Fidelity Gaussian Process
 
-### Without noise
+### With required nested sampling
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MFK/SMT_MFK_tutorial.ipynb)
+#### Without noise
 
-### With noise
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFK_tutorial.ipynb)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MFK/SMT_MFK_Noise.ipynb)
+#### With noise
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFK_Noise.ipynb)
+
+### Without nested sampling
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFCK_tutorial.ipynb)
 
 ## Proper Orthogonal Decomposition and Interpolation
 
