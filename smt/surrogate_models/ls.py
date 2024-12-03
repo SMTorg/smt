@@ -9,6 +9,7 @@ TO DO:
 """
 
 import numpy as np
+import pickle
 from sklearn import linear_model
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -23,6 +24,7 @@ class LS(SurrogateModel):
     """
 
     name = "LS"
+    filename = "least_square"
 
     def _initialize(self):
         super(LS, self)._initialize()
@@ -99,3 +101,22 @@ class LS(SurrogateModel):
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
         return y
+    
+    def _save(self, filename=None):
+        if filename is None:
+            filename = self.filename
+
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+                print("model saved")
+        except:
+            print("Couldn't save the model")
+
+    def _load(self, filename):
+        if filename is None:
+            return ("file is not found")
+        else:
+            with open(filename, "rb") as file:
+                sm2 = pickle.load(file)
+                return sm2
