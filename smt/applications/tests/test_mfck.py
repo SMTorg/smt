@@ -4,6 +4,7 @@ Created on Wed Oct  9 16:17:04 2024
 
 @author: mcastano
 """
+
 import unittest
 
 import numpy as np
@@ -50,7 +51,7 @@ class TestMFCK(SMTestCase):
             x_lf = deepcopy(xt)
             np.random.seed(1)
 
-            sm = MFCK(hyper_opt='Cobyla')
+            sm = MFCK(hyper_opt="Cobyla")
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -63,14 +64,12 @@ class TestMFCK(SMTestCase):
 
             m, c = sm._predict(xt)
 
-
-            num = np.linalg.norm( m[:,0] - yt[:,0])
-            den = np.linalg.norm(yt[:,0])
+            num = np.linalg.norm(m[:, 0] - yt[:, 0])
+            den = np.linalg.norm(yt[:, 0])
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-6,1e-6)
-
+            self.assert_error(t_error, 0.0, 1e-6, 1e-6)
 
     @staticmethod
     def run_mfck_example():
@@ -117,7 +116,7 @@ class TestMFCK(SMTestCase):
 
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
 
-        m,c = sm.predict_all_levels(x)
+        m, c = sm.predict_all_levels(x)
 
         plt.figure()
 
