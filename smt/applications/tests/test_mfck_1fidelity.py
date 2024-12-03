@@ -12,8 +12,9 @@ import numpy as np
 
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
-#from smt.utils.misc import compute_rms_error
-#from smt.utils.silence import Silence
+
+# from smt.utils.misc import compute_rms_error
+# from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 from smt.applications.mfck import MFCK
 
@@ -41,19 +42,19 @@ class TestMFKOneFidelity(SMTestCase):
 
             sampling = LHS(xlimits=prob.xlimits, random_state=0)
 
-            sm1 = MFCK(hyper_opt='Cobyla')
+            sm1 = MFCK(hyper_opt="Cobyla")
 
-            sm1.set_training_values(xt, yt[:,0])
+            sm1.set_training_values(xt, yt[:, 0])
             sm1.train()
 
             mean, cov = sm1._predict(xt)
 
-            num = np.linalg.norm( mean[:,0] - yt[:,0])
-            den = np.linalg.norm(yt[:,0])
+            num = np.linalg.norm(mean[:, 0] - yt[:, 0])
+            den = np.linalg.norm(yt[:, 0])
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-4,1e-4)
+            self.assert_error(t_error, 0.0, 1e-4, 1e-4)
 
     @staticmethod
     def run_mfck_example_1fidelity():
@@ -78,7 +79,7 @@ class TestMFKOneFidelity(SMTestCase):
         # Evaluate the HF function
         yt_e = hf_function(xt_e)
 
-        sm1 = MFCK(theta0=[1.0], hyper_opt='Cobyla')
+        sm1 = MFCK(theta0=[1.0], hyper_opt="Cobyla")
 
         # High-fidelity dataset without name
         sm1.set_training_values(xt_e, yt_e)
@@ -90,8 +91,8 @@ class TestMFKOneFidelity(SMTestCase):
 
         # Query the outputs
         y, cov = sm1._predict(x)
-        #_mse = sm.predict_variances(x)
-        #_derivs = sm.predict_derivatives(x, kx=0)
+        # _mse = sm.predict_variances(x)
+        # _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 
