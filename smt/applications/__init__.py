@@ -7,7 +7,6 @@ from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI, SubspacesInterpolation
 from .cckrg import CoopCompKRG
-from .tests.test_mixed_integer import TestMixedInteger
 
 __all__ = [
     "VFM",
@@ -23,5 +22,4 @@ __all__ = [
     "PODI",
     "SubspacesInterpolation",
     "CoopCompKRG",
-    "TestMixedInteger",
 ]
