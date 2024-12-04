@@ -10,6 +10,7 @@ TO DO:
 
 import numpy as np
 import scipy
+import pickle
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.caching import cached_operation
@@ -22,6 +23,7 @@ class QP(SurrogateModel):
     """
 
     name = "QP"
+    filename = "qp_save"
 
     def _initialize(self):
         super(QP, self)._initialize()
@@ -162,3 +164,22 @@ class QP(SurrogateModel):
         y = (self.y_mean + self.y_std * y_).ravel()
         y = y.reshape((x.shape[0], self.ny))
         return y
+
+    def _save(self, filename=None):
+        if filename is None:
+            filename = self.filename
+
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+                print("model saved")
+        except:
+            print("Couldn't save the model")
+
+    def _load(self, filename):
+        if filename is None:
+            return ("file is not found")
+        else:
+            with open(filename, "rb") as file:
+                sm2 = pickle.load(file)
+                return sm2

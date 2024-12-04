@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 from numbers import Integral
 
 import numpy as np
+import pickle
 import scipy.sparse
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -21,6 +22,7 @@ class RMTS(SurrogateModel):
     """
 
     name = "RMTS"
+    filename = "rmts_save"
 
     def _initialize(self):
         super(RMTS, self)._initialize()
@@ -583,3 +585,22 @@ class RMTS(SurrogateModel):
                 dy_dyt[kx - 1] = np.einsum("ij,jkl->ikl", dy_dw, dw_dyt)
 
         return dy_dyt
+    
+    def _save(self, filename=None):
+        if filename is None:
+            filename = self.filename
+
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+                print("model saved")
+        except:
+            print("Couldn't save the model")
+
+    def _load(self, filename):
+        if filename is None:
+            return ("file is not found")
+        else:
+            with open(filename, "rb") as file:
+                sm2 = pickle.load(file)
+                return sm2

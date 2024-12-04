@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
@@ -29,6 +30,7 @@ except ImportError:
 
 class GPX(SurrogateModel):
     name = "GPX"
+    filename = "gpx_save"
 
     def _initialize(self):
         super(GPX, self)._initialize()
@@ -162,14 +164,34 @@ class GPX(SurrogateModel):
         Returns all variance gradients at the given x points as a [n, nx] matrix"""
         return self._gpx.predict_var_gradients(x)
 
-    def save(self, filepath):
+    def _save(self, filename):
         """Save the trained model in the given filepath
 
         Arguments
         ---------
             filename (string): path to the json file
         """
-        self._gpx.save(filepath)
+        if filename is None:
+            filename = self.filename
+
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+                print("model saved")
+        except:
+            print("Couldn't save the model")
+        # self._gpx.save(filepath)
+
+        
+
+    # def _load(self, filename):
+    #     if filename is None:
+    #         return ("file is not found")
+    #     else:
+    #         with open(filename, "rb") as file:
+    #             sm2 = pickle.load(file)
+    #             return sm2
+
 
     @staticmethod
     def load(filepath):

@@ -286,6 +286,12 @@ class KrgBased(SurrogateModel):
                 xt=xt, xlimits=ds_input, design_space=ds_input
             )
         return self.options["design_space"]
+    
+    @design_space.setter
+    def design_space(self, d_s_value):
+        if not isinstance(d_s_value, BaseDesignSpace):
+            raise TypeError("design_space must be of type BaseDesignSpace")
+        self.options["design_space"] = d_s_value
 
     @property
     def is_continuous(self) -> bool:
