@@ -40,6 +40,11 @@ class TestKrgBased(unittest.TestCase):
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))  # erroneous
         self.assertRaises(ValueError, krg._check_param)
 
+    def test_multiple_training_outputs_warning(self):
+        krg = KrgBased()
+        with self.assertWarns(UserWarning):
+            krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1, 1]]))
+
     def test_less_almost_squar_exp(self):
         nobs = 50  # number of obsertvations
         np.random.seed(0)  # a seed for reproducibility
