@@ -307,6 +307,13 @@ class KrgBased(SurrogateModel):
             Matrix specifying which of the design variables is acting in a hierarchical design space
         """
         super().set_training_values(xt, yt, name=name)
+        if self.ny > 1:
+            warnings.warn(
+                "Kriging-based surrogate is not intended to handle multiple "
+                f"training output data (found yt dim = {self.ny}). "
+                "The quality of the resulting surrogate might not be as good as "
+                "if each training output is used separately to build a dedicated surrogate"
+            )
         if is_acting is not None:
             self.is_acting_points[name] = is_acting
 
@@ -397,6 +404,7 @@ class KrgBased(SurrogateModel):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
+
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
         if is_acting is None and not self.is_continuous:
