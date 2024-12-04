@@ -310,9 +310,10 @@ class KrgBased(SurrogateModel):
         if self.ny > 1:
             warnings.warn(
                 "Kriging-based surrogate is not intended to handle multiple "
-                f"training output data (found yt dim = {self.ny}). "
+                f"training output data (yt dim should be 1, got {self.ny}). "
                 "The quality of the resulting surrogate might not be as good as "
-                "if each training output is used separately to build a dedicated surrogate"
+                "if each training output is used separately to build a dedicated surrogate. "
+                "This warning might become a hard error in future SMT versions."
             )
         if is_acting is not None:
             self.is_acting_points[name] = is_acting
