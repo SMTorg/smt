@@ -211,7 +211,7 @@ class LHS(ScaledSamplingMethod):
             hist_T.extend(inner_loop * [T])
             hist_proba.extend(inner_loop * [p_accpt])
 
-            if PhiP_best - PhiP_oldbest < tol:
+            if PhiP_oldbest - PhiP_best > tol:
                 # flag_imp = 1
                 if p_accpt >= 0.1 and p_imp < p_accpt:
                     T = 0.8 * T

@@ -10,12 +10,13 @@ for gaussian process, 2022
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import (
-    CategoricalVariable,
-    DesignSpace,
+
+from smt.design_space import (
+    OrdinalVariable,
     FloatVariable,
     IntegerVariable,
-    OrdinalVariable,
+    DesignSpace,
+    CategoricalVariable,
 )
 
 

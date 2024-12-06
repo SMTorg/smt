@@ -1,8 +1,10 @@
 .. _Mixed Integer and hierarchical Surrogates:
 
-Mixed integer surrogate
-=======================
+Mixed Integer and hierarchical Surrogates
+=========================================
 
+Mixed Integer Surrogates
+------------------------
 To use a surrogate with mixed integer constraints, the user instantiates a ``MixedIntegerSurrogateModel`` with the given surrogate.
 The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.

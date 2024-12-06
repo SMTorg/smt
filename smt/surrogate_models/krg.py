@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging import componentwise_distance
+from smt.kernels import Kernel
 
 
 class KRG(KrgBased):
@@ -26,7 +27,7 @@ class KRG(KrgBased):
                 "matern32",
             ),
             desc="Correlation function type",
-            types=(str),
+            types=(str, Kernel),
         )
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):

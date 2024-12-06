@@ -24,7 +24,7 @@ License :: OSI Approved :: BSD License
 Programming Language :: C++
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -107,6 +107,9 @@ metadata = dict(
         "smt.sampling_methods",
         "smt.utils",
         "smt.applications",
+        "smt.applications.tests",
+        "smt.design_space",
+        "smt.kernels",
     ],
     install_requires=[
         "scikit-learn",
@@ -118,12 +121,9 @@ metadata = dict(
         "numba": [  # pip install smt[numba]
             "numba~=0.56.4",
         ],
-        "cs": [  # pip install smt[cs]
-            "ConfigSpace~=0.6.1",
-        ],
-        "gpx": ["egobox~=0.20"],  # pip install smt[gpx]
+        "gpx": ["egobox~=0.23"],  # pip install smt[gpx]
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     zip_safe=False,
     ext_modules=ext,
     url="https://github.com/SMTorg/smt",  # use the URL to the github repo

@@ -19,10 +19,7 @@ from smt.applications.mixed_integer import (
 )
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
-from smt.utils.design_space import (
-    BaseDesignSpace,
-    DesignSpace,
-)
+from smt.design_space import BaseDesignSpace, DesignSpace
 
 
 class Evaluator(object):
@@ -274,6 +271,8 @@ class EGO(SurrogateBasedApplication):
         """
         # Set the model
         self.gpr = self.options["surrogate"]
+        if "is_ri" in self.gpr.options:
+            self.gpr.options["is_ri"] = self.options["is_ri"]
         self.design_space: BaseDesignSpace = self.gpr.design_space
         if isinstance(self.design_space, DesignSpace):
             self.design_space.seed = self.options["random_state"]

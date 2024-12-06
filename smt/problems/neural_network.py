@@ -11,12 +11,12 @@ Operations Research Forum,4994:137, 2023.
 import numpy as np
 
 from smt.problems.problem import Problem
-from smt.utils.design_space import (
-    CategoricalVariable,
-    DesignSpace,
+from smt.design_space import (
+    OrdinalVariable,
     FloatVariable,
     IntegerVariable,
-    OrdinalVariable,
+    DesignSpace,
+    CategoricalVariable,
 )
 
 

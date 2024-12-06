@@ -86,7 +86,7 @@ class Test(SMTestCase):
         yt = np.array([0.0, 1.0, 1.5, 1.1, 1.0])
 
         # defining the models
-        sm_noisy = KRG(noise0=[1e-1], print_global=False)
+        sm_noisy = KRG(noise0=[1e-1], print_global=False, is_ri=True)
         # training the models
         sm_noisy.set_training_values(xt, yt)
         sm_noisy.train()

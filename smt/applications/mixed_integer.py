@@ -12,7 +12,8 @@ from smt.sampling_methods.sampling_method import SamplingMethod
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils.checks import ensure_2d_array
-from smt.utils.design_space import (
+
+from smt.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,
@@ -132,7 +133,7 @@ class MixedIntegerSurrogateModel(SurrogateModel):
         xt, _ = design_space.correct_get_acting(xt)
 
         if self._input_in_folded_space:
-            xt_apply, _ = design_space.unfold_x(xt)
+            xt_apply, _, _ = design_space.unfold_x(xt)
         else:
             xt_apply = xt
 
@@ -167,7 +168,9 @@ class MixedIntegerSurrogateModel(SurrogateModel):
 
         x_corr, is_acting = self.design_space.correct_get_acting(xp)
         if self._input_in_folded_space:
-            x_corr, is_acting = self.design_space.unfold_x(x_corr, is_acting=is_acting)
+            x_corr, is_acting, _ = self.design_space.unfold_x(
+                x_corr, is_acting=is_acting
+            )
         return x_corr, is_acting
 
     def _predict_values(self, x: np.ndarray) -> np.ndarray:
@@ -233,6 +236,10 @@ class MixedIntegerKrigingModel(KrgBased):
             )
         if self._surrogate.options["categorical_kernel"] is not None:
             self._input_in_folded_space = False
+
+        for key, value in self._surrogate.options._dict.items():
+            if key in self.options._dict:
+                self.options._dict[key] = value
 
     @property
     def name(self):

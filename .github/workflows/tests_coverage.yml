@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt numpy==1.26.4 ConfigSpace==0.6.1
+        pip install -r requirements.txt numpy==1.26.4 
         pip list
         pip install -e .
 
@@ -35,6 +35,7 @@ jobs:
       run: |
         ruff --version
         ruff check .
+        ruff format --check
 
     - name: Test with pytest and coverage
       run: |

@@ -17,7 +17,14 @@ try:
 except ImportError:
     NO_MATPLOTLIB = True
 
-import smt.utils.design_space as ds
+from smt.design_space import (
+    DesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
+    OrdinalVariable,
+)
+
 from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerKrigingModel,
@@ -32,14 +39,6 @@ from smt.surrogate_models import (
     QP,
     MixHrcKernelType,
     MixIntKernelType,
-)
-from smt.utils.design_space import (
-    HAS_CONFIG_SPACE,
-    CategoricalVariable,
-    DesignSpace,
-    FloatVariable,
-    IntegerVariable,
-    OrdinalVariable,
 )
 
 
@@ -277,7 +276,7 @@ class TestMixedInteger(unittest.TestCase):
                 CategoricalVariable(["A", "B"]),
             ]
         )
-        x_unfolded, _ = design_space.unfold_x(x)
+        x_unfolded, _, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_unfold_with_enum_mask_with_enum_first(self):
@@ -290,7 +289,7 @@ class TestMixedInteger(unittest.TestCase):
                 FloatVariable(1, 2),
             ]
         )
-        x_unfolded, _ = design_space.unfold_x(x)
+        x_unfolded, _, _ = design_space.unfold_x(x)
         self.assertListEqual(expected, x_unfolded.tolist())
 
     def test_fold_with_enum_index(self):
@@ -463,9 +462,11 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_gower_example()
         self.run_mixed_homo_gaussian_example()
         self.run_mixed_homo_hyp_example()
-        if ds.HAS_CONFIG_SPACE:
-            self.run_mixed_cs_example()
-            self.run_hierarchical_design_space_example()  # works only with config space impl
+        # FIXME: this test should belong to smt_design_space_ext
+        # but at the moment run_* code is used here to generate doc here in smt
+        # if HAS_DESIGN_SPACE_EXT:
+        #     self.run_mixed_cs_example()
+        #     self.run_hierarchical_design_space_example()  # works only with config space impl
 
     def run_mixed_integer_lhs_example(self):
         import matplotlib.pyplot as plt
@@ -474,10 +475,10 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-        from smt.utils.design_space import (
-            CategoricalVariable,
-            DesignSpace,
+        from smt.design_space import (
             FloatVariable,
+            DesignSpace,
+            CategoricalVariable,
         )
 
         float_var = FloatVariable(0, 4)
@@ -507,7 +508,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSurrogateModel
         from smt.surrogate_models import QP
-        from smt.utils.design_space import DesignSpace, IntegerVariable
+        from smt.design_space import DesignSpace, IntegerVariable
 
         xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -539,7 +540,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerContext
         from smt.surrogate_models import KRG
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -663,9 +664,8 @@ class TestMixedInteger(unittest.TestCase):
 
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-        self.assertTrue(pred_RMSE < 1e-7)
-        print("Pred_RMSE", pred_RMSE)
-        self.assertTrue(var_RMSE < 1e-7)
+        self.assertLess(pred_RMSE, 1e-7)
+        self.assertLess(var_RMSE, 1e-7)
         self.assertTrue(
             np.linalg.norm(
                 sm.predict_values(
@@ -748,7 +748,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerSamplingMethod
         from smt.sampling_methods import LHS
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -799,15 +799,15 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
-            DesignSpace,
             FloatVariable,
             IntegerVariable,
             OrdinalVariable,
         )
+        from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
 
-        ds = DesignSpace(
+        ds = ConfigSpaceDesignSpaceImpl(
             [
                 CategoricalVariable(
                     ["A", "B"]
@@ -917,8 +917,8 @@ class TestMixedInteger(unittest.TestCase):
 
         self._sm = sm  # to be ignored: just used for automated test
 
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    @unittest.skip(
+        "Use smt design space extension capability, this test should be moved in smt_design_space_ext"
     )
     def test_hierarchical_design_space_example(self):
         self.run_hierarchical_design_space_example()
@@ -950,8 +950,8 @@ class TestMixedInteger(unittest.TestCase):
             > 1e-8
         )
 
-    @unittest.skipIf(
-        not HAS_CONFIG_SPACE, "Hierarchy ConfigSpace dependency not installed"
+    @unittest.skip(
+        "Use smt design space extension capability, this test should be moved in smt_design_space_ext"
     )
     def test_hierarchical_design_space_example_all_categorical_decreed(self):
         ds = DesignSpace(
@@ -1040,6 +1040,8 @@ class TestMixedInteger(unittest.TestCase):
         for mixint_kernel in [
             MixIntKernelType.CONT_RELAX,
             MixIntKernelType.GOWER,
+            MixIntKernelType.COMPOUND_SYMMETRY,
+            MixIntKernelType.EXP_HOMO_HSPHERE,
             MixIntKernelType.HOMO_HSPHERE,
         ]:
             sm = MixedIntegerKrigingModel(
@@ -1057,10 +1059,10 @@ class TestMixedInteger(unittest.TestCase):
             sm.train()
             y_s = sm.predict_values(Xt)[:, 0]
             _pred_RMSE = np.linalg.norm(y_s - Yt) / len(Yt)
-
+            self.assertLess(_pred_RMSE, 1e-6)
             y_sv = sm.predict_variances(Xt)[:, 0]
             _var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-
+            self.assertLess(_var_RMSE, 1e-6)
             np.testing.assert_almost_equal(
                 sm.predict_values(
                     np.array(
@@ -1098,7 +1100,7 @@ class TestMixedInteger(unittest.TestCase):
         )
         from smt.sampling_methods import LHS
         from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -1323,9 +1325,8 @@ class TestMixedInteger(unittest.TestCase):
 
         y_sv = sm.predict_variances(Xt)[:, 0]
         var_RMSE = np.linalg.norm(y_sv) / len(Yt)
-        self.assertTrue(pred_RMSE < 1e-7)
-        print("Pred_RMSE", pred_RMSE)
-        self.assertTrue(var_RMSE < 1e-7)
+        self.assertLess(pred_RMSE, 1e-7)
+        self.assertLess(var_RMSE, 1e-7)
         np.testing.assert_almost_equal(
             sm.predict_values(
                 np.array(
@@ -2005,7 +2006,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerKrigingModel,
         )
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -2128,6 +2129,7 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_cs_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -2136,7 +2138,7 @@ class TestMixedInteger(unittest.TestCase):
             MixedIntegerKrigingModel,
         )
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -2259,13 +2261,14 @@ class TestMixedInteger(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+    # FIXME: Used in SMT documentation but belongs to smt_design_space_ext domain
     def run_mixed_homo_gaussian_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
@@ -2394,7 +2397,7 @@ class TestMixedInteger(unittest.TestCase):
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
         from smt.surrogate_models import KRG, MixIntKernelType
-        from smt.utils.design_space import (
+        from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,

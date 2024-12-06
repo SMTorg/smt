@@ -23,7 +23,7 @@ from smt.surrogate_models.krg_based import (
     MixIntKernelType,
     compute_n_param,
 )
-from smt.utils.design_space import ensure_design_space
+from smt.design_space import ensure_design_space
 from smt.utils.kriging import (
     componentwise_distance,
     compute_X_cont,
@@ -331,7 +331,7 @@ class MFK(KrgBased):
         self.y_norma_all = [(f - self.y_mean) / self.y_std for f in y]
 
         if not (self.is_continuous):
-            x2t, _ = self.design_space.unfold_x(np.concatenate(xt, axis=0))
+            x2t, _, _ = self.design_space.unfold_x(np.concatenate(xt, axis=0))
             _, _, self.X2_offset, _, self.X2_scale, _ = standardization(
                 x2t, np.concatenate(yt, axis=0)
             )
@@ -383,7 +383,7 @@ class MFK(KrgBased):
             self.D_all[lvl] = cross_distances(self.X_norma)
         else:
             _, is_acting = self.design_space.correct_get_acting(self.X[lvl])
-            D_lvl, ij_lvl, X = gower_componentwise_distances(
+            D_lvl, ij_lvl, X, _ = gower_componentwise_distances(
                 X=self.X[lvl],
                 x_is_acting=is_acting,
                 design_space=self.design_space,
@@ -533,7 +533,7 @@ class MFK(KrgBased):
         else:
             _, x_is_acting = self.design_space.correct_get_acting(X_usc)
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
-            dx = gower_componentwise_distances(
+            dx, _ = gower_componentwise_distances(
                 X=X_usc,
                 x_is_acting=x_is_acting,
                 design_space=self.design_space,
@@ -555,7 +555,7 @@ class MFK(KrgBased):
             )
             self.ij = ij
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(X_usc)
+                Xpred, _, _ = self.design_space.unfold_x(X_usc)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 # Get pairwise componentwise L1-distances to the input training set
                 dx = differences(Xpred_norma, Y=self.X2_norma[str(0)].copy())
@@ -590,7 +590,7 @@ class MFK(KrgBased):
             else:
                 _, x_is_acting = self.design_space.correct_get_acting(X_usc)
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
-                dx = gower_componentwise_distances(
+                dx, _ = gower_componentwise_distances(
                     X_usc,
                     x_is_acting=x_is_acting,
                     design_space=self.design_space,
@@ -612,7 +612,7 @@ class MFK(KrgBased):
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred, _ = self.design_space.unfold_x(X_usc)
+                    Xpred, _, _ = self.design_space.unfold_x(X_usc)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma[str(i)].copy())
@@ -722,7 +722,7 @@ class MFK(KrgBased):
         else:
             _, y_is_acting = self.design_space.correct_get_acting(self.X[0])
             _, x_is_acting = self.design_space.correct_get_acting(X)
-            dx = gower_componentwise_distances(
+            dx, _ = gower_componentwise_distances(
                 X,
                 x_is_acting=x_is_acting,
                 design_space=self.design_space,
@@ -744,7 +744,7 @@ class MFK(KrgBased):
             )
             self.ij = ij
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(X)
+                Xpred, _, _ = self.design_space.unfold_x(X)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                 # Get pairwise componentwise L1-distances to the input training set
                 dx = differences(Xpred_norma, Y=self.X2_norma[str(0)].copy())
@@ -794,7 +794,7 @@ class MFK(KrgBased):
             else:
                 _, y_is_acting = self.design_space.correct_get_acting(self.X[i])
                 _, x_is_acting = self.design_space.correct_get_acting(X)
-                dx = gower_componentwise_distances(
+                dx, _ = gower_componentwise_distances(
                     X,
                     x_is_acting=x_is_acting,
                     design_space=self.design_space,
@@ -816,7 +816,7 @@ class MFK(KrgBased):
                 )
                 self.ij = ij
                 if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                    Xpred, _ = self.design_space.unfold_x(X)
+                    Xpred, _, _ = self.design_space.unfold_x(X)
                     Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
                     # Get pairwise componentwise L1-distances to the input training set
                     dx = differences(Xpred_norma, Y=self.X2_norma[str(i)].copy())

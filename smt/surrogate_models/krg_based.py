@@ -4,6 +4,7 @@ Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
+import sys
 import warnings
 from copy import deepcopy
 
@@ -13,19 +14,23 @@ from scipy import linalg, optimize
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
-from smt.utils.kernels import (
+from smt.kernels import (
     SquarSinExp,
     PowExp,
     Matern52,
     Matern32,
     ActExp,
+    Kernel,
+    Operator,
 )
+from smt.kernels.kernels import _Constant
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.design_space import (
+from smt.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,
 )
+
 from smt.utils.kriging import (
     MixHrcKernelType,
     differences,
@@ -76,6 +81,20 @@ class KrgBased(SurrogateModel):
             types=(str),
         )
         declare(
+            "corr",
+            "squar_exp",
+            values=(
+                "pow_exp",
+                "abs_exp",
+                "squar_exp",
+                "act_exp",
+                "matern52",
+                "matern32",
+            ),
+            types=(str, Kernel),
+            desc="Correlation function type",
+        )
+        declare(
             "pow_exp_power",
             1.9,
             types=(float),
@@ -108,19 +127,6 @@ class KrgBased(SurrogateModel):
             100.0 * np.finfo(np.double).eps,
             types=(float),
             desc="a jitter for numerical stability",
-        )
-        declare(
-            "corr",
-            "squar_exp",
-            values=(
-                "pow_exp",
-                "abs_exp",
-                "squar_exp",
-                "act_exp",
-                "matern52",
-                "matern32",
-            ),
-            desc="Correlation function type",
         )
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
@@ -188,6 +194,9 @@ class KrgBased(SurrogateModel):
             desc="definition of the (hierarchical) design space: "
             "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
+        declare(
+            "is_ri", False, types=bool, desc="activate reinterpolation for noisy cases"
+        )
         self.options.declare(
             "random_state",
             default=41,
@@ -221,11 +230,26 @@ class KrgBased(SurrogateModel):
             "squar_sin_exp",
             "matern32",
             "matern52",
-        ]:
+        ] or isinstance(self.options["corr"], Kernel):
             self.options["pow_exp_power"] = 1.0
-        self.corr = self._correlation_class[self.options["corr"]](
-            self.options["theta0"]
-        )
+        # initialize kernel or link model with user defined kernel
+        if isinstance(self.options["corr"], Kernel):
+            if isinstance(self.options["corr"], Operator):
+                self.corr = self.options["corr"] * _Constant(
+                    1 / (self.options["corr"].nbaddition + 1)
+                )
+            else:
+                self.corr = self.options["corr"]
+            self.options["theta0"] = self.corr.theta
+        elif (
+            type(self.options["corr"]) is str
+            and self.options["corr"] in self._correlation_class
+        ):
+            self.corr = self._correlation_class[self.options["corr"]](
+                self.options["theta0"]
+            )
+        else:
+            raise ValueError("The correlation kernel has not been correctly defined.")
         # Check the pow_exp_power is >0 and <=2
         assert (
             self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
@@ -275,6 +299,14 @@ class KrgBased(SurrogateModel):
             Matrix specifying which of the design variables is acting in a hierarchical design space
         """
         super().set_training_values(xt, yt, name=name)
+        if self.ny > 1:
+            warnings.warn(
+                "Kriging-based surrogate is not intended to handle multiple "
+                f"training output data (yt dim should be 1, got {self.ny}). "
+                "The quality of the resulting surrogate might not be as good as "
+                "if each training output is used separately to build a dedicated surrogate. "
+                "This warning might become a hard error in future SMT versions."
+            )
         if is_acting is not None:
             self.is_acting_points[name] = is_acting
 
@@ -365,6 +397,7 @@ class KrgBased(SurrogateModel):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
+
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
         if is_acting is None and not self.is_continuous:
@@ -418,7 +451,7 @@ class KrgBased(SurrogateModel):
             self.y_norma = y_norma_unique
 
         if not (self.is_continuous):
-            D, self.ij, X_cont = gower_componentwise_distances(
+            D, self.ij, X_cont, D_num = gower_componentwise_distances(
                 X=X,
                 x_is_acting=is_acting,
                 design_space=self.design_space,
@@ -439,7 +472,7 @@ class KrgBased(SurrogateModel):
                     mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                X2, _ = self.design_space.unfold_x(X)
+                X2, _, self.unfolded_cat = self.design_space.unfold_x(X)
                 (
                     self.X2_norma,
                     _,
@@ -449,21 +482,29 @@ class KrgBased(SurrogateModel):
                     _,
                 ) = standardization(X2.copy(), y.copy())
                 D, _ = cross_distances(self.X2_norma)
+                D = np.abs(D)
                 self.Lij, self.n_levels = cross_levels(
                     X=self.X_train, ij=self.ij, design_space=self.design_space
                 )
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    D = self._correct_distances_cat_decreed(
-                        D,
-                        is_acting,
-                        listcatdecreed,
-                        self.ij,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
-
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        D = self._correct_distances_cat_decreed(
+                            D,
+                            is_acting,
+                            listcatdecreed,
+                            self.ij,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                    if np.any(self.design_space.is_conditionally_acting):
+                        D[:, np.logical_not(self.unfolded_cat)] = (
+                            D_num / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                        )
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -685,7 +726,7 @@ class KrgBased(SurrogateModel):
             y = self.training_points[None][0][1]
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
-            X_pls_space, _ = design_space.unfold_x(X)
+            X_pls_space, _, _ = design_space.unfold_x(X)
             nx = len(theta)
 
         elif cat_kernel == MixIntKernelType.GOWER:
@@ -913,8 +954,10 @@ class KrgBased(SurrogateModel):
         nugget = self.options["nugget"]
         # Nugget to ensure that the Cholesky decomposition can be performed
         if self.options["eval_noise"]:
-            nugget = 100.0 * np.finfo(np.double).eps
-
+            if self.options["is_ri"]:
+                nugget = 100.0 * np.finfo(np.double).eps
+            else:
+                nugget = 0
         noise = self.noise0
         tmp_var = theta
         if self.options["use_het_noise"]:
@@ -929,7 +972,7 @@ class KrgBased(SurrogateModel):
                     if (
                         self._lvl == self.nlvl - 1
                     ):  # highest fidelity identified by the key None
-                        X2, _ = self.design_space.unfold_x(
+                        X2, _, _ = self.design_space.unfold_x(
                             self.training_points[None][0][0]
                         )
                         self.X2_norma[str(self._lvl)] = (
@@ -937,24 +980,14 @@ class KrgBased(SurrogateModel):
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
                     elif self._lvl < self.nlvl - 1:
-                        X2, _ = self.design_space.unfold_x(
+                        X2, _, _ = self.design_space.unfold_x(
                             self.training_points[self._lvl][0][0]
                         )
                         self.X2_norma[str(self._lvl)] = (
                             X2 - self.X2_offset
                         ) / self.X2_scale
                         dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-                else:
-                    X2, _ = self.design_space.unfold_x(self.training_points[None][0][0])
-                    (
-                        self.X2_norma,
-                        _,
-                        self.X2_offset,
-                        _,
-                        self.X2_scale,
-                        _,
-                    ) = standardization(X2, self.training_points[None][0][1])
-                    dx, _ = cross_distances(self.X2_norma)
+
             try:
                 r = self._matrix_data_corr(
                     corr=self.options["corr"],
@@ -969,6 +1002,7 @@ class KrgBased(SurrogateModel):
                     cat_kernel=self.options["categorical_kernel"],
                     kplsk_second_loop=self.kplsk_second_loop,
                 ).reshape(-1, 1)
+
                 if np.isnan(r).any():
                     return reduced_likelihood_function_value, par
             except FloatingPointError:
@@ -988,10 +1022,14 @@ class KrgBased(SurrogateModel):
                 )
                 return reduced_likelihood_function_value, par
 
-        R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
-        R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-        R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-        R = np.eye(self.nt) * (1.0 + nugget)
+        if self.options["is_ri"]:
+            R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
+            R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
+            R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
+            R = np.eye(self.nt) * (1.0 + nugget)
+        else:
+            R = np.eye(self.nt) * (1.0 + nugget + noise)
+
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -1010,45 +1048,105 @@ class KrgBased(SurrogateModel):
             print(np.linalg.eig(R)[0])
             return reduced_likelihood_function_value, par
 
-        # Computation of R_ri for the reinterpolation case
-        C_inv = np.linalg.inv(C)
-        R_inv = np.dot(C_inv.T, C_inv)
-        R_ri = R_noisy @ R_inv @ R_noisy
-        par["C"] = C
+        if self.options["is_ri"]:
+            # Computation of R_ri for the reinterpolation case
+            C_inv = np.linalg.inv(C)
+            R_inv = np.dot(C_inv.T, C_inv)
+            R_ri = R_noisy @ R_inv @ R_noisy
+            par["C"] = C
 
-        par["sigma2"] = None
-        par["sigma2_ri"] = None
-        _, _, sigma2_ri = self._compute_sigma2(
-            R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
-        )
-        if sigma2_ri is not None:
-            par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
+            par["sigma2"] = None
+            par["sigma2_ri"] = None
+            _, _, sigma2_ri = self._compute_sigma2(
+                R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
+            )
+            if sigma2_ri is not None:
+                par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
 
-        reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
-            R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
-        )
-        if sigma2 is not None:
-            par["sigma2"] = sigma2 * self.y_std**2.0
+            reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
+                R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
+            )
+            if sigma2 is not None:
+                par["sigma2"] = sigma2 * self.y_std**2.0
 
-        if self.name in ["MGP"]:
-            reduced_likelihood_function_value += self._reduced_log_prior(theta)
+            if self.name in ["MGP"]:
+                reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
-        # A particular case when f_min_cobyla fail
-        if (self.best_iteration_fail is not None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            if reduced_likelihood_function_value > self.best_iteration_fail:
+            # A particular case when f_min_cobyla fail
+            if (self.best_iteration_fail is not None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                if reduced_likelihood_function_value > self.best_iteration_fail:
+                    self.best_iteration_fail = reduced_likelihood_function_value
+                    self._thetaMemory = np.array(tmp_var)
+
+            elif (self.best_iteration_fail is None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
                 self.best_iteration_fail = reduced_likelihood_function_value
                 self._thetaMemory = np.array(tmp_var)
+            if reduced_likelihood_function_value > 1e15:
+                reduced_likelihood_function_value = 1e15
+            return reduced_likelihood_function_value, par
+        else:
+            # Get generalized least squared solution
+            Ft = linalg.solve_triangular(C, self.F, lower=True)
+            Q, G = linalg.qr(Ft, mode="economic")
+            sv = linalg.svd(G, compute_uv=False)
+            rcondG = sv[-1] / sv[0]
+            if rcondG < 1e-10:
+                # Check F
+                sv = linalg.svd(self.F, compute_uv=False)
+                condF = sv[0] / sv[-1]
+                if condF > 1e15:
+                    raise Exception(
+                        "F is too ill conditioned. Poor combination "
+                        "of regression model and observations."
+                    )
 
-        elif (self.best_iteration_fail is None) and (
-            not np.isinf(reduced_likelihood_function_value)
-        ):
-            self.best_iteration_fail = reduced_likelihood_function_value
-            self._thetaMemory = np.array(tmp_var)
-        if reduced_likelihood_function_value > 1e15:
-            reduced_likelihood_function_value = 1e15
-        return reduced_likelihood_function_value, par
+                else:
+                    # Ft is too ill conditioned, get out (try different theta)
+                    return reduced_likelihood_function_value, par
+
+            Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
+            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
+            rho = Yt - np.dot(Ft, beta)
+
+            # The determinant of R is equal to the squared product of the diagonal
+            # elements of its Cholesky decomposition C
+            detR = (np.diag(C) ** (2.0 / self.nt)).prod()
+
+            sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
+            reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
+                sigma2.sum()
+            ) - self.nt * np.log10(detR)
+            par["sigma2"] = sigma2 * self.y_std**2.0
+            par["beta"] = beta
+            par["gamma"] = linalg.solve_triangular(C.T, rho)
+            par["C"] = C
+            par["Ft"] = Ft
+            par["G"] = G
+            par["Q"] = Q
+
+            if self.name in ["MGP"]:
+                reduced_likelihood_function_value += self._reduced_log_prior(theta)
+
+            # A particular case when f_min_cobyla fail
+            if (self.best_iteration_fail is not None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                if reduced_likelihood_function_value > self.best_iteration_fail:
+                    self.best_iteration_fail = reduced_likelihood_function_value
+                    self._thetaMemory = np.array(tmp_var)
+
+            elif (self.best_iteration_fail is None) and (
+                not np.isinf(reduced_likelihood_function_value)
+            ):
+                self.best_iteration_fail = reduced_likelihood_function_value
+                self._thetaMemory = np.array(tmp_var)
+            if reduced_likelihood_function_value > 1e15:
+                reduced_likelihood_function_value = 1e15
+            return reduced_likelihood_function_value, par
 
     def _compute_sigma2(
         self, R, reduced_likelihood_function_value, par, p, q, is_ri=False
@@ -1450,7 +1548,7 @@ class KrgBased(SurrogateModel):
                 x, is_acting = self.design_space.correct_get_acting(x)
             n_eval, _ = x.shape
             _, ij = cross_distances(x, self.X_train)
-            dx = gower_componentwise_distances(
+            dx, dnum = gower_componentwise_distances(
                 x,
                 x_is_acting=is_acting,
                 design_space=self.design_space,
@@ -1471,22 +1569,30 @@ class KrgBased(SurrogateModel):
                     mixint_type=MixIntKernelType.GOWER,
                 )
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                Xpred, _ = self.design_space.unfold_x(x)
+                Xpred, _, _ = self.design_space.unfold_x(x)
                 Xpred_norma = (Xpred - self.X2_offset) / self.X2_scale
-                dx = differences(Xpred_norma, Y=self.X2_norma.copy())
-                listcatdecreed = self.design_space.is_conditionally_acting[
-                    self.cat_features
-                ]
-                if np.any(listcatdecreed):
-                    dx = self._correct_distances_cat_decreed(
-                        dx,
-                        is_acting,
-                        listcatdecreed,
-                        ij,
-                        is_acting_y=self.is_acting_train,
-                        mixint_type=MixIntKernelType.CONT_RELAX,
-                    )
+                dx = np.abs(differences(Xpred_norma, Y=self.X2_norma.copy()))
 
+                if (
+                    "n_comp" not in self.options._dict.keys()
+                    and "cat_kernel_comp" not in self.options._dict.keys()
+                ):
+                    listcatdecreed = self.design_space.is_conditionally_acting[
+                        self.cat_features
+                    ]
+                    if np.any(listcatdecreed):
+                        dx = self._correct_distances_cat_decreed(
+                            dx,
+                            is_acting,
+                            listcatdecreed,
+                            ij,
+                            is_acting_y=self.is_acting_train,
+                            mixint_type=MixIntKernelType.GOWER,
+                        )
+                if np.any(self.design_space.is_conditionally_acting):
+                    dx[:, np.logical_not(self.unfolded_cat)] = (
+                        dnum / self.X2_scale[np.logical_not(self.unfolded_cat)]
+                    )
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -1567,7 +1673,6 @@ class KrgBased(SurrogateModel):
         # Initialization
         if not (self.is_continuous):
             x, is_acting, n_eval, ij, Lij, dx = self._predict_init(x, is_acting)
-
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
@@ -1625,7 +1730,9 @@ class KrgBased(SurrogateModel):
 
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"] == "squar_sin_exp":
+        if self.options["corr"] == "squar_sin_exp" or isinstance(
+            self.options["corr"], Kernel
+        ):
             dd = 0
         else:
             dd = self._componentwise_distance(
@@ -1735,10 +1842,7 @@ class KrgBased(SurrogateModel):
             # Compute the correlation function
             r = self.corr(d).reshape(n_eval, self.nt)
         X_cont = (X_cont - self.X_offset) / self.X_scale
-        if is_ri:
-            C = self.optimal_par["C"]
-        else:
-            C = self.optimal_par["C_noisy"]
+        C = self.optimal_par["C"]
         rt = linalg.solve_triangular(C, r.T, lower=True)
 
         u = linalg.solve_triangular(
@@ -1752,8 +1856,6 @@ class KrgBased(SurrogateModel):
         else:
             A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
-        # machine precision: force to zero!
-        B[B < 1e-12] = 0
         s2 = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
@@ -1807,7 +1909,9 @@ class KrgBased(SurrogateModel):
         # Get pairwise componentwise L1-distances to the input training set
         dx = differences(x, Y=self.X_norma.copy())
         d = self._componentwise_distance(dx)
-        if self.options["corr"] == "squar_sin_exp":
+        if self.options["corr"] == "squar_sin_exp" or isinstance(
+            self.options["corr"], Kernel
+        ):
             dd = 0
         else:
             dd = self._componentwise_distance(
@@ -2082,12 +2186,31 @@ class KrgBased(SurrogateModel):
                 if k > 0:
                     if np.isinf(optimal_rlf_value):
                         stop += 1
-                        if incr != 0:
-                            return
-                        if stop > max_retry:
-                            raise ValueError(
-                                "%d attempts to train the model failed" % max_retry
-                            )
+
+                        # One evaluation objectif function is done at least
+                        if self.best_iteration_fail is not None:
+                            if self.best_iteration_fail > best_optimal_rlf_value:
+                                best_optimal_theta = self._thetaMemory
+                                (
+                                    best_optimal_rlf_value,
+                                    best_optimal_par,
+                                ) = self._reduced_likelihood_function(
+                                    theta=best_optimal_theta
+                                )
+                    # Optimization fail
+                    elif np.size(best_optimal_par) == 0:
+                        nugget = self.options["nugget"]
+                        print(
+                            "\033[91mOptimization failed.\033[0m",
+                            end="",
+                            file=sys.stderr,
+                        )
+                        print(
+                            f" Try increasing the 'nugget' above its current value of {nugget}.",
+                            file=sys.stderr,
+                        )
+                        raise ve
+                    # Break the while loop
                     else:
                         if optimal_rlf_value >= self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
@@ -2176,19 +2299,19 @@ class KrgBased(SurrogateModel):
             n_comp,
             mat_dim,
         )
+        if type(self.options["corr"]) is str:
+            if self.options["corr"] == "squar_sin_exp":
+                if (
+                    self.is_continuous
+                    or self.options["categorical_kernel"] == MixIntKernelType.GOWER
+                ):
+                    self.options["theta0"] *= np.ones(2 * self.n_param)
+                else:
+                    self.n_param += len([self.design_space.is_cat_mask])
+                    self.options["theta0"] *= np.ones(self.n_param)
 
-        if self.options["corr"] == "squar_sin_exp":
-            if (
-                self.is_continuous
-                or self.options["categorical_kernel"] == MixIntKernelType.GOWER
-            ):
-                self.options["theta0"] *= np.ones(2 * self.n_param)
             else:
-                self.n_param += len([self.design_space.is_cat_mask])
                 self.options["theta0"] *= np.ones(self.n_param)
-
-        else:
-            self.options["theta0"] *= np.ones(self.n_param)
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
@@ -2211,7 +2334,14 @@ class KrgBased(SurrogateModel):
             if len(self.options["theta0"]) == 1:
                 self.options["theta0"] *= np.ones(d)
             else:
-                if self.options["corr"] != "squar_sin_exp":
+                if self.options["corr"] in (
+                    "pow_exp",
+                    "abs_exp",
+                    "squar_exp",
+                    "act_exp",
+                    "matern52",
+                    "matern32",
+                ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
                         % (len(self.options["theta0"]), d)

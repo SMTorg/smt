@@ -1,16 +1,19 @@
 from .ego import EGO, Evaluator
 from .mfk import MFK, NestedLHS
+from .mfck import MFCK
 from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI, SubspacesInterpolation
+from .cckrg import CoopCompKRG
 
 __all__ = [
     "VFM",
     "MOE",
     "MOESurrogateModel",
     "MFK",
+    "MFCK",
     "NestedLHS",
     "MFKPLS",
     "MFKPLSK",
@@ -18,4 +21,5 @@ __all__ = [
     "Evaluator",
     "PODI",
     "SubspacesInterpolation",
+    "CoopCompKRG",
 ]
