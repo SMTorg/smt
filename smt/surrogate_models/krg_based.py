@@ -2084,7 +2084,7 @@ class KrgBased(SurrogateModel):
             self.D = self._componentwise_distance(D)
 
         # Initialization
-        k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
+        k, _incr, stop, best_optimal_rlf_value, _max_retry = 0, 0, 1, -1e20, 10
         while k < stop:
             # Use specified starting point as first guess
             self.noise0 = np.array(self.options["noise0"])

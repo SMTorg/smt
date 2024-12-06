@@ -23,7 +23,6 @@ from smt.sampling_methods import LHS
 from scipy import optimize
 
 
-
 class SGP(KRG):
     name = "SGP"
 
