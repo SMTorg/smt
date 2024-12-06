@@ -2084,7 +2084,7 @@ class KrgBased(SurrogateModel):
             self.D = self._componentwise_distance(D)
 
         # Initialization
-        k, _incr, stop, best_optimal_rlf_value, _max_retry = 0, 0, 1, -1e20, 10
+        k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
         while k < stop:
             # Use specified starting point as first guess
             self.noise0 = np.array(self.options["noise0"])
@@ -2186,31 +2186,12 @@ class KrgBased(SurrogateModel):
                 if k > 0:
                     if np.isinf(optimal_rlf_value):
                         stop += 1
-
-                        # One evaluation objectif function is done at least
-                        if self.best_iteration_fail is not None:
-                            if self.best_iteration_fail > best_optimal_rlf_value:
-                                best_optimal_theta = self._thetaMemory
-                                (
-                                    best_optimal_rlf_value,
-                                    best_optimal_par,
-                                ) = self._reduced_likelihood_function(
-                                    theta=best_optimal_theta
-                                )
-                    # Optimization fail
-                    elif np.size(best_optimal_par) == 0:
-                        nugget = self.options["nugget"]
-                        print(
-                            "\033[91mOptimization failed.\033[0m",
-                            end="",
-                            file=sys.stderr,
-                        )
-                        print(
-                            f" Try increasing the 'nugget' above its current value of {nugget}.",
-                            file=sys.stderr,
-                        )
-                        raise ve
-                    # Break the while loop
+                        if incr != 0:
+                            return
+                        if stop > max_retry:
+                            raise ValueError(
+                                "%d attempts to train the model failed" % max_retry
+                            )
                     else:
                         if optimal_rlf_value >= self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
@@ -2253,12 +2234,22 @@ class KrgBased(SurrogateModel):
                             )
                 # Optimization fail
                 elif np.size(best_optimal_par) == 0:
-                    print("Optimization failed. Try increasing the ``nugget``")
+                    nugget = self.options["nugget"]
+                    print(
+                        "\033[91mOptimization failed.\033[0m",
+                        end="",
+                        file=sys.stderr,
+                    )
+                    print(
+                        f" Try increasing the 'nugget' above its current value of {nugget}.",
+                        file=sys.stderr,
+                    )
                     raise ve
                 # Break the while loop
                 else:
                     k = stop + 1
                     print("fmin_cobyla failed but the best value is retained")
+
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
