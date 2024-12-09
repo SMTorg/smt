@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
@@ -172,7 +171,6 @@ class GPX(SurrogateModel):
             filename (string): path to the json file
         """
         self._gpx.save(filename)
-
 
     @staticmethod
     def load(filepath):

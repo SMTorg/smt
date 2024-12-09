@@ -5,7 +5,6 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-import pickle
 import numpy as np
 
 from smt.surrogate_models.idwclib import PyIDW
@@ -133,22 +132,3 @@ class IDW(SurrogateModel):
 
         dy_dyt = {None: jac}
         return dy_dyt
-    
-    def _save(self, filename=None):
-        if filename is None:
-            filename = self.filename
-
-        try:
-            with open(filename, 'wb') as file:
-                pickle.dump(self, file)
-                print("model saved")
-        except:
-            print("Couldn't save the model")
-
-    def _load(self, filename):
-        if filename is None:
-            return ("file is not found")
-        else:
-            with open(filename, "rb") as file:
-                sm2 = pickle.load(file)
-                return sm2
