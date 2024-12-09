@@ -15,6 +15,7 @@ from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 
 from smt.kernels import (
     SquarSinExp,
@@ -1869,6 +1870,13 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         s2[s2 < 0.0] = 0.0
         return s2
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
 
     def _predict_variance_derivatives(self, x, kx):
         """

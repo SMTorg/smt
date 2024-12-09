@@ -12,6 +12,7 @@ import numpy as np
 import scipy
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 from smt.utils.misc import standardization
 
@@ -162,3 +163,10 @@ class QP(SurrogateModel):
         y = (self.y_mean + self.y_std * y_).ravel()
         y = y.reshape((x.shape[0], self.ny))
         return y
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
