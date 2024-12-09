@@ -284,7 +284,7 @@ class KrgBased(SurrogateModel):
                 xt=xt, xlimits=ds_input, design_space=ds_input
             )
         return self.options["design_space"]
-    
+
     @design_space.setter
     def design_space(self, d_s_value):
         if not isinstance(d_s_value, BaseDesignSpace):
@@ -1876,13 +1876,13 @@ class KrgBased(SurrogateModel):
         # machine precision: force to zero!
         s2[s2 < 0.0] = 0.0
         return s2
-    
+
     def save(self, filename):
         persistance.save(self, filename)
 
     @staticmethod
     def load(filename):
-        return (persistance.load(filename))
+        return persistance.load(filename)
 
     def _predict_variance_derivatives(self, x, kx):
         """
@@ -2563,5 +2563,3 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             if cat_kernel == MixIntKernelType.CONT_RELAX:
                 n_param += int(n_values)
     return n_param
-
-

@@ -9,7 +9,6 @@ TO DO:
 """
 
 import numpy as np
-import pickle
 from sklearn import linear_model
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
@@ -102,10 +101,10 @@ class LS(SurrogateModel):
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
         return y
-    
+
     def save(self, filename):
         persistance.save(self, filename)
 
     @staticmethod
     def load(filename):
-        return (persistance.load(filename))
+        return persistance.load(filename)

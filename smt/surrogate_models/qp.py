@@ -10,7 +10,6 @@ TO DO:
 
 import numpy as np
 import scipy
-import pickle
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistance
@@ -171,4 +170,4 @@ class QP(SurrogateModel):
 
     @staticmethod
     def load(filename):
-        return (persistance.load(filename))
+        return persistance.load(filename)

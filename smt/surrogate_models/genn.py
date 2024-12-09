@@ -218,7 +218,7 @@ class GENN(SurrogateModel):
 
     @staticmethod
     def load(filename):
-        return (persistance.load(filename))
+        return persistance.load(filename)
 
     def _predict_values(self, x):
         return self.model.predict(x.T).T

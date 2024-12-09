@@ -2,15 +2,12 @@ import pickle
 
 
 def save(self, filename):
-    try:
-        with open(filename, 'wb') as file:
-            pickle.dump(self, file)
-            print("model saved")
-    except:
-        print("Couldn't save the model")
+    with open(filename, "wb") as file:
+        pickle.dump(self, file)
 
-@staticmethod
+
 def load(filename):
+    sm = None
     with open(filename, "rb") as file:
         sm = pickle.load(file)
-        return sm
+    return sm
