@@ -164,33 +164,14 @@ class GPX(SurrogateModel):
         Returns all variance gradients at the given x points as a [n, nx] matrix"""
         return self._gpx.predict_var_gradients(x)
 
-    def _save(self, filename):
+    def save(self, filename):
         """Save the trained model in the given filepath
 
         Arguments
         ---------
             filename (string): path to the json file
         """
-        if filename is None:
-            filename = self.filename
-
-        try:
-            with open(filename, 'wb') as file:
-                pickle.dump(self, file)
-                print("model saved")
-        except:
-            print("Couldn't save the model")
-        # self._gpx.save(filepath)
-
-        
-
-    # def _load(self, filename):
-    #     if filename is None:
-    #         return ("file is not found")
-    #     else:
-    #         with open(filename, "rb") as file:
-    #             sm2 = pickle.load(file)
-    #             return sm2
+        self._gpx.save(filename)
 
 
     @staticmethod

@@ -571,8 +571,8 @@ class SurrogateModel(metaclass=ABCMeta):
         This method is used as a guard in preamble of predict methods"""
         check_nx(self.nx, x)
 
-    def _save(self, filename):
+    def save(self, filename):
         """
         Implemented by surrogate models to save the surrogate object in a file
         """
-        pass
+        raise NotImplementedError("save() has to be implemented by the given surrogate")

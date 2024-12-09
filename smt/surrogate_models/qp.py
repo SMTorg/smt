@@ -13,6 +13,7 @@ import scipy
 import pickle
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistance
 from smt.utils.caching import cached_operation
 from smt.utils.misc import standardization
 
@@ -165,21 +166,9 @@ class QP(SurrogateModel):
         y = y.reshape((x.shape[0], self.ny))
         return y
 
-    def _save(self, filename=None):
-        if filename is None:
-            filename = self.filename
+    def save(self, filename):
+        persistance.save(self, filename)
 
-        try:
-            with open(filename, 'wb') as file:
-                pickle.dump(self, file)
-                print("model saved")
-        except:
-            print("Couldn't save the model")
-
-    def _load(self, filename):
-        if filename is None:
-            return ("file is not found")
-        else:
-            with open(filename, "rb") as file:
-                sm2 = pickle.load(file)
-                return sm2
+    @staticmethod
+    def load(filename):
+        return (persistance.load(filename))

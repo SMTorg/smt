@@ -8,15 +8,14 @@ import sys
 import warnings
 from copy import deepcopy
 from enum import Enum
-from joblib import dump, load
 
 import numpy as np
-import pickle
 from scipy import linalg, optimize
 from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistance
 
 from smt.kernels import (
     SquarSinExp,
@@ -78,7 +77,6 @@ class KrgBased(SurrogateModel):
         "act_exp": ActExp,
     }
     name = "KrigingBased"
-    filename = "kriging_model"
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
@@ -1879,24 +1877,12 @@ class KrgBased(SurrogateModel):
         s2[s2 < 0.0] = 0.0
         return s2
     
-    def _save(self, filename=None):
-        if filename is None:
-            filename = self.filename
+    def save(self, filename):
+        persistance.save(self, filename)
 
-        try:
-            with open(filename, 'wb') as file:
-                pickle.dump(self, file)
-                print("model saved")
-        except:
-            print("Couldn't save the model")
-
-    def _load(self, filename):
-        if filename is None:
-            return ("file is not found")
-        else:
-            with open(filename, "rb") as file:
-                sm2 = pickle.load(file)
-                return sm2
+    @staticmethod
+    def load(filename):
+        return (persistance.load(filename))
 
     def _predict_variance_derivatives(self, x, kx):
         """
