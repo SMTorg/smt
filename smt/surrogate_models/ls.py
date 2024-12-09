@@ -12,7 +12,7 @@ import numpy as np
 from sklearn import linear_model
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils import persistance
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 
 
@@ -24,7 +24,6 @@ class LS(SurrogateModel):
     """
 
     name = "LS"
-    filename = "least_square"
 
     def _initialize(self):
         super(LS, self)._initialize()
@@ -103,8 +102,8 @@ class LS(SurrogateModel):
         return y
 
     def save(self, filename):
-        persistance.save(self, filename)
+        persistence.save(self, filename)
 
     @staticmethod
     def load(filename):
-        return persistance.load(filename)
+        return persistence.load(filename)

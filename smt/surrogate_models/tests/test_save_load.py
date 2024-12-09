@@ -52,7 +52,7 @@ class TestSaveLoad(unittest.TestCase):
         os.remove(filename)
 
     def test_save_load_surrogates(self):
-        krigs = [KRG, KPLS, KPLSK, MGP, SGP, QP, GENN, LS]
+        surrogates = [KRG, KPLS, KPLSK, MGP, SGP, QP, GENN, LS]
         rng = np.random.RandomState(1)
         N_inducing = 30
         num = 100
@@ -61,7 +61,7 @@ class TestSaveLoad(unittest.TestCase):
         yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
         x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
 
-        for surrogate in krigs:
+        for surrogate in surrogates:
             filename = "sm_save_test"
 
             sm = surrogate(print_global=False)

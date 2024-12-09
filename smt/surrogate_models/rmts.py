@@ -21,7 +21,6 @@ class RMTS(SurrogateModel):
     """
 
     name = "RMTS"
-    filename = "rmts_save"
 
     def _initialize(self):
         super(RMTS, self)._initialize()

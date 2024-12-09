@@ -19,7 +19,6 @@ class RBF(SurrogateModel):
     """
 
     name = "RBF"
-    filename = "rbf_save"
 
     def _initialize(self):
         super(RBF, self)._initialize()

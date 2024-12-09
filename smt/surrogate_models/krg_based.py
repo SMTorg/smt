@@ -15,7 +15,7 @@ from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils import persistance
+from smt.utils import persistence
 
 from smt.kernels import (
     SquarSinExp,
@@ -284,12 +284,6 @@ class KrgBased(SurrogateModel):
                 xt=xt, xlimits=ds_input, design_space=ds_input
             )
         return self.options["design_space"]
-
-    @design_space.setter
-    def design_space(self, d_s_value):
-        if not isinstance(d_s_value, BaseDesignSpace):
-            raise TypeError("design_space must be of type BaseDesignSpace")
-        self.options["design_space"] = d_s_value
 
     @property
     def is_continuous(self) -> bool:
@@ -1878,11 +1872,11 @@ class KrgBased(SurrogateModel):
         return s2
 
     def save(self, filename):
-        persistance.save(self, filename)
+        persistence.save(self, filename)
 
     @staticmethod
     def load(filename):
-        return persistance.load(filename)
+        return persistence.load(filename)
 
     def _predict_variance_derivatives(self, x, kx):
         """

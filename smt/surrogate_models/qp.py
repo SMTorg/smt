@@ -12,7 +12,7 @@ import numpy as np
 import scipy
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils import persistance
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 from smt.utils.misc import standardization
 
@@ -23,7 +23,6 @@ class QP(SurrogateModel):
     """
 
     name = "QP"
-    filename = "qp_save"
 
     def _initialize(self):
         super(QP, self)._initialize()
@@ -166,8 +165,8 @@ class QP(SurrogateModel):
         return y
 
     def save(self, filename):
-        persistance.save(self, filename)
+        persistence.save(self, filename)
 
     @staticmethod
     def load(filename):
-        return persistance.load(filename)
+        return persistence.load(filename)

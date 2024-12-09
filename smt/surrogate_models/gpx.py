@@ -29,7 +29,6 @@ except ImportError:
 
 class GPX(SurrogateModel):
     name = "GPX"
-    filename = "gpx_save"
 
     def _initialize(self):
         super(GPX, self)._initialize()
