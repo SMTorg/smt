@@ -4,7 +4,21 @@ import numpy as np
 
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
-from smt.surrogate_models import KRG, LS, KPLS, GEKPLS, KPLSK, MGP, QP, SGP, GENN
+from smt.surrogate_models import (
+    KRG,
+    LS,
+    KPLS,
+    GEKPLS,
+    KPLSK,
+    MGP,
+    QP,
+    SGP,
+    GENN,
+    RBF,
+    RMTB,
+    RMTC,
+    IDW,
+)
 
 
 class TestSaveLoad(unittest.TestCase):
@@ -72,6 +86,51 @@ class TestSaveLoad(unittest.TestCase):
                 sm.set_inducing_inputs(Z=sm.Z)
 
             sm.train()
+            y1 = sm.predict_values(x)
+            sm.save(filename)
+
+            sm2 = surrogate.load(filename)
+            y2 = sm2.predict_values(x)
+
+            np.testing.assert_allclose(y1, y2)
+
+            os.remove(filename)
+
+    def test_save_load_surrogates_cpp(self):
+        surrogates_cpp = [RBF, RMTC, RMTB, IDW]
+
+        num = 100
+        xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        yt = np.array([0.0, 1.0, 1.5, 0.9, 1.0])
+        x = np.linspace(0.0, 4.0, num)
+        xlimits = np.array([[0.0, 4.0]])
+
+        filename = "sm_save_test"
+
+        for surrogate in surrogates_cpp:
+            if surrogate == RMTB:
+                sm = RMTB(
+                    xlimits=xlimits,
+                    order=4,
+                    num_ctrl_pts=20,
+                    energy_weight=1e-15,
+                    regularization_weight=0.0,
+                )
+            elif surrogate == RMTC:
+                sm = RMTC(
+                    xlimits=xlimits,
+                    num_elements=6,
+                    energy_weight=1e-15,
+                    regularization_weight=0.0,
+                )
+            elif surrogate == RBF:
+                sm = RBF(d0=5)
+            else:
+                sm = IDW(p=2)
+
+            sm.set_training_values(xt, yt)
+            sm.train()
+
             y1 = sm.predict_values(x)
             sm.save(filename)
 

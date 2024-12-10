@@ -9,6 +9,7 @@ from scipy.sparse import csc_matrix
 
 from smt.surrogate_models.rbfclib import PyRBF
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 from smt.utils.linear_solvers import get_solver
 
@@ -94,6 +95,16 @@ class RBF(SurrogateModel):
             options["d0"],
             xt.flatten(),
         )
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["rbfc"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        self._setup()
 
     def _new_train(self):
         num = self.num
@@ -213,3 +224,10 @@ class RBF(SurrogateModel):
         dy_dyt = (dytl_dyt.T.dot(dstates_dytl.T).dot(dy_dstates.T)).T
         dy_dyt = np.einsum("ij,k->ijk", dy_dyt, np.ones(ny))
         return {None: dy_dyt}
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
