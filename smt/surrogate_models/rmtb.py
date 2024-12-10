@@ -96,6 +96,16 @@ class RMTB(RMTS):
             np.array(num["ctrl_list"], np.int32),
         )
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["rmtsc"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        self._setup()
+
     def _compute_jac_raw(self, ix1, ix2, x):
         xlimits = self.options["xlimits"]
 
