@@ -12,6 +12,7 @@ import numpy as np
 from sklearn import linear_model
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 
 
@@ -99,3 +100,10 @@ class LS(SurrogateModel):
         n_eval, n_features_x = x.shape
         y = np.ones((n_eval, self.ny)) * self.mod.coef_[:, kx]
         return y
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)

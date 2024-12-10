@@ -162,14 +162,14 @@ class GPX(SurrogateModel):
         Returns all variance gradients at the given x points as a [n, nx] matrix"""
         return self._gpx.predict_var_gradients(x)
 
-    def save(self, filepath):
+    def save(self, filename):
         """Save the trained model in the given filepath
 
         Arguments
         ---------
             filename (string): path to the json file
         """
-        self._gpx.save(filepath)
+        self._gpx.save(filename)
 
     @staticmethod
     def load(filepath):
