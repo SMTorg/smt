@@ -12,6 +12,7 @@ import numpy as np
 from jenn.model import NeuralNet
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 
 # The missing type
 SMTrainingPoints = Dict[Union[int, None], Dict[int, List[np.ndarray]]]
@@ -211,6 +212,13 @@ class GENN(SurrogateModel):
             random_state=None if self.options["seed"] < 0 else self.options["seed"],
         )
         self.model.fit(X, Y, J, **kwargs)
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
 
     def _predict_values(self, x):
         return self.model.predict(x.T).T
