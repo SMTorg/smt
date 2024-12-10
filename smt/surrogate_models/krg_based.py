@@ -307,6 +307,14 @@ class KrgBased(SurrogateModel):
             Matrix specifying which of the design variables is acting in a hierarchical design space
         """
         super().set_training_values(xt, yt, name=name)
+        if self.ny > 1:
+            warnings.warn(
+                "Kriging-based surrogate is not intended to handle multiple "
+                f"training output data (yt dim should be 1, got {self.ny}). "
+                "The quality of the resulting surrogate might not be as good as "
+                "if each training output is used separately to build a dedicated surrogate. "
+                "This warning might become a hard error in future SMT versions."
+            )
         if is_acting is not None:
             self.is_acting_points[name] = is_acting
 
@@ -397,6 +405,7 @@ class KrgBased(SurrogateModel):
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
+
         # Get is_acting status from design space model if needed (might correct training points)
         is_acting = self.is_acting_points.get(None)
         if is_acting is None and not self.is_continuous:
@@ -1855,8 +1864,6 @@ class KrgBased(SurrogateModel):
         else:
             A = self.optimal_par["sigma2"]
         B = 1.0 - (rt**2.0).sum(axis=0) + (u**2.0).sum(axis=0)
-        # machine precision: force to zero!
-        B[B < 1e-12] = 0
         s2 = np.einsum("i,j -> ji", A, B)
         # Mean Squared Error might be slightly negative depending on
         # machine precision: force to zero!
