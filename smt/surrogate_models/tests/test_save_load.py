@@ -2,6 +2,7 @@ import os
 import unittest
 import numpy as np
 
+
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
