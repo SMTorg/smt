@@ -10,6 +10,7 @@ import numpy as np
 import scipy.sparse
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 from smt.utils.caching import cached_operation
 from smt.utils.line_search import VALID_LINE_SEARCHES, LineSearch, get_line_search_class
 from smt.utils.linear_solvers import VALID_SOLVERS, LinearSolver, get_solver
@@ -583,3 +584,10 @@ class RMTS(SurrogateModel):
                 dy_dyt[kx - 1] = np.einsum("ij,jkl->ikl", dy_dw, dw_dyt)
 
         return dy_dyt
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
