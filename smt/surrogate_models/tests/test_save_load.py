@@ -25,13 +25,14 @@ from smt.surrogate_models import (
 class TestSaveLoad(unittest.TestCase):
     def test_save_load_GEKPLS(self):
         filename = "sm_save_test"
-        fun = Sphere(ndim=2)
+        ndim = 2
+        fun = Sphere(ndim=ndim)
 
         sampling = LHS(xlimits=fun.xlimits, criterion="m")
         xt = sampling(20)
         yt = fun(xt)
 
-        for i in range(2):
+        for i in range(ndim):
             yd = fun(xt, kx=i)
             yt = np.concatenate((yt, yd), axis=1)
 
@@ -43,7 +44,7 @@ class TestSaveLoad(unittest.TestCase):
 
         sm = GEKPLS(print_global=False)
         sm.set_training_values(xt, yt[:, 0])
-        for i in range(2):
+        for i in range(ndim):
             sm.set_training_derivatives(xt, yt[:, 1 + i].reshape((yt.shape[0], 1)), i)
         sm.train()
         for i in range(X.shape[0]):
