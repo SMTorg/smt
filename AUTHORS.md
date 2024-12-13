@@ -14,6 +14,7 @@ SMT has been developed thanks to contributions from:
 * Alexandre Thouvenot
 * Andres Lopez Lopera
 * Antoine Averland
+* Enrico Stragiotti
 * Emile Roux
 * Ewout ter Hoeven
 * Florent Vergnes
