@@ -212,8 +212,8 @@ class MFCK(KrgBased):
                     method="COBYLA",
                     constraints=[{"fun": con, "type": "ineq"} for con in constraints],
                     options={
-                        "rhobeg": 0.2,
-                        "tol": 1e-6,
+                        "rhobeg": 0.5,
+                        "tol": 1e-4,
                         "maxiter": 100,
                     },
                 )
