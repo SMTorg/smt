@@ -16,6 +16,7 @@ from sklearn.mixture import GaussianMixture
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
 
 MOE_EXPERT_NAMES = [
     "KRG",
@@ -171,6 +172,31 @@ class MOE(SurrogateBasedApplication):
         """
         self._enabled_expert_types = self._get_enabled_expert_types()
         return list(self._enabled_expert_types.keys())
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for expert in self._experts:
+            if expert == "IDW":
+                state["idwc"] = None
+            elif expert == "RMTC":
+                state["rmtsc"] = None
+            elif expert == "RMTB":
+                state["rmtsc"] = None
+            elif expert == "RBF":
+                state["rbfc"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        for expert in self._experts:
+            if expert == "IDW":
+                expert._setup()
+            elif expert == "RMTC":
+                expert._setup()
+            elif expert == "RMTB":
+                expert._setup()
+            elif expert == "RBF":
+                expert._setup()
 
     def set_training_values(self, xt, yt, name=None):
         """
@@ -760,3 +786,10 @@ class MOE(SurrogateBasedApplication):
             )
 
         return probs
+
+    def save(self, filename):
+        persistence.save(self, filename)
+
+    @staticmethod
+    def load(filename):
+        return persistence.load(filename)
