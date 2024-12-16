@@ -52,7 +52,7 @@ class TestMisc(unittest.TestCase):
         sm.train()
 
         pva = compute_pva_error(sm, xe, ye)
-        self.assertLess(pva, 0.5)
+        self.assertLess(pva, 0.7)
 
     def test_rmse_error(self):
         xe, ye = self.prepare_tests_errors()

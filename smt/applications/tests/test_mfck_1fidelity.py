@@ -13,7 +13,7 @@ import numpy as np
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
 
-# from smt.utils.misc import compute_rms_error
+# from smt.utils.misc import compute_relative_error
 # from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 from smt.applications.mfck import MFCK
