@@ -13,7 +13,7 @@ import numpy as np
 from smt.applications.mfk import MFK
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -53,8 +53,8 @@ class TestMFKOneFidelity(SMTestCase):
             with Silence():
                 sm.train()
 
-            t_error = compute_rms_error(sm)
-            e_error = compute_rms_error(sm, xv, yv)
+            t_error = compute_relative_error(sm)
+            e_error = compute_relative_error(sm, xv, yv)
 
             self.assert_error(t_error, 0.0, 3e-3)
             self.assert_error(e_error, 0.0, 3e-3)

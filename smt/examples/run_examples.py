@@ -10,7 +10,7 @@ import numpy as np
 from smt.problems import NdimRobotArm, Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GEKPLS, KPLS, KPLSK, KRG, LS, QP, DesignSpace
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 
 try:
     from smt.surrogate_models import IDW, RBF, RMTB, RMTC
@@ -65,7 +65,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("LS,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("LS,  err: " + str(compute_relative_error(t, xtest, ytest)))
 
 if plot_status:
     k, m = 0, 0
@@ -95,7 +95,7 @@ for i in range(ndim):
         "LS, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -119,7 +119,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("QP,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("QP,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -148,7 +148,7 @@ for i in range(ndim):
         "QP, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -173,7 +173,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("Kriging,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -202,7 +202,7 @@ for i in range(ndim):
         "Kriging, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -230,7 +230,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("KPLS,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("KPLS,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -258,7 +258,7 @@ for i in range(ndim):
         "KPLS, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -285,7 +285,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("KPLS + abs exp,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("KPLS + abs exp,  err: " + str(compute_relative_error(t, xtest, ytest)))
 
 
 ########### The KPLSK model
@@ -299,7 +299,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("KPLSK,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("KPLSK,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -328,7 +328,7 @@ for i in range(ndim):
         "KPLSK, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -364,7 +364,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("GEKPLS1,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("GEKPLS1,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -393,7 +393,7 @@ for i in range(ndim):
         "GEKPLS1, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -429,7 +429,7 @@ t.train()
 
 # Prediction of the validation points
 y = t.predict_values(xtest)
-print("GEKPLS2,  err: " + str(compute_rms_error(t, xtest, ytest)))
+print("GEKPLS2,  err: " + str(compute_relative_error(t, xtest, ytest)))
 if plot_status:
     k, m = 0, 0
     f, axarr = plt.subplots(4, 3)
@@ -458,7 +458,7 @@ for i in range(ndim):
         "GEKPLS2, err of the "
         + str(i)
         + "-th derivative: "
-        + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+        + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
     )
 
     if plot_status:
@@ -482,7 +482,7 @@ if COMPILED_AVAILABLE:
 
     # Prediction of the validation points
     y = t.predict_values(xtest)
-    print("IDW,  err: " + str(compute_rms_error(t, xtest, ytest)))
+    print("IDW,  err: " + str(compute_relative_error(t, xtest, ytest)))
     if plot_status:
         plt.figure()
         plt.plot(ytest, ytest, "-.")
@@ -501,7 +501,7 @@ if COMPILED_AVAILABLE:
 
     # Prediction of the validation points
     y = t.predict_values(xtest)
-    print("RBF,  err: " + str(compute_rms_error(t, xtest, ytest)))
+    print("RBF,  err: " + str(compute_relative_error(t, xtest, ytest)))
     if plot_status:
         k, m = 0, 0
         f, axarr = plt.subplots(4, 3)
@@ -529,7 +529,7 @@ if COMPILED_AVAILABLE:
             "RBF, err of the "
             + str(i)
             + "-th derivative: "
-            + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
         )
 
         if plot_status:
@@ -585,7 +585,7 @@ if COMPILED_AVAILABLE:
 
     # Prediction of the validation points
     y = t.predict_values(xtest)
-    print("RMTB,  err: " + str(compute_rms_error(t, xtest, ytest)))
+    print("RMTB,  err: " + str(compute_relative_error(t, xtest, ytest)))
     if plot_status:
         k, m = 0, 0
         f, axarr = plt.subplots(3, 2)
@@ -616,7 +616,7 @@ if COMPILED_AVAILABLE:
             "RMTB, err of the "
             + str(i)
             + "-th derivative: "
-            + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
         )
 
         if plot_status:
@@ -648,7 +648,7 @@ if COMPILED_AVAILABLE:
 
     # Prediction of the validation points
     y = t.predict_values(xtest)
-    print("RMTC,  err: " + str(compute_rms_error(t, xtest, ytest)))
+    print("RMTC,  err: " + str(compute_relative_error(t, xtest, ytest)))
     if plot_status:
         k, m = 0, 0
         f, axarr = plt.subplots(3, 2)
@@ -679,7 +679,7 @@ if COMPILED_AVAILABLE:
             "RMTC, err of the "
             + str(i)
             + "-th derivative: "
-            + str(compute_rms_error(t, xtest, ydtest[:, i], kx=i))
+            + str(compute_relative_error(t, xtest, ydtest[:, i], kx=i))
         )
 
         if plot_status:

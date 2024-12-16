@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 from smt.surrogate_models import RMTB
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -51,7 +51,7 @@ class TestRMTS(SMTestCase):
             with Silence():
                 self.sms[ls].train()
 
-            error = compute_rms_error(self.sms[ls], self.xref, self.yref)
+            error = compute_relative_error(self.sms[ls], self.xref, self.yref)
             self.assert_error(error, 0.0, 1e-1)
 
     def test_linear_solver(self):
@@ -74,7 +74,7 @@ class TestRMTS(SMTestCase):
             with Silence():
                 self.sms[ls].train()
 
-            error = compute_rms_error(self.sms[ls], self.xref, self.yref)
+            error = compute_relative_error(self.sms[ls], self.xref, self.yref)
             self.assert_error(error, 0.0, 1.1)
 
 

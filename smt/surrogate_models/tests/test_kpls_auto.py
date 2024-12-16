@@ -11,7 +11,7 @@ from collections import OrderedDict
 from smt.problems import Branin, Rosenbrock, Sphere, TensorProduct
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KPLS
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -82,8 +82,8 @@ class Test(SMTestCase):
 
         ncomp = sm.options["n_comp"]
 
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
+        t_error = compute_relative_error(sm)
+        e_error = compute_relative_error(sm, xe, ye)
 
         if print_output:
             print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))

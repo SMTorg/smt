@@ -21,7 +21,7 @@ from smt.applications import MOE, MOESurrogateModel
 from smt.problems import Branin, LpNorm
 from smt.sampling_methods import LHS, FullFactorial
 from smt.surrogate_models import RMTB, RMTC
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.sm_test_case import SMTestCase
 
 
@@ -64,7 +64,7 @@ class TestMOE(SMTestCase):
         xe = np.random.sample(self.ne)
         ye = self.function_test_1d(xe)
 
-        rms_error = compute_rms_error(moe, xe, ye)
+        rms_error = compute_relative_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 3e-1)
 
         self.assertRaises(RuntimeError, lambda: moe.predict_variances(xe))
@@ -109,7 +109,7 @@ class TestMOE(SMTestCase):
         xe = np.random.sample(self.ne)
         ye = self.function_test_1d(xe)
 
-        rms_error = compute_rms_error(moe, xe, ye)
+        rms_error = compute_relative_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 3e-1)
 
         moe.predict_variances(xe)
@@ -172,7 +172,7 @@ class TestMOE(SMTestCase):
         xe = np.random.sample(self.ne)
         ye = self.function_test_1d(xe)
 
-        rms_error = compute_rms_error(moe, xe, ye)
+        rms_error = compute_relative_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 3e-1)
 
         self.assertRaises(RuntimeError, lambda: moe.predict_variances(xe))
@@ -229,7 +229,7 @@ class TestMOE(SMTestCase):
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        rms_error = compute_rms_error(moe, xe, ye)
+        rms_error = compute_relative_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 1e-1)
 
         if TestMOE.plot:
@@ -273,7 +273,7 @@ class TestMOE(SMTestCase):
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        rms_error = compute_rms_error(moe, xe, ye)
+        rms_error = compute_relative_error(moe, xe, ye)
         self.assert_error(rms_error, 0.0, 1e-1)
 
         if TestMOE.plot:

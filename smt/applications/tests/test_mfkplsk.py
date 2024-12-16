@@ -23,7 +23,7 @@ import numpy as np
 from smt.applications.mfkplsk import MFKPLSK
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS, FullFactorial
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -79,8 +79,8 @@ class TestMFKPLSK(SMTestCase):
             with Silence():
                 sm.train()
 
-            t_error = compute_rms_error(sm)
-            e_error = compute_rms_error(sm, xe, ye)
+            t_error = compute_relative_error(sm)
+            e_error = compute_relative_error(sm, xe, ye)
 
             self.assert_error(t_error, 0.0, 1.5)
             self.assert_error(e_error, 0.0, 1.5)
@@ -130,10 +130,10 @@ class TestMFKPLSK(SMTestCase):
         with Silence():
             sm.train()
 
-        _t_error = compute_rms_error(sm)
-        _e_error = compute_rms_error(sm, xe, ye)
-        e_error0 = compute_rms_error(sm, xe, dye[0], 0)
-        e_error1 = compute_rms_error(sm, xe, dye[1], 1)
+        _t_error = compute_relative_error(sm)
+        _e_error = compute_relative_error(sm, xe, ye)
+        e_error0 = compute_relative_error(sm, xe, dye[0], 0)
+        e_error1 = compute_relative_error(sm, xe, dye[1], 1)
 
         self.assert_error(e_error0, 0.0, 1e-1)
         self.assert_error(e_error1, 0.0, 1e-1)

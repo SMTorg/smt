@@ -22,7 +22,7 @@ from smt.examples.rans_crm_wing.rans_crm_wing import (
 )
 from smt.problems import WaterFlow, WaterFlowLFidelity
 from smt.sampling_methods import LHS
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -111,7 +111,7 @@ class TestVFM(SMTestCase):
         )
 
         # Prediction of the validation points
-        rms_error = compute_rms_error(vfm, xtest, ytest)
+        rms_error = compute_relative_error(vfm, xtest, ytest)
         self.assert_error(rms_error, 0.0, 3e-1)
 
     @staticmethod
