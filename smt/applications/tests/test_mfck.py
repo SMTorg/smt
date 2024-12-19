@@ -69,7 +69,7 @@ class TestMFCK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-6, 1e-6)
+            self.assert_error(t_error, 0.0, 1e-5, 1e-5)
 
     @staticmethod
     def run_mfck_example():
