@@ -12,7 +12,7 @@ from smt.problems import Rosenbrock
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG, SGP
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 
 
 # defining the toy example
@@ -574,7 +574,7 @@ class TestKrgBased(unittest.TestCase):
 
         # Prediction of the validation points
         t.predict_values(xtest)
-        print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
+        print("Kriging,  err: " + str(compute_relative_error(t, xtest, ytest)))
         print("R is ill-conditioned?", t.is_training_ill_conditioned())
         self.assertTrue(not (t.is_training_ill_conditioned()))
         # The variable 'theta0' is a list of length ndim.
@@ -589,7 +589,7 @@ class TestKrgBased(unittest.TestCase):
 
         # Prediction of the validation points
         t.predict_values(xtest)
-        print("Kriging,  err: " + str(compute_rms_error(t, xtest, ytest)))
+        print("Kriging,  err: " + str(compute_relative_error(t, xtest, ytest)))
         print("R is ill-conditioned?", t.is_training_ill_conditioned())
         self.assertTrue(t.is_training_ill_conditioned())
 

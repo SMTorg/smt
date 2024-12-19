@@ -14,7 +14,7 @@ Usage
   from smt.sampling_methods import Random
   
   xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-  sampling = Random(xlimits=xlimits)
+  sampling = Random(xlimits=xlimits, random_state=12)
   
   num = 50
   x = sampling(num)
@@ -52,3 +52,8 @@ Options
      -  None
      -  ['ndarray']
      -  The interval of the domain in each dimension with shape nx x 2 (required)
+  *  -  random_state
+     -  None
+     -  None
+     -  ['NoneType', 'int', 'RandomState', 'Generator']
+     -  Numpy RandomState or Generator object or seed number which controls random draws

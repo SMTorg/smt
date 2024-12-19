@@ -43,7 +43,8 @@ Users can read the docs online at `smt.readthedocs.io <https://smt.readthedocs.i
 This is especially necessary because most of the docs in SMT contain code, code print output, and plots that are dynamically generated and embedded during the doc building process.
 The docs are written using reStructuredText, and there are a few custom directives we have added for this embedding of dynamically-generated content.
 
-First, install the required dependencies to build the doc with: ``pip install -r doc/requirements.txt``
+First, install the required package dependencies with: ``pip install -e .``.
+Additionally, install the required dependencies to build the doc with: ``pip install -r doc/requirements.txt``.
 
 Then to generate the doc, the developer should go to the ``doc`` directory and run ``sphinx_auto_embed``, then ``make html``.
 
