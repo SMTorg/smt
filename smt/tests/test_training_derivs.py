@@ -16,7 +16,7 @@ from smt.sampling_methods import FullFactorial
 from smt.design_space import (
     DesignSpace,
 )
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -110,8 +110,8 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
+        t_error = compute_relative_error(sm)
+        e_error = compute_relative_error(sm, xe, ye)
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
@@ -128,8 +128,8 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        ge_t_error = compute_rms_error(sm)
-        ge_e_error = compute_rms_error(sm, xe, ye)
+        ge_t_error = compute_relative_error(sm)
+        ge_e_error = compute_relative_error(sm, xe, ye)
 
         if print_output:
             print(

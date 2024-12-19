@@ -11,7 +11,7 @@ import numpy as np
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KPLS, KPLSK, KRG
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 
 
 class TestKPLS(unittest.TestCase):
@@ -154,7 +154,7 @@ class TestKPLS(unittest.TestCase):
             times.append(time.time() - intime)
 
             # y_pred = model.predict_values(x_test)
-            error = compute_rms_error(model, x_test, y_test)
+            error = compute_relative_error(model, x_test, y_test)
             rms.append(error)
         self.assertTrue((times[0] >= times[1]) and (times[1] >= times[2]))
 
