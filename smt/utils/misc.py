@@ -108,7 +108,7 @@ def compute_relative_error(sm, xe=None, ye=None, kx=None):
         return num / den
 
 
-def compute_pva_error(sm, xe, ye):
+def compute_pva(sm, xe, ye):
     ye = ye.reshape((xe.shape[0], 1))
     N = len(ye)
     ye2 = sm.predict_values(xe)
@@ -119,7 +119,7 @@ def compute_pva_error(sm, xe, ye):
     return pva
 
 
-def compute_rmse_error(sm, xe, ye):
+def compute_rmse(sm, xe, ye):
     ye = ye.reshape((xe.shape[0], 1))
     N = len(ye)
     ye2 = sm.predict_values(xe)
@@ -127,10 +127,10 @@ def compute_rmse_error(sm, xe, ye):
     return rmse
 
 
-def compute_q2_error(sm, xe, ye):
+def compute_q2(sm, xe, ye):
     ye = ye.reshape((xe.shape[0], 1))
     N = len(ye)
-    square_rmse = compute_rmse_error(sm, xe, ye) ** 2
+    square_rmse = compute_rmse(sm, xe, ye) ** 2
     ye_mean = np.mean(ye)
     variance = np.sum((ye - ye_mean) ** 2) / N
     Q2 = 1 - (square_rmse / variance)

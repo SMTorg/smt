@@ -9,9 +9,9 @@ import unittest
 import numpy as np
 
 from smt.utils.misc import (
-    compute_q2_error,
-    compute_pva_error,
-    compute_rmse_error,
+    compute_q2,
+    compute_pva,
+    compute_rmse,
     standardization,
 )
 from smt.problems import Sphere
@@ -51,7 +51,7 @@ class TestMisc(unittest.TestCase):
         sm.set_training_values(xe, ye)
         sm.train()
 
-        pva = compute_pva_error(sm, xe, ye)
+        pva = compute_pva(sm, xe, ye)
         self.assertLess(pva, 0.7)
 
     def test_rmse_error(self):
@@ -60,7 +60,7 @@ class TestMisc(unittest.TestCase):
         sm.set_training_values(xe, ye)
         sm.train()
 
-        rmse = compute_rmse_error(sm, xe, ye)
+        rmse = compute_rmse(sm, xe, ye)
         self.assertLess(rmse, 0.1)
 
     def test_q2_error(self):
@@ -69,7 +69,7 @@ class TestMisc(unittest.TestCase):
         sm.set_training_values(xe, ye)
         sm.train()
 
-        q2 = compute_q2_error(sm, xe, ye)
+        q2 = compute_q2(sm, xe, ye)
         self.assertAlmostEqual(q2, 1.0, delta=1e-3)
 
 
