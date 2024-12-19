@@ -63,7 +63,7 @@ def standardization(X, y):
     return X, y, X_offset, y_mean, X_scale, y_std
 
 
-def compute_rms_error(sm, xe=None, ye=None, kx=None):
+def compute_relative_error(sm, xe=None, ye=None, kx=None):
     """
     Returns a normalized RMS error of the training points or the given points.
 
@@ -106,6 +106,35 @@ def compute_rms_error(sm, xe=None, ye=None, kx=None):
         num = np.linalg.norm(yt2 - yt)
         den = np.linalg.norm(yt)
         return num / den
+
+
+def compute_pva(sm, xe, ye):
+    ye = ye.reshape((xe.shape[0], 1))
+    N = len(ye)
+    ye2 = sm.predict_values(xe)
+    variance = sm.predict_variances(xe)
+
+    error = (ye2 - ye) ** 2 / variance
+    pva = np.sum(error) / N
+    return pva
+
+
+def compute_rmse(sm, xe, ye):
+    ye = ye.reshape((xe.shape[0], 1))
+    N = len(ye)
+    ye2 = sm.predict_values(xe)
+    rmse = np.sqrt(np.sum((ye2 - ye) ** 2) / N)
+    return rmse
+
+
+def compute_q2(sm, xe, ye):
+    ye = ye.reshape((xe.shape[0], 1))
+    N = len(ye)
+    square_rmse = compute_rmse(sm, xe, ye) ** 2
+    ye_mean = np.mean(ye)
+    variance = np.sum((ye - ye_mean) ** 2) / N
+    Q2 = 1 - (square_rmse / variance)
+    return Q2
 
 
 def take_closest_number(myList, myNumber):
