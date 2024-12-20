@@ -20,6 +20,7 @@ from scipy import optimize
 from smt.sampling_methods import LHS
 from smt.utils.kriging import differences, componentwise_distance
 from smt.surrogate_models.krg_based import KrgBased
+from smt.utils.misc import standardization
 
 
 class MFCK(KrgBased):
@@ -50,9 +51,15 @@ class MFCK(KrgBased):
         )
         declare(
             "sigma_bounds",
-            [1e-1, 100],
+            [1e-2, 100],
             types=(list, np.ndarray),
             desc="Bounds for the variance parameter",
+        )
+        declare(
+            "lambda",
+            0.1,
+            types=(float),
+            desc="Regularization parameter",
         )
 
         self.options["nugget"] = (
@@ -83,29 +90,48 @@ class MFCK(KrgBased):
         self.X = xt
         self.y = np.vstack(yt)
         self._check_param()
-        self.nx = 1  # Forcing this in order to consider isotropic kernels (i.e., only one lengthscale)
+
+        (
+            _,
+            _,
+            self.X_offset,
+            self.y_mean,
+            self.X_scale,
+            self.y_std,
+        ) = standardization(np.concatenate(xt, axis=0), np.concatenate(yt, axis=0))
+
+        self.X_norma_all = [(x - self.X_offset) / self.X_scale for x in xt]
+        self.y_norma_all = np.vstack([(f - self.y_mean) / self.y_std for f in yt])
+
         if self.lvl == 1:
             # For a single level, initialize theta_ini, lower_bounds, and
             # upper_bounds with consistent shapes
             theta_ini = np.hstack(
-                (self.options["sigma0"], self.options["theta0"][0])
-            )  # Kernel variance + theta0
+                (self.options["sigma0"], self.options["theta0"])
+            )  # Variance + initial theta values
             lower_bounds = np.hstack(
-                (self.options["sigma_bounds"][0], self.options["theta_bounds"][0])
+                (
+                    self.options["sigma_bounds"][0],
+                    np.full(self.nx, self.options["theta_bounds"][0]),
+                )
             )
             upper_bounds = np.hstack(
-                (self.options["sigma_bounds"][1], self.options["theta_bounds"][1])
+                (
+                    self.options["sigma_bounds"][1],
+                    np.full(self.nx, self.options["theta_bounds"][1]),
+                )
             )
-            theta_ini = np.log10(theta_ini)
-            lower_bounds = np.log10(lower_bounds)
-            upper_bounds = np.log10(upper_bounds)
-            x_opt = theta_ini
+            # Apply log10 to theta_ini and bounds
+            nb_params = len(self.options["theta0"])
+            theta_ini[: nb_params + 1] = np.log10(theta_ini[: nb_params + 1])
+            lower_bounds[: nb_params + 1] = np.log10(lower_bounds[: nb_params + 1])
+            upper_bounds[: nb_params + 1] = np.log10(upper_bounds[: nb_params + 1])
         else:
             for lvl in range(self.lvl):
                 if lvl == 0:
                     # Initialize theta_ini for level 0
                     theta_ini = np.hstack(
-                        (self.options["sigma0"], self.options["theta0"][0])
+                        (self.options["sigma0"], self.options["theta0"])
                     )  # Variance + initial theta values
                     lower_bounds = np.hstack(
                         (
@@ -131,9 +157,7 @@ class MFCK(KrgBased):
 
                 elif lvl > 0:
                     # For additional levels, append to theta_ini, lower_bounds, and upper_bounds
-                    thetat = np.hstack(
-                        (self.options["sigma0"], self.options["theta0"][0])
-                    )
+                    thetat = np.hstack((self.options["sigma0"], self.options["theta0"]))
                     lower_boundst = np.hstack(
                         (
                             self.options["sigma_bounds"][0],
@@ -188,9 +212,9 @@ class MFCK(KrgBased):
                     method="COBYLA",
                     constraints=[{"fun": con, "type": "ineq"} for con in constraints],
                     options={
-                        "rhobeg": 0.1,
+                        "rhobeg": 0.5,
                         "tol": 1e-4,
-                        "maxiter": 200,
+                        "maxiter": 100,
                     },
                 )
                 x_opt_iter = optimal_theta_res_loop.x
@@ -213,7 +237,7 @@ class MFCK(KrgBased):
             opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
             opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension
             opt.set_min_objective(self.neg_log_likelihood_nlopt)
-            opt.set_maxeval(5000)
+            opt.set_maxeval(1000)
             opt.set_xtol_rel(1e-6)
             x0 = np.copy(theta_ini)
             x_opt = opt.optimize(x0)
@@ -221,10 +245,16 @@ class MFCK(KrgBased):
             raise ValueError(
                 f"The optimizer {self.options['hyper_opt']} is not available"
             )
+        x_opt[0] = 10 ** (x_opt[0])  # Apply 10** to Sigma 0
+        x_opt[1 : self.nx + 1] = (
+            10 ** (x_opt[1 : self.nx + 1])
+        )  # Apply 10** to length scales 0
+        x_opt[self.nx + 1 :: self.nx + 2] = (
+            10 ** (x_opt[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
 
-        x_opt[0:2] = 10 ** (x_opt[0:2])
-        x_opt[2::3] = 10 ** (x_opt[2::3])
-        x_opt[3::3] = 10 ** (x_opt[3::3])
+        for i in np.arange(self.nx + 2, x_opt.shape[0] - 1, self.nx + 2):
+            x_opt[i : i + self.nx] = 10 ** x_opt[i : i + self.nx]
         self.optimal_theta = x_opt
 
     def eta(self, j, jp, rho):
@@ -253,10 +283,16 @@ class MFCK(KrgBased):
         """
         cov_value = 0.0
 
-        param0 = param[0:2]
-        sigmas_gamma = param[2::3]
-        ls_gamma = param[3::3]
-        rho_values = param[4::3]
+        sigma_0 = param[0]
+        l_0 = param[1 : self.nx + 1]
+        # param0 = param[0 : self.nx+1]
+        sigmas_gamma = param[self.nx + 1 :: self.nx + 2]
+        l_s = [
+            param[i : i + self.nx].tolist()
+            for i in np.arange(self.nx + 2, param.shape[0] - 1, self.nx + 2)
+        ]
+        # ls_gamma = param[3::3]
+        rho_values = param[2 + 2 * self.nx :: self.nx + 2]
 
         # Sum of j=0 until l_^prime
         for j in range(Lp + 1):
@@ -265,12 +301,10 @@ class MFCK(KrgBased):
 
             if j == 0:
                 # Cov(γ_j(x), γ_j(x')) using the kernel for K_00
-                cov_gamma_j = self._compute_K(x, xp, param0)
+                cov_gamma_j = self._compute_K(x, xp, [sigma_0, l_0])
             else:
                 # Cov(γ_j(x), γ_j(x')) using the kernel
-                cov_gamma_j = self._compute_K(
-                    x, xp, [sigmas_gamma[j - 1], ls_gamma[j - 1]]
-                )
+                cov_gamma_j = self._compute_K(x, xp, [sigmas_gamma[j - 1], l_s[j - 1]])
             # Add to the value of the covariance
             cov_value += eta_j_l * eta_j_lp * cov_gamma_j
 
@@ -290,23 +324,30 @@ class MFCK(KrgBased):
         covariances: (list, np.array)
             Returns the conditional covariance matrixes per level.
         """
-        self.K = self.compute_blockwise_K(self.optimal_theta)
         means = []
         covariances = []
+        x = (x - self.X_offset) / self.X_scale
+
         if self.lvl == 1:
-            k_XX = self._compute_K(self.X[0], self.X[0], self.optimal_theta[0:2])
-            k_xX = self._compute_K(x, self.X[0], self.optimal_theta[0:2])
-            k_xx = self._compute_K(x, x, self.optimal_theta[0:2])
-            # To be adapted using the Cholesky decomposition
-            k_XX_inv = np.linalg.inv(
+            sigma = self.optimal_theta[0]  # Apply 10** to Sigma 0
+            l_s = [self.optimal_theta[1 : self.nx + 1]]  # Apply 10** to length scales 0
+
+            k_XX = self._compute_K(
+                self.X_norma_all[0], self.X_norma_all[0], [sigma, l_s[0]]
+            )
+            k_xX = self._compute_K(x, self.X_norma_all[0], [sigma, l_s[0]])
+            k_xx = self._compute_K(x, x, [sigma, l_s[0]])
+
+            L = np.linalg.cholesky(
                 k_XX + self.options["nugget"] * np.eye(k_XX.shape[0])
             )
-            means.append(np.dot(k_xX, np.matmul(k_XX_inv, self.y)))
-            covariances.append(
-                k_xx - np.matmul(k_xX, np.matmul(k_XX_inv, k_xX.transpose()))
-            )
 
+            beta1 = solve_triangular(L, k_xX.T, lower=True)
+            alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
+            means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
+            covariances.append(k_xx - np.dot(beta1.T, beta1))
         else:
+            self.K = self.compute_blockwise_K(self.optimal_theta)
             L = np.linalg.cholesky(
                 self.K + self.options["nugget"] * np.eye(self.K.shape[0])
             )
@@ -317,19 +358,19 @@ class MFCK(KrgBased):
                     if ind >= j:
                         k_xX.append(
                             self.compute_cross_K(
-                                self.X[j], x, ind, j, self.optimal_theta
+                                self.X_norma_all[j], x, ind, j, self.optimal_theta
                             )
                         )
                     else:
                         k_xX.append(
                             self.compute_cross_K(
-                                self.X[j], x, j, ind, self.optimal_theta
+                                self.X_norma_all[j], x, j, ind, self.optimal_theta
                             )
                         )
 
                 beta1 = solve_triangular(L, np.vstack(k_xX), lower=True)
-                alpha1 = solve_triangular(L, self.y, lower=True)
-                means.append(np.dot(beta1.T, alpha1))
+                alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
+                means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
                 covariances.append(k_xx - np.dot(beta1.T, beta1))
                 k_xX.clear()
 
@@ -355,15 +396,18 @@ class MFCK(KrgBased):
 
     def neg_log_likelihood(self, param, grad=None):
         if self.lvl == 1:
-            self.K = self._compute_K(self.X[0], self.X[0], param[0:2])
+            sigma = param[0]
+            l_s = [param[1 : self.nx + 1]]
+            self.K = self._compute_K(self.X[0], self.X[0], [sigma, l_s])
         else:
             self.K = self.compute_blockwise_K(param)
 
+        reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
         L = np.linalg.cholesky(
             self.K + self.options["nugget"] * np.eye(self.K.shape[0])
         )
-        beta = solve_triangular(L, self.y, lower=True)
-        NMLL = 1 / 2 * (2 * np.sum(np.log(np.diag(L))) + np.dot(beta.T, beta))
+        beta = solve_triangular(L, self.y_norma_all, lower=True)
+        NMLL = np.sum(np.log(np.diag(L))) + np.dot(beta.T, beta) + reg_term
         (nmll,) = NMLL[0]
         return nmll
 
@@ -372,9 +416,16 @@ class MFCK(KrgBased):
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
         param = np.array(param, copy=True)
-        param[0:2] = 10 ** (param[0:2])
-        param[2::3] = 10 ** (param[2::3])
-        param[3::3] = 10 ** (param[3::3])
+        param[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
+        param[1 : self.nx + 1] = (
+            10 ** (param[1 : self.nx + 1])
+        )  # Apply 10** to length scales 0
+        param[self.nx + 1 :: self.nx + 2] = (
+            10 ** (param[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
+
+        for i in np.arange(self.nx + 2, param.shape[0] - 1, self.nx + 2):
+            param[i : i + self.nx] = 10 ** param[i : i + self.nx]
         return self.neg_log_likelihood(param)
 
     def neg_log_likelihood_nlopt(self, param, grad=None):
@@ -382,9 +433,16 @@ class MFCK(KrgBased):
         Likelihood for nlopt optimizers
         """
         param = np.array(param, copy=True)
-        param[0:2] = 10 ** (param[0:2])
-        param[2::3] = 10 ** (param[2::3])
-        param[3::3] = 10 ** (param[3::3])
+        param[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
+        param[1 : self.nx + 1] = (
+            10 ** (param[1 : self.nx + 1])
+        )  # Apply 10** to length scales 0
+        param[self.nx + 1 :: self.nx + 2] = (
+            10 ** (param[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
+
+        for i in np.arange(self.nx + 2, param.shape[0] - 1, self.nx + 2):
+            param[i : i + self.nx] = 10 ** param[i : i + self.nx]
         return self.neg_log_likelihood(param, grad)
 
     def compute_blockwise_K(self, param):
@@ -394,7 +452,7 @@ class MFCK(KrgBased):
             for j in range(self.lvl):
                 if jp >= j:
                     K_block[str(jp) + str(j)] = self.compute_cross_K(
-                        self.X[j], self.X[jp], jp, j, param
+                        self.X_norma_all[j], self.X_norma_all[jp], jp, j, param
                     )
 
         K = np.zeros((n, n))
@@ -427,7 +485,7 @@ class MFCK(KrgBased):
             self.X[0].shape[1],
             power=self.options["pow_exp_power"],
         )
-        self.corr.theta = np.full(self.X[0].shape[1], param[1])
+        self.corr.theta = np.asarray(param[1])
         r = self.corr(d)
         R = r.reshape(A.shape[0], B.shape[0])
         K = param[0] * R
