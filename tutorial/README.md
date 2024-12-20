@@ -26,13 +26,17 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 ### With required nested sampling
 
-#### Without noise
-
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFK_tutorial.ipynb)
 
 #### With noise
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFK_Noise.ipynb)
+
+#### Adaptative sampling
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/ADOE_MFK_Forrester_1D2F.ipynb)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/ADOE_MFK_Rosenbrock_2D2F.ipynb)
 
 ### Without nested sampling
 
