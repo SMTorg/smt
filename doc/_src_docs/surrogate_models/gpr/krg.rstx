@@ -63,7 +63,7 @@ Kriging with categorical or integer variables
 ---------------------------------------------
 
 The goal is to be able to build a model for mixed typed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
