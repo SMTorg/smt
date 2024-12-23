@@ -202,7 +202,7 @@ Usage
   
   from smt.applications import EGO
   from smt.surrogate_models import KRG
-  from smt.utils.design_space import DesignSpace
+  from smt.design_space import DesignSpace
   
   def function_test_1d(x):
       # function xsinx
@@ -456,7 +456,7 @@ Usage with mixed variable
   from smt.applications import EGO
   from smt.applications.mixed_integer import MixedIntegerContext
   from smt.surrogate_models import KRG, MixIntKernelType
-  from smt.utils.design_space import (
+  from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
@@ -548,7 +548,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
+  Minimum in x=[-4.96251421  2.          0.          1.        ] with f(x)=-13.9
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -604,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000001FC214379D0>
+     -  <smt.applications.ego.Evaluator object at 0x000002477E8BE750>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -633,8 +633,13 @@ Options
      -  None
      -  ['bool']
      -  Enable the penalization of points that have been already evaluated in EI criterion
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000001FC1FE11950>
+     -  <smt.surrogate_models.krg.KRG object at 0x000002477E8CC410>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly

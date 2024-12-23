@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.6393216
+     Training - done. Time (sec):  0.3610163
   ___________________________________________________________________________
      
    Evaluation
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5364490
+     Training - done. Time (sec):  0.3749776
   ___________________________________________________________________________
      
    Evaluation
@@ -357,7 +357,12 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None
@@ -372,4 +377,9 @@ Options
      -  10
      -  None
      -  ['int']
-     -  Number of inducing inputs
+     -  Number of inducing inputs when inducing_method is set
+  *  -  inducing_method
+     -  None
+     -  ['random', 'kmeans']
+     -  ['str']
+     -  The chosen method to induce points
