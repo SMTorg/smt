@@ -1,7 +1,7 @@
 .. _cckrg-ref-label:
 
 Cooperative Components Kriging (CoopCompKRG)
-================================
+============================================
 
 Cooperative Components Kriging is a way of fitting a high-dimensional ordinary Kriging model by sequential lower-dimensional component model fits. For each component, only the associated hyperparameters are optimized. All other hyperparameters are set to a so-called cooperative context vector, which contains the current best hyperparameter values.
 
@@ -82,7 +82,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1147861
+     Training - done. Time (sec):  0.1211066
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -97,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1003253
+     Training - done. Time (sec):  0.1113083
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -112,7 +112,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1636684
+     Training - done. Time (sec):  0.1437654
   ___________________________________________________________________________
      
    Evaluation
@@ -124,8 +124,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[5.01799698]]
-  [[5.74486667]]
+  [[-0.49752687]]
+  [[72.00594081]]
   
 
 Options
@@ -245,7 +245,7 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
   *  -  is_ri
      -  False
      -  None

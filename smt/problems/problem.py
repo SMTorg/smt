@@ -65,7 +65,7 @@ class Problem:
 
     def _set_design_space(self, design_space: BaseDesignSpace):
         """
-        Set the design space definition (best is to use the smt.utils.design_space.DesignSpace class directly) of
+        Set the design space definition (best is to use the smt.design_space.DesignSpace class directly) of
         this problem from the _setup function. If used, there is no need to set xlimits.
         """
         self._design_space = design_space

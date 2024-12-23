@@ -645,7 +645,7 @@ class DesignSpace(BaseDesignSpace):
     --------
     Instantiate the design space with all its design variables:
 
-    >>> from smt.utils.design_space import *
+    >>> from smt.design_space import *
     >>> ds = DesignSpace([
     >>>     CategoricalVariable(['A', 'B']),  # x0 categorical: A or B; order is not relevant
     >>>     OrdinalVariable(['C', 'D', 'E']),  # x1 ordinal: C, D or E; order is relevant

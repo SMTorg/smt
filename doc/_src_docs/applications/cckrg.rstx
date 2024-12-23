@@ -1,7 +1,7 @@
 .. _cckrg-ref-label:
 
 Cooperative Components Kriging (CoopCompKRG)
-================================
+============================================
 
 Cooperative Components Kriging is a way of fitting a high-dimensional ordinary Kriging model by sequential lower-dimensional component model fits. For each component, only the associated hyperparameters are optimized. All other hyperparameters are set to a so-called cooperative context vector, which contains the current best hyperparameter values.
 

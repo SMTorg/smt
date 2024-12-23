@@ -65,7 +65,7 @@ where :math:`\phi_i` is the local POD basis at input point :math:`\mathbf{x_1}`.
 
 
 Singular Values Decomposition (SVD)
--------------------------------------
+-----------------------------------
 To perform the POD, the SVD of the snapshot matrix :math:`S` is used:
 
 .. math ::
@@ -109,7 +109,7 @@ The :math:`\alpha_i` coefficients of the :math:`A` matrix can be deduced:
 	\end{equation}
 
 Use of Surrogate models
----------------------------------
+-----------------------
 
 To compute :math:`u` at a new value :math:`\mathbf{x}_*`, the values of :math:`\alpha_i(\mathbf{x}_*)` at each mode :math:`i` are needed.
 
@@ -147,11 +147,10 @@ NB: The variance equation takes in consideration that:
 
 - the models are pairwise independent, so are the coefficients :math:`\hat\alpha_i(\mathbf{x}_*)`.
 
-
 Usage
 -----
 Example 1: global POD case for 1D function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
 
   import matplotlib.pyplot as plt
@@ -508,8 +507,6 @@ Example 2: local POD case for 2D function
   :scale: 80 %
   :align: center
 
-
-
 PODI class API
 --------------
 
@@ -527,7 +524,7 @@ PODI class API
 
 	.. automethod:: smt.applications.podi.PODI.get_singular_values
 
-	.. automethod:: mst.applications.podi.PODI.get_ev_list
+	.. automethod:: smt.applications.podi.PODI.get_ev_list
 
 	.. automethod:: smt.applications.podi.PODI.get_ev_ratio
 
@@ -547,4 +544,4 @@ PODI class API
 
 	.. automethod:: smt.applications.podi.PODI.predict_derivatives
 
-	.. automethod:: smt.applications.podi.PODI.predict_variance_derivativess
+	.. automethod:: smt.applications.podi.PODI.predict_variance_derivatives
