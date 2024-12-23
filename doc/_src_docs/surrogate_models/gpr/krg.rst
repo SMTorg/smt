@@ -63,7 +63,7 @@ Kriging with categorical or integer variables
 ---------------------------------------------
 
 The goal is to be able to build a model for mixed typed variables. 
-This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2]_.
+This algorithm has been presented by  Garrido-Merchán and Hernández-Lobato in 2020 [2].
 
 To incorporate integer (with order relation) and categorical variables (with no order), we used continuous relaxation.
 For integer, we add a continuous dimension with the same bounds and then we round in the prediction to the closer integer.
@@ -144,7 +144,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1002417
+     Training - done. Time (sec):  0.0817022
   ___________________________________________________________________________
      
    Evaluation
@@ -182,7 +182,10 @@ Example 2 with mixed variables
   
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
   from smt.surrogate_models import KRG
-  from smt.utils.design_space import DesignSpace, IntegerVariable
+  from smt.design_space import (
+      DesignSpace,
+      IntegerVariable,
+  )
   
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
@@ -226,14 +229,29 @@ Example 2 with mixed variables
 
   ___________________________________________________________________________
      
+                              MixedIntegerKriging
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 3
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec):  0.0847299
+  ___________________________________________________________________________
+     
    Evaluation
      
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0084236
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000168
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -306,7 +324,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1818266
+     Training - done. Time (sec):  0.1817245
   ___________________________________________________________________________
      
    Evaluation
@@ -314,9 +332,9 @@ Example 3 with noisy data
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0081284
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000813
      
   
 .. figure:: krg_Test_test_noisy_krg.png
@@ -370,7 +388,7 @@ Options
   *  -  corr
      -  squar_exp
      -  ['pow_exp', 'abs_exp', 'squar_exp', 'squar_sin_exp', 'matern52', 'matern32']
-     -  ['str']
+     -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
      -  1.9
@@ -441,7 +459,12 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None

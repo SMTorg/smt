@@ -201,7 +201,7 @@ class KrgBased(SurrogateModel):
             None,
             types=(BaseDesignSpace, list, np.ndarray),
             desc="definition of the (hierarchical) design space: "
-            "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
+            "use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
         declare(
             "is_ri", False, types=bool, desc="activate reinterpolation for noisy cases"
