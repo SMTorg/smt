@@ -139,7 +139,7 @@ in a binary file named ``kriging.bin``.
 Loading the model
 """""""""""""""""
 
-The previous model can be reloaded knowing the type of surrogate being saved (ie. ```KRG``)
+The previous model can be reloaded knowing the type of surrogate being saved (ie. ``KRG``)
 from the binary file with:
 
 .. code-block:: python
