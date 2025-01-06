@@ -1,6 +1,7 @@
 Cython
+packaging
 numpy
-scipy < 1.15
+scipy
 scikit-learn
 pyDOE3
 numba           # JIT compiler
