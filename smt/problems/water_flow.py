@@ -14,7 +14,7 @@ Use of Derivatives in Surface Prediction. Technometrics, 35(3), pp. 243-255. 199
 """
 
 import numpy as np
-from scipy.misc import derivative
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
 
@@ -57,7 +57,7 @@ class WaterFlow(Problem):
                 args[var] = x
                 return func(*args)
 
-            return derivative(wraps, point[var], dx=1e-6)
+            return SCIPY_DERIVATIVE(wraps, point[var], dx=1e-6)
 
         def func(x0, x1, x2, x3, x4, x5, x6, x7):
             return (
