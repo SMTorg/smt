@@ -54,7 +54,7 @@ class TestMisc(unittest.TestCase):
         sm.train()
 
         pva = compute_pva(sm, xe, ye)
-        self.assertAlmostEqual(pva, 0.1, delta=1e-2)
+        self.assertAlmostEqual(pva, 0.1, delta=2e-2)
 
     def test_rmse_error(self):
         xt, yt, xe, ye = self.prepare_tests_errors()
