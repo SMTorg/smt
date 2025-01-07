@@ -14,7 +14,7 @@ Computer methods in applied mechanics and engineering, 186(2), pp. 311-338. 2000
 """
 
 import numpy as np
-from scipy.misc import derivative
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
 
@@ -55,7 +55,7 @@ class WeldedBeam(Problem):
                 args[var] = x
                 return func(*args)
 
-            return derivative(wraps, point[var], dx=1e-6)
+            return SCIPY_DERIVATIVE(wraps, point[var], dx=1e-6)
 
         def func(x0, x1, x2):
             tau1 = 6000 / (np.sqrt(2) * x1 * x2)

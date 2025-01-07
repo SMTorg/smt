@@ -1,4 +1,5 @@
 Cython
+packaging
 numpy
 scipy
 scikit-learn
