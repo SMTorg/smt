@@ -47,7 +47,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pva_error(self):
         xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False)
+        sm = KRG(print_global=False, random_state=42)
         sm.set_training_values(xe, ye)
         sm.train()
 
@@ -56,7 +56,7 @@ class TestMisc(unittest.TestCase):
 
     def test_rmse_error(self):
         xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False)
+        sm = KRG(print_global=False, random_state=42)
         sm.set_training_values(xe, ye)
         sm.train()
 
@@ -65,7 +65,7 @@ class TestMisc(unittest.TestCase):
 
     def test_q2_error(self):
         xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False)
+        sm = KRG(print_global=False, random_state=42)
         sm.set_training_values(xe, ye)
         sm.train()
 
