@@ -13,8 +13,8 @@ import scipy
 from packaging.version import Version
 
 # Since scipy 1.15, derivative function has moved from scipy.misc to scipy.differentiate
-# As derivative is used by several benchmark problems, we initialize a constant
-# once here as a proxy of the derivative function wrt scipy version installed
+# As derivative is used by several benchmarking problems, we initialize a constant
+# once here as a proxy of the derivative function wrt the installed scipy version
 if Version(scipy.__version__) >= Version("1.15"):
     SCIPY_DERIVATIVE = scipy.differentiate.derivative
 else:
