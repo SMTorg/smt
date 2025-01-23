@@ -1,5 +1,5 @@
-Gausian process regression
-==========================
+Gaussian process regression
+===========================
 
 SMT implements several surrogate models related to Gaussian process regression:
 

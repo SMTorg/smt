@@ -1859,7 +1859,7 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
-        is_noisy = self.options["noise0"] != [0.0] or self.options["eval_noise"]
+        is_noisy = np.max(self.options["noise0"]) > 0.0 or self.options["eval_noise"]
         if is_noisy and is_ri:
             A = self.optimal_par["sigma2_ri"]
         else:
