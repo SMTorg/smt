@@ -153,9 +153,8 @@ class KrgBased(SurrogateModel):
         declare(
             "hyper_opt",
             "TNC",
-            values=("Cobyla", "TNC"),
+            values=("Cobyla", "TNC", "NoOp"),
             desc="Optimiser for hyperparameters optimisation",
-            types=str,
         )
         declare(
             "eval_noise",
@@ -2267,10 +2266,12 @@ class KrgBased(SurrogateModel):
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
+                    elif self.options["hyper_opt"] == "NoOp":
+                        optimal_theta_res["x"] = theta0
 
                     if "x" not in optimal_theta_res:
                         raise ValueError(
-                            f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
+                            f"Optimizer encountered a problem: {optimal_theta_res_loop}"
                         )
                     optimal_theta = optimal_theta_res["x"]
 
