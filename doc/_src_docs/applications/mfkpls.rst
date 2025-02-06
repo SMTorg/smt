@@ -109,7 +109,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1518815
+     Training - done. Time (sec):  0.1539667
   ___________________________________________________________________________
      
    Evaluation
@@ -117,9 +117,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010004
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000099
      
   ___________________________________________________________________________
      
@@ -254,7 +254,12 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None

@@ -129,7 +129,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0498188
+     Training - done. Time (sec):  0.8740928
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -181,7 +181,7 @@ Options
   *  -  corr
      -  squar_exp
      -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
-     -  None
+     -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
      -  1.9
@@ -252,7 +252,12 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None

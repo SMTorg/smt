@@ -376,7 +376,7 @@ class SubspacesInterpolation:
                     f"WARNING: Sample of size {n_real} at {n_new} points of a {self.n_DoF}*{self.n_modes} matrix"
                 )
                 print(
-                    f"Be sure to get sufficient memory for {n_real*n_new*self.n_DoF*self.n_modes} floats"
+                    f"Be sure to get sufficient memory for {n_real * n_new * self.n_DoF * self.n_modes} floats"
                 )
             # compute the interpolation of the coefficients and the associated variance
             coeff, var = self.pred_coeff(mu, compute_var=True)
