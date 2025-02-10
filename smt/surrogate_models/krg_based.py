@@ -153,9 +153,8 @@ class KrgBased(SurrogateModel):
         declare(
             "hyper_opt",
             "TNC",
-            values=("Cobyla", "TNC"),
+            values=("Cobyla", "TNC", "NoOp"),
             desc="Optimiser for hyperparameters optimisation",
-            types=str,
         )
         declare(
             "eval_noise",
@@ -201,7 +200,7 @@ class KrgBased(SurrogateModel):
             None,
             types=(BaseDesignSpace, list, np.ndarray),
             desc="definition of the (hierarchical) design space: "
-            "use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
+            "use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds",
         )
         declare(
             "is_ri", False, types=bool, desc="activate reinterpolation for noisy cases"
@@ -1859,7 +1858,7 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
-        is_noisy = self.options["noise0"] != [0.0] or self.options["eval_noise"]
+        is_noisy = np.max(self.options["noise0"]) > 0.0 or self.options["eval_noise"]
         if is_noisy and is_ri:
             A = self.optimal_par["sigma2_ri"]
         else:
@@ -2267,10 +2266,12 @@ class KrgBased(SurrogateModel):
                             )
                             if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
                                 optimal_theta_res = optimal_theta_res_loop
+                    elif self.options["hyper_opt"] == "NoOp":
+                        optimal_theta_res["x"] = theta0
 
                     if "x" not in optimal_theta_res:
                         raise ValueError(
-                            f"Optimizer encountered a problem: {optimal_theta_res_loop!s}"
+                            f"Optimizer encountered a problem: {optimal_theta_res_loop}"
                         )
                     optimal_theta = optimal_theta_res["x"]
 

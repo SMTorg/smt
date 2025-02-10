@@ -54,6 +54,11 @@ class Test(SMTestCase):
             noise_bounds=[1e-2, 1000.0],
             print_global=False,
         )  # noisy Kriging model with estimated variance
+        sm_het_noise_estim = KRG(
+            noise0=np.array([1e-2, 2e-2, 3e-2, 4e-2, 5e-2]),  # test with numpy array
+            use_het_noise=True,
+            print_global=False,
+        )  # heteroscedastic noisy Kriging model
 
         # training the models
         sm_noise_free.set_training_values(xt, yt)
@@ -64,6 +69,9 @@ class Test(SMTestCase):
 
         sm_noise_estim.set_training_values(xt, yt)
         sm_noise_estim.train()
+
+        sm_het_noise_estim.set_training_values(xt, yt)
+        sm_het_noise_estim.train()
 
         # predictions at training points
         x = xt
@@ -79,6 +87,10 @@ class Test(SMTestCase):
         self.assert_error(np.linalg.norm(var_noise_fixed), 0.04768, 1e-5)
         var_noise_estim = sm_noise_estim.predict_variances(x)  # predictive variance
         self.assert_error(np.linalg.norm(var_noise_estim), 0.01135, 1e-3)
+        var_het_noise_estim = sm_het_noise_estim.predict_variances(
+            x
+        )  # predictive variance
+        self.assert_error(np.linalg.norm(var_het_noise_estim), 0.02, 1e-3)
 
     def test_null_predict_variance_ri_at_data_points(self):
         # defining the training data

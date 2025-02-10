@@ -16,7 +16,7 @@ and materials conference, Newport, RI, pp. AIAA 2006-1811.
 """
 
 import numpy as np
-from scipy.misc import derivative
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
 
@@ -91,7 +91,7 @@ class TorsionVibration(Problem):
                 args[var] = x
                 return func(*args)
 
-            return derivative(wraps, point[var], dx=1e-6)
+            return SCIPY_DERIVATIVE(wraps, point[var], dx=1e-6)
 
         def func(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14):
             K1 = np.pi * x2 * x0 / (32 * x1)

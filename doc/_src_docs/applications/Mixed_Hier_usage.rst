@@ -26,7 +26,7 @@ some set. The main differences between these types is the question whether dista
 
 More details can be found in [1]_ .
 
-Variables are specified using the ``DesignVariable`` classes in ``smt.utils.design_space``:
+Variables are specified using the ``DesignVariable`` classes in ``smt.design_space``:
 - ``FloatVariable(lower_bound, upper_bound)``, upper should be greater than lower bound
 - ``IntegerVariable(lower_bound, upper_bound)``, bounds should be integers
 - ``OrdinalVariable(values)``, values is a list of int, float or str, encoded as integers from 0 to len(values)-1
@@ -249,7 +249,7 @@ The hierarchy relationships are specified after instantiating the design space:
    Training
      
      Training ...
-     Training - done. Time (sec):  2.9558113
+     Training - done. Time (sec):  2.1491070
   ___________________________________________________________________________
      
    Evaluation
@@ -257,11 +257,11 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.2929027
+     Predicting - done. Time (sec):  0.2126026
      
-     Prediction time/pt. (sec) :  0.0029290
+     Prediction time/pt. (sec) :  0.0021260
      
-  Pred_RMSE 4.0000324624835547e-13
+  Pred_RMSE 4.03450105320861e-13
   
 
 Design space and variable class references
@@ -269,19 +269,19 @@ Design space and variable class references
 
 The ``DesignSpace`` class and design variable classes implement the relevant functionality.
 
-  .. autoclass:: smt.utils.design_space.FloatVariable
+  .. autoclass:: smt.design_space.FloatVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.IntegerVariable
+  .. autoclass:: smt.design_space.IntegerVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.OrdinalVariable
+  .. autoclass:: smt.design_space.OrdinalVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.CategoricalVariable
+  .. autoclass:: smt.design_space.CategoricalVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.DesignSpace
+  .. autoclass:: smt.design_space.DesignSpace
      :members:
      :inherited-members:
      :exclude-members: get_unfolded_num_bounds, fold_x, unfold_x, get_num_bounds, get_x_limits
@@ -414,7 +414,7 @@ Example of mixed integer context usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4647245
+     Training - done. Time (sec):  0.3023846
   ___________________________________________________________________________
      
    Evaluation
@@ -422,9 +422,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0116608
+     Predicting - done. Time (sec):  0.0101750
      
-     Prediction time/pt. (sec) :  0.0002332
+     Prediction time/pt. (sec) :  0.0002035
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

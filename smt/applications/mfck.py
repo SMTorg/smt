@@ -346,12 +346,6 @@ class MFCK(KrgBased):
             alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
             means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
             covariances.append(k_xx - np.dot(beta1.T, beta1))
-
-            # k_XX_inv = np.linalg.inv(k_XX + self.options["nugget"]*np.eye(k_XX.shape[0]))
-            # means.append( np.dot(k_xX, np.matmul(k_XX_inv, self.y)))
-            # covariances.append(k_xx - np.matmul(k_xX,
-            #                                     np.matmul(k_XX_inv,
-            #                                               k_xX.transpose())))
         else:
             self.K = self.compute_blockwise_K(self.optimal_theta)
             L = np.linalg.cholesky(

@@ -206,6 +206,18 @@ class Test(SMTestCase):
         )
         np.testing.assert_allclose(total_error, 0, atol=1e-9)
 
+    def test_fixed_theta(self):
+        theta0 = np.ones(2)
+
+        sm = KRG(theta0=theta0)
+        sm.set_training_values(self.xt, self.yt)
+        sm.train()
+        print(sm.optimal_theta)  # [0.04373813 0.00697964]
+        sm = KRG(theta0=theta0, hyper_opt="NoOp")
+        sm.set_training_values(self.xt, self.yt)
+        sm.train()
+        np.testing.assert_allclose(sm.optimal_theta, theta0, 1e-2)
+
 
 if __name__ == "__main__":
     unittest.main()

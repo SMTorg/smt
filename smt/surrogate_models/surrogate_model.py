@@ -390,7 +390,8 @@ class SurrogateModel(metaclass=ABCMeta):
 
     def predict_variance_derivatives(self, x: np.ndarray, kx: int) -> np.ndarray:
         """
-        Provide the derivatives of the variance of the model at a set of points
+        Provide the derivatives of the variance of the model at a set of points.
+
         Parameters
         ----------
         x : np.ndarray [n_evals, dim]
@@ -576,3 +577,11 @@ class SurrogateModel(metaclass=ABCMeta):
         Implemented by surrogate models to save the surrogate object in a file
         """
         raise NotImplementedError("save() has to be implemented by the given surrogate")
+
+    @staticmethod
+    def load(filename):
+        """
+        Static method implemented by each surrogate model type (ie class)
+        to load the surrogate object from a file created by using the corresponding save method
+        """
+        raise NotImplementedError("load() has to be implemented by the given surrogate")

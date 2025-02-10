@@ -14,7 +14,7 @@ Engineering Design Via Surrogate Modelling: A Practical Guide, John Wiley & Sons
 """
 
 import numpy as np
-from scipy.misc import derivative
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
 
@@ -61,7 +61,7 @@ class WingWeight(Problem):
                 args[var] = x
                 return func(*args)
 
-            return derivative(wraps, point[var], dx=1e-6)
+            return SCIPY_DERIVATIVE(wraps, point[var], dx=1e-6)
 
         def func(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
             return (

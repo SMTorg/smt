@@ -18,7 +18,7 @@ from smt.design_space import (
     DesignSpace,
 )
 
-from smt.utils.misc import compute_rms_error
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -91,10 +91,10 @@ class Test(SMTestCase):
         with Silence():
             sm.train()
 
-        t_error = compute_rms_error(sm)
-        e_error = compute_rms_error(sm, xe, ye)
-        e_error0 = compute_rms_error(sm, xe, dye[0], 0)
-        e_error1 = compute_rms_error(sm, xe, dye[1], 1)
+        t_error = compute_relative_error(sm)
+        e_error = compute_relative_error(sm, xe, ye)
+        e_error0 = compute_relative_error(sm, xe, dye[0], 0)
+        e_error1 = compute_relative_error(sm, xe, dye[1], 1)
 
         if print_output:
             print(

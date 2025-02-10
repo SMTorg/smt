@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1314826
+     Training - done. Time (sec):  0.0715163
   ___________________________________________________________________________
      
    Evaluation
@@ -230,7 +230,12 @@ Options
      -  None
      -  None
      -  ['BaseDesignSpace', 'list', 'ndarray']
-     -  definition of the (hierarchical) design space: use `smt.utils.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
   *  -  random_state
      -  41
      -  None

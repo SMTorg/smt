@@ -15,9 +15,11 @@ SMT has been developed thanks to contributions from:
 * Andres Lopez Lopera
 * Antoine Averland
 * Emile Roux
+* Enrico Stragiotti
 * Ewout ter Hoeven
 * Florent Vergnes
 * Frederick Zahle
+* Heine Røstum
 * Hugo Reimeringer
 * Hugo Valayer
 * Jasper Bussemaker
@@ -27,6 +29,7 @@ SMT has been developed thanks to contributions from:
 * Lucas Alber
 * Maël Tremouille
 * Mauricio Castano Aguirre
+* Maxime Lalande
 * Mostafa Meliani
 * Neal Kesterton
 * Nick Thompson

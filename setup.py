@@ -112,6 +112,7 @@ metadata = dict(
         "smt.kernels",
     ],
     install_requires=[
+        "packaging",
         "scikit-learn",
         "pyDOE3",
         "scipy",

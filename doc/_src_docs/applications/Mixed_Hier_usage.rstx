@@ -26,7 +26,7 @@ some set. The main differences between these types is the question whether dista
 
 More details can be found in [1]_ .
 
-Variables are specified using the ``DesignVariable`` classes in ``smt.utils.design_space``:
+Variables are specified using the ``DesignVariable`` classes in ``smt.design_space``:
 - ``FloatVariable(lower_bound, upper_bound)``, upper should be greater than lower bound
 - ``IntegerVariable(lower_bound, upper_bound)``, bounds should be integers
 - ``OrdinalVariable(values)``, values is a list of int, float or str, encoded as integers from 0 to len(values)-1
@@ -60,19 +60,19 @@ Design space and variable class references
 
 The ``DesignSpace`` class and design variable classes implement the relevant functionality.
 
-  .. autoclass:: smt.utils.design_space.FloatVariable
+  .. autoclass:: smt.design_space.FloatVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.IntegerVariable
+  .. autoclass:: smt.design_space.IntegerVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.OrdinalVariable
+  .. autoclass:: smt.design_space.OrdinalVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.CategoricalVariable
+  .. autoclass:: smt.design_space.CategoricalVariable
      :exclude-members: get_limits
 
-  .. autoclass:: smt.utils.design_space.DesignSpace
+  .. autoclass:: smt.design_space.DesignSpace
      :members:
      :inherited-members:
      :exclude-members: get_unfolded_num_bounds, fold_x, unfold_x, get_num_bounds, get_x_limits
