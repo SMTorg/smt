@@ -1,4 +1,4 @@
-.. _mfk-ref-label:
+.. _mfck-ref-label:
 
 Multi-Fidelity Co-Kriging (MFCK)
 ================================
@@ -13,7 +13,7 @@ where :math:`\rho(x)`
 is a scaling/correlation factor (constant for MFCK) and :math:`\delta(\cdot)` is a discrepancy function.
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
-While MFK follows the recursive formulation of Le Gratiet [2]_. MFCK uses a block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
+While MFK follows the recursive formulation of Le Gratiet [2]_. MFCK uses ab block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
 
 References
 ----------
