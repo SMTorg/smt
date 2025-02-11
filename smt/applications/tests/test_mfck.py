@@ -98,32 +98,42 @@ class TestMFCK(SMTestCase):
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
         xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
-        xt_c, xt_e = xdoes(7)
+        xt_c, xt_e = xdoes(5)
+
+        # Delta value for the non-nested difference applied in the LF
+        delta = 0.05
+        rnd_state = 1
+
+        np.random.seed(rnd_state)
+        deltas = np.random.uniform(-delta, delta, np.shape(xt_c))
+        x_LF = xt_c + deltas
+        x_LF = np.clip(x_LF, xlimits[0][0], xlimits[0][1])
 
         # Evaluate the HF and LF functions
         yt_e = hf_function(xt_e)
-        yt_c = lf_function(xt_c)
+        yt_c = lf_function(x_LF)
 
-        sm = MFCK(theta0=xt_e.shape[1] * [1.0], corr="squar_exp")
+        sm_non_nested = MFCK(theta0=xt_e.shape[1] * [0.5], corr="squar_exp")
 
         # low-fidelity dataset names being integers from 0 to level-1
-        sm.set_training_values(xt_c, yt_c, name=0)
+        sm_non_nested.set_training_values(x_LF, yt_c, name=0)
         # high-fidelity dataset without name
-        sm.set_training_values(xt_e, yt_e)
+        sm_non_nested.set_training_values(xt_e, yt_e)
 
         # train the model
-        sm.train()
+        sm_non_nested.train()
 
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
 
-        m, c = sm.predict_all_levels(x)
+        m_non_nested, c_non_nested = sm_non_nested.predict_all_levels(x)
 
         plt.figure()
 
-        plt.plot(x, hf_function(x), label="reference")
-        plt.plot(x, m[1], linestyle="-.", label="mean_gp")
+        plt.plot(x, hf_function(x), label="reference HF")
+        plt.plot(x, lf_function(x), label="reference LF")
+        plt.plot(x, m_non_nested[1], linestyle="-.", label="mean_gp_non_nested")
         plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
-        plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
+        plt.scatter(x_LF, yt_c, marker="*", color="c", label="LF non-nested doe")
 
         plt.legend(loc=0)
         plt.ylim(-10, 17)
