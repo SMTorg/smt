@@ -27,6 +27,7 @@ from smt.utils.sm_test_case import SMTestCase
 
 print_output = False
 
+
 class TestMFCK(SMTestCase):
     def setUp(self):
         self.nt = 100
@@ -100,19 +101,17 @@ class TestMFCK(SMTestCase):
         xt_c, xt_e = xdoes(5)
 
         # Delta value for the non-nested difference applied in the LF
-        delta= 0.05
+        delta = 0.05
         rnd_state = 1
 
         np.random.seed(rnd_state)
-        deltas = np.random.uniform(-delta, delta,np.shape(xt_c))
+        deltas = np.random.uniform(-delta, delta, np.shape(xt_c))
         x_LF = xt_c + deltas
         x_LF = np.clip(x_LF, xlimits[0][0], xlimits[0][1])
-
 
         # Evaluate the HF and LF functions
         yt_e = hf_function(xt_e)
         yt_c = lf_function(x_LF)
-
 
         sm_non_nested = MFCK(theta0=xt_e.shape[1] * [0.5], corr="squar_exp")
 
