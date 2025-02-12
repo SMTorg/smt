@@ -78,6 +78,7 @@ class TestMFCK(SMTestCase):
 
         from smt.applications.mfck import MFCK
         from smt.applications.mfk import NestedLHS
+        from smt.sampling_methods import LHS
 
         # low fidelity model
         def lf_function(x):
@@ -89,34 +90,46 @@ class TestMFCK(SMTestCase):
                 - 5
             )
 
-        # high fidelity model
+            # high fidelity model
+
         def hf_function(x):
             import numpy as np
 
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
-        # Problem set up
-        xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
-        xt_c, xt_e = xdoes(5)
-
-        # Delta value for the non-nested difference applied in the LF
-        delta = 0.05
         rnd_state = 1
 
-        np.random.seed(rnd_state)
-        deltas = np.random.uniform(-delta, delta, np.shape(xt_c))
-        x_LF = xt_c + deltas
-        x_LF = np.clip(x_LF, xlimits[0][0], xlimits[0][1])
+        # Problem set up
+        xlimits = np.array([[0.0, 1.0]])
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=rnd_state)
 
-        # Evaluate the HF and LF functions
+        # Example with nested input data
+        xt_c, xt_e = xdoes(7)
+
+        # Evaluate the HF function
         yt_e = hf_function(xt_e)
-        yt_c = lf_function(x_LF)
 
-        sm_non_nested = MFCK(theta0=xt_e.shape[1] * [0.5], corr="squar_exp")
+        # Example with non-nested input data
+
+        # Creation of LHS for non-nested LF data
+        sampling = LHS(
+            xlimits=xlimits,
+            criterion="ese",
+            random_state=rnd_state,
+        )
+
+        xt_c_non = sampling(xt_c.shape[0])
+
+        # Evaluate the LF function
+        yt_c_non = lf_function(xt_c_non)
+
+        sm_non_nested = MFCK(
+            theta0=xt_e.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
+        )
+        sm_non_nested.options["lambda"] = 0.0  # Without regularization
 
         # low-fidelity dataset names being integers from 0 to level-1
-        sm_non_nested.set_training_values(x_LF, yt_c, name=0)
+        sm_non_nested.set_training_values(xt_c_non, yt_c_non, name=0)
         # high-fidelity dataset without name
         sm_non_nested.set_training_values(xt_e, yt_e)
 
@@ -128,12 +141,14 @@ class TestMFCK(SMTestCase):
         m_non_nested, c_non_nested = sm_non_nested.predict_all_levels(x)
 
         plt.figure()
-
+        plt.title("Example with non-nested input data")
         plt.plot(x, hf_function(x), label="reference HF")
         plt.plot(x, lf_function(x), label="reference LF")
         plt.plot(x, m_non_nested[1], linestyle="-.", label="mean_gp_non_nested")
         plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
-        plt.scatter(x_LF, yt_c, marker="*", color="c", label="LF non-nested doe")
+        plt.scatter(
+            xt_c_non, yt_c_non, marker="*", color="c", label="LF non-nested doe"
+        )
 
         plt.legend(loc=0)
         plt.ylim(-10, 17)
