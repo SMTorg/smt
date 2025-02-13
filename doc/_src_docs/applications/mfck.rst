@@ -14,6 +14,7 @@ is a scaling/correlation factor (constant for MFCK) and :math:`\delta(\cdot)` is
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
 While MFK follows the recursive formulation of Le Gratiet [2]_. MFCK uses ab block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
+This formulation can use non-nested input data.
 
 References
 ----------
@@ -29,7 +30,6 @@ Usage
   import numpy as np
   
   from smt.applications.mfck import MFCK
-  from smt.applications.mfk import NestedLHS
   from smt.sampling_methods import LHS
   
   # low fidelity model
@@ -53,15 +53,10 @@ Usage
   
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
-  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=rnd_state)
-  
-  # Example with nested input data
-  xt_c, xt_e = xdoes(7)
-  
-  # Evaluate the HF function
-  yt_e = hf_function(xt_e)
   
   # Example with non-nested input data
+  Obs_HF = 7  # Number of observations of HF
+  Obs_LF = 14  # Number of observations of LF
   
   # Creation of LHS for non-nested LF data
   sampling = LHS(
@@ -70,20 +65,22 @@ Usage
       random_state=rnd_state,
   )
   
-  xt_c_non = sampling(xt_c.shape[0])
+  xt_e_non = sampling(Obs_HF)
+  xt_c_non = sampling(Obs_LF)
   
   # Evaluate the LF function
+  yt_e_non = hf_function(xt_e_non)
   yt_c_non = lf_function(xt_c_non)
   
   sm_non_nested = MFCK(
-      theta0=xt_e.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
+      theta0=xt_e_non.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
   )
   sm_non_nested.options["lambda"] = 0.0  # Without regularization
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm_non_nested.set_training_values(xt_c_non, yt_c_non, name=0)
   # high-fidelity dataset without name
-  sm_non_nested.set_training_values(xt_e, yt_e)
+  sm_non_nested.set_training_values(xt_e_non, yt_e_non)
   
   # train the model
   sm_non_nested.train()
@@ -97,7 +94,7 @@ Usage
   plt.plot(x, hf_function(x), label="reference HF")
   plt.plot(x, lf_function(x), label="reference LF")
   plt.plot(x, m_non_nested[1], linestyle="-.", label="mean_gp_non_nested")
-  plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
+  plt.scatter(xt_e_non, yt_e_non, marker="o", color="k", label="HF doe")
   plt.scatter(
       xt_c_non, yt_c_non, marker="*", color="c", label="LF non-nested doe"
   )
