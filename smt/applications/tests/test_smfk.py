@@ -55,12 +55,12 @@ class TestSMFK(SMTestCase):
             xe = sampling(self.ne)
             ye = prob(xe)
 
-            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xt.shape[0])
+            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0])
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
 
-            sm.set_training_values(xt, yt[:, 0])
+            sm.set_training_values(xe, ye[:, 0])
             sm.set_training_values(x_lf, y_lf[:, 0], name=0)
 
             with Silence():
