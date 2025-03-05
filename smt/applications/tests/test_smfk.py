@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct  9 16:17:04 2024
+Created on March 05 2025
 
-@author: mcastano
+@author: m.castano
 """
 
 import unittest
@@ -19,22 +19,24 @@ except ImportError:
 
 from copy import deepcopy
 
-from smt.applications.mfck import MFCK
+from smt.applications.smfk import SMFK
+from smt.applications.mfk import NestedLHS
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
+from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
 print_output = False
 
 
-class TestMFCK(SMTestCase):
+class TestSMFK(SMTestCase):
     def setUp(self):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
 
-    def test_mfck(self):
+    def test_smfk(self):
         self.problems = ["exp"]  # , "tanh", "cos"]
 
         for fname in self.problems:
@@ -50,34 +52,30 @@ class TestMFCK(SMTestCase):
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
             np.random.seed(1)
+            xe = sampling(self.ne)
+            ye = prob(xe)
 
-            sm = MFCK(hyper_opt="Cobyla")
+            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0])
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
 
-            sm.set_training_values(xt, yt[:, 0])
+            sm.set_training_values(xe, ye[:, 0])
             sm.set_training_values(x_lf, y_lf[:, 0], name=0)
 
             with Silence():
                 sm.train()
 
-            m = sm.predict_values(xt)
+            t_error = compute_relative_error(sm)
+            e_error = compute_relative_error(sm, xe, ye)
 
-            num = np.linalg.norm(m[:, 0] - yt[:, 0])
-            den = np.linalg.norm(yt[:, 0])
-
-            t_error = num / den
-
-            self.assert_error(t_error, 0.0, 1e-5, 1e-5)
+            self.assert_error(t_error, 0.0, 1)
+            self.assert_error(e_error, 0.0, 1)
 
     @staticmethod
-    def run_mfck_example():
+    def run_smfk_example():
         import matplotlib.pyplot as plt
         import numpy as np
-
-        from smt.applications.mfck import MFCK
-        from smt.sampling_methods import LHS
 
         # low fidelity model
         def lf_function(x):
@@ -89,61 +87,52 @@ class TestMFCK(SMTestCase):
                 - 5
             )
 
-            # high fidelity model
-
+        # high fidelity model
         def hf_function(x):
             import numpy as np
 
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
-        rnd_state = 1
-
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xt_c, xt_e = xdoes(7)
 
-        # Example with non-nested input data
-        Obs_HF = 7  # Number of observations of HF
-        Obs_LF = 14  # Number of observations of LF
+        # Evaluate the HF and LF functions
+        yt_e = hf_function(xt_e)
+        yt_c = lf_function(xt_c)
 
-        # Creation of LHS for non-nested LF data
-        sampling = LHS(
-            xlimits=xlimits,
-            criterion="ese",
-            random_state=rnd_state,
+        sm = SMFK(
+            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_e.shape[0]
         )
-
-        xt_e_non = sampling(Obs_HF)
-        xt_c_non = sampling(Obs_LF)
-
-        # Evaluate the LF function
-        yt_e_non = hf_function(xt_e_non)
-        yt_c_non = lf_function(xt_c_non)
-
-        sm_non_nested = MFCK(
-            theta0=xt_e_non.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
-        )
-        sm_non_nested.options["lambda"] = 0.0  # Without regularization
 
         # low-fidelity dataset names being integers from 0 to level-1
-        sm_non_nested.set_training_values(xt_c_non, yt_c_non, name=0)
+        sm.set_training_values(xt_c, yt_c, name=0)
         # high-fidelity dataset without name
-        sm_non_nested.set_training_values(xt_e_non, yt_e_non)
+        sm.set_training_values(xt_e, yt_e)
 
         # train the model
-        sm_non_nested.train()
+        sm.train()
 
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
 
-        m_non_nested, c_non_nested = sm_non_nested.predict_all_levels(x)
+        # query the outputs
+        y = sm.predict_values(x)
+        _mse = sm.predict_variances(x)
+        # _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
-        plt.title("Example with non-nested input data")
-        plt.plot(x, hf_function(x), label="reference HF")
-        plt.plot(x, lf_function(x), label="reference LF")
-        plt.plot(x, m_non_nested[1], linestyle="-.", label="mean_gp_non_nested")
-        plt.scatter(xt_e_non, yt_e_non, marker="o", color="k", label="HF doe")
-        plt.scatter(
-            xt_c_non, yt_c_non, marker="*", color="c", label="LF non-nested doe"
+
+        plt.plot(x, hf_function(x), label="reference")
+        plt.plot(x, y, linestyle="-.", label="mean_gp")
+        plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
+        plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
+        plt.plot(
+            sm.Z,
+            -9.9 * np.ones_like(sm.Z),
+            "r|",
+            mew=2,
+            label=f"LF inducing:{sm.Z.shape[0]}",
         )
 
         plt.legend(loc=0)
@@ -157,8 +146,8 @@ class TestMFCK(SMTestCase):
     # run scripts are used in documentation as documentation is not always rebuild
     # make a test run by pytest to test the run scripts
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_run_mfck_example(self):
-        self.run_mfck_example()
+    def test_run_smfk_example(self):
+        self.run_smfk_example()
 
 
 if __name__ == "__main__":

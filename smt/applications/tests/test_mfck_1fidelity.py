@@ -47,7 +47,7 @@ class TestMFKOneFidelity(SMTestCase):
             sm1.set_training_values(xt, yt[:, 0])
             sm1.train()
 
-            mean, cov = sm1._predict(xt)
+            mean = sm1.predict_values(xt)
 
             num = np.linalg.norm(mean[:, 0] - yt[:, 0])
             den = np.linalg.norm(yt[:, 0])
@@ -90,7 +90,7 @@ class TestMFKOneFidelity(SMTestCase):
         x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
 
         # Query the outputs
-        y, cov = sm1._predict(x)
+        y = sm1.predict_values(x)
         # _mse = sm.predict_variances(x)
         # _derivs = sm.predict_derivatives(x, kx=0)
 

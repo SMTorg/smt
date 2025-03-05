@@ -376,7 +376,7 @@ class MFCK(KrgBased):
 
         return means, covariances
 
-    def _predict(self, x):
+    def predict_values(self, x, is_acting=None):
         """
         Prediction function for the highest fidelity level
         Parameters
@@ -392,7 +392,27 @@ class MFCK(KrgBased):
         """
         means, covariances = self.predict_all_levels(x)
 
-        return means[self.lvl - 1], covariances[self.lvl - 1]
+        return means[self.lvl - 1]
+
+    def predict_variances(
+        self, X: np.ndarray, is_acting=None, is_ri=False
+    ) -> np.ndarray:
+        """
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        """
+        means, covariances = self.predict_all_levels(X)
+
+        return covariances[self.lvl - 1]
 
     def neg_log_likelihood(self, param, grad=None):
         if self.lvl == 1:
