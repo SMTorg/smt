@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon May 07 14:20:11 2018
+Created on March 05 2025
 
-@author: m.meliani
+@author: m.castano
 """
 
 import unittest
@@ -30,32 +30,13 @@ from smt.utils.sm_test_case import SMTestCase
 print_output = False
 
 
-class TestMFK(SMTestCase):
+class TestSMFK(SMTestCase):
     def setUp(self):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
 
-    def test_nested_lhs(self):
-        xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
-        xnorm = NestedLHS(nlevel=3, xlimits=xlimits, random_state=0)
-        xlow, xmedium, xhigh = xnorm(15)
-
-        for items1 in xmedium:
-            found = False
-            for items0 in xlow:
-                if items1.all() == items0.all():
-                    found = True
-            self.assertTrue(found)
-
-        for items1 in xhigh:
-            found = False
-            for items0 in xmedium:
-                if items1.all() == items0.all():
-                    found = True
-            self.assertTrue(found)
-
-    def test_mfk(self):
+    def test_smfk(self):
         self.problems = ["exp"]  # , "tanh", "cos"]
 
         for fname in self.problems:
@@ -91,7 +72,7 @@ class TestMFK(SMTestCase):
             self.assert_error(t_error, 0.0, 1)
             self.assert_error(e_error, 0.0, 1)
 
-    def test_mfk_derivs(self):
+    def test_smfk_derivs(self):
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
 
@@ -136,11 +117,9 @@ class TestMFK(SMTestCase):
         self.assert_error(e_error, 0.0, 1e-1)
 
     @staticmethod
-    def run_mfk_example():
+    def run_smfk_example():
         import matplotlib.pyplot as plt
         import numpy as np
-
-        from smt.applications.mfk import MFK, NestedLHS
 
         # low fidelity model
         def lf_function(x):
@@ -167,7 +146,9 @@ class TestMFK(SMTestCase):
         yt_e = hf_function(xt_e)
         yt_c = lf_function(xt_c)
 
-        sm = MFK(theta0=xt_e.shape[1] * [1.0], corr="squar_exp")
+        sm = SMFK(
+            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_c.shape[0]
+        )
 
         # low-fidelity dataset names being integers from 0 to level-1
         sm.set_training_values(xt_c, yt_c, name=0)
@@ -202,8 +183,8 @@ class TestMFK(SMTestCase):
     # run scripts are used in documentation as documentation is not always rebuild
     # make a test run by pytest to test the run scripts
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
-    def test_run_mfk_example(self):
-        self.run_mfk_example()
+    def test_run_smfk_example(self):
+        self.run_smfk_example()
 
 
 if __name__ == "__main__":
