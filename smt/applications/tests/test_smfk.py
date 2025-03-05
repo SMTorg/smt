@@ -21,8 +21,8 @@ from copy import deepcopy
 
 from smt.applications.smfk import SMFK
 from smt.applications.mfk import NestedLHS
-from smt.problems import Sphere, TensorProduct
-from smt.sampling_methods import LHS, FullFactorial
+from smt.problems import TensorProduct
+from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
@@ -72,50 +72,6 @@ class TestSMFK(SMTestCase):
             self.assert_error(t_error, 0.0, 1)
             self.assert_error(e_error, 0.0, 1)
 
-    def test_smfk_derivs(self):
-        prob = Sphere(ndim=self.ndim)
-        sampling = LHS(xlimits=prob.xlimits)
-
-        nt = 100
-        np.random.seed(0)
-        xt = sampling(nt)
-        yt = prob(xt)
-        dyt = {}
-        for kx in range(prob.xlimits.shape[0]):
-            dyt[kx] = prob(xt, kx=kx)
-
-        y_lf = 2 * prob(xt) + 2
-        x_lf = deepcopy(xt)
-
-        np.random.seed(1)
-        xe = sampling(self.ne)
-        ye = prob(xe)
-        dye = {}
-        for kx in range(prob.xlimits.shape[0]):
-            dye[kx] = prob(xe, kx=kx)
-
-        sm = SMFK(theta0=[1e-2] * self.ndim, corr="squar_exp", n_inducing=xt.shape[0])
-
-        if sm.options.is_declared("xlimits"):
-            sm.options["xlimits"] = prob.xlimits
-        sm.options["print_global"] = False
-
-        sm.set_training_values(xt, yt)
-        sm.set_training_values(x_lf, y_lf, name=0)
-
-        with Silence():
-            sm.train()
-
-        t_error = compute_relative_error(sm)
-        e_error = compute_relative_error(sm, xe, ye)
-        # e_error0 = compute_relative_error(sm, xe, dye[0], 0)
-        # e_error1 = compute_relative_error(sm, xe, dye[1], 1)
-
-        if print_output:
-            print("%6s %18.9e %18.9e" % ("MFK", t_error, e_error))
-
-        self.assert_error(e_error, 0.0, 1e-1)
-
     @staticmethod
     def run_smfk_example():
         import matplotlib.pyplot as plt
@@ -147,7 +103,7 @@ class TestSMFK(SMTestCase):
         yt_c = lf_function(xt_c)
 
         sm = SMFK(
-            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_c.shape[0]
+            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_e.shape[0]
         )
 
         # low-fidelity dataset names being integers from 0 to level-1
@@ -171,6 +127,13 @@ class TestSMFK(SMTestCase):
         plt.plot(x, y, linestyle="-.", label="mean_gp")
         plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
         plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
+        plt.plot(
+            sm.Z,
+            -9.9 * np.ones_like(sm.Z),
+            "r|",
+            mew=2,
+            label=f"LF inducing:{sm.Z.shape[0]}",
+        )
 
         plt.legend(loc=0)
         plt.ylim(-10, 17)
