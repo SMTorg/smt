@@ -23,7 +23,6 @@ from smt.applications.smfk import SMFK
 from smt.applications.mfk import NestedLHS
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
-from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
 
@@ -72,7 +71,7 @@ class TestSMFK(SMTestCase):
             den = np.linalg.norm(yt[:, 0])
 
             t_error = num / den
-            
+
             self.assert_error(t_error, 0.0, 1e-5, 1e-5)
 
     @staticmethod
