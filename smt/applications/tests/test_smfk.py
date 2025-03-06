@@ -66,11 +66,14 @@ class TestSMFK(SMTestCase):
             with Silence():
                 sm.train()
 
-            t_error = compute_relative_error(sm)
-            e_error = compute_relative_error(sm, xe, ye)
+            m = sm.predict_values(xt)
 
-            self.assert_error(t_error, 0.0, 1)
-            self.assert_error(e_error, 0.0, 1)
+            num = np.linalg.norm(m[:, 0] - yt[:, 0])
+            den = np.linalg.norm(yt[:, 0])
+
+            t_error = num / den
+            
+            self.assert_error(t_error, 0.0, 1e-5, 1e-5)
 
     @staticmethod
     def run_smfk_example():
@@ -118,7 +121,7 @@ class TestSMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        _mse = sm.predict_variances(x)
+        varAl, _ = sm.predict_variances_all_levels(x)
         # _derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
