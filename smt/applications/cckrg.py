@@ -252,7 +252,7 @@ class CoopCompKRG(KrgBased):
             self.D = self._componentwise_distance(D, opt=ii)
 
             # Initialization
-            k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
+            k, stop, best_optimal_rlf_value = 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
@@ -376,13 +376,9 @@ class CoopCompKRG(KrgBased):
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
-                            stop += 1
-                            if incr != 0:
-                                return
-                            if stop > max_retry:
-                                raise ValueError(
-                                    "%d attempts to train the model failed" % max_retry
-                                )
+                            raise RuntimeError(
+                                "Cannot train the model: infinite likelihood found"
+                            )
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
                                 if optimal_rlf_value > best_optimal_rlf_value:
@@ -412,8 +408,8 @@ class CoopCompKRG(KrgBased):
                 except ValueError as ve:
                     # raise ve
                     # If iteration is max when fmin_cobyla fail is not reached
-                    if self.nb_ill_matrix > 0:
-                        self.nb_ill_matrix -= 1
+                    if self.retry > 0:
+                        self.retry -= 1
                         k += 1
                         stop += 1
                         # One evaluation objectif function is done at least

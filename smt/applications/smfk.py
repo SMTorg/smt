@@ -279,12 +279,14 @@ class SMFK(KrgBased):
             data = np.hstack((self.X_norma, self.y_norma))
             Z2 = kmeans(data, self.options["n_inducing"])[0][:, :-1]
 
-            sgp = SGP(method="FITC", print_prediction=False, print_global=False)
-
+            sgp = SGP(
+                method="FITC",
+                nugget=5000 * np.finfo(np.double).eps,
+                print_prediction=False,
+                print_global=False,
+            )
             sgp.set_training_values(self.X_norma, self.y_norma)
-
             sgp.set_inducing_inputs(Z=Z2)
-
             sgp.train()
 
             self.sgp = sgp
