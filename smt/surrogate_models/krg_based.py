@@ -64,6 +64,10 @@ class MixIntKernelType(Enum):
     COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
+# Nb of tries when inner optimization fails
+MAX_RETRY = 5
+
+
 class KrgBased(SurrogateModel):
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
@@ -214,7 +218,7 @@ class KrgBased(SurrogateModel):
         )
         self.kplsk_second_loop = None
         self.best_iteration_fail = None
-        self.nb_ill_matrix = 5
+        self.retry = MAX_RETRY
         self.is_acting_points = {}
 
         supports["derivatives"] = True
@@ -2154,7 +2158,7 @@ class KrgBased(SurrogateModel):
                 pass
 
             # Initialization
-            k, incr, stop, best_optimal_rlf_value, max_retry = 0, 0, 1, -1e20, 10
+            k, stop, best_optimal_rlf_value = 0, 1, -1e20
             while k < stop:
                 # Use specified starting point as first guess
                 self.noise0 = np.array(self.options["noise0"])
@@ -2162,7 +2166,7 @@ class KrgBased(SurrogateModel):
 
                 # SGP: GP variance is optimized too
                 offset = 0
-                if self.name in ["SGP"]:
+                if self.name in ["SGP"] and self.retry == MAX_RETRY:
                     sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
                     theta0_sigma2 = np.concatenate([theta0, sigma2_0])
                     sigma2_bounds = np.log10(
@@ -2179,7 +2183,11 @@ class KrgBased(SurrogateModel):
                     theta0 = theta0_sigma2
                     theta0_rand = np.concatenate([theta0_rand, sigma2_0])
 
-                if self.options["eval_noise"] and not self.options["use_het_noise"]:
+                if (
+                    self.options["eval_noise"]
+                    and not self.options["use_het_noise"]
+                    and self.retry == MAX_RETRY
+                ):
                     self.noise0[self.noise0 == 0.0] = noise_bounds[0]
                     for i in range(len(self.noise0)):
                         if (
@@ -2252,6 +2260,7 @@ class KrgBased(SurrogateModel):
                             raise ValueError(
                                 "For heteroscedastic noise, please use Cobyla"
                             )
+
                         for theta0_loop in theta_all_loops:
                             optimal_theta_res_loop = optimize.minimize(
                                 minus_reduced_likelihood_function,
@@ -2284,15 +2293,14 @@ class KrgBased(SurrogateModel):
                     # Compare the new optimizer to the best previous one
                     if k > 0:
                         if np.isinf(optimal_rlf_value):
-                            stop += 1
-                            if incr != 0:
-                                return
-                            if stop > max_retry:
-                                raise ValueError(
-                                    "%d attempts to train the model failed" % max_retry
-                                )
+                            raise RuntimeError(
+                                "Cannot train the model: infinite likelihood found"
+                            )
                         else:
-                            if optimal_rlf_value >= self.best_iteration_fail:
+                            if (
+                                self.best_iteration_fail is not None
+                                and optimal_rlf_value >= self.best_iteration_fail
+                            ):
                                 if optimal_rlf_value > best_optimal_rlf_value:
                                     best_optimal_rlf_value = optimal_rlf_value
                                     best_optimal_par = optimal_par
@@ -2320,8 +2328,8 @@ class KrgBased(SurrogateModel):
                 except ValueError as ve:
                     # raise ve
                     # If iteration is max when fmin_cobyla fail is not reached
-                    if self.nb_ill_matrix > 0:
-                        self.nb_ill_matrix -= 1
+                    if self.retry > 0:
+                        self.retry -= 1
                         k += 1
                         stop += 1
                         # One evaluation objectif function is done at least
@@ -2334,18 +2342,12 @@ class KrgBased(SurrogateModel):
                                 ) = self._reduced_likelihood_function(
                                     theta=best_optimal_theta
                                 )
+                        else:
+                            self.print_failed_optimization_msg()
+                            raise ve
                     # Optimization fail
                     elif np.size(best_optimal_par) == 0:
-                        nugget = self.options["nugget"]
-                        print(
-                            "\033[91mOptimization failed.\033[0m",
-                            end="",
-                            file=sys.stderr,
-                        )
-                        print(
-                            f" Try increasing the 'nugget' above its current value of {nugget}.",
-                            file=sys.stderr,
-                        )
+                        self.print_failed_optimization_msg()
                         raise ve
                     # Break the while loop
                     else:
@@ -2379,6 +2381,18 @@ class KrgBased(SurrogateModel):
                 self.best_iteration_fail = None
                 exit_function = True
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
+
+    def print_failed_optimization_msg(self):
+        nugget = self.options["nugget"]
+        print(
+            "\033[91mOptimization failed.\033[0m",
+            end="",
+            file=sys.stderr,
+        )
+        print(
+            f" Try increasing the 'nugget' above its current value of {nugget}.",
+            file=sys.stderr,
+        )
 
     def _check_param(self):
         """
