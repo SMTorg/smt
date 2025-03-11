@@ -1,6 +1,7 @@
 from .ego import EGO, Evaluator
 from .mfk import MFK, NestedLHS
 from .mfck import MFCK
+from .smfk import SMFK
 from .mfkpls import MFKPLS
 from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
@@ -14,6 +15,7 @@ __all__ = [
     "MOESurrogateModel",
     "MFK",
     "MFCK",
+    "SMFK",
     "NestedLHS",
     "MFKPLS",
     "MFKPLSK",
