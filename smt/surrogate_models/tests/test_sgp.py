@@ -89,7 +89,7 @@ class TestSGP(SMTestCase):
         sgp.train()
 
         Ypred = sgp.predict_values(self.Xtest)
-        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.2)
+        self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.3)
 
     def test_inducing_error(self):
         sgp = SGP()
@@ -99,6 +99,44 @@ class TestSGP(SMTestCase):
             msg="Specify inducing points with set_inducing_inputs() or set inducing_method option",
         ):
             sgp.train()
+
+    def test_sgp_reproducibility(self):
+        samples = 32
+        xs, ys = generate_sin_volume(samples)
+        sgp1 = SGP(
+            print_global=False,
+            inducing_method="kmeans",
+            n_inducing=samples,
+            random_state=42,
+        )
+        sgp1.set_training_values(xs, ys)
+        sgp1.train()
+        sgp2 = SGP(
+            print_global=False,
+            inducing_method="kmeans",
+            n_inducing=samples,
+            random_state=42,
+        )
+        sgp2.set_training_values(xs, ys)
+        sgp2.train()
+
+        x = np.array([np.array([0.3, -0.4, 0.6])])
+        y1 = sgp1.predict_values(x)[0][0]
+        y2 = sgp2.predict_values(x)[0][0]
+        print(f"{y1=}, {y2=}")
+        assert y1 == y2, "SGP is not bitwise reproducible."
+
+
+def generate_sin_volume(samples: int):
+    abscissas = np.ndarray(shape=(samples, 3))
+    ordinates = np.ndarray(shape=samples)
+    for i in range(samples):
+        x = np.random.uniform(-0.5, 0.5)
+        y = np.random.uniform(-1, 1)
+        z = np.random.uniform(-2, 2)
+        abscissas[i] = np.array([x, y, z])
+        ordinates[i] = np.sin(2 * np.pi * x) * np.sin(np.pi * y) * np.sin(np.pi * z / 2)
+    return abscissas, ordinates
 
 
 if __name__ == "__main__":

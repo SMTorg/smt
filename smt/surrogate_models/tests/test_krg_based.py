@@ -499,7 +499,7 @@ class TestKrgBased(unittest.TestCase):
         sm = SGP(
             n_start=25,
             hyper_opt="Cobyla",
-            random_state=np.random.RandomState(0),
+            random_state=0,  # np.random.RandomState(0) works only with numpy 2.2+
             inducing_method="kmeans",
         )
         sm.set_training_values(xt, yt)
