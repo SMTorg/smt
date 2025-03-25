@@ -9,9 +9,9 @@ Sparse GP implementations of GPy project. See https://github.com/SheffieldML/GPy
 """
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, __version__ as SCIPY_VERSION
 from scipy.cluster.vq import kmeans
-
+from packaging.version import Version
 
 from smt.surrogate_models.krg import KRG
 from smt.utils.checks import ensure_2d_array
@@ -126,15 +126,19 @@ class SGP(KRG):
         X = self.training_points[None][0][0]  # [nt,nx]
         y = self.training_points[None][0][1]
         if Z is None:
+            rng = np.random.default_rng(seed=self.options["random_state"])
             self.nz = self.options["n_inducing"]
             if self.options["inducing_method"] == "random":
                 # We pick inducing points among training data
-                idx = np.random.permutation(self.nt)[: self.nz]
+                idx = rng.permutation(self.nt)[: self.nz]
                 self.Z = X[idx].copy()  # [nz,nx]
             elif self.options["inducing_method"] == "kmeans":
                 # We pick inducing points as kmeans centroids
                 data = np.hstack((X, y))
-                self.Z = kmeans(data, self.nz)[0][:, :-1]
+                if Version(SCIPY_VERSION) >= Version("1.15"):
+                    self.Z = kmeans(data, self.nz, rng=rng)[0][:, :-1]
+                else:
+                    self.Z = kmeans(data, self.nz, seed=rng)[0][:, :-1]
             else:
                 raise ValueError(
                     "Specify inducing points with set_inducing_inputs() or set inducing_method option"
