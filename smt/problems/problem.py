@@ -83,7 +83,12 @@ class Problem:
         x, _ = self.design_space.sample_valid_x(n)
         return x
 
-    def __call__(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
+    def __call__(
+        self,
+        x: np.ndarray,
+        delta: Optional[np.ndarray] = None,
+        kx: Optional[int] = None,
+    ) -> np.ndarray:
         """
         Evaluate the function.
         The input vectors might be corrected if it is a hierarchical design space. You can get the corrected x and
@@ -116,8 +121,10 @@ class Problem:
         # Correct the design vector and get information about which design variables are active
         x_corr, self.eval_is_acting = self.design_space.correct_get_acting(x)
         self.eval_x = x_corr
-
-        y = self._evaluate(x_corr, kx)
+        if bool(np.max(self.design_space.is_conditionally_acting)):
+            y = self._evaluate(x_corr, self.eval_is_acting, kx)
+        else:
+            y = self._evaluate(x_corr, kx)
 
         if self.options["return_complex"]:
             return y

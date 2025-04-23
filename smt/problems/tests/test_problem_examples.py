@@ -81,6 +81,30 @@ class Test(unittest.TestCase):
         plt.show()
 
     @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_hier_goldstein(self):
+        import matplotlib.pyplot as plt
+
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+        from smt.problems import HierarchicalGoldstein
+        from smt.sampling_methods import LHS
+
+        problem = HierarchicalGoldstein()
+        ds = problem.design_space
+        n_doe = 100
+        ds.seed = 42
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        xdoe = samp(n_doe)
+
+        y = problem(xdoe)
+
+        plt.scatter(xdoe[:, 0], y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_robot_arm(self):
         import matplotlib.pyplot as plt
         import numpy as np
