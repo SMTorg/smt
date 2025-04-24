@@ -21,7 +21,7 @@ from smt.applications.mfck import MFCK
 print_output = False
 
 
-class TestMFKOneFidelity(SMTestCase):
+class TestMFCKOneFidelity(SMTestCase):
     def setUp(self):
         self.nt = 20
         self.ne = 50
@@ -42,7 +42,7 @@ class TestMFKOneFidelity(SMTestCase):
 
             sampling = LHS(xlimits=prob.xlimits, random_state=0)
 
-            sm1 = MFCK(hyper_opt="Cobyla")
+            sm1 = MFCK(hyper_opt="Cobyla",eval_noise=False)
 
             sm1.set_training_values(xt, yt[:, 0])
             sm1.train()
@@ -79,7 +79,7 @@ class TestMFKOneFidelity(SMTestCase):
         # Evaluate the HF function
         yt_e = hf_function(xt_e)
 
-        sm1 = MFCK(theta0=[1.0], hyper_opt="Cobyla")
+        sm1 = MFCK(theta0=[1.0], hyper_opt="Cobyla",eval_noise=False)
 
         # High-fidelity dataset without name
         sm1.set_training_values(xt_e, yt_e)

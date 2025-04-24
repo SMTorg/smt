@@ -514,6 +514,10 @@ class MFCK(KrgBased):
             sigma = param[0]
             l_s = [param[1 : self.nx + 1]]
             self.K = self._compute_K(self.X[0], self.X[0], [sigma, l_s])
+            L = np.linalg.cholesky(
+                self.K + self.options["nugget"] * np.eye(self.K.shape[0])
+            )
+            reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
         else:
             if self.options["eval_noise"]:
                 self.K = self.compute_blockwise_K(param[: -self.lvl])
