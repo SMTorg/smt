@@ -51,7 +51,7 @@ class TestMFCK(SMTestCase):
             x_lf = deepcopy(xt)
             np.random.seed(1)
 
-            sm = MFCK(hyper_opt="Cobyla")
+            sm = MFCK(hyper_opt="Cobyla", eval_noise=False)
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -120,7 +120,10 @@ class TestMFCK(SMTestCase):
         yt_c_non = lf_function(xt_c_non)
 
         sm_non_nested = MFCK(
-            theta0=xt_e_non.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
+            theta0=xt_e_non.shape[1] * [0.5],
+            theta_bounds=[1e-2, 100],
+            corr="squar_exp",
+            eval_noise=False,
         )
         sm_non_nested.options["lambda"] = 0.0  # Without regularization
 
