@@ -22,6 +22,7 @@ from smt.utils.kriging import differences, componentwise_distance
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.misc import standardization
 
+
 class MFCK(KrgBased):
     def _initialize(self):
         super()._initialize()
@@ -192,8 +193,9 @@ class MFCK(KrgBased):
                     )
 
         if self.options["eval_noise"]:
-
-            theta_ini = np.hstack([theta_ini, np.full(self.lvl, self.options["noise0"][0])])
+            theta_ini = np.hstack(
+                [theta_ini, np.full(self.lvl, self.options["noise0"][0])]
+            )
 
             lower_bounds = np.hstack(
                 [lower_bounds, np.full(self.lvl, self.options["noise_bounds"][0])]
@@ -205,9 +207,9 @@ class MFCK(KrgBased):
         theta_ini = theta_ini[:].T
 
         if self.options["eval_noise"]:
-            theta_ini[-self.lvl::] = np.log10(theta_ini[-self.lvl::])
-            upper_bounds[-self.lvl::] = np.log10(upper_bounds[-self.lvl::])
-            lower_bounds[-self.lvl::] = np.log10(lower_bounds[-self.lvl::])
+            theta_ini[-self.lvl : :] = np.log10(theta_ini[-self.lvl : :])
+            upper_bounds[-self.lvl : :] = np.log10(upper_bounds[-self.lvl : :])
+            lower_bounds[-self.lvl : :] = np.log10(lower_bounds[-self.lvl : :])
 
         # print("Bounds",upper_bounds,lower_bounds)
 
@@ -273,7 +275,7 @@ class MFCK(KrgBased):
             )
 
         if self.options["eval_noise"]:
-            x_opt1 = np.array(x_opt[:-self.lvl], copy=True)
+            x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
         else:
             x_opt1 = np.array(x_opt, copy=True)
 
@@ -282,9 +284,9 @@ class MFCK(KrgBased):
             10 ** (x_opt1[1 : self.nx + 1])
         )  # Apply 10** to length scales 0
 
-        x_opt1[self.nx + 1 ::self.nx + 2] = (
-                10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
-            )  # Apply 10** to sigmas gamma
+        x_opt1[self.nx + 1 :: self.nx + 2] = (
+            10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
 
         for i in np.arange(self.nx + 2, x_opt1.shape[0] - 1, self.nx + 2):
             x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
@@ -292,9 +294,9 @@ class MFCK(KrgBased):
         if self.options["eval_noise"]:
             x_opt = np.array(x_opt, copy=True)
 
-            x_opt[-self.lvl::] = 10 ** x_opt[-self.lvl::]
+            x_opt[-self.lvl : :] = 10 ** x_opt[-self.lvl : :]
 
-            x_opt[:-self.lvl] = x_opt1
+            x_opt[: -self.lvl] = x_opt1
         else:
             x_opt = np.array(x_opt, copy=True)
             x_opt = x_opt1
@@ -391,30 +393,27 @@ class MFCK(KrgBased):
             means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
             covariances.append(k_xx - np.dot(beta1.T, beta1))
         else:
-
             if self.options["eval_noise"]:
-                self.K = self.compute_blockwise_K(self.optimal_theta[:-self.lvl])
+                self.K = self.compute_blockwise_K(self.optimal_theta[: -self.lvl])
 
-                noises = self.optimal_theta[-self.lvl::]
+                noises = self.optimal_theta[-self.lvl : :]
                 varis = []
-                for i,v in enumerate(noises):
-                    varis = np.hstack([varis,np.full(self.X[i].shape[0], noises[i])])
+                for i, v in enumerate(noises):
+                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
                 noise_matrix = varis * np.eye(self.K.shape[0])
-                L = np.linalg.cholesky(
-                    self.K + noise_matrix
-                )
+                L = np.linalg.cholesky(self.K + noise_matrix)
             else:
                 self.K = self.compute_blockwise_K(self.optimal_theta)
                 L = np.linalg.cholesky(
                     self.K + self.options["nugget"] * np.eye(self.K.shape[0])
                 )
 
-
-
             k_xX = []
             for ind in range(self.lvl):
                 if self.options["eval_noise"]:
-                    k_xx = self.compute_cross_K(x, x, ind, ind, self.optimal_theta[:-self.lvl])
+                    k_xx = self.compute_cross_K(
+                        x, x, ind, ind, self.optimal_theta[: -self.lvl]
+                    )
                 else:
                     k_xx = self.compute_cross_K(x, x, ind, ind, self.optimal_theta)
 
@@ -422,21 +421,29 @@ class MFCK(KrgBased):
                     if ind >= j:
                         if self.options["eval_noise"]:
                             k_xX.append(
-                            self.compute_cross_K(
-                                self.X_norma_all[j], x, ind, j, self.optimal_theta[:-self.lvl]
+                                self.compute_cross_K(
+                                    self.X_norma_all[j],
+                                    x,
+                                    ind,
+                                    j,
+                                    self.optimal_theta[: -self.lvl],
                                 )
                             )
                         else:
                             k_xX.append(
-                            self.compute_cross_K(
-                                self.X_norma_all[j], x, ind, j, self.optimal_theta
+                                self.compute_cross_K(
+                                    self.X_norma_all[j], x, ind, j, self.optimal_theta
                                 )
                             )
                     else:
                         if self.options["eval_noise"]:
                             k_xX.append(
                                 self.compute_cross_K(
-                                    self.X_norma_all[j], x, j, ind, self.optimal_theta[:-self.lvl]
+                                    self.X_norma_all[j],
+                                    x,
+                                    j,
+                                    ind,
+                                    self.optimal_theta[: -self.lvl],
                                 )
                             )
                         else:
@@ -450,14 +457,18 @@ class MFCK(KrgBased):
                 alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
                 means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
                 if self.options["eval_noise"]:
-                    covariances.append(k_xx + noises[ind]*np.eye(k_xx.shape[0]) - np.dot(beta1.T, beta1))
+                    covariances.append(
+                        k_xx
+                        + noises[ind] * np.eye(k_xx.shape[0])
+                        - np.dot(beta1.T, beta1)
+                    )
                 else:
                     covariances.append(k_xx - np.dot(beta1.T, beta1))
 
                 covariances[ind] = np.diag(covariances[ind]) * self.y_std**2
                 k_xX.clear()
         # if self.options["eval_noise"]:
-            # print("Optimal noise",noises*self.y_std**2)
+        # print("Optimal noise",noises*self.y_std**2)
         return means, covariances
 
     def predict_values(self, x, is_acting=None):
@@ -505,17 +516,15 @@ class MFCK(KrgBased):
             self.K = self._compute_K(self.X[0], self.X[0], [sigma, l_s])
         else:
             if self.options["eval_noise"]:
-                self.K = self.compute_blockwise_K(param[:-self.lvl])
-                noises = param[-self.lvl::]
+                self.K = self.compute_blockwise_K(param[: -self.lvl])
+                noises = param[-self.lvl : :]
                 varis = []
-                for i,v in enumerate(noises):
-                    varis = np.hstack([varis,np.full(self.X[i].shape[0], noises[i])])
+                for i, v in enumerate(noises):
+                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
                 noise_matrix = varis * np.eye(self.K.shape[0])
 
                 reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
-                L = np.linalg.cholesky(
-                    self.K + noise_matrix
-                )
+                L = np.linalg.cholesky(self.K + noise_matrix)
             else:
                 self.K = self.compute_blockwise_K(param)
                 reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
@@ -532,7 +541,7 @@ class MFCK(KrgBased):
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
         if self.options["eval_noise"]:
-            param1 = np.array(param[:-self.lvl], copy=True)
+            param1 = np.array(param[: -self.lvl], copy=True)
         else:
             param1 = np.array(param, copy=True)
 
@@ -540,9 +549,9 @@ class MFCK(KrgBased):
         param1[1 : self.nx + 1] = (
             10 ** (param[1 : self.nx + 1])
         )  # Apply 10** to length scales 0
-        param1[self.nx + 1 ::self.nx + 2] = (
-                10 ** (param1[self.nx + 1 :: self.nx + 2])
-            )  # Apply 10** to sigmas gamma
+        param1[self.nx + 1 :: self.nx + 2] = (
+            10 ** (param1[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
 
         for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
             param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
@@ -550,9 +559,9 @@ class MFCK(KrgBased):
         if self.options["eval_noise"]:
             param = np.array(param, copy=True)
 
-            param[-self.lvl::] = 10 ** param[-self.lvl::]
+            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
 
-            param[:-self.lvl] = param1
+            param[: -self.lvl] = param1
         else:
             param = np.array(param, copy=True)
             param = param1
@@ -564,7 +573,7 @@ class MFCK(KrgBased):
         Likelihood for nlopt optimizers
         """
         if self.options["eval_noise"]:
-            param1 = np.array(param[:-self.lvl], copy=True)
+            param1 = np.array(param[: -self.lvl], copy=True)
         else:
             param1 = np.array(param, copy=True)
 
@@ -572,17 +581,17 @@ class MFCK(KrgBased):
         param1[1 : self.nx + 1] = (
             10 ** (param[1 : self.nx + 1])
         )  # Apply 10** to length scales 0
-        param1[self.nx + 1 ::self.nx + 2] = (
-                10 ** (param1[self.nx + 1 :: self.nx + 2])
-            )  # Apply 10** to sigmas gamma
+        param1[self.nx + 1 :: self.nx + 2] = (
+            10 ** (param1[self.nx + 1 :: self.nx + 2])
+        )  # Apply 10** to sigmas gamma
 
         for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
             param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
 
         if self.options["eval_noise"]:
             param = np.array(param, copy=True)
-            param[-self.lvl::] = 10 ** param[-self.lvl::]
-            param[:-self.lvl] = param1
+            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
+            param[: -self.lvl] = param1
         else:
             param = np.array(param, copy=True)
             param = param1
