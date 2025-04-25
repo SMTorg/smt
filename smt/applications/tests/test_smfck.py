@@ -64,7 +64,7 @@ class TestSMFCK(SMTestCase):
                 noise0=[1e-6],
                 noise_bounds=np.array((1e-12, 10.0)),
                 corr="squar_exp",
-                n_inducing=[x_lf.shape[0]-1, xe.shape[0]-1],
+                n_inducing=[x_lf.shape[0] - 1, xe.shape[0] - 1],
                 n_start=1,
             )
             # if sm.options.is_declared("xlimits"):
