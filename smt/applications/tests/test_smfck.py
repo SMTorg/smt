@@ -57,14 +57,14 @@ class TestSMFCK(SMTestCase):
 
             sm = SMFCK(
                 hyper_opt="Cobyla",
-                theta0=xe.shape[1] * [0.5],
-                theta_bounds=[1e-6, 100.0],
+                theta0=xe.shape[1] * [0.8],
+                theta_bounds=[1e-6, 2.0],
                 print_global=False,
                 eval_noise=True,
-                noise0=[1e-4],
-                noise_bounds=np.array((1e-9, 1.0)),
+                noise0=[1e-6],
+                noise_bounds=np.array((1e-12, 10.0)),
                 corr="squar_exp",
-                n_inducing=[x_lf.shape[0] - 2, xe.shape[0] - 1],
+                n_inducing=[x_lf.shape[0]-1, xe.shape[0]-1],
                 n_start=1,
             )
             # if sm.options.is_declared("xlimits"):
@@ -83,7 +83,7 @@ class TestSMFCK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-2, 1e-2)
+            self.assert_error(t_error, 0.0, 1e-3, 1e-3)
 
     @staticmethod
     def run_smfck_example():
@@ -129,10 +129,10 @@ class TestSMFCK(SMTestCase):
         sm = SMFCK(
             hyper_opt="Cobyla",
             theta0=xt_e_non.shape[1] * [1.0],
-            theta_bounds=[1e-3, 50.0],
+            theta_bounds=[1e-6, 50.0],
             print_global=False,
             eval_noise=True,
-            noise0=[1e-6],
+            noise0=[1e-4],
             noise_bounds=np.array((1e-12, 100)),
             corr="squar_exp",
             n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
