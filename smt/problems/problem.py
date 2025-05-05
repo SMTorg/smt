@@ -86,10 +86,10 @@ class Problem:
     def __call__(
         self,
         x: np.ndarray,
-        delta: Optional[np.ndarray] = None,
         kx: Optional[int] = None,
+        eval_is_acting: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """
+        r"""
         Evaluate the function.
         The input vectors might be corrected if it is a hierarchical design space. You can get the corrected x and
         information about which variables are acting from: problem.eval_x and problem.eval_is_acting
@@ -101,6 +101,11 @@ class Problem:
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
             None means return function value rather than derivative.
+        eval_is_acting : ndarray of shape (n, nx) or (n,), optional
+            Boolean mask indicating for each evaluation point which design
+            variables are “active” (i.e.\ truly participating) in a
+            hierarchical design space.  If provided, `evaluate` can use this
+            to skip or correct inactive dimensions.  Default is! None.
 
         Returns
         -------
@@ -121,7 +126,7 @@ class Problem:
         # Correct the design vector and get information about which design variables are active
         x_corr, self.eval_is_acting = self.design_space.correct_get_acting(x)
         self.eval_x = x_corr
-        if bool(np.max(self.design_space.is_conditionally_acting)):
+        if np.any(self.design_space.is_conditionally_acting):
             y = self._evaluate(x_corr, self.eval_is_acting, kx)
         else:
             y = self._evaluate(x_corr, kx)

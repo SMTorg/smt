@@ -45,7 +45,9 @@ class HierarchicalNeuralNetwork(Problem):
 
         self._set_design_space(design_space)
 
-    def _evaluate(self, x: np.ndarray, delta: np.ndarray, kx=0) -> np.ndarray:
+    def _evaluate(
+        self, x: np.ndarray, kx: int, eval_is_acting: np.ndarray
+    ) -> np.ndarray:
         """
         Arguments
         ---------
@@ -87,7 +89,7 @@ class HierarchicalNeuralNetwork(Problem):
                 x0 = x0_decoded[i]
                 x3 = x3_decoded[i]
                 x4 = x4_decoded[i]
-                deltai = delta[i]
+                deltai = eval_is_acting[i]
                 if np.sum(deltai) == 6:
                     y.append(f1(x[1], x[2], x3, x4, x[5]))
                 elif np.sum(deltai) == 7:

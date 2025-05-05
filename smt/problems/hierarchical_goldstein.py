@@ -49,7 +49,9 @@ class HierarchicalGoldstein(Problem):
 
         self._set_design_space(ds)
 
-    def _evaluate(self, x: np.ndarray, delta: np.ndarray, kx=0) -> np.ndarray:
+    def _evaluate(
+        self, x: np.ndarray, kx: int, eval_is_acting: np.ndarray
+    ) -> np.ndarray:
         def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
             h = (
                 53.3108
