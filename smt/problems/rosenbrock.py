@@ -12,6 +12,14 @@ from smt.problems.problem import Problem
 
 
 class Rosenbrock(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+        
     def _initialize(self):
         self.options.declare("name", "Rosenbrock", types=str)
 

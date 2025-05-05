@@ -575,7 +575,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    #   @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_NN(self):
         random_state = 42
 
@@ -598,15 +598,16 @@ class TestEGO(SMTestCase):
         def f3(x1, x2, x3, x4, x5, x6, x7):
             return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
 
-        def f_hv(X):
+        def f_hv(X, eval_is_acting):
             y = []
-            for x in X:
+            for i, x in enumerate(X):
+                deltai = eval_is_acting[i]
                 x3_decoded = design_space.decode_values(x, i_dv=3)[0]
-                if x[0] == 0:
+                if np.sum(deltai) == 6:
                     y.append(f1(x[1], x[2], x3_decoded, x[4], x[5]))
-                elif x[0] == 1:
+                elif np.sum(deltai) == 7:
                     y.append(f2(x[1], x[2], x3_decoded, x[4], x[5], x[6]))
-                elif x[0] == 2:
+                elif np.sum(deltai) == 8:
                     y.append(f3(x[1], x[2], x3_decoded, x[4], x[5], x[6], x[7]))
                 else:
                     raise ValueError(f"Unexpected x0: {x[0]}")
@@ -688,8 +689,12 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
+        x_corr, eval_is_acting = design_space.correct_get_acting(
+            [2, -5, -5, 5, 0, 0, 0, 5]
+        )
+
         self.assertAlmostEqual(
-            f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
+            f_hv(np.atleast_2d(x_corr), eval_is_acting),
             y_opt.item(),
             delta=18,
         )

@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 
 from types import FunctionType
 import time
+from typing import Optional
 
 import numpy as np
 from scipy.optimize import minimize
@@ -28,7 +29,7 @@ class Evaluator(object):
     User can derive this interface and override the run() method to implement custom multiprocessing.
     """
 
-    def run(self, fun, x):
+    def run(self, fun, x, design_space: Optional = None):
         """
         Evaluates fun at x.
 
@@ -45,7 +46,12 @@ class Evaluator(object):
             fun evaluations at the nsamples points.
 
         """
-        return fun(x)
+        if (design_space is not None) and np.any(design_space.is_conditionally_acting):
+            x_corr, eval_is_acting = design_space.correct_get_acting(x)
+            return fun(x_corr, eval_is_acting)
+
+        else:
+            return fun(x)
 
 
 class EGO(SurrogateBasedApplication):
@@ -176,7 +182,7 @@ class EGO(SurrogateBasedApplication):
 
             # Compute the real values of y_data
             x_to_compute = np.atleast_2d(x_data[-n_parallel:])
-            y = self._evaluator.run(fun, x_to_compute)
+            y = self._evaluator.run(fun, x_to_compute, self.design_space)
             y_data[-n_parallel:] = y
             end_time = time.time()
             iteration_time = end_time - start_time
@@ -323,7 +329,7 @@ class EGO(SurrogateBasedApplication):
 
         ydoe = self.options["ydoe"]
         if ydoe is None:
-            y_doe = self._evaluator.run(fun, x_doe)
+            y_doe = self._evaluator.run(fun, x_doe, self.design_space)
         else:  # to save time if y_doe is already given to EGO
             y_doe = ydoe
 

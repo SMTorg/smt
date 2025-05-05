@@ -20,6 +20,14 @@ from smt.problems.problem import Problem
 
 
 class CantileverBeam(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+        
     def _initialize(self):
         self.options.declare("name", "CantileverBeam", types=str)
         self.options.declare("ndim", 3, types=int)
@@ -29,6 +37,7 @@ class CantileverBeam(Problem):
         )
 
     def _setup(self):
+        self.design_space = None
         assert self.options["ndim"] % 3 == 0, "ndim must be divisible by 3"
 
         # Width b

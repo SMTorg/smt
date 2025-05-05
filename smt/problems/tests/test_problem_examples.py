@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
-    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    # •   @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_hier_neural_network(self):
         import matplotlib.pyplot as plt
 
@@ -72,8 +72,8 @@ class Test(unittest.TestCase):
             LHS, ds, criterion="ese", random_state=ds.seed
         )
         xdoe = samp(n_doe)
-
-        y = problem(xdoe)
+        x_corr, eval_is_acting = ds.correct_get_acting(xdoe)
+        y = problem(x=x_corr, kx=None, eval_is_acting=eval_is_acting)
 
         plt.scatter(xdoe[:, 0], y)
         plt.xlabel("x")
