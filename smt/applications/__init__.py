@@ -8,7 +8,13 @@ from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI, SubspacesInterpolation
 from .cckrg import CoopCompKRG
-from .mixed_integer import MixedIntegerSamplingMethod, MixedIntegerSurrogateModel,MixedIntegerKrigingModel,MixedIntegerContext
+from .mixed_integer import (
+    MixedIntegerSamplingMethod,
+    MixedIntegerSurrogateModel,
+    MixedIntegerKrigingModel,
+    MixedIntegerContext,
+)
+
 __all__ = [
     "VFM",
     "MOE",

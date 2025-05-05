@@ -28,7 +28,7 @@ class HierarchicalGoldstein(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def _setup(self):
         ds = DesignSpace(
             [

@@ -21,7 +21,7 @@ class WaterFlowLFidelity(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def _initialize(self):
         self.options.declare("name", "WaterFlowLFidelity", types=str)
         self.options.declare("use_FD", False, types=bool)

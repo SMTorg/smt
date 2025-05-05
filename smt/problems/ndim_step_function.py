@@ -19,7 +19,7 @@ class NdimStepFunction(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def __init__(self, ndim=1, width=10.0):
         super().__init__()
         self.problem = TensorProduct(ndim=ndim, func="tanh", width=width)

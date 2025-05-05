@@ -22,7 +22,7 @@ class NdimRobotArm(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def __init__(self, ndim=1, w=0.2):
         super().__init__()
         self.problem = ReducedProblem(

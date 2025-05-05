@@ -19,7 +19,7 @@ class Branin(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def _initialize(self):
         self.options.declare("ndim", 2, values=[2], types=int)
         self.options.declare("name", "Branin", types=str)

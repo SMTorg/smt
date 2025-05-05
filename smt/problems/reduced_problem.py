@@ -20,7 +20,7 @@ class ReducedProblem(Problem):
     @design_space.setter
     def design_space(self, value):
         self._design_space = value
-        
+
     def __init__(self, problem, dims, w=0.2):
         """
         Arguments
