@@ -33,6 +33,7 @@ from smt.surrogate_models import (
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.utils.sm_test_case import SMTestCase
+from sys import argv
 
 try:
     import matplotlib
@@ -1218,10 +1219,10 @@ class TestEGO(SMTestCase):
         actual = ego._get_virtual_point(xtest, fun(xtest))[0].item()
         self.assertAlmostEqual(expected, actual)
 
-    #    @unittest.skipIf(
-    #       int(os.getenv("RUN_SLOW_TESTS", 0)) < 2 or NO_MATPLOTLIB,
-    #       "too slow or matplotlib not installed",
-    #   )
+    @unittest.skipIf(
+        int(os.getenv("RUN_SLOW_TESTS", 0)) < 2 or NO_MATPLOTLIB,
+        "too slow or matplotlib not installed",
+    )
     def test_examples(self):
         self.run_ego_example()
         self.run_ego_parallel_example()
@@ -1449,26 +1450,26 @@ class TestEGO(SMTestCase):
             Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
             """
 
-        def run(self, fun, x, design_space: Optional = None):
-            n_thread = 5
-            # Caveat: import are made here due to SMT documentation building process
-            from multiprocessing.pool import ThreadPool
-            from sys import version_info
+            def run(self, fun, x, design_space: Optional = None):
+                n_thread = 5
+                # Caveat: import are made here due to SMT documentation building process
+                from multiprocessing.pool import ThreadPool
+                from sys import version_info
 
-            import numpy as np
+                import numpy as np
 
-            if version_info.major == 2:
-                return fun(x)
-            # Python 3 only
-            with ThreadPool(n_thread) as p:
-                return np.array(
-                    [
-                        y[0]
-                        for y in p.map(
-                            fun, [np.atleast_2d(x[i]) for i in range(len(x))]
-                        )
-                    ]
-                )
+                if version_info.major == 2:
+                    return fun(x)
+                # Python 3 only
+                with ThreadPool(n_thread) as p:
+                    return np.array(
+                        [
+                            y[0]
+                            for y in p.map(
+                                fun, [np.atleast_2d(x[i]) for i in range(len(x))]
+                            )
+                        ]
+                    )
 
         criterion = "EI"  #'EI' or 'SBO' or 'LCB'
         qEI = "KBUB"  # "KB", "KBLB", "KBUB", "KBRand"
@@ -1559,4 +1560,10 @@ class TestEGO(SMTestCase):
 
 
 if __name__ == "__main__":
+    if "--plot" in argv:
+        TestEGO.plot = True
+        argv.remove("--plot")
+    if "--example" in argv:
+        TestEGO.run_ego_mixed_integer_example()
+        exit()
     unittest.main()
