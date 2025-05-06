@@ -8,6 +8,7 @@ import os
 import unittest
 from multiprocessing import Pool
 from sys import argv
+from typing import Optional
 
 import numpy as np
 
@@ -45,7 +46,7 @@ except ImportError:
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
-    def run(self, fun, x):
+    def run(self, fun, x, design_space: Optional = None):
         with Pool(3) as p:
             return np.array(
                 [y[0] for y in p.map(fun, [np.atleast_2d(x[i]) for i in range(len(x))])]
@@ -575,7 +576,7 @@ class TestEGO(SMTestCase):
 
         self.assertAlmostEqual(-15, y_opt.item(), delta=5)
 
-    #   @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_ego_mixed_integer_hierarchical_NN(self):
         random_state = 42
 
@@ -782,7 +783,7 @@ class TestEGO(SMTestCase):
             )
             return y
 
-        def f_hv(X):
+        def f_hv(X, eval_is_acting: Optional = None):
             y = []
             for x in X:
                 if x[0] == 0:
@@ -1233,8 +1234,8 @@ class TestEGO(SMTestCase):
         import numpy as np
 
         from smt.applications import EGO
-        from smt.surrogate_models import KRG
         from smt.design_space import DesignSpace
+        from smt.surrogate_models import KRG
 
         def function_test_1d(x):
             # function xsinx
@@ -1324,13 +1325,13 @@ class TestEGO(SMTestCase):
 
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
             IntegerVariable,
         )
+        from smt.surrogate_models import KRG, MixIntKernelType
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.

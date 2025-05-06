@@ -80,8 +80,8 @@ class Test(SMTestCase):
                 )
 
                 abs_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN)
-                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / np.linalg.norm(
-                    dydx_CS
+                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / (
+                    np.linalg.norm(dydx_CS) + 1e-18
                 )
 
                 msg = (

@@ -10,13 +10,13 @@ import unittest
 
 import numpy as np
 
+from smt.applications.mfck import MFCK
 from smt.problems import TensorProduct
 from smt.sampling_methods import LHS
 
 # from smt.utils.misc import compute_relative_error
 # from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
-from smt.applications.mfck import MFCK
 
 print_output = False
 
@@ -61,8 +61,8 @@ class TestMFKOneFidelity(SMTestCase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        from smt.applications.mfk import NestedLHS
         from smt.applications.mfck import MFCK
+        from smt.applications.mfk import NestedLHS
 
         # Consider only 1 fidelity level
         # high fidelity model

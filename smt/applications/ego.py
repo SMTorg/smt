@@ -5,8 +5,8 @@ This package is distributed under New BSD license.
 
 """
 
-from types import FunctionType
 import time
+from types import FunctionType
 from typing import Optional
 
 import numpy as np
@@ -18,9 +18,9 @@ from smt.applications.mixed_integer import (
     MixedIntegerContext,
     MixedIntegerSamplingMethod,
 )
+from smt.design_space import BaseDesignSpace, DesignSpace
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
-from smt.design_space import BaseDesignSpace, DesignSpace
 
 
 class Evaluator(object):

@@ -9,15 +9,14 @@ for gaussian process, 2022
 
 import numpy as np
 
-from smt.problems.problem import Problem
-
 from smt.design_space import (
-    OrdinalVariable,
+    CategoricalVariable,
+    DesignSpace,
     FloatVariable,
     IntegerVariable,
-    DesignSpace,
-    CategoricalVariable,
+    OrdinalVariable,
 )
+from smt.problems.problem import Problem
 
 
 class HierarchicalGoldstein(Problem):
