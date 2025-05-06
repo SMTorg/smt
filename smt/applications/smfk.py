@@ -12,6 +12,7 @@ from copy import deepcopy
 
 import numpy as np
 from scipy import linalg
+from scipy.cluster.vq import kmeans
 from scipy.linalg import solve_triangular
 from sklearn.cross_decomposition import PLSRegression as pls
 
@@ -20,6 +21,7 @@ from smt.surrogate_models.krg_based import (
     MixIntKernelType,
     compute_n_param,
 )
+from smt.surrogate_models.sgp import SGP
 from smt.utils.kriging import (
     componentwise_distance,
     compute_X_cont,
@@ -27,8 +29,6 @@ from smt.utils.kriging import (
     differences,
 )
 from smt.utils.misc import standardization
-from smt.surrogate_models.sgp import SGP
-from scipy.cluster.vq import kmeans
 
 
 class SMFK(KrgBased):

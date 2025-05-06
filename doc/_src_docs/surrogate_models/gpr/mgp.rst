@@ -129,7 +129,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.8740928
+     Training - done. Time (sec):  4.8949547
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -215,8 +215,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  TNC
-     -  ['Cobyla', 'TNC']
-     -  ['str']
+     -  ['Cobyla', 'TNC', 'NoOp']
+     -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False

@@ -9,15 +9,23 @@ A mixed-categorical correlation kernel for gaussian process, 2022
 
 import numpy as np
 
-from smt.problems.problem import Problem
 from smt.design_space import (
-    FloatVariable,
-    DesignSpace,
     CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
 )
+from smt.problems.problem import Problem
 
 
 class MixedCantileverBeam(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def _initialize(self):
         self.options.declare("name", "MixedCantileverBeam", types=str)
         self.options.declare("P", 50e3, types=(int, float), desc="Tip load (50 kN)")

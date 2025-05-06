@@ -14,12 +14,20 @@ Engineering Design Via Surrogate Modelling: A Practical Guide, John Wiley & Sons
 """
 
 import numpy as np
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class WingWeight(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def _initialize(self):
         self.options.declare("name", "WingWeight", types=str)
         self.options.declare("use_FD", False, types=bool)

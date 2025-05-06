@@ -28,8 +28,8 @@ Usage
       LHS, ds, criterion="ese", random_state=ds.seed
   )
   xdoe = samp(n_doe)
-  
-  y = problem(xdoe)
+  x_corr, eval_is_acting = ds.correct_get_acting(xdoe)
+  y = problem(x=x_corr, kx=None, eval_is_acting=eval_is_acting)
   
   plt.scatter(xdoe[:, 0], y)
   plt.xlabel("x")
@@ -54,7 +54,7 @@ Options
      -  Acceptable types
      -  Description
   *  -  ndim
-     -  3
+     -  1
      -  None
      -  ['int']
      -  
@@ -64,17 +64,7 @@ Options
      -  ['bool']
      -  
   *  -  name
-     -  CantileverBeam
+     -  HierarchicalNeuralNetwork
      -  None
      -  ['str']
      -  
-  *  -  P
-     -  50000.0
-     -  None
-     -  ['int', 'float']
-     -  Tip load (50 kN)
-  *  -  E
-     -  200000000000.0
-     -  None
-     -  ['int', 'float']
-     -  Modulus of elast. (200 GPa)

@@ -8,10 +8,19 @@ Branin function.
 
 import numpy as np
 
+from smt.design_space import DesignSpace
 from smt.problems.problem import Problem
 
 
 class Branin(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def _initialize(self):
         self.options.declare("ndim", 2, values=[2], types=int)
         self.options.declare("name", "Branin", types=str)
@@ -21,6 +30,7 @@ class Branin(Problem):
 
         self.xlimits[0, :] = [-5.0, 10]
         self.xlimits[1, :] = [0.0, 15]
+        self.design_space = DesignSpace(self.xlimits, random_state=42)
 
     def _evaluate(self, x, kx):
         """

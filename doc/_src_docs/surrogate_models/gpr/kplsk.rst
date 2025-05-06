@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0715163
+     Training - done. Time (sec):  0.1798170
   ___________________________________________________________________________
      
    Evaluation
@@ -193,8 +193,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  TNC
-     -  ['Cobyla', 'TNC']
-     -  ['str']
+     -  ['Cobyla', 'TNC', 'NoOp']
+     -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False

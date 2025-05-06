@@ -16,12 +16,20 @@ and materials conference, Newport, RI, pp. AIAA 2006-1811.
 """
 
 import numpy as np
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class TorsionVibration(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def _initialize(self):
         self.options.declare("name", "TorsionVibration", types=str)
         self.options.declare("use_FD", False, types=bool)

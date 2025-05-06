@@ -104,18 +104,19 @@ Main
 ^^^^
 
 .. code-block:: python
+
   """
   Predicting Airfoil Aerodynamics through data by Raul Carreira Rufato and Prof. Joseph Morlier
   """
   
   import numpy as np
+  from sklearn.model_selection import train_test_split
   
   from smt.examples.airfoil_parameters.learning_airfoil_parameters import (
       load_cd_training_data,
       load_NACA4412_modeshapes,
       plot_predictions,
   )
-  from sklearn.model_selection import train_test_split
   from smt.surrogate_models.genn import GENN
   
   x, y, dy = load_cd_training_data()
@@ -181,11 +182,10 @@ Main
   plot_predictions(airfoil_modeshapes, Ma, genn)
   
 ::
-  Drag coefficient prediction (cd):  0.009881152860141375
+
+  Drag coefficient prediction (cd):  0.0103677112641534
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %
   :align: center
-.. 
-   Comment out as it is too long! embed-module-print-plot :: smt.examples.airfoil_parameters.run_genn , 100
 

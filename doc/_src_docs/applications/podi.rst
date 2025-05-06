@@ -155,6 +155,7 @@ Example 1: global POD case for 1D function
 
   import matplotlib.pyplot as plt
   import numpy as np
+  
   from smt.applications import PODI
   from smt.sampling_methods import LHS
   
@@ -292,6 +293,7 @@ Example 2: local POD case for 2D function
 
   import matplotlib.pyplot as plt
   import numpy as np
+  
   from smt.applications import PODI
   from smt.sampling_methods import LHS
   
@@ -407,6 +409,7 @@ Example 2: local POD case for 2D function
   
   def choose_local_bases(local_pod_bases, n_bases, modes_list, xt1, xv1):
       import numpy as np
+  
       from smt.applications import PODI
   
       interpolated_bases = []

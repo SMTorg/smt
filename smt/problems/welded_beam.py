@@ -14,12 +14,20 @@ Computer methods in applied mechanics and engineering, 186(2), pp. 311-338. 2000
 """
 
 import numpy as np
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class WeldedBeam(Problem):
+    @property
+    def design_space(self):
+        return self._design_space
+
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def _initialize(self):
         self.options.declare("name", "WeldedBeam", types=str)
         self.options.declare("use_FD", False, types=bool)

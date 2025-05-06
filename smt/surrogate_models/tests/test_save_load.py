@@ -1,24 +1,24 @@
 import os
 import unittest
-import numpy as np
 
+import numpy as np
 
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
+    GEKPLS,
+    GENN,
+    IDW,
+    KPLS,
+    KPLSK,
     KRG,
     LS,
-    KPLS,
-    GEKPLS,
-    KPLSK,
     MGP,
     QP,
-    SGP,
-    GENN,
     RBF,
     RMTB,
     RMTC,
-    IDW,
+    SGP,
 )
 
 
