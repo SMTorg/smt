@@ -144,7 +144,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0817022
+     Training - done. Time (sec):  0.2859745
   ___________________________________________________________________________
      
    Evaluation
@@ -181,11 +181,11 @@ Example 2 with mixed variables
   import numpy as np
   
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
-  from smt.surrogate_models import KRG
   from smt.design_space import (
       DesignSpace,
       IntegerVariable,
   )
+  from smt.surrogate_models import KRG
   
   xt = np.array([0.0, 2.0, 3.0])
   yt = np.array([0.0, 1.5, 0.9])
@@ -241,7 +241,7 @@ Example 2 with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0847299
+     Training - done. Time (sec):  0.0542204
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +249,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0097697
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000195
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -324,7 +324,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1817245
+     Training - done. Time (sec):  0.1257176
   ___________________________________________________________________________
      
    Evaluation
@@ -332,9 +332,9 @@ Example 3 with noisy data
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0081284
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000813
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: krg_Test_test_noisy_krg.png
@@ -422,8 +422,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  TNC
-     -  ['Cobyla', 'TNC']
-     -  ['str']
+     -  ['Cobyla', 'TNC', 'NoOp']
+     -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False
