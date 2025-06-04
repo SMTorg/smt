@@ -39,6 +39,7 @@ The design space is then defined from a list of design variables and implements 
   import numpy as np
   
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+  from smt.sampling_methods import LHS
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
@@ -46,7 +47,6 @@ The design space is then defined from a list of design variables and implements 
       IntegerVariable,
       OrdinalVariable,
   )
-  from smt.sampling_methods import LHS
   
   ds = DesignSpace(
       [
@@ -108,20 +108,20 @@ The hierarchy relationships are specified after instantiating the design space:
 .. code-block:: python
 
   import numpy as np
-  from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
   
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
       MixedIntegerSamplingMethod,
   )
+  from smt.sampling_methods import LHS
+  from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       FloatVariable,
       IntegerVariable,
       OrdinalVariable,
   )
-  from smt.sampling_methods import LHS
-  from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
+  from smt_design_space_ext import ConfigSpaceDesignSpaceImpl
   
   ds = ConfigSpaceDesignSpaceImpl(
       [
@@ -249,7 +249,7 @@ The hierarchy relationships are specified after instantiating the design space:
    Training
      
      Training ...
-     Training - done. Time (sec):  5.8195512
+     Training - done. Time (sec):  2.1491070
   ___________________________________________________________________________
      
    Evaluation
@@ -257,11 +257,11 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.7199609
+     Predicting - done. Time (sec):  0.2126026
      
-     Prediction time/pt. (sec) :  0.0071996
+     Prediction time/pt. (sec) :  0.0021260
      
-  Pred_RMSE 4.034606181104147e-13
+  Pred_RMSE 4.03450105320861e-13
   
 
 Design space and variable class references
@@ -296,12 +296,12 @@ Example of sampling a mixed-discrete design space
   from matplotlib import colors
   
   from smt.applications.mixed_integer import MixedIntegerSamplingMethod
-  from smt.design_space import (
-      CategoricalVariable,
-      DesignSpace,
-      FloatVariable,
-  )
   from smt.sampling_methods import LHS
+  from smt.design_space import (
+      FloatVariable,
+      DesignSpace,
+      CategoricalVariable,
+  )
   
   float_var = FloatVariable(0, 4)
   cat_var = CategoricalVariable(["blue", "red"])
@@ -350,13 +350,13 @@ Example of mixed integer context usage
   import matplotlib.pyplot as plt
   
   from smt.applications.mixed_integer import MixedIntegerContext
+  from smt.surrogate_models import KRG
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
       IntegerVariable,
   )
-  from smt.surrogate_models import KRG
   
   design_space = DesignSpace(
       [
@@ -414,7 +414,7 @@ Example of mixed integer context usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7409899
+     Training - done. Time (sec):  0.3023846
   ___________________________________________________________________________
      
    Evaluation
@@ -422,9 +422,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0248973
+     Predicting - done. Time (sec):  0.0101750
      
-     Prediction time/pt. (sec) :  0.0004979
+     Prediction time/pt. (sec) :  0.0002035
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

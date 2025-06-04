@@ -90,7 +90,7 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0150847
+     Training - done. Time (sec):  0.0082021
   ___________________________________________________________________________
      
    Evaluation

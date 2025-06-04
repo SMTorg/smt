@@ -104,7 +104,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec): 50.4712169
+     Training - done. Time (sec):  1.5782199
   ___________________________________________________________________________
      
    Evaluation
@@ -112,9 +112,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0012391
+     Predicting - done. Time (sec):  0.0009999
      
-     Prediction time/pt. (sec) :  0.0000123
+     Prediction time/pt. (sec) :  0.0000099
      
   ___________________________________________________________________________
      
@@ -123,9 +123,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0087624
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000868
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -212,8 +212,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  TNC
-     -  ['Cobyla', 'TNC', 'NoOp']
-     -  None
+     -  ['Cobyla', 'TNC']
+     -  ['str']
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False

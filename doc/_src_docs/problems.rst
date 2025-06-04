@@ -4,8 +4,6 @@ Benchmarking problems
 SMT contains a library of analytical and engineering problems to be used for benchmarking purposes.
 These are listed below.
 
-Note: The hierarchical functions takes the activation vectors corresponding to the input points as an additional input
-
 .. toctree::
    :maxdepth: 1
    :titlesonly:

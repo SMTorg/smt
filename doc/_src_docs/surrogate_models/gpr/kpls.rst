@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5150259
+     Training - done. Time (sec):  0.0937924
   ___________________________________________________________________________
      
    Evaluation
@@ -167,7 +167,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 52.4136887
+     Training - done. Time (sec):  9.3670509
   
    The model automatically choose 3 components.
   ___________________________________________________________________________
@@ -181,8 +181,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[7.89613116]]
-  [[64.47734166]]
+  [[7.89613133]]
+  [[64.47734003]]
   
 
 Options
@@ -265,8 +265,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  TNC
-     -  ['Cobyla', 'TNC', 'NoOp']
-     -  None
+     -  ['Cobyla', 'TNC']
+     -  ['str']
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False

@@ -19,13 +19,13 @@ Usage
 
 .. code-block:: python
 
+  import numpy as np
   import random
   
-  import numpy as np
-  
-  from smt.applications import CoopCompKRG
   from smt.problems import TensorProduct
   from smt.sampling_methods import LHS
+  
+  from smt.applications import CoopCompKRG
   
   # The problem is the exponential problem with dimension 10
   ndim = 10
@@ -82,7 +82,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1583652
+     Training - done. Time (sec):  0.1211066
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -97,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1544235
+     Training - done. Time (sec):  0.1113083
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -112,7 +112,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2050598
+     Training - done. Time (sec):  0.1437654
   ___________________________________________________________________________
      
    Evaluation
@@ -124,8 +124,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[0.56496318]]
-  [[91.30881442]]
+  [[-0.49752687]]
+  [[72.00594081]]
   
 
 Options

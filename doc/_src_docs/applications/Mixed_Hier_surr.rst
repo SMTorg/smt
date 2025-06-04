@@ -26,8 +26,8 @@ Example of mixed integer Polynomial (QP) surrogate
   import numpy as np
   
   from smt.applications.mixed_integer import MixedIntegerSurrogateModel
-  from smt.design_space import DesignSpace, IntegerVariable
   from smt.surrogate_models import QP
+  from smt.design_space import DesignSpace, IntegerVariable
   
   xt = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
   yt = np.array([0.0, 1.0, 1.5, 0.5, 1.0])
@@ -93,12 +93,12 @@ Example of mixed integer Gower Distance model
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
   )
+  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
   )
-  from smt.surrogate_models import KRG, MixIntKernelType
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -233,7 +233,7 @@ Example of mixed integer Gower Distance model
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5911818
+     Training - done. Time (sec):  0.2469125
   ___________________________________________________________________________
      
    Evaluation
@@ -241,20 +241,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0158095
+     Predicting - done. Time (sec):  0.0059998
      
-     Prediction time/pt. (sec) :  0.0001581
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0161097
-     
-     Prediction time/pt. (sec) :  0.0001611
+     Prediction time/pt. (sec) :  0.0000600
      
   ___________________________________________________________________________
      
@@ -263,9 +252,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0159316
+     Predicting - done. Time (sec):  0.0070035
      
-     Prediction time/pt. (sec) :  0.0001593
+     Prediction time/pt. (sec) :  0.0000700
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0059967
+     
+     Prediction time/pt. (sec) :  0.0000600
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -288,12 +288,12 @@ Example of mixed integer Compound Symmetry model
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
   )
+  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
   )
-  from smt.surrogate_models import KRG, MixIntKernelType
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -436,7 +436,7 @@ Example of mixed integer Compound Symmetry model
   [ 9.09297095e+00 -4.69851668e-02 -4.69502417e-02  9.74106925e-04
    -5.62905232e-06 -4.04511718e-06  2.47447274e-08 -1.26347122e-10
    -6.20962697e-11]
-     Training - done. Time (sec):  0.5298758
+     Training - done. Time (sec):  0.2162046
   ___________________________________________________________________________
      
    Evaluation
@@ -444,20 +444,9 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0146933
+     Predicting - done. Time (sec):  0.0070002
      
-     Prediction time/pt. (sec) :  0.0001469
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0199752
-     
-     Prediction time/pt. (sec) :  0.0001998
+     Prediction time/pt. (sec) :  0.0000700
      
   ___________________________________________________________________________
      
@@ -466,9 +455,20 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0154877
+     Predicting - done. Time (sec):  0.0060003
      
-     Prediction time/pt. (sec) :  0.0001549
+     Prediction time/pt. (sec) :  0.0000600
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0069995
+     
+     Prediction time/pt. (sec) :  0.0000700
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_cs_example.png
@@ -490,12 +490,12 @@ Example of mixed integer Homoscedastic Hypersphere model
   import numpy as np
   
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
   )
-  from smt.surrogate_models import KRG, MixIntKernelType
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -630,7 +630,7 @@ Example of mixed integer Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0349934
+     Training - done. Time (sec):  0.3829696
   ___________________________________________________________________________
      
    Evaluation
@@ -638,20 +638,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0155115
+     Predicting - done. Time (sec):  0.0060334
      
-     Prediction time/pt. (sec) :  0.0001551
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0213768
-     
-     Prediction time/pt. (sec) :  0.0002138
+     Prediction time/pt. (sec) :  0.0000603
      
   ___________________________________________________________________________
      
@@ -660,9 +649,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0098588
+     Predicting - done. Time (sec):  0.0059993
      
-     Prediction time/pt. (sec) :  0.0000986
+     Prediction time/pt. (sec) :  0.0000600
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0059984
+     
+     Prediction time/pt. (sec) :  0.0000600
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -684,12 +684,12 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
   import numpy as np
   
   from smt.applications.mixed_integer import MixedIntegerKrigingModel
+  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
   )
-  from smt.surrogate_models import KRG, MixIntKernelType
   
   xt1 = np.array([[0, 0.0], [0, 2.0], [0, 4.0]])
   xt2 = np.array([[1, 0.0], [1, 2.0], [1, 3.0]])
@@ -824,7 +824,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0382819
+     Training - done. Time (sec):  0.4382472
   ___________________________________________________________________________
      
    Evaluation
@@ -832,20 +832,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0197999
+     Predicting - done. Time (sec):  0.0069728
      
-     Prediction time/pt. (sec) :  0.0001980
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0146132
-     
-     Prediction time/pt. (sec) :  0.0001461
+     Prediction time/pt. (sec) :  0.0000697
      
   ___________________________________________________________________________
      
@@ -854,9 +843,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0204926
+     Predicting - done. Time (sec):  0.0070000
      
-     Prediction time/pt. (sec) :  0.0002049
+     Prediction time/pt. (sec) :  0.0000700
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0080030
+     
+     Prediction time/pt. (sec) :  0.0000800
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -882,14 +882,14 @@ Example of mixed integer Kriging with hierarchical variables
       MixedIntegerKrigingModel,
       MixedIntegerSamplingMethod,
   )
+  from smt.sampling_methods import LHS
+  from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
       IntegerVariable,
   )
-  from smt.sampling_methods import LHS
-  from smt.surrogate_models import KRG, MixHrcKernelType, MixIntKernelType
   
   def f_hv(X):
       import numpy as np
@@ -1067,7 +1067,7 @@ Example of mixed integer Kriging with hierarchical variables
    Training
      
      Training ...
-     Training - done. Time (sec):  1.6949980
+     Training - done. Time (sec):  0.6228259
   ___________________________________________________________________________
      
    Evaluation
@@ -1075,9 +1075,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0126493
+     Predicting - done. Time (sec):  0.0081153
      
-     Prediction time/pt. (sec) :  0.0008433
+     Prediction time/pt. (sec) :  0.0005410
      
   
 

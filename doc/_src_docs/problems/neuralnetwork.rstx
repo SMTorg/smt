@@ -17,4 +17,4 @@ Usage
 Options
 -------
 
-.. embed-options-table :: smt.problems , HierarchicalNeuralNetwork , options
+.. embed-options-table :: smt.problems , CantileverBeam , options
