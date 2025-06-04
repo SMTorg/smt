@@ -19,8 +19,8 @@ except ImportError:
 
 from copy import deepcopy
 
-from smt.applications.mfk import NestedLHS
 from smt.applications.smfk import SMFK
+from smt.applications.mfk import NestedLHS
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
 from smt.utils.misc import compute_relative_error

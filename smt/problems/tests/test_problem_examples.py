@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         plt.ylabel("y")
         plt.show()
 
-    # •   @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
     def test_hier_neural_network(self):
         import matplotlib.pyplot as plt
 

@@ -7,15 +7,17 @@ import unittest
 
 import numpy as np
 
+from smt.sampling_methods import LHS
+
+
 from smt.design_space.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
-    DesignSpace,
     FloatVariable,
     IntegerVariable,
     OrdinalVariable,
+    DesignSpace,
 )
-from smt.sampling_methods import LHS
 
 
 class Test(unittest.TestCase):

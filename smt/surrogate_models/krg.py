@@ -4,9 +4,9 @@ Author: Dr. Mohamed A. Bouhlel <mbouhlel@umich.edu>
 This package is distributed under New BSD license.
 """
 
-from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.kriging import componentwise_distance
+from smt.kernels import Kernel
 
 
 class KRG(KrgBased):

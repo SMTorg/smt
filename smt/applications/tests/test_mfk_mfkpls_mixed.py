@@ -26,17 +26,17 @@ from smt.applications.mfkpls import MFKPLS
 from smt.applications.mixed_integer import (
     MixedIntegerSamplingMethod,
 )
-from smt.design_space import (
-    CategoricalVariable,
-    DesignSpace,
-    FloatVariable,
-    IntegerVariable,
-)
 from smt.sampling_methods import LHS
 from smt.surrogate_models import (
     KPLS,
     KRG,
     MixIntKernelType,
+)
+from smt.design_space import (
+    DesignSpace,
+    CategoricalVariable,
+    FloatVariable,
+    IntegerVariable,
 )
 
 

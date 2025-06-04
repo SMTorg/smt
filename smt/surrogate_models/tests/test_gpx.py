@@ -1,5 +1,5 @@
-import tempfile
 import unittest
+import tempfile
 
 import numpy as np
 

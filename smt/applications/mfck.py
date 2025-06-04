@@ -15,12 +15,11 @@ Conference on Neural Information Processing Systems.
 
 # import warnings
 import numpy as np
-from scipy import optimize
 from scipy.linalg import solve_triangular
-
+from scipy import optimize
 from smt.sampling_methods import LHS
+from smt.utils.kriging import differences, componentwise_distance
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging import componentwise_distance, differences
 from smt.utils.misc import standardization
 
 

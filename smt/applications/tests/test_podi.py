@@ -3,13 +3,11 @@ Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
 import unittest
-
+from smt.utils.sm_test_case import SMTestCase
 import numpy as np
 from scipy import special
-
 from smt.applications import PODI
 from smt.sampling_methods import LHS
-from smt.utils.sm_test_case import SMTestCase
 
 
 def cos_coeff(i: int, x: np.ndarray):
@@ -417,7 +415,6 @@ class Test(SMTestCase):
     def run_podi_example_1d_global():
         import matplotlib.pyplot as plt
         import numpy as np
-
         from smt.applications import PODI
         from smt.sampling_methods import LHS
 
@@ -549,7 +546,6 @@ class Test(SMTestCase):
     def run_podi_example_2d_local():
         import matplotlib.pyplot as plt
         import numpy as np
-
         from smt.applications import PODI
         from smt.sampling_methods import LHS
 
@@ -665,7 +661,6 @@ class Test(SMTestCase):
 
         def choose_local_bases(local_pod_bases, n_bases, modes_list, xt1, xv1):
             import numpy as np
-
             from smt.applications import PODI
 
             interpolated_bases = []

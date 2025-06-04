@@ -8,18 +8,17 @@ This implementation in SMT is derived from FITC/VarDTC methods from
 Sparse GP implementations of GPy project. See https://github.com/SheffieldML/GPy
 """
 
-import warnings
-
 import numpy as np
-from packaging.version import Version
-from scipy import __version__ as SCIPY_VERSION
-from scipy import linalg
+from scipy import linalg, __version__ as SCIPY_VERSION
 from scipy.cluster.vq import kmeans
+from packaging.version import Version
 
 from smt.surrogate_models.krg import KRG
 from smt.utils.checks import ensure_2d_array
 from smt.utils.kriging import differences
 from smt.utils.misc import standardization
+
+import warnings
 
 
 class SGP(KRG):

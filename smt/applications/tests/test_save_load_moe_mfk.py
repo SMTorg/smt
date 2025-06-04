@@ -1,6 +1,5 @@
 import os
 import unittest
-
 import numpy as np
 
 from smt.applications.mfk import MFK, NestedLHS

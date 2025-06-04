@@ -248,11 +248,11 @@ class Test(unittest.TestCase):
         import numpy as np
 
         from smt.applications.mixed_integer import MixedIntegerKrigingModel
+        from smt.surrogate_models import KRG
         from smt.design_space import (
             DesignSpace,
             IntegerVariable,
         )
-        from smt.surrogate_models import KRG
 
         xt = np.array([0.0, 2.0, 3.0])
         yt = np.array([0.0, 1.5, 0.9])

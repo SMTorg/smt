@@ -11,11 +11,13 @@ from collections import OrderedDict
 import numpy as np
 
 from smt.applications import MFK
+from smt.problems import Sphere
+from smt.sampling_methods import LHS
+
 from smt.design_space import (
     DesignSpace,
 )
-from smt.problems import Sphere
-from smt.sampling_methods import LHS
+
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase

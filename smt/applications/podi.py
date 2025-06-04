@@ -2,10 +2,10 @@
 Author: Hugo Reimeringer <hugo.reimeringer@onera.fr>
 """
 
-import numpy as np
 import scipy.optimize as opt
-from sklearn.decomposition import PCA
 from sklearn.utils.extmath import randomized_svd
+from sklearn.decomposition import PCA
+import numpy as np
 
 from smt.applications.application import SurrogateBasedApplication
 from smt.surrogate_models import KPLS, KPLSK, KRG

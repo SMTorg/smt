@@ -10,12 +10,13 @@ from collections import OrderedDict
 
 import numpy as np
 
-from smt.design_space import (
-    DesignSpace,
-)
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS
 from smt.surrogate_models import LS, QP
+
+from smt.design_space import (
+    DesignSpace,
+)
 from smt.utils.misc import compute_relative_error
 from smt.utils.silence import Silence
 from smt.utils.sm_test_case import SMTestCase
