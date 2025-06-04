@@ -1228,8 +1228,8 @@ class TestEGO(SMTestCase):
         import numpy as np
 
         from smt.applications import EGO
-        from smt.surrogate_models import KRG
         from smt.design_space import DesignSpace
+        from smt.surrogate_models import KRG
 
         def function_test_1d(x):
             # function xsinx
@@ -1319,13 +1319,13 @@ class TestEGO(SMTestCase):
 
         from smt.applications import EGO
         from smt.applications.mixed_integer import MixedIntegerContext
-        from smt.surrogate_models import KRG, MixIntKernelType
         from smt.design_space import (
             CategoricalVariable,
             DesignSpace,
             FloatVariable,
             IntegerVariable,
         )
+        from smt.surrogate_models import KRG, MixIntKernelType
 
         # Regarding the interface, the function to be optimized should handle
         # categorical values as index values in the enumeration type specification.

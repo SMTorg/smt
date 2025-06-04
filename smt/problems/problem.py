@@ -10,12 +10,11 @@ from typing import Optional
 
 import numpy as np
 
-from smt.utils.checks import ensure_2d_array
-
 from smt.design_space import (
     BaseDesignSpace,
     DesignSpace,
 )
+from smt.utils.checks import ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
 
 

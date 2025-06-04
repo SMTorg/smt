@@ -10,14 +10,14 @@ Operations Research Forum,4994:137, 2023.
 
 import numpy as np
 
-from smt.problems.problem import Problem
 from smt.design_space import (
-    OrdinalVariable,
+    CategoricalVariable,
+    DesignSpace,
     FloatVariable,
     IntegerVariable,
-    DesignSpace,
-    CategoricalVariable,
+    OrdinalVariable,
 )
+from smt.problems.problem import Problem
 
 
 class HierarchicalNeuralNetwork(Problem):
