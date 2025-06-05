@@ -81,7 +81,7 @@ class Test(SMTestCase):
 
                 abs_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN)
                 rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / (
-                    np.linalg.norm(dydx_CS) + np.finfo(float).eps*0.001
+                    np.linalg.norm(dydx_CS) + np.finfo(float).eps * 0.001
                 )
 
                 msg = (
