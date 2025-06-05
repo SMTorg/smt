@@ -9,15 +9,14 @@ for gaussian process, 2022
 
 import numpy as np
 
-from smt.problems.problem import Problem
-
 from smt.design_space import (
-    OrdinalVariable,
+    CategoricalVariable,
+    DesignSpace,
     FloatVariable,
     IntegerVariable,
-    DesignSpace,
-    CategoricalVariable,
+    OrdinalVariable,
 )
+from smt.problems.problem import Problem
 
 
 class HierarchicalGoldstein(Problem):
@@ -49,7 +48,9 @@ class HierarchicalGoldstein(Problem):
 
         self._set_design_space(ds)
 
-    def _evaluate(self, x: np.ndarray, kx=0) -> np.ndarray:
+    def _evaluate(
+        self, x: np.ndarray, kx: int, eval_is_acting: np.ndarray
+    ) -> np.ndarray:
         def H(x1, x2, x3, x4, z3, z4, x5, cos_term):
             h = (
                 53.3108

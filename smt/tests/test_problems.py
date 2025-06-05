@@ -72,7 +72,7 @@ class Test(SMTestCase):
 
                 dydx_FD[:] = (y_FD[:, iy] - y0[:, iy]) / h
                 dydx_CS[:] = np.imag(y_CS[:, iy]) / ch
-                dydx_AN[:] = problem(x, idim)[:, iy]
+                dydx_AN[:] = problem(x, kx=idim)[:, iy]
 
                 abs_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN)
                 rel_rms_error_FD = np.linalg.norm(dydx_FD - dydx_AN) / np.linalg.norm(
@@ -80,8 +80,8 @@ class Test(SMTestCase):
                 )
 
                 abs_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN)
-                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / np.linalg.norm(
-                    dydx_CS
+                rel_rms_error_CS = np.linalg.norm(dydx_CS - dydx_AN) / (
+                    np.linalg.norm(dydx_CS) + np.finfo(float).eps * 0.001
                 )
 
                 msg = (
