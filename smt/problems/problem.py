@@ -18,7 +18,7 @@ from smt.utils.checks import ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-class Problem:
+class Problem:   
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -42,7 +42,7 @@ class Problem:
         self.options.update(kwargs)
 
         self.xlimits = np.zeros((self.options["ndim"], 2))
-        self.design_space = None
+        self._design_space = None
 
         self.eval_x = None
         self.eval_is_acting = None
@@ -70,13 +70,18 @@ class Problem:
         self.design_space = design_space
         self.options["ndim"] = len(design_space.design_variables)
         self.xlimits = design_space.get_num_bounds()
-
+       
     @property
     def design_space(self) -> BaseDesignSpace:
         """Gets the design space definitions as an instance of BaseDesignSpace"""
-        if self.design_space is None:
-            self.design_space = DesignSpace(self.xlimits)
-        return self.design_space
+        if self._design_space is None:
+            self._design_space = DesignSpace(self.xlimits)
+        return self._design_space
+    
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
 
     def sample(self, n):
         x, _ = self.design_space.sample_valid_x(n)
@@ -104,7 +109,7 @@ class Problem:
             Boolean mask indicating for each evaluation point which design
             variables are “active” (i.e.\ truly participating) in a
             hierarchical design space.  If provided, `evaluate` can use this
-            to skip or correct inactive dimensions.  Default is! None.
+            to skip or correct inactive dimensions.  Default is None.
 
         Returns
         -------

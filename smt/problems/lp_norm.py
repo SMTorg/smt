@@ -12,14 +12,6 @@ from smt.problems.problem import Problem
 
 
 class LpNorm(Problem):
-    @property
-    def design_space(self):
-        return self._design_space
-
-    @design_space.setter
-    def design_space(self, value):
-        self._design_space = value
-
     def _initialize(self, ndim=1):
         self.options.declare("order", default=2, types=int)
         self.options.declare("name", "LpNorm", types=str)

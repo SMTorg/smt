@@ -24,14 +24,6 @@ class HierarchicalNeuralNetwork(Problem):
     def _initialize(self):
         self.options.declare("name", "HierarchicalNeuralNetwork", types=str)
 
-    @property
-    def design_space(self):
-        return self._design_space
-
-    @design_space.setter
-    def design_space(self, value):
-        self._design_space = value
-
     def _setup(self):
         self.design_space = None
         design_space = DesignSpace(

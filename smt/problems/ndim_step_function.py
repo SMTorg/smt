@@ -12,13 +12,6 @@ from smt.utils.options_dictionary import OptionsDictionary
 
 
 class NdimStepFunction(Problem):
-    @property
-    def design_space(self):
-        return self._design_space
-
-    @design_space.setter
-    def design_space(self, value):
-        self._design_space = value
 
     def __init__(self, ndim=1, width=10.0):
         super().__init__()
