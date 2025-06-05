@@ -12,8 +12,6 @@ import unittest
 
 import numpy as np
 
-from smt.sampling_methods.lhs import LHS
-from smt.surrogate_models import KRG, MGP
 from smt.kernels import (
     ActExp,
     Matern32,
@@ -21,6 +19,8 @@ from smt.kernels import (
     PowExp,
     SquarSinExp,
 )
+from smt.sampling_methods.lhs import LHS
+from smt.surrogate_models import KRG, MGP
 from smt.utils.kriging import (
     componentwise_distance,
     cross_distances,

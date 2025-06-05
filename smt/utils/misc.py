@@ -8,7 +8,6 @@ import sys
 from bisect import bisect_left
 
 import numpy as np
-
 import scipy
 from packaging.version import Version
 

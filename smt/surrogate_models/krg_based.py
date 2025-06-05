@@ -13,46 +13,43 @@ import numpy as np
 from scipy import linalg, optimize
 from scipy.stats import multivariate_normal as m_norm
 
-from smt.sampling_methods import LHS
-from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils import persistence
-
-from smt.kernels import (
-    SquarSinExp,
-    PowExp,
-    Matern52,
-    Matern32,
-    ActExp,
-    Kernel,
-    Operator,
-)
-from smt.kernels.kernels import _Constant
-from smt.utils.checks import check_support, ensure_2d_array
 from smt.design_space import (
     BaseDesignSpace,
     CategoricalVariable,
     ensure_design_space,
 )
-
+from smt.kernels import (
+    ActExp,
+    Kernel,
+    Matern32,
+    Matern52,
+    Operator,
+    PowExp,
+    SquarSinExp,
+)
+from smt.kernels.kernels import _Constant
+from smt.sampling_methods import LHS
+from smt.surrogate_models.surrogate_model import SurrogateModel
+from smt.utils import persistence
+from smt.utils.checks import check_support, ensure_2d_array
 from smt.utils.kriging import (
     MixHrcKernelType,
-    differences,
-    constant,
-    linear,
-    quadratic,
-    cross_distances,
-    gower_componentwise_distances,
     componentwise_distance,
     componentwise_distance_PLS,
     compute_X_cont,
     compute_X_cross,
+    constant,
+    cross_distances,
     cross_levels,
     cross_levels_homo_space,
+    differences,
+    gower_componentwise_distances,
+    linear,
     matrix_data_corr_levels_cat_matrix,
     matrix_data_corr_levels_cat_mod,
     matrix_data_corr_levels_cat_mod_comps,
+    quadratic,
 )
-
 from smt.utils.misc import standardization
 
 

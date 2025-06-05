@@ -201,8 +201,8 @@ Usage
   import numpy as np
   
   from smt.applications import EGO
-  from smt.surrogate_models import KRG
   from smt.design_space import DesignSpace
+  from smt.surrogate_models import KRG
   
   def function_test_1d(x):
       # function xsinx
@@ -304,6 +304,7 @@ Usage with parallel options
   from smt.applications import EGO
   from smt.applications.ego import Evaluator
   from smt.surrogate_models import KRG, DesignSpace
+  from typing import Optional
   
   def function_test_1d(x):
       # function xsinx
@@ -329,7 +330,7 @@ Usage with parallel options
       Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
       """
   
-      def run(self, fun, x):
+  def run(self, fun, x, design_space: Optional = None):
           n_thread = 5
           # Caveat: import are made here due to SMT documentation building process
           from multiprocessing.pool import ThreadPool
@@ -455,13 +456,13 @@ Usage with mixed variable
   
   from smt.applications import EGO
   from smt.applications.mixed_integer import MixedIntegerContext
-  from smt.surrogate_models import KRG, MixIntKernelType
   from smt.design_space import (
       CategoricalVariable,
       DesignSpace,
       FloatVariable,
       IntegerVariable,
   )
+  from smt.surrogate_models import KRG, MixIntKernelType
   
   # Regarding the interface, the function to be optimized should handle
   # categorical values as index values in the enumeration type specification.
@@ -604,7 +605,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000002477E8BE750>
+     -  <smt.applications.ego.Evaluator object at 0x00000201D7755350>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -639,7 +640,7 @@ Options
      -  ['bool']
      -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000002477E8CC410>
+     -  <smt.surrogate_models.krg.KRG object at 0x00000201D7B600D0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly

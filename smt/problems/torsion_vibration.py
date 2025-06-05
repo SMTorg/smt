@@ -16,9 +16,9 @@ and materials conference, Newport, RI, pp. AIAA 2006-1811.
 """
 
 import numpy as np
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class TorsionVibration(Problem):

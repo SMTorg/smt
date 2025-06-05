@@ -9,12 +9,12 @@ A mixed-categorical correlation kernel for gaussian process, 2022
 
 import numpy as np
 
-from smt.problems.problem import Problem
 from smt.design_space import (
-    FloatVariable,
-    DesignSpace,
     CategoricalVariable,
+    DesignSpace,
+    FloatVariable,
 )
+from smt.problems.problem import Problem
 
 
 class MixedCantileverBeam(Problem):
