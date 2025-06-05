@@ -160,7 +160,7 @@ class Problem:
             Boolean mask indicating for each evaluation point which design
             variables are “active” (i.e.\ truly participating) in a
             hierarchical design space.  If provided, `evaluate` can use this
-            to skip or correct inactive dimensions.  Default is! None.
+            to skip or correct inactive dimensions.  Default is None.
 
         Returns
         -------
