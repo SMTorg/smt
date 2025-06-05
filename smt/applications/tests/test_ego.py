@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 import os
 import unittest
 from multiprocessing import Pool
-from sys import argv
+from typing import Optional
 
 import numpy as np
 
@@ -33,6 +33,7 @@ from smt.surrogate_models import (
 )
 from smt.surrogate_models.gpx import GPX_AVAILABLE
 from smt.utils.sm_test_case import SMTestCase
+from sys import argv
 
 try:
     import matplotlib
@@ -45,7 +46,7 @@ except ImportError:
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
-    def run(self, fun, x):
+    def run(self, fun, x, design_space: Optional = None):
         with Pool(3) as p:
             return np.array(
                 [y[0] for y in p.map(fun, [np.atleast_2d(x[i]) for i in range(len(x))])]
@@ -598,15 +599,16 @@ class TestEGO(SMTestCase):
         def f3(x1, x2, x3, x4, x5, x6, x7):
             return f_neu(x1, x2, x3, x4) + (x5**2) + 0.3 * x6 - 0.1 * x7**3
 
-        def f_hv(X):
+        def f_hv(X, eval_is_acting):
             y = []
-            for x in X:
+            for i, x in enumerate(X):
+                deltai = eval_is_acting[i]
                 x3_decoded = design_space.decode_values(x, i_dv=3)[0]
-                if x[0] == 0:
+                if np.sum(deltai) == 6:
                     y.append(f1(x[1], x[2], x3_decoded, x[4], x[5]))
-                elif x[0] == 1:
+                elif np.sum(deltai) == 7:
                     y.append(f2(x[1], x[2], x3_decoded, x[4], x[5], x[6]))
-                elif x[0] == 2:
+                elif np.sum(deltai) == 8:
                     y.append(f3(x[1], x[2], x3_decoded, x[4], x[5], x[6], x[7]))
                 else:
                     raise ValueError(f"Unexpected x0: {x[0]}")
@@ -688,8 +690,12 @@ class TestEGO(SMTestCase):
         )
 
         x_opt, y_opt, dnk, x_data, y_data = ego.optimize(fun=f_hv)
+        x_corr, eval_is_acting = design_space.correct_get_acting(
+            [2, -5, -5, 5, 0, 0, 0, 5]
+        )
+
         self.assertAlmostEqual(
-            f_hv(np.atleast_2d([2, -5, -5, 5, 0, 0, 0, 5])),
+            f_hv(np.atleast_2d(x_corr), eval_is_acting),
             y_opt.item(),
             delta=18,
         )
@@ -777,7 +783,7 @@ class TestEGO(SMTestCase):
             )
             return y
 
-        def f_hv(X):
+        def f_hv(X, eval_is_acting: Optional = None):
             y = []
             for x in X:
                 if x[0] == 0:
@@ -1418,6 +1424,7 @@ class TestEGO(SMTestCase):
         from smt.applications import EGO
         from smt.applications.ego import Evaluator
         from smt.surrogate_models import KRG, DesignSpace
+        from typing import Optional
 
         def function_test_1d(x):
             # function xsinx
@@ -1443,7 +1450,7 @@ class TestEGO(SMTestCase):
             Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
             """
 
-            def run(self, fun, x):
+            def run(self, fun, x, design_space: Optional = None):
                 n_thread = 5
                 # Caveat: import are made here due to SMT documentation building process
                 from multiprocessing.pool import ThreadPool

@@ -25,6 +25,7 @@ class HierarchicalNeuralNetwork(Problem):
         self.options.declare("name", "HierarchicalNeuralNetwork", types=str)
 
     def _setup(self):
+        self.design_space = None
         design_space = DesignSpace(
             [
                 OrdinalVariable(values=[1, 2, 3]),  # x0
@@ -45,7 +46,9 @@ class HierarchicalNeuralNetwork(Problem):
 
         self._set_design_space(design_space)
 
-    def _evaluate(self, x, kx=0):
+    def _evaluate(
+        self, x: np.ndarray, kx: int, eval_is_acting: np.ndarray
+    ) -> np.ndarray:
         """
         Arguments
         ---------
@@ -87,11 +90,12 @@ class HierarchicalNeuralNetwork(Problem):
                 x0 = x0_decoded[i]
                 x3 = x3_decoded[i]
                 x4 = x4_decoded[i]
-                if x0 == 1:
+                deltai = eval_is_acting[i]
+                if np.sum(deltai) == 6:
                     y.append(f1(x[1], x[2], x3, x4, x[5]))
-                elif x0 == 2:
+                elif np.sum(deltai) == 7:
                     y.append(f2(x[1], x[2], x3, x4, x[5], x[6]))
-                elif x0 == 3:
+                elif np.sum(deltai) == 8:
                     y.append(f3(x[1], x[2], x3, x4, x[5], x[6], x[7]))
                 else:
                     raise ValueError(f"Unexpected x0 value: {x0}")

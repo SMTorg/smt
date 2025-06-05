@@ -72,6 +72,30 @@ class Test(unittest.TestCase):
             LHS, ds, criterion="ese", random_state=ds.seed
         )
         xdoe = samp(n_doe)
+        x_corr, eval_is_acting = ds.correct_get_acting(xdoe)
+        y = problem(x=x_corr, kx=None, eval_is_acting=eval_is_acting)
+
+        plt.scatter(xdoe[:, 0], y)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB, "Matplotlib not installed")
+    def test_hier_goldstein(self):
+        import matplotlib.pyplot as plt
+
+        from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+        from smt.problems import HierarchicalGoldstein
+        from smt.sampling_methods import LHS
+
+        problem = HierarchicalGoldstein()
+        ds = problem.design_space
+        n_doe = 100
+        ds.seed = 42
+        samp = MixedIntegerSamplingMethod(
+            LHS, ds, criterion="ese", random_state=ds.seed
+        )
+        xdoe = samp(n_doe)
 
         y = problem(xdoe)
 
