@@ -20,7 +20,6 @@ from smt.problems.problem import Problem
 
 
 class HierarchicalGoldstein(Problem):
-
     def _setup(self):
         ds = DesignSpace(
             [

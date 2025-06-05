@@ -82,7 +82,6 @@ class Problem:
     def design_space(self, value):
         self._design_space = value
 
-
     def sample(self, n):
         x, _ = self.design_space.sample_valid_x(n)
         return x

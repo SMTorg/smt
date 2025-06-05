@@ -13,7 +13,6 @@ from smt.problems.problem import Problem
 
 
 class Branin(Problem):
-
     def _initialize(self):
         self.options.declare("ndim", 2, values=[2], types=int)
         self.options.declare("name", "Branin", types=str)
