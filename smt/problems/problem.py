@@ -18,7 +18,7 @@ from smt.utils.checks import ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
 
 
-class Problem:   
+class Problem:
     def __init__(self, **kwargs):
         """
         Constructor where values of options can be passed in.
@@ -70,14 +70,14 @@ class Problem:
         self.design_space = design_space
         self.options["ndim"] = len(design_space.design_variables)
         self.xlimits = design_space.get_num_bounds()
-       
+
     @property
     def design_space(self) -> BaseDesignSpace:
         """Gets the design space definitions as an instance of BaseDesignSpace"""
         if self._design_space is None:
             self._design_space = DesignSpace(self.xlimits)
         return self._design_space
-    
+
     @design_space.setter
     def design_space(self, value):
         self._design_space = value

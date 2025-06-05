@@ -13,14 +13,6 @@ from smt.utils.options_dictionary import OptionsDictionary
 
 
 class ReducedProblem(Problem):
-    @property
-    def design_space(self):
-        return self._design_space
-
-    @design_space.setter
-    def design_space(self, value):
-        self._design_space = value
-
     def __init__(self, problem, dims, w=0.2):
         """
         Arguments

@@ -14,13 +14,12 @@ Use of Derivatives in Surface Prediction. Technometrics, 35(3), pp. 243-255. 199
 """
 
 import numpy as np
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class WaterFlow(Problem):
-
     def _initialize(self):
         self.options.declare("name", "WaterFlow", types=str)
         self.options.declare("use_FD", False, types=bool)

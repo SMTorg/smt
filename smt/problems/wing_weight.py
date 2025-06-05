@@ -14,13 +14,12 @@ Engineering Design Via Surrogate Modelling: A Practical Guide, John Wiley & Sons
 """
 
 import numpy as np
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class WingWeight(Problem):
-
     def _initialize(self):
         self.options.declare("name", "WingWeight", types=str)
         self.options.declare("use_FD", False, types=bool)
