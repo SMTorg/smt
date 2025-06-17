@@ -10,12 +10,11 @@ from typing import Optional
 
 import numpy as np
 
-from smt.utils.checks import ensure_2d_array
-
 from smt.design_space import (
     BaseDesignSpace,
     DesignSpace,
 )
+from smt.utils.checks import ensure_2d_array
 from smt.utils.options_dictionary import OptionsDictionary
 
 
@@ -68,7 +67,7 @@ class Problem:
         Set the design space definition (best is to use the smt.design_space.DesignSpace class directly) of
         this problem from the _setup function. If used, there is no need to set xlimits.
         """
-        self._design_space = design_space
+        self.design_space = design_space
         self.options["ndim"] = len(design_space.design_variables)
         self.xlimits = design_space.get_num_bounds()
 
@@ -79,12 +78,21 @@ class Problem:
             self._design_space = DesignSpace(self.xlimits)
         return self._design_space
 
+    @design_space.setter
+    def design_space(self, value):
+        self._design_space = value
+
     def sample(self, n):
         x, _ = self.design_space.sample_valid_x(n)
         return x
 
-    def __call__(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
-        """
+    def __call__(
+        self,
+        x: np.ndarray,
+        kx: Optional[int] = None,
+        eval_is_acting: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        r"""
         Evaluate the function.
         The input vectors might be corrected if it is a hierarchical design space. You can get the corrected x and
         information about which variables are acting from: problem.eval_x and problem.eval_is_acting
@@ -96,6 +104,11 @@ class Problem:
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
             None means return function value rather than derivative.
+        eval_is_acting : ndarray of shape (n, nx) or (n,), optional
+            Boolean mask indicating for each evaluation point which design
+            variables are “active” (i.e.\ truly participating) in a
+            hierarchical design space.  If provided, `evaluate` can use this
+            to skip or correct inactive dimensions.  Default is None.
 
         Returns
         -------
@@ -112,20 +125,28 @@ class Problem:
         if kx is not None:
             if not isinstance(kx, int) or kx < 0:
                 raise TypeError("kx should be None or a non-negative int.")
-
-        # Correct the design vector and get information about which design variables are active
-        x_corr, self.eval_is_acting = self.design_space.correct_get_acting(x)
-        self.eval_x = x_corr
-
-        y = self._evaluate(x_corr, kx)
-
+        if self.design_space is not None:
+            # Correct the design vector and get information about which design variables are active
+            x_corr, self.eval_is_acting = self.design_space.correct_get_acting(x)
+            self.eval_x = x_corr
+            if np.any(self.design_space.is_conditionally_acting):
+                y = self._evaluate(x_corr, kx, self.eval_is_acting)
+            else:
+                y = self._evaluate(x_corr, kx)
+        else:
+            y = self._evaluate(x, kx)
         if self.options["return_complex"]:
             return y
         else:
             return np.real(y)
 
-    def _evaluate(self, x: np.ndarray, kx: Optional[int] = None) -> np.ndarray:
-        """
+    def _evaluate(
+        self,
+        x: np.ndarray,
+        kx: Optional[int] = None,
+        eval_is_acting: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        r"""
         Implemented by surrogate models to evaluate the function.
 
         Parameters
@@ -135,6 +156,11 @@ class Problem:
         kx : int or None
             Index of derivative (0-based) to return values with respect to.
             None means return function value rather than derivative.
+        eval_is_acting : ndarray of shape (n, nx) or (n,), optional
+            Boolean mask indicating for each evaluation point which design
+            variables are “active” (i.e.\ truly participating) in a
+            hierarchical design space.  If provided, `evaluate` can use this
+            to skip or correct inactive dimensions.  Default is None.
 
         Returns
         -------
