@@ -17,13 +17,13 @@ from scipy.linalg import solve_triangular
 from scipy.spatial.distance import cdist
 from sklearn.cross_decomposition import PLSRegression as pls
 
+from smt.design_space import ensure_design_space
 from smt.sampling_methods import LHS
 from smt.surrogate_models.krg_based import (
     KrgBased,
     MixIntKernelType,
     compute_n_param,
 )
-from smt.design_space import ensure_design_space
 from smt.utils.kriging import (
     componentwise_distance,
     compute_X_cont,

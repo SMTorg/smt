@@ -1,11 +1,10 @@
 import numpy as np
 
-from smt.surrogate_models.surrogate_model import SurrogateModel
-
 from smt.design_space import (
     BaseDesignSpace,
     ensure_design_space,
 )
+from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:
     import egobox as egx
