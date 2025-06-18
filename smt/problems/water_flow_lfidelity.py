@@ -8,9 +8,9 @@ and low-accuracy computer codes. Technometrics, 55(1), 37-46.
 """
 
 import numpy as np
-from smt.utils.misc import SCIPY_DERIVATIVE
 
 from smt.problems.problem import Problem
+from smt.utils.misc import SCIPY_DERIVATIVE
 
 
 class WaterFlowLFidelity(Problem):

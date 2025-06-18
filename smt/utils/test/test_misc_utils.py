@@ -8,15 +8,15 @@ import unittest
 
 import numpy as np
 
-from smt.utils.misc import (
-    compute_q2,
-    compute_pva,
-    compute_rmse,
-    standardization,
-)
 from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG
+from smt.utils.misc import (
+    compute_pva,
+    compute_q2,
+    compute_rmse,
+    standardization,
+)
 
 
 class TestMisc(unittest.TestCase):

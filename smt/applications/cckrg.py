@@ -14,6 +14,7 @@ J Glob Optim 88, 327–357 (2024). https://doi.org/10.1007/s10898-023-01316-6
 """
 
 from copy import deepcopy
+
 import numpy as np
 from scipy import optimize
 from scipy.stats import multivariate_normal as m_norm

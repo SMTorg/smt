@@ -12,7 +12,6 @@ from pyDOE3 import bbdesign
 from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
-
 from smt.design_space import (
     CategoricalVariable,
 )
