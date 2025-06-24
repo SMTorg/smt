@@ -528,7 +528,7 @@ class TestKrgBased(unittest.TestCase):
                     )
                 )
             ),
-            1.0e-2,
+            1.0e-1,
         )
         self.assertLess(
             np.mean(

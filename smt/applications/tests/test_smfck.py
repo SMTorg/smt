@@ -41,7 +41,7 @@ class TestSMFCK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            noise_std = 1e-6
+            noise_std = 1e-5
 
             np.random.seed(0)
             xt = sampling(self.nt)
@@ -61,7 +61,7 @@ class TestSMFCK(SMTestCase):
                 theta_bounds=[1e-6, 2.0],
                 print_global=False,
                 eval_noise=True,
-                noise0=[1e-6],
+                noise0=[1e-5],
                 noise_bounds=np.array((1e-12, 10.0)),
                 corr="squar_exp",
                 n_inducing=[x_lf.shape[0] - 1, xe.shape[0] - 1],
