@@ -3,7 +3,7 @@ Author: John T. Hwang <hwangjt@umich.edu>
         Mohamed A. Bouhlel <mbouhlel@umich.edu>
         Remi Lafage <remi.lafage@onera.fr>
         Lucas Alber <lucasd.alber@gmail.com>
-        Paul Saves <paul.saves@onera.fr>
+        Paul Saves <paul.saves@irit.fr>
 
 This package is distributed under New BSD license.
 """
