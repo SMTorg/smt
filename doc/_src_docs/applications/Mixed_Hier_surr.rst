@@ -871,6 +871,8 @@ The ``DesignSpace`` class can be used to model design variable hierarchy: condit
 A ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical variables can be build using this.
 Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section.
 
+Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext` [3]_ and also rely on `ADSG` and `ConfigSpace`. 
+
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1088,3 +1090,5 @@ References
 .. [1] Saves, P. and Diouane, Y. and Bartoli, N. and Lefebvre, T. and Morlier, J. (2022). A general square exponential kernel to handle mixed-categorical variables for Gaussian process. AIAA Aviation 2022 Forum. 
 
 .. [2] Pelamatti, J. "Mixed-variable Bayesian optimization: application to aerospace system design", PhD thesis, Université de Lille, Lille, 2020.
+
+.. [3] Saves, P., Hallé‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). “Hierarchical Modeling and Architecture Optimization: Review and Unified Framework”, arXiv:2506.22621.

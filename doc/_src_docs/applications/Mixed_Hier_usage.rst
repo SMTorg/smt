@@ -100,7 +100,7 @@ values simultaneously or for a continuous variable to be greater than another.
 This can be useful for modeling incompatibility relationships: for example, engines can't be 
 installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected.
 
-Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext`
+Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext` [3]_ and also rely on `ADSG` and `ConfigSpace`. 
 
 The hierarchy relationships are specified after instantiating the design space:
 
@@ -437,3 +437,6 @@ References
 .. [1] Saves, P. and Lafage, R. and Bartoli, N. and Diouane, Y. and Bussemaker, J. and Lefebvre, T. and Hwang, J. and Morlier, J. and Martins, J. (2024). SMT 2.0: A Surrogate Modeling Toolbox with a focus on Hierarchical and Mixed Variables Gaussian Processes. Advances in Engineering Sofware.
 
 .. [2] Hallé-Hannan, E. and  Audet, C., and Diouane, Y. and  Le Digabel, S. and Saves, P. (2024). A graph-structured distance for heterogeneous datasets with meta variable, Neurocomputing.
+
+.. [3] Saves, P., Hallé‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). “Hierarchical Modeling and Architecture Optimization: Review and Unified Framework”, arXiv:2506.22621.
+
