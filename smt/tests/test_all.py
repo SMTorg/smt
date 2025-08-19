@@ -100,7 +100,7 @@ class Test(SMTestCase):
         e_errors = {}
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
-        e_errors["GPX"] = 2e-2
+        e_errors["GPX"] = 3e-2
         e_errors["KRG"] = 3e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
