@@ -100,9 +100,9 @@ class SGP(KRG):
         )
 
         supports = self.supports
-        supports["derivatives"] = False
+        supports["derivatives"] = True
         supports["variances"] = True
-        supports["variance_derivatives"] = False
+        supports["variance_derivatives"] = True
         supports["x_hierarchy"] = False
 
         self.Z = None
@@ -361,6 +361,32 @@ class SGP(KRG):
 
         return likelihood, woodbury_vec, woodbury_inv
 
+    def _compute_K_gradient(self, x: np.ndarray, kx: int) -> np.ndarray:
+        """
+        Computes the gradient of the covariance matrix K(x, Z)
+        with respect to the kx-th dimension of x.
+
+        This is the analytical derivative for the 'squar_exp' kernel:
+        k(x, z) = σ² * exp(-θ * ||x - z||²)
+        ∂k/∂x_k = -2 * θ_k * (x_k - z_k) * k(x, z)
+        """
+        # First, compute the original covariance matrix K(x, Z)
+        K_xz = self._compute_K(x, self.Z, self.optimal_theta, self.optimal_sigma2)
+
+        # Get the specific theta for the kx-th dimension
+        theta_k = self.optimal_theta[kx]
+
+        # Get the difference for the kx-th dimension
+        # x is [n_eval, n_dim], Z is [n_inducing, n_dim]
+        # We need a matrix of shape [n_eval, n_inducing]
+        x_k = x[:, kx].reshape(-1, 1)
+        z_k = self.Z[:, kx].reshape(1, -1)
+        diff_k = x_k - z_k  # Shape: [n_eval, n_inducing]
+
+        # Compute the gradient using the analytical formula
+        grad = -2 * theta_k * diff_k * K_xz
+        return grad
+
     # overload kriging based implementation
     def _predict_values(self, x: np.ndarray, is_acting=None) -> np.ndarray:
         """
@@ -369,6 +395,18 @@ class SGP(KRG):
         Kx = self._compute_K(x, self.Z, self.optimal_theta, self.optimal_sigma2)
         mu = Kx @ self.woodbury_data["vec"]
         return mu
+
+    # overload kriging based implementation
+    def _predict_derivatives(self, x, kx):
+        """
+        Evaluates the derivatives at a set of points.
+        """
+        # Use the new helper to get the gradient of the covariance matrix
+        dKx_dx = self._compute_K_gradient(x, kx)
+
+        # Compute the gradient of the prediction: g = dK(x,Z)/dx * alpha
+        g = dKx_dx @ self.woodbury_data["vec"]
+        return g
 
     # overload kriging based implementation
     def _predict_variances(
@@ -383,3 +421,25 @@ class SGP(KRG):
         var = np.clip(var, 1e-15, np.inf)
         var += self.optimal_noise
         return var
+
+    # overload kriging based implementation
+    def _predict_variance_derivatives(self, x: np.ndarray, kx: int):
+        """
+        Provide the derivatives of the variance of the model at a set of points
+        """
+        # The derivative of the prior variance k(x*, x*) is zero for squar_exp.
+        # So we only need the derivative of the uncertainty reduction term:
+        # d/dx(k(x,Z) * K_inv * k(Z,x)) = 2 * (dK(x,Z)/dx) * K_inv * k(Z,x)
+
+        # Get the gradient of the kernel vector k(x, Z)
+        dKx_dx = self._compute_K_gradient(x, kx)
+
+        # Get the original kernel vector k(x, Z)
+        Kx = self._compute_K(x, self.Z, self.optimal_theta, self.optimal_sigma2)
+
+        # Compute the gradient of the variance
+        term1 = np.dot(dKx_dx, self.woodbury_data["inv"])  # (dK/dx) * K_inv
+        term2 = np.sum(term1 * Kx, axis=1)  # Element-wise product and sum
+        grad_var = -2 * term2[:, np.newaxis]
+
+        return grad_var
