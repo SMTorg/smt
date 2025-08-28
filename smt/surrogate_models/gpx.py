@@ -137,10 +137,10 @@ class GPX(SurrogateModel):
         self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
     def _predict_values(self, x):
-        return self._gpx.predict(x)
+        return self._gpx.predict(x).reshape(-1, 1)
 
     def _predict_variances(self, x):
-        return self._gpx.predict_var(x)
+        return self._gpx.predict_var(x).reshape(-1, 1)
 
     def _predict_derivatives(self, x, kx):
         return self._gpx.predict_gradients(x)[:, kx : kx + 1]
