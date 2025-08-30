@@ -202,7 +202,7 @@ class MGP(KrgBased):
         nx = self.nx
         if n_features < self.nx:
             nx = self.options["n_comp"]
-        check_nx(nx, x)
+        check_nx(self, nx, x)
 
     def _reduced_log_prior(self, theta, grad=False, hessian=False):
         """
