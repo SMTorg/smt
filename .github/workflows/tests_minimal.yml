@@ -20,6 +20,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install numpy cython
+        pip install scikit-learn
         pip install -e .
 
     - name: Test with pytest

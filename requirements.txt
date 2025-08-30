@@ -2,7 +2,7 @@ Cython
 packaging
 numpy
 scipy
-scikit-learn
+scikit-learn >=1.4
 pyDOE3
 numba           # JIT compiler
 matplotlib      # used in examples and tests
