@@ -199,11 +199,10 @@ class MGP(KrgBased):
 
     def _check_xdim(self, x):
         _, n_features = x.shape
-        nx = self.nx
+        nx = np.copy(self.nx)
         if n_features < self.nx:
             nx = self.options["n_comp"]
-        self.nx = nx
-        check_nx(self, x)
+        check_nx(self, x, nx)
 
     def _reduced_log_prior(self, theta, grad=False, hessian=False):
         """
