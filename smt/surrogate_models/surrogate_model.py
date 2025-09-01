@@ -572,7 +572,7 @@ class SurrogateModel(metaclass=ABCMeta):
     def _check_xdim(self, x):
         """Raise a ValueError if x dimension is not consistent with surrogate model training data dimension.
         This method is used as a guard in preamble of predict methods"""
-        check_nx(self, self.nx, x)
+        check_nx(self, x)
 
     def save(self, filename):
         """

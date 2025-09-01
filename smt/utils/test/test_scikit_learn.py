@@ -36,7 +36,7 @@ class TestSklearnAdapter(unittest.TestCase):
     def test_get_set_params(self):
         model = ScikitLearnAdapter(KRG, print_global=False, theta0=[2.0])
         params = dict(model.get_params().pop("model_cls").__dict__)
-        #        model.fit(self.X, self.y)
+        model.fit(self.X, self.y)
         self.assertIn("theta0", params)
         # Change a param and ensure it takes effect
         self.assertEqual(
