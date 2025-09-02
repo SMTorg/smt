@@ -199,7 +199,7 @@ class MGP(KrgBased):
 
     def _check_xdim(self, x):
         _, n_features = x.shape
-        nx = np.copy(self.nx)
+        nx = self.nx
         if n_features < self.nx:
             nx = self.options["n_comp"]
         check_nx(self, x, nx)
