@@ -1,4 +1,3 @@
-import os
 import unittest
 
 import numpy as np
@@ -34,15 +33,14 @@ class Test(unittest.TestCase):
         self.assertTrue(np.allclose(doe1, doe3))
         self.assertTrue(np.allclose(doe2, doe4))
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_expand_lhs(self):
         import numpy as np
 
-        num = 100
-        new_list = np.linspace(1, 5, 5) * num
+        num = 10
+        new_list = np.linspace(1, 5, 3) * num
 
         for i in range(len(new_list)):
-            xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [0.0, 3.0], [1.0, 5.0]])
+            xlimits = np.array([[0.0, 4.0], [0.0, 3.0], [1.0, 5.0]])
             sampling = LHS(xlimits=xlimits, criterion="ese")
 
             x = sampling(num)
