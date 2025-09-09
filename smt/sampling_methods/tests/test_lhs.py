@@ -77,6 +77,35 @@ class Test(unittest.TestCase):
                     ),
                 )
 
+    def test_expand_lhs_reproducibility(self):
+        num = 5
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+
+        x = sampling(num)
+        new = 10
+
+        x_new0 = sampling.expand_lhs(x, new)
+
+        x_new1 = sampling.expand_lhs(x, new, seed=41)
+        np.testing.assert_raises(
+            AssertionError, np.testing.assert_array_equal, x_new0, x_new1
+        )
+
+        x_new2 = sampling.expand_lhs(x, new, seed=42)
+        np.testing.assert_raises(
+            AssertionError, np.testing.assert_array_equal, x_new1, x_new2
+        )
+
+        x_new3 = sampling.expand_lhs(x, new, seed=42)
+        np.testing.assert_allclose(x_new2, x_new3)
+
+        x_new4 = sampling.expand_lhs(x, new, seed=41)
+        np.testing.assert_raises(
+            AssertionError, np.testing.assert_array_equal, x_new3, x_new4
+        )
+        np.testing.assert_allclose(x_new1, x_new4)
+
 
 if __name__ == "__main__":
     unittest.main()

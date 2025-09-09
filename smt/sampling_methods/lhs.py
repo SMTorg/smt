@@ -333,7 +333,7 @@ class LHS(ScaledSamplingMethod):
         )
         return P
 
-    def expand_lhs(self, x, n_points, method="basic"):
+    def expand_lhs(self, x, n_points, method="basic", seed=None):
         """
         Given a Latin Hypercube Sample (LHS) "x", returns an expanded LHS
         by adding "n_points" new points.
@@ -348,6 +348,8 @@ class LHS(ScaledSamplingMethod):
             Methodoly for the construction of the expanded LHS.
             The default is "basic". The other option is "ese" to use the
             ese optimization
+        seed : int, optional
+            A seed to allow LHS expansion reproducibility
 
         Returns
         -------
@@ -395,7 +397,10 @@ class LHS(ScaledSamplingMethod):
             ]
 
         # Sampling of the new subspace
-        sampling_new = LHS(xlimits=np.array([[0.0, 1.0]] * len(xlimits)))
+        sampling_new = LHS(
+            xlimits=np.array([[0.0, 1.0]] * len(xlimits)),
+            random_state=seed,
+        )
         x_subspace = sampling_new(n_points)
 
         column_index = 0
@@ -409,14 +414,17 @@ class LHS(ScaledSamplingMethod):
 
         H = np.zeros_like(sorted_arr)
         for j in range(len(xlimits)):
-            order = np.random.permutation(len(sorted_arr))
+            order = np.random.default_rng(seed=seed).permutation(len(sorted_arr))
             H[:, j] = sorted_arr[order, j]
 
         x_new = np.concatenate((x, H), axis=0)
 
         if method == "ese":
             # Sampling of the new subspace
-            sampling_new = LHS(xlimits=xlimits, criterion="ese")
+            new_seed = (
+                seed + 1 if seed else None
+            )  # To avoid same sampling as above when seeded
+            sampling_new = LHS(xlimits=xlimits, criterion="ese", random_state=new_seed)
             x_new = sampling_new._ese(
                 len(x_new), len(x_new), fixed_index=np.arange(0, len(x), 1), P0=x_new
             )
