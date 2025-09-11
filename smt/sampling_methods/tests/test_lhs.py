@@ -84,25 +84,46 @@ class Test(unittest.TestCase):
         new = 10
 
         x_new0 = sampling.expand_lhs(x, new)
+        print(x_new0)
 
-        x_new1 = sampling.expand_lhs(x, new, seed=41)
+        # Test seeded expand against no seed expand
+        x_new1 = sampling.expand_lhs(x, new, method="ese", seed=41)
+        print(x_new1)
         np.testing.assert_raises(
             AssertionError, np.testing.assert_array_equal, x_new0, x_new1
         )
 
-        x_new2 = sampling.expand_lhs(x, new, seed=42)
+        # Test seeded expand against another differently seeded expand
+        x_new2 = sampling.expand_lhs(x, new, method="ese", seed=42)
+        print(x_new2)
         np.testing.assert_raises(
             AssertionError, np.testing.assert_array_equal, x_new1, x_new2
         )
 
-        x_new3 = sampling.expand_lhs(x, new, seed=42)
-        np.testing.assert_allclose(x_new2, x_new3)
+        # Test expand reproducibility with same seed
+        x_new3 = sampling.expand_lhs(x, new, method="ese", seed=42)
+        print(x_new3)
+        np.testing.assert_array_equal(x_new2, x_new3)
 
-        x_new4 = sampling.expand_lhs(x, new, seed=41)
+        # Test seeded expand with initial seed
+        x_new4 = sampling.expand_lhs(x, new, method="ese", seed=41)
+        print(x_new4)
         np.testing.assert_raises(
             AssertionError, np.testing.assert_array_equal, x_new3, x_new4
         )
-        np.testing.assert_allclose(x_new1, x_new4)
+        np.testing.assert_array_equal(x_new1, x_new4)
+
+        # Test basic expand
+        x_new5 = sampling.expand_lhs(x, new, seed=41)
+        print(x_new5)
+        np.testing.assert_raises(
+            AssertionError, np.testing.assert_array_equal, x_new4, x_new5
+        )
+
+        # Test basic expand reproducibility
+        x_new6 = sampling.expand_lhs(x, new, seed=41)
+        print(x_new6)
+        np.testing.assert_array_equal(x_new5, x_new6)
 
 
 if __name__ == "__main__":

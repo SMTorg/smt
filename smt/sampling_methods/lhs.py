@@ -314,9 +314,6 @@ class LHS(ScaledSamplingMethod):
         # Parameters of maximinESE procedure
         if len(fixed_index) == 0:
             P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
-        else:
-            P0 = P0
-            self.random_state = np.random.RandomState()
         J = 20
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)
