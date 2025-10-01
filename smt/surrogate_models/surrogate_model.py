@@ -117,6 +117,8 @@ class SurrogateModel(metaclass=ABCMeta):
             An optional label for the group of training points being set.
             This is only used in special situations (e.g., multi-fidelity applications).
         """
+        if yt.shape == () and yt.item() is None:
+            raise ValueError("y should be a 1d array")
         xt = ensure_2d_array(xt, "xt")
         yt = ensure_2d_array(yt, "yt")
 
@@ -570,7 +572,7 @@ class SurrogateModel(metaclass=ABCMeta):
     def _check_xdim(self, x):
         """Raise a ValueError if x dimension is not consistent with surrogate model training data dimension.
         This method is used as a guard in preamble of predict methods"""
-        check_nx(self.nx, x)
+        check_nx(self, x)
 
     def save(self, filename):
         """

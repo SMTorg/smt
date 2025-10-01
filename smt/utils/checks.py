@@ -25,11 +25,16 @@ def check_support(sm, name, fail=False):
         raise NotImplementedError("{} does not support {}".format(class_name, name))
 
 
-def check_nx(nx, x):
+def check_nx(sm, x, nx=None):
+    if nx is None:
+        nx = sm.nx
+    class_name = sm.__class__.__name__
     if x.shape[1] != nx:
         if nx == 1:
             raise ValueError("x should have shape [:, 1] or [:]")
         else:
             raise ValueError(
-                "x should have shape [:, {}] and not {}".format(nx, x.shape)
+                "X has {} features, but ".format(x.shape[1])
+                + class_name
+                + " is expecting {} features as input".format(nx)
             )
