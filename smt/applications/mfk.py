@@ -165,7 +165,7 @@ class MFK(KrgBased):
             True,
             types=bool,
             values=(True, False),
-            desc="If True, the variance cotribution of lower fidelity levels are considered",
+            desc="If True, the variance contribution of lower fidelity levels are considered",
         )
         self.name = "MFK"
 

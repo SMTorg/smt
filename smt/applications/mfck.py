@@ -32,7 +32,7 @@ class MFCK(KrgBased):
 
         declare(
             "rho0",
-            1.0,
+            2.0,
             types=(float),
             desc="Initial rho for the autoregressive model , \
                   (scalar factor between two consecutive fidelities, \
@@ -40,7 +40,7 @@ class MFCK(KrgBased):
         )
         declare(
             "rho_bounds",
-            [-5.0, 5.0],
+            [1.5, 3.0],
             types=(list, np.ndarray),
             desc="Bounds for the rho parameter used in the autoregressive model",
         )
@@ -194,32 +194,32 @@ class MFCK(KrgBased):
                     )
 
         if self.options["eval_noise"]:
-            theta_ini = np.hstack(
-                [theta_ini, np.full(self.lvl, self.options["noise0"][0])]
-            )
+            if self.options["use_het_noise"]:
+                pass
+            else:
+                theta_ini = np.hstack(
+                    [theta_ini, np.full(self.lvl, self.options["noise0"][0])]
+                )
 
-            lower_bounds = np.hstack(
-                [lower_bounds, np.full(self.lvl, self.options["noise_bounds"][0])]
-            )
+                lower_bounds = np.hstack(
+                    [lower_bounds, np.full(self.lvl, self.options["noise_bounds"][0])]
+                )
 
-            upper_bounds = np.hstack(
-                [upper_bounds, np.full(self.lvl, self.options["noise_bounds"][1])]
-            )
+                upper_bounds = np.hstack(
+                    [upper_bounds, np.full(self.lvl, self.options["noise_bounds"][1])]
+                )
+                theta_ini[-self.lvl : :] = np.log10(theta_ini[-self.lvl : :])
+                upper_bounds[-self.lvl : :] = np.log10(upper_bounds[-self.lvl : :])
+                lower_bounds[-self.lvl : :] = np.log10(lower_bounds[-self.lvl : :])
+
         theta_ini = theta_ini[:].T
-
-        if self.options["eval_noise"]:
-            theta_ini[-self.lvl : :] = np.log10(theta_ini[-self.lvl : :])
-            upper_bounds[-self.lvl : :] = np.log10(upper_bounds[-self.lvl : :])
-            lower_bounds[-self.lvl : :] = np.log10(lower_bounds[-self.lvl : :])
-
-        # print("Bounds",upper_bounds,lower_bounds)
-
-        # print("X0",theta_ini)
-
         x_opt = theta_ini
 
+        self.upper_bounds = upper_bounds
+        self.lower_bounds = lower_bounds
+
         if self.options["hyper_opt"] == "Cobyla":
-            if self.options["n_start"] > 1:
+            if self.options["n_start"] >= 1:
                 sampling = LHS(
                     xlimits=np.stack((lower_bounds, upper_bounds), axis=1),
                     criterion="ese",
@@ -233,7 +233,6 @@ class MFCK(KrgBased):
             for i in range(len(theta_ini)):
                 constraints.append(lambda theta0, i=i: theta0[i] - lower_bounds[i])
                 constraints.append(lambda theta0, i=i: upper_bounds[i] - theta0[i])
-
             for j in range(self.options["n_start"]):
                 optimal_theta_res_loop = optimize.minimize(
                     self.neg_log_likelihood_scipy,
@@ -276,7 +275,10 @@ class MFCK(KrgBased):
             )
 
         if self.options["eval_noise"]:
-            x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
+            if self.options["use_het_noise"]:
+                x_opt1 = np.array(x_opt, copy=True)
+            else:
+                x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
         else:
             x_opt1 = np.array(x_opt, copy=True)
 
@@ -293,11 +295,15 @@ class MFCK(KrgBased):
             x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
 
         if self.options["eval_noise"]:
-            x_opt = np.array(x_opt, copy=True)
+            if self.options["use_het_noise"]:
+                x_opt = np.array(x_opt, copy=True)
+                x_opt = x_opt1
+            else:
+                x_opt = np.array(x_opt, copy=True)
 
-            x_opt[-self.lvl : :] = 10 ** x_opt[-self.lvl : :]
+                x_opt[-self.lvl : :] = 10 ** x_opt[-self.lvl : :]
 
-            x_opt[: -self.lvl] = x_opt1
+                x_opt[: -self.lvl] = x_opt1
         else:
             x_opt = np.array(x_opt, copy=True)
             x_opt = x_opt1
@@ -357,6 +363,44 @@ class MFCK(KrgBased):
 
         return cov_value
 
+    def compute_diag_K(self, x, xp, L, Lp, param):
+        """
+        Calculation of the diagonal of K using the autoregressive formulation.
+        Parmeters:
+        - x: First input for the covariannce (np.ndarray)
+        - xp: Second input for the covariannce (np.ndarray)
+        - L: Level index of the first output (scalar)
+        - Lp: Level index of the second output (scalar)
+        - param: Set of Hyper-parameters (vector)
+        Returns:
+        - Diagonal variance for cov(y_l(x), y_{l'}(x')) (np.ndarray)
+        """
+        v_value = 0.0
+
+        sigma_0 = param[0]
+
+        sigmas_gamma = param[self.nx + 1 :: self.nx + 2]
+
+        # ls_gamma = param[3::3]
+        rho_values = param[2 + 2 * self.nx :: self.nx + 2]
+
+        # Sum of j=0 until l_^prime
+        for j in range(Lp + 1):
+            eta_j_l = self.eta(j, L, rho_values)
+            eta_j_lp = self.eta(j, Lp, rho_values)
+
+            if j == 0:
+                # Cov(γ_j(x), γ_j(x')) using the kernel for K_00
+                variance = np.full(x.shape[0], sigma_0)
+
+            else:
+                # Cov(γ_j(x), γ_j(x')) using the kernel
+                variance = np.full(x.shape[0], sigmas_gamma[j - 1])
+            # Add to the value of the covariance
+            v_value += eta_j_l * eta_j_lp * variance
+
+        return v_value
+
     def predict_all_levels(self, x):
         """
         Generalized prediction function for the multi-fidelity co-Kriging
@@ -395,16 +439,33 @@ class MFCK(KrgBased):
             covariances.append(k_xx - np.dot(beta1.T, beta1))
         else:
             if self.options["eval_noise"]:
-                self.K = self.compute_blockwise_K(self.optimal_theta[: -self.lvl])
+                if self.options["use_het_noise"]:
+                    self.K = self.compute_blockwise_K(
+                        self.X_norma_all, self.X_norma_all, self.optimal_theta
+                    )
+                    noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
+                        self.K.shape[0]
+                    )
+                    L = np.linalg.cholesky(self.K + noise_matrix)
+                else:
+                    self.K = self.compute_blockwise_K(
+                        self.X_norma_all,
+                        self.X_norma_all,
+                        self.optimal_theta[: -self.lvl],
+                    )
 
-                noises = self.optimal_theta[-self.lvl : :]
-                varis = []
-                for i, v in enumerate(noises):
-                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
-                noise_matrix = varis * np.eye(self.K.shape[0])
-                L = np.linalg.cholesky(self.K + noise_matrix)
+                    noises = self.optimal_theta[-self.lvl : :]
+                    varis = []
+                    for i, v in enumerate(noises):
+                        varis = np.hstack(
+                            [varis, np.full(self.X[i].shape[0], noises[i])]
+                        )
+                    noise_matrix = varis * np.eye(self.K.shape[0])
+                    L = np.linalg.cholesky(self.K + noise_matrix)
             else:
-                self.K = self.compute_blockwise_K(self.optimal_theta)
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all, self.X_norma_all, self.optimal_theta
+                )
                 L = np.linalg.cholesky(
                     self.K + self.options["nugget"] * np.eye(self.K.shape[0])
                 )
@@ -412,24 +473,38 @@ class MFCK(KrgBased):
             k_xX = []
             for ind in range(self.lvl):
                 if self.options["eval_noise"]:
-                    k_xx = self.compute_cross_K(
-                        x, x, ind, ind, self.optimal_theta[: -self.lvl]
-                    )
+                    if self.options["use_het_noise"]:
+                        k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
+                    else:
+                        k_xx = self.compute_diag_K(
+                            x, x, ind, ind, self.optimal_theta[: -self.lvl]
+                        )
                 else:
-                    k_xx = self.compute_cross_K(x, x, ind, ind, self.optimal_theta)
+                    k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
 
                 for j in range(self.lvl):
                     if ind >= j:
                         if self.options["eval_noise"]:
-                            k_xX.append(
-                                self.compute_cross_K(
-                                    self.X_norma_all[j],
-                                    x,
-                                    ind,
-                                    j,
-                                    self.optimal_theta[: -self.lvl],
+                            if self.options["use_het_noise"]:
+                                k_xX.append(
+                                    self.compute_cross_K(
+                                        self.X_norma_all[j],
+                                        x,
+                                        ind,
+                                        j,
+                                        self.optimal_theta,
+                                    )
                                 )
-                            )
+                            else:
+                                k_xX.append(
+                                    self.compute_cross_K(
+                                        self.X_norma_all[j],
+                                        x,
+                                        ind,
+                                        j,
+                                        self.optimal_theta[: -self.lvl],
+                                    )
+                                )
                         else:
                             k_xX.append(
                                 self.compute_cross_K(
@@ -438,15 +513,26 @@ class MFCK(KrgBased):
                             )
                     else:
                         if self.options["eval_noise"]:
-                            k_xX.append(
-                                self.compute_cross_K(
-                                    self.X_norma_all[j],
-                                    x,
-                                    j,
-                                    ind,
-                                    self.optimal_theta[: -self.lvl],
+                            if self.options["use_het_noise"]:
+                                k_xX.append(
+                                    self.compute_cross_K(
+                                        self.X_norma_all[j],
+                                        x,
+                                        j,
+                                        ind,
+                                        self.optimal_theta,
+                                    )
                                 )
-                            )
+                            else:
+                                k_xX.append(
+                                    self.compute_cross_K(
+                                        self.X_norma_all[j],
+                                        x,
+                                        j,
+                                        ind,
+                                        self.optimal_theta[: -self.lvl],
+                                    )
+                                )
                         else:
                             k_xX.append(
                                 self.compute_cross_K(
@@ -455,21 +541,24 @@ class MFCK(KrgBased):
                             )
 
                 beta1 = solve_triangular(L, np.vstack(k_xX), lower=True)
+
                 alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
                 means.append(self.y_std * np.dot(beta1.T, alpha1) + self.y_mean)
                 if self.options["eval_noise"]:
-                    covariances.append(
-                        k_xx
-                        + noises[ind] * np.eye(k_xx.shape[0])
-                        - np.dot(beta1.T, beta1)
-                    )
+                    if self.options["use_het_noise"]:
+                        covariances.append(k_xx - np.diag(np.dot(beta1.T, beta1)))
+                    else:
+                        covariances.append(
+                            k_xx
+                            + np.diag(
+                                noises[ind] * np.eye(k_xx.shape[0])
+                                - np.diag(np.dot(beta1.T, beta1))
+                            )
+                        )
                 else:
-                    covariances.append(k_xx - np.dot(beta1.T, beta1))
-
-                covariances[ind] = np.diag(covariances[ind]) * self.y_std**2
+                    covariances.append(k_xx - np.diag(np.dot(beta1.T, beta1)))
+                # covariances[ind] = np.diag(covariances[ind]) * self.y_std**2
                 k_xX.clear()
-        # if self.options["eval_noise"]:
-        # print("Optimal noise",noises*self.y_std**2)
         return means, covariances
 
     def predict_values(self, x, is_acting=None):
@@ -521,23 +610,37 @@ class MFCK(KrgBased):
             reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
         else:
             if self.options["eval_noise"]:
-                self.K = self.compute_blockwise_K(param[: -self.lvl])
-                noises = param[-self.lvl : :]
-                varis = []
-                for i, v in enumerate(noises):
-                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
-                noise_matrix = varis * np.eye(self.K.shape[0])
+                if self.options["use_het_noise"]:
+                    self.K = self.compute_blockwise_K(
+                        self.X_norma_all, self.X_norma_all, param
+                    )
+                    noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
+                        self.K.shape[0]
+                    )
+                else:
+                    self.K = self.compute_blockwise_K(
+                        self.X_norma_all, self.X_norma_all, param[: -self.lvl]
+                    )
+                    noises = param[-self.lvl : :]
+                    varis = []
+                    for i, v in enumerate(noises):
+                        varis = np.hstack(
+                            [varis, np.full(self.X[i].shape[0], noises[i])]
+                        )
+                    noise_matrix = varis * np.eye(self.K.shape[0])
 
                 reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
                 L = np.linalg.cholesky(self.K + noise_matrix)
             else:
-                self.K = self.compute_blockwise_K(param)
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all, self.X_norma_all, param
+                )
                 reg_term = self.options["lambda"] * np.sum(np.power(param, 2))
                 L = np.linalg.cholesky(
                     self.K + self.options["nugget"] * np.eye(self.K.shape[0])
                 )
         beta = solve_triangular(L, self.y_norma_all, lower=True)
-        NMLL = np.sum(np.log(np.diag(L))) + np.dot(beta.T, beta) + reg_term
+        NMLL = 2 * np.sum(np.log(np.diag(L))) + np.dot(beta.T, beta) + reg_term
         (nmll,) = NMLL[0]
         return nmll
 
@@ -546,7 +649,10 @@ class MFCK(KrgBased):
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
         if self.options["eval_noise"]:
-            param1 = np.array(param[: -self.lvl], copy=True)
+            if self.options["use_het_noise"]:
+                param1 = np.array(param, copy=True)
+            else:
+                param1 = np.array(param[: -self.lvl], copy=True)
         else:
             param1 = np.array(param, copy=True)
 
@@ -562,11 +668,13 @@ class MFCK(KrgBased):
             param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
 
         if self.options["eval_noise"]:
-            param = np.array(param, copy=True)
-
-            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-
-            param[: -self.lvl] = param1
+            if self.options["use_het_noise"]:
+                param = np.array(param, copy=True)
+                param = param1
+            else:
+                param = np.array(param, copy=True)
+                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
+                param[: -self.lvl] = param1
         else:
             param = np.array(param, copy=True)
             param = param1
@@ -578,7 +686,10 @@ class MFCK(KrgBased):
         Likelihood for nlopt optimizers
         """
         if self.options["eval_noise"]:
-            param1 = np.array(param[: -self.lvl], copy=True)
+            if self.options["use_het_noise"]:
+                param1 = np.array(param, copy=True)
+            else:
+                param1 = np.array(param[: -self.lvl], copy=True)
         else:
             param1 = np.array(param, copy=True)
 
@@ -594,39 +705,49 @@ class MFCK(KrgBased):
             param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
 
         if self.options["eval_noise"]:
-            param = np.array(param, copy=True)
-            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-            param[: -self.lvl] = param1
+            if self.options["use_het_noise"]:
+                param = np.array(param, copy=True)
+                param = param1
+            else:
+                param = np.array(param, copy=True)
+                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
+                param[: -self.lvl] = param1
         else:
             param = np.array(param, copy=True)
             param = param1
         return self.neg_log_likelihood(param, grad)
 
-    def compute_blockwise_K(self, param):
+    def compute_blockwise_K(self, X, Xprime, param):
         K_block = {}
-        n = self.y.shape[0]
+        n = 0
+        nprime = 0
+        for i in X:
+            n = n + i.shape[0]
+
+        for i in Xprime:
+            nprime = nprime + i.shape[0]
         for jp in range(self.lvl):
             for j in range(self.lvl):
                 if jp >= j:
                     K_block[str(jp) + str(j)] = self.compute_cross_K(
-                        self.X_norma_all[j], self.X_norma_all[jp], jp, j, param
+                        X[j], Xprime[jp], jp, j, param
                     )
-
-        K = np.zeros((n, n))
+                else:
+                    K_block[str(jp) + str(j)] = self.compute_cross_K(
+                        X[j], Xprime[jp], j, jp, param
+                    )
+        K = np.zeros((n, nprime))
         row_init, col_init = 0, 0
         for j in range(self.lvl):
-            col_init = row_init
-            for jp in range(j, self.lvl):
+            col_init = 0
+            for jp in range(self.lvl):
                 r, c = K_block[str(jp) + str(j)].shape
                 K[row_init : row_init + r, col_init : col_init + c] = K_block[
                     str(jp) + str(j)
                 ]
-                if j != jp:
-                    K[col_init : col_init + c, row_init : row_init + r] = K_block[
-                        str(jp) + str(j)
-                    ].T
                 col_init += c
             row_init += r
+
         return K
 
     def _compute_K(self, A: np.ndarray, B: np.ndarray, param):
