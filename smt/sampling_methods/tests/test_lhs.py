@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
     def test_random_state(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         num = 10
-        sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=42)
         doe1 = sampling(num)
         doe2 = sampling(num)
 
@@ -25,9 +25,7 @@ class Test(unittest.TestCase):
         self.assertFalse(np.allclose(doe1, doe2))
 
         # Another LHS with same initialization should generate the same sequence of does
-        sampling = LHS(
-            xlimits=xlimits, criterion="ese", random_state=np.random.RandomState(42)
-        )
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=42)
         doe3 = sampling(num)
         doe4 = sampling(num)
         self.assertTrue(np.allclose(doe1, doe3))
@@ -78,7 +76,7 @@ class Test(unittest.TestCase):
     def test_expand_lhs_reproducibility(self):
         num = 5
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-        sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=42)
 
         x = sampling(num)
         new = 10
