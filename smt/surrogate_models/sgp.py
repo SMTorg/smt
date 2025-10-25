@@ -71,10 +71,8 @@ class SGP(KRG):
         )
         declare(
             "nugget",
-            1000.0
-            * np.finfo(
-                np.double
-            ).eps,  # slightly increased compared to kriging-based one
+            10000.0
+            * np.finfo(np.double).eps,  # increased compared to kriging-based one
             types=(float),
             desc="a jitter for numerical stability",
         )
@@ -127,7 +125,7 @@ class SGP(KRG):
         X = self.training_points[None][0][0]  # [nt,nx]
         y = self.training_points[None][0][1]
         if Z is None:
-            rng = np.random.default_rng(seed=self.options["random_state"])
+            rng = np.random.default_rng(seed=self.options["seed"])
             self.nz = self.options["n_inducing"]
             if self.options["inducing_method"] == "random":
                 # We pick inducing points among training data
@@ -137,7 +135,8 @@ class SGP(KRG):
                 # We pick inducing points as kmeans centroids
                 data = np.hstack((X, y))
                 if Version(SCIPY_VERSION) >= Version("1.15"):
-                    self.Z = kmeans(data, self.nz, rng=rng)[0][:, :-1]
+                    self.Z = kmeans(data, self.nz, seed=rng)[0][:, :-1]
+                    self.Z = kmeans(data, self.nz, seed=rng)[0][:, :-1]
                 else:
                     self.Z = kmeans(data, self.nz, seed=rng)[0][:, :-1]
             else:

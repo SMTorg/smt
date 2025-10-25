@@ -68,7 +68,7 @@ class TestGPX(unittest.TestCase):
         num = 30
         problem = Sphere(ndim=ndim)
         xlimits = problem.xlimits
-        sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=42)
 
         xt = sampling(num)
         yt = problem(xt)

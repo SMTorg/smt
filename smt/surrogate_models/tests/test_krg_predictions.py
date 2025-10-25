@@ -30,7 +30,7 @@ class Test(SMTestCase):
             return y
 
         xlimits = np.array([[-5, 10], [-5, 10]])
-        self.sampling = LHS(xlimits=xlimits, random_state=42)
+        self.sampling = LHS(xlimits=xlimits, seed=41)
         self.xt = self.sampling(12)
         self.yt = pb(self.xt)
         self.yt_squar_sin_exp = pb_for_sin_squar_exp(self.xt)

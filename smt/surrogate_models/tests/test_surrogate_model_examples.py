@@ -397,7 +397,7 @@ class Test(unittest.TestCase):
         prob = TensorProduct(ndim=ndim, func="exp")
 
         sm = KPLS(eval_n_comp=True)
-        samp = LHS(xlimits=prob.xlimits, random_state=42)
+        samp = LHS(xlimits=prob.xlimits, seed=42)
         np.random.seed(0)
         xt = samp(50)
         yt = prob(xt)
@@ -620,9 +620,7 @@ class Test(unittest.TestCase):
             )
             return res
 
-        sampling = LHS(
-            xlimits=np.asarray([(-1, 1)] * dim), criterion="m", random_state=42
-        )
+        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m", seed=42)
         xt = sampling(8)
         yt = np.atleast_2d(fun(xt)).T
 

@@ -499,7 +499,7 @@ class TestKrgBased(unittest.TestCase):
         sm = SGP(
             n_start=25,
             hyper_opt="Cobyla",
-            random_state=0,  # np.random.RandomState(0) works only with numpy 2.2+
+            seed=0,
             inducing_method="kmeans",
         )
         sm.set_training_values(xt, yt)
@@ -507,7 +507,7 @@ class TestKrgBased(unittest.TestCase):
         # predictions
         sm.predict_values(x)  # predictive mean
         sm.predict_variances(x)  # predictive variance
-        sm = KRG(n_start=25, hyper_opt="Cobyla", random_state=np.random.RandomState(0))
+        sm = KRG(n_start=25, hyper_opt="Cobyla", seed=0)
         sm.set_training_values(xt, yt)
         sm.train()
         # predictions
@@ -554,15 +554,15 @@ class TestKrgBased(unittest.TestCase):
         fun = Rosenbrock(ndim=ndim)
 
         # Construction of the DOE
-        # in order to have the always same LHS points, random_state=1
-        sampling = LHS(xlimits=fun.xlimits, criterion="ese", random_state=1)
+        # in order to have the always same LHS points, seed=1
+        sampling = LHS(xlimits=fun.xlimits, criterion="ese", seed=1)
         xt = sampling(ndoe)
         # Compute the outputs
         yt = fun(xt)
 
         # Construction of the validation points
         ntest = 200  # 500
-        sampling = LHS(xlimits=fun.xlimits, criterion="ese", random_state=1)
+        sampling = LHS(xlimits=fun.xlimits, criterion="ese", seed=1)
         xtest = sampling(ntest)
         ytest = fun(xtest)
 
