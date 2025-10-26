@@ -18,7 +18,6 @@ class Test(SMTestCase):
         yt = np.array([0.0, 1.0, 1.5, 1.1, 1.0])
 
         # Adding noisy repetitions
-        np.random.seed(6)
         yt_std_rand = np.std(yt) * np.random.uniform(size=yt.shape)
         xt_full = np.array(3 * xt.tolist())
         yt_full = np.concatenate((yt, yt + 0.2 * yt_std_rand, yt - 0.2 * yt_std_rand))

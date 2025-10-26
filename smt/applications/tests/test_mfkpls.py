@@ -44,7 +44,6 @@ class TestMFKPLS(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -52,7 +51,6 @@ class TestMFKPLS(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
@@ -92,9 +90,7 @@ class TestMFKPLS(SMTestCase):
         prob = Sphere(ndim=self.ndim)
         sampling = LHS(xlimits=prob.xlimits)
 
-        # Modif MM
         nt = 100
-        np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
         dyt = {}
@@ -104,7 +100,6 @@ class TestMFKPLS(SMTestCase):
         y_lf = 2 * prob(xt) + 2
         x_lf = deepcopy(xt)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
 
         dye = {}

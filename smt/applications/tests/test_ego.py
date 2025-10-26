@@ -280,6 +280,7 @@ class TestEGO(SMTestCase):
             n_doe=5,
             surrogate=KRG(design_space=design_space, print_global=False, noise0=noise0),
             is_ri=True,
+            seed=42,
         )
 
         x_opt, y_opt, _, _, _ = ego.optimize(fun=fun)

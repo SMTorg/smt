@@ -105,13 +105,13 @@ class Test(SMTestCase):
         self.n_modes_test = 10
 
         xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=self.seed)
+        sampling = LHS(xlimits=xlimits, seed=self.seed)
         self.nt = nt
         self.xt = sampling(self.nt)
         self.nn = 15
         self.xn = sampling(self.nn)
         self.nv = nv
-        sampling_new = LHS(xlimits=xlimits, random_state=self.seed + 1)
+        sampling_new = LHS(xlimits=xlimits, seed=self.seed + 1)
         self.xv = sampling_new(self.nv)
         self.x = np.concatenate((self.xt, self.xv))
 

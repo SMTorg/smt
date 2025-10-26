@@ -42,7 +42,6 @@ class TestSMFK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -53,7 +52,7 @@ class TestSMFK(SMTestCase):
             xe = sampling(self.ne)
             ye = prob(xe)
 
-            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0])
+            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0], seed=42)
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False

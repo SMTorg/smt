@@ -43,7 +43,6 @@ class TestSMFCK(SMTestCase):
 
             noise_std = 1e-5
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -51,7 +50,6 @@ class TestSMFCK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2 + np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe) + +np.random.normal(0, noise_std, size=xe.shape)
 

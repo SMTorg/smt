@@ -33,7 +33,6 @@ class TestMFKOneFidelity(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = LHS(xlimits=prob.xlimits, seed=0)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):

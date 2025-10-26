@@ -8,8 +8,6 @@ import inspect
 import unittest
 from collections import OrderedDict
 
-import numpy as np
-
 from smt.problems import Sphere, TensorProduct
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KPLS, KRG, LS, QP
@@ -81,11 +79,9 @@ class Test(SMTestCase):
         prob = self.problems[pname]
         sampling = LHS(xlimits=prob.xlimits, seed=42)
 
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 

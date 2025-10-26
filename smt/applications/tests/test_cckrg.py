@@ -38,10 +38,8 @@ class TestCCKRG(SMTestCase):
 
         # Initial sampling
         samp = LHS(xlimits=prob.xlimits, seed=42)
-        np.random.seed(0)
         xt = samp(50)
         yt = prob(xt)
-        np.random.seed(1)
 
         # Random design variable to component allocation
         comps = [*range(ncomp)]

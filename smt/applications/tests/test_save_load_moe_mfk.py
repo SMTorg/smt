@@ -25,7 +25,6 @@ class TestSaveLoad(unittest.TestCase):
         x = np.linspace(0, 1, 100)
 
         sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
-        np.random.seed(0)
         xt = sampling(nt)
         yt = self.function_test_1d(xt)
 

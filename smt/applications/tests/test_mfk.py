@@ -61,7 +61,6 @@ class TestMFK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -69,7 +68,6 @@ class TestMFK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
@@ -95,7 +93,6 @@ class TestMFK(SMTestCase):
         sampling = LHS(xlimits=prob.xlimits)
 
         nt = 100
-        np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
         dyt = {}
@@ -105,7 +102,6 @@ class TestMFK(SMTestCase):
         y_lf = 2 * prob(xt) + 2
         x_lf = deepcopy(xt)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
         dye = {}
