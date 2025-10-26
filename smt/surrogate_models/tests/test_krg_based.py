@@ -53,19 +53,20 @@ class TestKrgBased(unittest.TestCase):
         yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
 
         # training the model with the option eval_noise= True
-        sm = KRG(eval_noise=False, corr="pow_exp", pow_exp_power=1.99)
+        sm = KRG(eval_noise=True, corr="pow_exp", pow_exp_power=1.99, seed=42)
         sm.set_training_values(xt, yt)
         sm.train()
 
         # predictions
-        x = np.linspace(0, 1, 500).reshape(-1, 1)
+        x = np.linspace(0, 1, 100).reshape(-1, 1)
         sm.predict_values(x)  # predictive mean
         sm.predict_variances(x)  # predictive variance
         sm.predict_derivatives(x, 0)  # predictive variance
         self.assertLess(
             np.abs(
                 sm.predict_derivatives(x[20], 0)
-                - (sm.predict_values(x[20] + 1e-6) - sm.predict_values(x[20])) / 1e-6
+                - (sm.predict_values(x[20] + 1e-6) - sm.predict_values(x[20] - 1e-6))
+                / (2 * 1e-6)
             ),
             1.01e-2,
         )
