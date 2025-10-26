@@ -51,7 +51,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def _setup_MFKs(self):
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
         xt_c, xt_e = xdoes(7)
         yt_e = self.hf_function(xt_e)
         yt_c = self.lf_function(xt_c)

@@ -37,7 +37,7 @@ class TestMFK(SMTestCase):
 
     def test_nested_lhs(self):
         xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
-        xnorm = NestedLHS(nlevel=3, xlimits=xlimits, random_state=0)
+        xnorm = NestedLHS(nlevel=3, xlimits=xlimits, seed=0)
         xlow, xmedium, xhigh = xnorm(15)
 
         for items1 in xmedium:
@@ -162,7 +162,7 @@ class TestMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
         xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions

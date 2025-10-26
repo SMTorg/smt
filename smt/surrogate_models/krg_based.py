@@ -215,7 +215,6 @@ class KrgBased(SurrogateModel):
         )
         self.options.declare(
             "random_state",
-            default=41,
             types=(type(None), int, np.random.RandomState),
             desc="DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",

@@ -37,7 +37,7 @@ class TestCCKRG(SMTestCase):
         ncomp = 3
 
         # Initial sampling
-        samp = LHS(xlimits=prob.xlimits, random_state=42)
+        samp = LHS(xlimits=prob.xlimits, seed=42)
         np.random.seed(0)
         xt = samp(50)
         yt = prob(xt)

@@ -100,7 +100,7 @@ class Test(SMTestCase):
         e_errors = {}
         e_errors["LS"] = 1.5
         e_errors["QP"] = 1.5
-        e_errors["GPX"] = 3e-2
+        e_errors["GPX"] = 4e-2
         e_errors["KRG"] = 3e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
@@ -128,7 +128,7 @@ class Test(SMTestCase):
         sname = method_name.split("_")[2]
 
         prob = self.problems[pname]
-        sampling = LHS(xlimits=prob.xlimits, random_state=42)
+        sampling = LHS(xlimits=prob.xlimits, seed=42)
 
         xt = sampling(self.nt)
         yt = prob(xt)

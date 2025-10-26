@@ -116,7 +116,7 @@ class TestSMFCK(SMTestCase):
         sampling = LHS(
             xlimits=xlimits,
             criterion="ese",
-            random_state=0,
+            seed=0,
         )
 
         xt_e_non = sampling(Obs_HF)

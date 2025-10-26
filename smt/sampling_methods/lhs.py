@@ -62,7 +62,7 @@ class LHS(ScaledSamplingMethod):
                 "and will raise an error in a future version. Please "
                 "use seed parameter",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
             self.random_state = np.random.default_rng(self.options["random_state"])
 

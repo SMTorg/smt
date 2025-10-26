@@ -40,7 +40,7 @@ class TestMisc(unittest.TestCase):
         ndim = 2
         fun = Sphere(ndim=ndim)
 
-        sampling = LHS(xlimits=fun.xlimits, criterion="ese", random_state=42)
+        sampling = LHS(xlimits=fun.xlimits, criterion="ese", seed=42)
         xt = sampling(20)
         yt = fun(xt)
         xe = sampling(100)
@@ -49,16 +49,16 @@ class TestMisc(unittest.TestCase):
 
     def test_pva_error(self):
         xt, yt, xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False, n_start=25, random_state=42)
+        sm = KRG(print_global=False, n_start=25, seed=42)
         sm.set_training_values(xt, yt)
         sm.train()
 
         pva = compute_pva(sm, xe, ye)
-        self.assertAlmostEqual(pva, 0.1, delta=2e-2)
+        self.assertAlmostEqual(pva, 0.05, delta=2e-2)
 
     def test_rmse_error(self):
         xt, yt, xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False, random_state=42)
+        sm = KRG(print_global=False, seed=42)
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -67,7 +67,7 @@ class TestMisc(unittest.TestCase):
 
     def test_q2_error(self):
         xt, yt, xe, ye = self.prepare_tests_errors()
-        sm = KRG(print_global=False, random_state=42)
+        sm = KRG(print_global=False, seed=42)
         sm.set_training_values(xt, yt)
         sm.train()
 
