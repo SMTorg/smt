@@ -22,7 +22,7 @@ class Branin(Problem):
 
         self.xlimits[0, :] = [-5.0, 10]
         self.xlimits[1, :] = [0.0, 15]
-        self.design_space = DesignSpace(self.xlimits, random_state=42)
+        self.design_space = DesignSpace(self.xlimits, seed=42)
 
     def _evaluate(self, x, kx):
         """

@@ -50,7 +50,6 @@ class TestSMFK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
@@ -97,7 +96,7 @@ class TestSMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
         xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions

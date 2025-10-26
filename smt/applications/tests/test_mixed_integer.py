@@ -163,7 +163,7 @@ class TestMixedInteger(unittest.TestCase):
             LHS,
             design_space,
             criterion="ese",
-            random_state=42,
+            seed=42,
             output_in_folded_space=True,
         )
         xdoe = sampling(n_doe)
@@ -493,7 +493,7 @@ class TestMixedInteger(unittest.TestCase):
         num = 40
         design_space.seed = 42
         samp = MixedIntegerSamplingMethod(
-            LHS, design_space, criterion="ese", random_state=design_space.seed
+            LHS, design_space, criterion="ese", seed=design_space.seed
         )
         x, x_is_acting = samp(num, return_is_acting=True)
 
@@ -638,9 +638,7 @@ class TestMixedInteger(unittest.TestCase):
 
         n_doe = 15
         ds.seed = 42
-        samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
-        )
+        samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
         Xt, is_acting = samp(n_doe, return_is_acting=True)
 
         Yt = problem(Xt)
@@ -773,9 +771,7 @@ class TestMixedInteger(unittest.TestCase):
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         ds.seed = 42
-        samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
-        )
+        samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
         x_sampled, is_acting_sampled = samp(100, return_is_acting=True)
 
         # Correct design vectors: round discrete variables, correct hierarchical variables
@@ -842,9 +838,7 @@ class TestMixedInteger(unittest.TestCase):
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         ds.seed = 42
-        samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
-        )
+        samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
         Xt, is_acting_sampled = samp(100, return_is_acting=True)
 
         rng = np.random.default_rng(42)
@@ -984,9 +978,7 @@ class TestMixedInteger(unittest.TestCase):
         # Sample the design space
         # Note: is_acting_sampled specifies for each design variable whether it is acting or not
         ds.seed = 42
-        samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
-        )
+        samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
         Xt, is_acting_sampled = samp(100, return_is_acting=True)
 
         rng = np.random.default_rng(42)
@@ -1241,7 +1233,7 @@ class TestMixedInteger(unittest.TestCase):
         n_doe = 15
         design_space.seed = 42
         samp = MixedIntegerSamplingMethod(
-            LHS, design_space, criterion="ese", random_state=design_space.seed
+            LHS, design_space, criterion="ese", seed=design_space.seed
         )
         Xt, Xt_is_acting = samp(n_doe, return_is_acting=True)
 
@@ -1275,7 +1267,7 @@ class TestMixedInteger(unittest.TestCase):
 
         ds_sampling = DesignSpace(ds.design_variables[1:])
         sampling = MixedIntegerSamplingMethod(
-            LHS, ds_sampling, criterion="ese", random_state=42
+            LHS, ds_sampling, criterion="ese", seed=42
         )
         x_cont = sampling(3 * n_doe)
 

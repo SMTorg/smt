@@ -53,14 +53,9 @@ class LHS(ScaledSamplingMethod):
         if self.options["random_state"] is None:
             self.random_state = np.random.default_rng()
         elif isinstance(self.options["random_state"], np.random.RandomState):
-            warn(
-                "Using random_state is deprecated "
-                "and will raise an error in a future version. Please "
-                "use seed parameter and pass a np.random.Generator",
-                DeprecationWarning,
-                stacklevel=2,
+            raise ValueError(
+                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
             )
-            self.random_state = self.options["random_state"]
         elif isinstance(self.options["random_state"], int):
             warn(
                 "Passing a seed or integer to random_state is deprecated "
@@ -69,13 +64,10 @@ class LHS(ScaledSamplingMethod):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            self.random_state = np.random.RandomState(self.options["random_state"])
+            self.random_state = np.random.default_rng(self.options["random_state"])
 
         if self.options["seed"] is not None:
-            if isinstance(self.options["seed"], np.random.Generator):
-                self.random_state = self.options["seed"]
-            else:
-                self.random_state = np.random.default_rng(self.options["seed"])
+            self.random_state = np.random.default_rng(self.options["seed"])
 
     def _compute(self, nt):
         """
