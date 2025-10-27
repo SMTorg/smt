@@ -114,7 +114,7 @@ metadata = dict(
     install_requires=[
         "packaging",
         "scikit-learn",
-        "pyDOE3",
+        "pyDOE3 >= 1.5.0",
         "scipy",
         "jenn",
     ],
