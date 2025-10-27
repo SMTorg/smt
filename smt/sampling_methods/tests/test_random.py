@@ -33,6 +33,25 @@ class TestRandomSamplingMethod(unittest.TestCase):
             )
             npt.assert_allclose(points, expected_points, rtol=1e-4)
 
+    def test_random_generator(self):
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        num = 10
+        sampling = Random(xlimits=xlimits, seed=42)
+        doe1 = sampling(num)
+        sampling = Random(xlimits=xlimits, seed=np.random.default_rng(42))
+        doe2 = sampling(num)
+        self.assertTrue(np.allclose(doe1, doe2))
+
+    def test_deprecated_random_state(self):
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        num = 10
+        with self.assertWarns(DeprecationWarning):
+            sampling = Random(xlimits=xlimits, random_state=42)
+            _doe = sampling(num)
+        with self.assertRaises(ValueError):
+            sampling = Random(xlimits=xlimits, random_state=np.random.RandomState(42))
+            _doe = sampling(num)
+
 
 if __name__ == "__main__":
     unittest.main()
