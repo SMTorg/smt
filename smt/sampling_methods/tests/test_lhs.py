@@ -14,6 +14,27 @@ class Test(unittest.TestCase):
 
         self.assertEqual((50, 2), x.shape)
 
+    def test_random_generator(self):
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        num = 10
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=42)
+        doe1 = sampling(num)
+        sampling = LHS(xlimits=xlimits, criterion="ese", seed=np.random.default_rng(42))
+        doe2 = sampling(num)
+        self.assertTrue(np.allclose(doe1, doe2))
+
+    def test_deprecated_random_state(self):
+        xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
+        num = 10
+        with self.assertWarns(DeprecationWarning):
+            sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
+            _doe = sampling(num)
+        with self.assertRaises(ValueError):
+            sampling = LHS(
+                xlimits=xlimits, criterion="ese", random_state=np.random.RandomState(42)
+            )
+            _doe = sampling(num)
+
     def test_random_state(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
         num = 10

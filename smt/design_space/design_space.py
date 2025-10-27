@@ -633,6 +633,8 @@ class BaseDesignSpace:
            - Valid design vectors
         is_acting: np.ndarray [n, dim]
            - Boolean matrix specifying for each variable whether it is acting or non-acting
+        seed: int or numpy.random.Generator
+           - A seed to control random draws
         """
         raise NotImplementedError
 
@@ -890,8 +892,8 @@ class DesignSpace(BaseDesignSpace):
         """Sample design vectors"""
         # Simplified implementation: sample design vectors in unfolded space
         x_limits_unfolded = self.get_unfolded_num_bounds()
-        if self.seed is None:
-            self.seed = seed
+        if seed is None:
+            seed = self.seed
 
         if self.sampler is None:
             self.sampler = LHS(

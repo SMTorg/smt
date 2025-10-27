@@ -594,6 +594,30 @@ class TestKrgBased(unittest.TestCase):
         print("R is ill-conditioned?", t.is_training_ill_conditioned())
         self.assertTrue(t.is_training_ill_conditioned())
 
+    def test_random_generator(self):
+        nobs = 50  # number of obsertvations
+        xt = np.random.uniform(size=nobs)  # design points
+        yt = target_fun(xt)
+
+        ntest = 10  # test
+        sampling = LHS(xlimits=np.array([[0.0, 1.0]]), criterion="ese", seed=1)
+        xtest = sampling(ntest)
+
+        sm1 = KRG(seed=42)
+        sm1.set_training_values(xt, yt)
+        sm1.train()
+        sm2 = KRG(seed=np.random.default_rng(42))
+        sm2.set_training_values(xt, yt)
+        sm2.train()
+
+        np.testing.assert_allclose(sm1.predict_values(xtest), sm2.predict_values(xtest))
+
+    def test_deprecated_random_state(self):
+        with self.assertWarns(DeprecationWarning):
+            _sm1 = KRG(random_state=42)
+        with self.assertRaises(ValueError):
+            _sm1 = KRG(random_state=np.random.RandomState(42))
+
 
 if __name__ == "__main__":
     unittest.main()

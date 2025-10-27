@@ -421,6 +421,40 @@ class Test(unittest.TestCase):
 
         ds.sample_valid_x(10, seed=42)
 
+    def test_random_generator(self):
+        ds1 = DesignSpace(
+            [
+                CategoricalVariable(["A", "B", "C"]),
+                OrdinalVariable(["0", "1"]),
+                IntegerVariable(-1, 2),
+                FloatVariable(0.5, 1.5),
+            ],
+            seed=42,
+        )
+        ds2 = DesignSpace(
+            [
+                CategoricalVariable(["A", "B", "C"]),
+                OrdinalVariable(["0", "1"]),
+                IntegerVariable(-1, 2),
+                FloatVariable(0.5, 1.5),
+            ],
+            seed=np.random.default_rng(42),
+        )
+        for v1, v2 in zip(ds1.sample_valid_x(3), ds2.sample_valid_x(3)):
+            np.testing.assert_allclose(v1, v2)
+
+    def test_deprecated_random_state(self):
+        with self.assertWarns(DeprecationWarning):
+            _ds1 = DesignSpace(
+                [FloatVariable(0.5, 1.5)],
+                random_state=42,
+            )
+        with self.assertRaises(ValueError):
+            _ds2 = DesignSpace(
+                [FloatVariable(0.5, 1.5)],
+                random_state=np.random.RandomState(),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
