@@ -155,8 +155,8 @@ class Test(SMTestCase):
         self.n_modes_test = 10
 
         xlimits = [[0, 1], [0, 4]]
-        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=self.seed)
-        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=self.seed + 1)
+        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), seed=self.seed)
+        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), seed=self.seed + 1)
 
         self.nt1 = nt1
         self.nt2 = nt2
@@ -168,7 +168,7 @@ class Test(SMTestCase):
         for i, elt in enumerate(self.xt1):
             self.xt[i * self.nt2 : (i + 1) * self.nt2, 0] = elt
 
-        sampling_new = LHS(xlimits=np.array(xlimits), random_state=self.seed)
+        sampling_new = LHS(xlimits=np.array(xlimits), seed=self.seed)
 
         self.nn = 15
         self.xn = sampling_new(self.nn)
@@ -413,6 +413,10 @@ class Test(SMTestCase):
         with self.assertRaises(RuntimeError, msg=error_msg):
             sm.train()
 
+    def test_podi_examples(self):  # just to check eamples in CI autoamated tests
+        Test.run_podi_example_1d_global()
+        Test.run_podi_example_2d_local()
+
     @staticmethod
     def run_podi_example_1d_global():
         import matplotlib.pyplot as plt
@@ -471,7 +475,7 @@ class Test(SMTestCase):
 
         seed_sampling = 42
         xlimits = np.array([[0, 4]])
-        sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+        sampling = LHS(xlimits=xlimits, seed=seed_sampling)
 
         nt = 40
         xt = sampling(nt)
@@ -601,8 +605,8 @@ class Test(SMTestCase):
 
         seed = 42
         xlimits = [[0, 1], [0, 4]]
-        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=seed)
-        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=seed + 1)
+        sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), seed=seed)
+        sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), seed=seed + 1)
 
         nt1 = 25
         nt2 = 10
@@ -614,7 +618,7 @@ class Test(SMTestCase):
         for i, elt in enumerate(xt1):
             xt[i * nt2 : (i + 1) * nt2, 0] = elt
 
-        sampling_new = LHS(xlimits=np.array(xlimits), random_state=seed)
+        sampling_new = LHS(xlimits=np.array(xlimits), seed=seed)
 
         nv = 15
         xv = sampling_new(nv)
