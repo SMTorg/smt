@@ -297,9 +297,7 @@ class CoopCompKRG(KrgBased):
                 theta_all_loops = np.vstack((theta0, theta0_rand))
 
                 if self.options["n_start"] > 1:
-                    sampling = LHS(
-                        xlimits=theta_limits, criterion="maximin", random_state=41
-                    )
+                    sampling = LHS(xlimits=theta_limits, criterion="maximin", seed=41)
                     theta_lhs_loops = sampling(self.options["n_start"])
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 

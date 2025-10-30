@@ -36,7 +36,9 @@ from smt.utils.misc import standardization
 
 
 class NestedLHS(object):
-    def __init__(self, nlevel, xlimits=None, design_space=None, random_state=None):
+    def __init__(
+        self, nlevel, xlimits=None, design_space=None, seed=None, random_state=None
+    ):
         """
         Constructor where values of options can be passed in.
 
@@ -51,11 +53,32 @@ class NestedLHS(object):
         design_space : DesignSpace
             The design space with type and bounds for every design variable
 
-        random_state : Numpy RandomState object or seed number which controls random draws
+        seed : Numpy Generator object or seed number which controls random draws
+
+        random_state : DEPRECATED use seed. Numpy RandomState object or seed number which controls random draws
 
         """
         self.nlevel = nlevel
         self.random_state = random_state
+        if random_state is None:
+            self.random_state = np.random.default_rng()
+        elif isinstance(random_state, np.random.RandomState):
+            raise ValueError(
+                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
+            )
+        elif isinstance(random_state, int):
+            warnings.warn(
+                "Passing a seed or integer to random_state is deprecated "
+                "and will raise an error in a future version. Please "
+                "use seed parameter",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.random_state = np.random.default_rng(random_state)
+
+        if seed is not None:
+            self.random_state = np.random.default_rng(seed)
+
         if xlimits is None and design_space is None:
             raise ValueError(
                 "Either xlimits or design_space should be specified to have bounds for the sampling."
@@ -102,7 +125,7 @@ class NestedLHS(object):
         p0 = LHS(
             xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
             criterion="ese",
-            random_state=self.random_state,
+            seed=self.random_state,
         )
         p0nt0 = p0(nt[0])
         if self.design_space:
@@ -115,7 +138,7 @@ class NestedLHS(object):
             p = LHS(
                 xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
                 criterion="ese",
-                random_state=self.random_state,
+                seed=self.random_state,
             )
             pnti = p(nt[i])
             if self.design_space:

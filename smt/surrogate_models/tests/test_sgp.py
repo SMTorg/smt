@@ -16,23 +16,23 @@ def f_obj(x):
 
 class TestSGP(SMTestCase):
     def setUp(self):
-        rng = np.random.RandomState(1)
+        rng = np.random.default_rng(42)
 
         # Generate training data
         N_train = 200
         self.eta = [0.01]
         gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(self.eta), size=(N_train, 1))
-        self.Xtrain = 2 * rng.rand(N_train, 1) - 1
+        self.Xtrain = 2 * rng.random((N_train, 1)) - 1
         self.Ytrain = f_obj(self.Xtrain) + gaussian_noise
 
         # Generate test data (noise-free)
         N_test = 50
-        self.Xtest = 2 * rng.rand(N_test, 1) - 1
+        self.Xtest = 2 * rng.random((N_test, 1)) - 1
         self.Ytest = f_obj(self.Xtest).reshape(-1, 1)
 
         # Pick inducing points at random
         N_inducing = 30
-        self.Z = 2 * rng.rand(N_inducing, 1) - 1
+        self.Z = 2 * rng.random((N_inducing, 1)) - 1
 
     def test_fitc_with_noise0(self):
         # Assume we know the variance eta of our noisy input data
@@ -107,7 +107,7 @@ class TestSGP(SMTestCase):
             print_global=False,
             inducing_method="kmeans",
             n_inducing=samples,
-            random_state=42,
+            seed=42,
         )
         sgp1.set_training_values(xs, ys)
         sgp1.train()
@@ -115,7 +115,7 @@ class TestSGP(SMTestCase):
             print_global=False,
             inducing_method="kmeans",
             n_inducing=samples,
-            random_state=42,
+            seed=42,
         )
         sgp2.set_training_values(xs, ys)
         sgp2.train()

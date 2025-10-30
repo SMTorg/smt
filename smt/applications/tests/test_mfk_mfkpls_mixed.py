@@ -213,9 +213,7 @@ class TestMFKmixed(unittest.TestCase):
         # Validation data:
         n_valid = 100  # validation set size
         ds.seed = 42
-        samp = MixedIntegerSamplingMethod(
-            LHS, ds, criterion="ese", random_state=ds.seed
-        )
+        samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
         x_valid, is_acting_valid = samp(n_valid, return_is_acting=True)
 
         y1_valid = np.zeros(n_valid)  # obj 1

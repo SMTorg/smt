@@ -41,10 +41,17 @@ class MixedIntegerSamplingMethod(SamplingMethod):
             or not (enum masks)
         """
         self._design_space = design_space
+
         if "random_state" in kwargs:
-            self._design_space.random_state = kwargs["random_state"]
-        elif self._design_space.random_state is None:
-            self._design_space.random_state = 42
+            raise ValueError(
+                "random_state is not handled anymore. Please use seed parameter"
+            )
+
+        if "seed" in kwargs:
+            self._design_space.seed = kwargs["seed"]
+        elif self._design_space.seed is None:
+            self._design_space.seed = 42
+
         self._unfolded_xlimits = design_space.get_unfolded_num_bounds()
         self._output_in_folded_space = kwargs.get("output_in_folded_space", True)
         kwargs.pop("output_in_folded_space", None)
@@ -57,7 +64,7 @@ class MixedIntegerSamplingMethod(SamplingMethod):
         x_doe, is_acting = self._design_space.sample_valid_x(
             nt,
             unfolded=not self._output_in_folded_space,
-            random_state=self._design_space.random_state,
+            seed=self._design_space.seed,
         )
         if return_is_acting:
             return x_doe, is_acting
@@ -330,7 +337,7 @@ class MixedIntegerContext(object):
     def design_space(self) -> BaseDesignSpace:
         return self._design_space
 
-    def build_sampling_method(self, random_state=None):
+    def build_sampling_method(self, seed=None):
         """
         Build Mixed Integer LHS ESE sampler.
         """
@@ -338,7 +345,7 @@ class MixedIntegerContext(object):
 
         def sample(n):
             x, _ = self._design_space.sample_valid_x(
-                n, unfolded=not return_folded, random_state=random_state
+                n, unfolded=not return_folded, seed=seed
             )
             return x
 

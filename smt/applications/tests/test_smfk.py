@@ -42,7 +42,6 @@ class TestSMFK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -50,11 +49,10 @@ class TestSMFK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
-            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0])
+            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0], seed=42)
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -97,7 +95,7 @@ class TestSMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
         xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions

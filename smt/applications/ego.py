@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 
 import time
 from types import FunctionType
-from typing import Optional
 
 import numpy as np
 from scipy.optimize import minimize
@@ -29,7 +28,7 @@ class Evaluator(object):
     User can derive this interface and override the run() method to implement custom multiprocessing.
     """
 
-    def run(self, fun, x, design_space: Optional = None):
+    def run(self, fun, x, design_space=None):
         """
         Evaluates fun at x.
 
@@ -48,7 +47,7 @@ class Evaluator(object):
         """
         if (design_space is not None) and np.any(design_space.is_conditionally_acting):
             x_corr, eval_is_acting = design_space.correct_get_acting(x)
-            return fun(x_corr, eval_is_acting)
+            return fun(x_corr, eval_is_acting=eval_is_acting)
 
         else:
             return fun(x)
@@ -123,9 +122,9 @@ class EGO(SurrogateBasedApplication):
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(
-            "random_state",
-            types=(type(None), int, np.random.RandomState),
-            desc="Numpy RandomState object or seed number which controls random draws",
+            "seed",
+            types=(type(None), int, np.random.Generator),
+            desc="Numpy Generator object or seed number which controls random draws",
         )
 
     def optimize(self, fun):
@@ -281,7 +280,7 @@ class EGO(SurrogateBasedApplication):
             self.gpr.options["is_ri"] = self.options["is_ri"]
         self.design_space: BaseDesignSpace = self.gpr.design_space
         if isinstance(self.design_space, DesignSpace):
-            self.design_space.seed = self.options["random_state"]
+            self.design_space.seed = self.options["seed"]
 
         # Handle mixed integer optimization
         is_continuous = self.design_space.is_all_cont
@@ -301,7 +300,7 @@ class EGO(SurrogateBasedApplication):
                 work_in_folded_space=True,
             )
             self._sampling = self.mixint.build_sampling_method(
-                random_state=self.options["random_state"],
+                seed=self.options["seed"],
             )
 
         else:
@@ -310,7 +309,7 @@ class EGO(SurrogateBasedApplication):
                 LHS,
                 self.design_space,
                 criterion="ese",
-                random_state=self.options["random_state"],
+                seed=self.options["seed"],
             )
             self._sampling = lambda n: sampling(n)
 
@@ -467,7 +466,7 @@ class EGO(SurrogateBasedApplication):
             conf = -3.0
 
         if qEI == "KBRand":
-            conf = np.random.randn()
+            conf = np.random.standard_normal()
         pred = self.gpr.predict_values(x)
         var = self.gpr.predict_variances(x)
 

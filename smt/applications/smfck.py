@@ -275,7 +275,7 @@ class SMFCK(KrgBased):
                 sampling = LHS(
                     xlimits=np.stack((lower_bounds, upper_bounds), axis=1),
                     criterion="ese",
-                    random_state=0,
+                    seed=0,
                 )
                 theta_lhs_loops = sampling(self.options["n_start"])
                 theta0 = np.vstack((theta_ini, theta_lhs_loops))

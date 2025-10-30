@@ -41,7 +41,6 @@ class TestMFCK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -49,7 +48,6 @@ class TestMFCK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
 
             sm = MFCK(hyper_opt="Cobyla", eval_noise=False)
             if sm.options.is_declared("xlimits"):
@@ -109,7 +107,7 @@ class TestMFCK(SMTestCase):
         sampling = LHS(
             xlimits=xlimits,
             criterion="ese",
-            random_state=rnd_state,
+            seed=rnd_state,
         )
 
         xt_e_non = sampling(Obs_HF)
