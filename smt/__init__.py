@@ -1,4 +1,4 @@
-__version__ = "2.9.5"
+__version__ = "2.10.0"
 
 __all__ = [
     "surrogate_models",
