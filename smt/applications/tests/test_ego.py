@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 import os
 import unittest
 from multiprocessing import Pool
-from typing import Optional
 
 import numpy as np
 
@@ -46,7 +45,7 @@ except ImportError:
 
 # This implementation only works with Python > 3.3
 class ParallelEvaluator(Evaluator):
-    def run(self, fun, x, design_space: Optional = None):
+    def run(self, fun, x, design_space=None):
         with Pool(3) as p:
             return np.array(
                 [y[0] for y in p.map(fun, [np.atleast_2d(x[i]) for i in range(len(x))])]
@@ -783,7 +782,7 @@ class TestEGO(SMTestCase):
             )
             return y
 
-        def f_hv(X, eval_is_acting: Optional = None):
+        def f_hv(X, eval_is_acting=None):
             y = []
             for x in X:
                 if x[0] == 0:
@@ -1420,7 +1419,6 @@ class TestEGO(SMTestCase):
         from smt.applications import EGO
         from smt.applications.ego import Evaluator
         from smt.surrogate_models import KRG, DesignSpace
-        from typing import Optional
 
         def function_test_1d(x):
             # function xsinx
@@ -1446,7 +1444,7 @@ class TestEGO(SMTestCase):
             Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
             """
 
-            def run(self, fun, x, design_space: Optional = None):
+            def run(self, fun, x, design_space=None):
                 n_thread = 5
                 # Caveat: import are made here due to SMT documentation building process
                 from multiprocessing.pool import ThreadPool

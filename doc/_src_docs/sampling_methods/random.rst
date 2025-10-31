@@ -14,7 +14,7 @@ Usage
   from smt.sampling_methods import Random
   
   xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-  sampling = Random(xlimits=xlimits, random_state=12)
+  sampling = Random(xlimits=xlimits, seed=12)
   
   num = 50
   x = sampling(num)
@@ -55,5 +55,10 @@ Options
   *  -  random_state
      -  None
      -  None
-     -  ['NoneType', 'int', 'RandomState', 'Generator']
-     -  Numpy RandomState or Generator object or seed number which controls random draws
+     -  ['NoneType', 'int', 'RandomState']
+     -  DEPRECATED: Numpy RandomState object or seed number which controls random draws
+  *  -  seed
+     -  None
+     -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws

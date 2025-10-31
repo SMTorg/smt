@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5150259
+     Training - done. Time (sec):  0.0549781
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0000145
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000001
      
   ___________________________________________________________________________
      
@@ -127,11 +127,9 @@ Usage with an automatic number of components
   prob = TensorProduct(ndim=ndim, func="exp")
   
   sm = KPLS(eval_n_comp=True)
-  samp = LHS(xlimits=prob.xlimits, random_state=42)
-  np.random.seed(0)
+  samp = LHS(xlimits=prob.xlimits, seed=42)
   xt = samp(50)
   yt = prob(xt)
-  np.random.seed(1)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -167,9 +165,9 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 52.4136887
+     Training - done. Time (sec): 26.3353863
   
-   The model automatically choose 3 components.
+   The model automatically choose 5 components.
   ___________________________________________________________________________
      
    Evaluation
@@ -181,8 +179,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[7.89613116]]
-  [[64.47734166]]
+  [[2.73415691]]
+  [[40.38140342]]
   
 
 Options
@@ -308,11 +306,16 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

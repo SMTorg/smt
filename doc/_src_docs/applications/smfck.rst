@@ -1,0 +1,307 @@
+.. _smfck-ref-label:
+
+Sparse Multi-Fidelity Co-Kriging (SMFCK)
+================================
+
+SMFCK is a multi-fidelity modeling method adding sparsity to the MFCK model. This model allows to add sparsity to all the fidelity levels.
+
+We follow the same autoregressive formulation:
+
+.. math ::
+        y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+
+
+where :math:`\rho(x)`
+is a scaling/correlation factor (constant for MFCK) and :math:`\delta(\cdot)` is a discrepancy function.
+
+The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
+While MFK follows the recursive formulation of Le Gratiet [2]_. SMFCK uses ab block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
+The sparse approximations are based on the formulations of Titsias [3]_.
+
+References
+----------
+.. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
+.. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
+.. [3] Titsias, M.K., Variational Learning of Inducing Variables in Sparse Gaussian Processes. In Proceedings of the 12th International Conference on Artificial Intelligence and Statistics (AISTATS), 2009
+
+Usage
+-----
+
+.. code-block:: python
+
+  import matplotlib.pyplot as plt
+  import numpy as np
+  from smt.sampling_methods import LHS  # noqa
+  from smt.applications import SMFCK
+  
+  # low fidelity model
+  def lf_function(x):
+      import numpy as np
+  
+      return (
+          0.5 * ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
+          + (x - 0.5) * 10.0
+          - 5
+      )
+  
+  # high fidelity model
+  def hf_function(x):
+      import numpy as np
+  
+      return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
+  
+  # Problem set up
+  xlimits = np.array([[0.0, 1.0]])
+  # Example with non-nested input data
+  Obs_HF = 7  # Number of observations of HF
+  Obs_LF = 14  # Number of observations of LF
+  
+  # Creation of LHS for non-nested LF data
+  sampling = LHS(
+      xlimits=xlimits,
+      criterion="ese",
+      seed=0,
+  )
+  
+  xt_e_non = sampling(Obs_HF)
+  xt_c_non = sampling(Obs_LF)
+  
+  # Evaluate the HF and LF functions
+  yt_e = hf_function(xt_e_non)
+  yt_c = lf_function(xt_c_non)
+  
+  sm = SMFCK(
+      hyper_opt="Cobyla",
+      theta0=xt_e_non.shape[1] * [1.0],
+      theta_bounds=[1e-6, 50.0],
+      print_global=False,
+      eval_noise=True,
+      noise0=[1e-4],
+      noise_bounds=np.array((1e-12, 100)),
+      corr="squar_exp",
+      n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
+  )
+  
+  # low-fidelity dataset names being integers from 0 to level-1
+  sm.set_training_values(xt_c_non, yt_c, name=0)
+  # high-fidelity dataset without name
+  sm.set_training_values(xt_e_non, yt_e)
+  
+  # train the model
+  sm.train()
+  
+  x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
+  
+  # query the outputs
+  
+  mean, cov = sm.predict_all_levels(x)
+  
+  y = mean[-1]
+  # _derivs = sm.predict_derivatives(x, kx=0)
+  
+  plt.figure()
+  
+  plt.plot(x, hf_function(x), label="reference")
+  plt.plot(x, y, linestyle="-.", label="mean_gp")
+  plt.scatter(xt_e_non, yt_e, marker="o", color="k", label="HF doe")
+  plt.scatter(xt_c_non, yt_c, marker="*", color="g", label="LF doe")
+  plt.plot(
+      sm.Z[0],
+      -9.9 * np.ones_like(sm.Z[0]),
+      "g|",
+      mew=2,
+      label=f"LF inducing:{sm.Z[0].shape[0]}",
+  )
+  plt.plot(
+      sm.Z[1],
+      -9.9 * np.ones_like(sm.Z[1]),
+      "k|",
+      mew=2,
+      label=f"HF inducing:{sm.Z[1].shape[0]}",
+  )
+  
+  plt.legend(loc=0)
+  plt.ylim(-10, 17)
+  plt.xlim(-0.1, 1.1)
+  plt.xlabel(r"$x$")
+  plt.ylabel(r"$y$")
+  
+  plt.show()
+  
+.. figure:: smfck_TestSMFCK_run_smfck_example.png
+  :scale: 80 %
+  :align: center
+
+Options
+-------
+
+.. list-table:: List of options
+  :header-rows: 1
+  :widths: 15, 10, 20, 20, 30
+  :stub-columns: 0
+
+  *  -  Option
+     -  Default
+     -  Acceptable values
+     -  Acceptable types
+     -  Description
+  *  -  print_global
+     -  True
+     -  None
+     -  ['bool']
+     -  Global print toggle. If False, all printing is suppressed
+  *  -  print_training
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print training information
+  *  -  print_prediction
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print prediction information
+  *  -  print_problem
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print problem information
+  *  -  print_solver
+     -  True
+     -  None
+     -  ['bool']
+     -  Whether to print solver information
+  *  -  poly
+     -  constant
+     -  ['constant', 'linear', 'quadratic']
+     -  ['str']
+     -  Regression function type
+  *  -  corr
+     -  squar_exp
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['str', 'Kernel']
+     -  Correlation function type
+  *  -  pow_exp_power
+     -  1.9
+     -  None
+     -  ['float']
+     -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
+  *  -  categorical_kernel
+     -  MixIntKernelType.CONT_RELAX
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  None
+     -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  hierarchical_kernel
+     -  MixHrcKernelType.ALG_KERNEL
+     -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
+     -  None
+     -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
+  *  -  nugget
+     -  2.220446049250313e-13
+     -  None
+     -  ['float']
+     -  a jitter for numerical stability
+  *  -  theta0
+     -  [0.01]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial hyperparameters
+  *  -  theta_bounds
+     -  [1e-06, 20.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for hyperparameters
+  *  -  hyper_opt
+     -  Cobyla
+     -  ['Cobyla', 'Cobyla-nlopt']
+     -  None
+     -  Optimiser for hyperparameters optimisation
+  *  -  eval_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  noise evaluation flag
+  *  -  noise0
+     -  [0.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  Initial noise hyperparameters
+  *  -  noise_bounds
+     -  [2.220446049250313e-14, 10000000000.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  bounds for noise hyperparameters
+  *  -  use_het_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  heteroscedastic noise evaluation flag
+  *  -  n_start
+     -  10
+     -  None
+     -  ['int']
+     -  number of optimizer runs (multistart method)
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
+  *  -  design_space
+     -  None
+     -  None
+     -  ['BaseDesignSpace', 'list', 'ndarray']
+     -  definition of the (hierarchical) design space: use `smt.design_space.DesignSpace` as the main API. Also accepts list of float variable bounds
+  *  -  is_ri
+     -  False
+     -  None
+     -  ['bool']
+     -  activate reinterpolation for noisy cases
+  *  -  seed
+     -  41
+     -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
+     -  ['NoneType', 'int', 'RandomState']
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  rho0
+     -  1.0
+     -  None
+     -  ['float']
+     -  Initial rho for the autoregressive model ,                   (scalar factor between two consecutive fidelities,                     e.g., Y_HF = (Rho) * Y_LF + Gamma
+  *  -  rho_bounds
+     -  [-5.0, 5.0]
+     -  None
+     -  ['list', 'ndarray']
+     -  Bounds for the rho parameter used in the autoregressive model
+  *  -  sigma0
+     -  1.0
+     -  None
+     -  ['float']
+     -  Initial variance parameter
+  *  -  sigma_bounds
+     -  [1e-06, 100]
+     -  None
+     -  ['list', 'ndarray']
+     -  Bounds for the variance parameter
+  *  -  lambda
+     -  0.0
+     -  None
+     -  ['float']
+     -  Regularization parameter
+  *  -  n_inducing
+     -  [6, 5]
+     -  None
+     -  ['list', 'ndarray']
+     -  Number of inducing points per fidelity level
+  *  -  method
+     -  FITC
+     -  ['FITC']
+     -  ['str']
+     -  Methods available for Sparse Multi-fidelity
+  *  -  inducing_method
+     -  kmeans
+     -  ['random', 'kmeans']
+     -  ['str']
+     -  The chosen method to induce points

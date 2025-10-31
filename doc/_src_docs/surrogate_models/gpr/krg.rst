@@ -144,7 +144,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2859745
+     Training - done. Time (sec):  0.0601263
   ___________________________________________________________________________
      
    Evaluation
@@ -241,7 +241,7 @@ Example 2 with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0542204
+     Training - done. Time (sec):  0.0946400
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +249,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0097697
+     Predicting - done. Time (sec):  0.0100811
      
-     Prediction time/pt. (sec) :  0.0000195
+     Prediction time/pt. (sec) :  0.0000202
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -275,7 +275,6 @@ Example 3 with noisy data
       return np.cos(5 * x)
   
   nobs = 50  # number of obsertvations
-  np.random.seed(0)  # a seed for reproducibility
   xt = np.random.uniform(size=nobs)  # design points
   
   # adding a random noise to observations
@@ -324,7 +323,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1257176
+     Training - done. Time (sec):  0.1874537
   ___________________________________________________________________________
      
    Evaluation
@@ -465,8 +464,13 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)

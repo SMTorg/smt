@@ -20,7 +20,6 @@ except ImportError:
 from copy import deepcopy
 
 from smt.applications import SMFCK
-from smt.sampling_methods import LHS
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
 from smt.utils.sm_test_case import SMTestCase
@@ -87,6 +86,8 @@ class TestSMFCK(SMTestCase):
     def run_smfck_example():
         import matplotlib.pyplot as plt
         import numpy as np
+        from smt.sampling_methods import LHS  # noqa
+        from smt.applications import SMFCK
 
         # low fidelity model
         def lf_function(x):

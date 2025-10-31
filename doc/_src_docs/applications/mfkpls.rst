@@ -52,7 +52,7 @@ Usage
   
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
-  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
   xt_c, xt_e = xdoes(7)
   
   # Evaluate the HF and LF functions
@@ -109,7 +109,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  4.1182828
+     Training - done. Time (sec):  0.1501856
   ___________________________________________________________________________
      
    Evaluation
@@ -260,11 +260,16 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

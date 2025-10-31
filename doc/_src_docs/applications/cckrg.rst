@@ -36,11 +36,9 @@ Usage
   ncomp = 3
   
   # Initial sampling
-  samp = LHS(xlimits=prob.xlimits, random_state=42)
-  np.random.seed(0)
+  samp = LHS(xlimits=prob.xlimits, seed=42)
   xt = samp(50)
   yt = prob(xt)
-  np.random.seed(1)
   
   # Random design variable to component allocation
   comps = [*range(ncomp)]
@@ -82,7 +80,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1583652
+     Training - done. Time (sec):  0.1202128
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -97,7 +95,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1544235
+     Training - done. Time (sec):  0.1307766
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -112,7 +110,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2050598
+     Training - done. Time (sec):  0.1591473
   ___________________________________________________________________________
      
    Evaluation
@@ -124,8 +122,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[0.56496318]]
-  [[91.30881442]]
+  [[-2.29343475]]
+  [[32.46448918]]
   
 
 Options
@@ -251,8 +249,13 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)

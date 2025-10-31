@@ -183,7 +183,7 @@ Main
   
 ::
 
-  Drag coefficient prediction (cd):  0.0103677112641534
+  Drag coefficient prediction (cd):  0.01011976234154351
   
 .. figure:: learning_airfoil_parameters.png
   :scale: 100 %

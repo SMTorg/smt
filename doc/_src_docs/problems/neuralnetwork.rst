@@ -24,9 +24,7 @@ Usage
   ds = problem.design_space
   n_doe = 100
   ds.seed = 42
-  samp = MixedIntegerSamplingMethod(
-      LHS, ds, criterion="ese", random_state=ds.seed
-  )
+  samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
   xdoe = samp(n_doe)
   x_corr, eval_is_acting = ds.correct_get_acting(xdoe)
   y = problem(x=x_corr, kx=None, eval_is_acting=eval_is_acting)
