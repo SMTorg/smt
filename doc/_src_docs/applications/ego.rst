@@ -216,8 +216,8 @@ Usage
   n_iter = 6
   xlimits = np.array([[0.0, 25.0]])
   
-  random_state = 42  # for reproducibility
-  design_space = DesignSpace(xlimits, random_state=random_state)
+  seed = 42  # for reproducibility
+  design_space = DesignSpace(xlimits, seed=seed)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -228,7 +228,7 @@ Usage
       criterion=criterion,
       xdoe=xdoe,
       surrogate=KRG(design_space=design_space, print_global=False),
-      random_state=random_state,
+      seed=seed,
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -304,7 +304,6 @@ Usage with parallel options
   from smt.applications import EGO
   from smt.applications.ego import Evaluator
   from smt.surrogate_models import KRG, DesignSpace
-  from typing import Optional
   
   def function_test_1d(x):
       # function xsinx
@@ -320,8 +319,8 @@ Usage with parallel options
   n_start = 50
   xlimits = np.array([[0.0, 25.0]])
   
-  random_state = 42
-  design_space = DesignSpace(xlimits, random_state=random_state)
+  seed = 42
+  design_space = DesignSpace(xlimits, seed=seed)
   xdoe = np.atleast_2d([0, 7, 25]).T
   n_doe = xdoe.size
   
@@ -330,7 +329,7 @@ Usage with parallel options
       Implement Evaluator interface using multiprocessing ThreadPool object (Python 3 only).
       """
   
-  def run(self, fun, x, design_space: Optional = None):
+      def run(self, fun, x, design_space=None):
           n_thread = 5
           # Caveat: import are made here due to SMT documentation building process
           from multiprocessing.pool import ThreadPool
@@ -362,7 +361,7 @@ Usage with parallel options
       qEI=qEI,
       n_start=n_start,
       evaluator=ParallelEvaluator(),
-      random_state=random_state,
+      seed=seed,
   )
   
   x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=function_test_1d)
@@ -491,7 +490,7 @@ Usage with mixed variable
       return y.reshape((-1, 1))
   
   n_iter = 15
-  random_state = 42
+  seed = 42
   design_space = DesignSpace(
       [
           FloatVariable(-5, 5),
@@ -499,7 +498,7 @@ Usage with mixed variable
           CategoricalVariable(["square", "circle"]),
           IntegerVariable(0, 2),
       ],
-      random_state=random_state,
+      seed=seed,
   )
   
   criterion = "EI"  #'EI' or 'SBO' or 'LCB'
@@ -512,7 +511,7 @@ Usage with mixed variable
   )
   mixint = MixedIntegerContext(design_space)
   n_doe = 3
-  sampling = mixint.build_sampling_method(random_state=random_state)
+  sampling = mixint.build_sampling_method(seed=seed)
   xdoe = sampling(n_doe)
   ydoe = function_test_mixed_integer(xdoe)
   
@@ -524,7 +523,7 @@ Usage with mixed variable
       surrogate=sm,
       qEI=qEI,
       n_parallel=2,
-      random_state=random_state,
+      seed=seed,
   )
   
   x_opt, y_opt, _, _, y_data = ego.optimize(fun=function_test_mixed_integer)
@@ -549,7 +548,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-4.96251421  2.          0.          1.        ] with f(x)=-13.9
+  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -605,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x00000201D7755350>
+     -  <smt.applications.ego.Evaluator object at 0x000002B7F061E410>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -640,12 +639,12 @@ Options
      -  ['bool']
      -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x00000201D7B600D0>
+     -  <smt.surrogate_models.krg.KRG object at 0x000002B7F8F64350>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly
-  *  -  random_state
+  *  -  seed
      -  None
      -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws

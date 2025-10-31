@@ -61,7 +61,7 @@ Usage
   sampling = LHS(
       xlimits=xlimits,
       criterion="ese",
-      random_state=rnd_state,
+      seed=rnd_state,
   )
   
   xt_e_non = sampling(Obs_HF)
@@ -72,7 +72,10 @@ Usage
   yt_c_non = lf_function(xt_c_non)
   
   sm_non_nested = MFCK(
-      theta0=xt_e_non.shape[1] * [0.5], theta_bounds=[1e-2, 100], corr="squar_exp"
+      theta0=xt_e_non.shape[1] * [0.5],
+      theta_bounds=[1e-2, 100],
+      corr="squar_exp",
+      eval_noise=False,
   )
   sm_non_nested.options["lambda"] = 0.0  # Without regularization
   
@@ -189,8 +192,8 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  TNC
-     -  ['Cobyla', 'TNC', 'NoOp']
+     -  Cobyla
+     -  ['Cobyla', 'Cobyla-nlopt']
      -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
@@ -233,11 +236,16 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho0
      -  1.0
      -  None
@@ -259,7 +267,7 @@ Options
      -  ['list', 'ndarray']
      -  Bounds for the variance parameter
   *  -  lambda
-     -  0.1
+     -  0.0
      -  None
      -  ['float']
      -  Regularization parameter

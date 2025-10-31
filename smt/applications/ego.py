@@ -7,6 +7,7 @@ This package is distributed under New BSD license.
 
 import time
 from types import FunctionType
+from typing import Optional
 
 import numpy as np
 from scipy.optimize import minimize
@@ -28,7 +29,7 @@ class Evaluator(object):
     User can derive this interface and override the run() method to implement custom multiprocessing.
     """
 
-    def run(self, fun, x, design_space=None):
+    def run(self, fun, x, design_space: Optional[BaseDesignSpace] = None):
         """
         Evaluates fun at x.
 

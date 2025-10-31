@@ -1,27 +1,28 @@
-Multi-Fidelity Kriging KPLSK (MFKPLSK)
-======================================
+.. _smfck-ref-label:
 
-Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
-interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
-maximize the variation of the quantity of interest.
+Sparse Multi-Fidelity Co-Kriging (SMFCK)
+================================
 
-These principal components define rotations that can be applied to define bases changes.
-The principal components can be truncated at any number (called n_comp) to explain a
-’majority’ of the data variations.
-[1]_ used the PLS to define subspaces to make high-dimensional Kriging
-more efficient. 
+SMFCK is a multi-fidelity modeling method adding sparsity to the MFCK model. This model allows to add sparsity to all the fidelity levels.
 
-We apply the same idea to :ref:`mfk-ref-label`. The only difference is that we do
-not apply the PLS analysis step on all datasets. We apply the PLS analysis step on the
-high-fidelity to preserve the robustness to poor correlations between fidelity levels.
-A hyperparameter optimization is then performed in the subspace that maximizes the
-variations of HF data.
+We follow the same autoregressive formulation:
 
-MFKPLSK is a combination of :ref:`mfk-ref-label` and :ref:`kplsk-ref-label` techniques.
+.. math ::
+        y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
+
+
+where :math:`\rho(x)`
+is a scaling/correlation factor (constant for MFCK) and :math:`\delta(\cdot)` is a discrepancy function.
+
+The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
+While MFK follows the recursive formulation of Le Gratiet [2]_. SMFCK uses ab block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
+The sparse approximations are based on the formulations of Titsias [3]_.
 
 References
 ----------
-.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., & Morlier, J. (2016). An improved approach for estimating the hyperparameters of the kriging model for high-dimensional problems through the partial least squares method. Mathematical Problems in Engineering, 2016.
+.. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
+.. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
+.. [3] Titsias, M.K., Variational Learning of Inducing Variables in Sparse Gaussian Processes. In Proceedings of the 12th International Conference on Artificial Intelligence and Statistics (AISTATS), 2009
 
 Usage
 -----
@@ -30,11 +31,10 @@ Usage
 
   import matplotlib.pyplot as plt
   import numpy as np
+  from smt.sampling_methods import LHS  # noqa
+  from smt.applications import SMFCK
   
-  from smt.applications.mfk import NestedLHS
-  from smt.applications.mfkplsk import MFKPLSK
-  
-  # low fidelity modelk
+  # low fidelity model
   def lf_function(x):
       import numpy as np
   
@@ -52,21 +52,40 @@ Usage
   
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
-  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
-  xt_c, xt_e = xdoes(7)
+  # Example with non-nested input data
+  Obs_HF = 7  # Number of observations of HF
+  Obs_LF = 14  # Number of observations of LF
+  
+  # Creation of LHS for non-nested LF data
+  sampling = LHS(
+      xlimits=xlimits,
+      criterion="ese",
+      seed=0,
+  )
+  
+  xt_e_non = sampling(Obs_HF)
+  xt_c_non = sampling(Obs_LF)
   
   # Evaluate the HF and LF functions
-  yt_e = hf_function(xt_e)
-  yt_c = lf_function(xt_c)
+  yt_e = hf_function(xt_e_non)
+  yt_c = lf_function(xt_c_non)
   
-  # choice of number of PLS components
-  ncomp = 1
-  sm = MFKPLSK(n_comp=ncomp, theta0=ncomp * [1.0])
+  sm = SMFCK(
+      hyper_opt="Cobyla",
+      theta0=xt_e_non.shape[1] * [1.0],
+      theta_bounds=[1e-6, 50.0],
+      print_global=False,
+      eval_noise=True,
+      noise0=[1e-4],
+      noise_bounds=np.array((1e-12, 100)),
+      corr="squar_exp",
+      n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
+  )
   
   # low-fidelity dataset names being integers from 0 to level-1
-  sm.set_training_values(xt_c, yt_c, name=0)
+  sm.set_training_values(xt_c_non, yt_c, name=0)
   # high-fidelity dataset without name
-  sm.set_training_values(xt_e, yt_e)
+  sm.set_training_values(xt_e_non, yt_e)
   
   # train the model
   sm.train()
@@ -74,16 +93,32 @@ Usage
   x = np.linspace(0, 1, 101, endpoint=True).reshape(-1, 1)
   
   # query the outputs
-  y = sm.predict_values(x)
-  _mse = sm.predict_variances(x)
-  _derivs = sm.predict_derivatives(x, kx=0)
+  
+  mean, cov = sm.predict_all_levels(x)
+  
+  y = mean[-1]
+  # _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
   plt.plot(x, hf_function(x), label="reference")
   plt.plot(x, y, linestyle="-.", label="mean_gp")
-  plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
-  plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
+  plt.scatter(xt_e_non, yt_e, marker="o", color="k", label="HF doe")
+  plt.scatter(xt_c_non, yt_c, marker="*", color="g", label="LF doe")
+  plt.plot(
+      sm.Z[0],
+      -9.9 * np.ones_like(sm.Z[0]),
+      "g|",
+      mew=2,
+      label=f"LF inducing:{sm.Z[0].shape[0]}",
+  )
+  plt.plot(
+      sm.Z[1],
+      -9.9 * np.ones_like(sm.Z[1]),
+      "k|",
+      mew=2,
+      label=f"HF inducing:{sm.Z[1].shape[0]}",
+  )
   
   plt.legend(loc=0)
   plt.ylim(-10, 17)
@@ -93,47 +128,7 @@ Usage
   
   plt.show()
   
-::
-
-  ___________________________________________________________________________
-     
-                                    MFKPLSK
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 7
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.1600516
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 101
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 101
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
-  
-.. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
+.. figure:: smfck_TestSMFCK_run_smfck_example.png
   :scale: 80 %
   :align: center
 
@@ -182,8 +177,8 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['squar_exp']
-     -  ['str']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
      -  1.9
@@ -201,7 +196,7 @@ Options
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
-     -  2.220446049250313e-14
+     -  2.220446049250313e-13
      -  None
      -  ['float']
      -  a jitter for numerical stability
@@ -217,8 +212,8 @@ Options
      -  bounds for hyperparameters
   *  -  hyper_opt
      -  Cobyla
-     -  ['Cobyla']
-     -  ['str']
+     -  ['Cobyla', 'Cobyla-nlopt']
+     -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False
@@ -270,23 +265,43 @@ Options
      -  None
      -  ['NoneType', 'int', 'RandomState']
      -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  rho_regr
-     -  constant
-     -  ['constant', 'linear', 'quadratic']
+  *  -  rho0
+     -  1.0
      -  None
-     -  Regression function type for rho
-  *  -  optim_var
-     -  False
-     -  [True, False]
-     -  ['bool']
-     -  If True, the variance at HF samples is forced to zero
-  *  -  propagate_uncertainty
-     -  True
-     -  [True, False]
-     -  ['bool']
-     -  If True, the variance cotribution of lower fidelity levels are considered
-  *  -  n_comp
-     -  1
+     -  ['float']
+     -  Initial rho for the autoregressive model ,                   (scalar factor between two consecutive fidelities,                     e.g., Y_HF = (Rho) * Y_LF + Gamma
+  *  -  rho_bounds
+     -  [-5.0, 5.0]
      -  None
-     -  ['int']
-     -  Number of principal components
+     -  ['list', 'ndarray']
+     -  Bounds for the rho parameter used in the autoregressive model
+  *  -  sigma0
+     -  1.0
+     -  None
+     -  ['float']
+     -  Initial variance parameter
+  *  -  sigma_bounds
+     -  [1e-06, 100]
+     -  None
+     -  ['list', 'ndarray']
+     -  Bounds for the variance parameter
+  *  -  lambda
+     -  0.0
+     -  None
+     -  ['float']
+     -  Regularization parameter
+  *  -  n_inducing
+     -  [6, 5]
+     -  None
+     -  ['list', 'ndarray']
+     -  Number of inducing points per fidelity level
+  *  -  method
+     -  FITC
+     -  ['FITC']
+     -  ['str']
+     -  Methods available for Sparse Multi-fidelity
+  *  -  inducing_method
+     -  kmeans
+     -  ['random', 'kmeans']
+     -  ['str']
+     -  The chosen method to induce points

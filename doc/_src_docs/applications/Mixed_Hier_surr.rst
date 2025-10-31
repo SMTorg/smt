@@ -5,8 +5,8 @@ Mixed Integer and hierarchical Surrogates
 
 Mixed Integer Surrogates
 ------------------------
-To use a surrogate with mixed integer constraints, the user instantiates a ``MixedIntegerSurrogateModel`` with the given surrogate.
-The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
+To use a surrogate with mixed integer constraints, the user instantiates a `MixedIntegerSurrogateModel` with the given surrogate.
+The `MixedIntegerSurrogateModel` implements the `SurrogateModel` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
 For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instantiate a ``MixedIntegerKrigingModel`` with the given kernel for Kriging. Currently, 4 methods (CR, GD, EHH and  HH) are implemented that are described hereafter.
@@ -79,7 +79,7 @@ Mixed Integer Kriging with Gower Distance (GD)
 Another implemented method to tackle mixed integer with Kriging is using a basic mixed integer kernel based on the Gower distance between two points.
 When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
 
-For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
+For example, the Gower Distance between `[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
 With this distance, a mixed integer kernel can be build. Details can be found in [1]_ .
 
 Example of mixed integer Gower Distance model
@@ -233,7 +233,7 @@ Example of mixed integer Gower Distance model
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5911818
+     Training - done. Time (sec):  0.2635896
   ___________________________________________________________________________
      
    Evaluation
@@ -241,20 +241,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0158095
+     Predicting - done. Time (sec):  0.0081379
      
-     Prediction time/pt. (sec) :  0.0001581
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0161097
-     
-     Prediction time/pt. (sec) :  0.0001611
+     Prediction time/pt. (sec) :  0.0000814
      
   ___________________________________________________________________________
      
@@ -263,9 +252,20 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0159316
+     Predicting - done. Time (sec):  0.0020285
      
-     Prediction time/pt. (sec) :  0.0001593
+     Prediction time/pt. (sec) :  0.0000203
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0101628
+     
+     Prediction time/pt. (sec) :  0.0001016
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_gower_example.png
@@ -429,14 +429,14 @@ Example of mixed integer Compound Symmetry model
      
      Training ...
   exception :  4-th leading minor of the array is not positive definite
-  [ 3.28121902e+01 -1.19061651e+01 -1.19062304e+01  7.34202209e-04
-   -3.09582545e-04 -2.19341599e-04  3.49847458e-09 -1.67389635e-09
-   -7.15698428e-10]
+  [ 1.08573563e+01 -9.28689097e-01 -9.28688866e-01  2.59394451e-05
+   -2.51020465e-06 -1.80245284e-06  1.42556587e-11 -1.28557926e-12
+   -5.97253936e-13]
   exception :  4-th leading minor of the array is not positive definite
-  [ 9.09297095e+00 -4.69851668e-02 -4.69502417e-02  9.74106925e-04
-   -5.62905232e-06 -4.04511718e-06  2.47447274e-08 -1.26347122e-10
-   -6.20962697e-11]
-     Training - done. Time (sec):  0.5298758
+  [ 2.17574903e+01 -6.37874961e+00 -6.37875122e+00  2.51099932e-05
+   -8.50729004e-06 -6.04422345e-06  6.29132021e-12 -2.29991252e-12
+   -9.91832367e-13]
+     Training - done. Time (sec):  0.2348754
   ___________________________________________________________________________
      
    Evaluation
@@ -444,20 +444,9 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0146933
+     Predicting - done. Time (sec):  0.0080862
      
-     Prediction time/pt. (sec) :  0.0001469
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0199752
-     
-     Prediction time/pt. (sec) :  0.0001998
+     Prediction time/pt. (sec) :  0.0000809
      
   ___________________________________________________________________________
      
@@ -466,9 +455,20 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0154877
+     Predicting - done. Time (sec):  0.0070977
      
-     Prediction time/pt. (sec) :  0.0001549
+     Prediction time/pt. (sec) :  0.0000710
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0051768
+     
+     Prediction time/pt. (sec) :  0.0000518
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_cs_example.png
@@ -630,7 +630,7 @@ Example of mixed integer Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0349934
+     Training - done. Time (sec):  0.4104609
   ___________________________________________________________________________
      
    Evaluation
@@ -638,20 +638,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0155115
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0001551
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0213768
-     
-     Prediction time/pt. (sec) :  0.0002138
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -660,9 +649,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0098588
+     Predicting - done. Time (sec):  0.0100572
      
-     Prediction time/pt. (sec) :  0.0000986
+     Prediction time/pt. (sec) :  0.0001006
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0097873
+     
+     Prediction time/pt. (sec) :  0.0000979
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -824,7 +824,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0382819
+     Training - done. Time (sec):  0.4134455
   ___________________________________________________________________________
      
    Evaluation
@@ -832,20 +832,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0197999
+     Predicting - done. Time (sec):  0.0065877
      
-     Prediction time/pt. (sec) :  0.0001980
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0146132
-     
-     Prediction time/pt. (sec) :  0.0001461
+     Prediction time/pt. (sec) :  0.0000659
      
   ___________________________________________________________________________
      
@@ -854,9 +843,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0204926
+     Predicting - done. Time (sec):  0.0036645
      
-     Prediction time/pt. (sec) :  0.0002049
+     Prediction time/pt. (sec) :  0.0000366
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0102868
+     
+     Prediction time/pt. (sec) :  0.0001029
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -872,6 +872,7 @@ A ``MixedIntegerKrigingModel`` with both Hierarchical and Mixed-categorical vari
 Two kernels for hierarchical variables are available, namely ``Arc-Kernel`` and ``Alg-Kernel``. More details are given in the usage section.
 
 Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext` [3]_ and also rely on `ADSG` and `ConfigSpace`. 
+
 
 Example of mixed integer Kriging with hierarchical variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1028,7 +1029,7 @@ Example of mixed integer Kriging with hierarchical variables
   n_doe = 15
   design_space.seed = 42
   samp = MixedIntegerSamplingMethod(
-      LHS, design_space, criterion="ese", random_state=design_space.seed
+      LHS, design_space, criterion="ese", seed=design_space.seed
   )
   Xt, Xt_is_acting = samp(n_doe, return_is_acting=True)
   
@@ -1069,7 +1070,7 @@ Example of mixed integer Kriging with hierarchical variables
    Training
      
      Training ...
-     Training - done. Time (sec):  1.6949980
+     Training - done. Time (sec):  0.7269075
   ___________________________________________________________________________
      
    Evaluation
@@ -1077,9 +1078,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0126493
+     Predicting - done. Time (sec):  0.0031064
      
-     Prediction time/pt. (sec) :  0.0008433
+     Prediction time/pt. (sec) :  0.0002071
      
   
 
@@ -1091,4 +1092,5 @@ References
 
 .. [2] Pelamatti, J. "Mixed-variable Bayesian optimization: application to aerospace system design", PhD thesis, Université de Lille, Lille, 2020.
 
-.. [3] Saves, P., Hallé‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). “Hierarchical Modeling and Architecture Optimization: Review and Unified Framework”, arXiv:2506.22621.
+.. [3] Saves, P., Halle‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). "Hierarchical Modeling and Architecture Optimization: Review and Unified Framework", arXiv:2506.22621.
+

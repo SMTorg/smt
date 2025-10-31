@@ -1,27 +1,28 @@
-Multi-Fidelity Kriging KPLSK (MFKPLSK)
-======================================
+.. _smfk-ref-label:
 
-Partial Least Squares (PLS) is a statistical method to analyze the variations of a quantity of
-interest w.r.t underlying variables. PLS method gives directions (principal compoenents) that
-maximize the variation of the quantity of interest.
+Sparse Multi-Fidelity Kriging (SMFK)
+================================
 
-These principal components define rotations that can be applied to define bases changes.
-The principal components can be truncated at any number (called n_comp) to explain a
-’majority’ of the data variations.
-[1]_ used the PLS to define subspaces to make high-dimensional Kriging
-more efficient. 
+SMFK is a multi-fidelity modeling method which uses an autoregressive model of order 1 (AR1) introducing sparsity to the lowest fidelity level.
 
-We apply the same idea to :ref:`mfk-ref-label`. The only difference is that we do
-not apply the PLS analysis step on all datasets. We apply the PLS analysis step on the
-high-fidelity to preserve the robustness to poor correlations between fidelity levels.
-A hyperparameter optimization is then performed in the subspace that maximizes the
-variations of HF data.
+.. math ::
+        y_\text{high}({\bf x})=\rho(x) \cdot y_\text{low}({\bf x}) + \delta({\bf x})
 
-MFKPLSK is a combination of :ref:`mfk-ref-label` and :ref:`kplsk-ref-label` techniques.
+
+Using the Nystrom approximation :math:`\bf Q` to approximate the covariance :math:`\bf K` in the first level of fideliy.
+
+The model follows the same autoregressive formulation, where :math:`\rho(x)`
+is a scaling/correlation factor (constant, linear or quadratic) and :math:`\delta(\cdot)` is a discrepancy function.
+
+The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
+The implementation here follows the one proposed by Le Gratiet [2]_. It offers the advantage of being recursive, easily extended to :math:`n` levels of fidelity and offers better scaling for high numbers of samples.
+This method only uses nested sampling training points as described by Le Gratiet [2]_.
 
 References
 ----------
-.. [1] Bouhlel, M. A., Bartoli, N., Otsmane, A., & Morlier, J. (2016). An improved approach for estimating the hyperparameters of the kriging model for high-dimensional problems through the partial least squares method. Mathematical Problems in Engineering, 2016.
+.. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
+.. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
+.. [3] Titsias, M.K., Variational Learning of Inducing Variables in Sparse Gaussian Processes. In Proceedings of the 12th International Conference on Artificial Intelligence and Statistics (AISTATS), 2009
 
 Usage
 -----
@@ -30,11 +31,10 @@ Usage
 
   import matplotlib.pyplot as plt
   import numpy as np
-  
   from smt.applications.mfk import NestedLHS
-  from smt.applications.mfkplsk import MFKPLSK
+  from smt.applications.smfk import SMFK
   
-  # low fidelity modelk
+  # low fidelity model
   def lf_function(x):
       import numpy as np
   
@@ -59,9 +59,9 @@ Usage
   yt_e = hf_function(xt_e)
   yt_c = lf_function(xt_c)
   
-  # choice of number of PLS components
-  ncomp = 1
-  sm = MFKPLSK(n_comp=ncomp, theta0=ncomp * [1.0])
+  sm = SMFK(
+      theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_e.shape[0]
+  )
   
   # low-fidelity dataset names being integers from 0 to level-1
   sm.set_training_values(xt_c, yt_c, name=0)
@@ -75,8 +75,8 @@ Usage
   
   # query the outputs
   y = sm.predict_values(x)
-  _mse = sm.predict_variances(x)
-  _derivs = sm.predict_derivatives(x, kx=0)
+  varAl, _ = sm.predict_variances_all_levels(x)
+  # _derivs = sm.predict_derivatives(x, kx=0)
   
   plt.figure()
   
@@ -84,6 +84,13 @@ Usage
   plt.plot(x, y, linestyle="-.", label="mean_gp")
   plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
   plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
+  plt.plot(
+      sm.Z,
+      -9.9 * np.ones_like(sm.Z),
+      "g|",
+      mew=2,
+      label=f"LF inducing:{sm.Z.shape[0]}",
+  )
   
   plt.legend(loc=0)
   plt.ylim(-10, 17)
@@ -97,7 +104,7 @@ Usage
 
   ___________________________________________________________________________
      
-                                    MFKPLSK
+                                     SMFK
   ___________________________________________________________________________
      
    Problem size
@@ -109,18 +116,9 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1600516
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 101
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0000000
-     
-     Prediction time/pt. (sec) :  0.0000000
-     
+  Optimizing Level: 0
+  Optimizing Level: 1
+     Training - done. Time (sec):  0.4398677
   ___________________________________________________________________________
      
    Evaluation
@@ -133,7 +131,7 @@ Usage
      Prediction time/pt. (sec) :  0.0000000
      
   
-.. figure:: mfkplsk_TestMFKPLSK_run_mfkplsk_example.png
+.. figure:: smfk_TestSMFK_run_smfk_example.png
   :scale: 80 %
   :align: center
 
@@ -182,8 +180,8 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['squar_exp']
-     -  ['str']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
      -  1.9
@@ -216,9 +214,9 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
-     -  ['Cobyla']
-     -  ['str']
+     -  TNC
+     -  ['Cobyla', 'TNC', 'NoOp']
+     -  None
      -  Optimiser for hyperparameters optimisation
   *  -  eval_noise
      -  False
@@ -280,13 +278,13 @@ Options
      -  [True, False]
      -  ['bool']
      -  If True, the variance at HF samples is forced to zero
+  *  -  n_inducing
+     -  4
+     -  None
+     -  ['int']
+     -  Number of inducing points for the lowest fidelity                 level must be less or equal to the DoE in the lowest fideliy.
   *  -  propagate_uncertainty
      -  True
      -  [True, False]
      -  ['bool']
      -  If True, the variance cotribution of lower fidelity levels are considered
-  *  -  n_comp
-     -  1
-     -  None
-     -  ['int']
-     -  Number of principal components

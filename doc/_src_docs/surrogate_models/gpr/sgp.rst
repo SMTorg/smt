@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3448780
+     Training - done. Time (sec):  0.4818311
   ___________________________________________________________________________
      
    Evaluation
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2698798
+     Training - done. Time (sec):  0.4468930
   ___________________________________________________________________________
      
    Evaluation
@@ -304,7 +304,7 @@ Options
      -  None
      -  The kernel to use for mixed hierarchical inputs. Only for non continuous Kriging
   *  -  nugget
-     -  2.220446049250313e-13
+     -  2.220446049250313e-12
      -  None
      -  ['float']
      -  a jitter for numerical stability
@@ -363,11 +363,16 @@ Options
      -  None
      -  ['bool']
      -  activate reinterpolation for noisy cases
-  *  -  random_state
+  *  -  seed
      -  41
      -  None
+     -  ['NoneType', 'int', 'Generator']
+     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  random_state
+     -  None
+     -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  method
      -  FITC
      -  ['FITC', 'VFE']

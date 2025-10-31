@@ -66,9 +66,7 @@ The design space is then defined from a list of design variables and implements 
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
   ds.seed = 42
-  samp = MixedIntegerSamplingMethod(
-      LHS, ds, criterion="ese", random_state=ds.seed
-  )
+  samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
   x_sampled, is_acting_sampled = samp(100, return_is_acting=True)
   
   # Correct design vectors: round discrete variables, correct hierarchical variables
@@ -101,6 +99,7 @@ This can be useful for modeling incompatibility relationships: for example, engi
 installed on the back of the fuselage (vs on the wings) if a normal tail (vs T-tail) is selected.
 
 Note: this feature is only available if smt_design_space_ext has been installed: `pip install smt-design-space-ext` [3]_ and also rely on `ADSG` and `ConfigSpace`. 
+
 
 The hierarchy relationships are specified after instantiating the design space:
 
@@ -159,9 +158,7 @@ The hierarchy relationships are specified after instantiating the design space:
   # Sample the design space
   # Note: is_acting_sampled specifies for each design variable whether it is acting or not
   ds.seed = 42
-  samp = MixedIntegerSamplingMethod(
-      LHS, ds, criterion="ese", random_state=ds.seed
-  )
+  samp = MixedIntegerSamplingMethod(LHS, ds, criterion="ese", seed=ds.seed)
   Xt, is_acting_sampled = samp(100, return_is_acting=True)
   
   rng = np.random.default_rng(42)
@@ -249,7 +246,7 @@ The hierarchy relationships are specified after instantiating the design space:
    Training
      
      Training ...
-     Training - done. Time (sec):  5.8195512
+     Training - done. Time (sec):  2.3969007
   ___________________________________________________________________________
      
    Evaluation
@@ -257,11 +254,11 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.7199609
+     Predicting - done. Time (sec):  0.2258935
      
-     Prediction time/pt. (sec) :  0.0071996
+     Prediction time/pt. (sec) :  0.0022589
      
-  Pred_RMSE 4.034606181104147e-13
+  Pred_RMSE 4.0595409896223457e-13
   
 
 Design space and variable class references
@@ -316,7 +313,7 @@ Example of sampling a mixed-discrete design space
   num = 40
   design_space.seed = 42
   samp = MixedIntegerSamplingMethod(
-      LHS, design_space, criterion="ese", random_state=design_space.seed
+      LHS, design_space, criterion="ese", seed=design_space.seed
   )
   x, x_is_acting = samp(num, return_is_acting=True)
   
@@ -414,7 +411,7 @@ Example of mixed integer context usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7409899
+     Training - done. Time (sec):  0.2951317
   ___________________________________________________________________________
      
    Evaluation
@@ -422,9 +419,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0248973
+     Predicting - done. Time (sec):  0.0101120
      
-     Prediction time/pt. (sec) :  0.0004979
+     Prediction time/pt. (sec) :  0.0002022
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png
@@ -438,5 +435,5 @@ References
 
 .. [2] Hallé-Hannan, E. and  Audet, C., and Diouane, Y. and  Le Digabel, S. and Saves, P. (2024). A graph-structured distance for heterogeneous datasets with meta variable, Neurocomputing.
 
-.. [3] Saves, P., Hallé‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). “Hierarchical Modeling and Architecture Optimization: Review and Unified Framework”, arXiv:2506.22621.
+.. [3] Saves, P., Halle‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). "Hierarchical Modeling and Architecture Optimization: Review and Unified Framework", arXiv:2506.22621.
 
