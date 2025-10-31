@@ -37,7 +37,7 @@ class LHS(ScaledSamplingMethod):
         self.options.declare(
             "random_state",
             types=(type(None), int, np.random.RandomState),
-            desc="DEPRECATED: Numpy RandomState object or seed number which controls random draws",
+            desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws",
         )
         self.options.declare(
             "seed",
