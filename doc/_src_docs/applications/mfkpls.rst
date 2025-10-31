@@ -109,7 +109,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1548948
+     Training - done. Time (sec):  0.1501856
   ___________________________________________________________________________
      
    Evaluation
@@ -117,9 +117,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0050247
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000497
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -269,7 +269,7 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

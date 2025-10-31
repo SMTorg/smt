@@ -80,7 +80,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1398456
+     Training - done. Time (sec):  0.1202128
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -95,7 +95,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1324553
+     Training - done. Time (sec):  0.1307766
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -110,7 +110,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1697342
+     Training - done. Time (sec):  0.1591473
   ___________________________________________________________________________
      
    Evaluation
@@ -122,8 +122,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[0.87593173]]
-  [[15.96218104]]
+  [[-2.29343475]]
+  [[32.46448918]]
   
 
 Options
@@ -258,4 +258,4 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)

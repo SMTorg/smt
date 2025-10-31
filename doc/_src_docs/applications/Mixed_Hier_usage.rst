@@ -246,7 +246,7 @@ The hierarchy relationships are specified after instantiating the design space:
    Training
      
      Training ...
-     Training - done. Time (sec):  2.3969007
+     Training - done. Time (sec):  2.4042552
   ___________________________________________________________________________
      
    Evaluation
@@ -254,9 +254,9 @@ The hierarchy relationships are specified after instantiating the design space:
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.2258935
+     Predicting - done. Time (sec):  0.2304626
      
-     Prediction time/pt. (sec) :  0.0022589
+     Prediction time/pt. (sec) :  0.0023046
      
   Pred_RMSE 4.0595409896223457e-13
   
@@ -411,7 +411,7 @@ Example of mixed integer context usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.2951317
+     Training - done. Time (sec):  0.3177648
   ___________________________________________________________________________
      
    Evaluation
@@ -419,9 +419,9 @@ Example of mixed integer context usage
         # eval points. : 50
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0101120
+     Predicting - done. Time (sec):  0.0096788
      
-     Prediction time/pt. (sec) :  0.0002022
+     Prediction time/pt. (sec) :  0.0001936
      
   
 .. figure:: Mixed_Hier_usage_TestMixedInteger_run_mixed_integer_context_example.png

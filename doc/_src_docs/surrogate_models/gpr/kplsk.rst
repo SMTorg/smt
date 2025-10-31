@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0701256
+     Training - done. Time (sec):  0.0698915
   ___________________________________________________________________________
      
    Evaluation
@@ -245,7 +245,7 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4818311
+     Training - done. Time (sec):  0.4518239
   ___________________________________________________________________________
      
    Evaluation
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4468930
+     Training - done. Time (sec):  0.4059007
   ___________________________________________________________________________
      
    Evaluation
@@ -372,7 +372,7 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  method
      -  FITC
      -  ['FITC', 'VFE']

@@ -548,7 +548,7 @@ Usage with mixed variable
   
 ::
 
-  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.2
+  Minimum in x=[-5.  2.  1.  0.] with f(x)=-14.3
   
 .. figure:: ego_TestEGO_run_ego_mixed_integer_example.png
   :scale: 80 %
@@ -604,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x000002B7F061E410>
+     -  <smt.applications.ego.Evaluator object at 0x0000022BB0AC8C90>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -639,7 +639,7 @@ Options
      -  ['bool']
      -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x000002B7F8F64350>
+     -  <smt.surrogate_models.krg.KRG object at 0x0000022BB0BAE090>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly

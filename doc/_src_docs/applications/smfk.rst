@@ -118,7 +118,7 @@ Usage
      Training ...
   Optimizing Level: 0
   Optimizing Level: 1
-     Training - done. Time (sec):  0.4398677
+     Training - done. Time (sec):  0.4877243
   ___________________________________________________________________________
      
    Evaluation
@@ -126,9 +126,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0015311
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000152
      
   
 .. figure:: smfk_TestSMFK_run_smfk_example.png
@@ -267,7 +267,7 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED use seed instead: Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho_regr
      -  constant
      -  ['constant', 'linear', 'quadratic']

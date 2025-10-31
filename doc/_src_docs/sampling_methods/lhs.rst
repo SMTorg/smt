@@ -76,7 +76,7 @@ Options
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED: Numpy RandomState object or seed number which controls random draws
+     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws
   *  -  seed
      -  None
      -  None
