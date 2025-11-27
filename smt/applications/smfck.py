@@ -66,7 +66,7 @@ class SMFCK(MFCK):
             False,
             types=bool,
             values=(True, False),
-            desc="if use_het_noise is true, prediction of the variance over the test set",
+            desc="if use_het_noise is true, then the prediction of the variance over the test set will given",
         )
         declare(
             "random_state",

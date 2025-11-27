@@ -56,14 +56,13 @@ class TestSMFCK(SMTestCase):
             ye = prob(xe) + +np.random.normal(0, noise_std, size=xe.shape)
 
             sm = SMFCK(
-                hyper_opt="Cobyla",
-                theta0=xe.shape[1] * [0.8],
-                theta_bounds=[1e-6, 2.0],
+                hyper_opt="Cobyla-nlopt",
+                theta0=xe.shape[1] * [1.0],
+                theta_bounds=[1e-4, 1.0],
                 print_global=False,
                 eval_noise=True,
-                noise0=[1e-5],
-                noise_bounds=np.array((1e-12, 10.0)),
-                corr="squar_exp",
+                noise0=[1e-3],
+                noise_bounds=np.array((1e-6, 1.0)),
                 n_inducing=[x_lf.shape[0] - 1, xe.shape[0] - 1],
                 n_start=1,
             )
@@ -109,8 +108,8 @@ class TestSMFCK(SMTestCase):
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
         # Example with non-nested input data
-        Obs_HF = 7  # Number of observations of HF
-        Obs_LF = 14  # Number of observations of LF
+        Obs_HF = 100  # Number of observations of HF
+        Obs_LF = 500  # Number of observations of LF
 
         # Creation of LHS for non-nested LF data
         sampling = LHS(
@@ -127,15 +126,15 @@ class TestSMFCK(SMTestCase):
         yt_c = lf_function(xt_c_non)
 
         sm = SMFCK(
-            hyper_opt="Cobyla",
+            hyper_opt="Cobyla-nlopt",
             theta0=xt_e_non.shape[1] * [1.0],
-            theta_bounds=[1e-6, 50.0],
+            theta_bounds=[1e-6, 10.0],
             print_global=False,
             eval_noise=True,
             noise0=[1e-4],
-            noise_bounds=np.array((1e-12, 100)),
-            corr="squar_exp",
-            n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
+            noise_bounds=np.array((1e-6, 1)),
+            n_inducing=[20,10],
+            n_start=1
         )
 
         # low-fidelity dataset names being integers from 0 to level-1
@@ -154,7 +153,6 @@ class TestSMFCK(SMTestCase):
 
         y = mean[-1]
         # _derivs = sm.predict_derivatives(x, kx=0)
-
         plt.figure()
 
         plt.plot(x, hf_function(x), label="reference")
