@@ -133,8 +133,8 @@ class TestSMFCK(SMTestCase):
             eval_noise=True,
             noise0=[1e-4],
             noise_bounds=np.array((1e-6, 1)),
-            n_inducing=[20,10],
-            n_start=1
+            n_inducing=[20, 10],
+            n_start=1,
         )
 
         # low-fidelity dataset names being integers from 0 to level-1
