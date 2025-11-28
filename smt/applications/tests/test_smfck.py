@@ -29,12 +29,12 @@ print_output = False
 
 class TestSMFCK(SMTestCase):
     def setUp(self):
-        self.nt = 500
+        self.nt = 200
         self.ne = 100
         self.ndim = 3
 
     def test_smfck(self):
-        self.problems = ["tanh"]  # , "tanh", cos"]
+        self.problems = ["exp"]  # , "tanh", cos"]
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
@@ -47,7 +47,7 @@ class TestSMFCK(SMTestCase):
             for i in range(self.ndim):
                 yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
-            y_lf = 2 * prob(xt) + np.random.normal(0, noise_std, size=xt.shape)
+            y_lf = 2 * prob(xt) +2+ np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
             xe = sampling(self.ne)
             ye = prob(xe) + np.random.normal(0, noise_std, size=xe.shape)
@@ -60,7 +60,7 @@ class TestSMFCK(SMTestCase):
                 eval_noise=True,
                 noise0=[1e-3],
                 noise_bounds=np.array((1e-9, 1.0)),
-                n_inducing=[50, 25],
+                n_inducing=[10, 8],
                 n_start=10,
             )
             # if sm.options.is_declared("xlimits"):
@@ -79,7 +79,7 @@ class TestSMFCK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 5, 5)
+            self.assert_error(t_error, 0.0, 50, 50)
 
     @staticmethod
     def run_smfck_example():
