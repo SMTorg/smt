@@ -47,7 +47,7 @@ class TestSMFCK(SMTestCase):
             for i in range(self.ndim):
                 yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
-            y_lf = 2 * prob(xt) +2+ np.random.normal(0, noise_std, size=xt.shape)
+            y_lf = 2 * prob(xt) + 2 + np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
             xe = sampling(self.ne)
             ye = prob(xe) + np.random.normal(0, noise_std, size=xe.shape)
