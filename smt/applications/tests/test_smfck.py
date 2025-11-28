@@ -47,7 +47,7 @@ class TestSMFCK(SMTestCase):
             for i in range(self.ndim):
                 yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
-            y_lf = 2 * prob(xt)  + np.random.normal(0, noise_std, size=xt.shape)
+            y_lf = 2 * prob(xt) + np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
             xe = sampling(self.ne)
             ye = prob(xe) + np.random.normal(0, noise_std, size=xe.shape)
@@ -56,7 +56,7 @@ class TestSMFCK(SMTestCase):
                 hyper_opt="Cobyla",
                 theta0=xe.shape[1] * [1.5],
                 theta_bounds=[1e-2, 5.0],
-                #print_global=False,
+                # print_global=False,
                 eval_noise=True,
                 noise0=[1e-3],
                 noise_bounds=np.array((1e-9, 1.0)),
@@ -65,7 +65,7 @@ class TestSMFCK(SMTestCase):
             )
             # if sm.options.is_declared("xlimits"):
             #    sm.options["xlimits"] = prob.xlimits
-            #sm.options["print_global"] = False
+            # sm.options["print_global"] = False
 
             sm.set_training_values(xe, ye[:, 0])
             sm.set_training_values(x_lf, y_lf[:, 0], name=0)
@@ -78,7 +78,7 @@ class TestSMFCK(SMTestCase):
             den = np.linalg.norm(yt[:, 0])
 
             t_error = num / den
-            
+
             self.assert_error(t_error, 0.0, 5, 5)
 
     @staticmethod
