@@ -35,13 +35,13 @@ class Test(SMTestCase):
     def setUp(self):
         eps = 1e-8
         xlimits = np.asarray([[0, 1], [0, 1]])
-        self.random = np.random.RandomState(41)
-        lhs = LHS(xlimits=xlimits, random_state=self.random)
+        self.random = np.random.default_rng(2)
+        lhs = LHS(xlimits=xlimits, seed=self.random)
         X = lhs(8)
-        y = LHS(xlimits=np.asarray([[0, 1]]), random_state=self.random)(8)
+        y = LHS(xlimits=np.asarray([[0, 1]]), seed=self.random)(8)
         X_norma, y_norma, X_offset, y_mean, X_scale, y_std = standardization(X, y)
         D, ij = cross_distances(X_norma)
-        theta = self.random.rand(2)
+        theta = self.random.random(2)
         corr_str = [
             "pow_exp",
             "abs_exp",
@@ -111,7 +111,7 @@ class Test(SMTestCase):
                 self.power_val[self.corr_str[ind]],
             )
             if corr == SquarSinExp:
-                theta = self.random.rand(4)
+                theta = self.random.random(4)
             else:
                 theta = self.theta
 
@@ -157,7 +157,7 @@ class Test(SMTestCase):
             )
 
             if corr == SquarSinExp:
-                theta = self.random.rand(4)
+                theta = self.random.random(4)
             else:
                 theta = self.theta
 
@@ -206,10 +206,10 @@ class Test(SMTestCase):
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
                     kr = KRG(print_global=False, corr=corr_str)
-                    theta = self.random.rand(4)
+                    theta = self.random.random(4)
                 elif corr_str == "act_exp":
                     kr = MGP(print_global=False, corr=corr_str)
-                    theta = self.random.rand(4)
+                    theta = self.random.random(4)
                 else:
                     kr = KRG(print_global=False, corr=corr_str)
                     theta = self.theta
@@ -253,10 +253,10 @@ class Test(SMTestCase):
             for poly_str in ["constant", "linear", "quadratic"]:  # For every method
                 if corr_str == "squar_sin_exp":
                     kr = KRG(print_global=False, corr=corr_str)
-                    theta = self.random.rand(4)
+                    theta = self.random.random(4)
                 elif corr_str == "act_exp":
                     kr = MGP(print_global=False, corr=corr_str)
-                    theta = self.random.rand(4)
+                    theta = self.random.random(4)
                 else:
                     kr = KRG(print_global=False, corr=corr_str)
                     theta = self.theta

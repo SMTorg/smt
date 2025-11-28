@@ -31,15 +31,14 @@ class TestMFKOneFidelity(SMTestCase):
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
-            sampling = LHS(xlimits=prob.xlimits, random_state=0)
+            sampling = LHS(xlimits=prob.xlimits, seed=0)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
                 yt = np.concatenate((yt, prob(xt, kx=i)), axis=1)
 
-            sampling = LHS(xlimits=prob.xlimits, random_state=1)
+            sampling = LHS(xlimits=prob.xlimits, seed=1)
             xv = sampling(self.ne)
             yv = prob(xv)
 
@@ -75,7 +74,7 @@ class TestMFKOneFidelity(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=1, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=1, xlimits=xlimits, seed=0)
         xt_e = xdoes(7)[0]
 
         # Evaluate the HF function

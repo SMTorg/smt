@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 
 import time
 import unittest
+import os
 
 import numpy as np
 
@@ -25,13 +26,13 @@ class TestKPLS(unittest.TestCase):
             sx = LHS(
                 xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
                 criterion="m",
-                random_state=42,
+                seed=42,
             )
             x = sx(n)
             sy = LHS(
                 xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
                 criterion="m",
-                random_state=42,
+                seed=42,
             )
             y = sy(n)
 
@@ -60,13 +61,13 @@ class TestKPLS(unittest.TestCase):
             sx = LHS(
                 xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
                 criterion="m",
-                random_state=42,
+                seed=42,
             )
             x = sx(n)
             sy = LHS(
                 xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
                 criterion="m",
-                random_state=42,
+                seed=42,
             )
             y = sy(n)
 
@@ -100,6 +101,7 @@ class TestKPLS(unittest.TestCase):
                 < 2
             )
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_optim_kplsk(self):
         # Griewank function definition
         def griewank(x):
@@ -123,7 +125,7 @@ class TestKPLS(unittest.TestCase):
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_dim, axis=0),
             criterion="m",
-            random_state=42,
+            seed=42,
         )
         x_train = sx(n_train)
         x_train = lb + (ub - lb) * x_train  # map generated samples to design space

@@ -306,7 +306,6 @@ class Test(unittest.TestCase):
             return np.cos(5 * x)
 
         nobs = 50  # number of obsertvations
-        np.random.seed(0)  # a seed for reproducibility
         xt = np.random.uniform(size=nobs)  # design points
 
         # adding a random noise to observations
@@ -397,11 +396,9 @@ class Test(unittest.TestCase):
         prob = TensorProduct(ndim=ndim, func="exp")
 
         sm = KPLS(eval_n_comp=True)
-        samp = LHS(xlimits=prob.xlimits, random_state=42)
-        np.random.seed(0)
+        samp = LHS(xlimits=prob.xlimits, seed=42)
         xt = samp(50)
         yt = prob(xt)
-        np.random.seed(1)
         sm.set_training_values(xt, yt)
         sm.train()
 
@@ -620,9 +617,7 @@ class Test(unittest.TestCase):
             )
             return res
 
-        sampling = LHS(
-            xlimits=np.asarray([(-1, 1)] * dim), criterion="m", random_state=42
-        )
+        sampling = LHS(xlimits=np.asarray([(-1, 1)] * dim), criterion="m", seed=42)
         xt = sampling(8)
         yt = np.atleast_2d(fun(xt)).T
 

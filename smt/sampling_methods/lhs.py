@@ -6,6 +6,7 @@ This package is distributed under New BSD license.
 LHS sampling; uses the pyDOE3 package.
 """
 
+from warnings import warn
 import numpy as np
 from pyDOE3 import lhs
 from scipy.spatial.distance import cdist, pdist
@@ -36,7 +37,12 @@ class LHS(ScaledSamplingMethod):
         self.options.declare(
             "random_state",
             types=(type(None), int, np.random.RandomState),
-            desc="Numpy RandomState object or seed number which controls random draws",
+            desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws",
+        )
+        self.options.declare(
+            "seed",
+            types=(type(None), int, np.random.Generator),
+            desc="Numpy seed number or random generator which controls random draws",
         )
 
         # Update options values passed by the user here to get 'random_state' option
@@ -44,12 +50,24 @@ class LHS(ScaledSamplingMethod):
 
         # RandomState is and has to be initialized once at constructor time,
         # not in _compute to avoid yielding the same dataset again and again
-        if isinstance(self.options["random_state"], np.random.RandomState):
-            self.random_state = self.options["random_state"]
+        if self.options["random_state"] is None:
+            self.random_state = np.random.default_rng()
+        elif isinstance(self.options["random_state"], np.random.RandomState):
+            raise ValueError(
+                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
+            )
         elif isinstance(self.options["random_state"], int):
-            self.random_state = np.random.RandomState(self.options["random_state"])
-        else:
-            self.random_state = np.random.RandomState()
+            warn(
+                "Passing a seed or integer to random_state is deprecated "
+                "and will raise an error in a future version. Please "
+                "use seed parameter",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            self.random_state = np.random.default_rng(self.options["random_state"])
+
+        if self.options["seed"] is not None:
+            self.random_state = np.random.default_rng(self.options["seed"])
 
     def _compute(self, nt):
         """
@@ -71,12 +89,20 @@ class LHS(ScaledSamplingMethod):
         nx = xlimits.shape[0]
 
         if self.options["criterion"] != "ese":
-            return lhs(
-                nx,
-                samples=nt,
-                criterion=self.options["criterion"],
-                random_state=self.random_state,
-            )
+            if isinstance(self.random_state, np.random.RandomState):
+                return lhs(
+                    nx,
+                    samples=nt,
+                    criterion=self.options["criterion"],
+                    random_state=self.random_state,
+                )
+            else:
+                return lhs(
+                    nx,
+                    samples=nt,
+                    criterion=self.options["criterion"],
+                    seed=self.random_state,
+                )
         elif self.options["criterion"] == "ese":
             return self._ese(nx, nt)
 
@@ -192,7 +218,13 @@ class LHS(ScaledSamplingMethod):
                 PhiP_try = l_PhiP[k]
 
                 # Threshold of acceptance
-                if PhiP_try - PhiP_ <= T * self.random_state.rand(1)[0]:
+                rand = (
+                    self.random_state.rand(1)
+                    if isinstance(self.random_state, np.random.RandomState)
+                    else self.random_state.random(1)
+                )
+
+                if PhiP_try - PhiP_ <= T * rand[0]:
                     PhiP_ = PhiP_try
                     n_acpt = n_acpt + 1
                     X_ = l_X[k]
@@ -279,13 +311,29 @@ class LHS(ScaledSamplingMethod):
         """
 
         # Choose two (different) random rows to perform the exchange
-        i1 = self.random_state.randint(X.shape[0])
+        i1 = (
+            self.random_state.randint(X.shape[0])
+            if isinstance(self.random_state, np.random.RandomState)
+            else self.random_state.integers(X.shape[0])
+        )
         while i1 in fixed_index:
-            i1 = self.random_state.randint(X.shape[0])
+            i1 = (
+                self.random_state.randint(X.shape[0])
+                if isinstance(self.random_state, np.random.RandomState)
+                else self.random_state.integers(X.shape[0])
+            )
 
-        i2 = self.random_state.randint(X.shape[0])
+        i2 = (
+            self.random_state.randint(X.shape[0])
+            if isinstance(self.random_state, np.random.RandomState)
+            else self.random_state.integers(X.shape[0])
+        )
         while i2 == i1 or i2 in fixed_index:
-            i2 = self.random_state.randint(X.shape[0])
+            i2 = (
+                self.random_state.randint(X.shape[0])
+                if isinstance(self.random_state, np.random.RandomState)
+                else self.random_state.integers(X.shape[0])
+            )
 
         X_ = np.delete(X, [i1, i2], axis=0)
 
@@ -313,7 +361,11 @@ class LHS(ScaledSamplingMethod):
         """
         # Parameters of maximinESE procedure
         if len(fixed_index) == 0:
-            P0 = lhs(dim, nt, criterion=None, random_state=self.random_state)
+            P0 = (
+                lhs(dim, nt, criterion=None, random_state=self.random_state)
+                if isinstance(self.random_state, np.random.RandomState)
+                else lhs(dim, nt, criterion=None, seed=self.random_state)
+            )
         J = 20
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)
@@ -396,7 +448,7 @@ class LHS(ScaledSamplingMethod):
         # Sampling of the new subspace
         sampling_new = LHS(
             xlimits=np.array([[0.0, 1.0]] * len(xlimits)),
-            random_state=seed,
+            seed=seed,
         )
         x_subspace = sampling_new(n_points)
 
@@ -421,7 +473,7 @@ class LHS(ScaledSamplingMethod):
             new_seed = (
                 seed + 1 if seed else None
             )  # To avoid same sampling as above when seeded
-            sampling_new = LHS(xlimits=xlimits, criterion="ese", random_state=new_seed)
+            sampling_new = LHS(xlimits=xlimits, criterion="ese", seed=new_seed)
             x_new = sampling_new._ese(
                 len(x_new), len(x_new), fixed_index=np.arange(0, len(x), 1), P0=x_new
             )

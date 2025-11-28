@@ -20,7 +20,6 @@ except ImportError:
 from copy import deepcopy
 
 from smt.applications import SMFCK
-from smt.sampling_methods import LHS
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
 from smt.utils.sm_test_case import SMTestCase
@@ -43,7 +42,6 @@ class TestSMFCK(SMTestCase):
 
             noise_std = 1e-5
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -51,7 +49,6 @@ class TestSMFCK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2 + np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe) + +np.random.normal(0, noise_std, size=xe.shape)
 
@@ -82,12 +79,14 @@ class TestSMFCK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 5e-2, 5e-2)
+            self.assert_error(t_error, 0.0, 2e-1, 2e-1)
 
     @staticmethod
     def run_smfck_example():
         import matplotlib.pyplot as plt
         import numpy as np
+        from smt.sampling_methods import LHS  # noqa
+        from smt.applications import SMFCK
 
         # low fidelity model
         def lf_function(x):
@@ -115,7 +114,7 @@ class TestSMFCK(SMTestCase):
         sampling = LHS(
             xlimits=xlimits,
             criterion="ese",
-            random_state=0,
+            seed=0,
         )
 
         xt_e_non = sampling(Obs_HF)

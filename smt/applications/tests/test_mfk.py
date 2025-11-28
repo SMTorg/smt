@@ -37,7 +37,7 @@ class TestMFK(SMTestCase):
 
     def test_nested_lhs(self):
         xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
-        xnorm = NestedLHS(nlevel=3, xlimits=xlimits, random_state=0)
+        xnorm = NestedLHS(nlevel=3, xlimits=xlimits, seed=0)
         xlow, xmedium, xhigh = xnorm(15)
 
         for items1 in xmedium:
@@ -61,7 +61,6 @@ class TestMFK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -69,7 +68,6 @@ class TestMFK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
@@ -95,7 +93,6 @@ class TestMFK(SMTestCase):
         sampling = LHS(xlimits=prob.xlimits)
 
         nt = 100
-        np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
         dyt = {}
@@ -105,7 +102,6 @@ class TestMFK(SMTestCase):
         y_lf = 2 * prob(xt) + 2
         x_lf = deepcopy(xt)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
         dye = {}
@@ -162,7 +158,7 @@ class TestMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
         xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions

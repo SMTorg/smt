@@ -47,8 +47,7 @@ class TestMOE(SMTestCase):
         self.nt = 50
         self.ne = 50
 
-        np.random.seed(0)
-        xt = np.random.sample(self.nt).reshape((-1, 1))
+        xt = np.random.default_rng(seed=0).random(self.nt).reshape((-1, 1))
         yt = self.function_test_1d(xt)
         moe = MOE(
             smooth_recombination=True,
@@ -60,8 +59,7 @@ class TestMOE(SMTestCase):
         moe.train()
 
         # validation data
-        np.random.seed(1)
-        xe = np.random.sample(self.ne)
+        xe = np.random.default_rng(seed=3).random(self.ne)
         ye = self.function_test_1d(xe)
 
         rms_error = compute_relative_error(moe, xe, ye)
@@ -91,8 +89,7 @@ class TestMOE(SMTestCase):
         self.nt = 50
         self.ne = 50
 
-        np.random.seed(0)
-        xt = np.random.sample(self.nt).reshape((-1, 1))
+        xt = np.random.default_rng(seed=0).random(self.nt).reshape((-1, 1))
         yt = self.function_test_1d(xt)
         moe = MOE(
             smooth_recombination=True,
@@ -105,8 +102,7 @@ class TestMOE(SMTestCase):
         moe.train()
 
         # validation data
-        np.random.seed(1)
-        xe = np.random.sample(self.ne)
+        xe = np.random.default_rng(seed=3).random(self.ne)
         ye = self.function_test_1d(xe)
 
         rms_error = compute_relative_error(moe, xe, ye)
@@ -152,8 +148,7 @@ class TestMOE(SMTestCase):
         self.nt = 50
         self.ne = 50
 
-        np.random.seed(0)
-        xt = np.random.sample(self.nt).reshape((-1, 1))
+        xt = np.random.default_rng(seed=0).random(self.nt).reshape((-1, 1))
         yt = self.function_test_1d(xt)
         moe = MOESurrogateModel(
             smooth_recombination=True,
@@ -168,8 +163,7 @@ class TestMOE(SMTestCase):
         self.assertFalse(moe.supports["variances"])
 
         # validation data
-        np.random.seed(1)
-        xe = np.random.sample(self.ne)
+        xe = np.random.default_rng(seed=3).random(self.ne)
         ye = self.function_test_1d(xe)
 
         rms_error = compute_relative_error(moe, xe, ye)
@@ -215,7 +209,6 @@ class TestMOE(SMTestCase):
 
         # training data
         sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
 
@@ -225,7 +218,6 @@ class TestMOE(SMTestCase):
         moe.train()
 
         # validation data
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
@@ -258,7 +250,6 @@ class TestMOE(SMTestCase):
 
         # training data
         sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
 
@@ -269,7 +260,6 @@ class TestMOE(SMTestCase):
         moe.train()
 
         # validation data
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 
@@ -351,7 +341,7 @@ class TestMOE(SMTestCase):
         ndoe = 6
 
         # Construction of the DOE
-        sampling = LHS(xlimits=xlimits, criterion="m", random_state=0)
+        sampling = LHS(xlimits=xlimits, criterion="m", seed=0)
         x1D = sampling(ndoe)
         x1D = np.sort(x1D, axis=0)
         # Compute the output
@@ -374,7 +364,6 @@ class TestMOE(SMTestCase):
     def test_bad_allow_value(self):
         nt = 35
         sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
-        np.random.seed(0)
         xt = sampling(nt)
         yt = self.function_test_1d(xt)
 
@@ -413,7 +402,6 @@ class TestMOE(SMTestCase):
 
         # Training data
         sampling = FullFactorial(xlimits=np.array([[0, 1]]), clip=True)
-        np.random.seed(0)
         xt = sampling(nt)
         yt = function_test_1d(xt)
 
@@ -463,7 +451,6 @@ class TestMOE(SMTestCase):
 
         # Training data
         sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
-        np.random.seed(0)
         xt = sampling(nt)
         yt = prob(xt)
 
@@ -476,7 +463,6 @@ class TestMOE(SMTestCase):
         moe.train()
 
         # Validation data
-        np.random.seed(1)
         xe = sampling(ne)
         ye = prob(xe)
 

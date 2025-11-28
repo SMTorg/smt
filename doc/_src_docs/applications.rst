@@ -13,7 +13,9 @@ Three methods are available:
    applications/moe
    applications/vfm
    applications/mfk
+   applications/smfk
    applications/mfck
+   applications/smfck
    applications/mfkpls
    applications/mfkplsk
    applications/ego

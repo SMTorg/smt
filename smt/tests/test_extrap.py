@@ -51,7 +51,6 @@ class Test(SMTestCase):
         prob = self.problems["sphere"]
         sampling = LHS(xlimits=prob.xlimits)
 
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
 

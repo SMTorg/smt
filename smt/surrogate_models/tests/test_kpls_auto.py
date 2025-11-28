@@ -38,10 +38,10 @@ class Test(SMTestCase):
         e_errors["KPLS"] = 2.5
 
         n_comp_opt = {}
-        n_comp_opt["Branin"] = 2
+        n_comp_opt["Branin"] = 1
         n_comp_opt["Rosenbrock"] = 1
-        n_comp_opt["sphere"] = 1
-        n_comp_opt["exp"] = 3
+        n_comp_opt["sphere"] = 2
+        n_comp_opt["exp"] = 5
         n_comp_opt["tanh"] = 1
         n_comp_opt["cos"] = 1
 
@@ -59,7 +59,7 @@ class Test(SMTestCase):
 
         prob = self.problems[pname]
 
-        sampling = LHS(xlimits=prob.xlimits, random_state=42)
+        sampling = LHS(xlimits=prob.xlimits, seed=42)
 
         xt = sampling(self.nt)
         yt = prob(xt)

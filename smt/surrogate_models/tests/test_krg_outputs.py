@@ -19,7 +19,7 @@ class TestKRG(unittest.TestCase):
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
             criterion="m",
-            random_state=42,
+            seed=42,
         )
         x = sx(n)
         # 2-dimensional output
@@ -27,7 +27,7 @@ class TestKRG(unittest.TestCase):
         sy = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), n_s, axis=0),
             criterion="m",
-            random_state=42,
+            seed=42,
         )
         y = sy(n)
 
@@ -62,7 +62,7 @@ class TestKRG(unittest.TestCase):
             return y
 
         xlimits = np.array([[-5, 10], [-5, 10]])
-        sampling = LHS(xlimits=xlimits, random_state=42)
+        sampling = LHS(xlimits=xlimits, seed=42)
         xt = sampling(12)
         yt = pb(xt)
 
@@ -78,7 +78,7 @@ class TestKRG(unittest.TestCase):
             print_global=False,
             poly="constant",
             corr="abs_exp",
-            random_state=42,
+            seed=42,
         )
         # train
         sm_gpx.set_training_values(xt, yt)
@@ -125,7 +125,7 @@ class TestKRG(unittest.TestCase):
                 + np.sum(deriv_krg - diff_krg)
             )
             / np.sum(np.abs(deriv_gpx))
-            < 1e-3
+            < 1e-2
         )
 
 

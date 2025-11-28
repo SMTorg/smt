@@ -59,14 +59,12 @@ class Test(SMTestCase):
         prob = self.problem
         sampling = FullFactorial(xlimits=prob.xlimits, clip=False)
 
-        np.random.seed(0)
         xt = sampling(self.nt)
         yt = prob(xt)
         # dyt = {}
         # for kx in range(prob.xlimits.shape[0]):
         #     dyt[kx] = prob(xt, kx=kx)
 
-        np.random.seed(1)
         xe = sampling(self.ne)
         ye = prob(xe)
 

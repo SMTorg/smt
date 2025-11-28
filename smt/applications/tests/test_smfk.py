@@ -19,7 +19,6 @@ except ImportError:
 
 from copy import deepcopy
 
-from smt.applications.mfk import NestedLHS
 from smt.applications.smfk import SMFK
 from smt.problems import TensorProduct
 from smt.sampling_methods import FullFactorial
@@ -42,7 +41,6 @@ class TestSMFK(SMTestCase):
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            np.random.seed(0)
             xt = sampling(self.nt)
             yt = prob(xt)
             for i in range(self.ndim):
@@ -50,7 +48,6 @@ class TestSMFK(SMTestCase):
 
             y_lf = 2 * prob(xt) + 2
             x_lf = deepcopy(xt)
-            np.random.seed(1)
             xe = sampling(self.ne)
             ye = prob(xe)
 
@@ -78,6 +75,8 @@ class TestSMFK(SMTestCase):
     def run_smfk_example():
         import matplotlib.pyplot as plt
         import numpy as np
+        from smt.applications.mfk import NestedLHS
+        from smt.applications.smfk import SMFK
 
         # low fidelity model
         def lf_function(x):

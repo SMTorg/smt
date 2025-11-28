@@ -5,8 +5,8 @@ Mixed Integer and hierarchical Surrogates
 
 Mixed Integer Surrogates
 ------------------------
-To use a surrogate with mixed integer constraints, the user instantiates a ``MixedIntegerSurrogateModel`` with the given surrogate.
-The ``MixedIntegerSurrogateModel`` implements the ``SurrogateModel`` interface  and decorates the given surrogate while respecting integer and categorical types.
+To use a surrogate with mixed integer constraints, the user instantiates a `MixedIntegerSurrogateModel` with the given surrogate.
+The `MixedIntegerSurrogateModel` implements the `SurrogateModel` interface  and decorates the given surrogate while respecting integer and categorical types.
 They are various surrogate models implemented that are described below.
 
 For Kriging models, several methods to construct the mixed categorical correlation kernel are implemented. As a consequence, the user can instantiate a ``MixedIntegerKrigingModel`` with the given kernel for Kriging. Currently, 4 methods (CR, GD, EHH and  HH) are implemented that are described hereafter.
@@ -29,7 +29,7 @@ Mixed Integer Kriging with Gower Distance (GD)
 Another implemented method to tackle mixed integer with Kriging is using a basic mixed integer kernel based on the Gower distance between two points.
 When constructing the correlation kernel, the distance is redefined as :math:`\Delta= \Delta_{cont} + \Delta_{cat}`, with :math:`\Delta_{cont}` the continuous distance as usual and :math:`\Delta_ {cat}` the categorical distance defined as the number of categorical variables that differs from one point to another.
 
-For example, the Gower Distance between ``[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
+For example, the Gower Distance between `[1,'red', 'medium']`` and ``[1.2,'red', 'large']`` is :math:`\Delta= 0.2+ (0` ``'red'`` :math:`=` ``'red'`` :math:`+ 1` ``'medium'`` :math:`\neq` ``'large'``  ) :math:`=1.2`.
 With this distance, a mixed integer kernel can be build. Details can be found in [1]_ .
 
 Example of mixed integer Gower Distance model
@@ -93,5 +93,5 @@ References
 
 .. [2] Pelamatti, J. "Mixed-variable Bayesian optimization: application to aerospace system design", PhD thesis, Université de Lille, Lille, 2020.
 
-.. [3] Saves, P., Hallé‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). “Hierarchical Modeling and Architecture Optimization: Review and Unified Framework”, arXiv:2506.22621.
+.. [3] Saves, P., Halle‑Hannan, E., Bussemaker, J., Diouane, Y., Bartoli, N. (2025). "Hierarchical Modeling and Architecture Optimization: Review and Unified Framework", arXiv:2506.22621.
 

@@ -209,7 +209,7 @@ Example 1: global POD case for 1D function
   
   seed_sampling = 42
   xlimits = np.array([[0, 4]])
-  sampling = LHS(xlimits=xlimits, random_state=seed_sampling)
+  sampling = LHS(xlimits=xlimits, seed=seed_sampling)
   
   nt = 40
   xt = sampling(nt)
@@ -345,8 +345,8 @@ Example 2: local POD case for 2D function
   
   seed = 42
   xlimits = [[0, 1], [0, 4]]
-  sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), random_state=seed)
-  sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), random_state=seed + 1)
+  sampling_x1 = LHS(xlimits=np.array([xlimits[0]]), seed=seed)
+  sampling_x2 = LHS(xlimits=np.array([xlimits[1]]), seed=seed + 1)
   
   nt1 = 25
   nt2 = 10
@@ -358,7 +358,7 @@ Example 2: local POD case for 2D function
   for i, elt in enumerate(xt1):
       xt[i * nt2 : (i + 1) * nt2, 0] = elt
   
-  sampling_new = LHS(xlimits=np.array(xlimits), random_state=seed)
+  sampling_new = LHS(xlimits=np.array(xlimits), seed=seed)
   
   nv = 15
   xv = sampling_new(nv)

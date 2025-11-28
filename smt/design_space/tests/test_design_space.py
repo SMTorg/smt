@@ -188,11 +188,11 @@ class Test(unittest.TestCase):
                 IntegerVariable(-1, 2),
                 FloatVariable(0.5, 1.5),
             ],
-            random_state=42,
+            seed=42,
         )
         self.assertEqual(len(ds.design_variables), 4)
         self.assertTrue(np.all(~ds.is_conditionally_acting))
-        ds.sample_valid_x(3, random_state=42)
+        ds.sample_valid_x(3, seed=42)
         x = np.array(
             [
                 [1, 0, 0, 0.834],
@@ -226,17 +226,18 @@ class Test(unittest.TestCase):
         self.assertTrue(np.all(is_act_corr == is_acting))
 
         x_sampled_externally = LHS(
-            xlimits=ds.get_unfolded_num_bounds(), criterion="ese", random_state=42
+            xlimits=ds.get_unfolded_num_bounds(), criterion="ese", seed=42
         )(3)
         x_corr, is_acting_corr = ds.correct_get_acting(x_sampled_externally)
         x_corr, is_acting_corr = ds.fold_x(x_corr, is_acting_corr)
+        print(x_corr)
         np.testing.assert_allclose(
             x_corr,
             np.array(
                 [
-                    [2.0, 0.0, -1.0, 1.34158548],
-                    [0.0, 1.0, -0.0, 0.55199817],
-                    [1.0, 1.0, 1.0, 1.15663662],
+                    [1.0, 0.0, -1.0, 1.142255],
+                    [0.0, 0.0, 2.0, 0.82520745],
+                    [2.0, 1.0, 0.0, 1.18793909],
                 ]
             ),
             atol=1e-8,
@@ -246,7 +247,7 @@ class Test(unittest.TestCase):
         (
             x_unfolded,
             is_acting_unfolded,
-        ) = ds.sample_valid_x(3, unfolded=True, random_state=42)
+        ) = ds.sample_valid_x(3, unfolded=True, seed=42)
         self.assertEqual(x_unfolded.shape, (3, 6))
 
         self.assertTrue(str(ds))
@@ -302,7 +303,7 @@ class Test(unittest.TestCase):
                 IntegerVariable(0, 1),  # x2
                 FloatVariable(0.1, 1),  # x3
             ],
-            random_state=42,
+            seed=42,
         )
         ds.declare_decreed_var(
             decreed_var=3, meta_var=0, meta_value="A"
@@ -367,7 +368,7 @@ class Test(unittest.TestCase):
             ),
         )
 
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, seed=42)
         assert x_sampled.shape == (100, 4)
         x_sampled[is_acting_sampled[:, 3], 3] = np.round(
             x_sampled[is_acting_sampled[:, 3], 3], 4
@@ -383,10 +384,10 @@ class Test(unittest.TestCase):
             seen_x.add(tuple(xi))
             seen_is_acting.add(tuple(is_acting_sampled[i, :]))
 
-        assert len(seen_x) == 42
+        assert len(seen_x) == 40
         assert len(seen_is_acting) == 2
 
-        x_sampled, is_acting_sampled = ds.sample_valid_x(100, random_state=42)
+        x_sampled, is_acting_sampled = ds.sample_valid_x(100, seed=42)
         assert x_sampled.shape == (100, 4)
         x_sampled[is_acting_sampled[:, 3], 3] = np.round(
             x_sampled[is_acting_sampled[:, 3], 3]
@@ -412,13 +413,47 @@ class Test(unittest.TestCase):
                 IntegerVariable(0, 1),  # x2
                 FloatVariable(0, 1),  # x3
             ],
-            random_state=42,
+            seed=42,
         )
         ds.declare_decreed_var(
             decreed_var=0, meta_var=1, meta_value="E"
         )  # Activate x3 if x0 == A
 
-        ds.sample_valid_x(10, random_state=42)
+        ds.sample_valid_x(10, seed=42)
+
+    def test_random_generator(self):
+        ds1 = DesignSpace(
+            [
+                CategoricalVariable(["A", "B", "C"]),
+                OrdinalVariable(["0", "1"]),
+                IntegerVariable(-1, 2),
+                FloatVariable(0.5, 1.5),
+            ],
+            seed=42,
+        )
+        ds2 = DesignSpace(
+            [
+                CategoricalVariable(["A", "B", "C"]),
+                OrdinalVariable(["0", "1"]),
+                IntegerVariable(-1, 2),
+                FloatVariable(0.5, 1.5),
+            ],
+            seed=np.random.default_rng(42),
+        )
+        for v1, v2 in zip(ds1.sample_valid_x(3), ds2.sample_valid_x(3)):
+            np.testing.assert_allclose(v1, v2)
+
+    def test_deprecated_random_state(self):
+        with self.assertWarns(DeprecationWarning):
+            _ds1 = DesignSpace(
+                [FloatVariable(0.5, 1.5)],
+                random_state=42,
+            )
+        with self.assertRaises(ValueError):
+            _ds2 = DesignSpace(
+                [FloatVariable(0.5, 1.5)],
+                random_state=np.random.RandomState(),
+            )
 
 
 if __name__ == "__main__":

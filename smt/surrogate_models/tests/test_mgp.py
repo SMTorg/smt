@@ -18,13 +18,13 @@ class TestMGP(unittest.TestCase):
         sx = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), d, axis=0),
             criterion="m",
-            random_state=42,
+            seed=42,
         )
         x = sx(n)
         sy = LHS(
             xlimits=np.repeat(np.atleast_2d([0.0, 1.0]), 1, axis=0),
             criterion="m",
-            random_state=42,
+            seed=42,
         )
         y = sy(n)
         y = y.flatten()
