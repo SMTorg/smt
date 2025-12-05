@@ -10,5 +10,6 @@ pytest          # tests runner
 pytest-xdist    # allows running parallel testing with pytest -n <num_workers>
 pytest-cov      # allows to get coverage report
 ruff            # format and lint code
-jenn >= 1.0.2, <2.0
+# jenn >= 1.0.2, <2.0
+git+https://github.com/shb84/JENN.git
 egobox >= 0.25.0, <1.0

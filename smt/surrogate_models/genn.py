@@ -9,7 +9,7 @@ This package is distributed under New BSD license.
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
-from jenn.model import NeuralNet
+import jenn 
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
@@ -70,7 +70,6 @@ class GENN(SurrogateModel):
     def load_data(self, xt, yt, dyt_dxt=None):
         """Load all training data into surrogate model in one step.
 
-        :param model: SurrogateModel object for which to load training data
         :param xt: smt data points at which response is evaluated
         :param yt: response at xt
         :param dyt_dxt: gradient at xt
@@ -167,7 +166,7 @@ class GENN(SurrogateModel):
         )
         self.options.declare(
             "is_normalize",
-            default=False,
+            default=True,
             types=bool,
             desc="normalize training by mean and variance",
         )
@@ -183,7 +182,7 @@ class GENN(SurrogateModel):
         output = [1]  # will be overwritten during training (dummy value)
         hidden = self.options["hidden_layer_sizes"]
         layer_sizes = inputs + hidden + output
-        self.model = NeuralNet(layer_sizes)
+        self.model = jenn.NeuralNet(layer_sizes)
 
     def _train(self):
         X, Y, J = _smt_to_genn(self.training_points)
