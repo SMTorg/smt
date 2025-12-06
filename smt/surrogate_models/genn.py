@@ -9,7 +9,7 @@ This package is distributed under New BSD license.
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
-import jenn 
+import jenn
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence

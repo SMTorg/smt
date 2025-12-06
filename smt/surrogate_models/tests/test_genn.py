@@ -1,10 +1,10 @@
-import numpy as np 
+import numpy as np
 import unittest
-import jenn 
+import jenn
 import smt
 
+
 class TestGENN(unittest.TestCase):
-    
     def test_rosenbrock(self):
         """Check GENN predictions on Rosenbrock function."""
 
@@ -37,7 +37,7 @@ class TestGENN(unittest.TestCase):
         y_test = y_test.T
         dydx_test = dydx_test.squeeze().T
 
-        # Training model using SMT API as usual 
+        # Training model using SMT API as usual
         genn = smt.surrogate_models.GENN()
         genn.options["hidden_layer_sizes"] = [12, 12]
         genn.options["alpha"] = 0.01
@@ -50,10 +50,10 @@ class TestGENN(unittest.TestCase):
         genn.load_data(x_train, y_train, dydx_train)
         genn.train()
 
-        # Predict test data 
+        # Predict test data
         y_pred = genn.predict_values(x_test)
 
-        # Make sure the prediction is good 
+        # Make sure the prediction is good
         rsquare = jenn.metrics.rsquare(y_pred.ravel(), y_test.ravel())
         tol = 0.99
         self.assertGreater(rsquare, tol, msg=f"R^2 = {rsquare:.3f} is less than {tol}")
