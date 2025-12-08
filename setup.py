@@ -116,7 +116,7 @@ metadata = dict(
         "scikit-learn",
         "pyDOE3 >= 1.5.0",
         "scipy",
-        "jenn",
+        "jenn >= 2.0.0, <3.0",
     ],
     extras_require={
         "numba": [  # pip install smt[numba]
