@@ -64,11 +64,11 @@ class Test(SMTestCase):
         sms["MGP"] = MGP(theta0=[1e-2] * ndim)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = GENN(
-            num_iterations=1000,
+            num_iterations=5000,
             hidden_layer_sizes=[
                 24,
             ],
-            alpha=1e-1,
+            alpha=1e-2,
             lambd=1e-2,
             is_backtracking=True,
             is_normalize=True,
