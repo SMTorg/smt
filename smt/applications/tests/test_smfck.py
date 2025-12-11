@@ -29,18 +29,18 @@ print_output = False
 
 class TestSMFCK(SMTestCase):
     def setUp(self):
-        self.nt = 200
+        self.nt = 100
         self.ne = 100
         self.ndim = 3
 
     def test_smfck(self):
-        self.problems = ["exp"]  # , "tanh", cos"]
+        self.problems = ["exp", "cos"]  # , "tanh", "cos"]
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
             sampling = FullFactorial(xlimits=prob.xlimits, clip=True)
 
-            noise_std = 1e-8
+            noise_std = 1e-5
 
             xt = sampling(self.nt)
             yt = prob(xt)
@@ -50,22 +50,24 @@ class TestSMFCK(SMTestCase):
             y_lf = 2 * prob(xt) + 2 + np.random.normal(0, noise_std, size=xt.shape)
             x_lf = deepcopy(xt)
             xe = sampling(self.ne)
-            ye = prob(xe) + np.random.normal(0, noise_std, size=xe.shape)
+            ye = prob(xe) + +np.random.normal(0, noise_std, size=xe.shape)
 
             sm = SMFCK(
                 hyper_opt="Cobyla",
-                theta0=xe.shape[1] * [1.5],
-                theta_bounds=[1e-2, 5.0],
-                # print_global=False,
+                theta0=xe.shape[1] * [0.8],
+                theta_bounds=[1e-6, 2.0],
+                print_global=False,
+                method="FITC",
                 eval_noise=True,
-                noise0=[1e-3],
-                noise_bounds=np.array((1e-9, 1.0)),
-                n_inducing=[10, 8],
-                n_start=10,
+                noise0=[1e-5],
+                noise_bounds=np.array((1e-12, 10.0)),
+                corr="squar_exp",
+                n_inducing=[x_lf.shape[0] - 1, xe.shape[0] - 1],
+                n_start=1,
             )
             # if sm.options.is_declared("xlimits"):
             #    sm.options["xlimits"] = prob.xlimits
-            # sm.options["print_global"] = False
+            sm.options["print_global"] = False
 
             sm.set_training_values(xe, ye[:, 0])
             sm.set_training_values(x_lf, y_lf[:, 0], name=0)
@@ -79,7 +81,7 @@ class TestSMFCK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 50, 50)
+            self.assert_error(t_error, 0.0, 1e-1, 1e-1)
 
     @staticmethod
     def run_smfck_example():
@@ -107,8 +109,8 @@ class TestSMFCK(SMTestCase):
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
         # Example with non-nested input data
-        Obs_HF = 100  # Number of observations of HF
-        Obs_LF = 500  # Number of observations of LF
+        Obs_HF = 7  # Number of observations of HF
+        Obs_LF = 14  # Number of observations of LF
 
         # Creation of LHS for non-nested LF data
         sampling = LHS(
@@ -126,14 +128,15 @@ class TestSMFCK(SMTestCase):
 
         sm = SMFCK(
             hyper_opt="Cobyla",
-            theta0=xt_e_non.shape[1] * [0.5],
-            theta_bounds=[1e-6, 10.0],
+            theta0=xt_e_non.shape[1] * [1.0],
+            theta_bounds=[1e-6, 50.0],
             print_global=False,
+            method="FITC",
             eval_noise=True,
-            noise0=[1e-2],
-            noise_bounds=np.array((1e-6, 1)),
-            n_inducing=[20, 10],
-            n_start=10,
+            noise0=[1e-4],
+            noise_bounds=np.array((1e-12, 100)),
+            corr="squar_exp",
+            n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
         )
 
         # low-fidelity dataset names being integers from 0 to level-1
@@ -152,6 +155,7 @@ class TestSMFCK(SMTestCase):
 
         y = mean[-1]
         # _derivs = sm.predict_derivatives(x, kx=0)
+
         plt.figure()
 
         plt.plot(x, hf_function(x), label="reference")

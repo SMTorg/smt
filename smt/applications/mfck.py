@@ -40,7 +40,7 @@ class MFCK(KrgBased):
         )
         declare(
             "rho_bounds",
-            [1.5, 3.0],
+            [-5, 5],
             types=(list, np.ndarray),
             desc="Bounds for the rho parameter used in the autoregressive model",
         )
@@ -52,7 +52,7 @@ class MFCK(KrgBased):
         )
         declare(
             "sigma_bounds",
-            [1e-2, 100],
+            [1e-1, 100],
             types=(list, np.ndarray),
             desc="Bounds for the variance parameter",
         )
@@ -64,7 +64,7 @@ class MFCK(KrgBased):
         )
         declare(
             "hyper_opt",
-            "Cobyla",
+            "Cobyla-nlopt",
             values=("Cobyla", "Cobyla-nlopt"),
             desc="Optimiser for hyperparameters optimisation",
         )
@@ -240,7 +240,7 @@ class MFCK(KrgBased):
                     constraints=[{"fun": con, "type": "ineq"} for con in constraints],
                     options={
                         "rhobeg": 0.5,
-                        "tol": 1e-4,
+                        "tol": 1e-6,
                         "maxiter": 100,
                     },
                 )
@@ -677,7 +677,6 @@ class MFCK(KrgBased):
         else:
             param = np.array(param, copy=True)
             param = param1
-
         return self.neg_log_likelihood(param)
 
     def neg_log_likelihood_nlopt(self, param, grad=None):
@@ -752,7 +751,7 @@ class MFCK(KrgBased):
     def _compute_K(self, A: np.ndarray, B: np.ndarray, param):
         """
         Compute the covariance matrix K between A and B
-            Modified for MFCK initial test (Same theta for each dimmension)
+            Modified for MFCK
         """
         # Compute pairwise componentwise L1-distances between A and B
         dx = differences(A, B)
@@ -767,3 +766,25 @@ class MFCK(KrgBased):
         R = r.reshape(A.shape[0], B.shape[0])
         K = param[0] * R
         return K
+
+    # def _compute_K(self, X, Xp, param):
+    #     """
+    #     X: array (n, d)
+    #     Xp: array (m, d)
+    #     sigma: scalar
+    #     theta: array (d,) or scalar
+    #     returns: K (n, m)
+    #     """
+    #     X = np.asarray(X)
+    #     Xp = np.asarray(Xp)
+    #     theta = np.asarray(param[1])
+
+    #     # permitir theta escalar
+    #     if theta.ndim == 0:
+    #         theta = np.full(X.shape[1], float(theta))
+
+    #     # cálculo vectorizado: ((X[:,None,:] - Xp[None,:,:]) / theta)**2 sumando sobre la dimensión
+    #     diff = (X[:, None, :] - Xp[None, :, :]) / theta[None, None, :]
+    #     sqdist = np.sum(diff**2, axis=2)   # forma (n, m)
+    #     K = (param[0]**2) * np.exp(-0.5 * sqdist)
+    #     return K
