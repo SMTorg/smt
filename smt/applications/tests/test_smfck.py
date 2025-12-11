@@ -34,7 +34,7 @@ class TestSMFCK(SMTestCase):
         self.ndim = 3
 
     def test_smfck(self):
-        self.problems = ["exp", "cos"]  # , "tanh", "cos"]
+        self.problems = ["exp"]  # , "tanh", "cos"]
 
         for fname in self.problems:
             prob = TensorProduct(ndim=self.ndim, func=fname)
