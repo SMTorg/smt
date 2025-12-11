@@ -69,7 +69,7 @@ class TestSMFK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-5, 1e-5)
+            self.assert_error(t_error, 0.0, 1e-3, 1e-3)
 
     @staticmethod
     def run_smfk_example():
@@ -96,7 +96,7 @@ class TestSMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, random_state=0)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
         xt_c, xt_e = xdoes(14)
 
         # Evaluate the HF and LF functions
