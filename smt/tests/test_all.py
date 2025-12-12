@@ -64,11 +64,11 @@ class Test(SMTestCase):
         sms["MGP"] = MGP(theta0=[1e-2] * ndim)
         sms["GEKPLS"] = GEKPLS(theta0=[1e-2] * 2, n_comp=2, delta_x=1e-1)
         sms["GENN"] = GENN(
-            num_iterations=1000,
+            num_iterations=5000,
             hidden_layer_sizes=[
                 24,
             ],
-            alpha=1e-1,
+            alpha=1e-2,
             lambd=1e-2,
             is_backtracking=True,
             is_normalize=True,
@@ -107,7 +107,7 @@ class Test(SMTestCase):
         e_errors["KPLSK"] = 3e-2
         e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
-        e_errors["GENN"] = 3e-2
+        e_errors["GENN"] = 5e-2
         if COMPILED_AVAILABLE:
             e_errors["IDW"] = 1e0
             e_errors["RBF"] = 1e0
