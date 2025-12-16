@@ -22,7 +22,7 @@ jobs:
           CIBW_BUILD: cp310-* cp311-* cp312-* cp313-*
           CIBW_SKIP: cp*_i686
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: smt-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -36,7 +36,7 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: smt-src
           path: dist/*.tar.gz
