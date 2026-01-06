@@ -24,7 +24,7 @@ from scipy.cluster.vq import kmeans
 
 
 class SMFCK(KrgBased):
-    "This class will inherit the functions from the class MFCK"
+    "This class should inherit from the class MFCK"
 
     def _initialize(self):
         super()._initialize()
