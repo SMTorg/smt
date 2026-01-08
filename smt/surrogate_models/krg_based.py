@@ -97,7 +97,6 @@ class KrgBased(SurrogateModel):
                 "pow_exp",
                 "abs_exp",
                 "squar_exp",
-                "act_exp",
                 "matern52",
                 "matern32",
             ),

@@ -6,7 +6,7 @@ scikit-learn
 pyDOE3 >= 1.5.0
 numpydoc
 matplotlib
-jenn >= 1.0.2, <2.0
-egobox ~= 0.33.0
+jenn >= 2.0.0, <3.0
+egobox ~= 0.34
 smt-design-space-ext
 git+https://github.com/hwangjt/sphinx_auto_embed.git  # for doc generation
