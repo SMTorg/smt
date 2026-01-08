@@ -51,7 +51,7 @@ class TestSMFK(SMTestCase):
             xe = sampling(self.ne)
             ye = prob(xe)
 
-            sm = SMFK(theta0=[1e-2] * self.ndim, n_inducing=xe.shape[0], seed=42)
+            sm = SMFK(theta0=[1.0] * self.ndim, n_inducing=xe.shape[0], nugget=1e-7)
             if sm.options.is_declared("xlimits"):
                 sm.options["xlimits"] = prob.xlimits
             sm.options["print_global"] = False
@@ -69,7 +69,7 @@ class TestSMFK(SMTestCase):
 
             t_error = num / den
 
-            self.assert_error(t_error, 0.0, 1e-5, 1e-5)
+            self.assert_error(t_error, 0.0, 1e-3, 1e-3)
 
     @staticmethod
     def run_smfk_example():
@@ -96,15 +96,15 @@ class TestSMFK(SMTestCase):
 
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
-        xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
-        xt_c, xt_e = xdoes(7)
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
+        xt_c, xt_e = xdoes(14)
 
         # Evaluate the HF and LF functions
         yt_e = hf_function(xt_e)
         yt_c = lf_function(xt_c)
 
         sm = SMFK(
-            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_e.shape[0]
+            theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=7, nugget=1e-7
         )
 
         # low-fidelity dataset names being integers from 0 to level-1

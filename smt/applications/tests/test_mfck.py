@@ -94,8 +94,6 @@ class TestMFCK(SMTestCase):
 
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
-        rnd_state = 1
-
         # Problem set up
         xlimits = np.array([[0.0, 1.0]])
 
@@ -107,7 +105,6 @@ class TestMFCK(SMTestCase):
         sampling = LHS(
             xlimits=xlimits,
             criterion="ese",
-            seed=rnd_state,
         )
 
         xt_e_non = sampling(Obs_HF)
