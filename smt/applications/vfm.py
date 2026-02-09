@@ -210,28 +210,33 @@ class VFM(SurrogateBasedApplication):
         # Construct the final model
         sm_HF = {}
         if self.options["type_bridge"] == "Multiplicative":
-            sm_HF["predict_values"] = lambda x: sm_bridge.predict_values(
-                x
-            ) * sm_LF.predict_values(x)
+            sm_HF["predict_values"] = lambda x: (
+                sm_bridge.predict_values(x) * sm_LF.predict_values(x)
+            )
             if sm_bridge.supports["derivatives"] and sm_LF.supports["derivatives"]:
                 sm_HF["predict_derivatives"] = []
                 for i in range(sm_LF.nx):
                     sm_HF["predict_derivatives"].append(
-                        lambda x, i=i: sm_bridge.predict_derivatives(x, i)
-                        * sm_LF.predict_values(x)
-                        + sm_bridge.predict_values(x) * sm_LF.predict_derivatives(x, i)
+                        lambda x, i=i: (
+                            sm_bridge.predict_derivatives(x, i)
+                            * sm_LF.predict_values(x)
+                            + sm_bridge.predict_values(x)
+                            * sm_LF.predict_derivatives(x, i)
+                        )
                     )
 
         else:
-            sm_HF["predict_values"] = lambda x: sm_bridge.predict_values(
-                x
-            ) + sm_LF.predict_values(x)
+            sm_HF["predict_values"] = lambda x: (
+                sm_bridge.predict_values(x) + sm_LF.predict_values(x)
+            )
             if sm_bridge.supports["derivatives"] and sm_LF.supports["derivatives"]:
                 sm_HF["predict_derivatives"] = []
                 for i in range(sm_LF.nx):
                     sm_HF["predict_derivatives"].append(
-                        lambda x, i=i: sm_bridge.predict_derivatives(x, i)
-                        + sm_LF.predict_derivatives(x, i)
+                        lambda x, i=i: (
+                            sm_bridge.predict_derivatives(x, i)
+                            + sm_LF.predict_derivatives(x, i)
+                        )
                     )
 
         self._trained = True

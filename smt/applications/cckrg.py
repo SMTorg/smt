@@ -283,12 +283,14 @@ class CoopCompKRG(KrgBased):
                     for i in range(len(self.noise0)):
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t: log10t[i + len(self.theta0)]
-                            - noise_bounds[0]
+                            lambda log10t: (
+                                log10t[i + len(self.theta0)] - noise_bounds[0]
+                            )
                         )
                         constraints.append(
-                            lambda log10t: noise_bounds[1]
-                            - log10t[i + len(self.theta0)]
+                            lambda log10t: (
+                                noise_bounds[1] - log10t[i + len(self.theta0)]
+                            )
                         )
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(

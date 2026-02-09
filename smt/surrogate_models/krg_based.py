@@ -2225,12 +2225,14 @@ class KrgBased(SurrogateModel):
                     for i in range(len(self.noise0)):
                         noise_bounds = np.log10(noise_bounds)
                         constraints.append(
-                            lambda log10t, i=i: log10t[offset + i + len(self.theta0)]
-                            - noise_bounds[0]
+                            lambda log10t, i=i: (
+                                log10t[offset + i + len(self.theta0)] - noise_bounds[0]
+                            )
                         )
                         constraints.append(
-                            lambda log10t, i=i: noise_bounds[1]
-                            - log10t[offset + i + len(self.theta0)]
+                            lambda log10t, i=i: (
+                                noise_bounds[1] - log10t[offset + i + len(self.theta0)]
+                            )
                         )
                         bounds_hyp.append(noise_bounds)
                 theta_limits = np.repeat(
