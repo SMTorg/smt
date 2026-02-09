@@ -158,7 +158,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
