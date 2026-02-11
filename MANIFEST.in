@@ -1,4 +1,0 @@
-include README.md
-include LICENSE.txt
-global-include *.pyx
-global-include *.hpp
