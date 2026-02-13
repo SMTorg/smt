@@ -9,6 +9,7 @@ from __future__ import division
 import numpy as np
 from scipy import linalg
 
+from smt.kernels.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.checks import check_nx, check_support, ensure_2d_array
 from smt.utils.kriging import componentwise_distance, differences
@@ -34,6 +35,13 @@ class MGP(KrgBased):
             {"mean": [0.0], "var": 5.0 / 4.0},
             types=dict,
             desc="Parameters for Gaussian prior of the Hyperparameters",
+        )
+        declare(
+            "corr",
+            "squar_exp",
+            values=("act_exp",),
+            types=(str, Kernel),
+            desc="Correlation function type",
         )
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
