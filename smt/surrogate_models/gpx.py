@@ -4,7 +4,12 @@ from smt.design_space import (
     BaseDesignSpace,
     ensure_design_space,
 )
-from smt.design_space.design_space import CategoricalVariable, OrdinalVariable
+from smt.design_space import (
+    CategoricalVariable,
+    OrdinalVariable,
+    IntegerVariable,
+    FloatVariable,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:
@@ -145,7 +150,7 @@ class GPX(SurrogateModel):
             self.options["design_space"] is not None
             or self.options["xlimits"] is not None
         ):
-            config["x_spec"] = self._to_specs()
+            config["xspecs"] = self._to_specs()
 
         self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
@@ -210,11 +215,11 @@ class GPX(SurrogateModel):
                 spec = egx.XSpec(egx.XType.ENUM, tags=var.get_limits())
             elif isinstance(var, OrdinalVariable):
                 spec = egx.XSpec(egx.XType.ORD, xlimits=var.values)
-            elif isinstance(var, OrdinalVariable):
-                spec = egx.XSpec(egx.XType.ORD, xlimits=[var.lower, var.upper])
-            elif isinstance(var, OrdinalVariable):
-                spec = egx.XSpec(egx.XType.ORD, xlimits=[var.lower, var.upper])
+            elif isinstance(var, IntegerVariable):
+                spec = egx.XSpec(egx.XType.INT, xlimits=[var.lower, var.upper])
+            elif isinstance(var, FloatVariable):
+                spec = egx.XSpec(egx.XType.FLOAT, xlimits=[var.lower, var.upper])
             else:
-                raise ValueError(f"Unsupported variable type: {var.type}")
+                raise ValueError(f"Unsupported variable type: {var.__class__}")
             specs.append(spec)
         return specs
