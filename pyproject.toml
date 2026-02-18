@@ -8,8 +8,8 @@ dynamic = ["version"]
 description = "The Surrogate Modeling Toolbox (SMT)"
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.9"
-authors = [{ name = "Remi Lafage et al.", email = "remi.lafage@onera.fr" }]
+requires-python = ">=3.10"
+maintainers = [{ name = "Rémi Lafage", email = "remi.lafage@onera.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
