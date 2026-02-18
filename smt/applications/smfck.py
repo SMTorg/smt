@@ -147,7 +147,9 @@ class SMFCK(KrgBased):
             elif self.options["inducing_method"] == "kmeans":
                 zt.append(
                     kmeans(
-                        self.training_points[i][0][0], self.options["n_inducing"][i]
+                        self.training_points[i][0][0],
+                        self.options["n_inducing"][i],
+                        rng=self.options["seed"],
                     )[0]
                 )
             i = i + 1
@@ -159,9 +161,11 @@ class SMFCK(KrgBased):
             zt.append(xt[idx])
         elif self.options["inducing_method"] == "kmeans":
             zt.append(
-                kmeans(self.training_points[None][0][0], self.options["n_inducing"][i])[
-                    0
-                ]
+                kmeans(
+                    self.training_points[None][0][0],
+                    self.options["n_inducing"][i],
+                    rng=self.options["seed"],
+                )[0]
             )
         # zt.append(kmeans(self.training_points[None][0][0],self.options["n_inducing"][i])[0])
         self.lvl = i + 1
@@ -302,7 +306,7 @@ class SMFCK(KrgBased):
                 sampling = LHS(
                     xlimits=np.stack((lower_bounds, upper_bounds), axis=1),
                     criterion="ese",
-                    seed=0,
+                    seed=self.options["seed"],
                 )
                 theta_lhs_loops = sampling(self.options["n_start"])
                 theta0 = np.vstack((theta_ini, theta_lhs_loops))
