@@ -201,7 +201,7 @@ class GPX(SurrogateModel):
         gpx.training_points[None][0] = gpx._gpx.training_data()
         return gpx
 
-    def _to_specs(self) -> list[egx.XSpec]:
+    def _to_specs(self):
         """Convert the design space to a list of XSpec objects for GPX."""
         specs = []
         print(self.design_space.design_variables)
