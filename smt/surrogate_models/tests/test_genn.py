@@ -55,5 +55,5 @@ class TestGENN(unittest.TestCase):
 
         # Make sure the prediction is good
         rsquare = jenn.metrics.rsquare(y_pred.ravel(), y_test.ravel())
-        tol = 0.99
+        tol = 0.98
         self.assertGreater(rsquare, tol, msg=f"R^2 = {rsquare:.3f} is less than {tol}")

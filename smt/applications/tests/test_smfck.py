@@ -129,12 +129,12 @@ class TestSMFCK(SMTestCase):
         sm = SMFCK(
             hyper_opt="Cobyla",
             theta0=xt_e_non.shape[1] * [1.0],
-            theta_bounds=[1e-6, 50.0],
+            theta_bounds=[1e-6, 2.0],
             print_global=False,
             method="FITC",
             eval_noise=True,
-            noise0=[1e-4],
-            noise_bounds=np.array((1e-12, 100)),
+            noise0=[1e-5],
+            noise_bounds=np.array((1e-12, 10.0)),
             corr="squar_exp",
             n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
         )

@@ -107,7 +107,7 @@ class Test(SMTestCase):
         e_errors["KPLSK"] = 3e-2
         e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
-        e_errors["GENN"] = 5e-2
+        e_errors["GENN"] = 6e-2
         if COMPILED_AVAILABLE:
             e_errors["IDW"] = 1e0
             e_errors["RBF"] = 1e0

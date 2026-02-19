@@ -1,5 +1,54 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy", "Cython"]
+requires = ["setuptools>=64", "wheel", "numpy", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smt"
+dynamic = ["version"]
+description = "The Surrogate Modeling Toolbox (SMT)"
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.10"
+maintainers = [{ name = "Rémi Lafage", email = "remi.lafage@onera.fr" }]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+dependencies = [
+    "packaging",
+    "scikit-learn",
+    "pyDOE3>=1.5.0",
+    "scipy",
+    "jenn>=2.0.0,<3.0",
+]
+
+[project.optional-dependencies]
+numba = ["numba~=0.64"]
+gpx = ["egobox~=0.36"]
+
+[project.urls]
+Homepage = "https://github.com/SMTorg/smt"
+Download = "https://github.com/SMTorg/smt/releases"
+
+[tool.setuptools.dynamic]
+version = { attr = "smt.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["smt*"]
+
+[tool.setuptools.package-data]
+smt = ["py.typed", "src/**/*.pyx", "src/**/*.hpp"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
