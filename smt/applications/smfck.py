@@ -131,6 +131,7 @@ class SMFCK(KrgBased):
             "Cobyla-nlopt"  # MFCK doesn't support gradient-based optimizers
         )
         self.woodbury_data = {"vec": None, "inv": None}
+        self._seed = self.options["seed"]
 
     def train(self):
         """
@@ -152,11 +153,13 @@ class SMFCK(KrgBased):
                 idx = np.random.permutation(self.nt)[: self.options["n_inducing"][i]]
                 zt.append(xt[idx])
             elif self.options["inducing_method"] == "kmeans":
+                if self._seed is not None:
+                    self._seed += 1
                 zt.append(
                     kmeans(
                         self.training_points[i][0][0],
                         self.options["n_inducing"][i],
-                        rng=self.options["seed"],
+                        rng=self._seed,
                     )[0]
                 )
             i = i + 1
@@ -167,14 +170,13 @@ class SMFCK(KrgBased):
             idx = np.random.permutation(self.nt)[: self.options["n_inducing"][i]]
             zt.append(xt[idx])
         elif self.options["inducing_method"] == "kmeans":
-            seed = None
-            if self.options["seed"] is not None:
-                seed = self.options["seed"] + 1
+            if self._seed is not None:
+                self._seed += 1
             zt.append(
                 kmeans(
                     self.training_points[None][0][0],
                     self.options["n_inducing"][i],
-                    rng=seed,
+                    rng=self._seed,
                 )[0]
             )
         # zt.append(kmeans(self.training_points[None][0][0],self.options["n_inducing"][i])[0])
