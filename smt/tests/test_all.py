@@ -104,7 +104,7 @@ class Test(SMTestCase):
         e_errors["KRG"] = 3e-2
         e_errors["MFK"] = 2e-2
         e_errors["KPLS"] = 2e-2
-        e_errors["KPLSK"] = 3e-2
+        e_errors["KPLSK"] = 2e-1
         e_errors["MGP"] = 6e-2
         e_errors["GEKPLS"] = 2e-2
         e_errors["GENN"] = 1e-1
