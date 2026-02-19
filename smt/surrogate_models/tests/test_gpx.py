@@ -7,6 +7,15 @@ from smt.problems import Sphere
 from smt.sampling_methods import LHS
 from smt.surrogate_models import GPX, KRG
 from smt.surrogate_models.gpx import GPX_AVAILABLE
+from smt.applications.mixed_integer import MixedIntegerSamplingMethod
+
+from smt.design_space import DesignSpace
+from smt.design_space.design_space import (
+    CategoricalVariable,
+    OrdinalVariable,
+    IntegerVariable,
+    FloatVariable,
+)
 
 
 class TestGPX(unittest.TestCase):
@@ -54,6 +63,7 @@ class TestGPX(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".json") as fp:
             gpx.save(fp.name)
             gpx2 = GPX.load(fp.name)
+            gpx2.printer.active = False  # Disable printing for the test
 
         xe = sampling(10)
         ye = problem(xe)
@@ -101,6 +111,47 @@ class TestGPX(unittest.TestCase):
             dvar = gpx.predict_variance_derivatives(xe, kx)
             krg_dvar = krg.predict_variance_derivatives(xe, kx)
             np.testing.assert_allclose(dvar, krg_dvar, rtol=1e-2, atol=1e-3)
+
+    @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
+    def test_mixint_gpx_vs_krg(self):
+
+        tol = 0.01
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(["red", "green", "blue"]),
+                OrdinalVariable(["0", "1", "2"]),
+                IntegerVariable(0, 10),
+                FloatVariable(0.0, tol),
+            ]
+        )
+
+        num = 30
+        sampling = MixedIntegerSamplingMethod(
+            sampling_method_class=LHS,
+            design_space=design_space,
+            criterion="ese",
+            seed=42,
+        )
+
+        xt = sampling(num)
+        yt = np.sum(xt, axis=1, keepdims=True)
+
+        gpx = GPX(print_global=False, seed=42)
+        gpx.set_training_values(xt, yt)
+        gpx.train()
+
+        xe = sampling(10)
+
+        gpx_y = gpx.predict_values(xe)
+
+        # Compare against KRG
+        krg = KRG(print_global=False)
+        krg.set_training_values(xt, yt)
+        krg.train()
+
+        krg_y = krg.predict_values(xe)
+
+        np.testing.assert_allclose(gpx_y, krg_y, atol=tol)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,12 @@ from smt.design_space import (
     BaseDesignSpace,
     ensure_design_space,
 )
+from smt.design_space import (
+    CategoricalVariable,
+    OrdinalVariable,
+    IntegerVariable,
+    FloatVariable,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 
 try:
@@ -85,7 +91,13 @@ class GPX(SurrogateModel):
             desc="Seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-
+        declare(
+            "xlimits",
+            None,
+            types=(list, np.ndarray),
+            desc="definition of a design space of float (continuous) variables: "
+            "array-like of size nx x 2 (lower, upper bounds)",
+        )
         declare(
             "design_space",
             None,
@@ -133,6 +145,12 @@ class GPX(SurrogateModel):
         kpls_dim = self.options["kpls_dim"]
         if kpls_dim:
             config["kpls_dim"] = kpls_dim
+
+        if (
+            self.options["design_space"] is not None
+            or self.options["xlimits"] is not None
+        ):
+            config["xspecs"] = self._to_specs()
 
         self._gpx = egx.Gpx.builder(**config).fit(xt, yt)
 
@@ -187,3 +205,21 @@ class GPX(SurrogateModel):
         (gpx.nx, gpx.ny) = gpx._gpx.dims()
         gpx.training_points[None][0] = gpx._gpx.training_data()
         return gpx
+
+    def _to_specs(self):
+        """Convert the design space to a list of XSpec objects for GPX."""
+        specs = []
+        print(self.design_space.design_variables)
+        for var in self.design_space.design_variables:
+            if isinstance(var, CategoricalVariable):
+                spec = egx.XSpec(egx.XType.ENUM, tags=var.get_limits())
+            elif isinstance(var, OrdinalVariable):
+                spec = egx.XSpec(egx.XType.ORD, xlimits=var.values)
+            elif isinstance(var, IntegerVariable):
+                spec = egx.XSpec(egx.XType.INT, xlimits=[var.lower, var.upper])
+            elif isinstance(var, FloatVariable):
+                spec = egx.XSpec(egx.XType.FLOAT, xlimits=[var.lower, var.upper])
+            else:
+                raise ValueError(f"Unsupported variable type: {var.__class__}")
+            specs.append(spec)
+        return specs

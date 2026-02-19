@@ -34,8 +34,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-numba = ["numba~=0.56.4"]
-gpx = ["egobox~=0.34"]
+numba = ["numba~=0.64"]
+gpx = ["egobox~=0.36"]
 
 [project.urls]
 Homepage = "https://github.com/SMTorg/smt"
