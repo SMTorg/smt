@@ -52,15 +52,15 @@ Usage
   
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
-  xdoes = NestedLHS(nlevel=2, xlimits=xlimits, seed=0)
-  xt_c, xt_e = xdoes(7)
+  xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
+  xt_c, xt_e = xdoes(14)
   
   # Evaluate the HF and LF functions
   yt_e = hf_function(xt_e)
   yt_c = lf_function(xt_c)
   
   sm = SMFK(
-      theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=xt_e.shape[0]
+      theta0=xt_e.shape[1] * [1.0], corr="squar_exp", n_inducing=7, nugget=1e-7
   )
   
   # low-fidelity dataset names being integers from 0 to level-1
@@ -109,16 +109,14 @@ Usage
      
    Problem size
      
-        # training points.        : 7
+        # training points.        : 14
      
   ___________________________________________________________________________
      
    Training
      
      Training ...
-  Optimizing Level: 0
-  Optimizing Level: 1
-     Training - done. Time (sec):  0.4877243
+     Training - done. Time (sec):  1.1131628
   ___________________________________________________________________________
      
    Evaluation
@@ -126,9 +124,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0015311
+     Predicting - done. Time (sec):  0.0009995
      
-     Prediction time/pt. (sec) :  0.0000152
+     Prediction time/pt. (sec) :  0.0000099
      
   
 .. figure:: smfk_TestSMFK_run_smfk_example.png
@@ -180,7 +178,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
@@ -229,7 +227,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters
@@ -278,13 +276,13 @@ Options
      -  [True, False]
      -  ['bool']
      -  If True, the variance at HF samples is forced to zero
-  *  -  n_inducing
-     -  4
-     -  None
-     -  ['int']
-     -  Number of inducing points for the lowest fidelity                 level must be less or equal to the DoE in the lowest fideliy.
   *  -  propagate_uncertainty
      -  True
      -  [True, False]
      -  ['bool']
      -  If True, the variance cotribution of lower fidelity levels are considered
+  *  -  n_inducing
+     -  4
+     -  None
+     -  ['int']
+     -  Number of inducing points for the lowest fidelity                 level must be less or equal to the DoE in the lowest fideliy.

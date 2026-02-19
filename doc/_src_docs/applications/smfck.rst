@@ -73,11 +73,12 @@ Usage
   sm = SMFCK(
       hyper_opt="Cobyla",
       theta0=xt_e_non.shape[1] * [1.0],
-      theta_bounds=[1e-6, 50.0],
+      theta_bounds=[1e-6, 2.0],
       print_global=False,
+      method="FITC",
       eval_noise=True,
-      noise0=[1e-4],
-      noise_bounds=np.array((1e-12, 100)),
+      noise0=[1e-5],
+      noise_bounds=np.array((1e-12, 10.0)),
       corr="squar_exp",
       n_inducing=[xt_c_non.shape[0] - 2, xt_e_non.shape[0] - 1],
   )
@@ -177,7 +178,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['pow_exp', 'abs_exp', 'squar_exp', 'matern52', 'matern32']
      -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
@@ -219,14 +220,14 @@ Options
      -  False
      -  [True, False]
      -  ['bool']
-     -  noise evaluation flag
+     -  If True, the model evaluates noise variance, can be homoscedastic or heteroscedastic
   *  -  noise0
      -  [0.0]
      -  None
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters
@@ -234,7 +235,7 @@ Options
      -  False
      -  [True, False]
      -  ['bool']
-     -  heteroscedastic noise evaluation flag
+     -  If True, the model considers Heteroscedastic noise, array with the same size of y(x) is expected
   *  -  n_start
      -  10
      -  None
@@ -256,15 +257,20 @@ Options
      -  ['bool']
      -  activate reinterpolation for noisy cases
   *  -  seed
-     -  41
+     -  0
      -  None
-     -  ['NoneType', 'int', 'Generator']
-     -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  ['NoneType', 'int']
+     -  seed number which controls random draws
   *  -  random_state
      -  None
      -  None
      -  ['NoneType', 'int', 'RandomState']
      -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  predict_with_noise
+     -  False
+     -  [True, False]
+     -  ['bool']
+     -  if use_het_noise is true, then the prediction of the noise variance over the test set will given
   *  -  rho0
      -  1.0
      -  None

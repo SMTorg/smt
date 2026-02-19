@@ -90,7 +90,7 @@ Example
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0025253
+     Training - done. Time (sec):  0.0346439
   ___________________________________________________________________________
      
    Evaluation
@@ -98,9 +98,9 @@ Example
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010004
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   ___________________________________________________________________________
      
@@ -109,9 +109,9 @@ Example
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009995
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: gpx_Test_test_gpx.png
@@ -191,6 +191,11 @@ Options
      -  None
      -  ['int']
      -  Seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  xlimits
+     -  None
+     -  None
+     -  ['list', 'ndarray']
+     -  definition of a design space of float (continuous) variables: array-like of size nx x 2 (lower, upper bounds)
   *  -  design_space
      -  None
      -  None

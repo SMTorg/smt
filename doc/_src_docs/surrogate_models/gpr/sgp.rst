@@ -133,7 +133,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4518239
+     Training - done. Time (sec):  1.1140270
   ___________________________________________________________________________
      
    Evaluation
@@ -223,7 +223,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4059007
+     Training - done. Time (sec):  1.0627096
   ___________________________________________________________________________
      
    Evaluation
@@ -334,7 +334,7 @@ Options
      -  ['list', 'ndarray']
      -  Gaussian noise on observed training data
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

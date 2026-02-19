@@ -127,7 +127,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7861152
+     Training - done. Time (sec):  0.8523538
   
 .. figure:: mgp_Test_test_mgp.png
   :scale: 80 %
@@ -178,7 +178,7 @@ Options
      -  Regression function type
   *  -  corr
      -  squar_exp
-     -  ['pow_exp', 'abs_exp', 'squar_exp', 'act_exp', 'matern52', 'matern32']
+     -  ['act_exp']
      -  ['str', 'Kernel']
      -  Correlation function type
   *  -  pow_exp_power
@@ -227,7 +227,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

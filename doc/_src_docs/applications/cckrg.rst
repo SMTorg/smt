@@ -80,7 +80,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1202128
+     Training - done. Time (sec):  0.5913942
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -95,7 +95,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1307766
+     Training - done. Time (sec):  0.4922669
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -110,7 +110,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1591473
+     Training - done. Time (sec):  0.7231290
   ___________________________________________________________________________
      
    Evaluation
@@ -122,8 +122,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[-2.29343475]]
-  [[32.46448918]]
+  [[-2.25281975]]
+  [[15.32276756]]
   
 
 Options
@@ -220,7 +220,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

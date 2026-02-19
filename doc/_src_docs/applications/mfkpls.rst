@@ -109,7 +109,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1501856
+     Training - done. Time (sec):  0.7148075
   ___________________________________________________________________________
      
    Evaluation
@@ -231,7 +231,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters
@@ -284,7 +284,7 @@ Options
      -  True
      -  [True, False]
      -  ['bool']
-     -  If True, the variance cotribution of lower fidelity levels are considered
+     -  If True, the variance contribution of lower fidelity levels are considered
   *  -  n_comp
      -  1
      -  None

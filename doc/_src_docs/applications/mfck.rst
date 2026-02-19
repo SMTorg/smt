@@ -48,8 +48,6 @@ Usage
   
       return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
   
-  rnd_state = 1
-  
   # Problem set up
   xlimits = np.array([[0.0, 1.0]])
   
@@ -61,7 +59,6 @@ Usage
   sampling = LHS(
       xlimits=xlimits,
       criterion="ese",
-      seed=rnd_state,
   )
   
   xt_e_non = sampling(Obs_HF)
@@ -192,7 +189,7 @@ Options
      -  ['list', 'ndarray']
      -  bounds for hyperparameters
   *  -  hyper_opt
-     -  Cobyla
+     -  Cobyla-nlopt
      -  ['Cobyla', 'Cobyla-nlopt']
      -  None
      -  Optimiser for hyperparameters optimisation
@@ -207,7 +204,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters
@@ -247,12 +244,12 @@ Options
      -  ['NoneType', 'int', 'RandomState']
      -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho0
-     -  1.0
+     -  2.0
      -  None
      -  ['float']
      -  Initial rho for the autoregressive model ,                   (scalar factor between two consecutive fidelities,                     e.g., Y_HF = (Rho) * Y_LF + Gamma
   *  -  rho_bounds
-     -  [-5.0, 5.0]
+     -  [-5, 5]
      -  None
      -  ['list', 'ndarray']
      -  Bounds for the rho parameter used in the autoregressive model
@@ -262,7 +259,7 @@ Options
      -  ['float']
      -  Initial variance parameter
   *  -  sigma_bounds
-     -  [0.01, 100]
+     -  [0.1, 100]
      -  None
      -  ['list', 'ndarray']
      -  Bounds for the variance parameter
