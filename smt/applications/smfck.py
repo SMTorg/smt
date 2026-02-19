@@ -120,6 +120,13 @@ class SMFCK(KrgBased):
             values=["random", "kmeans"],
             desc="The chosen method to induce points",
         )
+        self.options.declare(
+            "seed",
+            default=0,
+            types=(type(None), int),
+            desc="seed number which controls random draws",
+        )
+
         self.options["hyper_opt"] = (
             "Cobyla-nlopt"  # MFCK doesn't support gradient-based optimizers
         )
@@ -160,11 +167,14 @@ class SMFCK(KrgBased):
             idx = np.random.permutation(self.nt)[: self.options["n_inducing"][i]]
             zt.append(xt[idx])
         elif self.options["inducing_method"] == "kmeans":
+            seed = None
+            if self.options["seed"] is not None:
+                seed = self.options["seed"] + 1
             zt.append(
                 kmeans(
                     self.training_points[None][0][0],
                     self.options["n_inducing"][i],
-                    rng=self.options["seed"],
+                    rng=seed,
                 )[0]
             )
         # zt.append(kmeans(self.training_points[None][0][0],self.options["n_inducing"][i])[0])
