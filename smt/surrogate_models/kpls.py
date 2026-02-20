@@ -7,12 +7,16 @@ This package is distributed under New BSD license.
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
-from smt.surrogate_models.krg_based import KrgBased
+from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
 from smt.utils.kriging import componentwise_distance_PLS
 
 
 class KPLS(KrgBased):
     name = "KPLS"
+
+    @property
+    def _use_pls(self) -> bool:
+        return True
 
     def _initialize(self):
         super(KPLS, self)._initialize()
@@ -63,6 +67,26 @@ class KPLS(KrgBased):
             else:
                 self.coeff_pls = abs(_pls.fit(X.copy(), y.copy()).x_rotations_)
         return X, y
+
+    def _check_param(self):
+        """
+        Validates KPLS-specific parameters before calling base class validation.
+        """
+        if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
+            raise ValueError(
+                "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
+            )
+        if (
+            self.options["categorical_kernel"]
+            not in [
+                MixIntKernelType.EXP_HOMO_HSPHERE,
+                MixIntKernelType.HOMO_HSPHERE,
+            ]
+            and self.name == "KPLS"
+        ):
+            if self.options["cat_kernel_comps"] is not None:
+                raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
+        super()._check_param()
 
     def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(

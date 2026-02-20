@@ -11,7 +11,6 @@ from enum import Enum
 
 import numpy as np
 from scipy import linalg, optimize
-from scipy.stats import multivariate_normal as m_norm
 
 from smt.design_space import (
     BaseDesignSpace,
@@ -283,6 +282,97 @@ class KrgBased(SurrogateModel):
             % self.options["pow_exp_power"]
         )
 
+    # --- Polymorphic hooks (override in subclasses instead of checking self.name) ---
+
+    @property
+    def _use_pls(self) -> bool:
+        """Whether this model uses PLS dimensionality reduction.
+        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS).
+        """
+        return False
+
+    @property
+    def _should_compute_distances_in_train(self) -> bool:
+        """Whether cross-distances should be computed during training.
+        Override in SGP (returns False since SGP uses inducing points).
+        """
+        return True
+
+    def _get_fidelity_training_data(self):
+        """Return (X, y) training data for the current fidelity level.
+        Override in MFK to return data for self._lvl.
+        """
+        return self.training_points[None][0][0], self.training_points[None][0][1]
+
+    def _get_pq(self):
+        """Return (p, q) regression/correlation size parameters.
+        Override in MFK to return (self.p, self.q).
+        """
+        return 0, 0
+
+    def _reduced_log_prior(self, theta, grad=False, hessian=False):
+        """Return the log prior contribution for Bayesian models.
+        Default is zero (no prior). Override in MGP.
+        """
+        if grad:
+            return np.zeros((len(theta), 1))
+        if hessian:
+            return np.zeros(len(theta))
+        return 0.0
+
+    def _post_optim_hook(self):
+        """Post-optimization hook called after _optimize_hyperparam in _new_train.
+        Default extracts noise from optimal_theta when eval_noise is enabled.
+        Override in MGP (calls _specific_train) and SGP (extracts sigma2).
+        """
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            self.optimal_noise = self.optimal_theta[-1]
+            self.optimal_theta = self.optimal_theta[:-1]
+
+    def _uses_log_theta_space(self) -> bool:
+        """Whether the optimizer works in log10(theta) space.
+        Default is True. Override in MGP (works in linear theta space).
+        """
+        return True
+
+    def _get_optimizer_theta_bounds(self, theta_bounds, i):
+        """Return (constraints, bounds_hyp_entry, theta0_clamped) for one theta dimension.
+        Override in MGP to use linear-space bounds instead of log-space.
+        """
+        log10t_bounds = np.log10(theta_bounds)
+        constraints = [
+            lambda log10t, i=i: log10t[i] - log10t_bounds[0],
+            lambda log10t, i=i: log10t_bounds[1] - log10t[i],
+        ]
+        return constraints, log10t_bounds
+
+    def _get_optimizer_initial_theta(self, theta_bounds):
+        """Return (theta0, theta0_rand) initial theta values for the optimizer.
+        Override in MGP to sample from prior distribution.
+        """
+        log10t_bounds = np.log10(theta_bounds)
+        theta0_rand = self.random_state.random(len(self.theta0))
+        theta0_rand = (
+            theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
+        )
+        theta0 = np.log10(self.theta0)
+        return theta0, theta0_rand
+
+    def _transform_optimal_theta(self, optimal_theta):
+        """Transform optimizer output back to model theta space.
+        Default: 10**optimal_theta (from log10 space). Override in MGP (identity).
+        """
+        return 10**optimal_theta
+
+    def _get_cont_relax_dx(self, dx):
+        """Compute CONT_RELAX distances for the current fidelity level.
+        Default: return dx unchanged. Override in MFK for multi-fidelity
+        CONT_RELAX distance computation per level.
+        """
+        return dx
+
+    # --- End hooks ---
+
     @property
     def design_space(self) -> BaseDesignSpace:
         xt = self.training_points.get(None)
@@ -419,6 +509,20 @@ class KrgBased(SurrogateModel):
         return D
 
     def _new_train(self):
+        X, y, is_acting = self._prepare_training_data()
+        D = self._compute_training_distances(X, y, is_acting)
+        self._build_regression_matrix()
+
+        # Optimization
+        (
+            self.optimal_rlf_value,
+            self.optimal_par,
+            self.optimal_theta,
+        ) = self._optimize_hyperparam(D)
+        self._post_optim_hook()
+
+    def _prepare_training_data(self):
+        """Prepare training data: load, validate, apply PLS, standardize, and handle noise."""
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -431,7 +535,7 @@ class KrgBased(SurrogateModel):
             self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name not in ["Kriging", "MGP", "SGP"]:
+        if self._use_pls:
             if self.is_continuous:
                 X, y = self._compute_pls(X.copy(), y.copy())
 
@@ -440,7 +544,6 @@ class KrgBased(SurrogateModel):
         self.is_acting_train = is_acting
         self._corr_params = None
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
-        D = None  # For SGP, D is not computed at all
         # Center and scale X and y
         (
             self.X_norma,
@@ -474,6 +577,12 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
+
+        return X, y, is_acting
+
+    def _compute_training_distances(self, X, y, is_acting):
+        """Compute cross-distances for training, handling continuous and mixed-integer cases."""
+        D = None  # For SGP, D is not computed at all
 
         if not (self.is_continuous):
             D, self.ij, X_cont, D_num = gower_componentwise_distances(
@@ -540,7 +649,7 @@ class KrgBased(SurrogateModel):
                 self.y_std,
             ) = standardization(X_cont.copy(), y.copy())
 
-        if self.name not in ["SGP"]:
+        if self._should_compute_distances_in_train:
             if self.is_continuous:
                 # Calculate matrix of distances D between samples
                 D, self.ij = cross_distances(self.X_norma)
@@ -550,8 +659,10 @@ class KrgBased(SurrogateModel):
                     "Warning: multiple x input features have the same value (at least same row twice)."
                 )
 
-        ####
-        # Regression matrix and parameters
+        return D
+
+    def _build_regression_matrix(self):
+        """Build the regression matrix F and validate its shape."""
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
         n_samples_F = self.F.shape[0]
         if self.F.ndim > 1:
@@ -559,29 +670,6 @@ class KrgBased(SurrogateModel):
         else:
             p = 1
         self._check_F(n_samples_F, p)
-
-        # Optimization
-        (
-            self.optimal_rlf_value,
-            self.optimal_par,
-            self.optimal_theta,
-        ) = self._optimize_hyperparam(D)
-        if self.name in ["MGP"]:
-            self._specific_train()
-        elif self.name in ["SGP"] and not self.options["use_het_noise"]:
-            if self.options["eval_noise"]:
-                self.optimal_noise = self.optimal_theta[-1]
-                self.optimal_sigma2 = self.optimal_theta[-2]
-                self.optimal_theta = self.optimal_theta[:-2]
-            else:
-                self.optimal_sigma2 = self.optimal_theta[-1]
-                self.optimal_theta = self.optimal_theta[:-1]
-        else:
-            if self.options["eval_noise"] and not self.options["use_het_noise"]:
-                self.optimal_noise = self.optimal_theta[-1]
-                self.optimal_theta = self.optimal_theta[:-1]
-        # if self.name != "MGP":
-        #     del self.y_norma, self.D
 
     def is_training_ill_conditioned(self):
         """
@@ -739,16 +827,7 @@ class KrgBased(SurrogateModel):
         ) = self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
 
         # Sampling points X and y
-        if "MFK" in self.name:
-            if self._lvl < self.nlvl - 1:
-                X = self.training_points[self._lvl][0][0]
-                y = self.training_points[self._lvl][0][1]
-            elif self._lvl == self.nlvl - 1:
-                X = self.training_points[None][0][0]
-                y = self.training_points[None][0][1]
-        else:
-            X = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
+        X, y = self._get_fidelity_training_data()
 
         if cat_kernel == MixIntKernelType.CONT_RELAX:
             X_pls_space, _, _ = design_space.unfold_x(X)
@@ -993,25 +1072,7 @@ class KrgBased(SurrogateModel):
         if not (self.is_continuous):
             dx = self.D
             if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                if "MFK" in self.name:
-                    if (
-                        self._lvl == self.nlvl - 1
-                    ):  # highest fidelity identified by the key None
-                        X2, _, _ = self.design_space.unfold_x(
-                            self.training_points[None][0][0]
-                        )
-                        self.X2_norma[str(self._lvl)] = (
-                            X2 - self.X2_offset
-                        ) / self.X2_scale
-                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-                    elif self._lvl < self.nlvl - 1:
-                        X2, _, _ = self.design_space.unfold_x(
-                            self.training_points[self._lvl][0][0]
-                        )
-                        self.X2_norma[str(self._lvl)] = (
-                            X2 - self.X2_offset
-                        ) / self.X2_scale
-                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
+                dx = self._get_cont_relax_dx(dx)
 
             try:
                 r = self._matrix_data_corr(
@@ -1058,11 +1119,7 @@ class KrgBased(SurrogateModel):
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
-        p = 0
-        q = 0
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            p = self.p
-            q = self.q
+        p, q = self._get_pq()
 
         # Cholesky decomposition of R and computation of its inverse
         C = None
@@ -1094,8 +1151,7 @@ class KrgBased(SurrogateModel):
             if sigma2 is not None:
                 par["sigma2"] = sigma2 * self.y_std**2.0
 
-            if self.name in ["MGP"]:
-                reduced_likelihood_function_value += self._reduced_log_prior(theta)
+            reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
             # A particular case when f_min_cobyla fail
             if (self.best_iteration_fail is not None) and (
@@ -1153,8 +1209,7 @@ class KrgBased(SurrogateModel):
             par["G"] = G
             par["Q"] = Q
 
-            if self.name in ["MGP"]:
-                reduced_likelihood_function_value += self._reduced_log_prior(theta)
+            reduced_likelihood_function_value += self._reduced_log_prior(theta)
 
             # A particular case when f_min_cobyla fail
             if (self.best_iteration_fail is not None) and (
@@ -1383,8 +1438,7 @@ class KrgBased(SurrogateModel):
 
         grad_red = np.atleast_2d(grad_red).T
 
-        if self.name in ["MGP"]:
-            grad_red += self._reduced_log_prior(theta, grad=True)
+        grad_red += self._reduced_log_prior(theta, grad=True)
         return grad_red, par
 
     def _reduced_likelihood_hessian(self, theta):
@@ -1452,8 +1506,7 @@ class KrgBased(SurrogateModel):
         hess_ij = np.zeros((n_val_hess, 2), dtype=np.int32)
         hess = np.zeros((n_val_hess, 1))
         ind_1 = 0
-        if self.name in ["MGP"]:
-            log_prior = self._reduced_log_prior(theta, hessian=True)
+        log_prior = self._reduced_log_prior(theta, hessian=True)
 
         for omega in range(nb_theta):
             ind_0 = ind_1
@@ -1561,7 +1614,7 @@ class KrgBased(SurrogateModel):
 
                 hess[ind_0 + i, 0] = (self.nt / np.log(10) * dreddetadomega).item()
 
-                if self.name in ["MGP"] and eta == omega:
+                if eta == omega:
                     hess[ind_0 + i, 0] += log_prior[eta].item()
             par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
             par["Rinv_dmu"] = Rinv_dmudomega_all
@@ -2042,21 +2095,7 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        if self.name in ["MGP"]:
-
-            def minus_reduced_likelihood_function(theta):
-                res = -self._reduced_likelihood_function(theta)[0]
-                return res
-
-            def grad_minus_reduced_likelihood_function(theta):
-                grad = -self._reduced_likelihood_gradient(theta)[0]
-                return grad
-
-            def hessian_minus_reduced_likelihood_function(theta):
-                hess = -self._reduced_likelihood_hessian(theta)[0]
-                return hess
-
-        else:
+        if self._uses_log_theta_space():
 
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
@@ -2078,6 +2117,20 @@ class KrgBased(SurrogateModel):
                     * (self._reduced_likelihood_hessian(10.0**log10t_2d)[0])
                 )
                 return res
+
+        else:
+
+            def minus_reduced_likelihood_function(theta):
+                res = -self._reduced_likelihood_function(theta)[0]
+                return res
+
+            def grad_minus_reduced_likelihood_function(theta):
+                grad = -self._reduced_likelihood_gradient(theta)[0]
+                return grad
+
+            def hessian_minus_reduced_likelihood_function(theta):
+                hess = -self._reduced_likelihood_hessian(theta)[0]
+                return hess
 
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
@@ -2134,34 +2187,17 @@ class KrgBased(SurrogateModel):
                             + theta_bounds[0]
                         )
 
-                if self.name in ["MGP"]:  # to be discussed with R. Priem
-                    constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
-                    constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
-                    bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
-                else:
-                    log10t_bounds = np.log10(theta_bounds)
-                    constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
-                    constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
-                    bounds_hyp.append(log10t_bounds)
-
-            if self.name in ["MGP"]:
-                theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.theta0),
-                    self.options["prior"]["var"],
-                    1,
+                new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
+                    theta_bounds, i
                 )
-                theta0 = self.theta0
-            else:
-                theta_bounds = self.options["theta_bounds"]
-                log10t_bounds = np.log10(theta_bounds)
-                theta0_rand = self.random_state.random(len(self.theta0))
-                theta0_rand = (
-                    theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
-                    + log10t_bounds[0]
-                )
-                theta0 = np.log10(self.theta0)
+                constraints.extend(new_constraints)
+                bounds_hyp.append(bounds_entry)
 
-            if self.name not in ["SGP"]:
+            theta0, theta0_rand = self._get_optimizer_initial_theta(
+                self.options["theta_bounds"]
+            )
+
+            if self._should_compute_distances_in_train:
                 if not (self.is_continuous):
                     self.D = D
                 else:
@@ -2299,8 +2335,7 @@ class KrgBased(SurrogateModel):
                         )
                     optimal_theta = optimal_theta_res["x"]
 
-                    if self.name not in ["MGP"]:
-                        optimal_theta = 10**optimal_theta
+                    optimal_theta = self._transform_optimal_theta(optimal_theta)
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -2415,23 +2450,6 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
-        if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
-                )
-            if (
-                self.options["categorical_kernel"]
-                not in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]
-                and self.name == "KPLS"
-            ):
-                if self.options["cat_kernel_comps"] is not None:
-                    raise ValueError(
-                        "cat_kernel_comps option is for homoscedastic kernel."
-                    )
 
         mat_dim = (
             self.options["cat_kernel_comps"]
