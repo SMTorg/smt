@@ -278,6 +278,8 @@ class MFK(KrgBased):
         Trains the Multi-Fidelity model
         """
         self._corr_params = None
+        if hasattr(self, "_mix_int_corr"):
+            self._mix_int_corr.reset()
 
         self._new_train_init()
         theta0 = self.options["theta0"].copy()

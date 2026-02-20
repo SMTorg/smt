@@ -1,6 +1,5 @@
 """
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
-Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
@@ -14,7 +13,6 @@ from scipy import linalg
 
 from smt.design_space import (
     BaseDesignSpace,
-    CategoricalVariable,
     ensure_design_space,
 )
 from smt.kernels import (
@@ -34,25 +32,23 @@ from smt.surrogate_models.hyperparam_optim import (
     NoOpOptimizer,
     TNCOptimizer,
 )
+from smt.surrogate_models.mixed_int_corr import (
+    MixedIntegerCorrelation,
+    compute_n_param as _compute_n_param,
+    correct_distances_cat_decreed as _correct_distances_cat_decreed,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.checks import check_support, ensure_2d_array
 from smt.utils.kriging import (
     MixHrcKernelType,
-    componentwise_distance,
-    componentwise_distance_PLS,
     compute_X_cont,
-    compute_X_cross,
     constant,
     cross_distances,
     cross_levels,
-    cross_levels_homo_space,
     differences,
     gower_componentwise_distances,
     linear,
-    matrix_data_corr_levels_cat_matrix,
-    matrix_data_corr_levels_cat_mod,
-    matrix_data_corr_levels_cat_mod_comps,
     quadratic,
 )
 from smt.utils.misc import standardization
@@ -549,79 +545,20 @@ class KrgBased(SurrogateModel):
         is_acting_y=None,
         mixint_type=MixIntKernelType.CONT_RELAX,
     ):
-        indjcat = -1
-        for j in listcatdecreed:
-            indjcat = indjcat + 1
-            if j:
-                indicat = -1
-                indices = 0
-                for v in range(len(self.design_space.design_variables)):
-                    if isinstance(
-                        self.design_space.design_variables[v], CategoricalVariable
-                    ):
-                        indicat = indicat + 1
-                        if indicat == indjcat:
-                            ia2 = np.zeros((len(ij), 2), dtype=bool)
-                            if is_acting_y is None:
-                                ia2 = (is_acting[:, self.cat_features][:, indjcat])[ij]
-                            else:
-                                ia2[:, 0] = (
-                                    is_acting[:, self.cat_features][:, indjcat]
-                                )[ij[:, 0]]
-                                ia2[:, 1] = (
-                                    is_acting_y[:, self.cat_features][:, indjcat]
-                                )[ij[:, 1]]
-
-                            act_inact = ia2[:, 0] ^ ia2[:, 1]
-                            act_act = ia2[:, 0] & ia2[:, 1]
-
-                            if mixint_type == MixIntKernelType.CONT_RELAX:
-                                val_act = (
-                                    np.array([1] * self.n_levels[indjcat])
-                                    - self.X2_offset[
-                                        indices : indices + self.n_levels[indjcat]
-                                    ]
-                                ) / self.X2_scale[
-                                    indices : indices + self.n_levels[indjcat]
-                                ] - (
-                                    np.array([0] * self.n_levels[indjcat])
-                                    - self.X2_offset[
-                                        indices : indices + self.n_levels[indjcat]
-                                    ]
-                                ) / self.X2_scale[
-                                    indices : indices + self.n_levels[indjcat]
-                                ]
-                                D[:, indices : indices + self.n_levels[indjcat]][
-                                    act_inact
-                                ] = val_act
-                                D[:, indices : indices + self.n_levels[indjcat]][
-                                    act_act
-                                ] = (
-                                    np.sqrt(2)
-                                    * D[:, indices : indices + self.n_levels[indjcat]][
-                                        act_act
-                                    ]
-                                )
-                            elif mixint_type == MixIntKernelType.GOWER:
-                                D[:, indices : indices + 1][act_inact] = (
-                                    self.n_levels[indjcat] * 0.5
-                                )
-                                D[:, indices : indices + 1][act_act] = (
-                                    np.sqrt(2) * D[:, indices : indices + 1][act_act]
-                                )
-
-                            else:
-                                raise ValueError(
-                                    "Continuous decreed kernel not implemented"
-                                )
-                        else:
-                            if mixint_type == MixIntKernelType.CONT_RELAX:
-                                indices = indices + self.n_levels[indicat]
-                            elif mixint_type == MixIntKernelType.GOWER:
-                                indices = indices + 1
-                    else:
-                        indices = indices + 1
-        return D
+        """Delegate to :func:`mixed_int_corr.correct_distances_cat_decreed`."""
+        return _correct_distances_cat_decreed(
+            D,
+            is_acting,
+            listcatdecreed,
+            ij,
+            design_space=self.design_space,
+            cat_features=self.cat_features,
+            n_levels=self.n_levels,
+            X2_offset=getattr(self, "X2_offset", None),
+            X2_scale=getattr(self, "X2_scale", None),
+            is_acting_y=is_acting_y,
+            mixint_type=mixint_type,
+        )
 
     def _new_train(self):
         X, y, is_acting = self._prepare_training_data()
@@ -657,7 +594,7 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         self.is_acting_train = is_acting
-        self._corr_params = None
+        self._mix_int_corr = MixedIntegerCorrelation(self)
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         # Center and scale X and y
         (
@@ -819,71 +756,12 @@ class KrgBased(SurrogateModel):
         self._new_train()
 
     def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
-        self.n_levels_origin = n_levels
-        if self._corr_params is not None:
-            return self._corr_params
-        nx = self.nx
-        try:
-            cat_kernel_comps = self.options["cat_kernel_comps"]
-            if cat_kernel_comps is not None:
-                n_levels = np.array(cat_kernel_comps)
-        except KeyError:
-            cat_kernel_comps = None
-        try:
-            ncomp = self.options["n_comp"]
-            try:
-                self.pls_coeff_cont
-            except AttributeError:
-                self.pls_coeff_cont = []
-        except KeyError:
-            cat_kernel_comps = None
-            ncomp = 1e5
-
-        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.ones((len(theta), len(n_levels)), dtype=bool)
-        if cat_kernel in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.HOMO_HSPHERE,
-        ]:
-            theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
-        i = 0
-        j = 0
-        n_theta_cont = 0
-        for feat in cat_features:
-            if feat:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    theta_cat_features[
-                        j : j + int(n_levels[i] * (n_levels[i] - 1) / 2), i
-                    ] = [True] * int(n_levels[i] * (n_levels[i] - 1) / 2)
-                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)
-                i += 1
-            else:
-                if n_theta_cont < ncomp:
-                    theta_cont_features[j] = True
-                    theta_cat_features[j] = False
-                    j += 1
-                    n_theta_cont += 1
-
-        theta_cat_features = (
-            [
-                np.where(theta_cat_features[:, i_lvl])[0]
-                for i_lvl in range(len(n_levels))
-            ],
-            np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None,
+        """Delegate to :class:`MixedIntegerCorrelation._initialize_theta`."""
+        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+            self._mix_int_corr = MixedIntegerCorrelation(self)
+        return self._mix_int_corr._initialize_theta(
+            theta, n_levels, cat_features, cat_kernel
         )
-
-        self._corr_params = params = (
-            cat_kernel_comps,
-            ncomp,
-            theta_cat_features,
-            theta_cont_features,
-            nx,
-            n_levels,
-        )
-        return params
 
     def _matrix_data_corr(
         self,
@@ -900,232 +778,27 @@ class KrgBased(SurrogateModel):
         x=None,
         kplsk_second_loop=False,
     ):
+        """Delegate to :class:`MixedIntegerCorrelation.compute`.
+
+        The signature is preserved for backward compatibility (used by
+        subclasses such as MFK).
         """
-        matrix kernel correlation model.
-
-        Parameters
-        ----------
-        corr: correlation_types
-            - The autocorrelation model
-        design_space: BaseDesignSpace
-            - The design space definition
-        theta : list[small_d * n_comp]
-            Hyperparameters of the correlation model
-        dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-            - The gower_componentwise_distances between the samples.
-        Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
-                - The levels corresponding to the indices i and j of the vectors in X.
-        n_levels: np.ndarray
-                - The number of levels for every categorical variable.
-        cat_features: np.ndarray [dim]
-            -  Indices of the categorical input dimensions.
-         cat_kernel : string
-             - The kernel to use for categorical inputs. Only for non continuous Kriging",
-        x : np.ndarray[n_obs , n_comp]
-            - The input instead of dx for homo_hs prediction
-        kplsk_second_loop : bool
-            - If we are doing the second loop for kplsk
-        Returns
-        -------
-        r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-            An array containing the values of the autocorrelation model.
-        """
-
-        # Initialize static parameters
-        (
-            cat_kernel_comps,
-            ncomp,
-            theta_cat_features,
-            theta_cont_features,
-            nx,
-            n_levels,
-        ) = self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
-
-        # Sampling points X and y
-        X, y = self._get_fidelity_training_data()
-
-        if cat_kernel == MixIntKernelType.CONT_RELAX:
-            X_pls_space, _, _ = design_space.unfold_x(X)
-            nx = len(theta)
-
-        elif cat_kernel == MixIntKernelType.GOWER:
-            X_pls_space = np.copy(X)
-        else:
-            X_pls_space, _ = compute_X_cont(X, design_space)
-        if not (kplsk_second_loop) and (cat_kernel_comps is not None or ncomp < 1e5):
-            if np.size(self.pls_coeff_cont) == 0:
-                X, y = self._compute_pls(X_pls_space.copy(), y.copy())
-                self.pls_coeff_cont = self.coeff_pls
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-                d = componentwise_distance_PLS(
-                    dx,
-                    corr,
-                    self.options["n_comp"],
-                    self.pls_coeff_cont,
-                    power,
-                    theta=None,
-                    return_derivative=False,
-                )
-                self.corr.theta = theta
-                r = self.corr(d)
-                return r
-            else:
-                d_cont = componentwise_distance_PLS(
-                    dx[:, np.logical_not(cat_features)],
-                    corr,
-                    self.options["n_comp"],
-                    self.pls_coeff_cont,
-                    power,
-                    theta=None,
-                    return_derivative=False,
-                )
-        else:
-            d = componentwise_distance(
-                dx,
-                corr,
-                nx,
-                power,
-                theta=None,
-                return_derivative=False,
-            )
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-                self.corr.theta = theta
-                r = self.corr(d)
-                return r
-            else:
-                d_cont = d[:, np.logical_not(cat_features)]
-        if self.options["corr"] == "squar_sin_exp":
-            if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-
-        theta_cont = theta[theta_cont_features[:, 0]]
-        self.corr.theta = theta_cont
-        r_cont = self.corr(d_cont)
-        r_cat = np.copy(r_cont) * 0
-        r = np.copy(r_cont)
-        ##Theta_cat_i loop
-        try:
-            self.coeff_pls_cat
-        except AttributeError:
-            self.coeff_pls_cat = []
-
-        theta_cat_kernel = theta
-        if len(n_levels) > 0:
-            theta_cat_kernel = theta.copy()
-            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= 0.5 * np.pi / theta_bounds[1]
-            elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= 2.0 * np.pi / theta_bounds[1]
-            elif cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
-                theta_cat_kernel[theta_cat_features[1]] *= 2.0
-                theta_cat_kernel[theta_cat_features[1]] -= (
-                    theta_bounds[1] + theta_bounds[0]
-                )
-                theta_cat_kernel[theta_cat_features[1]] *= 1 / (
-                    1.000000000001 * theta_bounds[1]
-                )
-
-        for i in range(len(n_levels)):
-            theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
-            if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
-                T = np.zeros((n_levels[i], n_levels[i]))
-                for tij in range(n_levels[i]):
-                    for tji in range(n_levels[i]):
-                        if tij == tji:
-                            T[tij, tji] = 1
-                        else:
-                            T[tij, tji] = max(
-                                theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
-                            )
-            else:
-                T = matrix_data_corr_levels_cat_matrix(
-                    i,
-                    n_levels,
-                    theta_cat,
-                    theta_bounds,
-                    is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
-                )
-
-            if cat_kernel_comps is not None:
-                # Sampling points X and y
-                X = self.training_points[None][0][0]
-                y = self.training_points[None][0][1]
-                X_icat = X[:, cat_features]
-                X_icat = X_icat[:, i]
-                old_n_comp = (
-                    self.options["n_comp"] if "n_comp" in self.options else None
-                )
-                self.options["n_comp"] = int(n_levels[i] / 2 * (n_levels[i] - 1))
-                X_full_space = compute_X_cross(X_icat, self.n_levels_origin[i])
-                try:
-                    self.coeff_pls = self.coeff_pls_cat[i]
-                except IndexError:
-                    _, _ = self._compute_pls(X_full_space.copy(), y.copy())
-                    self.coeff_pls_cat.append(self.coeff_pls)
-
-                if x is not None:
-                    x_icat = x[:, cat_features]
-                    x_icat = x_icat[:, i]
-                    x_full_space = compute_X_cross(x_icat, self.n_levels_origin[i])
-                    dx_cat_i = cross_levels_homo_space(
-                        x_full_space, self.ij, y=X_full_space
-                    )
-                else:
-                    dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
-
-                d_cat_i = componentwise_distance_PLS(
-                    dx_cat_i,
-                    "squar_exp",
-                    self.options["n_comp"],
-                    self.coeff_pls,
-                    power=self.options["pow_exp_power"],
-                    theta=None,
-                    return_derivative=False,
-                )
-
-                matrix_data_corr_levels_cat_mod_comps(
-                    i,
-                    Lij,
-                    r_cat,
-                    n_levels,
-                    T,
-                    d_cat_i,
-                    has_cat_kernel=cat_kernel
-                    in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                    ],
-                )
-            else:
-                matrix_data_corr_levels_cat_mod(
-                    i,
-                    Lij,
-                    r_cat,
-                    T,
-                    has_cat_kernel=cat_kernel
-                    in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                        MixIntKernelType.COMPOUND_SYMMETRY,
-                    ],
-                )
-
-            r = np.multiply(r, r_cat)
-            if cat_kernel_comps is not None:
-                if old_n_comp is None:
-                    self.options._dict.pop("n_comp", None)
-                else:
-                    self.options["n_comp"] = old_n_comp
-        return r
+        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+            self._mix_int_corr = MixedIntegerCorrelation(self)
+        return self._mix_int_corr.compute(
+            corr=corr,
+            design_space=design_space,
+            power=power,
+            theta=theta,
+            theta_bounds=theta_bounds,
+            dx=dx,
+            Lij=Lij,
+            n_levels=n_levels,
+            cat_features=cat_features,
+            cat_kernel=cat_kernel,
+            x=x,
+            kplsk_second_loop=kplsk_second_loop,
+        )
 
     def _reduced_likelihood_function(self, theta):
         """
@@ -2618,44 +2291,5 @@ class KrgBased(SurrogateModel):
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
-    """
-    Returns the he number of parameters needed for an homoscedastic or full group kernel.
-    Parameters
-     ----------
-    design_space: BaseDesignSpace
-            - design space definition
-    cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging,
-    d: int
-            - n_comp or nx
-    n_comp : int
-            - if PLS, then it is the number of components else None,
-    mat_dim : int
-            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
-    Returns
-    -------
-     n_param: int
-            - The number of parameters.
-    """
-    n_param = design_space.n_dv
-    if n_comp is not None:
-        n_param = d
-        if cat_kernel == MixIntKernelType.CONT_RELAX:
-            return n_param
-        if mat_dim is not None:
-            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
-    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
-        return n_param
-    for i, dv in enumerate(design_space.design_variables):
-        if isinstance(dv, CategoricalVariable):
-            n_values = dv.n_values
-            if design_space.n_dv == d:
-                n_param -= 1
-            if cat_kernel in [
-                MixIntKernelType.EXP_HOMO_HSPHERE,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]:
-                n_param += int(n_values * (n_values - 1) / 2)
-            if cat_kernel == MixIntKernelType.CONT_RELAX:
-                n_param += int(n_values)
-    return n_param
+    """Backward-compatible wrapper: delegates to :func:`mixed_int_corr.compute_n_param`."""
+    return _compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim)
