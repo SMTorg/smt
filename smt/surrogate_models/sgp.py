@@ -108,6 +108,22 @@ class SGP(KRG):
         self.optimal_par = {}
         self.optimal_noise = None
 
+    @property
+    def _should_compute_distances_in_train(self) -> bool:
+        """SGP uses inducing points; distances are not computed in the standard way."""
+        return False
+
+    def _post_optim_hook(self):
+        """SGP extracts sigma2 (and optionally noise) from optimal_theta."""
+        if not self.options["use_het_noise"]:
+            if self.options["eval_noise"]:
+                self.optimal_noise = self.optimal_theta[-1]
+                self.optimal_sigma2 = self.optimal_theta[-2]
+                self.optimal_theta = self.optimal_theta[:-2]
+            else:
+                self.optimal_sigma2 = self.optimal_theta[-1]
+                self.optimal_theta = self.optimal_theta[:-1]
+
     def set_inducing_inputs(self, Z=None, normalize=False):
         """
         Define number of inducing inputs or set the locations manually.

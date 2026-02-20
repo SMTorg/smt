@@ -196,6 +196,35 @@ class MFK(KrgBased):
         self.X2_offset = {}
         self.X2_scale = {}
 
+    # --- Polymorphic hook overrides ---
+
+    def _get_fidelity_training_data(self):
+        """Return (X, y) for the current fidelity level."""
+        if self._lvl < self.nlvl - 1:
+            return self.training_points[self._lvl][0][0], self.training_points[
+                self._lvl
+            ][0][1]
+        else:
+            return self.training_points[None][0][0], self.training_points[None][0][1]
+
+    def _get_pq(self):
+        """Return (p, q) for multi-fidelity regression."""
+        return self.p, self.q
+
+    def _get_cont_relax_dx(self, dx):
+        """Compute CONT_RELAX distances for the current MFK fidelity level."""
+        if self._lvl == self.nlvl - 1:
+            X2, _, _ = self.design_space.unfold_x(self.training_points[None][0][0])
+            self.X2_norma[str(self._lvl)] = (X2 - self.X2_offset) / self.X2_scale
+            dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
+        elif self._lvl < self.nlvl - 1:
+            X2, _, _ = self.design_space.unfold_x(self.training_points[self._lvl][0][0])
+            self.X2_norma[str(self._lvl)] = (X2 - self.X2_offset) / self.X2_scale
+            dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
+        return dx
+
+    # --- End hook overrides ---
+
     def _differences(self, X, Y):
         """
         Compute the distances
