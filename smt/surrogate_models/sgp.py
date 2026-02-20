@@ -113,6 +113,11 @@ class SGP(KRG):
         """SGP uses inducing points; distances are not computed in the standard way."""
         return False
 
+    @property
+    def _optimize_sigma2(self):
+        """SGP optimizes GP variance (sigma2) as a hyperparameter."""
+        return True
+
     def _post_optim_hook(self):
         """SGP extracts sigma2 (and optionally noise) from optimal_theta."""
         if not self.options["use_het_noise"]:
