@@ -8,6 +8,7 @@ from __future__ import division
 
 import numpy as np
 from scipy import linalg
+from scipy.stats import multivariate_normal as m_norm
 
 from smt.kernels.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
@@ -504,6 +505,38 @@ class MGP(KrgBased):
         svd_cumsum = np.cumsum(svd[1])
         svd_sum = np.sum(svd[1])
         self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
+
+    # --- Polymorphic hook overrides ---
+
+    def _post_optim_hook(self):
+        """MGP runs _specific_train after optimization."""
+        self._specific_train()
+
+    def _uses_log_theta_space(self) -> bool:
+        """MGP works in linear theta space, not log10."""
+        return False
+
+    def _get_optimizer_theta_bounds(self, theta_bounds, i):
+        """MGP uses linear-space symmetric bounds."""
+        constraints = [
+            lambda theta, i=i: theta[i] + theta_bounds[1],
+            lambda theta, i=i: theta_bounds[1] - theta[i],
+        ]
+        return constraints, (-theta_bounds[1], theta_bounds[1])
+
+    def _get_optimizer_initial_theta(self, theta_bounds):
+        """MGP samples initial theta from prior distribution."""
+        theta0_rand = m_norm.rvs(
+            self.options["prior"]["mean"] * len(self.theta0),
+            self.options["prior"]["var"],
+            1,
+        )
+        theta0 = self.theta0
+        return theta0, theta0_rand
+
+    def _transform_optimal_theta(self, optimal_theta):
+        """MGP operates in linear theta space; no transformation needed."""
+        return optimal_theta
 
     def _check_param(self):
         """

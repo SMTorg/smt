@@ -1,6 +1,5 @@
 """
 Author: Dr. Mohamed Amine Bouhlel <mbouhlel@umich.edu>
-Some functions are copied from gaussian_process submodule (Scikit-learn 0.14)
 This package is distributed under New BSD license.
 """
 
@@ -10,12 +9,10 @@ from copy import deepcopy
 from enum import Enum
 
 import numpy as np
-from scipy import linalg, optimize
-from scipy.stats import multivariate_normal as m_norm
+from scipy import linalg
 
 from smt.design_space import (
     BaseDesignSpace,
-    CategoricalVariable,
     ensure_design_space,
 )
 from smt.kernels import (
@@ -29,25 +26,30 @@ from smt.kernels import (
 )
 from smt.kernels.kernels import _Constant
 from smt.sampling_methods import LHS
+from smt.surrogate_models.hyperparam_optim import (
+    CobylaOptimizer,
+    HyperparamOptimizer,
+    NoOpOptimizer,
+    TNCOptimizer,
+)
+from smt.surrogate_models.likelihood_eval import LikelihoodEvaluator
+from smt.surrogate_models.mixed_int_corr import (
+    MixedIntegerCorrelation,
+    compute_n_param as _compute_n_param,
+    correct_distances_cat_decreed as _correct_distances_cat_decreed,
+)
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.checks import check_support, ensure_2d_array
 from smt.utils.kriging import (
     MixHrcKernelType,
-    componentwise_distance,
-    componentwise_distance_PLS,
     compute_X_cont,
-    compute_X_cross,
     constant,
     cross_distances,
     cross_levels,
-    cross_levels_homo_space,
     differences,
     gower_componentwise_distances,
     linear,
-    matrix_data_corr_levels_cat_matrix,
-    matrix_data_corr_levels_cat_mod,
-    matrix_data_corr_levels_cat_mod_comps,
     quadratic,
 )
 from smt.utils.misc import standardization
@@ -283,6 +285,206 @@ class KrgBased(SurrogateModel):
             % self.options["pow_exp_power"]
         )
 
+    # --- Polymorphic hooks (override in subclasses instead of checking self.name) ---
+
+    @property
+    def _use_pls(self) -> bool:
+        """Whether this model uses PLS dimensionality reduction.
+        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS).
+        """
+        return False
+
+    @property
+    def _should_compute_distances_in_train(self) -> bool:
+        """Whether cross-distances should be computed during training.
+        Override in SGP (returns False since SGP uses inducing points).
+        """
+        return True
+
+    def _get_fidelity_training_data(self):
+        """Return (X, y) training data for the current fidelity level.
+        Override in MFK to return data for self._lvl.
+        """
+        return self.training_points[None][0][0], self.training_points[None][0][1]
+
+    def _get_pq(self):
+        """Return (p, q) regression/correlation size parameters.
+        Override in MFK to return (self.p, self.q).
+        """
+        return 0, 0
+
+    def _reduced_log_prior(self, theta, grad=False, hessian=False):
+        """Return the log prior contribution for Bayesian models.
+        Default is zero (no prior). Override in MGP.
+        """
+        if grad:
+            return np.zeros((len(theta), 1))
+        if hessian:
+            return np.zeros(len(theta))
+        return 0.0
+
+    def _post_optim_hook(self):
+        """Post-optimization hook called after _optimize_hyperparam in _new_train.
+        Default extracts noise from optimal_theta when eval_noise is enabled.
+        Override in MGP (calls _specific_train) and SGP (extracts sigma2).
+        """
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            self.optimal_noise = self.optimal_theta[-1]
+            self.optimal_theta = self.optimal_theta[:-1]
+
+    def _uses_log_theta_space(self) -> bool:
+        """Whether the optimizer works in log10(theta) space.
+        Default is True. Override in MGP (works in linear theta space).
+        """
+        return True
+
+    def _get_optimizer_theta_bounds(self, theta_bounds, i):
+        """Return (constraints, bounds_hyp_entry, theta0_clamped) for one theta dimension.
+        Override in MGP to use linear-space bounds instead of log-space.
+        """
+        log10t_bounds = np.log10(theta_bounds)
+        constraints = [
+            lambda log10t, i=i: log10t[i] - log10t_bounds[0],
+            lambda log10t, i=i: log10t_bounds[1] - log10t[i],
+        ]
+        return constraints, log10t_bounds
+
+    def _get_optimizer_initial_theta(self, theta_bounds):
+        """Return (theta0, theta0_rand) initial theta values for the optimizer.
+        Override in MGP to sample from prior distribution.
+        """
+        log10t_bounds = np.log10(theta_bounds)
+        theta0_rand = self.random_state.random(len(self.theta0))
+        theta0_rand = (
+            theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
+        )
+        theta0 = np.log10(self.theta0)
+        return theta0, theta0_rand
+
+    def _transform_optimal_theta(self, optimal_theta):
+        """Transform optimizer output back to model theta space.
+        Default: 10**optimal_theta (from log10 space). Override in MGP (identity).
+        """
+        return 10**optimal_theta
+
+    def _get_cont_relax_dx(self, dx):
+        """Compute CONT_RELAX distances for the current fidelity level.
+        Default: return dx unchanged. Override in MFK for multi-fidelity
+        CONT_RELAX distance computation per level.
+        """
+        return dx
+
+    def _create_optimizer(self):
+        """Create the hyperparameter optimizer strategy.
+
+        Maps the ``hyper_opt`` option string to a :class:`HyperparamOptimizer`
+        instance. Override this method to inject a custom optimizer.
+
+        Returns
+        -------
+        HyperparamOptimizer
+        """
+        hyper_opt = self.options["hyper_opt"]
+        if isinstance(hyper_opt, HyperparamOptimizer):
+            return hyper_opt
+        if hyper_opt == "Cobyla":
+            return CobylaOptimizer()
+        elif hyper_opt == "TNC":
+            if self.options["use_het_noise"]:
+                raise ValueError("For heteroscedastic noise, please use Cobyla")
+            return TNCOptimizer()
+        elif hyper_opt == "NoOp":
+            return NoOpOptimizer()
+        else:
+            raise ValueError(f"Unknown optimizer: {hyper_opt}")
+
+    @property
+    def _n_outer_iterations(self):
+        """Number of outer optimization passes (0 = single pass).
+        Override in KPLSK for two-pass (PLS then full Kriging) optimization.
+        """
+        return 0
+
+    def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
+        """Handle a theta0 value that is outside the feasible bounds.
+
+        Parameters
+        ----------
+        theta0_i : float
+            The out-of-bounds theta0 value.
+        i : int
+            Index of the parameter.
+        theta_bounds : array-like
+            ``[lower, upper]`` bounds.
+
+        Returns
+        -------
+        float
+            Corrected theta0 value.
+        """
+        warnings.warn(
+            f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
+                                [{theta_bounds[0]}, {theta_bounds[1]}]). \
+                                    A random initialisation is used instead."
+        )
+        val = self.random_state.random()
+        val = val * (theta_bounds[1] - theta_bounds[0]) + theta_bounds[0]
+        return val
+
+    @property
+    def _optimize_sigma2(self):
+        """Whether to optimize GP variance (sigma2) as a hyperparameter.
+        Default False. Override in SGP to return True.
+        """
+        return False
+
+    def _should_sample_multistart(self, ii):
+        """Whether to add LHS multistart samples in this outer iteration.
+
+        Parameters
+        ----------
+        ii : int
+            Current outer-loop iteration index.
+
+        Returns
+        -------
+        bool
+        """
+        return True
+
+    def _finalize_outer_loop(
+        self,
+        best_optimal_rlf_value,
+        best_optimal_par,
+        best_optimal_theta,
+        exit_function,
+    ):
+        """Finalize an outer optimization loop iteration.
+
+        Called at the end of each outer-loop iteration in
+        :meth:`_optimize_hyperparam`. The default implementation requests an
+        immediate return (single-pass). Override in KPLSK for two-pass logic.
+
+        Parameters
+        ----------
+        best_optimal_rlf_value : float
+        best_optimal_par : dict
+        best_optimal_theta : np.ndarray
+        exit_function : bool
+
+        Returns
+        -------
+        should_return : bool
+            If ``True``, return current best values and stop looping.
+        exit_function : bool
+            Updated flag for next iteration.
+        new_limit : int or None
+            If not ``None``, overrides the iteration limit for the next pass.
+        """
+        return True, exit_function, None
+
+    # --- End hooks ---
+
     @property
     def design_space(self) -> BaseDesignSpace:
         xt = self.training_points.get(None)
@@ -344,81 +546,36 @@ class KrgBased(SurrogateModel):
         is_acting_y=None,
         mixint_type=MixIntKernelType.CONT_RELAX,
     ):
-        indjcat = -1
-        for j in listcatdecreed:
-            indjcat = indjcat + 1
-            if j:
-                indicat = -1
-                indices = 0
-                for v in range(len(self.design_space.design_variables)):
-                    if isinstance(
-                        self.design_space.design_variables[v], CategoricalVariable
-                    ):
-                        indicat = indicat + 1
-                        if indicat == indjcat:
-                            ia2 = np.zeros((len(ij), 2), dtype=bool)
-                            if is_acting_y is None:
-                                ia2 = (is_acting[:, self.cat_features][:, indjcat])[ij]
-                            else:
-                                ia2[:, 0] = (
-                                    is_acting[:, self.cat_features][:, indjcat]
-                                )[ij[:, 0]]
-                                ia2[:, 1] = (
-                                    is_acting_y[:, self.cat_features][:, indjcat]
-                                )[ij[:, 1]]
-
-                            act_inact = ia2[:, 0] ^ ia2[:, 1]
-                            act_act = ia2[:, 0] & ia2[:, 1]
-
-                            if mixint_type == MixIntKernelType.CONT_RELAX:
-                                val_act = (
-                                    np.array([1] * self.n_levels[indjcat])
-                                    - self.X2_offset[
-                                        indices : indices + self.n_levels[indjcat]
-                                    ]
-                                ) / self.X2_scale[
-                                    indices : indices + self.n_levels[indjcat]
-                                ] - (
-                                    np.array([0] * self.n_levels[indjcat])
-                                    - self.X2_offset[
-                                        indices : indices + self.n_levels[indjcat]
-                                    ]
-                                ) / self.X2_scale[
-                                    indices : indices + self.n_levels[indjcat]
-                                ]
-                                D[:, indices : indices + self.n_levels[indjcat]][
-                                    act_inact
-                                ] = val_act
-                                D[:, indices : indices + self.n_levels[indjcat]][
-                                    act_act
-                                ] = (
-                                    np.sqrt(2)
-                                    * D[:, indices : indices + self.n_levels[indjcat]][
-                                        act_act
-                                    ]
-                                )
-                            elif mixint_type == MixIntKernelType.GOWER:
-                                D[:, indices : indices + 1][act_inact] = (
-                                    self.n_levels[indjcat] * 0.5
-                                )
-                                D[:, indices : indices + 1][act_act] = (
-                                    np.sqrt(2) * D[:, indices : indices + 1][act_act]
-                                )
-
-                            else:
-                                raise ValueError(
-                                    "Continuous decreed kernel not implemented"
-                                )
-                        else:
-                            if mixint_type == MixIntKernelType.CONT_RELAX:
-                                indices = indices + self.n_levels[indicat]
-                            elif mixint_type == MixIntKernelType.GOWER:
-                                indices = indices + 1
-                    else:
-                        indices = indices + 1
-        return D
+        """Delegate to :func:`mixed_int_corr.correct_distances_cat_decreed`."""
+        return _correct_distances_cat_decreed(
+            D,
+            is_acting,
+            listcatdecreed,
+            ij,
+            design_space=self.design_space,
+            cat_features=self.cat_features,
+            n_levels=self.n_levels,
+            X2_offset=getattr(self, "X2_offset", None),
+            X2_scale=getattr(self, "X2_scale", None),
+            is_acting_y=is_acting_y,
+            mixint_type=mixint_type,
+        )
 
     def _new_train(self):
+        X, y, is_acting = self._prepare_training_data()
+        D = self._compute_training_distances(X, y, is_acting)
+        self._build_regression_matrix()
+
+        # Optimization
+        (
+            self.optimal_rlf_value,
+            self.optimal_par,
+            self.optimal_theta,
+        ) = self._optimize_hyperparam(D)
+        self._post_optim_hook()
+
+    def _prepare_training_data(self):
+        """Prepare training data: load, validate, apply PLS, standardize, and handle noise."""
         # Sampling points X and y
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
@@ -431,16 +588,15 @@ class KrgBased(SurrogateModel):
             self.is_acting_points[None] = is_acting
 
         # Compute PLS-coefficients (attr of self) and modified X and y (if GEKPLS is used)
-        if self.name not in ["Kriging", "MGP", "SGP"]:
+        if self._use_pls:
             if self.is_continuous:
                 X, y = self._compute_pls(X.copy(), y.copy())
 
         self._check_param()
         self.X_train = X
         self.is_acting_train = is_acting
-        self._corr_params = None
+        self._mix_int_corr = MixedIntegerCorrelation(self)
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
-        D = None  # For SGP, D is not computed at all
         # Center and scale X and y
         (
             self.X_norma,
@@ -474,6 +630,12 @@ class KrgBased(SurrogateModel):
                     self.optimal_noise[i] = np.std(diff, ddof=1) ** 2
             self.optimal_noise = self.optimal_noise / nt_reps
             self.y_norma = y_norma_unique
+
+        return X, y, is_acting
+
+    def _compute_training_distances(self, X, y, is_acting):
+        """Compute cross-distances for training, handling continuous and mixed-integer cases."""
+        D = None  # For SGP, D is not computed at all
 
         if not (self.is_continuous):
             D, self.ij, X_cont, D_num = gower_componentwise_distances(
@@ -540,7 +702,7 @@ class KrgBased(SurrogateModel):
                 self.y_std,
             ) = standardization(X_cont.copy(), y.copy())
 
-        if self.name not in ["SGP"]:
+        if self._should_compute_distances_in_train:
             if self.is_continuous:
                 # Calculate matrix of distances D between samples
                 D, self.ij = cross_distances(self.X_norma)
@@ -550,8 +712,10 @@ class KrgBased(SurrogateModel):
                     "Warning: multiple x input features have the same value (at least same row twice)."
                 )
 
-        ####
-        # Regression matrix and parameters
+        return D
+
+    def _build_regression_matrix(self):
+        """Build the regression matrix F and validate its shape."""
         self.F = self._regression_types[self.options["poly"]](self.X_norma)
         n_samples_F = self.F.shape[0]
         if self.F.ndim > 1:
@@ -559,29 +723,6 @@ class KrgBased(SurrogateModel):
         else:
             p = 1
         self._check_F(n_samples_F, p)
-
-        # Optimization
-        (
-            self.optimal_rlf_value,
-            self.optimal_par,
-            self.optimal_theta,
-        ) = self._optimize_hyperparam(D)
-        if self.name in ["MGP"]:
-            self._specific_train()
-        elif self.name in ["SGP"] and not self.options["use_het_noise"]:
-            if self.options["eval_noise"]:
-                self.optimal_noise = self.optimal_theta[-1]
-                self.optimal_sigma2 = self.optimal_theta[-2]
-                self.optimal_theta = self.optimal_theta[:-2]
-            else:
-                self.optimal_sigma2 = self.optimal_theta[-1]
-                self.optimal_theta = self.optimal_theta[:-1]
-        else:
-            if self.options["eval_noise"] and not self.options["use_het_noise"]:
-                self.optimal_noise = self.optimal_theta[-1]
-                self.optimal_theta = self.optimal_theta[:-1]
-        # if self.name != "MGP":
-        #     del self.y_norma, self.D
 
     def is_training_ill_conditioned(self):
         """
@@ -616,71 +757,12 @@ class KrgBased(SurrogateModel):
         self._new_train()
 
     def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
-        self.n_levels_origin = n_levels
-        if self._corr_params is not None:
-            return self._corr_params
-        nx = self.nx
-        try:
-            cat_kernel_comps = self.options["cat_kernel_comps"]
-            if cat_kernel_comps is not None:
-                n_levels = np.array(cat_kernel_comps)
-        except KeyError:
-            cat_kernel_comps = None
-        try:
-            ncomp = self.options["n_comp"]
-            try:
-                self.pls_coeff_cont
-            except AttributeError:
-                self.pls_coeff_cont = []
-        except KeyError:
-            cat_kernel_comps = None
-            ncomp = 1e5
-
-        theta_cont_features = np.zeros((len(theta), 1), dtype=bool)
-        theta_cat_features = np.ones((len(theta), len(n_levels)), dtype=bool)
-        if cat_kernel in [
-            MixIntKernelType.EXP_HOMO_HSPHERE,
-            MixIntKernelType.HOMO_HSPHERE,
-        ]:
-            theta_cat_features = np.zeros((len(theta), len(n_levels)), dtype=bool)
-        i = 0
-        j = 0
-        n_theta_cont = 0
-        for feat in cat_features:
-            if feat:
-                if cat_kernel in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]:
-                    theta_cat_features[
-                        j : j + int(n_levels[i] * (n_levels[i] - 1) / 2), i
-                    ] = [True] * int(n_levels[i] * (n_levels[i] - 1) / 2)
-                    j += int(n_levels[i] * (n_levels[i] - 1) / 2)
-                i += 1
-            else:
-                if n_theta_cont < ncomp:
-                    theta_cont_features[j] = True
-                    theta_cat_features[j] = False
-                    j += 1
-                    n_theta_cont += 1
-
-        theta_cat_features = (
-            [
-                np.where(theta_cat_features[:, i_lvl])[0]
-                for i_lvl in range(len(n_levels))
-            ],
-            np.any(theta_cat_features, axis=1) if len(n_levels) > 0 else None,
+        """Delegate to :class:`MixedIntegerCorrelation._initialize_theta`."""
+        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+            self._mix_int_corr = MixedIntegerCorrelation(self)
+        return self._mix_int_corr._initialize_theta(
+            theta, n_levels, cat_features, cat_kernel
         )
-
-        self._corr_params = params = (
-            cat_kernel_comps,
-            ncomp,
-            theta_cat_features,
-            theta_cont_features,
-            nx,
-            n_levels,
-        )
-        return params
 
     def _matrix_data_corr(
         self,
@@ -697,241 +779,27 @@ class KrgBased(SurrogateModel):
         x=None,
         kplsk_second_loop=False,
     ):
+        """Delegate to :class:`MixedIntegerCorrelation.compute`.
+
+        The signature is preserved for backward compatibility (used by
+        subclasses such as MFK).
         """
-        matrix kernel correlation model.
-
-        Parameters
-        ----------
-        corr: correlation_types
-            - The autocorrelation model
-        design_space: BaseDesignSpace
-            - The design space definition
-        theta : list[small_d * n_comp]
-            Hyperparameters of the correlation model
-        dx: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
-            - The gower_componentwise_distances between the samples.
-        Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
-                - The levels corresponding to the indices i and j of the vectors in X.
-        n_levels: np.ndarray
-                - The number of levels for every categorical variable.
-        cat_features: np.ndarray [dim]
-            -  Indices of the categorical input dimensions.
-         cat_kernel : string
-             - The kernel to use for categorical inputs. Only for non continuous Kriging",
-        x : np.ndarray[n_obs , n_comp]
-            - The input instead of dx for homo_hs prediction
-        kplsk_second_loop : bool
-            - If we are doing the second loop for kplsk
-        Returns
-        -------
-        r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
-            An array containing the values of the autocorrelation model.
-        """
-
-        # Initialize static parameters
-        (
-            cat_kernel_comps,
-            ncomp,
-            theta_cat_features,
-            theta_cont_features,
-            nx,
-            n_levels,
-        ) = self._initialize_theta(theta, n_levels, cat_features, cat_kernel)
-
-        # Sampling points X and y
-        if "MFK" in self.name:
-            if self._lvl < self.nlvl - 1:
-                X = self.training_points[self._lvl][0][0]
-                y = self.training_points[self._lvl][0][1]
-            elif self._lvl == self.nlvl - 1:
-                X = self.training_points[None][0][0]
-                y = self.training_points[None][0][1]
-        else:
-            X = self.training_points[None][0][0]
-            y = self.training_points[None][0][1]
-
-        if cat_kernel == MixIntKernelType.CONT_RELAX:
-            X_pls_space, _, _ = design_space.unfold_x(X)
-            nx = len(theta)
-
-        elif cat_kernel == MixIntKernelType.GOWER:
-            X_pls_space = np.copy(X)
-        else:
-            X_pls_space, _ = compute_X_cont(X, design_space)
-        if not (kplsk_second_loop) and (cat_kernel_comps is not None or ncomp < 1e5):
-            if np.size(self.pls_coeff_cont) == 0:
-                X, y = self._compute_pls(X_pls_space.copy(), y.copy())
-                self.pls_coeff_cont = self.coeff_pls
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-                d = componentwise_distance_PLS(
-                    dx,
-                    corr,
-                    self.options["n_comp"],
-                    self.pls_coeff_cont,
-                    power,
-                    theta=None,
-                    return_derivative=False,
-                )
-                self.corr.theta = theta
-                r = self.corr(d)
-                return r
-            else:
-                d_cont = componentwise_distance_PLS(
-                    dx[:, np.logical_not(cat_features)],
-                    corr,
-                    self.options["n_comp"],
-                    self.pls_coeff_cont,
-                    power,
-                    theta=None,
-                    return_derivative=False,
-                )
-        else:
-            d = componentwise_distance(
-                dx,
-                corr,
-                nx,
-                power,
-                theta=None,
-                return_derivative=False,
-            )
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
-                self.corr.theta = theta
-                r = self.corr(d)
-                return r
-            else:
-                d_cont = d[:, np.logical_not(cat_features)]
-        if self.options["corr"] == "squar_sin_exp":
-            if self.options["categorical_kernel"] != MixIntKernelType.GOWER:
-                theta_cont_features[-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([True] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-                theta_cat_features[1][-len([self.design_space.is_cat_mask]) :] = (
-                    np.atleast_2d(
-                        np.array([False] * len([self.design_space.is_cat_mask]))
-                    ).T
-                )
-
-        theta_cont = theta[theta_cont_features[:, 0]]
-        self.corr.theta = theta_cont
-        r_cont = self.corr(d_cont)
-        r_cat = np.copy(r_cont) * 0
-        r = np.copy(r_cont)
-        ##Theta_cat_i loop
-        try:
-            self.coeff_pls_cat
-        except AttributeError:
-            self.coeff_pls_cat = []
-
-        theta_cat_kernel = theta
-        if len(n_levels) > 0:
-            theta_cat_kernel = theta.copy()
-            if cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= 0.5 * np.pi / theta_bounds[1]
-            elif cat_kernel == MixIntKernelType.HOMO_HSPHERE:
-                theta_cat_kernel[theta_cat_features[1]] *= 2.0 * np.pi / theta_bounds[1]
-            elif cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
-                theta_cat_kernel[theta_cat_features[1]] *= 2.0
-                theta_cat_kernel[theta_cat_features[1]] -= (
-                    theta_bounds[1] + theta_bounds[0]
-                )
-                theta_cat_kernel[theta_cat_features[1]] *= 1 / (
-                    1.000000000001 * theta_bounds[1]
-                )
-
-        for i in range(len(n_levels)):
-            theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
-            if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
-                T = np.zeros((n_levels[i], n_levels[i]))
-                for tij in range(n_levels[i]):
-                    for tji in range(n_levels[i]):
-                        if tij == tji:
-                            T[tij, tji] = 1
-                        else:
-                            T[tij, tji] = max(
-                                theta_cat[0], 1e-10 - 1 / (n_levels[i] - 1)
-                            )
-            else:
-                T = matrix_data_corr_levels_cat_matrix(
-                    i,
-                    n_levels,
-                    theta_cat,
-                    theta_bounds,
-                    is_ehh=cat_kernel == MixIntKernelType.EXP_HOMO_HSPHERE,
-                )
-
-            if cat_kernel_comps is not None:
-                # Sampling points X and y
-                X = self.training_points[None][0][0]
-                y = self.training_points[None][0][1]
-                X_icat = X[:, cat_features]
-                X_icat = X_icat[:, i]
-                old_n_comp = (
-                    self.options["n_comp"] if "n_comp" in self.options else None
-                )
-                self.options["n_comp"] = int(n_levels[i] / 2 * (n_levels[i] - 1))
-                X_full_space = compute_X_cross(X_icat, self.n_levels_origin[i])
-                try:
-                    self.coeff_pls = self.coeff_pls_cat[i]
-                except IndexError:
-                    _, _ = self._compute_pls(X_full_space.copy(), y.copy())
-                    self.coeff_pls_cat.append(self.coeff_pls)
-
-                if x is not None:
-                    x_icat = x[:, cat_features]
-                    x_icat = x_icat[:, i]
-                    x_full_space = compute_X_cross(x_icat, self.n_levels_origin[i])
-                    dx_cat_i = cross_levels_homo_space(
-                        x_full_space, self.ij, y=X_full_space
-                    )
-                else:
-                    dx_cat_i = cross_levels_homo_space(X_full_space, self.ij)
-
-                d_cat_i = componentwise_distance_PLS(
-                    dx_cat_i,
-                    "squar_exp",
-                    self.options["n_comp"],
-                    self.coeff_pls,
-                    power=self.options["pow_exp_power"],
-                    theta=None,
-                    return_derivative=False,
-                )
-
-                matrix_data_corr_levels_cat_mod_comps(
-                    i,
-                    Lij,
-                    r_cat,
-                    n_levels,
-                    T,
-                    d_cat_i,
-                    has_cat_kernel=cat_kernel
-                    in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                    ],
-                )
-            else:
-                matrix_data_corr_levels_cat_mod(
-                    i,
-                    Lij,
-                    r_cat,
-                    T,
-                    has_cat_kernel=cat_kernel
-                    in [
-                        MixIntKernelType.EXP_HOMO_HSPHERE,
-                        MixIntKernelType.HOMO_HSPHERE,
-                        MixIntKernelType.COMPOUND_SYMMETRY,
-                    ],
-                )
-
-            r = np.multiply(r, r_cat)
-            if cat_kernel_comps is not None:
-                if old_n_comp is None:
-                    self.options._dict.pop("n_comp", None)
-                else:
-                    self.options["n_comp"] = old_n_comp
-        return r
+        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+            self._mix_int_corr = MixedIntegerCorrelation(self)
+        return self._mix_int_corr.compute(
+            corr=corr,
+            design_space=design_space,
+            power=power,
+            theta=theta,
+            theta_bounds=theta_bounds,
+            dx=dx,
+            Lij=Lij,
+            n_levels=n_levels,
+            cat_features=cat_features,
+            cat_kernel=cat_kernel,
+            x=x,
+            kplsk_second_loop=kplsk_second_loop,
+        )
 
     def _reduced_likelihood_function(self, theta):
         """
@@ -971,207 +839,9 @@ class KrgBased(SurrogateModel):
             Q, G
             QR decomposition of the matrix Ft.
         """
-        # Initialize output
-
-        reduced_likelihood_function_value = -np.inf
-        par = {}
-        # Set up R
-        nugget = self.options["nugget"]
-        # Nugget to ensure that the Cholesky decomposition can be performed
-        if self.options["eval_noise"]:
-            if self.options["is_ri"]:
-                nugget = 100.0 * np.finfo(np.double).eps
-            else:
-                nugget = 0
-        noise = self.noise0
-        tmp_var = theta
-        if self.options["use_het_noise"]:
-            noise = self.optimal_noise
-        if self.options["eval_noise"] and not self.options["use_het_noise"]:
-            theta = tmp_var[0:-1]
-            noise = tmp_var[-1]
-        if not (self.is_continuous):
-            dx = self.D
-            if self.options["categorical_kernel"] == MixIntKernelType.CONT_RELAX:
-                if "MFK" in self.name:
-                    if (
-                        self._lvl == self.nlvl - 1
-                    ):  # highest fidelity identified by the key None
-                        X2, _, _ = self.design_space.unfold_x(
-                            self.training_points[None][0][0]
-                        )
-                        self.X2_norma[str(self._lvl)] = (
-                            X2 - self.X2_offset
-                        ) / self.X2_scale
-                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-                    elif self._lvl < self.nlvl - 1:
-                        X2, _, _ = self.design_space.unfold_x(
-                            self.training_points[self._lvl][0][0]
-                        )
-                        self.X2_norma[str(self._lvl)] = (
-                            X2 - self.X2_offset
-                        ) / self.X2_scale
-                        dx, _ = cross_distances(self.X2_norma[str(self._lvl)])
-
-            try:
-                r = self._matrix_data_corr(
-                    corr=self.options["corr"],
-                    design_space=self.design_space,
-                    power=self.options["pow_exp_power"],
-                    theta=theta,
-                    theta_bounds=self.options["theta_bounds"],
-                    dx=dx,
-                    Lij=self.Lij,
-                    n_levels=self.n_levels,
-                    cat_features=self.cat_features,
-                    cat_kernel=self.options["categorical_kernel"],
-                    kplsk_second_loop=self.kplsk_second_loop,
-                ).reshape(-1, 1)
-
-                if np.isnan(r).any():
-                    return reduced_likelihood_function_value, par
-            except FloatingPointError:
-                warnings.warn(
-                    "Theta upper bound is too high.  please reduced it in the parameter theta_bounds."
-                )
-                return reduced_likelihood_function_value, par
-        else:
-            self.corr.theta = theta
-            try:
-                r = self.corr(self.D).reshape(-1, 1)
-                if np.isnan(r).any():
-                    return reduced_likelihood_function_value, par
-            except FloatingPointError:
-                warnings.warn(
-                    "Theta upper bound is too high.  please reduced it in the parameter theta_bounds."
-                )
-                return reduced_likelihood_function_value, par
-
-        if self.options["is_ri"]:
-            R_noisy = np.eye(self.nt) * (1.0 + nugget + noise)
-            R_noisy[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-            R_noisy[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-            R = np.eye(self.nt) * (1.0 + nugget)
-        else:
-            R = np.eye(self.nt) * (1.0 + nugget + noise)
-
-        R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
-        R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
-
-        p = 0
-        q = 0
-        if self.name in ["MFK", "MFKPLS", "MFKPLSK"]:
-            p = self.p
-            q = self.q
-
-        # Cholesky decomposition of R and computation of its inverse
-        C = None
-        try:
-            C = linalg.cholesky(R, lower=True)
-        except (linalg.LinAlgError, ValueError) as e:
-            print("exception : ", e)
-            print(np.linalg.eig(R)[0])
-            return reduced_likelihood_function_value, par
-
-        if self.options["is_ri"]:
-            # Computation of R_ri for the reinterpolation case
-            C_inv = np.linalg.inv(C)
-            R_inv = np.dot(C_inv.T, C_inv)
-            R_ri = R_noisy @ R_inv @ R_noisy
-            par["C"] = C
-
-            par["sigma2"] = None
-            par["sigma2_ri"] = None
-            _, _, sigma2_ri = self._compute_sigma2(
-                R_ri, reduced_likelihood_function_value, par, p, q, is_ri=True
-            )
-            if sigma2_ri is not None:
-                par["sigma2_ri"] = sigma2_ri * self.y_std**2.0
-
-            reduced_likelihood_function_value, par, sigma2 = self._compute_sigma2(
-                R_noisy, reduced_likelihood_function_value, par, p, q, is_ri=False
-            )
-            if sigma2 is not None:
-                par["sigma2"] = sigma2 * self.y_std**2.0
-
-            if self.name in ["MGP"]:
-                reduced_likelihood_function_value += self._reduced_log_prior(theta)
-
-            # A particular case when f_min_cobyla fail
-            if (self.best_iteration_fail is not None) and (
-                not np.isinf(reduced_likelihood_function_value)
-            ):
-                if reduced_likelihood_function_value > self.best_iteration_fail:
-                    self.best_iteration_fail = reduced_likelihood_function_value
-                    self._thetaMemory = np.array(tmp_var)
-
-            elif (self.best_iteration_fail is None) and (
-                not np.isinf(reduced_likelihood_function_value)
-            ):
-                self.best_iteration_fail = reduced_likelihood_function_value
-                self._thetaMemory = np.array(tmp_var)
-            if reduced_likelihood_function_value > 1e15:
-                reduced_likelihood_function_value = 1e15
-            return reduced_likelihood_function_value, par
-        else:
-            # Get generalized least squared solution
-            Ft = linalg.solve_triangular(C, self.F, lower=True)
-            Q, G = linalg.qr(Ft, mode="economic")
-            sv = linalg.svd(G, compute_uv=False)
-            rcondG = sv[-1] / sv[0]
-            if rcondG < 1e-10:
-                # Check F
-                sv = linalg.svd(self.F, compute_uv=False)
-                condF = sv[0] / sv[-1]
-                if condF > 1e15:
-                    raise Exception(
-                        "F is too ill conditioned. Poor combination "
-                        "of regression model and observations."
-                    )
-
-                else:
-                    # Ft is too ill conditioned, get out (try different theta)
-                    return reduced_likelihood_function_value, par
-
-            Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
-            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
-            rho = Yt - np.dot(Ft, beta)
-
-            # The determinant of R is equal to the squared product of the diagonal
-            # elements of its Cholesky decomposition C
-            detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-
-            sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
-            reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
-                sigma2.sum()
-            ) - self.nt * np.log10(detR)
-            par["sigma2"] = sigma2 * self.y_std**2.0
-            par["beta"] = beta
-            par["gamma"] = linalg.solve_triangular(C.T, rho)
-            par["C"] = C
-            par["Ft"] = Ft
-            par["G"] = G
-            par["Q"] = Q
-
-            if self.name in ["MGP"]:
-                reduced_likelihood_function_value += self._reduced_log_prior(theta)
-
-            # A particular case when f_min_cobyla fail
-            if (self.best_iteration_fail is not None) and (
-                not np.isinf(reduced_likelihood_function_value)
-            ):
-                if reduced_likelihood_function_value > self.best_iteration_fail:
-                    self.best_iteration_fail = reduced_likelihood_function_value
-                    self._thetaMemory = np.array(tmp_var)
-
-            elif (self.best_iteration_fail is None) and (
-                not np.isinf(reduced_likelihood_function_value)
-            ):
-                self.best_iteration_fail = reduced_likelihood_function_value
-                self._thetaMemory = np.array(tmp_var)
-            if reduced_likelihood_function_value > 1e15:
-                reduced_likelihood_function_value = 1e15
-            return reduced_likelihood_function_value, par
+        if not hasattr(self, "_likelihood_evaluator"):
+            self._likelihood_evaluator = LikelihoodEvaluator(self)
+        return self._likelihood_evaluator.evaluate(theta)
 
     def _compute_sigma2(
         self, R, reduced_likelihood_function_value, par, p, q, is_ri=False
@@ -1212,57 +882,11 @@ class KrgBased(SurrogateModel):
         sigma2: float or None
             - The computed Gaussian Process variance, or None if the computation fails.
         """
-        #  Cholesky decomposition
-        try:
-            C = linalg.cholesky(R, lower=True)
-        except (linalg.LinAlgError, ValueError) as e:
-            print("exception : ", e)
-            print(np.linalg.eig(R)[0])
-            sigma2 = par["sigma2"]
-            if is_ri:
-                sigma2 = par["sigma2_ri"]
-            return reduced_likelihood_function_value, par, sigma2
-
-        # Get generalized least squared solution
-        Ft = linalg.solve_triangular(C, self.F, lower=True)
-        Q, G = linalg.qr(Ft, mode="economic")
-        sv = linalg.svd(G, compute_uv=False)
-        rcondG = sv[-1] / sv[0]
-        if rcondG < 1e-10:
-            # Check F
-            sv = linalg.svd(self.F, compute_uv=False)
-            condF = sv[0] / sv[-1]
-            if condF > 1e15:
-                raise Exception(
-                    "F is too ill conditioned. Poor combination "
-                    "of regression model and observations."
-                )
-            else:
-                # Ft is too ill conditioned, get out (try different theta)
-                return reduced_likelihood_function_value, par, None
-
-        Yt = linalg.solve_triangular(C, self.y_norma, lower=True)
-        beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
-        rho = Yt - np.dot(Ft, beta)
-
-        # The determinant of R is equal to the squared product of the diagonal
-        # elements of its Cholesky decomposition C
-        detR = (np.diag(C) ** (2.0 / self.nt)).prod()
-
-        sigma2 = (rho**2.0).sum(axis=0) / (self.nt - p - q)
-        reduced_likelihood_function_value = -(self.nt - p - q) * np.log10(
-            sigma2.sum()
-        ) - self.nt * np.log10(detR)
-
-        if not is_ri:
-            par["beta"] = beta
-            par["gamma"] = linalg.solve_triangular(C.T, rho)
-            par["Ft"] = Ft
-            par["G"] = G
-            par["Q"] = Q
-            par["C_noisy"] = C
-
-        return reduced_likelihood_function_value, par, sigma2
+        if not hasattr(self, "_likelihood_evaluator"):
+            self._likelihood_evaluator = LikelihoodEvaluator(self)
+        return self._likelihood_evaluator.compute_sigma2(
+            R, reduced_likelihood_function_value, par, p, q, is_ri
+        )
 
     def _reduced_likelihood_gradient(self, theta):
         """
@@ -1305,87 +929,9 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        grad_red = 1
-        par = {}
-        red, par = self._reduced_likelihood_function(theta)
-        try:
-            C = par["C"]
-            gamma = par["gamma"]
-            Q = par["Q"]
-            G = par["G"]
-            sigma_2 = par["sigma2"] + self.options["nugget"]
-        except KeyError:
-            return grad_red, par
-
-        C = par["C"]
-        gamma = par["gamma"]
-        Q = par["Q"]
-        G = par["G"]
-        sigma_2 = par["sigma2"] + self.options["nugget"]
-
-        nb_theta = len(theta)
-        grad_red = np.zeros(nb_theta)
-
-        dr_all = []
-        tr_all = []
-        dmu_all = []
-        arg_all = []
-        dsigma_all = []
-        dbeta_all = []
-        for i_der in range(nb_theta):
-            # Compute R derivatives
-            dr = self.corr(self.D, grad_ind=i_der)
-            dr_all.append(dr)
-
-            dR = np.zeros((self.nt, self.nt))
-            dR[self.ij[:, 0], self.ij[:, 1]] = dr[:, 0]
-            dR[self.ij[:, 1], self.ij[:, 0]] = dr[:, 0]
-
-            # Compute beta derivatives
-            Cinv_dR_gamma = linalg.solve_triangular(C, np.dot(dR, gamma), lower=True)
-            dbeta = -linalg.solve_triangular(G, np.dot(Q.T, Cinv_dR_gamma))
-            arg_all.append(Cinv_dR_gamma)
-
-            dbeta_all.append(dbeta)
-
-            # Compute mu derivatives
-            dmu = np.dot(self.F, dbeta)
-            dmu_all.append(dmu)
-
-            # Compute log(detR) derivatives
-            tr_1 = linalg.solve_triangular(C, dR, lower=True)
-            tr = linalg.solve_triangular(C.T, tr_1)
-            tr_all.append(tr)
-
-            # Compute Sigma2 Derivatives
-            dsigma_2 = (
-                (1 / self.nt)
-                * (
-                    -dmu.T.dot(gamma)
-                    - gamma.T.dot(dmu)
-                    - np.dot(gamma.T, dR.dot(gamma))
-                )
-                * self.y_std**2.0
-            )
-            dsigma_all.append(dsigma_2)
-
-            # Compute reduced log likelihood derivatives
-            grad_red[i_der] = (
-                -self.nt / np.log(10) * (dsigma_2 / sigma_2 + np.trace(tr) / self.nt)
-            ).item()
-
-        par["dr"] = dr_all
-        par["tr"] = tr_all
-        par["dmu"] = dmu_all
-        par["arg"] = arg_all
-        par["dsigma"] = dsigma_all
-        par["dbeta_all"] = dbeta_all
-
-        grad_red = np.atleast_2d(grad_red).T
-
-        if self.name in ["MGP"]:
-            grad_red += self._reduced_log_prior(theta, grad=True)
-        return grad_red, par
+        if not hasattr(self, "_likelihood_evaluator"):
+            self._likelihood_evaluator = LikelihoodEvaluator(self)
+        return self._likelihood_evaluator.gradient(theta)
 
     def _reduced_likelihood_hessian(self, theta):
         """
@@ -1430,142 +976,9 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        dred, par = self._reduced_likelihood_gradient(theta)
-
-        C = par["C"]
-        gamma = par["gamma"]
-        Q = par["Q"]
-        G = par["G"]
-        sigma_2 = par["sigma2"]
-
-        nb_theta = len(theta)
-
-        dr_all = par["dr"]
-        tr_all = par["tr"]
-        dmu_all = par["dmu"]
-        arg_all = par["arg"]
-        dsigma = par["dsigma"]
-        Rinv_dRdomega_gamma_all = []
-        Rinv_dmudomega_all = []
-
-        n_val_hess = nb_theta * (nb_theta + 1) // 2
-        hess_ij = np.zeros((n_val_hess, 2), dtype=np.int32)
-        hess = np.zeros((n_val_hess, 1))
-        ind_1 = 0
-        if self.name in ["MGP"]:
-            log_prior = self._reduced_log_prior(theta, hessian=True)
-
-        for omega in range(nb_theta):
-            ind_0 = ind_1
-            ind_1 = ind_0 + nb_theta - omega
-            hess_ij[ind_0:ind_1, 0] = omega
-            hess_ij[ind_0:ind_1, 1] = np.arange(omega, nb_theta)
-
-            dRdomega = np.zeros((self.nt, self.nt))
-            dRdomega[self.ij[:, 0], self.ij[:, 1]] = dr_all[omega][:, 0]
-            dRdomega[self.ij[:, 1], self.ij[:, 0]] = dr_all[omega][:, 0]
-
-            dmudomega = dmu_all[omega]
-            Cinv_dmudomega = linalg.solve_triangular(C, dmudomega, lower=True)
-            Rinv_dmudomega = linalg.solve_triangular(C.T, Cinv_dmudomega)
-            Rinv_dmudomega_all.append(Rinv_dmudomega)
-            Rinv_dRdomega_gamma = linalg.solve_triangular(C.T, arg_all[omega])
-            Rinv_dRdomega_gamma_all.append(Rinv_dRdomega_gamma)
-
-            for i, eta in enumerate(hess_ij[ind_0:ind_1, 1]):
-                dRdeta = np.zeros((self.nt, self.nt))
-                dRdeta[self.ij[:, 0], self.ij[:, 1]] = dr_all[eta][:, 0]
-                dRdeta[self.ij[:, 1], self.ij[:, 0]] = dr_all[eta][:, 0]
-                dr_eta_omega = self.corr(self.D, grad_ind=omega, hess_ind=eta)
-                dRdetadomega = np.zeros((self.nt, self.nt))
-                dRdetadomega[self.ij[:, 0], self.ij[:, 1]] = dr_eta_omega[:, 0]
-                dRdetadomega[self.ij[:, 1], self.ij[:, 0]] = dr_eta_omega[:, 0]
-
-                # Compute beta second derivatives
-                dRdeta_Rinv_dmudomega = np.dot(dRdeta, Rinv_dmudomega)
-
-                dmudeta = dmu_all[eta]
-                Cinv_dmudeta = linalg.solve_triangular(C, dmudeta, lower=True)
-                Rinv_dmudeta = linalg.solve_triangular(C.T, Cinv_dmudeta)
-                dRdomega_Rinv_dmudeta = np.dot(dRdomega, Rinv_dmudeta)
-
-                dRdeta_Rinv_dRdomega_gamma = np.dot(dRdeta, Rinv_dRdomega_gamma)
-
-                Rinv_dRdeta_gamma = linalg.solve_triangular(C.T, arg_all[eta])
-                dRdomega_Rinv_dRdeta_gamma = np.dot(dRdomega, Rinv_dRdeta_gamma)
-
-                dRdetadomega_gamma = np.dot(dRdetadomega, gamma)
-
-                beta_sum = (
-                    dRdeta_Rinv_dmudomega
-                    + dRdomega_Rinv_dmudeta
-                    + dRdeta_Rinv_dRdomega_gamma
-                    + dRdomega_Rinv_dRdeta_gamma
-                    - dRdetadomega_gamma
-                )
-
-                Qt_Cinv_beta_sum = np.dot(
-                    Q.T, linalg.solve_triangular(C, beta_sum, lower=True)
-                )
-                dbetadetadomega = linalg.solve_triangular(G, Qt_Cinv_beta_sum)
-
-                # Compute mu second derivatives
-                dmudetadomega = np.dot(self.F, dbetadetadomega)
-
-                # Compute sigma2 second derivatives
-                sigma_arg_1 = (
-                    -np.dot(dmudetadomega.T, gamma)
-                    + np.dot(dmudomega.T, Rinv_dRdeta_gamma)
-                    + np.dot(dmudeta.T, Rinv_dRdomega_gamma)
-                )
-
-                sigma_arg_2 = (
-                    -np.dot(gamma.T, dmudetadomega)
-                    + np.dot(gamma.T, dRdeta_Rinv_dmudomega)
-                    + np.dot(gamma.T, dRdomega_Rinv_dmudeta)
-                )
-
-                sigma_arg_3 = np.dot(dmudeta.T, Rinv_dmudomega) + np.dot(
-                    dmudomega.T, Rinv_dmudeta
-                )
-
-                sigma_arg_4_in = (
-                    -dRdetadomega_gamma
-                    + dRdeta_Rinv_dRdomega_gamma
-                    + dRdomega_Rinv_dRdeta_gamma
-                )
-                sigma_arg_4 = np.dot(gamma.T, sigma_arg_4_in)
-
-                dsigma2detadomega = (
-                    (1 / self.nt)
-                    * (sigma_arg_1 + sigma_arg_2 + sigma_arg_3 + sigma_arg_4)
-                    * self.y_std**2.0
-                )
-
-                # Compute Hessian
-                dreddetadomega_tr_1 = np.trace(np.dot(tr_all[eta], tr_all[omega]))
-
-                dreddetadomega_tr_2 = np.trace(
-                    linalg.solve_triangular(
-                        C.T, linalg.solve_triangular(C, dRdetadomega, lower=True)
-                    )
-                )
-
-                dreddetadomega_arg1 = (self.nt / sigma_2) * (
-                    dsigma2detadomega - (1 / sigma_2) * dsigma[omega] * dsigma[eta]
-                )
-                dreddetadomega = (
-                    -(dreddetadomega_arg1 - dreddetadomega_tr_1 + dreddetadomega_tr_2)
-                    / self.nt
-                )
-
-                hess[ind_0 + i, 0] = (self.nt / np.log(10) * dreddetadomega).item()
-
-                if self.name in ["MGP"] and eta == omega:
-                    hess[ind_0 + i, 0] += log_prior[eta].item()
-            par["Rinv_dR_gamma"] = Rinv_dRdomega_gamma_all
-            par["Rinv_dmu"] = Rinv_dmudomega_all
-        return hess, hess_ij, par
+        if not hasattr(self, "_likelihood_evaluator"):
+            self._likelihood_evaluator = LikelihoodEvaluator(self)
+        return self._likelihood_evaluator.hessian(theta)
 
     def _predict_init(self, x, is_acting):
         if not (self.is_continuous):
@@ -2042,21 +1455,7 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        if self.name in ["MGP"]:
-
-            def minus_reduced_likelihood_function(theta):
-                res = -self._reduced_likelihood_function(theta)[0]
-                return res
-
-            def grad_minus_reduced_likelihood_function(theta):
-                grad = -self._reduced_likelihood_gradient(theta)[0]
-                return grad
-
-            def hessian_minus_reduced_likelihood_function(theta):
-                hess = -self._reduced_likelihood_hessian(theta)[0]
-                return hess
-
-        else:
+        if self._uses_log_theta_space():
 
             def minus_reduced_likelihood_function(log10t):
                 return -self._reduced_likelihood_function(theta=10.0**log10t)[0]
@@ -2079,16 +1478,30 @@ class KrgBased(SurrogateModel):
                 )
                 return res
 
+        else:
+
+            def minus_reduced_likelihood_function(theta):
+                res = -self._reduced_likelihood_function(theta)[0]
+                return res
+
+            def grad_minus_reduced_likelihood_function(theta):
+                grad = -self._reduced_likelihood_gradient(theta)[0]
+                return grad
+
+            def hessian_minus_reduced_likelihood_function(theta):
+                hess = -self._reduced_likelihood_hessian(theta)[0]
+                return hess
+
         limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
         exit_function = False
         if self.kplsk_second_loop is None:
             self.kplsk_second_loop = False
         elif self.kplsk_second_loop is True:
             exit_function = True
-        if "KPLSK" in self.name:
-            n_iter = 1
-        else:
-            n_iter = 0
+        n_iter = self._n_outer_iterations
+
+        # Create optimizer strategy
+        optimizer = self._create_optimizer()
 
         (
             best_optimal_theta,
@@ -2105,7 +1518,7 @@ class KrgBased(SurrogateModel):
         for ii in range(n_iter, -1, -1):
             bounds_hyp = []
             self.kplsk_second_loop = (
-                "KPLSK" in self.name and ii == 0
+                self._n_outer_iterations > 0 and ii == 0
             ) or self.kplsk_second_loop
             self.theta0 = deepcopy(self.options["theta0"])
             self.corr.theta = deepcopy(self.options["theta0"])
@@ -2117,51 +1530,21 @@ class KrgBased(SurrogateModel):
                 # to theta in (0,2e1]
                 theta_bounds = self.options["theta_bounds"]
                 if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    if "KPLSK" in self.name:
-                        if self.theta0[i] - theta_bounds[1] > 0:
-                            self.theta0[i] = theta_bounds[1] - 1e-10
-                        else:
-                            self.theta0[i] = theta_bounds[0] + 1e-10
-                    else:
-                        warnings.warn(
-                            f"theta0 is out the feasible bounds ({self.theta0}[{i}] out of \
-                                [{theta_bounds[0]}, {theta_bounds[1]}]). \
-                                    A random initialisation is used instead."
-                        )
-                        self.theta0[i] = self.random_state.random()
-                        self.theta0[i] = (
-                            self.theta0[i] * (theta_bounds[1] - theta_bounds[0])
-                            + theta_bounds[0]
-                        )
+                    self.theta0[i] = self._handle_theta0_out_of_bounds(
+                        self.theta0[i], i, theta_bounds
+                    )
 
-                if self.name in ["MGP"]:  # to be discussed with R. Priem
-                    constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
-                    constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
-                    bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
-                else:
-                    log10t_bounds = np.log10(theta_bounds)
-                    constraints.append(lambda log10t, i=i: log10t[i] - log10t_bounds[0])
-                    constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
-                    bounds_hyp.append(log10t_bounds)
-
-            if self.name in ["MGP"]:
-                theta0_rand = m_norm.rvs(
-                    self.options["prior"]["mean"] * len(self.theta0),
-                    self.options["prior"]["var"],
-                    1,
+                new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
+                    theta_bounds, i
                 )
-                theta0 = self.theta0
-            else:
-                theta_bounds = self.options["theta_bounds"]
-                log10t_bounds = np.log10(theta_bounds)
-                theta0_rand = self.random_state.random(len(self.theta0))
-                theta0_rand = (
-                    theta0_rand * (log10t_bounds[1] - log10t_bounds[0])
-                    + log10t_bounds[0]
-                )
-                theta0 = np.log10(self.theta0)
+                constraints.extend(new_constraints)
+                bounds_hyp.append(bounds_entry)
 
-            if self.name not in ["SGP"]:
+            theta0, theta0_rand = self._get_optimizer_initial_theta(
+                self.options["theta_bounds"]
+            )
+
+            if self._should_compute_distances_in_train:
                 if not (self.is_continuous):
                     self.D = D
                 else:
@@ -2177,9 +1560,9 @@ class KrgBased(SurrogateModel):
                 self.noise0 = np.array(self.options["noise0"])
                 noise_bounds = self.options["noise_bounds"]
 
-                # SGP: GP variance is optimized too
+                # GP variance is optimized too when _optimize_sigma2 is True
                 offset = 0
-                if self.name in ["SGP"] and self.retry == MAX_RETRY:
+                if self._optimize_sigma2 and self.retry == MAX_RETRY:
                     sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
                     theta0_sigma2 = np.concatenate([theta0, sigma2_0])
                     sigma2_bounds = np.log10(
@@ -2239,7 +1622,7 @@ class KrgBased(SurrogateModel):
                     np.log10([theta_bounds]), repeats=len(theta0), axis=0
                 )
                 theta_all_loops = np.vstack((theta0, theta0_rand))
-                if ii == 1 or "KPLSK" not in self.name:
+                if self._should_sample_multistart(ii):
                     if self.options["n_start"] > 1:
                         sampling = LHS(
                             xlimits=theta_limits,
@@ -2249,58 +1632,25 @@ class KrgBased(SurrogateModel):
                         theta_lhs_loops = sampling(self.options["n_start"])
                         theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
-                optimal_theta_res = {"fun": float("inf")}
-                optimal_theta_res_loop = None
                 try:
-                    if self.options["hyper_opt"] == "Cobyla":
-                        for theta0_loop in theta_all_loops:
-                            optimal_theta_res_loop = optimize.minimize(
-                                minus_reduced_likelihood_function,
-                                theta0_loop,
-                                constraints=[
-                                    {"fun": con, "type": "ineq"} for con in constraints
-                                ],
-                                method="COBYLA",
-                                options={
-                                    "rhobeg": _rhobeg,
-                                    "tol": 1e-4,
-                                    "maxiter": limit,
-                                },
-                            )
-                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
-                                optimal_theta_res = optimal_theta_res_loop
+                    # Delegate to optimizer strategy
+                    optimal_theta_res = optimizer.optimize(
+                        objective=minus_reduced_likelihood_function,
+                        theta_starts=theta_all_loops,
+                        gradient=grad_minus_reduced_likelihood_function,
+                        hessian=hessian_minus_reduced_likelihood_function,
+                        constraints=constraints,
+                        bounds=bounds_hyp,
+                        limit=limit,
+                    )
 
-                    elif self.options["hyper_opt"] == "TNC":
-                        if self.options["use_het_noise"]:
-                            raise ValueError(
-                                "For heteroscedastic noise, please use Cobyla"
-                            )
-
-                        for theta0_loop in theta_all_loops:
-                            optimal_theta_res_loop = optimize.minimize(
-                                minus_reduced_likelihood_function,
-                                theta0_loop,
-                                method="TNC",
-                                jac=grad_minus_reduced_likelihood_function,
-                                ###The hessian information is available but never used
-                                #
-                                ####hess=hessian_minus_reduced_likelihood_function,
-                                bounds=bounds_hyp,
-                                options={"maxfun": limit},
-                            )
-                            if optimal_theta_res_loop["fun"] < optimal_theta_res["fun"]:
-                                optimal_theta_res = optimal_theta_res_loop
-                    elif self.options["hyper_opt"] == "NoOp":
-                        optimal_theta_res["x"] = theta0
-
-                    if "x" not in optimal_theta_res:
+                    if optimal_theta_res is None or "x" not in optimal_theta_res:
                         raise ValueError(
-                            f"Optimizer encountered a problem: {optimal_theta_res_loop}"
+                            "Optimizer encountered a problem: no valid result found"
                         )
                     optimal_theta = optimal_theta_res["x"]
 
-                    if self.name not in ["MGP"]:
-                        optimal_theta = 10**optimal_theta
+                    optimal_theta = self._transform_optimal_theta(optimal_theta)
 
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -2369,32 +1719,16 @@ class KrgBased(SurrogateModel):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if "KPLSK" in self.name:
-                if self.options["eval_noise"]:
-                    # best_optimal_theta contains [theta, noise] if eval_noise = True
-                    theta = best_optimal_theta[:-1]
-                else:
-                    # best_optimal_theta contains [theta] if eval_noise = False
-                    theta = best_optimal_theta
-
-                if exit_function:
-                    return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
-
-                if self.options["corr"] == "squar_exp":
-                    self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
-                else:
-                    self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
-                self.n_param = compute_n_param(
-                    self.design_space,
-                    self.options["categorical_kernel"],
-                    self.nx,
-                    None,
-                    None,
-                )
-                self.options["n_comp"] = int(self.n_param)
-                limit = 10 * self.options["n_comp"]
-                self.best_iteration_fail = None
-                exit_function = True
+            should_return, exit_function, new_limit = self._finalize_outer_loop(
+                best_optimal_rlf_value,
+                best_optimal_par,
+                best_optimal_theta,
+                exit_function,
+            )
+            if new_limit is not None:
+                limit = new_limit
+            if should_return:
+                return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def print_failed_optimization_msg(self):
@@ -2415,23 +1749,6 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
-        if self.name in ["KPLS"]:
-            if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
-                raise ValueError(
-                    "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
-                )
-            if (
-                self.options["categorical_kernel"]
-                not in [
-                    MixIntKernelType.EXP_HOMO_HSPHERE,
-                    MixIntKernelType.HOMO_HSPHERE,
-                ]
-                and self.name == "KPLS"
-            ):
-                if self.options["cat_kernel_comps"] is not None:
-                    raise ValueError(
-                        "cat_kernel_comps option is for homoscedastic kernel."
-                    )
 
         mat_dim = (
             self.options["cat_kernel_comps"]
@@ -2546,44 +1863,5 @@ class KrgBased(SurrogateModel):
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
-    """
-    Returns the he number of parameters needed for an homoscedastic or full group kernel.
-    Parameters
-     ----------
-    design_space: BaseDesignSpace
-            - design space definition
-    cat_kernel : string
-            -The kernel to use for categorical inputs. Only for non continuous Kriging,
-    d: int
-            - n_comp or nx
-    n_comp : int
-            - if PLS, then it is the number of components else None,
-    mat_dim : int
-            - if PLS, then it is the number of components for matrix kernel (mixed integer) else None,
-    Returns
-    -------
-     n_param: int
-            - The number of parameters.
-    """
-    n_param = design_space.n_dv
-    if n_comp is not None:
-        n_param = d
-        if cat_kernel == MixIntKernelType.CONT_RELAX:
-            return n_param
-        if mat_dim is not None:
-            return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
-    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
-        return n_param
-    for i, dv in enumerate(design_space.design_variables):
-        if isinstance(dv, CategoricalVariable):
-            n_values = dv.n_values
-            if design_space.n_dv == d:
-                n_param -= 1
-            if cat_kernel in [
-                MixIntKernelType.EXP_HOMO_HSPHERE,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]:
-                n_param += int(n_values * (n_values - 1) / 2)
-            if cat_kernel == MixIntKernelType.CONT_RELAX:
-                n_param += int(n_values)
-    return n_param
+    """Backward-compatible wrapper: delegates to :func:`mixed_int_corr.compute_n_param`."""
+    return _compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim)

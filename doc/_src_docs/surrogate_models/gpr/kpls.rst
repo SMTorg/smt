@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0549781
+     Training - done. Time (sec):  0.0663459
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000145
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000001
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0005040
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0001008
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -165,7 +165,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 26.3353863
+     Training - done. Time (sec): 27.0634744
   
    The model automatically choose 5 components.
   ___________________________________________________________________________
@@ -277,7 +277,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

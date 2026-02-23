@@ -144,7 +144,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0601263
+     Training - done. Time (sec):  0.0661705
   ___________________________________________________________________________
      
    Evaluation
@@ -241,7 +241,7 @@ Example 2 with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0946400
+     Training - done. Time (sec):  0.4387052
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +249,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0100811
+     Predicting - done. Time (sec):  0.0062246
      
-     Prediction time/pt. (sec) :  0.0000202
+     Prediction time/pt. (sec) :  0.0000124
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -323,7 +323,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1874537
+     Training - done. Time (sec):  0.9947252
   ___________________________________________________________________________
      
    Evaluation
@@ -435,7 +435,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

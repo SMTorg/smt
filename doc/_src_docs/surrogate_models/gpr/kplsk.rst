@@ -85,7 +85,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0698915
+     Training - done. Time (sec):  0.0715313
   ___________________________________________________________________________
      
    Evaluation
@@ -93,9 +93,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010870
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000109
      
   ___________________________________________________________________________
      
@@ -104,9 +104,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010059
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0002012
      
   
 .. figure:: kplsk_Test_test_kplsk.png
@@ -207,7 +207,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

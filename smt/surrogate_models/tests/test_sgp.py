@@ -75,6 +75,183 @@ class TestSGP(SMTestCase):
         self.assert_error(Ypred, self.Ytest, atol=0.05, rtol=0.2)
         self.assertAlmostEqual(sgp.optimal_noise, self.eta[0], delta=2.9e-2)
 
+    # --- 1D derivative tests (f_obj) ---
+
+    def test_predict_derivatives_fitc(self):
+        sgp = SGP(noise0=self.eta)
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        h = 1e-6
+        x = self.Xtest
+        analytical = sgp.predict_derivatives(x, 0)
+
+        x_fwd = x.copy()
+        x_fwd[:, 0] += h
+        x_bwd = x.copy()
+        x_bwd[:, 0] -= h
+        fd = (sgp.predict_values(x_fwd) - sgp.predict_values(x_bwd)) / (2 * h)
+
+        np.testing.assert_allclose(analytical, fd, rtol=1e-4, atol=1e-8)
+
+    def test_predict_derivatives_vfe(self):
+        sgp = SGP(noise0=self.eta, method="VFE")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        h = 1e-6
+        x = self.Xtest
+        analytical = sgp.predict_derivatives(x, 0)
+
+        x_fwd = x.copy()
+        x_fwd[:, 0] += h
+        x_bwd = x.copy()
+        x_bwd[:, 0] -= h
+        fd = (sgp.predict_values(x_fwd) - sgp.predict_values(x_bwd)) / (2 * h)
+
+        np.testing.assert_allclose(analytical, fd, rtol=1e-4, atol=1e-8)
+
+    def test_predict_variance_derivatives_fitc(self):
+        sgp = SGP(noise0=self.eta)
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        h = 1e-6
+        x = self.Xtest
+        analytical = sgp.predict_variance_derivatives(x, 0)
+
+        # Use kernel-level FD: compute FD of K(x, Z) then apply the formula
+        # -2 * dK^T @ W_inv @ K.  This avoids catastrophic cancellation in
+        # the FD of sigma2 - k^T W_inv k when the Woodbury inverse is
+        # ill-conditioned and variance is small.
+        x_fwd = x.copy()
+        x_fwd[:, 0] += h
+        x_bwd = x.copy()
+        x_bwd[:, 0] -= h
+        theta, sigma2 = sgp.optimal_theta, sgp.optimal_sigma2
+        Kx = sgp._compute_K(x, sgp.Z, theta, sigma2)
+        dKx_fd = (
+            sgp._compute_K(x_fwd, sgp.Z, theta, sigma2)
+            - sgp._compute_K(x_bwd, sgp.Z, theta, sigma2)
+        ) / (2 * h)
+        fd = -2 * np.sum(
+            (dKx_fd @ sgp.woodbury_data["inv"]) * Kx, axis=1, keepdims=True
+        )
+
+        np.testing.assert_allclose(analytical, fd, rtol=1e-3, atol=5e-4)
+
+    def test_predict_variance_derivatives_vfe(self):
+        sgp = SGP(noise0=self.eta, method="VFE")
+        sgp.set_training_values(self.Xtrain, self.Ytrain)
+        sgp.set_inducing_inputs(Z=self.Z)
+        sgp.train()
+
+        h = 1e-6
+        x = self.Xtest
+        analytical = sgp.predict_variance_derivatives(x, 0)
+
+        # Use kernel-level FD (see test_predict_variance_derivatives_fitc)
+        x_fwd = x.copy()
+        x_fwd[:, 0] += h
+        x_bwd = x.copy()
+        x_bwd[:, 0] -= h
+        theta, sigma2 = sgp.optimal_theta, sgp.optimal_sigma2
+        Kx = sgp._compute_K(x, sgp.Z, theta, sigma2)
+        dKx_fd = (
+            sgp._compute_K(x_fwd, sgp.Z, theta, sigma2)
+            - sgp._compute_K(x_bwd, sgp.Z, theta, sigma2)
+        ) / (2 * h)
+        fd = -2 * np.sum(
+            (dKx_fd @ sgp.woodbury_data["inv"]) * Kx, axis=1, keepdims=True
+        )
+
+        np.testing.assert_allclose(analytical, fd, rtol=1e-2, atol=5e-3)
+
+    # --- 3D derivative tests (sin volume) ---
+
+    def test_predict_derivatives_3d(self):
+        rng = np.random.default_rng(42)
+        N_train = 200
+        Xtrain = rng.uniform([-0.5, -1.0, -2.0], [0.5, 1.0, 2.0], size=(N_train, 3))
+        Ytrain = (
+            np.sin(2 * np.pi * Xtrain[:, 0])
+            * np.sin(np.pi * Xtrain[:, 1])
+            * np.sin(np.pi * Xtrain[:, 2] / 2)
+        )
+
+        sgp = SGP(
+            noise0=[1e-4],
+            n_inducing=30,
+            inducing_method="kmeans",
+            seed=42,
+            print_global=False,
+        )
+        sgp.set_training_values(Xtrain, Ytrain)
+        sgp.train()
+
+        N_test = 50
+        Xtest = rng.uniform([-0.5, -1.0, -2.0], [0.5, 1.0, 2.0], size=(N_test, 3))
+
+        h = 1e-6
+        for kx in range(3):
+            analytical = sgp.predict_derivatives(Xtest, kx)
+            x_fwd = Xtest.copy()
+            x_fwd[:, kx] += h
+            x_bwd = Xtest.copy()
+            x_bwd[:, kx] -= h
+            fd = (sgp.predict_values(x_fwd) - sgp.predict_values(x_bwd)) / (2 * h)
+            np.testing.assert_allclose(
+                analytical,
+                fd,
+                rtol=1e-4,
+                atol=1e-8,
+                err_msg=f"predict_derivatives failed for kx={kx}",
+            )
+
+    def test_predict_variance_derivatives_3d(self):
+        rng = np.random.default_rng(42)
+        N_train = 200
+        Xtrain = rng.uniform([-0.5, -1.0, -2.0], [0.5, 1.0, 2.0], size=(N_train, 3))
+        Ytrain = (
+            np.sin(2 * np.pi * Xtrain[:, 0])
+            * np.sin(np.pi * Xtrain[:, 1])
+            * np.sin(np.pi * Xtrain[:, 2] / 2)
+        )
+
+        sgp = SGP(
+            noise0=[1e-4],
+            n_inducing=30,
+            inducing_method="kmeans",
+            seed=42,
+            print_global=False,
+        )
+        sgp.set_training_values(Xtrain, Ytrain)
+        sgp.train()
+
+        N_test = 50
+        Xtest = rng.uniform([-0.5, -1.0, -2.0], [0.5, 1.0, 2.0], size=(N_test, 3))
+
+        h = 1e-6
+        for kx in range(3):
+            analytical = sgp.predict_variance_derivatives(Xtest, kx)
+            x_fwd = Xtest.copy()
+            x_fwd[:, kx] += h
+            x_bwd = Xtest.copy()
+            x_bwd[:, kx] -= h
+            fd = (sgp.predict_variances(x_fwd) - sgp.predict_variances(x_bwd)) / (2 * h)
+            np.testing.assert_allclose(
+                analytical,
+                fd,
+                rtol=1e-3,
+                atol=1e-8,
+                err_msg=f"predict_variance_derivatives failed for kx={kx}",
+            )
+
+    # --- Other tests ---
+
     def test_fitc_with_kmeans(self):
         sgp = SGP(n_inducing=30, inducing_method="kmeans")
         sgp.set_training_values(self.Xtrain, self.Ytrain)

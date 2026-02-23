@@ -79,7 +79,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0051229
+     Training - done. Time (sec):  0.0010009
   ___________________________________________________________________________
      
    Evaluation

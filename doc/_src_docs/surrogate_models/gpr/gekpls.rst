@@ -97,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.1355894
+     Training - done. Time (sec):  0.5462985
   
 .. figure:: gekpls_Test_test_gekpls.png
   :scale: 80 %
@@ -197,7 +197,7 @@ Options
      -  ['list', 'ndarray']
      -  Initial noise hyperparameters
   *  -  noise_bounds
-     -  [2.220446049250313e-14, 10000000000.0]
+     -  [np.float64(2.220446049250313e-14), 10000000000.0]
      -  None
      -  ['list', 'ndarray']
      -  bounds for noise hyperparameters

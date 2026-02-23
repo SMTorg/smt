@@ -96,7 +96,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  1.3790700
+     Training - done. Time (sec):  0.6805949
   ___________________________________________________________________________
      
    Evaluation
@@ -207,7 +207,7 @@ Options
      -  ['bool']
      -  print progress (or not)
   *  -  is_normalize
-     -  False
+     -  True
      -  None
      -  ['bool']
      -  normalize training by mean and variance

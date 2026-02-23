@@ -10,7 +10,10 @@ Adapted on March 2020 by Nathalie Bartoli to the new SMT version
 Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
+import numpy as np
+
 from smt.applications import MFKPLS
+from smt.surrogate_models.krg_based import compute_n_param
 from smt.utils.kriging import componentwise_distance
 
 
@@ -47,6 +50,56 @@ class MFKPLSK(MFKPLS):
             d = super(MFKPLSK, self)._componentwise_distance(dx, opt)
 
         return d
+
+    # --- KPLSK two-loop hook overrides (same behavior as KPLSK) ---
+
+    @property
+    def _n_outer_iterations(self):
+        """MFKPLSK uses two-pass optimization like KPLSK."""
+        return 1
+
+    def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
+        """Clamp theta0 to bounds like KPLSK."""
+        if theta0_i - theta_bounds[1] > 0:
+            return theta_bounds[1] - 1e-10
+        else:
+            return theta_bounds[0] + 1e-10
+
+    def _should_sample_multistart(self, ii):
+        """Only sample LHS multistart in the first (PLS) loop."""
+        return ii == 1
+
+    def _finalize_outer_loop(
+        self,
+        best_optimal_rlf_value,
+        best_optimal_par,
+        best_optimal_theta,
+        exit_function,
+    ):
+        """Two-pass: after PLS loop, update theta0 from PLS coefficients."""
+        if self.options["eval_noise"]:
+            theta = best_optimal_theta[:-1]
+        else:
+            theta = best_optimal_theta
+
+        if exit_function:
+            return True, exit_function, None
+
+        if self.options["corr"] == "squar_exp":
+            self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+        else:
+            self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+        self.n_param = compute_n_param(
+            self.design_space,
+            self.options["categorical_kernel"],
+            self.nx,
+            None,
+            None,
+        )
+        self.options["n_comp"] = int(self.n_param)
+        new_limit = 10 * self.options["n_comp"]
+        self.best_iteration_fail = None
+        return False, True, new_limit
 
     def _new_train(self):
         """
