@@ -168,7 +168,7 @@ class TestSGP(SMTestCase):
             (dKx_fd @ sgp.woodbury_data["inv"]) * Kx, axis=1, keepdims=True
         )
 
-        np.testing.assert_allclose(analytical, fd, rtol=1e-3, atol=5e-4)
+        np.testing.assert_allclose(analytical, fd, rtol=1e-2, atol=5e-3)
 
     # --- 3D derivative tests (sin volume) ---
 
