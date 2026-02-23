@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "numpy", "Cython"]
+requires = ["setuptools>=64", "setuptools-scm>=8", "wheel", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,7 +17,7 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
@@ -41,8 +41,9 @@ gpx = ["egobox~=0.36"]
 Homepage = "https://github.com/SMTorg/smt"
 Download = "https://github.com/SMTorg/smt/releases"
 
-[tool.setuptools.dynamic]
-version = { attr = "smt.__version__" }
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
 
 [tool.setuptools.packages.find]
 include = ["smt*"]
