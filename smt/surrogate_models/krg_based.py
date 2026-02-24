@@ -1075,11 +1075,7 @@ class KrgBased(SurrogateModel):
             self.options["print_global"] and self.options["print_prediction"]
         )
 
-        if self.name == "MixExp":
-            # Mixture of experts model
-            self.printer._title("Evaluation of the Mixture of experts")
-        else:
-            self.printer._title("Evaluation")
+        self.printer._title("Evaluation")
         self.printer("   %-12s : %i" % ("# eval points.", n))
         self.printer()
 

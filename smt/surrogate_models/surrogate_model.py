@@ -267,11 +267,7 @@ class SurrogateModel(metaclass=ABCMeta):
         self.printer.active = (
             self.options["print_global"] and self.options["print_training"]
         )
-        if self.name == "MixExp":
-            # Mixture of experts model
-            self.printer._title("Training of the Mixture of experts")
-        else:
-            self.printer._title("Training")
+        self.printer._title("Training")
 
         # Train the model using the specified model-method
         with self.printer._timed_context("Training", "training"):
@@ -287,11 +283,7 @@ class SurrogateModel(metaclass=ABCMeta):
             self.options["print_global"] and self.options["print_prediction"]
         )
 
-        if self.name == "MixExp":
-            # Mixture of experts model
-            self.printer._title("Evaluation of the Mixture of experts")
-        else:
-            self.printer._title("Evaluation")
+        self.printer._title("Evaluation")
         self.printer("   %-12s : %i" % ("# eval points.", n))
         self.printer()
         return x
