@@ -7,7 +7,7 @@ This package is distributed under New BSD license.
 import numpy as np
 
 from smt.surrogate_models import KPLS
-from smt.utils.kriging import ge_compute_pls
+from smt.surrogate_models.krg_based.distances import ge_compute_pls
 
 
 class GEKPLS(KPLS):

@@ -21,7 +21,7 @@ from scipy.stats import multivariate_normal as m_norm
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging import componentwise_distance
+from smt.surrogate_models.krg_based.distances import componentwise_distance
 
 
 class CoopCompKRG(KrgBased):

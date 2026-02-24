@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
-from smt.utils.kriging import componentwise_distance_PLS
+from smt.surrogate_models.krg_based.distances import componentwise_distance_PLS
 
 
 class KPLS(KrgBased):

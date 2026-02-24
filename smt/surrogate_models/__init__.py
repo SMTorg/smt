@@ -18,7 +18,7 @@ from smt.design_space import (
     IntegerVariable,
     OrdinalVariable,
 )
-from smt.utils.kriging import MixHrcKernelType
+from .krg_based import MixHrcKernelType
 
 __all__ = [
     "LS",

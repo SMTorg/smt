@@ -13,7 +13,7 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.kernels.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.checks import check_nx, check_support, ensure_2d_array
-from smt.utils.kriging import componentwise_distance, differences
+from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 
 """
 The Active kriging class.

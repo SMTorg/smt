@@ -24,23 +24,504 @@ correct_distances_cat_decreed
 import numpy as np
 
 from smt.design_space import CategoricalVariable
-from smt.utils.kriging import (
+
+from .kernel_types import MixHrcKernelType, MixIntKernelType
+from .distances import (
+    njit_use,
+    prange,
     componentwise_distance,
     componentwise_distance_PLS,
-    compute_X_cont,
-    compute_X_cross,
-    cross_levels_homo_space,
-    matrix_data_corr_levels_cat_matrix,
-    matrix_data_corr_levels_cat_mod,
-    matrix_data_corr_levels_cat_mod_comps,
 )
 
 
-# Import lazily to avoid circular imports at module level
-def _get_MixIntKernelType():
-    from smt.surrogate_models.krg_based import MixIntKernelType
+# ======================================================================
+# Mixed-integer helper functions (absorbed from smt.utils.kriging)
+# ======================================================================
 
-    return MixIntKernelType
+
+def cross_levels(X, ij, design_space, y=None):
+    """
+    Returns the levels corresponding to the indices i and j of the vectors in X and the number of levels.
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    design_space: BaseDesignSpace
+        - The design space definition
+    Returns
+    -------
+
+     Lij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The levels corresponding to the indices i and j of the vectors in X.
+     n_levels: np.ndarray
+            - The number of levels for every categorical variable.
+    """
+
+    n_levels = []
+    for dv in design_space.design_variables:
+        if isinstance(dv, CategoricalVariable):
+            n_levels.append(dv.n_values)
+    n_levels = np.array(n_levels)
+    n_var = n_levels.shape[0]
+    n, _ = ij.shape
+    X_cont, cat_features = compute_X_cont(X, design_space)
+    X_cat = X[:, cat_features]
+
+    if y is None:
+        Lij = _cross_levels_mat(n_var, n, X_cat, ij)
+    else:
+        Lij = _cross_levels_mat_y(n_var, n, X_cat, ij, y, cat_features)
+
+    return Lij, n_levels
+
+
+@njit_use(parallel=True)
+def _cross_levels_mat(n_var, n, X_cat, ij):
+    Lij = np.zeros((n_var, n, 2))
+    for k in prange(n_var):
+        for ll in prange(n):
+            i, j = ij[ll]
+            Lij[k][ll][0] = X_cat[i, k]
+            Lij[k][ll][1] = X_cat[j, k]
+    return Lij
+
+
+@njit_use(parallel=True)
+def _cross_levels_mat_y(n_var, n, X_cat, ij, y, cat_features):
+    Lij = np.zeros((n_var, n, 2))
+    y_cat = y[:, cat_features]
+    for k in prange(n_var):
+        for ll in prange(n):
+            i, j = ij[ll]
+            Lij[k][ll][0] = X_cat[i, k]
+            Lij[k][ll][1] = y_cat[j, k]
+    return Lij
+
+
+def cross_levels_homo_space(X, ij, y=None):
+    """
+    Computes the nonzero componentwise (or Hadamard) product between the vectors in X
+    Parameters
+    ----------
+
+    X: np.ndarray [n_obs, dim]
+            - The input variables.
+    y: np.ndarray [n_y, dim]
+            - The training data.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+
+    Returns
+    -------
+     dx: np.ndarray [n_obs * (n_obs - 1) / 2,dim]
+            - The Hadamard product between the vectors in X.
+    """
+    dim = np.shape(X)[1]
+    n, _ = ij.shape
+    dx = np.zeros((n, dim))
+    for ll in range(n):
+        i, j = ij[ll]
+        if y is None:
+            dx[ll] = X[i] * X[j]
+        else:
+            dx[ll] = X[i] * y[j]
+
+    return dx
+
+
+def compute_X_cont(x, design_space):
+    """
+    Gets the X_cont part of a vector x for mixed integer
+    Parameters
+    ----------
+    x: np.ndarray [n_obs, dim]
+            - The input variables.
+    design_space : BaseDesignSpace
+        - The design space definition
+    Returns
+    -------
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    cat_features: np.ndarray [dim]
+        -  Indices of the categorical input dimensions.
+
+    """
+    is_cat_mask = design_space.is_cat_mask
+    return x[:, ~is_cat_mask], is_cat_mask
+
+
+def gower_componentwise_distances(
+    X, x_is_acting, design_space, hierarchical_kernel, y=None, y_is_acting=None
+):
+    """
+    Computes the nonzero Gower-distances componentwise between the vectors
+    in X.
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, dim]
+        - The input variables.
+    x_is_acting: np.ndarray [n_obs, dim]
+        - is_acting matrix for the inputs
+    design_space : BaseDesignSpace
+        - The design space definition
+    y: np.ndarray [n_y, dim]
+        - The training data
+    y_is_acting: np.ndarray [n_y, dim]
+        - is_acting matrix for the training points
+    Returns
+    -------
+    D: np.ndarray [n_obs * (n_obs - 1) / 2, dim]
+            - The gower distances between the vectors in X.
+    ij: np.ndarray [n_obs * (n_obs - 1) / 2, 2]
+            - The indices i and j of the vectors in X associated to the cross-
+              distances in D.
+    X_cont: np.ndarray [n_obs, dim_cont]
+         - The non categorical values of the input variables.
+    """
+    X = X.astype(np.float64)
+    Xt = X
+    X_cont, cat_features = compute_X_cont(Xt, design_space)
+    is_decreed = design_space.is_conditionally_acting
+
+    # function checks
+    if y is None:
+        Y = X
+        y_is_acting = x_is_acting
+    else:
+        Y = y
+        if y_is_acting is None:
+            raise ValueError("Expected y_is_acting because y is given")
+
+    if not isinstance(X, np.ndarray):
+        if not np.array_equal(X.columns, Y.columns):
+            raise TypeError("X and Y must have same columns!")
+    else:
+        if not X.shape[1] == Y.shape[1]:
+            raise TypeError("X and Y must have same y-dim!")
+
+    if x_is_acting.shape != X.shape or y_is_acting.shape != Y.shape:
+        raise ValueError("is_acting matrices must have same shape as X!")
+
+    x_n_rows, x_n_cols = X.shape
+    y_n_rows, y_n_cols = Y.shape
+    if not isinstance(X, np.ndarray):
+        X = np.asarray(X)
+    if not isinstance(Y, np.ndarray):
+        Y = np.asarray(Y)
+
+    Z = np.concatenate((X, Y))
+    z_is_acting = np.concatenate((x_is_acting, y_is_acting))
+    Z_cat = Z[:, cat_features]
+
+    x_index = range(0, x_n_rows)
+    y_index = range(x_n_rows, x_n_rows + y_n_rows)
+    X_cat = Z_cat[x_index,]
+    Y_cat = Z_cat[y_index,]
+
+    # This is to normalize the numeric values between 0 and 1.
+    Z_num = Z[:, ~cat_features]
+    z_num_is_acting = z_is_acting[:, ~cat_features]
+    num_is_decreed = is_decreed[~cat_features]
+    num_bounds = design_space.get_num_bounds()[~cat_features, :]
+    Z_scale = 1
+    if num_bounds.shape[0] > 0:
+        Z_offset = num_bounds[:, 0]
+        Z_max = num_bounds[:, 1]
+        Z_scale = Z_max - Z_offset
+        Z_num = (Z_num - Z_offset) / Z_scale
+    X_num = Z_num[x_index,]
+    Y_num = Z_num[y_index,]
+    x_num_is_acting = z_num_is_acting[x_index,]
+    y_num_is_acting = z_num_is_acting[y_index,]
+
+    # x_cat_is_acting : activeness vector delta
+    # X_cat( not(x_cat_is_acting)) = 0 ###IMPUTED TO FIRST VALUE IN LIST (index 0)
+    D_cat = compute_D_cat(X_cat, Y_cat, y)
+    D_num, ij = compute_D_num(
+        X_num,
+        Y_num,
+        x_num_is_acting,
+        y_num_is_acting,
+        num_is_decreed,
+        y,
+        hierarchical_kernel,
+    )
+    D_num_out = D_num * Z_scale
+    D = np.concatenate((D_cat, D_num), axis=1) * 0
+    D[:, np.logical_not(cat_features)] = D_num
+    D[:, cat_features] = D_cat
+    if y is not None:
+        return D, D_num_out
+    else:
+        return D, ij.astype(np.int32), X_cont, D_num_out
+
+
+@njit_use(parallel=True)
+def compute_D_cat(X_cat, Y_cat, y):
+    nx_samples, n_features = X_cat.shape
+    ny_samples, n_features = Y_cat.shape
+    n_nonzero_cross_dist = nx_samples * ny_samples
+    if y is None:
+        n_nonzero_cross_dist = nx_samples * (nx_samples - 1) // 2
+    D_cat = np.zeros((n_nonzero_cross_dist, n_features))
+    indD = 0
+    k1max = nx_samples
+    if y is None:
+        k1max = nx_samples - 1
+    for k1 in range(k1max):
+        k2max = ny_samples
+        if y is None:
+            k2max = ny_samples - k1 - 1
+        for k2 in prange(k2max):
+            l2 = k2
+            if y is None:
+                l2 = k2 + k1 + 1
+            D_cat[indD + k2] = X_cat[k1] != Y_cat[l2]
+        indD += k2max
+    return D_cat
+
+
+@njit_use()  # setting parallel=True results in a stack overflow
+def compute_D_num(
+    X_num,
+    Y_num,
+    x_num_is_acting,
+    y_num_is_acting,
+    num_is_decreed,
+    y,
+    hierarchical_kernel,
+):
+    nx_samples, n_features = X_num.shape
+    ny_samples, n_features = Y_num.shape
+    n_nonzero_cross_dist = nx_samples * ny_samples
+    if y is None:
+        n_nonzero_cross_dist = nx_samples * (nx_samples - 1) // 2
+    D_num = np.zeros((n_nonzero_cross_dist, n_features))
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int32)
+    ll_1 = 0
+    indD = 0
+    k1max = nx_samples
+    if y is None:
+        k1max = nx_samples - 1
+    for k1 in range(k1max):
+        k2max = ny_samples
+        if y is None:
+            k2max = ny_samples - k1 - 1
+            ll_0 = ll_1
+            ll_1 = ll_0 + nx_samples - k1 - 1
+            ij[ll_0:ll_1, 0] = k1
+            ij[ll_0:ll_1, 1] = np.arange(k1 + 1, nx_samples)
+        for k2 in range(k2max):
+            l2 = k2
+            if y is None:
+                l2 = k2 + k1 + 1
+            D_num[indD] = np.abs(X_num[k1] - Y_num[l2])
+            indD += 1
+
+    if np.any(num_is_decreed):
+        D_num = apply_the_algebraic_distance_to_the_decreed_variable(
+            X_num,
+            Y_num,
+            x_num_is_acting,
+            y_num_is_acting,
+            num_is_decreed,
+            y,
+            D_num,
+            hierarchical_kernel,
+        )
+
+    return D_num, ij
+
+
+@njit_use()  # setting parallel=True results in a stack overflow
+def apply_the_algebraic_distance_to_the_decreed_variable(
+    X_num,
+    Y_num,
+    x_num_is_acting,
+    y_num_is_acting,
+    num_is_decreed,
+    y,
+    D_num,
+    hierarchical_kernel,
+):
+    nx_samples, n_features = X_num.shape
+    ny_samples, n_features = Y_num.shape
+
+    indD = 0
+    k1max = nx_samples
+    if y is None:
+        k1max = nx_samples - 1
+    for k1 in range(k1max):
+        k2max = ny_samples
+        if y is None:
+            k2max = ny_samples - k1 - 1
+        x_k1_acting = x_num_is_acting[k1]
+        for k2 in range(k2max):
+            l2 = k2
+            if y is None:
+                l2 = k2 + k1 + 1
+            abs_delta = np.abs(X_num[k1] - Y_num[l2])
+            y_l2_acting = y_num_is_acting[l2]
+
+            # Calculate the distances between the decreed (aka conditionally acting) variables
+            if hierarchical_kernel == MixHrcKernelType.ALG_KERNEL:
+                abs_delta[num_is_decreed] = (
+                    2
+                    * np.abs(X_num[k1][num_is_decreed] - Y_num[l2][num_is_decreed])
+                    / (
+                        np.sqrt(1 + X_num[k1][num_is_decreed] ** 2)
+                        * np.sqrt(1 + Y_num[l2][num_is_decreed] ** 2)
+                    )
+                )
+            elif hierarchical_kernel == MixHrcKernelType.ARC_KERNEL:
+                abs_delta[num_is_decreed] = np.sqrt(2) * np.sqrt(
+                    1
+                    - np.cos(
+                        np.pi
+                        * np.abs(X_num[k1][num_is_decreed] - Y_num[l2][num_is_decreed])
+                    )
+                )
+
+            # Set distances for non-acting variables: 0 if both are non-acting, 1 if only one is non-acting
+            both_non_acting = num_is_decreed & ~(x_k1_acting | y_l2_acting)
+            abs_delta[both_non_acting] = 0.0
+
+            either_acting = num_is_decreed & (x_k1_acting != y_l2_acting)
+            abs_delta[either_acting] = 1.0
+
+            D_num[indD] = abs_delta
+            indD += 1
+    return D_num
+
+
+def compute_X_cross(X, n_levels):
+    """
+    Computes the full space cross-relaxation of the input X for
+    the homoscedastic hypersphere kernel.
+    Parameters
+    ----------
+    X: np.ndarray [n_obs, 1]
+            - The input variables.
+    n_levels: np.ndarray
+            - The number of levels for the categorical variable.
+    Returns
+    -------
+    Zeta: np.ndarray [n_obs, n_levels * (n_levels - 1) / 2]
+         - The non categorical values of the input variables.
+    """
+
+    dim = int(n_levels * (n_levels - 1) / 2)
+    nt = len(X)
+    Zeta = np.zeros((nt, dim))
+    k = 0
+    for i in range(n_levels):
+        for j in range(n_levels):
+            if j > i:
+                s = 0
+                for x in X:
+                    if int(x) == i or int(x) == j:
+                        Zeta[s, k] = 1
+                    s += 1
+                k += 1
+
+    return Zeta
+
+
+@njit_use(parallel=True)
+def matrix_data_corr_levels_cat_matrix(
+    i, n_levels, theta_cat, theta_bounds, is_ehh: bool
+):
+    Theta_mat = np.zeros((n_levels[i], n_levels[i]), dtype=np.float64)
+    L = np.zeros((n_levels[i], n_levels[i]))
+    v = 0
+    for j in range(n_levels[i]):
+        for k in range(n_levels[i] - j):
+            if j == k + j:
+                Theta_mat[j, k + j] = 1.0
+            else:
+                Theta_mat[j, k + j] = theta_cat[v].item()
+                Theta_mat[k + j, j] = theta_cat[v].item()
+                v = v + 1
+
+    for j in range(n_levels[i]):
+        for k in range(n_levels[i] - j):
+            if j == k + j:
+                if j == 0:
+                    L[j, k + j] = 1
+
+                else:
+                    L[j, k + j] = 1
+                    for ll in range(j):
+                        L[j, k + j] = L[j, k + j] * np.sin(Theta_mat[j, ll])
+
+            else:
+                if j == 0:
+                    L[k + j, j] = np.cos(Theta_mat[k, 0])
+                else:
+                    L[k + j, j] = np.cos(Theta_mat[k + j, j])
+                    for ll in range(j):
+                        L[k + j, j] = L[k + j, j] * np.sin(Theta_mat[k + j, ll])
+
+    T = np.dot(L, L.T)
+
+    if is_ehh:
+        T = (T - 1) * theta_bounds[1] / 2
+        T = np.exp(2 * T)
+    k = (1 + np.exp(-theta_bounds[1])) / np.exp(-theta_bounds[0])
+    T = (T + np.exp(-theta_bounds[1])) / (k)
+    return T
+
+
+@njit_use()
+def matrix_data_corr_levels_cat_mod(i, Lij, r_cat, T, has_cat_kernel):
+    for k in range(np.shape(Lij[i])[0]):
+        indi = int(Lij[i][k][0])
+        indj = int(Lij[i][k][1])
+
+        if indi == indj:
+            r_cat[k] = 1.0
+        else:
+            if has_cat_kernel:
+                r_cat[k] = T[indi, indj]
+
+
+@njit_use()
+def matrix_data_corr_levels_cat_mod_comps(
+    i, Lij, r_cat, n_levels, T, d_cat_i, has_cat_kernel
+):
+    for k in range(np.shape(Lij[i])[0]):
+        indi = int(Lij[i][k][0])
+        indj = int(Lij[i][k][1])
+
+        if indi == indj:
+            r_cat[k] = 1.0
+        else:
+            if has_cat_kernel:
+                Theta_i_red = np.zeros(int((n_levels[i] - 1) * n_levels[i] / 2))
+                indmatvec = 0
+                for j in range(n_levels[i]):
+                    for ll in range(n_levels[i]):
+                        if ll > j:
+                            Theta_i_red[indmatvec] = T[j, ll]
+                            indmatvec += 1
+                kval_cat = 0
+                for indijk in range(len(Theta_i_red)):
+                    kval_cat += np.multiply(
+                        Theta_i_red[indijk], d_cat_i[k : k + 1][0][indijk]
+                    )
+                r_cat[k] = kval_cat
+
+
+# ======================================================================
+# Original mixed_int_corr.py content
+# ======================================================================
 
 
 def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
@@ -64,8 +545,6 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
     int
         Number of hyperparameters.
     """
-    MixIntKernelType = _get_MixIntKernelType()
-
     n_param = design_space.n_dv
     if n_comp is not None:
         n_param = d
@@ -139,7 +618,6 @@ def correct_distances_cat_decreed(
     np.ndarray
         The corrected distance matrix ``D``.
     """
-    MixIntKernelType = _get_MixIntKernelType()
     if mixint_type is None:
         mixint_type = MixIntKernelType.CONT_RELAX
 
@@ -248,8 +726,6 @@ class MixedIntegerCorrelation:
             ``(cat_kernel_comps, ncomp, theta_cat_features,
             theta_cont_features, nx, n_levels)``
         """
-        MixIntKernelType = _get_MixIntKernelType()
-
         self.n_levels_origin = n_levels
         if self._corr_params is not None:
             return self._corr_params
@@ -375,7 +851,6 @@ class MixedIntegerCorrelation:
         np.ndarray
             Correlation vector/matrix.
         """
-        MixIntKernelType = _get_MixIntKernelType()
         model = self._model
 
         # Initialize static parameters

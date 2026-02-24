@@ -20,7 +20,7 @@ from scipy.linalg import solve_triangular
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging import componentwise_distance, differences
+from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 from smt.utils.misc import standardization
 
 

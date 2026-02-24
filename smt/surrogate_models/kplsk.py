@@ -8,7 +8,10 @@ import numpy as np
 
 from smt.surrogate_models import KPLS
 from smt.surrogate_models.krg_based import compute_n_param
-from smt.utils.kriging import componentwise_distance, componentwise_distance_PLS
+from smt.surrogate_models.krg_based.distances import (
+    componentwise_distance,
+    componentwise_distance_PLS,
+)
 
 
 class KPLSK(KPLS):

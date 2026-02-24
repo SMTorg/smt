@@ -17,7 +17,7 @@ Conference on Neural Information Processing Systems.
 import numpy as np
 from scipy import optimize
 from smt.sampling_methods import LHS
-from smt.utils.kriging import differences, componentwise_distance
+from smt.surrogate_models.krg_based.distances import differences, componentwise_distance
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.misc import standardization
 from scipy.cluster.vq import kmeans
