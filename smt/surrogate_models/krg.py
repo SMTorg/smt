@@ -6,7 +6,7 @@ This package is distributed under New BSD license.
 
 from smt.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging import componentwise_distance
+from smt.surrogate_models.krg_based.distances import componentwise_distance
 
 
 class KRG(KrgBased):

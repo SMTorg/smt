@@ -18,6 +18,8 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from smt.surrogate_models.krg_based.kernel_types import MixIntKernelType
+
 
 class LikelihoodEvaluator:
     """Evaluate the reduced likelihood for a standard Kriging model.
@@ -83,8 +85,6 @@ class LikelihoodEvaluator:
             Gaussian-process model parameters (``sigma2``, ``beta``,
             ``gamma``, ``C``, ``Ft``, ``Q``, ``G``, …).
         """
-        from smt.surrogate_models.krg_based.krg_based import MixIntKernelType
-
         m = self._model
 
         reduced_likelihood_function_value = -np.inf

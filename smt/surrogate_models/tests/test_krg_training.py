@@ -21,7 +21,7 @@ from smt.kernels import (
 )
 from smt.sampling_methods.lhs import LHS
 from smt.surrogate_models import KRG, MGP
-from smt.utils.kriging import (
+from smt.surrogate_models.krg_based.distances import (
     componentwise_distance,
     cross_distances,
 )

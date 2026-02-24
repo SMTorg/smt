@@ -13,7 +13,7 @@ from scipy.cluster.vq import kmeans
 from scipy.linalg import solve_triangular
 
 from smt.surrogate_models.sgp import SGP
-from smt.utils.kriging import (
+from smt.surrogate_models.krg_based.distances import (
     cross_distances,
 )
 from smt.applications.mfk import MFK

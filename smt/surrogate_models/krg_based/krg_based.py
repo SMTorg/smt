@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 import sys
 import warnings
 from copy import deepcopy
-from enum import Enum
 
 import numpy as np
 from scipy import linalg
@@ -26,41 +25,36 @@ from smt.kernels import (
 )
 from smt.kernels.kernels import _Constant
 from smt.sampling_methods import LHS
+from smt.surrogate_models.krg_based.distances import (
+    constant,
+    cross_distances,
+    differences,
+    linear,
+    quadratic,
+)
 from smt.surrogate_models.krg_based.hyperparam_optim import (
     CobylaOptimizer,
     HyperparamOptimizer,
     NoOpOptimizer,
     TNCOptimizer,
 )
+from smt.surrogate_models.krg_based.kernel_types import (
+    MixHrcKernelType,
+    MixIntKernelType,
+)
 from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
 from smt.surrogate_models.krg_based.mixed_int_corr import (
     MixedIntegerCorrelation,
+    compute_X_cont,
+    cross_levels,
+    gower_componentwise_distances,
     compute_n_param as _compute_n_param,
     correct_distances_cat_decreed as _correct_distances_cat_decreed,
 )
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.kriging import (
-    MixHrcKernelType,
-    compute_X_cont,
-    constant,
-    cross_distances,
-    cross_levels,
-    differences,
-    gower_componentwise_distances,
-    linear,
-    quadratic,
-)
 from smt.utils.misc import standardization
-
-
-class MixIntKernelType(Enum):
-    EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
-    HOMO_HSPHERE = "HOMO_HSPHERE"
-    CONT_RELAX = "CONT_RELAX"
-    GOWER = "GOWER"
-    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
 # Nb of tries when inner optimization fails

@@ -24,12 +24,14 @@ from smt.surrogate_models.krg_based import (
     MixIntKernelType,
     compute_n_param,
 )
-from smt.utils.kriging import (
+from smt.surrogate_models.krg_based.distances import (
     componentwise_distance,
-    compute_X_cont,
     cross_distances,
-    cross_levels,
     differences,
+)
+from smt.surrogate_models.krg_based.mixed_int_corr import (
+    compute_X_cont,
+    cross_levels,
     gower_componentwise_distances,
 )
 from smt.utils.misc import standardization

@@ -18,7 +18,7 @@ from scipy.cluster.vq import kmeans
 
 from smt.surrogate_models.krg import KRG
 from smt.utils.checks import ensure_2d_array
-from smt.utils.kriging import differences
+from smt.surrogate_models.krg_based.distances import differences
 from smt.utils.misc import standardization
 
 
