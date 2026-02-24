@@ -26,14 +26,14 @@ from smt.kernels import (
 )
 from smt.kernels.kernels import _Constant
 from smt.sampling_methods import LHS
-from smt.surrogate_models.hyperparam_optim import (
+from smt.surrogate_models.krg_based.hyperparam_optim import (
     CobylaOptimizer,
     HyperparamOptimizer,
     NoOpOptimizer,
     TNCOptimizer,
 )
-from smt.surrogate_models.likelihood_eval import LikelihoodEvaluator
-from smt.surrogate_models.mixed_int_corr import (
+from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
+from smt.surrogate_models.krg_based.mixed_int_corr import (
     MixedIntegerCorrelation,
     compute_n_param as _compute_n_param,
     correct_distances_cat_decreed as _correct_distances_cat_decreed,

@@ -38,7 +38,7 @@ from smt.utils.kriging import (
 
 # Import lazily to avoid circular imports at module level
 def _get_MixIntKernelType():
-    from smt.surrogate_models.krg_based import MixIntKernelType
+    from smt.surrogate_models.krg_based.krg_based import MixIntKernelType
 
     return MixIntKernelType
 

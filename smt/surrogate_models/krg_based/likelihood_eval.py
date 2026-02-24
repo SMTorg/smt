@@ -83,7 +83,7 @@ class LikelihoodEvaluator:
             Gaussian-process model parameters (``sigma2``, ``beta``,
             ``gamma``, ``C``, ``Ft``, ``Q``, ``G``, …).
         """
-        from smt.surrogate_models.krg_based import MixIntKernelType
+        from smt.surrogate_models.krg_based.krg_based import MixIntKernelType
 
         m = self._model
 
