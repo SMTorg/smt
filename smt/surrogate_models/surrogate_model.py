@@ -496,7 +496,7 @@ class SurrogateModel(metaclass=ABCMeta):
         Implemented by surrogate models to predict the dy_dyt derivatives (optional).
 
         If this method is implemented, the surrogate model should have
-        `self.supports['derivatives'] = True` in the `_initialize()` implementation.
+        `self.supports['output_derivatives'] = True` in the `_initialize()` implementation.
 
         Parameters
         ----------
