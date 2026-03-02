@@ -218,6 +218,8 @@ class KrgBased(SurrogateModel):
         self.best_iteration_fail = None
         self.retry = MAX_RETRY
         self.is_acting_points = {}
+        self.X2_offset = None
+        self.X2_scale = None
 
         supports["derivatives"] = True
         supports["variances"] = True
@@ -505,8 +507,8 @@ class KrgBased(SurrogateModel):
             design_space=self.design_space,
             cat_features=self.cat_features,
             n_levels=self.n_levels,
-            X2_offset=getattr(self, "X2_offset", None),
-            X2_scale=getattr(self, "X2_scale", None),
+            X2_offset=self.X2_offset,
+            X2_scale=self.X2_scale,
             is_acting_y=is_acting_y,
             mixint_type=mixint_type,
         )

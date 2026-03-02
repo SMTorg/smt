@@ -23,6 +23,7 @@ class KPLSK(KPLS):
 
     def _initialize(self):
         super()._initialize()
+        self._pls_pass = False
         declare = self.options.declare
         # KPLSK used only with "squar_exp" correlations
         declare(
@@ -42,7 +43,7 @@ class KPLSK(KPLS):
         )
 
     def _componentwise_distance(self, dx, theta=None, return_derivative=False):
-        if getattr(self, "_pls_pass", False):
+        if self._pls_pass:
             # PLS step (reduced space for first optimization pass)
             d = componentwise_distance_PLS(
                 dx,

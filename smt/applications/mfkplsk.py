@@ -24,6 +24,7 @@ class MFKPLSK(MFKPLS):
 
     def _initialize(self):
         super(MFKPLSK, self)._initialize()
+        self._pls_pass = False
         declare = self.options.declare
         # Like KPLSK, MFKPLSK used only with "squar_exp" correlations
         declare(
@@ -43,7 +44,7 @@ class MFKPLSK(MFKPLS):
         self.name = "MFKPLSK"
 
     def _componentwise_distance(self, dx):
-        if getattr(self, "_pls_pass", False):
+        if self._pls_pass:
             # PLS step (reduced space for first optimization pass)
             d = super(MFKPLSK, self)._componentwise_distance(dx)
         else:
