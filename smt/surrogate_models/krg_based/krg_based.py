@@ -284,7 +284,15 @@ class KrgBased(SurrogateModel):
     @property
     def _use_pls(self) -> bool:
         """Whether this model uses PLS dimensionality reduction.
-        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS).
+        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS, MFKPLS, MFKPLSK).
+        """
+        return False
+
+    @property
+    def _is_kplsk_style(self) -> bool:
+        """Whether this model uses the KPLSK two-pass optimization
+        (PLS space then full Kriging space).
+        Override in KPLSK and MFKPLSK.
         """
         return False
 

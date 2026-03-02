@@ -18,6 +18,10 @@ from smt.surrogate_models.krg_based.distances import componentwise_distance
 
 
 class MFKPLSK(MFKPLS):
+    @property
+    def _is_kplsk_style(self) -> bool:
+        return True
+
     def _initialize(self):
         super(MFKPLSK, self)._initialize()
         declare = self.options.declare

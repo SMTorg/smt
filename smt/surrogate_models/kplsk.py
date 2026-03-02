@@ -17,6 +17,10 @@ from smt.surrogate_models.krg_based.distances import (
 class KPLSK(KPLS):
     name = "KPLSK"
 
+    @property
+    def _is_kplsk_style(self) -> bool:
+        return True
+
     def _initialize(self):
         super()._initialize()
         declare = self.options.declare
@@ -33,7 +37,7 @@ class KPLSK(KPLS):
             "eval_n_comp",
             False,
             types=(bool),
-            values=(False),
+            values=(False,),
             desc="n_comp evaluation flag",
         )
 

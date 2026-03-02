@@ -78,7 +78,7 @@ class KPLS(KrgBased):
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
             ]
-            and self.name == "KPLS"
+            and self._use_pls
         ):
             if self.options["cat_kernel_comps"] is not None:
                 raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")

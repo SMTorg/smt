@@ -22,6 +22,10 @@ class MFKPLS(MFK):
     Multi-Fidelity model + PLS (done on the highest fidelity level)
     """
 
+    @property
+    def _use_pls(self) -> bool:
+        return True
+
     def _initialize(self):
         super()._initialize()
         declare = self.options.declare
