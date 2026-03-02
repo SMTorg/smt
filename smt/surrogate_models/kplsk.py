@@ -28,6 +28,14 @@ class KPLSK(KPLS):
             desc="Correlation function type",
             types=(str),
         )
+        # KPLSK does not evaluate n_comp during optimization, so it is set to False
+        declare(
+            "eval_n_comp",
+            False,
+            types=(bool),
+            values=(False),
+            desc="n_comp evaluation flag",
+        )
 
     def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         if getattr(self, "_pls_pass", False):
