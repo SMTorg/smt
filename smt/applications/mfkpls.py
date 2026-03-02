@@ -53,7 +53,7 @@ class MFKPLS(MFK):
         D = np.abs(D, D)
         return D.reshape((-1, X.shape[1]))
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx):
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],

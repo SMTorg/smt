@@ -88,7 +88,7 @@ class KPLS(KrgBased):
                 raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
         super()._check_param()
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],

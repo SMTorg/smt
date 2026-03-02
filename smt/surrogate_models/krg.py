@@ -30,7 +30,7 @@ class KRG(KrgBased):
             types=(str, Kernel),
         )
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance(
             dx,
             self.options["corr"],

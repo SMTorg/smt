@@ -528,7 +528,7 @@ class MFK(KrgBased):
             self._new_train()
             self.options["eval_noise"] = True
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx):
         d = componentwise_distance(
             dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
         )

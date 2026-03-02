@@ -85,7 +85,7 @@ class CoopCompKRG(KrgBased):
         supports["variance_derivatives"] = False
         supports["x_hierarchy"] = False
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance(
             dx,
             self.options["corr"],
@@ -250,7 +250,7 @@ class CoopCompKRG(KrgBased):
                 )
                 theta0 = np.log10(self.theta0)
             ##from abs distance to kernel distance
-            self.D = self._componentwise_distance(D, opt=ii)
+            self.D = self._componentwise_distance(D)
 
             # Initialization
             k, stop, best_optimal_rlf_value = 0, 1, -1e20

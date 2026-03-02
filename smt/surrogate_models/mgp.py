@@ -47,7 +47,7 @@ class MGP(KrgBased):
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
 
-    def _componentwise_distance(self, dx, small=False, opt=0):
+    def _componentwise_distance(self, dx, small=False):
         """
         Compute the componentwise distance with respect to the correlation kernel
 
@@ -59,8 +59,6 @@ class MGP(KrgBased):
         small : bool, optional
             Compute the componentwise distance in small (n_components) dimension
             or in initial dimension. The default is False.
-        opt : int, optional
-            useless for MGP
 
         Returns
         -------

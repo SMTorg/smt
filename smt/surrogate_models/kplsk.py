@@ -29,24 +29,24 @@ class KPLSK(KPLS):
             types=(str),
         )
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
-        if opt == 0:
-            # Kriging step
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                power=self.options["pow_exp_power"],
-                theta=theta,
-                return_derivative=return_derivative,
-            )
-        else:
-            # KPLS step
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
+        if getattr(self, "_pls_pass", False):
+            # PLS step (reduced space for first optimization pass)
             d = componentwise_distance_PLS(
                 dx,
                 self.options["corr"],
                 self.options["n_comp"],
                 self.coeff_pls,
+                power=self.options["pow_exp_power"],
+                theta=theta,
+                return_derivative=return_derivative,
+            )
+        else:
+            # Full Kriging step (prediction and second optimization pass)
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
                 power=self.options["pow_exp_power"],
                 theta=theta,
                 return_derivative=return_derivative,
@@ -63,8 +63,9 @@ class KPLSK(KPLS):
     def _run_optimization(self, D):
         """Two-pass optimization: PLS space then full Kriging space."""
         # First pass: optimize in reduced PLS space
+        self._pls_pass = True
         self.kplsk_second_loop = False
-        _, _, best_theta = self._optimize_hyperparam(D, opt=1)
+        _, _, best_theta = self._optimize_hyperparam(D)
 
         # Project PLS theta back to full Kriging space
         if self.options["eval_noise"]:
@@ -87,10 +88,10 @@ class KPLSK(KPLS):
         self.best_iteration_fail = None
 
         # Second pass: optimize in full Kriging space (no multistart)
+        self._pls_pass = False
         self.kplsk_second_loop = True
         return self._optimize_hyperparam(
             D,
-            opt=0,
             use_multistart=False,
             limit=10 * self.options["n_comp"],
         )

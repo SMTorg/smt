@@ -1385,7 +1385,7 @@ class KrgBased(SurrogateModel):
             derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
             return np.atleast_2d(derived_variance).T
 
-    def _optimize_hyperparam(self, D, opt=0, use_multistart=True, limit=None):
+    def _optimize_hyperparam(self, D, use_multistart=True, limit=None):
         """
         Optimize the hyperparameters of the Gaussian Process model.
 
@@ -1395,10 +1395,6 @@ class KrgBased(SurrogateModel):
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
            For SGP surrogate, D is not used
-        opt : int, optional
-            Passed to ``_componentwise_distance`` as the ``opt`` argument.
-            Use 0 for full-space distances, 1 for PLS-space distances.
-            Default is 0.
         use_multistart : bool, optional
             Whether to add LHS multistart samples for the optimizer.
             Default is True.
@@ -1507,7 +1503,7 @@ class KrgBased(SurrogateModel):
                 self.D = D
             else:
                 ##from abs distance to kernel distance
-                self.D = self._componentwise_distance(D, opt=opt)
+                self.D = self._componentwise_distance(D)
         else:  # SGP case, D is not used
             pass
 
