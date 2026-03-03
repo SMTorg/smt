@@ -11,6 +11,7 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 import numpy as np
+from copy import deepcopy
 
 from smt.applications import MFKPLS
 from smt.surrogate_models.krg_based import compute_n_param
@@ -50,7 +51,7 @@ class MFKPLSK(MFKPLS):
         else:
             # Full Kriging step (prediction and second optimization pass)
             d = componentwise_distance(
-                dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
+                dx, self.options["corr"], self.nx, power=self._pow_exp_power
             )
         return d
 
@@ -69,7 +70,7 @@ class MFKPLSK(MFKPLS):
         _, _, best_theta = self._optimize_hyperparam(D)
 
         # Project PLS theta back to full Kriging space
-        if self.options["eval_noise"]:
+        if self._eval_noise:
             theta = best_theta[:-1]
         else:
             theta = best_theta
@@ -85,7 +86,7 @@ class MFKPLSK(MFKPLS):
             None,
             None,
         )
-        self.options["n_comp"] = int(self.n_param)
+        self._n_comp = int(self.n_param)
         self.best_iteration_fail = None
 
         # Second pass: optimize in full Kriging space (no multistart)
@@ -94,7 +95,7 @@ class MFKPLSK(MFKPLS):
         return self._optimize_hyperparam(
             D,
             use_multistart=False,
-            limit=10 * self.options["n_comp"],
+            limit=10 * self._n_comp,
         )
 
     def _new_train(self):
@@ -103,15 +104,13 @@ class MFKPLSK(MFKPLS):
         Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
         """
         self._new_train_init()
-        self.n_comp = self.options["n_comp"]
         theta0 = self._theta0.copy()
-        noise0 = self.options["noise0"].copy()
+        noise0 = deepcopy(self._noise0)
 
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
-            self.options["n_comp"] = self.n_comp
             self._theta0 = theta0
-            self.options["noise0"] = noise0
+            self._noise0 = noise0
 
         self._reinterpolate(lvl)
 

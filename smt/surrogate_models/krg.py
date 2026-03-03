@@ -35,7 +35,7 @@ class KRG(KrgBased):
             dx,
             self.options["corr"],
             self.nx,
-            self.options["pow_exp_power"],
+            self._pow_exp_power,
             theta=theta,
             return_derivative=return_derivative,
         )

@@ -541,6 +541,13 @@ class MGP(KrgBased):
         Overrides KrgBased implementation
         This function checks some parameters of the model.
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
 
         d = self.options["n_comp"] * self.nx
 

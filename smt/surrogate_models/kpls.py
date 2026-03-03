@@ -90,7 +90,7 @@ class KPLS(KrgBased):
             self.options["corr"],
             self.options["n_comp"],
             self.coeff_pls,
-            power=self.options["pow_exp_power"],
+            power=self._pow_exp_power,
             theta=theta,
             return_derivative=return_derivative,
         )

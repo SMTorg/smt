@@ -114,7 +114,7 @@ class MFCK(KrgBased):
             # For a single level, initialize theta_ini, lower_bounds, and
             # upper_bounds with consistent shapes
             theta_ini = np.hstack(
-                (self.options["sigma0"], self.options["theta0"])
+                (self.options["sigma0"], self._theta0)
             )  # Variance + initial theta values
             lower_bounds = np.hstack(
                 (
@@ -129,7 +129,7 @@ class MFCK(KrgBased):
                 )
             )
             # Apply log10 to theta_ini and bounds
-            nb_params = len(self.options["theta0"])
+            nb_params = len(self._theta0)
             theta_ini[: nb_params + 1] = np.log10(theta_ini[: nb_params + 1])
             lower_bounds[: nb_params + 1] = np.log10(lower_bounds[: nb_params + 1])
             upper_bounds[: nb_params + 1] = np.log10(upper_bounds[: nb_params + 1])
@@ -138,7 +138,7 @@ class MFCK(KrgBased):
                 if lvl == 0:
                     # Initialize theta_ini for level 0
                     theta_ini = np.hstack(
-                        (self.options["sigma0"], self.options["theta0"])
+                        (self.options["sigma0"], self._theta0)
                     )  # Variance + initial theta values
                     lower_bounds = np.hstack(
                         (
@@ -153,7 +153,7 @@ class MFCK(KrgBased):
                         )
                     )
                     # Apply log10 to theta_ini and bounds
-                    nb_params = len(self.options["theta0"])
+                    nb_params = len(self._theta0)
                     theta_ini[: nb_params + 1] = np.log10(theta_ini[: nb_params + 1])
                     lower_bounds[: nb_params + 1] = np.log10(
                         lower_bounds[: nb_params + 1]
@@ -164,7 +164,7 @@ class MFCK(KrgBased):
 
                 elif lvl > 0:
                     # For additional levels, append to theta_ini, lower_bounds, and upper_bounds
-                    thetat = np.hstack((self.options["sigma0"], self.options["theta0"]))
+                    thetat = np.hstack((self.options["sigma0"], self._theta0))
                     lower_boundst = np.hstack(
                         (
                             self.options["sigma_bounds"][0],

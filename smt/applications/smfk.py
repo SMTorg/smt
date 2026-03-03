@@ -59,13 +59,13 @@ class SMFK(MFK):
 
     def _new_train_iteration(self, lvl):
         # n_samples = self.nt_all
-        self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
+        self._noise0 = np.array([self._noise0[lvl]]).flatten()
         self._theta0 = list(self._theta0[lvl, :])
 
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]
 
-        if self.options["eval_noise"]:
+        if self._eval_noise:
             if self.options["use_het_noise"]:
                 # hetGP works with unique design variables
                 (
@@ -84,7 +84,7 @@ class SMFK(MFK):
                 y_norma_unique = np.array(y_norma_unique).reshape(-1, 1)
 
                 # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.optimal_noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                self.optimal_noise = self._noise0 * np.ones(self.nt_all[lvl])
                 for i in range(self.nt_all[lvl]):
                     diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
                     if np.sum(diff**2) != 0.0:
@@ -96,7 +96,7 @@ class SMFK(MFK):
                 self.X_norma_all[lvl] = self.X_norma
                 self.y_norma_all[lvl] = self.y_norma
         else:
-            self.optimal_noise = self.options["noise0"] / self.y_std**2
+            self.optimal_noise = self._noise0 / self.y_std**2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
         # Calculate matrix of distances D between samples
@@ -189,7 +189,7 @@ class SMFK(MFK):
                 self.optimal_theta[lvl],
             ) = self._optimize_hyperparam(D)
 
-            if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            if self._eval_noise and not self.options["use_het_noise"]:
                 tmp_list = self.optimal_theta[lvl]
                 self.optimal_theta[lvl] = tmp_list[:-1]
                 self.optimal_noise = tmp_list[-1]
