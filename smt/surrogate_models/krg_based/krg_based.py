@@ -263,14 +263,13 @@ class KrgBased(SurrogateModel):
                 )
             else:
                 self.corr = self.options["corr"]
-            self.options["theta0"] = self.corr.theta
+            self._theta0 = self.corr.theta
         elif (
             type(self.options["corr"]) is str
             and self.options["corr"] in self._correlation_class
         ):
-            self.corr = self._correlation_class[self.options["corr"]](
-                self.options["theta0"]
-            )
+            self._theta0 = list(self.options["theta0"])
+            self.corr = self._correlation_class[self.options["corr"]](self._theta0)
         else:
             raise ValueError("The correlation kernel has not been correctly defined.")
         # Check the pow_exp_power is >0 and <=2
@@ -1465,7 +1464,7 @@ class KrgBased(SurrogateModel):
                 return hess
 
         if limit is None:
-            limit = max(12 * len(self.options["theta0"]), 50)
+            limit = max(12 * len(self._theta0), 50)
         _rhobeg = 0.5
 
         # Create optimizer strategy
@@ -1484,8 +1483,8 @@ class KrgBased(SurrogateModel):
         )
 
         bounds_hyp = []
-        self.theta0 = deepcopy(self.options["theta0"])
-        self.corr.theta = deepcopy(self.options["theta0"])
+        self.theta0 = deepcopy(self._theta0)
+        self.corr.theta = deepcopy(self._theta0)
         for i in range(len(self.theta0)):
             # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
             # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -1719,13 +1718,15 @@ class KrgBased(SurrogateModel):
                     self.is_continuous
                     or self.options["categorical_kernel"] == MixIntKernelType.GOWER
                 ):
-                    self.options["theta0"] *= np.ones(2 * self.n_param)
+                    self._theta0 = list(
+                        np.array(self._theta0) * np.ones(2 * self.n_param)
+                    )
                 else:
                     self.n_param += len([self.design_space.is_cat_mask])
-                    self.options["theta0"] *= np.ones(self.n_param)
+                    self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
 
             else:
-                self.options["theta0"] *= np.ones(self.n_param)
+                self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
@@ -1740,13 +1741,13 @@ class KrgBased(SurrogateModel):
                 "Categorical kernels should be matrix or exponential based."
             )
 
-        if len(self.options["theta0"]) != d and (
+        if len(self._theta0) != d and (
             self.options["categorical_kernel"]
             in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
             or self.is_continuous
         ):
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 if self.options["corr"] in (
                     "pow_exp",
@@ -1758,7 +1759,7 @@ class KrgBased(SurrogateModel):
                 ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                        % (len(self.options["theta0"]), d)
+                        % (len(self._theta0), d)
                     )
         if (
             self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12

@@ -284,12 +284,12 @@ class MFK(KrgBased):
             self._mix_int_corr.reset()
 
         self._new_train_init()
-        theta0 = self.options["theta0"].copy()
+        theta0 = self._theta0.copy()
         noise0 = self.options["noise0"].copy()
 
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
-            self.options["theta0"] = theta0
+            self._theta0 = theta0
             self.options["noise0"] = noise0
 
         self._reinterpolate(lvl)
@@ -381,7 +381,7 @@ class MFK(KrgBased):
     def _new_train_iteration(self, lvl):
         n_samples = self.nt_all
         self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
-        self.options["theta0"] = self.options["theta0"][lvl, :]
+        self._theta0 = list(self._theta0[lvl, :])
 
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]
@@ -1069,29 +1069,29 @@ class MFK(KrgBased):
                     "Only the continuous relaxation kernel is available with multi-fidelity"
                 )
 
-        if isinstance(self.options["theta0"], np.ndarray):
-            if self.options["theta0"].shape != (self.nlvl, n_param):
+        if isinstance(self._theta0, np.ndarray):
+            if self._theta0.shape != (self.nlvl, n_param):
                 raise ValueError(
                     "the dimensions of theta0 %s should coincide to the number of dim %s"
-                    % (self.options["theta0"].shape, (self.nlvl, n_param))
+                    % (self._theta0.shape, (self.nlvl, n_param))
                 )
         else:
-            if len(self.options["theta0"]) != n_param:
-                if len(self.options["theta0"]) == 1:
-                    self.options["theta0"] *= np.ones((self.nlvl, n_param))
-                elif len(self.options["theta0"]) == self.nlvl:
-                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
-                        -1, 1
+            if len(self._theta0) != n_param:
+                if len(self._theta0) == 1:
+                    self._theta0 = np.array(self._theta0) * np.ones(
+                        (self.nlvl, n_param)
                     )
-                    self.options["theta0"] *= np.ones((1, n_param))
+                elif len(self._theta0) == self.nlvl:
+                    self._theta0 = np.array(self._theta0).reshape(-1, 1)
+                    self._theta0 = self._theta0 * np.ones((1, n_param))
                 else:
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s) \
                             or levels of fidelity (%s)."
-                        % (len(self.options["theta0"]), n_param, self.nlvl)
+                        % (len(self._theta0), n_param, self.nlvl)
                     )
             else:
-                self.options["theta0"] *= np.ones((self.nlvl, 1))
+                self._theta0 = np.array(self._theta0) * np.ones((self.nlvl, 1))
 
         if len(self.options["noise0"]) != self.nlvl:
             if len(self.options["noise0"]) == 1:

@@ -75,9 +75,9 @@ class MFKPLSK(MFKPLS):
             theta = best_theta
 
         if self.options["corr"] == "squar_exp":
-            self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+            self._theta0 = list((theta * self.coeff_pls**2).sum(1))
         else:
-            self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+            self._theta0 = list((theta * np.abs(self.coeff_pls)).sum(1))
         self.n_param = compute_n_param(
             self.design_space,
             self.options["categorical_kernel"],
@@ -104,13 +104,13 @@ class MFKPLSK(MFKPLS):
         """
         self._new_train_init()
         self.n_comp = self.options["n_comp"]
-        theta0 = self.options["theta0"].copy()
+        theta0 = self._theta0.copy()
         noise0 = self.options["noise0"].copy()
 
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
             self.options["n_comp"] = self.n_comp
-            self.options["theta0"] = theta0
+            self._theta0 = theta0
             self.options["noise0"] = noise0
 
         self._reinterpolate(lvl)

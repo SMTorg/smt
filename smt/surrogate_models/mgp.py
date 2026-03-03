@@ -549,11 +549,11 @@ class MGP(KrgBased):
         if self.options["hyper_opt"] != "TNC":
             raise ValueError("MGP must be used with TNC hyperparameters optimizer")
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+        if len(self._theta0) != d:
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 raise ValueError(
                     "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    % (d, len(self._theta0))
                 )

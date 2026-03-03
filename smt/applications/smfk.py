@@ -60,7 +60,7 @@ class SMFK(MFK):
     def _new_train_iteration(self, lvl):
         # n_samples = self.nt_all
         self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
-        self.options["theta0"] = self.options["theta0"][lvl, :]
+        self._theta0 = list(self._theta0[lvl, :])
 
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]

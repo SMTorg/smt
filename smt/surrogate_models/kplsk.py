@@ -87,9 +87,9 @@ class KPLSK(KPLS):
             theta = best_theta
 
         if self.options["corr"] == "squar_exp":
-            self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+            self._theta0 = list((theta * self.coeff_pls**2).sum(1))
         else:
-            self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+            self._theta0 = list((theta * np.abs(self.coeff_pls)).sum(1))
         self.n_param = compute_n_param(
             self.design_space,
             self.options["categorical_kernel"],
