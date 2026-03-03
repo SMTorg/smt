@@ -85,7 +85,7 @@ class CoopCompKRG(KrgBased):
         supports["variance_derivatives"] = False
         supports["x_hierarchy"] = False
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance(
             dx,
             self.options["corr"],
@@ -151,7 +151,7 @@ class CoopCompKRG(KrgBased):
         self.best_iteration_fail = None
         self._thetaMemory = None
         # Initialize the hyperparameter-optimization
-        if self.name in ["MGP"]:
+        if not self._uses_log_theta_space():
 
             def minus_cooperative_reduced_likelihood_function(active_theta):
                 theta = self.coop_theta
@@ -185,7 +185,7 @@ class CoopCompKRG(KrgBased):
 
         limit, _rhobeg = 10 * self.num_active, 0.5  # consider only active dimensions
         exit_function = False
-        if "KPLSK" in self.name:
+        if self._is_kplsk_style:
             n_iter = 1
         else:
             n_iter = 0
@@ -225,7 +225,7 @@ class CoopCompKRG(KrgBased):
                         "Warning: theta0 is out the feasible bounds. A random initialisation is used instead."
                     )
 
-                if self.name in ["MGP"]:  # to be discussed with R. Priem
+                if not self._uses_log_theta_space():  # to be discussed with R. Priem
                     constraints.append(lambda theta, i=i: theta[i] + theta_bounds[1])
                     constraints.append(lambda theta, i=i: theta_bounds[1] - theta[i])
                     bounds_hyp.append((-theta_bounds[1], theta_bounds[1]))
@@ -235,7 +235,7 @@ class CoopCompKRG(KrgBased):
                     constraints.append(lambda log10t, i=i: log10t_bounds[1] - log10t[i])
                     bounds_hyp.append(log10t_bounds)
 
-            if self.name in ["MGP"]:
+            if not self._uses_log_theta_space():
                 theta0_rand = m_norm.rvs(
                     self.options["prior"]["mean"] * len(self.theta0),
                     self.options["prior"]["var"],
@@ -250,7 +250,7 @@ class CoopCompKRG(KrgBased):
                 )
                 theta0 = np.log10(self.theta0)
             ##from abs distance to kernel distance
-            self.D = self._componentwise_distance(D, opt=ii)
+            self.D = self._componentwise_distance(D)
 
             # Initialization
             k, stop, best_optimal_rlf_value = 0, 1, -1e20
@@ -325,7 +325,7 @@ class CoopCompKRG(KrgBased):
                                     "maxiter": limit,
                                 },
                             )
-                            if self.name not in ["MGP"]:
+                            if self._uses_log_theta_space():
                                 optimal_coop_theta = np.log10(self.coop_theta)
                             else:
                                 optimal_coop_theta = self.coop_theta
@@ -353,7 +353,7 @@ class CoopCompKRG(KrgBased):
                                 bounds=bounds_hyp,
                                 options={"maxiter": 100},
                             )
-                            if self.name not in ["MGP"]:
+                            if self._uses_log_theta_space():
                                 optimal_coop_theta = np.log10(self.coop_theta)
                             else:
                                 optimal_coop_theta = self.coop_theta
@@ -368,7 +368,7 @@ class CoopCompKRG(KrgBased):
                     else:
                         optimal_theta = theta0
 
-                    if self.name not in ["MGP"]:
+                    if self._uses_log_theta_space():
                         optimal_theta = 10**optimal_theta
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
                         theta=optimal_theta
@@ -432,7 +432,7 @@ class CoopCompKRG(KrgBased):
                         k = stop + 1
                         print("fmin_cobyla failed but the best value is retained")
 
-            if "KPLSK" in self.name:
+            if self._is_kplsk_style:
                 if self.options["eval_noise"]:
                     # best_optimal_theta contains [theta, noise] if eval_noise = True
                     theta = best_optimal_theta[:-1]

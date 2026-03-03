@@ -295,7 +295,7 @@ class MFK(KrgBased):
         self._reinterpolate(lvl)
 
     def _new_train_init(self):
-        if self.name in ["MFKPLS", "MFKPLSK"]:
+        if self._use_pls:
             _pls = pls(self.options["n_comp"])
 
             # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception
@@ -506,7 +506,7 @@ class MFK(KrgBased):
             self.optimal_rlf_value[lvl],
             self.optimal_par[lvl],
             self.optimal_theta[lvl],
-        ) = self._optimize_hyperparam(D)
+        ) = self._run_optimization(D)
         if self.options["eval_noise"] and not self.options["use_het_noise"]:
             tmp_list = self.optimal_theta[lvl]
             self.optimal_theta[lvl] = tmp_list[:-1]
@@ -528,7 +528,7 @@ class MFK(KrgBased):
             self._new_train()
             self.options["eval_noise"] = True
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx):
         d = componentwise_distance(
             dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
         )
@@ -896,7 +896,7 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            if self.name in ["MFKPLS", "MFKPLSK"]:
+            if self._use_pls:
                 p = self.p_all[i]
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
@@ -1019,7 +1019,7 @@ class MFK(KrgBased):
         This function checks some parameters of the model.
         """
 
-        if self.name in ["MFKPLS", "MFKPLSK"]:
+        if self._use_pls:
             d = self.options["n_comp"]
         else:
             d = self.nx
@@ -1027,12 +1027,12 @@ class MFK(KrgBased):
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 
-        if self.name in ["MFKPLS"]:
+        if self._use_pls and not self._is_kplsk_style:
             if self.options["corr"] not in ["squar_exp", "abs_exp"]:
                 raise ValueError(
                     "MFKPLS only works with a squared exponential or an absolute exponential kernel"
                 )
-        elif self.name in ["MFKPLSK"]:
+        elif self._is_kplsk_style:
             if self.options["corr"] not in ["squar_exp"]:
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"

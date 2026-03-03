@@ -384,7 +384,7 @@ class SMFK(MFK):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            if self.name in ["MFKPLS", "MFKPLSK"]:
+            if self._use_pls:
                 p = self.p_all[i]
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (

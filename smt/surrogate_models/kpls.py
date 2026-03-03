@@ -22,7 +22,7 @@ class KPLS(KrgBased):
         super(KPLS, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
-        # KPLS used only with "abs_exp" and "squar_exp" correlations
+        # KPLS used only with "abs_exp", "squar_exp" and "pow_exp" correlations
         declare(
             "corr",
             "squar_exp",
@@ -72,23 +72,19 @@ class KPLS(KrgBased):
         """
         Validates KPLS-specific parameters before calling base class validation.
         """
-        if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
-            raise ValueError(
-                "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
-            )
         if (
             self.options["categorical_kernel"]
             not in [
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
             ]
-            and self.name == "KPLS"
+            and self._use_pls
         ):
             if self.options["cat_kernel_comps"] is not None:
                 raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
         super()._check_param()
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],

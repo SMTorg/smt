@@ -17,8 +17,13 @@ from smt.surrogate_models.krg_based.distances import (
 class KPLSK(KPLS):
     name = "KPLSK"
 
+    @property
+    def _is_kplsk_style(self) -> bool:
+        return True
+
     def _initialize(self):
         super()._initialize()
+        self._pls_pass = False
         declare = self.options.declare
         # KPLSK used only with "squar_exp" correlations
         declare(
@@ -28,20 +33,18 @@ class KPLSK(KPLS):
             desc="Correlation function type",
             types=(str),
         )
+        # KPLSK does not evaluate n_comp during optimization, so it is set to False
+        declare(
+            "eval_n_comp",
+            False,
+            types=(bool),
+            values=(False,),
+            desc="n_comp evaluation flag",
+        )
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
-        if opt == 0:
-            # Kriging step
-            d = componentwise_distance(
-                dx,
-                self.options["corr"],
-                self.nx,
-                power=self.options["pow_exp_power"],
-                theta=theta,
-                return_derivative=return_derivative,
-            )
-        else:
-            # KPLS step
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
+        if self._pls_pass:
+            # PLS step (reduced space for first optimization pass)
             d = componentwise_distance_PLS(
                 dx,
                 self.options["corr"],
@@ -51,14 +54,17 @@ class KPLSK(KPLS):
                 theta=theta,
                 return_derivative=return_derivative,
             )
+        else:
+            # Full Kriging step (prediction and second optimization pass)
+            d = componentwise_distance(
+                dx,
+                self.options["corr"],
+                self.nx,
+                power=self.options["pow_exp_power"],
+                theta=theta,
+                return_derivative=return_derivative,
+            )
         return d
-
-    # --- Polymorphic hook overrides ---
-
-    @property
-    def _n_outer_iterations(self):
-        """KPLSK uses two-pass optimization: PLS space then full Kriging space."""
-        return 1
 
     def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
         """KPLSK clamps theta0 to bounds instead of random initialization."""
@@ -67,28 +73,18 @@ class KPLSK(KPLS):
         else:
             return theta_bounds[0] + 1e-10
 
-    def _should_sample_multistart(self, ii):
-        """Only sample LHS multistart points in the first (PLS) loop."""
-        return ii == 1
+    def _run_optimization(self, D):
+        """Two-pass optimization: PLS space then full Kriging space."""
+        # First pass: optimize in reduced PLS space
+        self._pls_pass = True
+        self.kplsk_second_loop = False
+        _, _, best_theta = self._optimize_hyperparam(D)
 
-    def _finalize_outer_loop(
-        self,
-        best_optimal_rlf_value,
-        best_optimal_par,
-        best_optimal_theta,
-        exit_function,
-    ):
-        """KPLSK two-pass: after PLS loop, update theta0 from PLS coefficients
-        and continue to full Kriging loop. After Kriging loop, return."""
+        # Project PLS theta back to full Kriging space
         if self.options["eval_noise"]:
-            # best_optimal_theta contains [theta, noise] if eval_noise = True
-            theta = best_optimal_theta[:-1]
+            theta = best_theta[:-1]
         else:
-            # best_optimal_theta contains [theta] if eval_noise = False
-            theta = best_optimal_theta
-
-        if exit_function:
-            return True, exit_function, None
+            theta = best_theta
 
         if self.options["corr"] == "squar_exp":
             self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
@@ -102,6 +98,13 @@ class KPLSK(KPLS):
             None,
         )
         self.options["n_comp"] = int(self.n_param)
-        new_limit = 10 * self.options["n_comp"]
         self.best_iteration_fail = None
-        return False, True, new_limit
+
+        # Second pass: optimize in full Kriging space (no multistart)
+        self._pls_pass = False
+        self.kplsk_second_loop = True
+        return self._optimize_hyperparam(
+            D,
+            use_multistart=False,
+            limit=10 * self.options["n_comp"],
+        )

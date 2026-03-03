@@ -214,10 +214,12 @@ class KrgBased(SurrogateModel):
             desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-        self.kplsk_second_loop = None
+        self.kplsk_second_loop = False
         self.best_iteration_fail = None
         self.retry = MAX_RETRY
         self.is_acting_points = {}
+        self.X2_offset = None
+        self.X2_scale = None
 
         supports["derivatives"] = True
         supports["variances"] = True
@@ -284,7 +286,15 @@ class KrgBased(SurrogateModel):
     @property
     def _use_pls(self) -> bool:
         """Whether this model uses PLS dimensionality reduction.
-        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS).
+        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS, MFKPLS, MFKPLSK).
+        """
+        return False
+
+    @property
+    def _is_kplsk_style(self) -> bool:
+        """Whether this model uses the KPLSK two-pass optimization
+        (PLS space then full Kriging space).
+        Override in KPLSK and MFKPLSK.
         """
         return False
 
@@ -392,13 +402,6 @@ class KrgBased(SurrogateModel):
         else:
             raise ValueError(f"Unknown optimizer: {hyper_opt}")
 
-    @property
-    def _n_outer_iterations(self):
-        """Number of outer optimization passes (0 = single pass).
-        Override in KPLSK for two-pass (PLS then full Kriging) optimization.
-        """
-        return 0
-
     def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
         """Handle a theta0 value that is outside the feasible bounds.
 
@@ -431,51 +434,6 @@ class KrgBased(SurrogateModel):
         Default False. Override in SGP to return True.
         """
         return False
-
-    def _should_sample_multistart(self, ii):
-        """Whether to add LHS multistart samples in this outer iteration.
-
-        Parameters
-        ----------
-        ii : int
-            Current outer-loop iteration index.
-
-        Returns
-        -------
-        bool
-        """
-        return True
-
-    def _finalize_outer_loop(
-        self,
-        best_optimal_rlf_value,
-        best_optimal_par,
-        best_optimal_theta,
-        exit_function,
-    ):
-        """Finalize an outer optimization loop iteration.
-
-        Called at the end of each outer-loop iteration in
-        :meth:`_optimize_hyperparam`. The default implementation requests an
-        immediate return (single-pass). Override in KPLSK for two-pass logic.
-
-        Parameters
-        ----------
-        best_optimal_rlf_value : float
-        best_optimal_par : dict
-        best_optimal_theta : np.ndarray
-        exit_function : bool
-
-        Returns
-        -------
-        should_return : bool
-            If ``True``, return current best values and stop looping.
-        exit_function : bool
-            Updated flag for next iteration.
-        new_limit : int or None
-            If not ``None``, overrides the iteration limit for the next pass.
-        """
-        return True, exit_function, None
 
     # --- End hooks ---
 
@@ -549,8 +507,8 @@ class KrgBased(SurrogateModel):
             design_space=self.design_space,
             cat_features=self.cat_features,
             n_levels=self.n_levels,
-            X2_offset=getattr(self, "X2_offset", None),
-            X2_scale=getattr(self, "X2_scale", None),
+            X2_offset=self.X2_offset,
+            X2_scale=self.X2_scale,
             is_acting_y=is_acting_y,
             mixint_type=mixint_type,
         )
@@ -565,8 +523,26 @@ class KrgBased(SurrogateModel):
             self.optimal_rlf_value,
             self.optimal_par,
             self.optimal_theta,
-        ) = self._optimize_hyperparam(D)
+        ) = self._run_optimization(D)
         self._post_optim_hook()
+
+    def _run_optimization(self, D):
+        """Run hyperparameter optimization.
+
+        Override in KPLSK/MFKPLSK for two-pass (PLS then full Kriging) strategy.
+
+        Parameters
+        ----------
+        D : np.ndarray
+            Componentwise cross-distances.
+
+        Returns
+        -------
+        best_optimal_rlf_value : float
+        best_optimal_par : dict
+        best_optimal_theta : np.ndarray
+        """
+        return self._optimize_hyperparam(D)
 
     def _prepare_training_data(self):
         """Prepare training data: load, validate, apply PLS, standardize, and handle noise."""
@@ -1419,9 +1395,9 @@ class KrgBased(SurrogateModel):
             derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
             return np.atleast_2d(derived_variance).T
 
-    def _optimize_hyperparam(self, D):
+    def _optimize_hyperparam(self, D, use_multistart=True, limit=None):
         """
-        This function evaluates the Gaussian Process model at x.
+        Optimize the hyperparameters of the Gaussian Process model.
 
         Parameters
         ----------
@@ -1429,6 +1405,12 @@ class KrgBased(SurrogateModel):
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
            For SGP surrogate, D is not used
+        use_multistart : bool, optional
+            Whether to add LHS multistart samples for the optimizer.
+            Default is True.
+        limit : int or None, optional
+            Iteration limit for the optimizer. If None, a default is computed
+            from the number of hyperparameters.
 
         Returns
         -------
@@ -1482,13 +1464,9 @@ class KrgBased(SurrogateModel):
                 hess = -self._reduced_likelihood_hessian(theta)[0]
                 return hess
 
-        limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
-        exit_function = False
-        if self.kplsk_second_loop is None:
-            self.kplsk_second_loop = False
-        elif self.kplsk_second_loop is True:
-            exit_function = True
-        n_iter = self._n_outer_iterations
+        if limit is None:
+            limit = max(12 * len(self.options["theta0"]), 50)
+        _rhobeg = 0.5
 
         # Create optimizer strategy
         optimizer = self._create_optimizer()
@@ -1505,220 +1483,201 @@ class KrgBased(SurrogateModel):
             [],
         )
 
-        for ii in range(n_iter, -1, -1):
-            bounds_hyp = []
-            self.kplsk_second_loop = (
-                self._n_outer_iterations > 0 and ii == 0
-            ) or self.kplsk_second_loop
-            self.theta0 = deepcopy(self.options["theta0"])
-            self.corr.theta = deepcopy(self.options["theta0"])
-            for i in range(len(self.theta0)):
-                # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
-                # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
-                # By standardising X in R, X_norm = (X-X_mean)/X_std, then
-                # X_norm in [-1,1] if considering one std intervals. This leads
-                # to theta in (0,2e1]
-                theta_bounds = self.options["theta_bounds"]
-                if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    self.theta0[i] = self._handle_theta0_out_of_bounds(
-                        self.theta0[i], i, theta_bounds
-                    )
-
-                new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
-                    theta_bounds, i
+        bounds_hyp = []
+        self.theta0 = deepcopy(self.options["theta0"])
+        self.corr.theta = deepcopy(self.options["theta0"])
+        for i in range(len(self.theta0)):
+            # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
+            # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
+            # By standardising X in R, X_norm = (X-X_mean)/X_std, then
+            # X_norm in [-1,1] if considering one std intervals. This leads
+            # to theta in (0,2e1]
+            theta_bounds = self.options["theta_bounds"]
+            if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                self.theta0[i] = self._handle_theta0_out_of_bounds(
+                    self.theta0[i], i, theta_bounds
                 )
-                constraints.extend(new_constraints)
-                bounds_hyp.append(bounds_entry)
 
-            theta0, theta0_rand = self._get_optimizer_initial_theta(
-                self.options["theta_bounds"]
+            new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
+                theta_bounds, i
             )
+            constraints.extend(new_constraints)
+            bounds_hyp.append(bounds_entry)
 
-            if self._should_compute_distances_in_train:
-                if not (self.is_continuous):
-                    self.D = D
-                else:
-                    ##from abs distance to kernel distance
-                    self.D = self._componentwise_distance(D, opt=ii)
-            else:  # SGP case, D is not used
-                pass
+        theta0, theta0_rand = self._get_optimizer_initial_theta(
+            self.options["theta_bounds"]
+        )
 
-            # Initialization
-            k, stop, best_optimal_rlf_value = 0, 1, -1e20
-            while k < stop:
-                # Use specified starting point as first guess
-                self.noise0 = np.array(self.options["noise0"])
-                noise_bounds = self.options["noise_bounds"]
+        if self._should_compute_distances_in_train:
+            if not (self.is_continuous):
+                self.D = D
+            else:
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D)
+        else:  # SGP case, D is not used
+            pass
 
-                # GP variance is optimized too when _optimize_sigma2 is True
-                offset = 0
-                if self._optimize_sigma2 and self.retry == MAX_RETRY:
-                    sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
-                    theta0_sigma2 = np.concatenate([theta0, sigma2_0])
-                    sigma2_bounds = np.log10(
-                        np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
-                    )
-                    constraints.append(
-                        lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
-                    )
-                    constraints.append(
-                        lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
-                    )
-                    bounds_hyp.append(sigma2_bounds)
-                    offset = 1
-                    theta0 = theta0_sigma2
-                    theta0_rand = np.concatenate([theta0_rand, sigma2_0])
+        # Initialization
+        k, stop, best_optimal_rlf_value = 0, 1, -1e20
+        while k < stop:
+            # Use specified starting point as first guess
+            self.noise0 = np.array(self.options["noise0"])
+            noise_bounds = self.options["noise_bounds"]
 
-                if (
-                    self.options["eval_noise"]
-                    and not self.options["use_het_noise"]
-                    and self.retry == MAX_RETRY
-                ):
-                    self.noise0[self.noise0 == 0.0] = noise_bounds[0]
-                    for i in range(len(self.noise0)):
-                        if (
-                            self.noise0[i] < noise_bounds[0]
-                            or self.noise0[i] > noise_bounds[1]
-                        ):
-                            self.noise0[i] = noise_bounds[0]
-                            warnings.warn(
-                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
-                            )
-
-                    theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.noise0]).flatten())]
-                    )
-                    theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([self.noise0]).flatten()),
-                        ]
-                    )
-
-                    for i in range(len(self.noise0)):
-                        noise_bounds = np.log10(noise_bounds)
-                        constraints.append(
-                            lambda log10t, i=i: (
-                                log10t[offset + i + len(self.theta0)] - noise_bounds[0]
-                            )
-                        )
-                        constraints.append(
-                            lambda log10t, i=i: (
-                                noise_bounds[1] - log10t[offset + i + len(self.theta0)]
-                            )
-                        )
-                        bounds_hyp.append(noise_bounds)
-                theta_limits = np.repeat(
-                    np.log10([theta_bounds]), repeats=len(theta0), axis=0
+            # GP variance is optimized too when _optimize_sigma2 is True
+            offset = 0
+            if self._optimize_sigma2 and self.retry == MAX_RETRY:
+                sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
+                theta0_sigma2 = np.concatenate([theta0, sigma2_0])
+                sigma2_bounds = np.log10(np.array([1e-12, (3.0 * self.y_std[0]) ** 2]))
+                constraints.append(
+                    lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
                 )
-                theta_all_loops = np.vstack((theta0, theta0_rand))
-                if self._should_sample_multistart(ii):
-                    if self.options["n_start"] > 1:
-                        sampling = LHS(
-                            xlimits=theta_limits,
-                            criterion="maximin",
-                            seed=self.random_state,
+                constraints.append(
+                    lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
+                )
+                bounds_hyp.append(sigma2_bounds)
+                offset = 1
+                theta0 = theta0_sigma2
+                theta0_rand = np.concatenate([theta0_rand, sigma2_0])
+
+            if (
+                self.options["eval_noise"]
+                and not self.options["use_het_noise"]
+                and self.retry == MAX_RETRY
+            ):
+                self.noise0[self.noise0 == 0.0] = noise_bounds[0]
+                for i in range(len(self.noise0)):
+                    if (
+                        self.noise0[i] < noise_bounds[0]
+                        or self.noise0[i] > noise_bounds[1]
+                    ):
+                        self.noise0[i] = noise_bounds[0]
+                        warnings.warn(
+                            "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
                         )
-                        theta_lhs_loops = sampling(self.options["n_start"])
-                        theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
-                try:
-                    # Delegate to optimizer strategy
-                    optimal_theta_res = optimizer.optimize(
-                        objective=minus_reduced_likelihood_function,
-                        theta_starts=theta_all_loops,
-                        gradient=grad_minus_reduced_likelihood_function,
-                        hessian=hessian_minus_reduced_likelihood_function,
-                        constraints=constraints,
-                        bounds=bounds_hyp,
-                        limit=limit,
-                    )
+                theta0 = np.concatenate(
+                    [theta0, np.log10(np.array([self.noise0]).flatten())]
+                )
+                theta0_rand = np.concatenate(
+                    [
+                        theta0_rand,
+                        np.log10(np.array([self.noise0]).flatten()),
+                    ]
+                )
 
-                    if optimal_theta_res is None or "x" not in optimal_theta_res:
-                        raise ValueError(
-                            "Optimizer encountered a problem: no valid result found"
+                for i in range(len(self.noise0)):
+                    noise_bounds = np.log10(noise_bounds)
+                    constraints.append(
+                        lambda log10t, i=i: (
+                            log10t[offset + i + len(self.theta0)] - noise_bounds[0]
                         )
-                    optimal_theta = optimal_theta_res["x"]
-
-                    optimal_theta = self._transform_optimal_theta(optimal_theta)
-
-                    optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                        theta=optimal_theta
                     )
-                    # Compare the new optimizer to the best previous one
-                    if k > 0:
-                        if np.isinf(optimal_rlf_value):
-                            raise RuntimeError(
-                                "Cannot train the model: infinite likelihood found"
-                            )
-                        else:
-                            if (
-                                self.best_iteration_fail is not None
-                                and optimal_rlf_value >= self.best_iteration_fail
-                            ):
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
-                                else:
-                                    if (
-                                        self.best_iteration_fail
-                                        > best_optimal_rlf_value
-                                    ):
-                                        best_optimal_theta = self._thetaMemory
-                                        (
-                                            best_optimal_rlf_value,
-                                            best_optimal_par,
-                                        ) = self._reduced_likelihood_function(
-                                            theta=best_optimal_theta
-                                        )
+                    constraints.append(
+                        lambda log10t, i=i: (
+                            noise_bounds[1] - log10t[offset + i + len(self.theta0)]
+                        )
+                    )
+                    bounds_hyp.append(noise_bounds)
+            theta_limits = np.repeat(
+                np.log10([theta_bounds]), repeats=len(theta0), axis=0
+            )
+            theta_all_loops = np.vstack((theta0, theta0_rand))
+            if use_multistart:
+                if self.options["n_start"] > 1:
+                    sampling = LHS(
+                        xlimits=theta_limits,
+                        criterion="maximin",
+                        seed=self.random_state,
+                    )
+                    theta_lhs_loops = sampling(self.options["n_start"])
+                    theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+
+            try:
+                # Delegate to optimizer strategy
+                optimal_theta_res = optimizer.optimize(
+                    objective=minus_reduced_likelihood_function,
+                    theta_starts=theta_all_loops,
+                    gradient=grad_minus_reduced_likelihood_function,
+                    hessian=hessian_minus_reduced_likelihood_function,
+                    constraints=constraints,
+                    bounds=bounds_hyp,
+                    limit=limit,
+                )
+
+                if optimal_theta_res is None or "x" not in optimal_theta_res:
+                    raise ValueError(
+                        "Optimizer encountered a problem: no valid result found"
+                    )
+                optimal_theta = optimal_theta_res["x"]
+
+                optimal_theta = self._transform_optimal_theta(optimal_theta)
+
+                optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
+                    theta=optimal_theta
+                )
+                # Compare the new optimizer to the best previous one
+                if k > 0:
+                    if np.isinf(optimal_rlf_value):
+                        raise RuntimeError(
+                            "Cannot train the model: infinite likelihood found"
+                        )
                     else:
-                        if np.isinf(optimal_rlf_value):
-                            stop += 1
-                        else:
-                            best_optimal_rlf_value = optimal_rlf_value
-                            best_optimal_par = optimal_par
-                            best_optimal_theta = optimal_theta
-                    k += 1
-                except ValueError as ve:
-                    # raise ve
-                    # If iteration is max when fmin_cobyla fail is not reached
-                    if self.retry > 0:
-                        self.retry -= 1
-                        k += 1
+                        if (
+                            self.best_iteration_fail is not None
+                            and optimal_rlf_value >= self.best_iteration_fail
+                        ):
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
+                            else:
+                                if self.best_iteration_fail > best_optimal_rlf_value:
+                                    best_optimal_theta = self._thetaMemory
+                                    (
+                                        best_optimal_rlf_value,
+                                        best_optimal_par,
+                                    ) = self._reduced_likelihood_function(
+                                        theta=best_optimal_theta
+                                    )
+                else:
+                    if np.isinf(optimal_rlf_value):
                         stop += 1
-                        # One evaluation objectif function is done at least
-                        if self.best_iteration_fail is not None:
-                            if self.best_iteration_fail > best_optimal_rlf_value:
-                                best_optimal_theta = self._thetaMemory
-                                (
-                                    best_optimal_rlf_value,
-                                    best_optimal_par,
-                                ) = self._reduced_likelihood_function(
-                                    theta=best_optimal_theta
-                                )
-                        else:
-                            self.print_failed_optimization_msg()
-                            raise ve
-                    # Optimization fail
-                    elif np.size(best_optimal_par) == 0:
+                    else:
+                        best_optimal_rlf_value = optimal_rlf_value
+                        best_optimal_par = optimal_par
+                        best_optimal_theta = optimal_theta
+                k += 1
+            except ValueError as ve:
+                # raise ve
+                # If iteration is max when fmin_cobyla fail is not reached
+                if self.retry > 0:
+                    self.retry -= 1
+                    k += 1
+                    stop += 1
+                    # One evaluation objectif function is done at least
+                    if self.best_iteration_fail is not None:
+                        if self.best_iteration_fail > best_optimal_rlf_value:
+                            best_optimal_theta = self._thetaMemory
+                            (
+                                best_optimal_rlf_value,
+                                best_optimal_par,
+                            ) = self._reduced_likelihood_function(
+                                theta=best_optimal_theta
+                            )
+                    else:
                         self.print_failed_optimization_msg()
                         raise ve
-                    # Break the while loop
-                    else:
-                        k = stop + 1
-                        print("fmin_cobyla failed but the best value is retained")
+                # Optimization fail
+                elif np.size(best_optimal_par) == 0:
+                    self.print_failed_optimization_msg()
+                    raise ve
+                # Break the while loop
+                else:
+                    k = stop + 1
+                    print("fmin_cobyla failed but the best value is retained")
 
-            should_return, exit_function, new_limit = self._finalize_outer_loop(
-                best_optimal_rlf_value,
-                best_optimal_par,
-                best_optimal_theta,
-                exit_function,
-            )
-            if new_limit is not None:
-                limit = new_limit
-            if should_return:
-                return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def print_failed_optimization_msg(self):
