@@ -92,7 +92,7 @@ class LikelihoodEvaluator:
 
         # ---- nugget / noise ----
         nugget = m.options["nugget"]
-        if m.options["eval_noise"]:
+        if m._eval_noise:
             if m.options["is_ri"]:
                 nugget = 100.0 * np.finfo(np.double).eps
             else:
@@ -101,7 +101,7 @@ class LikelihoodEvaluator:
         tmp_var = theta
         if m.options["use_het_noise"]:
             noise = m.optimal_noise
-        if m.options["eval_noise"] and not m.options["use_het_noise"]:
+        if m._eval_noise and not m.options["use_het_noise"]:
             theta = tmp_var[0:-1]
             noise = tmp_var[-1]
 
@@ -114,7 +114,7 @@ class LikelihoodEvaluator:
                 r = m._matrix_data_corr(
                     corr=m.options["corr"],
                     design_space=m.design_space,
-                    power=m.options["pow_exp_power"],
+                    power=m._pow_exp_power,
                     theta=theta,
                     theta_bounds=m.options["theta_bounds"],
                     dx=dx,

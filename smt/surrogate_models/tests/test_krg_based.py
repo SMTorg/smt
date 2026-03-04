@@ -25,13 +25,17 @@ class TestKrgBased(unittest.TestCase):
         krg = KrgBased()
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))
         krg._check_param()
-        self.assertTrue(np.array_equal(krg.options["theta0"], [1e-2, 1e-2, 1e-2]))
+        self.assertTrue(np.array_equal(krg._theta0, [1e-2, 1e-2, 1e-2]))
+        # options["theta0"] should NOT be mutated
+        self.assertTrue(np.array_equal(krg.options["theta0"], [1e-2]))
 
     def test_theta0_one_dim_init(self):
         krg = KrgBased(theta0=[2e-2])
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))
         krg._check_param()
-        self.assertTrue(np.array_equal(krg.options["theta0"], [2e-2, 2e-2, 2e-2]))
+        self.assertTrue(np.array_equal(krg._theta0, [2e-2, 2e-2, 2e-2]))
+        # options["theta0"] should NOT be mutated
+        self.assertTrue(np.array_equal(krg.options["theta0"], [2e-2]))
 
     def test_theta0_erroneous_init(self):
         krg = KrgBased(theta0=[2e-2, 1e-2])

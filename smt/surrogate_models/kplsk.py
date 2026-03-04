@@ -50,7 +50,7 @@ class KPLSK(KPLS):
                 self.options["corr"],
                 self.options["n_comp"],
                 self.coeff_pls,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=theta,
                 return_derivative=return_derivative,
             )
@@ -60,7 +60,7 @@ class KPLSK(KPLS):
                 dx,
                 self.options["corr"],
                 self.nx,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=theta,
                 return_derivative=return_derivative,
             )
@@ -81,15 +81,15 @@ class KPLSK(KPLS):
         _, _, best_theta = self._optimize_hyperparam(D)
 
         # Project PLS theta back to full Kriging space
-        if self.options["eval_noise"]:
+        if self._eval_noise:
             theta = best_theta[:-1]
         else:
             theta = best_theta
 
         if self.options["corr"] == "squar_exp":
-            self.options["theta0"] = (theta * self.coeff_pls**2).sum(1)
+            self._theta0 = list((theta * self.coeff_pls**2).sum(1))
         else:
-            self.options["theta0"] = (theta * np.abs(self.coeff_pls)).sum(1)
+            self._theta0 = list((theta * np.abs(self.coeff_pls)).sum(1))
         self.n_param = compute_n_param(
             self.design_space,
             self.options["categorical_kernel"],
@@ -97,7 +97,7 @@ class KPLSK(KPLS):
             None,
             None,
         )
-        self.options["n_comp"] = int(self.n_param)
+        self._n_comp = int(self.n_param)
         self.best_iteration_fail = None
 
         # Second pass: optimize in full Kriging space (no multistart)
@@ -106,5 +106,5 @@ class KPLSK(KPLS):
         return self._optimize_hyperparam(
             D,
             use_multistart=False,
-            limit=10 * self.options["n_comp"],
+            limit=10 * self._n_comp,
         )

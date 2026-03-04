@@ -541,6 +541,13 @@ class MGP(KrgBased):
         Overrides KrgBased implementation
         This function checks some parameters of the model.
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
 
         d = self.options["n_comp"] * self.nx
 
@@ -549,11 +556,11 @@ class MGP(KrgBased):
         if self.options["hyper_opt"] != "TNC":
             raise ValueError("MGP must be used with TNC hyperparameters optimizer")
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+        if len(self._theta0) != d:
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 raise ValueError(
                     "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    % (d, len(self._theta0))
                 )

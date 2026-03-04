@@ -163,7 +163,7 @@ class CoopCompKRG(KrgBased):
             dx,
             self.options["corr"],
             self.nx,
-            self.options["pow_exp_power"],
+            self._pow_exp_power,
             theta=theta,
             return_derivative=return_derivative,
         )
@@ -188,7 +188,7 @@ class CoopCompKRG(KrgBased):
         try:
             self.coop_theta = self.optimal_theta
         except AttributeError:
-            self.coop_theta = self.options["theta0"] * np.ones((self.nx))
+            self.coop_theta = self._theta0 * np.ones((self.nx))
 
         # Hyperparameter optimization for active components
         self.active_comp_var = self.comp_var[active_coop_comp]

@@ -1002,7 +1002,7 @@ class MixedIntegerCorrelation:
                     "squar_exp",
                     model.options["n_comp"],
                     model.coeff_pls,
-                    power=model.options["pow_exp_power"],
+                    power=model._pow_exp_power,
                     theta=None,
                     return_derivative=False,
                 )

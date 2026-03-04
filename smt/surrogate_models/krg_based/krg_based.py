@@ -245,16 +245,17 @@ class KrgBased(SurrogateModel):
         if self.options["seed"]:
             self.random_state = np.random.default_rng(self.options["seed"])
 
-        # initialize default power values
+        # initialize default power values (working copy, don't mutate options)
+        self._pow_exp_power = self.options["pow_exp_power"]
         if self.options["corr"] == "squar_exp":
-            self.options["pow_exp_power"] = 2.0
+            self._pow_exp_power = 2.0
         elif self.options["corr"] in [
             "abs_exp",
             "squar_sin_exp",
             "matern32",
             "matern52",
         ] or isinstance(self.options["corr"], Kernel):
-            self.options["pow_exp_power"] = 1.0
+            self._pow_exp_power = 1.0
         # initialize kernel or link model with user defined kernel
         if isinstance(self.options["corr"], Kernel):
             if isinstance(self.options["corr"], Operator):
@@ -263,22 +264,19 @@ class KrgBased(SurrogateModel):
                 )
             else:
                 self.corr = self.options["corr"]
-            self.options["theta0"] = self.corr.theta
+            self._theta0 = self.corr.theta
         elif (
             type(self.options["corr"]) is str
             and self.options["corr"] in self._correlation_class
         ):
-            self.corr = self._correlation_class[self.options["corr"]](
-                self.options["theta0"]
-            )
+            self._theta0 = list(self.options["theta0"])
+            self.corr = self._correlation_class[self.options["corr"]](self._theta0)
         else:
             raise ValueError("The correlation kernel has not been correctly defined.")
         # Check the pow_exp_power is >0 and <=2
-        assert (
-            self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
-        ), (
+        assert self._pow_exp_power > 0 and self._pow_exp_power <= 2, (
             "The power value for exponential power function can only be >0 and <=2, but %s was given"
-            % self.options["pow_exp_power"]
+            % self._pow_exp_power
         )
 
     # --- Polymorphic hooks (override in subclasses instead of checking self.name) ---
@@ -332,7 +330,7 @@ class KrgBased(SurrogateModel):
         Default extracts noise from optimal_theta when eval_noise is enabled.
         Override in MGP (calls _specific_train) and SGP (extracts sigma2).
         """
-        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+        if self._eval_noise and not self.options["use_het_noise"]:
             self.optimal_noise = self.optimal_theta[-1]
             self.optimal_theta = self.optimal_theta[:-1]
 
@@ -388,7 +386,7 @@ class KrgBased(SurrogateModel):
         -------
         HyperparamOptimizer
         """
-        hyper_opt = self.options["hyper_opt"]
+        hyper_opt = self._hyper_opt
         if isinstance(hyper_opt, HyperparamOptimizer):
             return hyper_opt
         if hyper_opt == "Cobyla":
@@ -577,8 +575,8 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X.copy(), y.copy())
 
-        if not self.options["eval_noise"]:
-            self.optimal_noise = np.array(self.options["noise0"])
+        if not self._eval_noise:
+            self.optimal_noise = np.array(self._noise0)
         elif self.options["use_het_noise"]:
             # hetGP works with unique design variables when noise variance are not given
             (
@@ -593,7 +591,7 @@ class KrgBased(SurrogateModel):
             for i in range(self.nt):
                 y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
             # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-            self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
+            self.optimal_noise = self._noise0 * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[index_unique == i] - y_norma_unique[i]
                 if np.sum(diff**2) != 0.0:
@@ -1080,7 +1078,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1226,7 +1224,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1254,7 +1252,7 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
-        is_noisy = np.max(self.options["noise0"]) > 0.0 or self.options["eval_noise"]
+        is_noisy = np.max(self._noise0) > 0.0 or self._eval_noise
         if is_noisy and is_ri:
             A = self.optimal_par["sigma2_ri"]
         else:
@@ -1465,7 +1463,7 @@ class KrgBased(SurrogateModel):
                 return hess
 
         if limit is None:
-            limit = max(12 * len(self.options["theta0"]), 50)
+            limit = max(12 * len(self._theta0), 50)
         _rhobeg = 0.5
 
         # Create optimizer strategy
@@ -1484,8 +1482,8 @@ class KrgBased(SurrogateModel):
         )
 
         bounds_hyp = []
-        self.theta0 = deepcopy(self.options["theta0"])
-        self.corr.theta = deepcopy(self.options["theta0"])
+        self.theta0 = deepcopy(self._theta0)
+        self.corr.theta = deepcopy(self._theta0)
         for i in range(len(self.theta0)):
             # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
             # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
@@ -1521,7 +1519,7 @@ class KrgBased(SurrogateModel):
         k, stop, best_optimal_rlf_value = 0, 1, -1e20
         while k < stop:
             # Use specified starting point as first guess
-            self.noise0 = np.array(self.options["noise0"])
+            self.noise0 = np.array(self._noise0)
             noise_bounds = self.options["noise_bounds"]
 
             # GP variance is optimized too when _optimize_sigma2 is True
@@ -1542,7 +1540,7 @@ class KrgBased(SurrogateModel):
                 theta0_rand = np.concatenate([theta0_rand, sigma2_0])
 
             if (
-                self.options["eval_noise"]
+                self._eval_noise
                 and not self.options["use_het_noise"]
                 and self.retry == MAX_RETRY
             ):
@@ -1697,6 +1695,14 @@ class KrgBased(SurrogateModel):
         This function checks some parameters of the model
         and amend theta0 if possible (see _amend_theta0_option).
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
+
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
         mat_dim = (
@@ -1719,13 +1725,15 @@ class KrgBased(SurrogateModel):
                     self.is_continuous
                     or self.options["categorical_kernel"] == MixIntKernelType.GOWER
                 ):
-                    self.options["theta0"] *= np.ones(2 * self.n_param)
+                    self._theta0 = list(
+                        np.array(self._theta0) * np.ones(2 * self.n_param)
+                    )
                 else:
                     self.n_param += len([self.design_space.is_cat_mask])
-                    self.options["theta0"] *= np.ones(self.n_param)
+                    self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
 
             else:
-                self.options["theta0"] *= np.ones(self.n_param)
+                self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
@@ -1740,13 +1748,13 @@ class KrgBased(SurrogateModel):
                 "Categorical kernels should be matrix or exponential based."
             )
 
-        if len(self.options["theta0"]) != d and (
+        if len(self._theta0) != d and (
             self.options["categorical_kernel"]
             in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
             or self.is_continuous
         ):
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 if self.options["corr"] in (
                     "pow_exp",
@@ -1758,31 +1766,31 @@ class KrgBased(SurrogateModel):
                 ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                        % (len(self.options["theta0"]), d)
+                        % (len(self._theta0), d)
                     )
         if (
-            self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12
-        ) and self.options["hyper_opt"] == "TNC":
+            self._eval_noise or np.max(self._noise0) > 1e-12
+        ) and self._hyper_opt == "TNC":
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"
             )
-            self.options["hyper_opt"] = "Cobyla"
+            self._hyper_opt = "Cobyla"
 
-        if self.options["use_het_noise"] and not self.options["eval_noise"]:
-            if len(self.options["noise0"]) != self.nt:
-                if len(self.options["noise0"]) == 1:
-                    self.options["noise0"] *= np.ones(self.nt)
+        if self.options["use_het_noise"] and not self._eval_noise:
+            if len(self._noise0) != self.nt:
+                if len(self._noise0) == 1:
+                    self._noise0 *= np.ones(self.nt)
                 else:
                     raise ValueError(
                         "for the heteroscedastic case, the length of noise0 (%s) \
                             should be equal to the number of observations (%s)."
-                        % (len(self.options["noise0"]), self.nt)
+                        % (len(self._noise0), self.nt)
                     )
         if not self.options["use_het_noise"]:
-            if len(self.options["noise0"]) != 1:
+            if len(self._noise0) != 1:
                 raise ValueError(
                     "for the homoscedastic noise case, the length of noise0 (%s) should be equal to one."
-                    % (len(self.options["noise0"]))
+                    % (len(self._noise0))
                 )
 
         if self.supports["training_derivatives"]:
