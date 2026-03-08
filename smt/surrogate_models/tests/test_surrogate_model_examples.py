@@ -852,6 +852,78 @@ class Test(unittest.TestCase):
         ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_idw_derivatives(self):
+        import numpy as np
+
+        from smt.surrogate_models import IDW
+
+        xt = np.array([[0.0], [1.0], [2.0]])
+        yt = np.array([[0.0], [1.0], [4.0]])
+
+        sm = IDW(print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        xe = np.array([[0.5], [1.5]])
+
+        # 1. predict_derivatives (kx=0)
+        dy = sm.predict_derivatives(xe, kx=0)
+        self.assertEqual(dy.shape, (2, 1))
+
+        # 2. predict_output_derivatives (Jacobian wrt training values)
+        dy_dyt = sm.predict_output_derivatives(xe)
+        jac = dy_dyt[None]
+        self.assertEqual(jac.shape, (2, 3, 1))
+
+        # Consistency check: Jacobian * yt should match predictions
+        y_pred = sm.predict_values(xe)
+        for i in range(len(xe)):
+            y_from_jac = jac[i, :, 0].dot(yt)
+            self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0])
+
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_rbf_output_derivatives(self):
+        import numpy as np
+
+        from smt.surrogate_models import RBF
+
+        xt = np.array([[0.0], [1.0], [2.0]])
+        yt = np.array([[0.0], [1.0], [4.0]])
+
+        sm = RBF(print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        xe = np.array([[0.5], [1.5]])
+
+        # predict_output_derivatives
+        dy_dyt = sm.predict_output_derivatives(xe)
+        jac = dy_dyt[None]
+        self.assertEqual(jac.shape, (2, 3, 1))
+
+        # Consistency check
+        y_pred = sm.predict_values(xe)
+        for i in range(len(xe)):
+            y_from_jac = jac[i, :, 0].dot(yt)
+            self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0], places=7)
+
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_rbf_polynomial_trends(self):
+        import numpy as np
+
+        from smt.surrogate_models import RBF
+
+        xt = np.array([[0.0], [1.0]])
+        yt = np.array([[0.0], [1.0]])
+
+        for degree in [-1, 0, 1]:
+            sm = RBF(poly_degree=degree, print_global=False)
+            sm.set_training_values(xt, yt)
+            sm.train()
+            y = sm.predict_values(np.array([[0.5]]))
+            self.assertEqual(y.shape, (1, 1))
+
 
 if __name__ == "__main__":
     unittest.main()
