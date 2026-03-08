@@ -183,6 +183,54 @@ class Test(SMTestCase):
             self.assertLessEqual(e_error, self.e_errors[sname])
         self.assertLessEqual(t_error, self.t_errors[sname])
 
+    def test_legacy_shims_coverage(self):
+        """Import from legacy shims to get them to 100% coverage."""
+        import smt.utils.krg_sampling as krg_sampling
+        import smt.utils.kriging as kriging
+
+        self.assertTrue(hasattr(krg_sampling, "sample_trajectory"))
+        self.assertTrue(hasattr(kriging, "MixIntKernelType"))
+
+    def test_silence_utilities(self):
+        """Covers smt/utils/silence.py branches."""
+        from smt.utils.silence import Silence, Silence2
+        import tempfile
+        import os
+        import sys
+
+        # Test Silence (basic sys.stdout override)
+        with Silence():
+            print("Silenced")
+
+        # Test Silence2 (low-level FD)
+        with Silence2():
+            print("FD Silenced")
+
+        # Redirect to file
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            fname = tmp.name
+        try:
+            # Use binary mode for unbuffered IO support in Silence2
+            with Silence2(stdout=fname, mode="wb"):
+                sys.stdout.write(b"Fruit")
+                sys.stdout.flush()
+            with open(fname, "rb") as f:
+                self.assertEqual(f.read().strip(), b"Fruit")
+        finally:
+            if os.path.exists(fname):
+                os.remove(fname)
+
+        # Combined stdout/stderr
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            cname = tmp.name
+        try:
+            with Silence2(stdout=cname, stderr=cname, mode="wb"):
+                sys.stdout.write(b"Combined")
+                sys.stdout.flush()
+        finally:
+            if os.path.exists(cname):
+                os.remove(cname)
+
     def test_exp_LS(self):
         self.run_test()
 

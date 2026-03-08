@@ -74,6 +74,48 @@ class TestMisc(unittest.TestCase):
         q2 = compute_q2(sm, xe, ye)
         self.assertAlmostEqual(q2, 1.0, delta=1e-2)
 
+    def test_silence_utilities(self):
+        """Covers smt/utils/silence.py branches."""
+        from smt.utils.silence import Silence, Silence2
+        import tempfile
+        import os
+        import sys
+
+        # Test Silence (basic sys.stdout override)
+        with Silence():
+            print("Silenced")
+
+        # Test Silence2 (low-level FD)
+        with Silence2():
+            print("FD Silenced")
+
+        # Redirect to file
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            fname = tmp.name
+        try:
+            with Silence2(stdout=fname, mode="wb"):
+                # We must print enough to be sure it's flushed
+                sys.stdout.write(b"Fruit")
+                sys.stdout.flush()
+
+            if os.path.exists(fname):
+                with open(fname, "rb") as f:
+                    self.assertEqual(f.read().strip(), b"Fruit")
+        finally:
+            if os.path.exists(fname):
+                os.remove(fname)
+
+        # Combined stdout/stderr
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            cname = tmp.name
+        try:
+            with Silence2(stdout=cname, stderr=cname, mode="wb"):
+                sys.stdout.write(b"Combined")
+                sys.stdout.flush()
+        finally:
+            if os.path.exists(cname):
+                os.remove(cname)
+
 
 if __name__ == "__main__":
     unittest.main()

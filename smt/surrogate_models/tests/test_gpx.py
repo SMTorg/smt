@@ -114,7 +114,6 @@ class TestGPX(unittest.TestCase):
 
     @unittest.skipIf(not GPX_AVAILABLE, "GPX not available")
     def test_mixint_gpx_vs_krg(self):
-
         tol = 0.01
         design_space = DesignSpace(
             [

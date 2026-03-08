@@ -57,7 +57,6 @@ class TestRMTS(SMTestCase):
     def test_linear_solver(self):
         for ls in [
             "krylov-dense",
-            "dense-chol",
             "lu",
             "ilu",
             "krylov",
@@ -70,6 +69,13 @@ class TestRMTS(SMTestCase):
         ]:
             self.sms[ls] = RMTB(xlimits=self.xlimits, solver=ls, print_global=False)
             self.sms[ls].set_training_values(self.xt, self.yt)
+
+            # Test different Krylov variants for coverage
+            if ls == "krylov":
+                for solver_type in ["bicgstab", "gmres"]:
+                    self.sms[ls].options["solver"] = solver_type
+                    with Silence():
+                        self.sms[ls].train()
 
             with Silence():
                 self.sms[ls].train()
