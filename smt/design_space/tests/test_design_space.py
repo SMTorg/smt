@@ -182,9 +182,9 @@ class Test(unittest.TestCase):
 
     def test_design_space_corner_cases(self):
         ds = DesignSpace([FloatVariable(0, 1)])
-        x, is_acting = ds.sample_valid_x(1)
-        self.assertEqual(len(x), 1)
-        self.assertEqual(len(is_acting), 1)
+        x, is_acting = ds.sample_valid_x(10)
+        self.assertEqual(len(x), 10)
+        self.assertEqual(len(is_acting), 10)
 
     def test_design_space(self):
         ds = DesignSpace(

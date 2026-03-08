@@ -97,24 +97,32 @@ class Silence2:
         # save previous stdout/stderr
         self.saved_streams = saved_streams = sys.__stdout__, sys.__stderr__
         self.fds = fds = [s.fileno() for s in saved_streams]
-        self.saved_fds = map(os.dup, fds)
+        self.saved_fds = list(map(os.dup, fds))
         # flush any pending output
         for s in saved_streams:
             s.flush()
 
         # open surrogate files
+        # Python 3: can't have unbuffered text I/O (buffer=0 is for binary only)
+        buffer_size = 0 if "b" in self.mode else 1
+
         if self.combine:
-            null_streams = [open(self.outfiles[0], self.mode, 0)] * 2
+            null_streams = [open(self.outfiles[0], self.mode, buffer_size)] * 2
             if self.outfiles[0] != os.devnull:
                 # disable buffering so output is merged immediately
-                sys.stdout, sys.stderr = map(os.fdopen, fds, ["w"] * 2, [0] * 2)
+                sys.stdout, sys.stderr = map(
+                    os.fdopen, fds, ["w"] * 2, [buffer_size] * 2
+                )
         else:
-            null_streams = [open(f, self.mode, 0) for f in self.outfiles]
+            null_streams = [
+                open(f, self.mode, buffer_size) for f in self.outfiles
+            ]
         self.null_fds = null_fds = [s.fileno() for s in null_streams]
         self.null_streams = null_streams
 
         # overwrite file objects and low-level file descriptors
-        map(os.dup2, null_fds, fds)
+        for nf, f in zip(null_fds, fds):
+            os.dup2(nf, f)
 
     def __exit__(self, *args):
         sys = self.sys
@@ -122,7 +130,9 @@ class Silence2:
         for s in self.saved_streams:
             s.flush()
         # restore original streams and file descriptors
-        map(os.dup2, self.saved_fds, self.fds)
+        for sf, f in zip(self.saved_fds, self.fds):
+            os.dup2(sf, f)
+            os.close(sf)
         sys.stdout, sys.stderr = self.saved_streams
         # clean up
         for s in self.null_streams:
