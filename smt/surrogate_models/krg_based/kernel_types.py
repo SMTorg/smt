@@ -25,6 +25,7 @@ class MixIntKernelType(Enum):
     CONT_RELAX = "CONT_RELAX"
     GOWER = "GOWER"
     COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
+    DIST_ENCODING = "DIST_ENCODING"
 
 
 class MixHrcKernelType(Enum):
