@@ -114,9 +114,7 @@ class Silence2:
                     os.fdopen, fds, ["w"] * 2, [buffer_size] * 2
                 )
         else:
-            null_streams = [
-                open(f, self.mode, buffer_size) for f in self.outfiles
-            ]
+            null_streams = [open(f, self.mode, buffer_size) for f in self.outfiles]
         self.null_fds = null_fds = [s.fileno() for s in null_streams]
         self.null_streams = null_streams
 

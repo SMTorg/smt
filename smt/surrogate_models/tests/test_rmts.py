@@ -56,6 +56,7 @@ class TestRMTS(SMTestCase):
 
     def test_linear_solver(self):
         from smt.utils.linear_solvers import KrylovSolver
+
         for ls in [
             "krylov-dense",
             "dense-lu",
@@ -81,7 +82,9 @@ class TestRMTS(SMTestCase):
                     self.sms[ls + "_" + solver_type] = RMTB(
                         xlimits=self.xlimits, solver=custom_solver, print_global=False
                     )
-                    self.sms[ls + "_" + solver_type].set_training_values(self.xt, self.yt)
+                    self.sms[ls + "_" + solver_type].set_training_values(
+                        self.xt, self.yt
+                    )
                     with Silence():
                         self.sms[ls + "_" + solver_type].train()
 

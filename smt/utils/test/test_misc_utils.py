@@ -100,8 +100,9 @@ class TestMisc(unittest.TestCase):
 
         # 2. check_support
         from smt.surrogate_models import IDW
-        sm = IDW() # IDW supports 'derivatives' but not 'variances'
-        check_support(sm, "derivatives") # Should pass
+
+        sm = IDW()  # IDW supports 'derivatives' but not 'variances'
+        check_support(sm, "derivatives")  # Should pass
         with self.assertRaises(NotImplementedError):
             check_support(sm, "variances")
         with self.assertRaises(NotImplementedError):
@@ -110,11 +111,11 @@ class TestMisc(unittest.TestCase):
         # 3. check_nx
         sm.nx = 2
         with self.assertRaises(ValueError):
-            check_nx(sm, np.zeros((10, 3))) # expects 2
+            check_nx(sm, np.zeros((10, 3)))  # expects 2
 
         sm.nx = 1
         with self.assertRaisesRegex(ValueError, "x should have shape"):
-            check_nx(sm, np.zeros((10, 2))) # expects 1
+            check_nx(sm, np.zeros((10, 2)))  # expects 1
 
 
 if __name__ == "__main__":
