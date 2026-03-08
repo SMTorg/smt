@@ -556,9 +556,7 @@ class SurrogateModel(metaclass=ABCMeta):
         derived_variance:  np.ndarray
             The gradient of the variance of the kriging model
         """
-        gradient = [
-            self._predict_variance_derivatives(self, x, kx) for kx in range(self.nx)
-        ]
+        gradient = [self._predict_variance_derivatives(x, kx) for kx in range(self.nx)]
         return np.array(gradient)
 
     def _check_xdim(self, x):

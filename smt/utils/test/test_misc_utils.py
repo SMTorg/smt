@@ -75,12 +75,20 @@ class TestMisc(unittest.TestCase):
         self.assertAlmostEqual(q2, 1.0, delta=1e-2)
 
     def test_silence_utilities(self):
-        """Covers smt/utils/silence.py Silence class."""
-        from smt.utils.silence import Silence
+        """Covers smt/utils/silence.py Silence and Silence2 classes."""
+        from smt.utils.silence import Silence, Silence2
 
         # Test Silence (basic sys.stdout override)
         with Silence():
             print("Silenced")
+
+        # Test Silence2 (low-level FD suppression)
+        # Using default devnull avoids Windows file-locking issues.
+        with Silence2():
+            import sys
+
+            print("FD Stdout Silenced")
+            sys.stderr.write("FD Stderr Silenced\n")
 
     def test_checks(self):
         """Covers smt/utils/checks.py."""
