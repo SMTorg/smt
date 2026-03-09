@@ -84,7 +84,7 @@ class TestSaveLoad(unittest.TestCase):
             sm.set_training_values(xt, yt)
 
             if surrogate == SGP:
-                sm.Z = 2 * rng.rand(N_inducing, 1) - 1
+                sm.Z = 2 * rng.random((N_inducing, 1)) - 1
                 sm.set_inducing_inputs(Z=sm.Z)
 
             sm.train()

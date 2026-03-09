@@ -98,12 +98,15 @@ class TestDistEncoding(unittest.TestCase):
             x_cat = x[:, 0].astype(int)
             x_cont = x[:, 1]
             y = np.zeros_like(x_cat, dtype=float)
-            # Signal: Group 1 and 2 are very similar (1.0 vs 1.2), Group 3 is far (100.0)
-            y[x_cat < 4] = 1.0 * x_cont[x_cat < 4]  # Group 1
-            y[(x_cat >= 4) & (x_cat < 8)] = (
-                1.2 * x_cont[(x_cat >= 4) & (x_cat < 8)]
-            )  # Group 2
-            y[x_cat >= 8] = 100.0 * x_cont[x_cat >= 8]  # Group 3 (Far)
+            # Non-linear interaction: slope AND curvature depend on group
+            # Group 1 (0-3): y = x^2
+            y[x_cat < 4] = x_cont[x_cat < 4] ** 2
+            # Group 2 (4-7): y = 1.1 * x^2 (Similar to Group 1)
+            y[(x_cat >= 4) & (x_cat < 8)] = 1.1 * (
+                x_cont[(x_cat >= 4) & (x_cat < 8)] ** 2
+            )
+            # Group 3 (8-11): y = 10 * sin(pi * x) (Very different)
+            y[x_cat >= 8] = 10.0 * np.sin(np.pi * x_cont[x_cat >= 8])
             return y.reshape(-1, 1) + r.normal(0, 0.01, (len(x_cat), 1))
 
         ds = DesignSpace(
