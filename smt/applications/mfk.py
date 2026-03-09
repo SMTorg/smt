@@ -280,7 +280,7 @@ class MFK(KrgBased):
         Trains the Multi-Fidelity model
         """
         self._corr_params = None
-        if hasattr(self, "_mix_int_corr"):
+        if self._mix_int_corr is not None:
             self._mix_int_corr.reset()
 
         self._new_train_init()
