@@ -80,7 +80,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5913942
+     Training - done. Time (sec):  0.4329119
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -95,7 +95,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4922669
+     Training - done. Time (sec):  0.4303195
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -110,7 +110,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7231290
+     Training - done. Time (sec):  0.6015077
   ___________________________________________________________________________
      
    Evaluation
@@ -122,8 +122,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[-2.25281975]]
-  [[15.32276756]]
+  [[7.03542902]]
+  [[13.86086644]]
   
 
 Options
@@ -181,9 +181,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
@@ -208,7 +213,7 @@ Options
      -  Cobyla
      -  ['Cobyla']
      -  ['str']
-     -  Correlation function type
+     -  Optimizer for hyperparameters optimisation
   *  -  eval_noise
      -  False
      -  [True, False]

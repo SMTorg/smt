@@ -604,7 +604,7 @@ Options
      -  ['str']
      -  Approximated q-EI maximization strategy
   *  -  evaluator
-     -  <smt.applications.ego.Evaluator object at 0x0000023C50108560>
+     -  <smt.applications.ego.Evaluator object at 0x000001A2DA03D290>
      -  None
      -  ['Evaluator']
      -  Object used to run function fun to optimize at x points (nsamples, nxdim)
@@ -639,7 +639,7 @@ Options
      -  ['bool']
      -  Enable to re interpolate the variance for training points
   *  -  surrogate
-     -  <smt.surrogate_models.krg.KRG object at 0x0000023C54895760>
+     -  <smt.surrogate_models.krg.KRG object at 0x000001A2DAF27FD0>
      -  None
      -  ['KRG', 'KPLS', 'KPLSK', 'GEKPLS', 'MGP', 'GPX']
      -  SMT kriging-based surrogate model used internaly

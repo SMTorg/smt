@@ -41,7 +41,8 @@ Usage
   dyt_dxt = df_dx(xt)
   
   # Validation data
-  xv = lb + np.random.rand(30, 1) * (ub - lb)
+  rng = np.random.default_rng(42)
+  xv = lb + rng.random((30, 1)) * (ub - lb)
   yv = f(xv)
   # dyv_dxv = df_dx(xv)
   
@@ -96,7 +97,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.6805949
+     Training - done. Time (sec):  1.7451601
   ___________________________________________________________________________
      
    Evaluation

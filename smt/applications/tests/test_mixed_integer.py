@@ -461,6 +461,7 @@ class TestMixedInteger(unittest.TestCase):
         self.run_mixed_gower_example()
         self.run_mixed_homo_gaussian_example()
         self.run_mixed_homo_hyp_example()
+        self.run_mixed_dist_encoding_example()
         # FIXME: this test should belong to smt_design_space_ext
         # but at the moment run_* code is used here to generate doc here in smt
         # if HAS_DESIGN_SPACE_EXT:
@@ -2508,6 +2509,102 @@ class TestMixedInteger(unittest.TestCase):
             loc="upper left",
             bbox_to_anchor=[0, 1],
         )
+        plt.tight_layout()
+        plt.show()
+
+    def run_mixed_dist_encoding_example(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import seaborn as sns
+
+        from smt.applications.mixed_integer import (
+            MixedIntegerKrigingModel,
+        )
+        from smt.design_space import (
+            CategoricalVariable,
+            DesignSpace,
+            FloatVariable,
+        )
+        from smt.surrogate_models import KRG, MixIntKernelType
+
+        # 1. Generate a Mixed 2D Dataset
+        np.random.seed(42)
+        n_per_level = 50
+        n_levels = 4
+        X_cat = np.repeat(np.arange(n_levels), n_per_level).reshape(-1, 1)
+        X_cont = np.random.uniform(0, 1, size=(n_levels * n_per_level, 1))
+        xt = np.hstack((X_cat, X_cont))
+        yt = np.zeros((n_levels * n_per_level, 1))
+
+        # Define distinct behaviors for levels
+        slopes = [2.0, 2.2, 10.0, -4.0]
+        intercepts = [0.0, 0.0, 5.0, 2.0]
+        noises = [0.2, 0.2, 0.5, 0.3]
+
+        for i in range(n_levels):
+            mask = xt[:, 0] == i
+            yt[mask] = (
+                slopes[i] * X_cont[mask]
+                + intercepts[i]
+                + np.random.normal(0, noises[i], (n_per_level, 1))
+            )
+
+        # 2. Fit Kriging with Distributional Encoding (DE)
+        design_space = DesignSpace(
+            [
+                CategoricalVariable(values=[str(i) for i in range(n_levels)]),
+                FloatVariable(0, 1),
+            ]
+        )
+        sm = MixedIntegerKrigingModel(
+            surrogate=KRG(
+                design_space=design_space,
+                categorical_kernel=MixIntKernelType.DIST_ENCODING,
+                categorical_kernel_beta=1.0,
+                theta0=[1e-1],
+                hyper_opt="Cobyla",
+                corr="squar_exp",
+            ),
+        )
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # 3. Predict and Plot Dashboard
+        level_names = [f"Group {chr(65 + i)}" for i in range(n_levels)]
+        colors = sns.color_palette("husl", n_levels)
+        fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+
+        # --- Subplot 1: Raw Data ---
+        for i in range(n_levels):
+            mask = xt[:, 0] == i
+            axs[0].scatter(xt[mask, 1], yt[mask], label=level_names[i], color=colors[i])
+        axs[0].set_title("1. Raw Mixed Dataset")
+        axs[0].legend()
+
+        # --- Subplot 2: Density ---
+        for i in range(n_levels):
+            mask = xt[:, 0] == i
+            sns.kdeplot(
+                yt[mask].flatten(),
+                label=level_names[i],
+                color=colors[i],
+                fill=True,
+                ax=axs[1],
+                alpha=0.4,
+            )
+        axs[1].set_title("2. Target Density per Level")
+
+        # --- Subplot 3: Predictions ---
+        x_plot = np.linspace(0, 1, 100)
+        for i in range(n_levels):
+            x_test = np.hstack((np.full((100, 1), i), x_plot.reshape(-1, 1)))
+            y_pred = sm.predict_values(x_test)
+            axs[2].plot(
+                x_plot, y_pred, color=colors[i], linewidth=2, label=level_names[i]
+            )
+        axs[2].set_title("3. Kriging Predictions (DE)")
+        axs[2].legend()
+
         plt.tight_layout()
         plt.show()
 

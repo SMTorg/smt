@@ -79,14 +79,13 @@ Using FITC method
       )
   
   # random generator for reproducibility
-  rng = np.random.RandomState(0)
-  
+  rng = np.random.default_rng(0)
   # Generate training data
   nt = 200
   # Variance of the gaussian noise on our trainingg data
   eta2 = [0.01]
   gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
-  xt = 2 * rng.rand(nt, 1) - 1
+  xt = 2 * rng.random((nt, 1)) - 1
   yt = f_obj(xt) + gaussian_noise
   
   # Pick inducing points randomly in training data
@@ -94,7 +93,7 @@ Using FITC method
   random_idx = rng.permutation(nt)[:n_inducing]
   Z = xt[random_idx].copy()
   
-  sgp = SGP()
+  sgp = SGP(seed=42)
   sgp.set_training_values(xt, yt)
   sgp.set_inducing_inputs(Z=Z)
   # sgp.set_inducing_inputs()  # When Z not specified n_inducing points are picked randomly in traing data
@@ -133,7 +132,7 @@ Using FITC method
    Training
      
      Training ...
-     Training - done. Time (sec):  1.1140270
+     Training - done. Time (sec):  3.2089267
   ___________________________________________________________________________
      
    Evaluation
@@ -141,9 +140,9 @@ Using FITC method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009944
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000049
      
   
 .. figure:: sgp_Test_test_sgp_fitc.png
@@ -170,14 +169,14 @@ Using VFE method
       )
   
   # random generator for reproducibility
-  rng = np.random.RandomState(42)
+  rng = np.random.default_rng(42)
   
   # Generate training data
   nt = 200
   # Variance of the gaussian noise on our training data
   eta2 = [0.01]
   gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
-  xt = 2 * rng.rand(nt, 1) - 1
+  xt = 2 * rng.random((nt, 1)) - 1
   yt = f_obj(xt) + gaussian_noise
   
   # Pick inducing points randomly in training data
@@ -185,7 +184,7 @@ Using VFE method
   random_idx = rng.permutation(nt)[:n_inducing]
   Z = xt[random_idx].copy()
   
-  sgp = SGP(method="VFE")
+  sgp = SGP(method="VFE", seed=42)
   sgp.set_training_values(xt, yt)
   sgp.set_inducing_inputs(Z=Z)
   sgp.train()
@@ -223,7 +222,7 @@ Using VFE method
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0627096
+     Training - done. Time (sec):  3.4447055
   ___________________________________________________________________________
      
    Evaluation
@@ -231,9 +230,9 @@ Using VFE method
         # eval points. : 201
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0010011
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000050
      
   
 .. figure:: sgp_Test_test_sgp_vfe.png
@@ -295,9 +294,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]

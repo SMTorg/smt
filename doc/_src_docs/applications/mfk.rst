@@ -104,7 +104,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.6976089
+     Training - done. Time (sec):  0.6219940
   ___________________________________________________________________________
      
    Evaluation
@@ -123,9 +123,9 @@ Usage
         # eval points. : 101
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0010109
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000100
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: mfk_TestMFK_run_mfk_example.png
@@ -187,9 +187,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
