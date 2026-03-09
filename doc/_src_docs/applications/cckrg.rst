@@ -80,7 +80,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4329119
+     Training - done. Time (sec):  0.4252124
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -95,7 +95,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4303195
+     Training - done. Time (sec):  0.4003313
   ___________________________________________________________________________
      
                         Cooperative Components Kriging
@@ -110,7 +110,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.6015077
+     Training - done. Time (sec):  0.5732880
   ___________________________________________________________________________
      
    Evaluation
@@ -122,8 +122,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[7.03542902]]
-  [[13.86086644]]
+  [[-0.6850014]]
+  [[4.11094958]]
   
 
 Options

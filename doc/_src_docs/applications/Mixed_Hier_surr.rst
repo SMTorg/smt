@@ -233,7 +233,7 @@ Example of mixed integer Gower Distance model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.0783525
+     Training - done. Time (sec):  1.0548606
   ___________________________________________________________________________
      
    Evaluation
@@ -241,9 +241,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0050247
+     Predicting - done. Time (sec):  0.0051856
      
-     Prediction time/pt. (sec) :  0.0000502
+     Prediction time/pt. (sec) :  0.0000519
      
   ___________________________________________________________________________
      
@@ -252,9 +252,9 @@ Example of mixed integer Gower Distance model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0050247
+     Predicting - done. Time (sec):  0.0030277
      
-     Prediction time/pt. (sec) :  0.0000502
+     Prediction time/pt. (sec) :  0.0000303
      
   ___________________________________________________________________________
      
@@ -456,7 +456,7 @@ Example of mixed integer Compound Symmetry model
   [ 2.17574903e+01 -6.37874961e+00 -6.37875122e+00  2.51099932e-05
    -8.50729004e-06 -6.04422345e-06  6.29132021e-12 -2.29991252e-12
    -9.91832367e-13]
-     Training - done. Time (sec):  0.7491555
+     Training - done. Time (sec):  0.7101350
   ___________________________________________________________________________
      
    Evaluation
@@ -464,20 +464,9 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0066617
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000666
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0055478
-     
-     Prediction time/pt. (sec) :  0.0000555
+     Prediction time/pt. (sec) :  0.0000000
      
   ___________________________________________________________________________
      
@@ -486,9 +475,20 @@ Example of mixed integer Compound Symmetry model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0050006
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000500
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0101485
+     
+     Prediction time/pt. (sec) :  0.0001015
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_cs_example.png
@@ -650,7 +650,7 @@ Example of mixed integer Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.3367758
+     Training - done. Time (sec):  1.3153698
   ___________________________________________________________________________
      
    Evaluation
@@ -658,20 +658,9 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0035059
+     Predicting - done. Time (sec):  0.0097883
      
-     Prediction time/pt. (sec) :  0.0000351
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0060132
-     
-     Prediction time/pt. (sec) :  0.0000601
+     Prediction time/pt. (sec) :  0.0000979
      
   ___________________________________________________________________________
      
@@ -680,9 +669,20 @@ Example of mixed integer Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0020242
+     Predicting - done. Time (sec):  0.0042152
      
-     Prediction time/pt. (sec) :  0.0000202
+     Prediction time/pt. (sec) :  0.0000422
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0060172
+     
+     Prediction time/pt. (sec) :  0.0000602
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_hyp_example.png
@@ -844,7 +844,7 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.4367628
+     Training - done. Time (sec):  1.4050841
   ___________________________________________________________________________
      
    Evaluation
@@ -852,20 +852,9 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0060415
+     Predicting - done. Time (sec):  0.0103734
      
-     Prediction time/pt. (sec) :  0.0000604
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.0060785
-     
-     Prediction time/pt. (sec) :  0.0000608
+     Prediction time/pt. (sec) :  0.0001037
      
   ___________________________________________________________________________
      
@@ -874,9 +863,20 @@ Example of mixed integer Exponential Homoscedastic Hypersphere model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0041428
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0000414
+     Prediction time/pt. (sec) :  0.0000000
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0000000
+     
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_homo_gaussian_example.png
@@ -900,7 +900,7 @@ Example of mixed integer Distributional Encoding model
 
   import matplotlib.pyplot as plt
   import numpy as np
-  import seaborn as sns
+  from scipy.stats import gaussian_kde
   
   from smt.applications.mixed_integer import (
       MixedIntegerKrigingModel,
@@ -955,37 +955,36 @@ Example of mixed integer Distributional Encoding model
   sm.train()
   
   # 3. Predict and Plot Dashboard
-  level_names = [f"Group {chr(65+i)}" for i in range(n_levels)]
-  colors = sns.color_palette("husl", n_levels)
+  level_names = [f"Group {chr(65 + i)}" for i in range(n_levels)]
   fig, axs = plt.subplots(1, 3, figsize=(18, 5))
   
   # --- Subplot 1: Raw Data ---
   for i in range(n_levels):
       mask = xt[:, 0] == i
-      axs[0].scatter(xt[mask, 1], yt[mask], label=level_names[i], color=colors[i])
+      color = plt.get_cmap("tab10")(i)
+      axs[0].scatter(xt[mask, 1], yt[mask], label=level_names[i], color=color)
   axs[0].set_title("1. Raw Mixed Dataset")
   axs[0].legend()
   
   # --- Subplot 2: Density ---
+  x_kde = np.linspace(yt.min(), yt.max(), 200)
   for i in range(n_levels):
       mask = xt[:, 0] == i
-      sns.kdeplot(
-          yt[mask].flatten(),
-          label=level_names[i],
-          color=colors[i],
-          fill=True,
-          ax=axs[1],
-          alpha=0.4,
-      )
+      color = plt.get_cmap("tab10")(i)
+      kde = gaussian_kde(yt[mask].flatten())
+      axs[1].plot(x_kde, kde(x_kde), color=color, label=level_names[i])
+      axs[1].fill_between(x_kde, kde(x_kde), color=color, alpha=0.4)
   axs[1].set_title("2. Target Density per Level")
   
   # --- Subplot 3: Predictions ---
   x_plot = np.linspace(0, 1, 100)
   for i in range(n_levels):
+      mask = xt[:, 0] == i
+      color = plt.get_cmap("tab10")(i)
       x_test = np.hstack((np.full((100, 1), i), x_plot.reshape(-1, 1)))
       y_pred = sm.predict_values(x_test)
       axs[2].plot(
-          x_plot, y_pred, color=colors[i], linewidth=2, label=level_names[i]
+          x_plot, y_pred, color=color, linewidth=2, label=level_names[i]
       )
   axs[2].set_title("3. Kriging Predictions (DE)")
   axs[2].legend()
@@ -1009,7 +1008,7 @@ Example of mixed integer Distributional Encoding model
    Training
      
      Training ...
-     Training - done. Time (sec):  1.1956043
+     Training - done. Time (sec):  1.1077783
   ___________________________________________________________________________
      
    Evaluation
@@ -1017,20 +1016,9 @@ Example of mixed integer Distributional Encoding model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.1115267
+     Predicting - done. Time (sec):  0.1074939
      
-     Prediction time/pt. (sec) :  0.0011153
-     
-  ___________________________________________________________________________
-     
-   Evaluation
-     
-        # eval points. : 100
-     
-     Predicting ...
-     Predicting - done. Time (sec):  0.1037331
-     
-     Prediction time/pt. (sec) :  0.0010373
+     Prediction time/pt. (sec) :  0.0010749
      
   ___________________________________________________________________________
      
@@ -1039,9 +1027,9 @@ Example of mixed integer Distributional Encoding model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.1080418
+     Predicting - done. Time (sec):  0.1062019
      
-     Prediction time/pt. (sec) :  0.0010804
+     Prediction time/pt. (sec) :  0.0010620
      
   ___________________________________________________________________________
      
@@ -1050,9 +1038,20 @@ Example of mixed integer Distributional Encoding model
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.1045628
+     Predicting - done. Time (sec):  0.1027400
      
-     Prediction time/pt. (sec) :  0.0010456
+     Prediction time/pt. (sec) :  0.0010274
+     
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 100
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.1035326
+     
+     Prediction time/pt. (sec) :  0.0010353
      
   
 .. figure:: Mixed_Hier_surr_TestMixedInteger_run_mixed_dist_encoding_example.png
@@ -1266,7 +1265,7 @@ Example of mixed integer Kriging with hierarchical variables
    Training
      
      Training ...
-     Training - done. Time (sec):  2.7478201
+     Training - done. Time (sec):  3.1095726
   ___________________________________________________________________________
      
    Evaluation
@@ -1274,9 +1273,9 @@ Example of mixed integer Kriging with hierarchical variables
         # eval points. : 15
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0047131
+     Predicting - done. Time (sec):  0.0045068
      
-     Prediction time/pt. (sec) :  0.0003142
+     Prediction time/pt. (sec) :  0.0003005
      
   
 

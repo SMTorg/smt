@@ -2515,7 +2515,7 @@ class TestMixedInteger(unittest.TestCase):
     def run_mixed_dist_encoding_example(self):
         import matplotlib.pyplot as plt
         import numpy as np
-        import seaborn as sns
+        from scipy.stats import gaussian_kde
 
         from smt.applications.mixed_integer import (
             MixedIntegerKrigingModel,
@@ -2571,37 +2571,34 @@ class TestMixedInteger(unittest.TestCase):
 
         # 3. Predict and Plot Dashboard
         level_names = [f"Group {chr(65 + i)}" for i in range(n_levels)]
-        colors = sns.color_palette("husl", n_levels)
         fig, axs = plt.subplots(1, 3, figsize=(18, 5))
 
         # --- Subplot 1: Raw Data ---
         for i in range(n_levels):
             mask = xt[:, 0] == i
-            axs[0].scatter(xt[mask, 1], yt[mask], label=level_names[i], color=colors[i])
+            color = plt.get_cmap("tab10")(i)
+            axs[0].scatter(xt[mask, 1], yt[mask], label=level_names[i], color=color)
         axs[0].set_title("1. Raw Mixed Dataset")
         axs[0].legend()
 
         # --- Subplot 2: Density ---
+        x_kde = np.linspace(yt.min(), yt.max(), 200)
         for i in range(n_levels):
             mask = xt[:, 0] == i
-            sns.kdeplot(
-                yt[mask].flatten(),
-                label=level_names[i],
-                color=colors[i],
-                fill=True,
-                ax=axs[1],
-                alpha=0.4,
-            )
+            color = plt.get_cmap("tab10")(i)
+            kde = gaussian_kde(yt[mask].flatten())
+            axs[1].plot(x_kde, kde(x_kde), color=color, label=level_names[i])
+            axs[1].fill_between(x_kde, kde(x_kde), color=color, alpha=0.4)
         axs[1].set_title("2. Target Density per Level")
 
         # --- Subplot 3: Predictions ---
         x_plot = np.linspace(0, 1, 100)
         for i in range(n_levels):
+            mask = xt[:, 0] == i
+            color = plt.get_cmap("tab10")(i)
             x_test = np.hstack((np.full((100, 1), i), x_plot.reshape(-1, 1)))
             y_pred = sm.predict_values(x_test)
-            axs[2].plot(
-                x_plot, y_pred, color=colors[i], linewidth=2, label=level_names[i]
-            )
+            axs[2].plot(x_plot, y_pred, color=color, linewidth=2, label=level_names[i])
         axs[2].set_title("3. Kriging Predictions (DE)")
         axs[2].legend()
 
