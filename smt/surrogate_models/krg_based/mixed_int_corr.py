@@ -24,6 +24,7 @@ correct_distances_cat_decreed
 import numpy as np
 
 from smt.design_space import CategoricalVariable
+from smt.utils.distributional_encoding import DistributionalEncoder
 
 from .kernel_types import MixHrcKernelType, MixIntKernelType
 from .distances import (
@@ -552,7 +553,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
-    if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]:
+    if cat_kernel.is_scalar_encoding():
         return n_param
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
@@ -702,6 +703,8 @@ class MixedIntegerCorrelation:
         self.pls_coeff_cont = []
         self.coeff_pls_cat = []
         self.n_levels_origin = None
+        self.de_encoder = DistributionalEncoder()
+        self.de_dist_matrices = {}
 
     def reset(self):
         """Clear cached state. Call when retraining."""
@@ -709,8 +712,67 @@ class MixedIntegerCorrelation:
         self.pls_coeff_cont = []
         self.coeff_pls_cat = []
         self.n_levels_origin = None
+        self.de_encoder = DistributionalEncoder()
+        self.de_dist_matrices = {}
 
-    # ------------------------------------------------------------------
+    def replace_with_de_distances(self, D, X, ij, beta, y_norma=None, x_pred=None):
+        """
+        Replace categorical Gower distances in D with Wasserstein distances.
+
+        Parameters
+        ----------
+        D : np.ndarray
+            Distance matrix to modify in-place.
+        X : np.ndarray
+            Reference training data (X_train).
+        ij : np.ndarray
+            Index pairs for the distances in D.
+        beta : float
+            Power parameter for the Wasserstein distance.
+        y_norma : np.ndarray, optional
+            Normalized targets for fitting (training case).
+        x_pred : np.ndarray, optional
+            Prediction points (prediction case).
+        """
+        model = self._model
+        design_space = model.design_space
+        _, cat_features = compute_X_cont(X, design_space)
+        cat_features_indices = [i for i, feat in enumerate(cat_features) if feat]
+
+        # Update beta in encoder
+        self.de_encoder.beta = beta
+
+        if x_pred is None:
+            # Training Case: Fit was already handled in KrgBased._initialize_distribution_encoding
+            for i, feat_idx in enumerate(cat_features_indices):
+                unique_levels = np.unique(X[:, feat_idx])
+                dist_matrix = self.de_encoder.compute_distance_matrix(
+                    feat_idx, unique_levels
+                )
+
+                # Vectorized mapping to D
+                cat_vals = X[:, feat_idx].astype(int)
+                indi = np.searchsorted(unique_levels, cat_vals[ij[:, 0]])
+                indj = np.searchsorted(unique_levels, cat_vals[ij[:, 1]])
+                D[:, feat_idx] = dist_matrix[indi, indj] ** beta
+        else:
+            # Prediction Case
+            Lij, _ = cross_levels(X=x_pred, ij=ij, design_space=design_space, y=X)
+            for i, feat_idx in enumerate(cat_features_indices):
+                levels_pred_unique = np.unique(x_pred[:, feat_idx])
+                levels_train_unique = np.unique(X[:, feat_idx])
+                dist_matrix = self.de_encoder.compute_distance_matrix(
+                    feat_idx, levels_pred_unique, levels_train_unique
+                )
+
+                # Vectorized mapping to D
+                indi = np.searchsorted(levels_pred_unique, Lij[i][:, 0].astype(int))
+                indj = np.searchsorted(levels_train_unique, Lij[i][:, 1].astype(int))
+
+                D[:, feat_idx] = (
+                    dist_matrix[indi, indj] ** beta
+                )  # ------------------------------------------------------------------
+
     # Parameter layout
     # ------------------------------------------------------------------
 
@@ -878,7 +940,10 @@ class MixedIntegerCorrelation:
             if np.size(self.pls_coeff_cont) == 0:
                 X, y = model._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = model.coeff_pls
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
+            if (
+                cat_kernel.is_scalar_encoding()
+                or cat_kernel == MixIntKernelType.CONT_RELAX
+            ):
                 d = componentwise_distance_PLS(
                     dx,
                     corr,
@@ -910,7 +975,11 @@ class MixedIntegerCorrelation:
                 theta=None,
                 return_derivative=False,
             )
-            if cat_kernel in [MixIntKernelType.GOWER, MixIntKernelType.CONT_RELAX]:
+            if cat_kernel in [
+                MixIntKernelType.GOWER,
+                MixIntKernelType.CONT_RELAX,
+                MixIntKernelType.DIST_ENCODING,
+            ]:
                 model.corr.theta = theta
                 r = model.corr(d)
                 return r
@@ -929,7 +998,6 @@ class MixedIntegerCorrelation:
         theta_cont = theta[theta_cont_features[:, 0]]
         model.corr.theta = theta_cont
         r_cont = model.corr(d_cont)
-        r_cat = np.copy(r_cont) * 0
         r = np.copy(r_cont)
 
         # Theta_cat_i loop
@@ -951,6 +1019,8 @@ class MixedIntegerCorrelation:
 
         for i in range(len(n_levels)):
             theta_cat = theta_cat_kernel[theta_cat_features[0][i]]
+            r_cat_feat = np.ones(r.shape)
+
             if cat_kernel == MixIntKernelType.COMPOUND_SYMMETRY:
                 T = np.zeros((n_levels[i], n_levels[i]))
                 for tij in range(n_levels[i]):
@@ -972,9 +1042,9 @@ class MixedIntegerCorrelation:
 
             if cat_kernel_comps is not None:
                 # Sampling points
-                X = model.training_points[None][0][0]
-                y = model.training_points[None][0][1]
-                X_icat = X[:, cat_features]
+                X_data = model.training_points[None][0][0]
+                y_data = model.training_points[None][0][1]
+                X_icat = X_data[:, cat_features]
                 X_icat = X_icat[:, i]
                 old_n_comp = (
                     model.options["n_comp"] if "n_comp" in model.options else None
@@ -984,7 +1054,7 @@ class MixedIntegerCorrelation:
                 try:
                     model.coeff_pls = self.coeff_pls_cat[i]
                 except IndexError:
-                    _, _ = model._compute_pls(X_full_space.copy(), y.copy())
+                    _, _ = model._compute_pls(X_full_space.copy(), y_data.copy())
                     self.coeff_pls_cat.append(model.coeff_pls)
 
                 if x is not None:
@@ -1010,7 +1080,7 @@ class MixedIntegerCorrelation:
                 matrix_data_corr_levels_cat_mod_comps(
                     i,
                     Lij,
-                    r_cat,
+                    r_cat_feat,
                     n_levels,
                     T,
                     d_cat_i,
@@ -1024,7 +1094,7 @@ class MixedIntegerCorrelation:
                 matrix_data_corr_levels_cat_mod(
                     i,
                     Lij,
-                    r_cat,
+                    r_cat_feat,
                     T,
                     has_cat_kernel=cat_kernel
                     in [
@@ -1034,7 +1104,7 @@ class MixedIntegerCorrelation:
                     ],
                 )
 
-            r = np.multiply(r, r_cat)
+            r = np.multiply(r, r_cat_feat)
             if cat_kernel_comps is not None:
                 if old_n_comp is None:
                     model.options._dict.pop("n_comp", None)

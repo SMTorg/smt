@@ -115,8 +115,15 @@ class KrgBased(SurrogateModel):
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
                 MixIntKernelType.COMPOUND_SYMMETRY,
+                MixIntKernelType.DIST_ENCODING,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
+        )
+        declare(
+            "categorical_kernel_beta",
+            1.0,
+            types=(float, int),
+            desc="Power for the distributional encoding kernel (valid values in (0.0, 2.0]).",
         )
         declare(
             "hierarchical_kernel",
@@ -513,6 +520,7 @@ class KrgBased(SurrogateModel):
 
     def _new_train(self):
         X, y, is_acting = self._prepare_training_data()
+        self._initialize_distribution_encoding()
         D = self._compute_training_distances(X, y, is_acting)
         self._build_regression_matrix()
 
@@ -660,6 +668,7 @@ class KrgBased(SurrogateModel):
                         D[:, np.logical_not(self.unfolded_cat)] = (
                             D_num / self.X2_scale[np.logical_not(self.unfolded_cat)]
                         )
+
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -669,6 +678,19 @@ class KrgBased(SurrogateModel):
                 self.X_scale,
                 self.y_std,
             ) = standardization(X_cont.copy(), y.copy())
+
+            if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+                if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+                    self._mix_int_corr = MixedIntegerCorrelation(self)
+
+                # Replace Gower distances with Wasserstein distances in D using the new method
+                self._mix_int_corr.replace_with_de_distances(
+                    D,
+                    self.X_train,
+                    self.ij,
+                    self.options["categorical_kernel_beta"],
+                    y_norma=self.y_norma,
+                )
 
         if self._should_compute_distances_in_train:
             if self.is_continuous:
@@ -723,6 +745,29 @@ class KrgBased(SurrogateModel):
         # outputs['sol'] = self.sol
 
         self._new_train()
+
+    def _initialize_distribution_encoding(self):
+        """Fit Distributional Encoding distributions once before optimization loop."""
+        if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+            if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+                self._mix_int_corr = MixedIntegerCorrelation(self)
+
+            # Apply beta option
+            self._mix_int_corr.de_encoder.beta = self.options["categorical_kernel_beta"]
+
+            # Use normalized targets for fitting
+            X_orig, _ = self._get_fidelity_training_data()
+            y_norma = self.y_norma
+            is_acting = self.is_acting_train
+            _, cat_features = compute_X_cont(X_orig, self.design_space)
+            cat_features_indices = [i for i, feat in enumerate(cat_features) if feat]
+            self._mix_int_corr.de_encoder.fit_distributions(
+                X_orig[:, cat_features],
+                y_norma,
+                cat_features_indices,
+                is_acting=is_acting,
+                loo=True,
+            )
 
     def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
         """Delegate to :class:`MixedIntegerCorrelation._initialize_theta`."""
@@ -999,6 +1044,21 @@ class KrgBased(SurrogateModel):
                     dx[:, np.logical_not(self.unfolded_cat)] = (
                         dnum / self.X2_scale[np.logical_not(self.unfolded_cat)]
                     )
+
+            if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+                if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
+                    # Should have been initialized in train, but safeguard
+                    self._mix_int_corr = MixedIntegerCorrelation(self)
+
+                # Replace Gower distances with Wasserstein distances in dx using the new method
+                self._mix_int_corr.replace_with_de_distances(
+                    dx,
+                    self.X_train,
+                    ij,
+                    self.options["categorical_kernel_beta"],
+                    x_pred=x,
+                )
+
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -1737,20 +1797,15 @@ class KrgBased(SurrogateModel):
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and self.options["categorical_kernel"]
-            not in [
-                MixIntKernelType.GOWER,
-                MixIntKernelType.COMPOUND_SYMMETRY,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]
+            and not self.options["categorical_kernel"].is_scalar_encoding()
+            and self.options["categorical_kernel"] != MixIntKernelType.HOMO_HSPHERE
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."
             )
 
         if len(self._theta0) != d and (
-            self.options["categorical_kernel"]
-            in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
+            self.options["categorical_kernel"].is_scalar_encoding()
             or self.is_continuous
         ):
             if len(self._theta0) == 1:

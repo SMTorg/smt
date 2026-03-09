@@ -50,11 +50,12 @@ class TestKrgBased(unittest.TestCase):
             krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1, 1]]))
 
     def test_less_almost_squar_exp(self):
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
-        xt = np.random.uniform(size=nobs)  # design points
+        xt = rng.uniform(size=nobs)  # design points
 
         # adding a random noise to observations
-        yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
+        yt = target_fun(xt) + rng.normal(scale=0.05, size=nobs)
 
         # training the model with the option eval_noise= True
         sm = KRG(eval_noise=True, corr="pow_exp", pow_exp_power=1.99, seed=42)
@@ -599,8 +600,9 @@ class TestKrgBased(unittest.TestCase):
         self.assertTrue(t.is_training_ill_conditioned())
 
     def test_random_generator(self):
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
-        xt = np.random.uniform(size=nobs)  # design points
+        xt = rng.uniform(size=nobs)  # design points
         yt = target_fun(xt)
 
         ntest = 10  # test
