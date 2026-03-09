@@ -25,6 +25,15 @@ class MixIntKernelType(Enum):
     CONT_RELAX = "CONT_RELAX"
     GOWER = "GOWER"
     COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
+    DIST_ENCODING = "DIST_ENCODING"
+
+    def is_scalar_encoding(self):
+        """Whether the categorical kernel is based on a scalar encoding (Gower, CS, or DE)."""
+        return self in [
+            MixIntKernelType.GOWER,
+            MixIntKernelType.COMPOUND_SYMMETRY,
+            MixIntKernelType.DIST_ENCODING,
+        ]
 
 
 class MixHrcKernelType(Enum):
