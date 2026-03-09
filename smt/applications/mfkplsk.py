@@ -16,6 +16,8 @@ from copy import deepcopy
 from smt.applications import MFKPLS
 from smt.surrogate_models.krg_based import compute_n_param
 from smt.surrogate_models.krg_based.distances import componentwise_distance
+from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
+from smt.surrogate_models.krg_based.mixed_int_corr import MixedIntegerCorrelation
 
 
 class MFKPLSK(MFKPLS):
@@ -103,6 +105,8 @@ class MFKPLSK(MFKPLS):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
         """
+        self._mix_int_corr = MixedIntegerCorrelation(self)
+        self._likelihood_evaluator = LikelihoodEvaluator(self)
         self._new_train_init()
         theta0 = self._theta0.copy()
         noise0 = deepcopy(self._noise0)

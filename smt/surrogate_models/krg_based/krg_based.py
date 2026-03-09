@@ -521,6 +521,8 @@ class KrgBased(SurrogateModel):
         )
 
     def _new_train(self):
+        self._mix_int_corr = MixedIntegerCorrelation(self)
+        self._likelihood_evaluator = LikelihoodEvaluator(self)
         X, y, is_acting = self._prepare_training_data()
         self._initialize_distribution_encoding()
         D = self._compute_training_distances(X, y, is_acting)
@@ -573,7 +575,6 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         self.is_acting_train = is_acting
-        self._mix_int_corr = MixedIntegerCorrelation(self)
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         # Center and scale X and y
         (
@@ -682,9 +683,6 @@ class KrgBased(SurrogateModel):
             ) = standardization(X_cont.copy(), y.copy())
 
             if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
-                if self._mix_int_corr is None:
-                    self._mix_int_corr = MixedIntegerCorrelation(self)
-
                 # Replace Gower distances with Wasserstein distances in D using the new method
                 self._mix_int_corr.replace_with_de_distances(
                     D,
@@ -751,9 +749,6 @@ class KrgBased(SurrogateModel):
     def _initialize_distribution_encoding(self):
         """Fit Distributional Encoding distributions once before optimization loop."""
         if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
-            if self._mix_int_corr is None:
-                self._mix_int_corr = MixedIntegerCorrelation(self)
-
             # Apply beta option
             self._mix_int_corr.de_encoder.beta = self.options["categorical_kernel_beta"]
 
@@ -773,8 +768,6 @@ class KrgBased(SurrogateModel):
 
     def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
         """Delegate to :class:`MixedIntegerCorrelation._initialize_theta`."""
-        if self._mix_int_corr is None:
-            self._mix_int_corr = MixedIntegerCorrelation(self)
         return self._mix_int_corr._initialize_theta(
             theta, n_levels, cat_features, cat_kernel
         )
@@ -799,8 +792,6 @@ class KrgBased(SurrogateModel):
         The signature is preserved for backward compatibility (used by
         subclasses such as MFK).
         """
-        if self._mix_int_corr is None:
-            self._mix_int_corr = MixedIntegerCorrelation(self)
         return self._mix_int_corr.compute(
             corr=corr,
             design_space=design_space,
@@ -854,8 +845,6 @@ class KrgBased(SurrogateModel):
             Q, G
             QR decomposition of the matrix Ft.
         """
-        if self._likelihood_evaluator is None:
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.evaluate(theta)
 
     def _compute_sigma2(
@@ -897,8 +886,6 @@ class KrgBased(SurrogateModel):
         sigma2: float or None
             - The computed Gaussian Process variance, or None if the computation fails.
         """
-        if self._likelihood_evaluator is None:
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.compute_sigma2(
             R, reduced_likelihood_function_value, par, p, q, is_ri
         )
@@ -944,8 +931,6 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        if self._likelihood_evaluator is None:
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.gradient(theta)
 
     def _reduced_likelihood_hessian(self, theta):
@@ -991,8 +976,6 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        if self._likelihood_evaluator is None:
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.hessian(theta)
 
     def _predict_init(self, x, is_acting):
@@ -1048,10 +1031,6 @@ class KrgBased(SurrogateModel):
                     )
 
             if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
-                if self._mix_int_corr is None:
-                    # Should have been initialized in train, but safeguard
-                    self._mix_int_corr = MixedIntegerCorrelation(self)
-
                 # Replace Gower distances with Wasserstein distances in dx using the new method
                 self._mix_int_corr.replace_with_de_distances(
                     dx,
