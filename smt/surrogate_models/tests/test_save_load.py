@@ -69,7 +69,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def test_save_load_surrogates(self):
         surrogates = [KRG, KPLS, KPLSK, MGP, SGP, QP, GENN, LS]
-        rng = np.random.RandomState(1)
+        rng = np.random.default_rng(42)
         N_inducing = 30
         num = 100
 

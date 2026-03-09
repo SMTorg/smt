@@ -305,12 +305,13 @@ class TestSGP(SMTestCase):
 
 
 def generate_sin_volume(samples: int):
+    rng = np.random.default_rng(42)
     abscissas = np.ndarray(shape=(samples, 3))
     ordinates = np.ndarray(shape=samples)
     for i in range(samples):
-        x = np.random.uniform(-0.5, 0.5)
-        y = np.random.uniform(-1, 1)
-        z = np.random.uniform(-2, 2)
+        x = rng.uniform(-0.5, 0.5)
+        y = rng.uniform(-1, 1)
+        z = rng.uniform(-2, 2)
         abscissas[i] = np.array([x, y, z])
         ordinates[i] = np.sin(2 * np.pi * x) * np.sin(np.pi * y) * np.sin(np.pi * z / 2)
     return abscissas, ordinates

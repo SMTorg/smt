@@ -10,7 +10,7 @@ from scipy.stats import spearmanr
 class TestDistEncoding(unittest.TestCase):
     def test_dist_encoding_krg(self):
         """Basic 1D categorical check: preserve order and accuracy."""
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         n_per_level = 5
         X = np.repeat([0, 1, 2], n_per_level).reshape(-1, 1)
 
@@ -48,7 +48,7 @@ class TestDistEncoding(unittest.TestCase):
 
     def test_dist_encoding_beta_effect(self):
         """Verify that beta scales the Wasserstein distance correctly (W2^beta)."""
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         n_per_level = 5
         X = np.repeat([0, 1], n_per_level).reshape(-1, 1)
         y = np.concatenate(
@@ -90,7 +90,7 @@ class TestDistEncoding(unittest.TestCase):
         Reproduction of the grouped levels benchmark from Da Veiga (2025).
         Ensures DE captures similarity between categorical levels within a group.
         """
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         n_levels = 12
         n_per_level = 5
 
@@ -158,7 +158,7 @@ class TestDistEncoding(unittest.TestCase):
 
     def test_learning_curve(self):
         """Check that MSE decreases with more points for DIST_ENCODING."""
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         ds = DesignSpace([CategoricalVariable(["A", "B", "C"])])
 
         def fun(x, r):

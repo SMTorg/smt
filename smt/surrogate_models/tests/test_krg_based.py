@@ -50,7 +50,7 @@ class TestKrgBased(unittest.TestCase):
             krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1, 1]]))
 
     def test_less_almost_squar_exp(self):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
         xt = rng.uniform(size=nobs)  # design points
 
@@ -600,7 +600,7 @@ class TestKrgBased(unittest.TestCase):
         self.assertTrue(t.is_training_ill_conditioned())
 
     def test_random_generator(self):
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
         xt = rng.uniform(size=nobs)  # design points
         yt = target_fun(xt)

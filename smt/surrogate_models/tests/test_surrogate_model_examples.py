@@ -747,7 +747,7 @@ class Test(unittest.TestCase):
             )
 
         # random generator for reproducibility
-        rng = np.random.RandomState(42)
+        rng = np.random.default_rng(42)
 
         # Generate training data
         nt = 200
