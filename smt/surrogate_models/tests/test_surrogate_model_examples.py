@@ -692,14 +692,13 @@ class Test(unittest.TestCase):
             )
 
         # random generator for reproducibility
-        rng = np.random.RandomState(0)
-
+        rng = np.random.default_rng(0)
         # Generate training data
         nt = 200
         # Variance of the gaussian noise on our trainingg data
         eta2 = [0.01]
         gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
-        xt = 2 * rng.rand(nt, 1) - 1
+        xt = 2 * rng.random((nt, 1)) - 1
         yt = f_obj(xt) + gaussian_noise
 
         # Pick inducing points randomly in training data
@@ -707,7 +706,7 @@ class Test(unittest.TestCase):
         random_idx = rng.permutation(nt)[:n_inducing]
         Z = xt[random_idx].copy()
 
-        sgp = SGP()
+        sgp = SGP(seed=42)
         sgp.set_training_values(xt, yt)
         sgp.set_inducing_inputs(Z=Z)
         # sgp.set_inducing_inputs()  # When Z not specified n_inducing points are picked randomly in traing data
@@ -754,7 +753,7 @@ class Test(unittest.TestCase):
         # Variance of the gaussian noise on our training data
         eta2 = [0.01]
         gaussian_noise = rng.normal(loc=0.0, scale=np.sqrt(eta2), size=(nt, 1))
-        xt = 2 * rng.rand(nt, 1) - 1
+        xt = 2 * rng.random((nt, 1)) - 1
         yt = f_obj(xt) + gaussian_noise
 
         # Pick inducing points randomly in training data
@@ -762,7 +761,7 @@ class Test(unittest.TestCase):
         random_idx = rng.permutation(nt)[:n_inducing]
         Z = xt[random_idx].copy()
 
-        sgp = SGP(method="VFE")
+        sgp = SGP(method="VFE", seed=42)
         sgp.set_training_values(xt, yt)
         sgp.set_inducing_inputs(Z=Z)
         sgp.train()
@@ -813,7 +812,8 @@ class Test(unittest.TestCase):
         dyt_dxt = df_dx(xt)
 
         # Validation data
-        xv = lb + np.random.rand(30, 1) * (ub - lb)
+        rng = np.random.default_rng(42)
+        xv = lb + rng.random((30, 1)) * (ub - lb)
         yv = f(xv)
         # dyv_dxv = df_dx(xv)
 
