@@ -553,11 +553,7 @@ def compute_n_param(design_space, cat_kernel, d, n_comp, mat_dim):
             return n_param
         if mat_dim is not None:
             return int(np.sum([i * (i - 1) / 2 for i in mat_dim]) + n_param)
-    if cat_kernel in [
-        MixIntKernelType.GOWER,
-        MixIntKernelType.COMPOUND_SYMMETRY,
-        MixIntKernelType.DIST_ENCODING,
-    ]:
+    if cat_kernel.is_scalar_encoding():
         return n_param
     for i, dv in enumerate(design_space.design_variables):
         if isinstance(dv, CategoricalVariable):
@@ -944,11 +940,10 @@ class MixedIntegerCorrelation:
             if np.size(self.pls_coeff_cont) == 0:
                 X, y = model._compute_pls(X_pls_space.copy(), y.copy())
                 self.pls_coeff_cont = model.coeff_pls
-            if cat_kernel in [
-                MixIntKernelType.GOWER,
-                MixIntKernelType.CONT_RELAX,
-                MixIntKernelType.DIST_ENCODING,
-            ]:
+            if (
+                cat_kernel.is_scalar_encoding()
+                or cat_kernel == MixIntKernelType.CONT_RELAX
+            ):
                 d = componentwise_distance_PLS(
                     dx,
                     corr,

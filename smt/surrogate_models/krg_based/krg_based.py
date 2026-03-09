@@ -1797,21 +1797,15 @@ class KrgBased(SurrogateModel):
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and self.options["categorical_kernel"]
-            not in [
-                MixIntKernelType.GOWER,
-                MixIntKernelType.COMPOUND_SYMMETRY,
-                MixIntKernelType.HOMO_HSPHERE,
-                MixIntKernelType.DIST_ENCODING,
-            ]
+            and not self.options["categorical_kernel"].is_scalar_encoding()
+            and self.options["categorical_kernel"] != MixIntKernelType.HOMO_HSPHERE
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."
             )
 
         if len(self._theta0) != d and (
-            self.options["categorical_kernel"]
-            in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
+            self.options["categorical_kernel"].is_scalar_encoding()
             or self.is_continuous
         ):
             if len(self._theta0) == 1:
