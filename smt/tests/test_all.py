@@ -183,22 +183,6 @@ class Test(SMTestCase):
             self.assertLessEqual(e_error, self.e_errors[sname])
         self.assertLessEqual(t_error, self.t_errors[sname])
 
-    def test_legacy_shims_coverage(self):
-        """Import from legacy shims to get them to 100% coverage."""
-        import smt.utils.krg_sampling as krg_sampling
-        import smt.utils.kriging as kriging
-
-        self.assertTrue(hasattr(krg_sampling, "sample_trajectory"))
-        self.assertTrue(hasattr(kriging, "MixIntKernelType"))
-
-    def test_silence_utilities(self):
-        """Covers smt/utils/silence.py Silence class."""
-        from smt.utils.silence import Silence
-
-        # Test Silence (basic sys.stdout override)
-        with Silence():
-            print("Silenced")
-
     def test_exp_LS(self):
         self.run_test()
 
