@@ -852,6 +852,142 @@ class Test(unittest.TestCase):
         ax.legend(["Predicted", "True", "Test", "Train"])
         plt.show()
 
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_idw_derivatives(self):
+        import numpy as np
+
+        from smt.surrogate_models import IDW
+
+        xt = np.array([[0.0], [1.0], [2.0]])
+        yt = np.array([[0.0], [1.0], [4.0]])
+
+        sm = IDW(print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        xe = np.array([[0.5], [1.5]])
+
+        # 1. predict_derivatives (kx=0)
+        dy = sm.predict_derivatives(xe, kx=0)
+        self.assertEqual(dy.shape, (2, 1))
+
+        # 2. predict_output_derivatives (Jacobian wrt training values)
+        dy_dyt = sm.predict_output_derivatives(xe)
+        jac = dy_dyt[None]
+        self.assertEqual(jac.shape, (2, 3, 1))
+
+        # Consistency check: Jacobian * yt should match predictions
+        y_pred = sm.predict_values(xe)
+        for i in range(len(xe)):
+            y_from_jac = jac[i, :, 0].dot(yt)
+            self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0])
+
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_rbf_output_derivatives(self):
+        import numpy as np
+
+        from smt.surrogate_models import RBF
+
+        xt = np.array([[0.0], [1.0], [2.0]])
+        yt = np.array([[0.0], [1.0], [4.0]])
+
+        sm = RBF(print_global=False)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        xe = np.array([[0.5], [1.5]])
+
+        # predict_output_derivatives
+        dy_dyt = sm.predict_output_derivatives(xe)
+        jac = dy_dyt[None]
+        self.assertEqual(jac.shape, (2, 3, 1))
+
+        # Consistency check
+        y_pred = sm.predict_values(xe)
+        for i in range(len(xe)):
+            y_from_jac = jac[i, :, 0].dot(yt)
+            self.assertAlmostEqual(y_pred[i, 0], y_from_jac[0], places=7)
+
+    @unittest.skipIf(NO_COMPILED, "C compilation failed")
+    def test_rbf_polynomial_trends(self):
+        import numpy as np
+
+        from smt.surrogate_models import RBF
+
+        xt = np.array([[0.0], [1.0]])
+        yt = np.array([[0.0], [1.0]])
+
+        for degree in [-1, 0, 1]:
+            sm = RBF(poly_degree=degree, print_global=False)
+            sm.set_training_values(xt, yt)
+            sm.train()
+            y = sm.predict_values(np.array([[0.5]]))
+            self.assertEqual(y.shape, (1, 1))
+
+    def test_surrogate_model_base_coverage(self):
+        """Exercise missed lines in surrogate_model.py base class."""
+        import numpy as np
+
+        from smt.surrogate_models.surrogate_model import SurrogateModel
+
+        class MockSurrogate(SurrogateModel):
+            @property
+            def name(self):
+                return "MockSurrogate"
+
+            def _predict_values(self, x):
+                return np.zeros((x.shape[0], 1))
+
+        sm = MockSurrogate()
+        sm.nx = 1
+
+        # 1. set_training_values validation
+        with self.assertRaisesRegex(ValueError, "y should be a 1d array"):
+            # Passing None inside array to trigger yt.item() is None check
+            sm.set_training_values(np.array([0]), np.array(None))
+
+        xt = np.array([[0.0], [1.0]])
+        yt = np.array([[0.0], [1.0]])
+        sm.set_training_values(xt, yt)
+
+        # 2. update_training_values
+        with self.assertRaisesRegex(
+            ValueError, "number of training points does not agree"
+        ):
+            sm.update_training_values(np.array([[0.0]]))  # length 1 != 2
+
+        sm.update_training_values(np.array([[1.0], [2.0]]))
+        self.assertEqual(sm.training_points[None][0][1][0, 0], 1.0)
+
+        # 3. set_training_derivatives / update_training_derivatives without support
+        with self.assertRaises(NotImplementedError):
+            sm.set_training_derivatives(xt, yt, 0)
+
+        sm.supports["training_derivatives"] = True
+        sm.set_training_derivatives(xt, yt, 0)
+
+        with self.assertRaisesRegex(ValueError, "kx must be an int"):
+            sm.set_training_derivatives(xt, yt, "invalid")
+
+        with self.assertRaisesRegex(ValueError, "must be set first"):
+            sm.update_training_derivatives(yt, 5)  # kx=5 not set
+
+        sm.update_training_derivatives(np.array([[5.0], [6.0]]), 0)
+
+        # 4. _predict_variance_gradient default implementation
+        sm.nx = 1
+        sm.supports["variance_derivatives"] = True
+        # Mock _predict_variance_derivatives
+        sm._predict_variance_derivatives = lambda x, kx: np.array([[0.1]])
+        grad = sm.predict_variance_gradient(np.array([0.5]))
+        self.assertEqual(grad.shape, (1, 1, 1))
+
+        # 5. Abstract method failures (save/load)
+        with self.assertRaises(NotImplementedError):
+            sm.save("test.pkl")
+        with self.assertRaises(NotImplementedError):
+            MockSurrogate.load("test.pkl")
+
 
 if __name__ == "__main__":
     unittest.main()

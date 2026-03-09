@@ -126,7 +126,17 @@ class Test(SMTestCase):
         self.run_test(Branin(ndim=2))
 
     def test_lp_norm(self):
-        self.run_test(LpNorm(ndim=2))
+        self.run_test(LpNorm(ndim=1, order=1))
+        self.run_test(LpNorm(ndim=2, order=2))
+        self.run_test(LpNorm(ndim=3, order=3))
+
+    def test_reduced_problem_extra(self):
+        # Test integer dims (ReducedProblem line ~35)
+        self.run_test(ReducedProblem(Sphere(ndim=5), dims=2))
+
+        # Test invalid dims (ReducedProblem line ~43)
+        with self.assertRaises(ValueError):
+            ReducedProblem(Sphere(ndim=5), dims="invalid")
 
     def test_rosenbrock(self):
         self.run_test(Rosenbrock(ndim=2))

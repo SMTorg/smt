@@ -28,7 +28,7 @@ class TestSaveLoad(unittest.TestCase):
         ndim = 2
         fun = Sphere(ndim=ndim)
 
-        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        sampling = LHS(xlimits=fun.xlimits, criterion="m", seed=42)
         xt = sampling(20)
         yt = fun(xt)
 

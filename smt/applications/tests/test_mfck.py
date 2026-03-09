@@ -69,6 +69,12 @@ class TestMFCK(SMTestCase):
 
             self.assert_error(t_error, 0.0, 3e-5, 1e-5)
 
+    def test_mfck_error_branches(self):
+        """Covers ValueError in eta."""
+        sm = MFCK()
+        with self.assertRaises(ValueError):
+            sm.eta(j=5, jp=2, rho=[1.0, 1.0])
+
     @staticmethod
     def run_mfck_example():
         import matplotlib.pyplot as plt
