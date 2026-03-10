@@ -243,11 +243,6 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  random_state
-     -  None
-     -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  rho0
      -  2.0
      -  None
