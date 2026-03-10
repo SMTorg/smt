@@ -304,34 +304,7 @@ class SMFCK(MFCK):
                 f"The optimizer {self.options['hyper_opt']} is not available"
             )
 
-        if not self.options["eval_noise"] or self.options["use_het_noise"]:
-            x_opt1 = np.array(x_opt, copy=True)
-        else:
-            x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
-
-        x_opt1[0] = 10 ** (x_opt1[0])  # Apply 10** to Sigma 0
-        x_opt1[1 : self.nx + 1] = (
-            10 ** (x_opt1[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-
-        x_opt1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, x_opt1.shape[0] - 1, self.nx + 2):
-            x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
-
-        x_opt = np.array(x_opt, copy=True)
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt = x_opt1
-            else:
-                x_opt[-self.lvl :] = 10 ** x_opt[-self.lvl :]
-                x_opt[: -self.lvl] = x_opt1
-        else:
-            x_opt = x_opt1
-        self.optimal_theta = x_opt
+        self.optimal_theta = self._transform_optimizer_param(x_opt)
 
     def predict_all_levels(self, x):
         """

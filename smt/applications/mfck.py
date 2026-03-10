@@ -282,41 +282,7 @@ class MFCK(KrgBased):
                 f"The optimizer {self.options['hyper_opt']} is not available"
             )
 
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt1 = np.array(x_opt, copy=True)
-            else:
-                x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
-        else:
-            x_opt1 = np.array(x_opt, copy=True)
-
-        x_opt1[0] = 10 ** (x_opt1[0])  # Apply 10** to Sigma 0
-        x_opt1[1 : self.nx + 1] = (
-            10 ** (x_opt1[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-
-        x_opt1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, x_opt1.shape[0] - 1, self.nx + 2):
-            x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt = np.array(x_opt, copy=True)
-                x_opt = x_opt1
-            else:
-                x_opt = np.array(x_opt, copy=True)
-
-                x_opt[-self.lvl : :] = 10 ** x_opt[-self.lvl : :]
-
-                x_opt[: -self.lvl] = x_opt1
-        else:
-            x_opt = np.array(x_opt, copy=True)
-            x_opt = x_opt1
-
-        self.optimal_theta = x_opt
+        self.optimal_theta = self._transform_optimizer_param(x_opt)
 
     def eta(self, j, jp, rho):
         """Compute eta_{j,l} based on the given rho values."""
