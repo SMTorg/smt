@@ -618,11 +618,11 @@ class TestKrgBased(unittest.TestCase):
 
         np.testing.assert_allclose(sm1.predict_values(xtest), sm2.predict_values(xtest))
 
-    def test_deprecated_random_state(self):
-        with self.assertWarns(DeprecationWarning):
-            _sm1 = KRG(random_state=42)
-        with self.assertRaises(ValueError):
-            _sm1 = KRG(random_state=np.random.RandomState(42))
+    def test_removed_random_state(self):
+        with self.assertRaises(AssertionError):
+            KRG(random_state=42)
+        with self.assertRaises(AssertionError):
+            KRG(random_state=np.random.RandomState(42))
 
 
 if __name__ == "__main__":

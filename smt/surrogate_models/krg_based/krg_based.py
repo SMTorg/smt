@@ -215,12 +215,6 @@ class KrgBased(SurrogateModel):
             desc="Numpy Generator object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-        self.options.declare(
-            "random_state",
-            types=(type(None), int, np.random.RandomState),
-            desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws \
-                for internal optim (set by default to get reproductibility)",
-        )
         self.kplsk_second_loop = False
         self.best_iteration_fail = None
         self.retry = MAX_RETRY
@@ -236,23 +230,7 @@ class KrgBased(SurrogateModel):
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
-        if isinstance(self.options["random_state"], np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(self.options["random_state"], int):
-            warnings.warn(
-                "Using random_state is deprecated and will raise an error in a future version. "
-                "Please use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.random_state = np.random.default_rng(self.options["random_state"])
-        else:
-            self.random_state = np.random.default_rng()
-
-        if self.options["seed"]:
-            self.random_state = np.random.default_rng(self.options["seed"])
+        self.random_state = np.random.default_rng(self.options["seed"])
 
         # initialize default power values (working copy, don't mutate options)
         self._pow_exp_power = self.options["pow_exp_power"]

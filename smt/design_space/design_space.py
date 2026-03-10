@@ -5,7 +5,6 @@ This package is distributed under New BSD license.
 """
 
 from typing import List, Optional, Sequence, Tuple, Union
-from warnings import warn
 
 import numpy as np
 
@@ -179,28 +178,11 @@ class BaseDesignSpace:
         self,
         design_variables: List[DesignVariable] = None,
         seed=None,
-        random_state=None,
     ):
         self._design_variables = design_variables
         self._is_cat_mask = None
         self._is_conditionally_acting_mask = None
-        if isinstance(random_state, np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(random_state, int):
-            warn(
-                "Using random_state is deprecated and will raise an error in a future version. "
-                "Please use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.seed = np.random.default_rng(random_state)
-        else:
-            self.seed = np.random.default_rng()
-
-        if seed:
-            self.seed = np.random.default_rng(seed)
+        self.seed = np.random.default_rng(seed)
         self.has_valcons_ord_int = False
 
     @property
@@ -343,7 +325,7 @@ class BaseDesignSpace:
         return decoded_des_vectors[0] if is_1d else decoded_des_vectors
 
     def sample_valid_x(
-        self, n: int, unfolded=False, seed=None, random_state=None
+        self, n: int, unfolded=False, seed=None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Sample n design vectors and additionally return the is_acting matrix.
@@ -356,8 +338,6 @@ class BaseDesignSpace:
            - Whether to return the samples in unfolded space (each categorical level gets its own dimension)
         seed: int or np.random.Generator
            - To control random draws
-        random_state:
-           - DEPRECATED use seed
 
         Returns
         -------
@@ -621,9 +601,7 @@ class BaseDesignSpace:
         """
         raise NotImplementedError
 
-    def _sample_valid_x(
-        self, n: int, seed=None, random_state=None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def _sample_valid_x(self, n: int, seed=None) -> Tuple[np.ndarray, np.ndarray]:
         """
         Sample n design vectors and additionally return the is_acting matrix.
 
@@ -722,27 +700,7 @@ class DesignSpace(BaseDesignSpace):
         self,
         design_variables: Union[List[DesignVariable], list, np.ndarray],
         seed=None,
-        random_state=None,
     ):
-        if isinstance(random_state, np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(random_state, int):
-            warn(
-                "Using random_state is deprecated and will raise an error in a future version. "
-                "Please use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.seed = np.random.default_rng(random_state)
-        else:
-            self.seed = np.random.default_rng()
-
-        self.seed = None
-        if seed:
-            self.seed = np.random.default_rng(seed)
-
         self.sampler = None
 
         # Assume float variable bounds as inputs
@@ -766,8 +724,6 @@ class DesignSpace(BaseDesignSpace):
                 converted_dvs.append(FloatVariable(bounds[0], bounds[1]))
             design_variables = converted_dvs
 
-        self.seed = seed  # For testing
-        seed = self.seed
         # dict[int, dict[any, list[int]]]: {meta_var_idx: {value: [decreed_var_idx, ...], ...}, ...}
         self._meta_vars = {}
         self._is_decreed = np.zeros((len(design_variables),), dtype=bool)

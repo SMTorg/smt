@@ -40,9 +40,7 @@ from smt.utils.misc import standardization
 
 
 class NestedLHS(object):
-    def __init__(
-        self, nlevel, xlimits=None, design_space=None, seed=None, random_state=None
-    ):
+    def __init__(self, nlevel, xlimits=None, design_space=None, seed=None):
         """
         Constructor where values of options can be passed in.
 
@@ -59,29 +57,9 @@ class NestedLHS(object):
 
         seed : Numpy Generator object or seed number which controls random draws
 
-        random_state : DEPRECATED use seed. Numpy RandomState object or seed number which controls random draws
-
         """
         self.nlevel = nlevel
-        self.random_state = random_state
-        if random_state is None:
-            self.random_state = np.random.default_rng()
-        elif isinstance(random_state, np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(random_state, int):
-            warnings.warn(
-                "Passing a seed or integer to random_state is deprecated "
-                "and will raise an error in a future version. Please "
-                "use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.random_state = np.random.default_rng(random_state)
-
-        if seed is not None:
-            self.random_state = np.random.default_rng(seed)
+        self.random_state = np.random.default_rng(seed)
 
         if xlimits is None and design_space is None:
             raise ValueError(
