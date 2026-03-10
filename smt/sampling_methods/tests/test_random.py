@@ -12,7 +12,7 @@ class TestRandomSamplingMethod(unittest.TestCase):
 
     def test_seed_initialization(self):
         sampler = Random(xlimits=self.xlimits, seed=12)
-        self.assertIsInstance(sampler.random_state, np.random.Generator)
+        self.assertIsInstance(sampler.rng, np.random.Generator)
 
     def test_compute_new(self):
         sampler = Random(xlimits=self.xlimits, seed=12)

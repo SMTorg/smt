@@ -59,7 +59,7 @@ class NestedLHS(object):
 
         """
         self.nlevel = nlevel
-        self.random_state = np.random.default_rng(seed)
+        self.rng = np.random.default_rng(seed)
 
         if xlimits is None and design_space is None:
             raise ValueError(
@@ -107,7 +107,7 @@ class NestedLHS(object):
         p0 = LHS(
             xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
             criterion="ese",
-            seed=self.random_state,
+            seed=self.rng,
         )
         p0nt0 = p0(nt[0])
         if self.design_space:
@@ -120,7 +120,7 @@ class NestedLHS(object):
             p = LHS(
                 xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
                 criterion="ese",
-                seed=self.random_state,
+                seed=self.rng,
             )
             pnti = p(nt[i])
             if self.design_space:

@@ -230,7 +230,7 @@ class KrgBased(SurrogateModel):
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
-        self.random_state = np.random.default_rng(self.options["seed"])
+        self.rng = np.random.default_rng(self.options["seed"])
 
         # initialize default power values (working copy, don't mutate options)
         self._pow_exp_power = self.options["pow_exp_power"]
@@ -343,7 +343,7 @@ class KrgBased(SurrogateModel):
         Override in MGP to sample from prior distribution.
         """
         log10t_bounds = np.log10(theta_bounds)
-        theta0_rand = self.random_state.random(len(self.theta0))
+        theta0_rand = self.rng.random(len(self.theta0))
         theta0_rand = (
             theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
         )
@@ -409,7 +409,7 @@ class KrgBased(SurrogateModel):
                                 [{theta_bounds[0]}, {theta_bounds[1]}]). \
                                     A random initialisation is used instead."
         )
-        val = self.random_state.random()
+        val = self.rng.random()
         val = val * (theta_bounds[1] - theta_bounds[0]) + theta_bounds[0]
         return val
 
@@ -1606,7 +1606,7 @@ class KrgBased(SurrogateModel):
                     sampling = LHS(
                         xlimits=theta_limits,
                         criterion="maximin",
-                        seed=self.random_state,
+                        seed=self.rng,
                     )
                     theta_lhs_loops = sampling(self.options["n_start"])
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))

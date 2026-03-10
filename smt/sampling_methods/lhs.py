@@ -43,9 +43,9 @@ class LHS(ScaledSamplingMethod):
 
         # RandomState is and has to be initialized once at constructor time,
         # not in _compute to avoid yielding the same dataset again and again
-        self.random_state = np.random.default_rng()
+        self.rng = np.random.default_rng()
         if self.options["seed"] is not None:
-            self.random_state = np.random.default_rng(self.options["seed"])
+            self.rng = np.random.default_rng(self.options["seed"])
 
     def _compute(self, nt):
         """
@@ -71,7 +71,7 @@ class LHS(ScaledSamplingMethod):
                 nx,
                 samples=nt,
                 criterion=self.options["criterion"],
-                seed=self.random_state,
+                seed=self.rng,
             )
         elif self.options["criterion"] == "ese":
             return self._ese(nx, nt)
@@ -188,7 +188,7 @@ class LHS(ScaledSamplingMethod):
                 PhiP_try = l_PhiP[k]
 
                 # Threshold of acceptance
-                rand = self.random_state.random(1)
+                rand = self.rng.random(1)
 
                 if PhiP_try - PhiP_ <= T * rand[0]:
                     PhiP_ = PhiP_try
@@ -277,13 +277,13 @@ class LHS(ScaledSamplingMethod):
         """
 
         # Choose two (different) random rows to perform the exchange
-        i1 = self.random_state.integers(X.shape[0])
+        i1 = self.rng.integers(X.shape[0])
         while i1 in fixed_index:
-            i1 = self.random_state.integers(X.shape[0])
+            i1 = self.rng.integers(X.shape[0])
 
-        i2 = self.random_state.integers(X.shape[0])
+        i2 = self.rng.integers(X.shape[0])
         while i2 == i1 or i2 in fixed_index:
-            i2 = self.random_state.integers(X.shape[0])
+            i2 = self.rng.integers(X.shape[0])
 
         X_ = np.delete(X, [i1, i2], axis=0)
 
@@ -311,7 +311,7 @@ class LHS(ScaledSamplingMethod):
         """
         # Parameters of maximinESE procedure
         if len(fixed_index) == 0:
-            P0 = lhs(dim, nt, criterion=None, seed=self.random_state)
+            P0 = lhs(dim, nt, criterion=None, seed=self.rng)
         J = 20
         outer_loop = min(int(1.5 * dim), 30)
         inner_loop = min(20 * dim, 100)

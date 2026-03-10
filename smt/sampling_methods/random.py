@@ -23,9 +23,9 @@ class Random(ScaledSamplingMethod):
 
         # Generator are and have to be initialized once at constructor time,
         # not in _compute to avoid yielding the same dataset again and again
-        self.random_state = np.random.default_rng()
+        self.rng = np.random.default_rng()
         if self.options["seed"] is not None:
-            self.random_state = np.random.default_rng(self.options["seed"])
+            self.rng = np.random.default_rng(self.options["seed"])
 
     def _compute(self, nt):
         """
@@ -45,4 +45,4 @@ class Random(ScaledSamplingMethod):
         """
         xlimits = self.options["xlimits"]
         nx = xlimits.shape[0]
-        return self.random_state.random((nt, nx))
+        return self.rng.random((nt, nx))
