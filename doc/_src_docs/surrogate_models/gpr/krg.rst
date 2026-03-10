@@ -73,6 +73,9 @@ then we round in the prediction to the output dimension giving the greatest cont
 A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
 See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
 
+Another advanced method for categorical variables is the **Distributional Encoding (DE)** kernel, which represents categorical levels as empirical distributions of the target values. 
+See :ref:`Mixed Integer and hierarchical Surrogates` for more details.
+
 More details available in [2]_. See also :ref:`Mixed Integer and hierarchical Surrogates`.
 
 Implementation Note: Mixed variables handling is available for all Kriging models (KRG, KPLS or KPLSK) but cannot be used with derivatives computation.
@@ -144,7 +147,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0661705
+     Training - done. Time (sec):  0.0636456
   ___________________________________________________________________________
      
    Evaluation
@@ -241,7 +244,7 @@ Example 2 with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.4387052
+     Training - done. Time (sec):  0.3591080
   ___________________________________________________________________________
      
    Evaluation
@@ -249,9 +252,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0062246
+     Predicting - done. Time (sec):  0.0049174
      
-     Prediction time/pt. (sec) :  0.0000124
+     Prediction time/pt. (sec) :  0.0000098
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -323,7 +326,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.9947252
+     Training - done. Time (sec):  0.7063498
   ___________________________________________________________________________
      
    Evaluation
@@ -396,9 +399,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]

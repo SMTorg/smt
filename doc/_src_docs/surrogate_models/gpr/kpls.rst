@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0663459
+     Training - done. Time (sec):  0.0716436
   ___________________________________________________________________________
      
    Evaluation
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005040
+     Predicting - done. Time (sec):  0.0014985
      
-     Prediction time/pt. (sec) :  0.0001008
+     Prediction time/pt. (sec) :  0.0002997
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -165,7 +165,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 27.0634744
+     Training - done. Time (sec): 38.3302641
   
    The model automatically choose 5 components.
   ___________________________________________________________________________
@@ -179,8 +179,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[2.73415691]]
-  [[40.38140342]]
+  [[2.73415569]]
+  [[40.38141973]]
   
 
 Options
@@ -238,9 +238,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
