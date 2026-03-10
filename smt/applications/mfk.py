@@ -281,7 +281,6 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model
         """
-        self._corr_params = None
         self._mix_int_corr = MixedIntegerCorrelation(self)
         self._likelihood_evaluator = LikelihoodEvaluator(self)
         self._new_train_init()
