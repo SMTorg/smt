@@ -643,77 +643,42 @@ class MFCK(KrgBased):
         (nmll,) = NMLL[0]
         return nmll
 
+    def _transform_optimizer_param(self, param):
+        """Map optimizer parameters from log10-space to model-space."""
+        param = np.array(param, copy=True)
+
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            kernel_param = np.array(param[: -self.lvl], copy=True)
+        else:
+            kernel_param = np.array(param, copy=True)
+
+        kernel_param[0] = 10 ** kernel_param[0]
+        kernel_param[1 : self.nx + 1] = 10 ** kernel_param[1 : self.nx + 1]
+        kernel_param[self.nx + 1 :: self.nx + 2] = (
+            10 ** kernel_param[self.nx + 1 :: self.nx + 2]
+        )
+
+        for i in np.arange(self.nx + 2, kernel_param.shape[0] - 1, self.nx + 2):
+            kernel_param[i : i + self.nx] = 10 ** kernel_param[i : i + self.nx]
+
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            param[-self.lvl :] = 10 ** param[-self.lvl :]
+            param[: -self.lvl] = kernel_param
+            return param
+
+        return kernel_param
+
     def neg_log_likelihood_scipy(self, param):
         """
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param1 = np.array(param, copy=True)
-            else:
-                param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param = np.array(param, copy=True)
-                param = param1
-            else:
-                param = np.array(param, copy=True)
-                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-                param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param)
+        return self.neg_log_likelihood(self._transform_optimizer_param(param))
 
     def neg_log_likelihood_nlopt(self, param, grad=None):
         """
         Likelihood for nlopt optimizers
         """
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param1 = np.array(param, copy=True)
-            else:
-                param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param = np.array(param, copy=True)
-                param = param1
-            else:
-                param = np.array(param, copy=True)
-                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-                param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param, grad)
+        return self.neg_log_likelihood(self._transform_optimizer_param(param), grad)
 
     def compute_blockwise_K(self, X, Xprime, param):
         K_block = {}
@@ -766,25 +731,3 @@ class MFCK(KrgBased):
         R = r.reshape(A.shape[0], B.shape[0])
         K = param[0] * R
         return K
-
-    # def _compute_K(self, X, Xp, param):
-    #     """
-    #     X: array (n, d)
-    #     Xp: array (m, d)
-    #     sigma: scalar
-    #     theta: array (d,) or scalar
-    #     returns: K (n, m)
-    #     """
-    #     X = np.asarray(X)
-    #     Xp = np.asarray(Xp)
-    #     theta = np.asarray(param[1])
-
-    #     # permitir theta escalar
-    #     if theta.ndim == 0:
-    #         theta = np.full(X.shape[1], float(theta))
-
-    #     # cálculo vectorizado: ((X[:,None,:] - Xp[None,:,:]) / theta)**2 sumando sobre la dimensión
-    #     diff = (X[:, None, :] - Xp[None, :, :]) / theta[None, None, :]
-    #     sqdist = np.sum(diff**2, axis=2)   # forma (n, m)
-    #     K = (param[0]**2) * np.exp(-0.5 * sqdist)
-    #     return K
