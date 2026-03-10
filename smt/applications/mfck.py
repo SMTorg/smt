@@ -14,6 +14,8 @@ Conference on Neural Information Processing Systems.
 """
 
 # import warnings
+from typing import Any
+
 import numpy as np
 from scipy import optimize
 from scipy.linalg import solve_triangular
@@ -23,8 +25,19 @@ from smt.surrogate_models.krg_based import KrgBased
 from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 from smt.utils.misc import standardization
 
+try:
+    import nlopt as _nlopt  # pyright: ignore[reportMissingImports]
+except ImportError:
+    _nlopt = None
+
 
 class MFCK(KrgBased):
+    @staticmethod
+    def _get_nlopt() -> Any:
+        if _nlopt is None:
+            raise ImportError("nlopt is required when hyper_opt='Cobyla-nlopt'")
+        return _nlopt
+
     def _initialize(self):
         super()._initialize()
         declare = self.options.declare
@@ -255,11 +268,7 @@ class MFCK(KrgBased):
                         nll = optimal_theta_res_loop["fun"]
 
         elif self.options["hyper_opt"] == "Cobyla-nlopt":
-            try:
-                import nlopt
-            except ImportError:
-                print("nlopt library is not installed or available on this system")
-
+            nlopt = self._get_nlopt()
             opt = nlopt.opt(nlopt.LN_COBYLA, theta_ini.shape[0])
             opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
             opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension

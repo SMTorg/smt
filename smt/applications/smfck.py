@@ -290,11 +290,7 @@ class SMFCK(MFCK):
                         nll = optimal_theta_res_loop["fun"]
 
         elif self.options["hyper_opt"] == "Cobyla-nlopt":
-            try:
-                import nlopt
-            except ImportError:
-                print("nlopt library is not installed or available on this system")
-
+            nlopt = self._get_nlopt()
             opt = nlopt.opt(nlopt.LN_COBYLA, theta_ini.shape[0])
             opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
             opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension
@@ -427,11 +423,7 @@ class SMFCK(MFCK):
 
             if self.options["use_het_noise"]:
                 if self.options["predict_with_noise"]:
-                    try:
-                        import nlopt
-                    except ImportError:
-                        print("predict_with_noise olny available with nlopt")
-
+                    nlopt = self._get_nlopt()
                     opt = nlopt.opt(nlopt.LN_COBYLA, len(self.optimal_theta))
                     opt.set_lower_bounds(
                         10**self.lower_bounds
