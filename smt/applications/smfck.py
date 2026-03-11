@@ -17,79 +17,22 @@ Conference on Neural Information Processing Systems.
 import numpy as np
 from scipy import optimize
 from smt.sampling_methods import LHS
-from smt.surrogate_models.krg_based.distances import differences, componentwise_distance
-from smt.surrogate_models.krg_based import KrgBased
+from smt.applications.mfck import MFCK
 from smt.utils.misc import standardization
 from scipy.cluster.vq import kmeans
 
 
-class SMFCK(KrgBased):
-    "This class should inherit from the class MFCK"
-
+class SMFCK(MFCK):
     def _initialize(self):
         super()._initialize()
         declare = self.options.declare
         self.name = "SMFCK"
-
-        declare(
-            "eval_noise",
-            False,
-            types=bool,
-            values=(True, False),
-            desc="If True, the model evaluates noise variance, can be homoscedastic or heteroscedastic",
-        )
-        declare(
-            "use_het_noise",
-            False,
-            types=bool,
-            values=(True, False),
-            desc="If True, the model considers Heteroscedastic noise, array with the same size of y(x) is expected",
-        )
         declare(
             "predict_with_noise",
             False,
             types=bool,
             values=(True, False),
             desc="if use_het_noise is true, then the prediction of the noise variance over the test set will given",
-        )
-
-        declare(
-            "rho0",
-            1.0,
-            types=(float),
-            desc="Initial rho for the autoregressive model , \
-                  (scalar factor between two consecutive fidelities, \
-                    e.g., Y_HF = (Rho) * Y_LF + Gamma",
-        )
-        declare(
-            "rho_bounds",
-            [-5.0, 5.0],
-            types=(list, np.ndarray),
-            desc="Bounds for the rho parameter used in the autoregressive model",
-        )
-        declare(
-            "sigma0",
-            1.0,
-            types=(float),
-            desc="Initial variance parameter",
-        )
-        declare(
-            "sigma_bounds",
-            [1e-6, 100],
-            types=(list, np.ndarray),
-            desc="Bounds for the variance parameter",
-        )
-        declare(
-            "lambda",
-            0.0,
-            types=(float),
-            desc="Regularization parameter",
-        )
-        declare(
-            "hyper_opt",
-            "Cobyla",
-            values=("Cobyla", "Cobyla-nlopt"),
-            desc="Optimiser for hyperparameters optimisation",
         )
         declare(
             "n_inducing",
@@ -105,31 +48,25 @@ class SMFCK(KrgBased):
             types=(str),
         )
         declare(
-            "nugget",
-            1000.0
-            * np.finfo(
-                np.double
-            ).eps,  # slightly increased compared to kriging-based one
-            types=(float),
-            desc="a jitter for numerical stability",
-        )
-        declare(
             "inducing_method",
             "kmeans",
             types=str,
             values=["random", "kmeans"],
             desc="The chosen method to induce points",
         )
-        self.options.declare(
-            "seed",
-            default=0,
-            types=(type(None), int),
-            desc="seed number which controls random draws",
-        )
 
+        self.options["rho0"] = 1.0
+        self.options["rho_bounds"] = [-5.0, 5.0]
+        self.options["sigma0"] = 1.0
+        self.options["sigma_bounds"] = [1e-6, 100]
+        self.options["lambda"] = 0.0
+        self.options["eval_noise"] = False
+        self.options["use_het_noise"] = False
+        self.options["seed"] = 0
         self.options["hyper_opt"] = (
             "Cobyla-nlopt"  # MFCK doesn't support gradient-based optimizers
         )
+        self.options["nugget"] = 1000.0 * np.finfo(np.double).eps
         self.woodbury_data = {"vec": None, "inv": None}
         self._seed = self.options["seed"]
 
@@ -353,11 +290,7 @@ class SMFCK(KrgBased):
                         nll = optimal_theta_res_loop["fun"]
 
         elif self.options["hyper_opt"] == "Cobyla-nlopt":
-            try:
-                import nlopt
-            except ImportError:
-                print("nlopt library is not installed or available on this system")
-
+            nlopt = self._get_nlopt()
             opt = nlopt.opt(nlopt.LN_COBYLA, theta_ini.shape[0])
             opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
             opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension
@@ -371,87 +304,7 @@ class SMFCK(KrgBased):
                 f"The optimizer {self.options['hyper_opt']} is not available"
             )
 
-        if not self.options["eval_noise"] or self.options["use_het_noise"]:
-            x_opt1 = np.array(x_opt, copy=True)
-        else:
-            x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
-
-        x_opt1[0] = 10 ** (x_opt1[0])  # Apply 10** to Sigma 0
-        x_opt1[1 : self.nx + 1] = (
-            10 ** (x_opt1[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-
-        x_opt1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, x_opt1.shape[0] - 1, self.nx + 2):
-            x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
-
-        x_opt = np.array(x_opt, copy=True)
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt = x_opt1
-            else:
-                x_opt[-self.lvl :] = 10 ** x_opt[-self.lvl :]
-                x_opt[: -self.lvl] = x_opt1
-        else:
-            x_opt = x_opt1
-        self.optimal_theta = x_opt
-
-    def eta(self, j, jp, rho):
-        """Compute eta_{j,l} based on the given rho values."""
-        if j < jp:
-            return np.prod(rho[j:jp])  # Product of rho[j+1] to rho[l]
-        elif j == jp:
-            return 1
-        else:
-            raise ValueError(
-                f"The iterative variable j={j} cannot be greater than j'={jp}"
-            )
-
-    # Covariance between y_l(x) and y_l'(x')
-    def compute_cross_K(self, x, xp, L, Lp, param):
-        """
-        Calculation Cov(y_l(x), y_{l'}(x')) using the autoregressive formulation.
-        Parmeters:
-        - x: First input for the covariannce (np.ndarray)
-        - xp: Second input for the covariannce (np.ndarray)
-        - L: Level index of the first output (scalar)
-        - Lp: Level index of the second output (scalar)
-        - param: Set of Hyper-parameters (vector)
-        Returns:
-        - Covariance matrix cov(y_l(x), y_{l'}(x')) (np.ndarray)
-        """
-        cov_value = 0.0
-
-        sigma_0 = param[0]
-        l_0 = param[1 : self.nx + 1]
-        # param0 = param[0 : self.nx+1]
-        sigmas_gamma = param[self.nx + 1 :: self.nx + 2]
-        l_s = [
-            param[i : i + self.nx].tolist()
-            for i in np.arange(self.nx + 2, param.shape[0] - 1, self.nx + 2)
-        ]
-        # ls_gamma = param[3::3]
-        rho_values = param[2 + 2 * self.nx :: self.nx + 2]
-
-        # Sum of j=0 until l_^prime
-        for j in range(Lp + 1):
-            eta_j_l = self.eta(j, L, rho_values)
-            eta_j_lp = self.eta(j, Lp, rho_values)
-
-            if j == 0:
-                # Cov(γ_j(x), γ_j(x')) using the kernel for K_00
-                cov_gamma_j = self._compute_K(x, xp, [sigma_0, l_0])
-            else:
-                # Cov(γ_j(x), γ_j(x')) using the kernel
-                cov_gamma_j = self._compute_K(x, xp, [sigmas_gamma[j - 1], l_s[j - 1]])
-            # Add to the value of the covariance
-            cov_value += eta_j_l * eta_j_lp * cov_gamma_j
-
-        return cov_value
+        self.optimal_theta = self._transform_optimizer_param(x_opt)
 
     def predict_all_levels(self, x):
         """
@@ -543,11 +396,7 @@ class SMFCK(KrgBased):
 
             if self.options["use_het_noise"]:
                 if self.options["predict_with_noise"]:
-                    try:
-                        import nlopt
-                    except ImportError:
-                        print("predict_with_noise olny available with nlopt")
-
+                    nlopt = self._get_nlopt()
                     opt = nlopt.opt(nlopt.LN_COBYLA, len(self.optimal_theta))
                     opt.set_lower_bounds(
                         10**self.lower_bounds
@@ -602,44 +451,6 @@ class SMFCK(KrgBased):
             k_xZ.clear()
         # print("Optimal noise",noises * self.y_std**2)
         return means, covariances
-
-    def predict_values(self, x, is_acting=None):
-        """
-        Prediction function for the highest fidelity level
-        Parameters
-        ----------
-        x : array
-            Array with the inputs for make the prediction.
-        Returns
-        -------
-        mean : np.array
-            Returns the conditional means per level.
-        covariance: np.ndarray
-            Returns the conditional covariance matrixes per level.
-        """
-        means, covariances = self.predict_all_levels(x)
-
-        return means[self.lvl - 1]
-
-    def predict_variances(
-        self, X: np.ndarray, is_acting=None, is_ri=False
-    ) -> np.ndarray:
-        """
-        Evaluates the model at a set of points.
-
-        Arguments
-        ---------
-        x : np.ndarray [n_evals, dim]
-            Evaluation point input variable values
-
-        Returns
-        -------
-        y : np.ndarray
-            Evaluation point output variable values
-        """
-        means, covariances = self.predict_all_levels(X)
-
-        return covariances[self.lvl - 1]
 
     def neg_log_likelihood(self, param, grad=None):
         if self.options["method"] == "FITC":
@@ -761,74 +572,11 @@ class SMFCK(KrgBased):
 
         return likelihood, woodbury_vec, woodbury_inv
 
-    def compute_diag_K(self, x, xp, L, Lp, param):
-        """
-        Calculation of the diagonal of K using the autoregressive formulation.
-        Parmeters:
-        - x: First input for the covariannce (np.ndarray)
-        - xp: Second input for the covariannce (np.ndarray)
-        - L: Level index of the first output (scalar)
-        - Lp: Level index of the second output (scalar)
-        - param: Set of Hyper-parameters (vector)
-        Returns:
-        - Diagonal variance for cov(y_l(x), y_{l'}(x')) (np.ndarray)
-        """
-        v_value = 0.0
-
-        sigma_0 = param[0]
-
-        sigmas_gamma = param[self.nx + 1 :: self.nx + 2]
-
-        # ls_gamma = param[3::3]
-        rho_values = param[2 + 2 * self.nx :: self.nx + 2]
-
-        # Sum of j=0 until l_^prime
-        for j in range(Lp + 1):
-            eta_j_l = self.eta(j, L, rho_values)
-            eta_j_lp = self.eta(j, Lp, rho_values)
-
-            if j == 0:
-                # Cov(γ_j(x), γ_j(x')) using the kernel for K_00
-                variance = np.full(x.shape[0], sigma_0)
-
-            else:
-                # Cov(γ_j(x), γ_j(x')) using the kernel
-                variance = np.full(x.shape[0], sigmas_gamma[j - 1])
-            # Add to the value of the covariance
-            v_value += eta_j_l * eta_j_lp * variance
-
-        return v_value
-
     def neg_log_likelihood_scipy(self, param):
         """
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
-        if self.options["eval_noise"]:
-            param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            param = np.array(param, copy=True)
-
-            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-
-            param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param)
+        return self.neg_log_likelihood(self._transform_optimizer_param(param))
 
     def neg_log_likelihood_noise(self, param, grad=None):
         # param = np.append(param,self.optimal_theta[-1])
@@ -853,79 +601,4 @@ class SMFCK(KrgBased):
         """
         Likelihood for nlopt optimizers
         """
-        if self.options["eval_noise"]:
-            param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            param = np.array(param, copy=True)
-            param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-            param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param, grad)
-
-    def compute_blockwise_K(self, X, Xprime, param):
-        K_block = {}
-        n = 0
-        nprime = 0
-        for i in X:
-            n = n + i.shape[0]
-
-        for i in Xprime:
-            nprime = nprime + i.shape[0]
-        for jp in range(self.lvl):
-            for j in range(self.lvl):
-                if jp >= j:
-                    K_block[str(jp) + str(j)] = self.compute_cross_K(
-                        X[j], Xprime[jp], jp, j, param
-                    )
-                else:
-                    K_block[str(jp) + str(j)] = self.compute_cross_K(
-                        X[j], Xprime[jp], j, jp, param
-                    )
-        K = np.zeros((n, nprime))
-        row_init, col_init = 0, 0
-        for j in range(self.lvl):
-            col_init = 0
-            for jp in range(self.lvl):
-                r, c = K_block[str(jp) + str(j)].shape
-                K[row_init : row_init + r, col_init : col_init + c] = K_block[
-                    str(jp) + str(j)
-                ]
-                col_init += c
-            row_init += r
-
-        return K
-
-    def _compute_K(self, A: np.ndarray, B: np.ndarray, param):
-        """
-        Compute the covariance matrix K between A and B
-            Modified for MFCK initial test (Same theta for each dimmension)
-        """
-        # Compute pairwise componentwise L1-distances between A and B
-        dx = differences(A, B)
-        d = componentwise_distance(
-            dx,
-            self.options["corr"],
-            self.X[0].shape[1],
-            power=self.options["pow_exp_power"],
-        )
-        self.corr.theta = np.asarray(param[1])
-        r = self.corr(d)
-        R = r.reshape(A.shape[0], B.shape[0])
-        K = param[0] * R
-        return K
+        return self.neg_log_likelihood(self._transform_optimizer_param(param), grad)

@@ -29,7 +29,9 @@ from smt.surrogate_models.krg_based.distances import (
     cross_distances,
     differences,
 )
+from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
 from smt.surrogate_models.krg_based.mixed_int_corr import (
+    MixedIntegerCorrelation,
     compute_X_cont,
     cross_levels,
     gower_componentwise_distances,
@@ -279,10 +281,8 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model
         """
-        self._corr_params = None
-        if hasattr(self, "_mix_int_corr"):
-            self._mix_int_corr.reset()
-
+        self._mix_int_corr = MixedIntegerCorrelation(self)
+        self._likelihood_evaluator = LikelihoodEvaluator(self)
         self._new_train_init()
         theta0 = self._theta0.copy()
         noise0 = deepcopy(self._noise0)

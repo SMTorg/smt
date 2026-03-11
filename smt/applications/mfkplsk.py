@@ -11,7 +11,6 @@ Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
 import numpy as np
-from copy import deepcopy
 
 from smt.applications import MFKPLS
 from smt.surrogate_models.krg_based import compute_n_param
@@ -97,22 +96,6 @@ class MFKPLSK(MFKPLS):
             use_multistart=False,
             limit=10 * self._n_comp,
         )
-
-    def _new_train(self):
-        """
-        Overrides KrgBased implementation
-        Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
-        """
-        self._new_train_init()
-        theta0 = self._theta0.copy()
-        noise0 = deepcopy(self._noise0)
-
-        for lvl in range(self.nlvl):
-            self._new_train_iteration(lvl)
-            self._theta0 = theta0
-            self._noise0 = noise0
-
-        self._reinterpolate(lvl)
 
     def _get_theta(self, i):
         return self.optimal_theta[i]
