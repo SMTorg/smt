@@ -52,11 +52,6 @@ Options
      -  None
      -  ['ndarray']
      -  The interval of the domain in each dimension with shape nx x 2 (required)
-  *  -  random_state
-     -  None
-     -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED: Numpy RandomState object or seed number which controls random draws
   *  -  seed
      -  None
      -  None

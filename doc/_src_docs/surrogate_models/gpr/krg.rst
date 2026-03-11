@@ -147,7 +147,7 @@ Example 1
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0636456
+     Training - done. Time (sec):  0.0664966
   ___________________________________________________________________________
      
    Evaluation
@@ -244,7 +244,7 @@ Example 2 with mixed variables
    Training
      
      Training ...
-     Training - done. Time (sec):  0.3591080
+     Training - done. Time (sec):  0.4050598
   ___________________________________________________________________________
      
    Evaluation
@@ -252,9 +252,9 @@ Example 2 with mixed variables
         # eval points. : 500
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0049174
+     Predicting - done. Time (sec):  0.0073817
      
-     Prediction time/pt. (sec) :  0.0000098
+     Prediction time/pt. (sec) :  0.0000148
      
   
 .. figure:: krg_Test_test_mixed_int_krg.png
@@ -326,7 +326,7 @@ Example 3 with noisy data
    Training
      
      Training ...
-     Training - done. Time (sec):  0.7063498
+     Training - done. Time (sec):  0.8462408
   ___________________________________________________________________________
      
    Evaluation
@@ -334,9 +334,9 @@ Example 3 with noisy data
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0009997
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000100
      
   
 .. figure:: krg_Test_test_noisy_krg.png
@@ -477,8 +477,3 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  random_state
-     -  None
-     -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)

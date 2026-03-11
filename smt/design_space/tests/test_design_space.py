@@ -449,14 +449,14 @@ class Test(unittest.TestCase):
         for v1, v2 in zip(ds1.sample_valid_x(3), ds2.sample_valid_x(3)):
             np.testing.assert_allclose(v1, v2)
 
-    def test_deprecated_random_state(self):
-        with self.assertWarns(DeprecationWarning):
-            _ds1 = DesignSpace(
+    def test_removed_random_state(self):
+        with self.assertRaises(TypeError):
+            DesignSpace(
                 [FloatVariable(0.5, 1.5)],
                 random_state=42,
             )
-        with self.assertRaises(ValueError):
-            _ds2 = DesignSpace(
+        with self.assertRaises(TypeError):
+            DesignSpace(
                 [FloatVariable(0.5, 1.5)],
                 random_state=np.random.RandomState(),
             )

@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0716436
+     Training - done. Time (sec):  0.0683827
   ___________________________________________________________________________
      
    Evaluation
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0014985
+     Predicting - done. Time (sec):  0.0000000
      
-     Prediction time/pt. (sec) :  0.0002997
+     Prediction time/pt. (sec) :  0.0000000
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -165,7 +165,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 38.3302641
+     Training - done. Time (sec): 25.7292035
   
    The model automatically choose 5 components.
   ___________________________________________________________________________
@@ -179,8 +179,8 @@ Usage with an automatic number of components
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[2.73415569]]
-  [[40.38141973]]
+  [[2.73415806]]
+  [[40.38142763]]
   
 
 Options
@@ -316,11 +316,6 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  random_state
-     -  None
-     -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None

@@ -215,12 +215,6 @@ class KrgBased(SurrogateModel):
             desc="Numpy Generator object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-        self.options.declare(
-            "random_state",
-            types=(type(None), int, np.random.RandomState),
-            desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws \
-                for internal optim (set by default to get reproductibility)",
-        )
         self.kplsk_second_loop = False
         self.best_iteration_fail = None
         self.retry = MAX_RETRY
@@ -236,23 +230,7 @@ class KrgBased(SurrogateModel):
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
-        if isinstance(self.options["random_state"], np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(self.options["random_state"], int):
-            warnings.warn(
-                "Using random_state is deprecated and will raise an error in a future version. "
-                "Please use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.random_state = np.random.default_rng(self.options["random_state"])
-        else:
-            self.random_state = np.random.default_rng()
-
-        if self.options["seed"]:
-            self.random_state = np.random.default_rng(self.options["seed"])
+        self.rng = np.random.default_rng(self.options["seed"])
 
         # initialize default power values (working copy, don't mutate options)
         self._pow_exp_power = self.options["pow_exp_power"]
@@ -365,7 +343,7 @@ class KrgBased(SurrogateModel):
         Override in MGP to sample from prior distribution.
         """
         log10t_bounds = np.log10(theta_bounds)
-        theta0_rand = self.random_state.random(len(self.theta0))
+        theta0_rand = self.rng.random(len(self.theta0))
         theta0_rand = (
             theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
         )
@@ -431,7 +409,7 @@ class KrgBased(SurrogateModel):
                                 [{theta_bounds[0]}, {theta_bounds[1]}]). \
                                     A random initialisation is used instead."
         )
-        val = self.random_state.random()
+        val = self.rng.random()
         val = val * (theta_bounds[1] - theta_bounds[0]) + theta_bounds[0]
         return val
 
@@ -1628,7 +1606,7 @@ class KrgBased(SurrogateModel):
                     sampling = LHS(
                         xlimits=theta_limits,
                         criterion="maximin",
-                        seed=self.random_state,
+                        seed=self.rng,
                     )
                     theta_lhs_loops = sampling(self.options["n_start"])
                     theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
