@@ -38,9 +38,18 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/ADOE_MFK_Rosenbrock_2D2F.ipynb)
 
+* ### Sparse Multi-fidelity gaussian processes with nested DOE (large database) based on MFK
+  
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_SMFK_tutorial.ipynb)
+
+* ### Sparse Multi-fidelity gaussian processes with non nested DOE (large database) based on MFCK
+  
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_SMFCK_tutorial.ipynb)
+
 * ### Without nested sampling
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MultiFi/SMT_MFCK_tutorial.ipynb)
+
 
 ## Proper Orthogonal Decomposition and Interpolation
 
@@ -111,3 +120,4 @@ These tutorials introduce to use the opensource Surrogate Modeling Toolbox where
 * ### Mixed-Integer Gaussian Process and Bayesian Optimization for Engineering application
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SMTorg/smt/blob/master/tutorial/MixedInteger/SMT_MixedInteger_Engineering_applications.ipynb)
+
