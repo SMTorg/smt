@@ -14,6 +14,7 @@ import numpy as np
 
 from smt.kernels import (
     ActExp,
+    Kernel,
     Matern32,
     Matern52,
     PowExp,
@@ -100,6 +101,38 @@ class Test(SMTestCase):
         sm.set_training_values(xt, yt)
         sm.train()
         self.assert_error(np.array(sm.optimal_theta), np.array([1.6]), 1e-1, 1e-1)
+
+    def test_custom_composed_kernel_training(self):
+        class RatQuad(Kernel):
+            def __call__(self, d, grad_ind=None, hess_ind=None, derivative_params=None):
+                n_theta = self.theta.shape[0]
+                theta_1 = self.theta[: n_theta // 2]
+                theta_2 = self.theta[n_theta // 2 :]
+                return (1.0 + d**2 / (2.0 * theta_1 * theta_2)) ** (-theta_1)
+
+        xt = np.linspace(0.0, 1.0, 8).reshape(-1, 1)
+        yt = np.sin(2.0 * np.pi * xt)
+        kernel = (
+            Matern32([0.01])
+            + SquarSinExp([0.01, 0.01]) * PowExp([0.01])
+            + RatQuad([0.01, 0.01])
+        )
+
+        sm = KRG(
+            corr=kernel,
+            hyper_opt="Cobyla",
+            n_start=5,
+            poly="linear",
+            print_global=False,
+        )
+
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        self.assertEqual(len(sm.optimal_theta), 6)
+        self.assertEqual(sm.corr.theta.shape[0], 6)
+        y_pred = sm.predict_values(np.array([[0.1], [0.5], [0.9]]))
+        self.assertEqual(y_pred.shape, (3, 1))
 
     def test_corr_derivatives(self):
         for ind, corr in enumerate(self.corr_def):  # For every kernel
