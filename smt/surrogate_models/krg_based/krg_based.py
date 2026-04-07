@@ -1715,7 +1715,10 @@ class KrgBased(SurrogateModel):
         and amend theta0 if possible (see _amend_theta0_option).
         """
         # Create working copies of mutable options to avoid mutating self.options
-        self._theta0 = list(self.options["theta0"])
+        if isinstance(self.options["corr"], Kernel):
+            self._theta0 = list(np.atleast_1d(self.corr.theta))
+        else:
+            self._theta0 = list(self.options["theta0"])
         self._eval_noise = getattr(
             self, "_eval_noise_request", self.options["eval_noise"]
         )
@@ -1763,9 +1766,13 @@ class KrgBased(SurrogateModel):
                 "Categorical kernels should be matrix or exponential based."
             )
 
-        if len(self._theta0) != d and (
-            self.options["categorical_kernel"].is_scalar_encoding()
-            or self.is_continuous
+        if (
+            not isinstance(self.options["corr"], Kernel)
+            and len(self._theta0) != d
+            and (
+                self.options["categorical_kernel"].is_scalar_encoding()
+                or self.is_continuous
+            )
         ):
             if len(self._theta0) == 1:
                 self._theta0 = list(np.array(self._theta0) * np.ones(d))
