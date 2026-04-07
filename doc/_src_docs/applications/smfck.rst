@@ -16,13 +16,15 @@ is a scaling/correlation factor (constant for MFCK) and :math:`\delta(\cdot)` is
 
 The additive AR1 formulation was first introduced by Kennedy and O'Hagan [1]_.
 While MFK follows the recursive formulation of Le Gratiet [2]_. SMFCK uses ab block-wise matrix construction for :math:`n` levels of fidelity offering freedom in terms of data input assumptions.
-The sparse approximations are based on the formulations of Titsias [3]_.
+The sparse approximations are based on the formulations of Titsias [3]_ and given in [4]_.
 
 References
 ----------
 .. [1] Kennedy, M.C. and O'Hagan, A., Bayesian calibration of computer models. Journal of the Royal Statistical Society. 2001
 .. [2] Le Gratiet, L., Multi-fidelity Gaussian process regression for computer experiments. PhD Thesis. 2013
 .. [3] Titsias, M.K., Variational Learning of Inducing Variables in Sparse Gaussian Processes. In Proceedings of the 12th International Conference on Artificial Intelligence and Statistics (AISTATS), 2009
+.. [4] Castano-Aguirre, M., López-Lopera, F. A., Bartoli, N., Massa, F., & Lefebvre, T. Scalable Sparse Co-Kriging for Multi-Fidelity Data Fusion: An Application to Aerodynamics. Reliability Engineering & System Safety, 112485, 2026
+
 
 Usage
 -----

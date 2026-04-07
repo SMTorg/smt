@@ -26,8 +26,11 @@ Squared Exponential (Gaussian) correlation function:
 
 Exponential correlation function with a variable power:
 
+
 .. math ::
   \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|^{p}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+In order to have a better condition number for the Gaussian correlation  matrices, the power exponential kernel is considered with power = 1.9 by default (see Zimmermann, R. (2015). 'On the condition number anomaly of Gaussian correlation matrices'. Linear Algebra and its Applications, 466, 512-526 and Schoenberg, I. J. [1938], 'Metric spaces and positive definite functions', Transactions  of the American Mathematical Society 44, 522–536)
   
 Matérn 5/2 correlation function:
 
