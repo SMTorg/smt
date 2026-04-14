@@ -119,7 +119,8 @@ class CoopCompKRG(KrgBased):
         comp_var[vars[start:end],c] = True
 
     # Cooperative components Kriging model fit
-    model = CoopCompKRG(comp_var=comp_var)
+    # comp_var can be provided explicitly or auto-computed from ncomp and seed
+    model = CoopCompKRG(ncomp=n_comp)
     model.set_training_values(x_train, y_train)
     model.train()
 
@@ -154,7 +155,14 @@ class CoopCompKRG(KrgBased):
         declare(
             "comp_var",
             None,
-            desc="Boolean array [nx, n_comp] mapping design variables to components",
+            desc="Boolean array [nx, n_comp] mapping design variables to components. "
+            "If None, computed automatically from ncomp and seed.",
+        )
+        declare(
+            "ncomp",
+            3,
+            types=(int,),
+            desc="Number of components (used to build comp_var when not provided)",
         )
         supports = self.supports
         supports["variances"] = True
@@ -173,12 +181,27 @@ class CoopCompKRG(KrgBased):
         )
         return d
 
+    def _build_comp_var(self, nx, ncomp, rng):
+        """Build a random design-variable-to-component allocation."""
+        vars_order = list(range(nx))
+        rng.shuffle(vars_order)
+        comp_var = np.full((nx, ncomp), False)
+        for c in range(ncomp):
+            comp_size = nx // ncomp
+            start = c * comp_size
+            end = (c + 1) * comp_size
+            if c + 1 == ncomp:
+                end = max(end, nx)
+            for v in vars_order[start:end]:
+                comp_var[v, c] = True
+        return comp_var
+
     def _train(self):
         """Loop over all components and train cooperatively."""
         comp_var = self.options["comp_var"]
 
         if comp_var is None:
-            raise ValueError("comp_var option must be set before training.")
+            comp_var = self._build_comp_var(self.nx, self.options["ncomp"], self.rng)
 
         if not isinstance(comp_var, np.ndarray) or comp_var.shape[0] != self.nx:
             raise ValueError("comp_var has the wrong data type or shape.")

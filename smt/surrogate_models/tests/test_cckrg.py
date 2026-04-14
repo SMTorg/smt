@@ -5,6 +5,13 @@ This package is distributed under New BSD license.
 """
 
 import unittest
+import random
+
+import numpy as np
+
+from smt.surrogate_models import CoopCompKRG
+from smt.problems import TensorProduct
+from smt.sampling_methods import LHS
 
 try:
     import matplotlib
@@ -20,8 +27,6 @@ from smt.utils.sm_test_case import SMTestCase
 class TestCCKRG(SMTestCase):
     @staticmethod
     def run_cckrg_example():
-        import random
-
         import numpy as np
 
         from smt.surrogate_models import CoopCompKRG
@@ -33,7 +38,6 @@ class TestCCKRG(SMTestCase):
         prob = TensorProduct(ndim=ndim, func="exp")
 
         # Example with three random components
-        # (use physical components if available)
         ncomp = 3
 
         # Initial sampling
@@ -41,7 +45,30 @@ class TestCCKRG(SMTestCase):
         xt = samp(50)
         yt = prob(xt)
 
-        # Random design variable to component allocation
+        # Cooperative components Kriging model fit
+        # comp_var is auto-computed from ncomp and seed
+        sm = CoopCompKRG(ncomp=ncomp)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        # Prediction as for ordinary Kriging
+        xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
+        print(sm.predict_values(xpoint))
+        print(sm.predict_variances(xpoint))
+
+    def test_cckrg_explicit_comp_var(self):
+        # The problem is the exponential problem with dimension 10
+        ndim = 10
+        prob = TensorProduct(ndim=ndim, func="exp")
+
+        ncomp = 3
+
+        # Initial sampling
+        samp = LHS(xlimits=prob.xlimits, seed=42)
+        xt = samp(50)
+        yt = prob(xt)
+
+        # Explicit design variable to component allocation
         comps = [*range(ncomp)]
         vars = [*range(ndim)]
         random.shuffle(vars)
@@ -54,7 +81,7 @@ class TestCCKRG(SMTestCase):
                 end = max((c + 1) * comp_size, ndim)
             comp_var[vars[start:end], c] = True
 
-        # Cooperative components Kriging model fit
+        # Cooperative components Kriging model fit with explicit comp_var
         sm = CoopCompKRG(comp_var=comp_var)
         sm.set_training_values(xt, yt)
         sm.train()
