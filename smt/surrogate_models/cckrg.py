@@ -119,12 +119,9 @@ class CoopCompKRG(KrgBased):
         comp_var[vars[start:end],c] = True
 
     # Cooperative components Kriging model fit
-    model = CoopCompKRG()
-    model.options["comp_var"] = comp_var
-    for active_coop_comp in comps:
-        model.set_training_values(x_train, y_train)
-        model.options["active_coop_comp"] = active_coop_comp
-        model.train()
+    model = CoopCompKRG(comp_var=comp_var)
+    model.set_training_values(x_train, y_train)
+    model.train()
 
     # Prediction as for ordinary Kriging
     y_pred = model.predict_values(x_test)
@@ -159,12 +156,6 @@ class CoopCompKRG(KrgBased):
             None,
             desc="Boolean array [nx, n_comp] mapping design variables to components",
         )
-        declare(
-            "active_coop_comp",
-            None,
-            types=(int,),
-            desc="Index of the active component to optimize",
-        )
         supports = self.supports
         supports["variances"] = True
         supports["derivatives"] = False
@@ -183,30 +174,29 @@ class CoopCompKRG(KrgBased):
         return d
 
     def _train(self):
-        """Set up cooperative state and delegate to KrgBased training."""
+        """Loop over all components and train cooperatively."""
         comp_var = self.options["comp_var"]
-        active_coop_comp = self.options["active_coop_comp"]
 
-        if comp_var is None or active_coop_comp is None:
-            raise ValueError(
-                "comp_var and active_coop_comp options must be set before training."
-            )
+        if comp_var is None:
+            raise ValueError("comp_var option must be set before training.")
 
         if not isinstance(comp_var, np.ndarray) or comp_var.shape[0] != self.nx:
             raise ValueError("comp_var has the wrong data type or shape.")
 
         self.comp_var = [var for var in comp_var.T]
+        n_comp = comp_var.shape[1]
 
-        # Set context vector to current best hyperparameter (used for inactive components)
-        try:
-            self.coop_theta = self.optimal_theta
-        except AttributeError:
-            self.coop_theta = self._theta0 * np.ones((self.nx))
+        for active_coop_comp in range(n_comp):
+            # Set context vector to current best hyperparameter (used for inactive components)
+            try:
+                self.coop_theta = self.optimal_theta
+            except AttributeError:
+                self.coop_theta = self._theta0 * np.ones((self.nx))
 
-        # Hyperparameter optimization for active components
-        self.active_comp_var = self.comp_var[active_coop_comp]
-        self.num_active = np.count_nonzero(self.active_comp_var)
-        super()._train()
+            # Hyperparameter optimization for active components
+            self.active_comp_var = self.comp_var[active_coop_comp]
+            self.num_active = np.count_nonzero(self.active_comp_var)
+            super()._train()
 
     def _create_optimizer(self):
         """Create a cooperative COBYLA optimizer for active components only."""

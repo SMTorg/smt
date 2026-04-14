@@ -55,12 +55,9 @@ class TestCCKRG(SMTestCase):
             comp_var[vars[start:end], c] = True
 
         # Cooperative components Kriging model fit
-        sm = CoopCompKRG()
-        sm.options["comp_var"] = comp_var
-        for active_coop_comp in comps:
-            sm.set_training_values(xt, yt)
-            sm.options["active_coop_comp"] = active_coop_comp
-            sm.train()
+        sm = CoopCompKRG(comp_var=comp_var)
+        sm.set_training_values(xt, yt)
+        sm.train()
 
         # Prediction as for ordinary Kriging
         xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
