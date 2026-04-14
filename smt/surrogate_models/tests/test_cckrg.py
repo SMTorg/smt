@@ -24,7 +24,7 @@ class TestCCKRG(SMTestCase):
 
         import numpy as np
 
-        from smt.applications import CoopCompKRG
+        from smt.surrogate_models import CoopCompKRG
         from smt.problems import TensorProduct
         from smt.sampling_methods import LHS
 
