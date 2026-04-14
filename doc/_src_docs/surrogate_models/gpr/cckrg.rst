@@ -19,11 +19,9 @@ Usage
 
 .. code-block:: python
 
-  import random
-  
   import numpy as np
   
-  from smt.applications import CoopCompKRG
+  from smt.surrogate_models import CoopCompKRG
   from smt.problems import TensorProduct
   from smt.sampling_methods import LHS
   
@@ -32,7 +30,6 @@ Usage
   prob = TensorProduct(ndim=ndim, func="exp")
   
   # Example with three random components
-  # (use physical components if available)
   ncomp = 3
   
   # Initial sampling
@@ -40,21 +37,9 @@ Usage
   xt = samp(50)
   yt = prob(xt)
   
-  # Random design variable to component allocation
-  comps = [*range(ncomp)]
-  vars = [*range(ndim)]
-  random.shuffle(vars)
-  comp_var = np.full((ndim, ncomp), False)
-  for c in comps:
-      comp_size = int(ndim / ncomp)
-      start = c * comp_size
-      end = (c + 1) * comp_size
-      if c + 1 == ncomp:
-          end = max((c + 1) * comp_size, ndim)
-      comp_var[vars[start:end], c] = True
-  
   # Cooperative components Kriging model fit
-  sm = CoopCompKRG(comp_var=comp_var)
+  # comp_var is auto-computed from ncomp and seed
+  sm = CoopCompKRG(ncomp=ncomp)
   sm.set_training_values(xt, yt)
   sm.train()
   
@@ -79,37 +64,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5289240
-  ___________________________________________________________________________
-     
-                        Cooperative Components Kriging
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 50
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.5080299
-  ___________________________________________________________________________
-     
-                        Cooperative Components Kriging
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 50
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.7042744
+     Training - done. Time (sec):  2.1547103
   ___________________________________________________________________________
      
    Evaluation
@@ -121,8 +76,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[-0.4326049]]
-  [[4.88229842]]
+  [[0.42716488]]
+  [[6.5016309]]
   
 
 Options
@@ -258,3 +213,13 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+  *  -  comp_var
+     -  None
+     -  None
+     -  None
+     -  Boolean array [nx, n_comp] mapping design variables to components. If None, computed automatically from ncomp and seed.
+  *  -  ncomp
+     -  3
+     -  None
+     -  ['int']
+     -  Number of components (used to build comp_var when not provided)
