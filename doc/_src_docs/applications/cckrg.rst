@@ -55,9 +55,11 @@ Usage
   
   # Cooperative components Kriging model fit
   sm = CoopCompKRG()
+  sm.options["comp_var"] = comp_var
   for active_coop_comp in comps:
       sm.set_training_values(xt, yt)
-      sm.train(active_coop_comp, comp_var)
+      sm.options["active_coop_comp"] = active_coop_comp
+      sm.train()
   
   # Prediction as for ordinary Kriging
   xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
