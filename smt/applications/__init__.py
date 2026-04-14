@@ -8,7 +8,6 @@ from .mfkplsk import MFKPLSK
 from .moe import MOE, MOESurrogateModel
 from .vfm import VFM
 from .podi import PODI, SubspacesInterpolation
-from smt.surrogate_models.cckrg import CoopCompKRG
 from .mixed_integer import (
     MixedIntegerSamplingMethod,
     MixedIntegerSurrogateModel,
@@ -31,7 +30,6 @@ __all__ = [
     "Evaluator",
     "PODI",
     "SubspacesInterpolation",
-    "CoopCompKRG",
     "MixedIntegerSamplingMethod",
     "MixedIntegerSurrogateModel",
     "MixedIntegerKrigingModel",
