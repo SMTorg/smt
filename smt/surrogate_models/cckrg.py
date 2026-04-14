@@ -166,8 +166,8 @@ class CoopCompKRG(KrgBased):
         )
         supports = self.supports
         supports["variances"] = True
-        supports["derivatives"] = False
-        supports["variance_derivatives"] = False
+        supports["derivatives"] = True
+        supports["variance_derivatives"] = True
         supports["x_hierarchy"] = False
 
     def _componentwise_distance(self, dx, theta=None, return_derivative=False):
@@ -232,21 +232,3 @@ class CoopCompKRG(KrgBased):
     def _optimize_hyperparam(self, D):
         """Delegate to parent with iteration limit based on active dimensions."""
         return super()._optimize_hyperparam(D, limit=10 * self.num_active)
-
-    def _predict_derivatives(self, x, kx):
-        """
-        Not implemented yet.
-        Evaluates the derivatives at a set of points.
-        """
-        raise NotImplementedError(
-            "Derivative prediction is not available for cooperative Kriging."
-        )
-
-    def _predict_variance_derivatives(self, x):
-        """
-        Not implemented yet.
-        Provide the derivative of the variance of the model at a set of points.
-        """
-        raise NotImplementedError(
-            "Derivative prediction is not available for cooperative Kriging."
-        )
