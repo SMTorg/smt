@@ -97,6 +97,32 @@ class TestCCKRG(SMTestCase):
     def test_run_cckrg_example(self):
         self.run_cckrg_example()
 
+    def test_ego_with_cckrg(self):
+        from smt.applications import EGO
+        from smt.design_space import DesignSpace
+        from smt.problems import Sphere
+
+        ndim = 10
+        prob = Sphere(ndim=ndim)
+        design_space = DesignSpace(prob.xlimits)
+
+        surrogate = CoopCompKRG(design_space=design_space, ncomp=2, print_global=False)
+
+        ego = EGO(
+            n_iter=10,
+            criterion="EI",
+            n_doe=50,
+            surrogate=surrogate,
+            seed=42,
+            verbose=True,
+        )
+
+        x_opt, y_opt, _, x_data, y_data = ego.optimize(fun=prob)
+        # Check that EGO improved over the initial DOE
+        y_doe_best = np.min(y_data[:50])
+        print(f"Best DOE value: {y_doe_best:.4e}, best EGO value: {y_opt.item():.4e}")
+        self.assertLess(y_opt.item(), y_doe_best)
+
 
 if __name__ == "__main__":
     unittest.main()
