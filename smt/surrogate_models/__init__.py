@@ -8,6 +8,7 @@ from .gpx import GPX
 from .genn import GENN
 from .mgp import MGP
 from .sgp import SGP
+from .cckrg import CoopCompKRG
 
 from .krg_based import MixIntKernelType
 
@@ -31,6 +32,7 @@ __all__ = [
     "GENN",
     "MGP",
     "SGP",
+    "CoopCompKRG",
     "MixIntKernelType",
     "DesignSpace",
     "FloatVariable",
