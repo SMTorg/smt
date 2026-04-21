@@ -14,17 +14,30 @@ Conference on Neural Information Processing Systems.
 """
 
 # import warnings
+from typing import Any
+
 import numpy as np
 from scipy import optimize
 from scipy.linalg import solve_triangular
 
 from smt.sampling_methods import LHS
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.kriging import componentwise_distance, differences
+from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 from smt.utils.misc import standardization
+
+try:
+    import nlopt as _nlopt  # pyright: ignore[reportMissingImports]
+except ImportError:
+    _nlopt = None
 
 
 class MFCK(KrgBased):
+    @staticmethod
+    def _get_nlopt() -> Any:
+        if _nlopt is None:
+            raise ImportError("nlopt is required when hyper_opt='Cobyla-nlopt'")
+        return _nlopt
+
     def _initialize(self):
         super()._initialize()
         declare = self.options.declare
@@ -114,7 +127,7 @@ class MFCK(KrgBased):
             # For a single level, initialize theta_ini, lower_bounds, and
             # upper_bounds with consistent shapes
             theta_ini = np.hstack(
-                (self.options["sigma0"], self.options["theta0"])
+                (self.options["sigma0"], self._theta0)
             )  # Variance + initial theta values
             lower_bounds = np.hstack(
                 (
@@ -129,7 +142,7 @@ class MFCK(KrgBased):
                 )
             )
             # Apply log10 to theta_ini and bounds
-            nb_params = len(self.options["theta0"])
+            nb_params = len(self._theta0)
             theta_ini[: nb_params + 1] = np.log10(theta_ini[: nb_params + 1])
             lower_bounds[: nb_params + 1] = np.log10(lower_bounds[: nb_params + 1])
             upper_bounds[: nb_params + 1] = np.log10(upper_bounds[: nb_params + 1])
@@ -138,7 +151,7 @@ class MFCK(KrgBased):
                 if lvl == 0:
                     # Initialize theta_ini for level 0
                     theta_ini = np.hstack(
-                        (self.options["sigma0"], self.options["theta0"])
+                        (self.options["sigma0"], self._theta0)
                     )  # Variance + initial theta values
                     lower_bounds = np.hstack(
                         (
@@ -153,7 +166,7 @@ class MFCK(KrgBased):
                         )
                     )
                     # Apply log10 to theta_ini and bounds
-                    nb_params = len(self.options["theta0"])
+                    nb_params = len(self._theta0)
                     theta_ini[: nb_params + 1] = np.log10(theta_ini[: nb_params + 1])
                     lower_bounds[: nb_params + 1] = np.log10(
                         lower_bounds[: nb_params + 1]
@@ -164,7 +177,7 @@ class MFCK(KrgBased):
 
                 elif lvl > 0:
                     # For additional levels, append to theta_ini, lower_bounds, and upper_bounds
-                    thetat = np.hstack((self.options["sigma0"], self.options["theta0"]))
+                    thetat = np.hstack((self.options["sigma0"], self._theta0))
                     lower_boundst = np.hstack(
                         (
                             self.options["sigma_bounds"][0],
@@ -255,11 +268,7 @@ class MFCK(KrgBased):
                         nll = optimal_theta_res_loop["fun"]
 
         elif self.options["hyper_opt"] == "Cobyla-nlopt":
-            try:
-                import nlopt
-            except ImportError:
-                print("nlopt library is not installed or available on this system")
-
+            nlopt = self._get_nlopt()
             opt = nlopt.opt(nlopt.LN_COBYLA, theta_ini.shape[0])
             opt.set_lower_bounds(lower_bounds)  # Lower bounds for each dimension
             opt.set_upper_bounds(upper_bounds)  # Upper bounds for each dimension
@@ -273,41 +282,7 @@ class MFCK(KrgBased):
                 f"The optimizer {self.options['hyper_opt']} is not available"
             )
 
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt1 = np.array(x_opt, copy=True)
-            else:
-                x_opt1 = np.array(x_opt[: -self.lvl], copy=True)
-        else:
-            x_opt1 = np.array(x_opt, copy=True)
-
-        x_opt1[0] = 10 ** (x_opt1[0])  # Apply 10** to Sigma 0
-        x_opt1[1 : self.nx + 1] = (
-            10 ** (x_opt1[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-
-        x_opt1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (x_opt1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, x_opt1.shape[0] - 1, self.nx + 2):
-            x_opt1[i : i + self.nx] = 10 ** x_opt1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                x_opt = np.array(x_opt, copy=True)
-                x_opt = x_opt1
-            else:
-                x_opt = np.array(x_opt, copy=True)
-
-                x_opt[-self.lvl : :] = 10 ** x_opt[-self.lvl : :]
-
-                x_opt[: -self.lvl] = x_opt1
-        else:
-            x_opt = np.array(x_opt, copy=True)
-            x_opt = x_opt1
-
-        self.optimal_theta = x_opt
+        self.optimal_theta = self._transform_optimizer_param(x_opt)
 
     def eta(self, j, jp, rho):
         """Compute eta_{j,l} based on the given rho values."""
@@ -643,77 +618,42 @@ class MFCK(KrgBased):
         (nmll,) = NMLL[0]
         return nmll
 
+    def _transform_optimizer_param(self, param):
+        """Map optimizer parameters from log10-space to model-space."""
+        param = np.array(param, copy=True)
+
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            kernel_param = np.array(param[: -self.lvl], copy=True)
+        else:
+            kernel_param = np.array(param, copy=True)
+
+        kernel_param[0] = 10 ** kernel_param[0]
+        kernel_param[1 : self.nx + 1] = 10 ** kernel_param[1 : self.nx + 1]
+        kernel_param[self.nx + 1 :: self.nx + 2] = (
+            10 ** kernel_param[self.nx + 1 :: self.nx + 2]
+        )
+
+        for i in np.arange(self.nx + 2, kernel_param.shape[0] - 1, self.nx + 2):
+            kernel_param[i : i + self.nx] = 10 ** kernel_param[i : i + self.nx]
+
+        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+            param[-self.lvl :] = 10 ** param[-self.lvl :]
+            param[: -self.lvl] = kernel_param
+            return param
+
+        return kernel_param
+
     def neg_log_likelihood_scipy(self, param):
         """
         Likelihood for Cobyla-scipy (SMT) optimizer
         """
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param1 = np.array(param, copy=True)
-            else:
-                param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param = np.array(param, copy=True)
-                param = param1
-            else:
-                param = np.array(param, copy=True)
-                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-                param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param)
+        return self.neg_log_likelihood(self._transform_optimizer_param(param))
 
     def neg_log_likelihood_nlopt(self, param, grad=None):
         """
         Likelihood for nlopt optimizers
         """
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param1 = np.array(param, copy=True)
-            else:
-                param1 = np.array(param[: -self.lvl], copy=True)
-        else:
-            param1 = np.array(param, copy=True)
-
-        param1[0] = 10 ** (param[0])  # Apply 10** to Sigma 0
-        param1[1 : self.nx + 1] = (
-            10 ** (param[1 : self.nx + 1])
-        )  # Apply 10** to length scales 0
-        param1[self.nx + 1 :: self.nx + 2] = (
-            10 ** (param1[self.nx + 1 :: self.nx + 2])
-        )  # Apply 10** to sigmas gamma
-
-        for i in np.arange(self.nx + 2, param1.shape[0] - 1, self.nx + 2):
-            param1[i : i + self.nx] = 10 ** param1[i : i + self.nx]
-
-        if self.options["eval_noise"]:
-            if self.options["use_het_noise"]:
-                param = np.array(param, copy=True)
-                param = param1
-            else:
-                param = np.array(param, copy=True)
-                param[-self.lvl : :] = 10 ** param[-self.lvl : :]
-                param[: -self.lvl] = param1
-        else:
-            param = np.array(param, copy=True)
-            param = param1
-        return self.neg_log_likelihood(param, grad)
+        return self.neg_log_likelihood(self._transform_optimizer_param(param), grad)
 
     def compute_blockwise_K(self, X, Xprime, param):
         K_block = {}
@@ -766,25 +706,3 @@ class MFCK(KrgBased):
         R = r.reshape(A.shape[0], B.shape[0])
         K = param[0] * R
         return K
-
-    # def _compute_K(self, X, Xp, param):
-    #     """
-    #     X: array (n, d)
-    #     Xp: array (m, d)
-    #     sigma: scalar
-    #     theta: array (d,) or scalar
-    #     returns: K (n, m)
-    #     """
-    #     X = np.asarray(X)
-    #     Xp = np.asarray(Xp)
-    #     theta = np.asarray(param[1])
-
-    #     # permitir theta escalar
-    #     if theta.ndim == 0:
-    #         theta = np.full(X.shape[1], float(theta))
-
-    #     # cálculo vectorizado: ((X[:,None,:] - Xp[None,:,:]) / theta)**2 sumando sobre la dimensión
-    #     diff = (X[:, None, :] - Xp[None, :, :]) / theta[None, None, :]
-    #     sqdist = np.sum(diff**2, axis=2)   # forma (n, m)
-    #     K = (param[0]**2) * np.exp(-0.5 * sqdist)
-    #     return K

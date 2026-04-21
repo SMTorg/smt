@@ -14,13 +14,17 @@ from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
 from smt.applications import MFK
-from smt.utils.kriging import componentwise_distance_PLS
+from smt.surrogate_models.krg_based.distances import componentwise_distance_PLS
 
 
 class MFKPLS(MFK):
     """
     Multi-Fidelity model + PLS (done on the highest fidelity level)
     """
+
+    @property
+    def _use_pls(self) -> bool:
+        return True
 
     def _initialize(self):
         super()._initialize()
@@ -53,13 +57,13 @@ class MFKPLS(MFK):
         D = np.abs(D, D)
         return D.reshape((-1, X.shape[1]))
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx):
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],
             self.options["n_comp"],
             self.coeff_pls,
-            power=self.options["pow_exp_power"],
+            power=self._pow_exp_power,
         )
         return d
 

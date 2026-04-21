@@ -24,21 +24,23 @@ from smt.surrogate_models.krg_based import (
     MixIntKernelType,
     compute_n_param,
 )
-from smt.utils.kriging import (
+from smt.surrogate_models.krg_based.distances import (
     componentwise_distance,
-    compute_X_cont,
     cross_distances,
-    cross_levels,
     differences,
+)
+from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
+from smt.surrogate_models.krg_based.mixed_int_corr import (
+    MixedIntegerCorrelation,
+    compute_X_cont,
+    cross_levels,
     gower_componentwise_distances,
 )
 from smt.utils.misc import standardization
 
 
 class NestedLHS(object):
-    def __init__(
-        self, nlevel, xlimits=None, design_space=None, seed=None, random_state=None
-    ):
+    def __init__(self, nlevel, xlimits=None, design_space=None, seed=None):
         """
         Constructor where values of options can be passed in.
 
@@ -55,29 +57,9 @@ class NestedLHS(object):
 
         seed : Numpy Generator object or seed number which controls random draws
 
-        random_state : DEPRECATED use seed. Numpy RandomState object or seed number which controls random draws
-
         """
         self.nlevel = nlevel
-        self.random_state = random_state
-        if random_state is None:
-            self.random_state = np.random.default_rng()
-        elif isinstance(random_state, np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(random_state, int):
-            warnings.warn(
-                "Passing a seed or integer to random_state is deprecated "
-                "and will raise an error in a future version. Please "
-                "use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.random_state = np.random.default_rng(random_state)
-
-        if seed is not None:
-            self.random_state = np.random.default_rng(seed)
+        self.rng = np.random.default_rng(seed)
 
         if xlimits is None and design_space is None:
             raise ValueError(
@@ -125,7 +107,7 @@ class NestedLHS(object):
         p0 = LHS(
             xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
             criterion="ese",
-            seed=self.random_state,
+            seed=self.rng,
         )
         p0nt0 = p0(nt[0])
         if self.design_space:
@@ -138,7 +120,7 @@ class NestedLHS(object):
             p = LHS(
                 xlimits=np.array(self.design_space.get_unfolded_num_bounds()),
                 criterion="ese",
-                seed=self.random_state,
+                seed=self.rng,
             )
             pnti = p(nt[i])
             if self.design_space:
@@ -277,23 +259,21 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         Trains the Multi-Fidelity model
         """
-        self._corr_params = None
-        if hasattr(self, "_mix_int_corr"):
-            self._mix_int_corr.reset()
-
+        self._mix_int_corr = MixedIntegerCorrelation(self)
+        self._likelihood_evaluator = LikelihoodEvaluator(self)
         self._new_train_init()
-        theta0 = self.options["theta0"].copy()
-        noise0 = self.options["noise0"].copy()
+        theta0 = self._theta0.copy()
+        noise0 = deepcopy(self._noise0)
 
         for lvl in range(self.nlvl):
             self._new_train_iteration(lvl)
-            self.options["theta0"] = theta0
-            self.options["noise0"] = noise0
+            self._theta0 = theta0
+            self._noise0 = noise0
 
         self._reinterpolate(lvl)
 
     def _new_train_init(self):
-        if self.name in ["MFKPLS", "MFKPLSK"]:
+        if self._use_pls:
             _pls = pls(self.options["n_comp"])
 
             # As of sklearn 0.24.1 PLS with zeroed outputs raises an exception
@@ -378,13 +358,13 @@ class MFK(KrgBased):
 
     def _new_train_iteration(self, lvl):
         n_samples = self.nt_all
-        self.options["noise0"] = np.array([self.options["noise0"][lvl]]).flatten()
-        self.options["theta0"] = self.options["theta0"][lvl, :]
+        self._noise0 = np.array([self._noise0[lvl]]).flatten()
+        self._theta0 = list(self._theta0[lvl, :])
 
         self.X_norma = self.X_norma_all[lvl]
         self.y_norma = self.y_norma_all[lvl]
 
-        if self.options["eval_noise"]:
+        if self._eval_noise:
             if self.options["use_het_noise"]:
                 # hetGP works with unique design variables
                 (
@@ -403,7 +383,7 @@ class MFK(KrgBased):
                 y_norma_unique = np.array(y_norma_unique).reshape(-1, 1)
 
                 # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-                self.optimal_noise = self.options["noise0"] * np.ones(self.nt_all[lvl])
+                self.optimal_noise = self._noise0 * np.ones(self.nt_all[lvl])
                 for i in range(self.nt_all[lvl]):
                     diff = self.y_norma[self.index_unique == i] - y_norma_unique[i]
                     if np.sum(diff**2) != 0.0:
@@ -415,7 +395,7 @@ class MFK(KrgBased):
                 self.X_norma_all[lvl] = self.X_norma
                 self.y_norma_all[lvl] = self.y_norma
         else:
-            self.optimal_noise = self.options["noise0"] / self.y_std**2
+            self.optimal_noise = self._noise0 / self.y_std**2
             self.optimal_noise_all[lvl] = self.optimal_noise
 
         # Calculate matrix of distances D between samples
@@ -504,8 +484,8 @@ class MFK(KrgBased):
             self.optimal_rlf_value[lvl],
             self.optimal_par[lvl],
             self.optimal_theta[lvl],
-        ) = self._optimize_hyperparam(D)
-        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+        ) = self._run_optimization(D)
+        if self._eval_noise and not self.options["use_het_noise"]:
             tmp_list = self.optimal_theta[lvl]
             self.optimal_theta[lvl] = tmp_list[:-1]
             self.optimal_noise = tmp_list[-1]
@@ -513,7 +493,7 @@ class MFK(KrgBased):
         del self.y_norma, self.D, self.optimal_noise
 
     def _reinterpolate(self, lvl):
-        if self.options["eval_noise"] and self.options["optim_var"]:
+        if self._eval_noise and self.options["optim_var"]:
             X = self.X
             for lvl in range(self.nlvl - 1):
                 self.set_training_values(
@@ -522,13 +502,13 @@ class MFK(KrgBased):
             self.set_training_values(
                 X[-1], self._predict_intermediate_values(X[-1], self.nlvl)
             )
-            self.options["eval_noise"] = False
+            self._eval_noise_request = False
             self._new_train()
-            self.options["eval_noise"] = True
+            del self._eval_noise_request
 
-    def _componentwise_distance(self, dx, opt=0):
+    def _componentwise_distance(self, dx):
         d = componentwise_distance(
-            dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
+            dx, self.options["corr"], self.nx, power=self._pow_exp_power
         )
         return d
 
@@ -894,7 +874,7 @@ class MFK(KrgBased):
             sigma2_rho = (sigma2_rho * g).sum(axis=1)
             sigma2_rhos.append(sigma2_rho)
 
-            if self.name in ["MFKPLS", "MFKPLSK"]:
+            if self._use_pls:
                 p = self.p_all[i]
                 Q_ = (np.dot((yt - np.dot(Ft, beta)).T, yt - np.dot(Ft, beta)))[0, 0]
                 MSE[:, i] = (
@@ -1016,8 +996,17 @@ class MFK(KrgBased):
         Overrides KrgBased implementation
         This function checks some parameters of the model.
         """
+        from copy import deepcopy
 
-        if self.name in ["MFKPLS", "MFKPLSK"]:
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = deepcopy(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
+
+        if self._use_pls:
             d = self.options["n_comp"]
         else:
             d = self.nx
@@ -1025,22 +1014,20 @@ class MFK(KrgBased):
         if self.options["corr"] == "act_exp":
             raise ValueError("act_exp correlation function must be used with MGP")
 
-        if self.name in ["MFKPLS"]:
+        if self._use_pls and not self._is_kplsk_style:
             if self.options["corr"] not in ["squar_exp", "abs_exp"]:
                 raise ValueError(
                     "MFKPLS only works with a squared exponential or an absolute exponential kernel"
                 )
-        elif self.name in ["MFKPLSK"]:
+        elif self._is_kplsk_style:
             if self.options["corr"] not in ["squar_exp"]:
                 raise ValueError(
                     "MFKPLSK only works with a squared exponential kernel (until we prove the contrary)"
                 )
         # noise0 may be a list of noise values for various fi levels with various length
-        max_noise = np.max([np.max(row) for row in self.options["noise0"]])
-        if (self.options["eval_noise"] or max_noise > 1e-12) and self.options[
-            "hyper_opt"
-        ] == "TNC":
-            self.options["hyper_opt"] = "Cobyla"
+        max_noise = np.max([np.max(row) for row in self._noise0])
+        if (self._eval_noise or max_noise > 1e-12) and self._hyper_opt == "TNC":
+            self._hyper_opt = "Cobyla"
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"
             )
@@ -1067,54 +1054,54 @@ class MFK(KrgBased):
                     "Only the continuous relaxation kernel is available with multi-fidelity"
                 )
 
-        if isinstance(self.options["theta0"], np.ndarray):
-            if self.options["theta0"].shape != (self.nlvl, n_param):
+        if isinstance(self._theta0, np.ndarray):
+            if self._theta0.shape != (self.nlvl, n_param):
                 raise ValueError(
                     "the dimensions of theta0 %s should coincide to the number of dim %s"
-                    % (self.options["theta0"].shape, (self.nlvl, n_param))
+                    % (self._theta0.shape, (self.nlvl, n_param))
                 )
         else:
-            if len(self.options["theta0"]) != n_param:
-                if len(self.options["theta0"]) == 1:
-                    self.options["theta0"] *= np.ones((self.nlvl, n_param))
-                elif len(self.options["theta0"]) == self.nlvl:
-                    self.options["theta0"] = np.array(self.options["theta0"]).reshape(
-                        -1, 1
+            if len(self._theta0) != n_param:
+                if len(self._theta0) == 1:
+                    self._theta0 = np.array(self._theta0) * np.ones(
+                        (self.nlvl, n_param)
                     )
-                    self.options["theta0"] *= np.ones((1, n_param))
+                elif len(self._theta0) == self.nlvl:
+                    self._theta0 = np.array(self._theta0).reshape(-1, 1)
+                    self._theta0 = self._theta0 * np.ones((1, n_param))
                 else:
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s) \
                             or levels of fidelity (%s)."
-                        % (len(self.options["theta0"]), n_param, self.nlvl)
+                        % (len(self._theta0), n_param, self.nlvl)
                     )
             else:
-                self.options["theta0"] *= np.ones((self.nlvl, 1))
+                self._theta0 = np.array(self._theta0) * np.ones((self.nlvl, 1))
 
-        if len(self.options["noise0"]) != self.nlvl:
-            if len(self.options["noise0"]) == 1:
-                self.options["noise0"] = self.nlvl * [self.options["noise0"]]
+        if len(self._noise0) != self.nlvl:
+            if len(self._noise0) == 1:
+                self._noise0 = self.nlvl * [self._noise0]
             else:
                 raise ValueError(
                     "the length of noise0 (%s) should be equal to the number of levels of fidelity (%s)."
-                    % (len(self.options["noise0"]), self.nlvl)
+                    % (len(self._noise0), self.nlvl)
                 )
 
         for i in range(self.nlvl):
             if self.options["use_het_noise"]:
                 if len(self.X[i]) == len(np.unique(self.X[i])):
-                    if len(self.options["noise0"][i]) != self.nt_all[i]:
-                        if len(self.options["noise0"][i]) == 1:
-                            self.options["noise0"][i] *= np.ones(self.nt_all[i])
+                    if len(self._noise0[i]) != self.nt_all[i]:
+                        if len(self._noise0[i]) == 1:
+                            self._noise0[i] *= np.ones(self.nt_all[i])
                         else:
                             raise ValueError(
                                 "for the level of fidelity %s, the length of noise0 (%s) should be equal to \
                                     the number of observations (%s)."
-                                % (i, len(self.options["noise0"][i]), self.nt_all[i])
+                                % (i, len(self._noise0[i]), self.nt_all[i])
                             )
             else:
-                if np.size(self.options["noise0"][i]) != 1:
+                if np.size(self._noise0[i]) != 1:
                     raise ValueError(
                         "for the level of fidelity %s, the length of noise0 (%s) should be equal to one."
-                        % (i, len(self.options["noise0"][i]))
+                        % (i, len(self._noise0[i]))
                     )

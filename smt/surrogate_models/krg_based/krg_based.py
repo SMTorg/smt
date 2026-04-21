@@ -6,7 +6,6 @@ This package is distributed under New BSD license.
 import sys
 import warnings
 from copy import deepcopy
-from enum import Enum
 
 import numpy as np
 from scipy import linalg
@@ -26,41 +25,36 @@ from smt.kernels import (
 )
 from smt.kernels.kernels import _Constant
 from smt.sampling_methods import LHS
-from smt.surrogate_models.hyperparam_optim import (
+from smt.surrogate_models.krg_based.distances import (
+    constant,
+    cross_distances,
+    differences,
+    linear,
+    quadratic,
+)
+from smt.surrogate_models.krg_based.hyperparam_optim import (
     CobylaOptimizer,
     HyperparamOptimizer,
     NoOpOptimizer,
     TNCOptimizer,
 )
-from smt.surrogate_models.likelihood_eval import LikelihoodEvaluator
-from smt.surrogate_models.mixed_int_corr import (
+from smt.surrogate_models.krg_based.kernel_types import (
+    MixHrcKernelType,
+    MixIntKernelType,
+)
+from smt.surrogate_models.krg_based.likelihood_eval import LikelihoodEvaluator
+from smt.surrogate_models.krg_based.mixed_int_corr import (
     MixedIntegerCorrelation,
+    compute_X_cont,
+    cross_levels,
+    gower_componentwise_distances,
     compute_n_param as _compute_n_param,
     correct_distances_cat_decreed as _correct_distances_cat_decreed,
 )
 from smt.surrogate_models.surrogate_model import SurrogateModel
 from smt.utils import persistence
 from smt.utils.checks import check_support, ensure_2d_array
-from smt.utils.kriging import (
-    MixHrcKernelType,
-    compute_X_cont,
-    constant,
-    cross_distances,
-    cross_levels,
-    differences,
-    gower_componentwise_distances,
-    linear,
-    quadratic,
-)
 from smt.utils.misc import standardization
-
-
-class MixIntKernelType(Enum):
-    EXP_HOMO_HSPHERE = "EXP_HOMO_HSPHERE"
-    HOMO_HSPHERE = "HOMO_HSPHERE"
-    CONT_RELAX = "CONT_RELAX"
-    GOWER = "GOWER"
-    COMPOUND_SYMMETRY = "COMPOUND_SYMMETRY"
 
 
 # Nb of tries when inner optimization fails
@@ -121,8 +115,15 @@ class KrgBased(SurrogateModel):
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
                 MixIntKernelType.COMPOUND_SYMMETRY,
+                MixIntKernelType.DIST_ENCODING,
             ],
             desc="The kernel to use for categorical inputs. Only for non continuous Kriging",
+        )
+        declare(
+            "categorical_kernel_beta",
+            1.0,
+            types=(float, int),
+            desc="Power for the distributional encoding kernel (valid values in (0.0, 2.0]).",
         )
         declare(
             "hierarchical_kernel",
@@ -214,16 +215,14 @@ class KrgBased(SurrogateModel):
             desc="Numpy Generator object or seed number which controls random draws \
                 for internal optim (set by default to get reproductibility)",
         )
-        self.options.declare(
-            "random_state",
-            types=(type(None), int, np.random.RandomState),
-            desc="DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws \
-                for internal optim (set by default to get reproductibility)",
-        )
-        self.kplsk_second_loop = None
+        self.kplsk_second_loop = False
         self.best_iteration_fail = None
         self.retry = MAX_RETRY
         self.is_acting_points = {}
+        self.X2_offset = None
+        self.X2_scale = None
+        self._mix_int_corr = None
+        self._likelihood_evaluator = None
 
         supports["derivatives"] = True
         supports["variances"] = True
@@ -231,34 +230,19 @@ class KrgBased(SurrogateModel):
         supports["x_hierarchy"] = True
 
     def _final_initialize(self):
-        if isinstance(self.options["random_state"], np.random.RandomState):
-            raise ValueError(
-                "np.random.RandomState object is not handled anymore. Please use seed and np.random.Generator"
-            )
-        elif isinstance(self.options["random_state"], int):
-            warnings.warn(
-                "Using random_state is deprecated and will raise an error in a future version. "
-                "Please use seed parameter",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.random_state = np.random.default_rng(self.options["random_state"])
-        else:
-            self.random_state = np.random.default_rng()
+        self.rng = np.random.default_rng(self.options["seed"])
 
-        if self.options["seed"]:
-            self.random_state = np.random.default_rng(self.options["seed"])
-
-        # initialize default power values
+        # initialize default power values (working copy, don't mutate options)
+        self._pow_exp_power = self.options["pow_exp_power"]
         if self.options["corr"] == "squar_exp":
-            self.options["pow_exp_power"] = 2.0
+            self._pow_exp_power = 2.0
         elif self.options["corr"] in [
             "abs_exp",
             "squar_sin_exp",
             "matern32",
             "matern52",
         ] or isinstance(self.options["corr"], Kernel):
-            self.options["pow_exp_power"] = 1.0
+            self._pow_exp_power = 1.0
         # initialize kernel or link model with user defined kernel
         if isinstance(self.options["corr"], Kernel):
             if isinstance(self.options["corr"], Operator):
@@ -267,22 +251,19 @@ class KrgBased(SurrogateModel):
                 )
             else:
                 self.corr = self.options["corr"]
-            self.options["theta0"] = self.corr.theta
+            self._theta0 = self.corr.theta
         elif (
             type(self.options["corr"]) is str
             and self.options["corr"] in self._correlation_class
         ):
-            self.corr = self._correlation_class[self.options["corr"]](
-                self.options["theta0"]
-            )
+            self._theta0 = list(self.options["theta0"])
+            self.corr = self._correlation_class[self.options["corr"]](self._theta0)
         else:
             raise ValueError("The correlation kernel has not been correctly defined.")
         # Check the pow_exp_power is >0 and <=2
-        assert (
-            self.options["pow_exp_power"] > 0 and self.options["pow_exp_power"] <= 2
-        ), (
+        assert self._pow_exp_power > 0 and self._pow_exp_power <= 2, (
             "The power value for exponential power function can only be >0 and <=2, but %s was given"
-            % self.options["pow_exp_power"]
+            % self._pow_exp_power
         )
 
     # --- Polymorphic hooks (override in subclasses instead of checking self.name) ---
@@ -290,7 +271,15 @@ class KrgBased(SurrogateModel):
     @property
     def _use_pls(self) -> bool:
         """Whether this model uses PLS dimensionality reduction.
-        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS).
+        Override in PLS-based subclasses (KPLS, KPLSK, GEKPLS, MFKPLS, MFKPLSK).
+        """
+        return False
+
+    @property
+    def _is_kplsk_style(self) -> bool:
+        """Whether this model uses the KPLSK two-pass optimization
+        (PLS space then full Kriging space).
+        Override in KPLSK and MFKPLSK.
         """
         return False
 
@@ -328,7 +317,7 @@ class KrgBased(SurrogateModel):
         Default extracts noise from optimal_theta when eval_noise is enabled.
         Override in MGP (calls _specific_train) and SGP (extracts sigma2).
         """
-        if self.options["eval_noise"] and not self.options["use_het_noise"]:
+        if self._eval_noise and not self.options["use_het_noise"]:
             self.optimal_noise = self.optimal_theta[-1]
             self.optimal_theta = self.optimal_theta[:-1]
 
@@ -354,7 +343,7 @@ class KrgBased(SurrogateModel):
         Override in MGP to sample from prior distribution.
         """
         log10t_bounds = np.log10(theta_bounds)
-        theta0_rand = self.random_state.random(len(self.theta0))
+        theta0_rand = self.rng.random(len(self.theta0))
         theta0_rand = (
             theta0_rand * (log10t_bounds[1] - log10t_bounds[0]) + log10t_bounds[0]
         )
@@ -384,7 +373,7 @@ class KrgBased(SurrogateModel):
         -------
         HyperparamOptimizer
         """
-        hyper_opt = self.options["hyper_opt"]
+        hyper_opt = self._hyper_opt
         if isinstance(hyper_opt, HyperparamOptimizer):
             return hyper_opt
         if hyper_opt == "Cobyla":
@@ -397,13 +386,6 @@ class KrgBased(SurrogateModel):
             return NoOpOptimizer()
         else:
             raise ValueError(f"Unknown optimizer: {hyper_opt}")
-
-    @property
-    def _n_outer_iterations(self):
-        """Number of outer optimization passes (0 = single pass).
-        Override in KPLSK for two-pass (PLS then full Kriging) optimization.
-        """
-        return 0
 
     def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
         """Handle a theta0 value that is outside the feasible bounds.
@@ -427,7 +409,7 @@ class KrgBased(SurrogateModel):
                                 [{theta_bounds[0]}, {theta_bounds[1]}]). \
                                     A random initialisation is used instead."
         )
-        val = self.random_state.random()
+        val = self.rng.random()
         val = val * (theta_bounds[1] - theta_bounds[0]) + theta_bounds[0]
         return val
 
@@ -437,51 +419,6 @@ class KrgBased(SurrogateModel):
         Default False. Override in SGP to return True.
         """
         return False
-
-    def _should_sample_multistart(self, ii):
-        """Whether to add LHS multistart samples in this outer iteration.
-
-        Parameters
-        ----------
-        ii : int
-            Current outer-loop iteration index.
-
-        Returns
-        -------
-        bool
-        """
-        return True
-
-    def _finalize_outer_loop(
-        self,
-        best_optimal_rlf_value,
-        best_optimal_par,
-        best_optimal_theta,
-        exit_function,
-    ):
-        """Finalize an outer optimization loop iteration.
-
-        Called at the end of each outer-loop iteration in
-        :meth:`_optimize_hyperparam`. The default implementation requests an
-        immediate return (single-pass). Override in KPLSK for two-pass logic.
-
-        Parameters
-        ----------
-        best_optimal_rlf_value : float
-        best_optimal_par : dict
-        best_optimal_theta : np.ndarray
-        exit_function : bool
-
-        Returns
-        -------
-        should_return : bool
-            If ``True``, return current best values and stop looping.
-        exit_function : bool
-            Updated flag for next iteration.
-        new_limit : int or None
-            If not ``None``, overrides the iteration limit for the next pass.
-        """
-        return True, exit_function, None
 
     # --- End hooks ---
 
@@ -555,14 +492,17 @@ class KrgBased(SurrogateModel):
             design_space=self.design_space,
             cat_features=self.cat_features,
             n_levels=self.n_levels,
-            X2_offset=getattr(self, "X2_offset", None),
-            X2_scale=getattr(self, "X2_scale", None),
+            X2_offset=self.X2_offset,
+            X2_scale=self.X2_scale,
             is_acting_y=is_acting_y,
             mixint_type=mixint_type,
         )
 
     def _new_train(self):
+        self._mix_int_corr = MixedIntegerCorrelation(self)
+        self._likelihood_evaluator = LikelihoodEvaluator(self)
         X, y, is_acting = self._prepare_training_data()
+        self._initialize_distribution_encoding()
         D = self._compute_training_distances(X, y, is_acting)
         self._build_regression_matrix()
 
@@ -571,8 +511,26 @@ class KrgBased(SurrogateModel):
             self.optimal_rlf_value,
             self.optimal_par,
             self.optimal_theta,
-        ) = self._optimize_hyperparam(D)
+        ) = self._run_optimization(D)
         self._post_optim_hook()
+
+    def _run_optimization(self, D):
+        """Run hyperparameter optimization.
+
+        Override in KPLSK/MFKPLSK for two-pass (PLS then full Kriging) strategy.
+
+        Parameters
+        ----------
+        D : np.ndarray
+            Componentwise cross-distances.
+
+        Returns
+        -------
+        best_optimal_rlf_value : float
+        best_optimal_par : dict
+        best_optimal_theta : np.ndarray
+        """
+        return self._optimize_hyperparam(D)
 
     def _prepare_training_data(self):
         """Prepare training data: load, validate, apply PLS, standardize, and handle noise."""
@@ -595,7 +553,6 @@ class KrgBased(SurrogateModel):
         self._check_param()
         self.X_train = X
         self.is_acting_train = is_acting
-        self._mix_int_corr = MixedIntegerCorrelation(self)
         _, self.cat_features = compute_X_cont(self.X_train, self.design_space)
         # Center and scale X and y
         (
@@ -607,8 +564,8 @@ class KrgBased(SurrogateModel):
             self.y_std,
         ) = standardization(X.copy(), y.copy())
 
-        if not self.options["eval_noise"]:
-            self.optimal_noise = np.array(self.options["noise0"])
+        if not self._eval_noise:
+            self.optimal_noise = np.array(self._noise0)
         elif self.options["use_het_noise"]:
             # hetGP works with unique design variables when noise variance are not given
             (
@@ -623,7 +580,7 @@ class KrgBased(SurrogateModel):
             for i in range(self.nt):
                 y_norma_unique.append(np.mean(self.y_norma[index_unique == i]))
             # pointwise sensible estimates of the noise variances (see Ankenman et al., 2010)
-            self.optimal_noise = self.options["noise0"] * np.ones(self.nt)
+            self.optimal_noise = self._noise0 * np.ones(self.nt)
             for i in range(self.nt):
                 diff = self.y_norma[index_unique == i] - y_norma_unique[i]
                 if np.sum(diff**2) != 0.0:
@@ -692,6 +649,7 @@ class KrgBased(SurrogateModel):
                         D[:, np.logical_not(self.unfolded_cat)] = (
                             D_num / self.X2_scale[np.logical_not(self.unfolded_cat)]
                         )
+
             # Center and scale X_cont and y
             (
                 self.X_norma,
@@ -701,6 +659,16 @@ class KrgBased(SurrogateModel):
                 self.X_scale,
                 self.y_std,
             ) = standardization(X_cont.copy(), y.copy())
+
+            if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+                # Replace Gower distances with Wasserstein distances in D using the new method
+                self._mix_int_corr.replace_with_de_distances(
+                    D,
+                    self.X_train,
+                    self.ij,
+                    self.options["categorical_kernel_beta"],
+                    y_norma=self.y_norma,
+                )
 
         if self._should_compute_distances_in_train:
             if self.is_continuous:
@@ -756,10 +724,28 @@ class KrgBased(SurrogateModel):
 
         self._new_train()
 
+    def _initialize_distribution_encoding(self):
+        """Fit Distributional Encoding distributions once before optimization loop."""
+        if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+            # Apply beta option
+            self._mix_int_corr.de_encoder.beta = self.options["categorical_kernel_beta"]
+
+            # Use normalized targets for fitting
+            X_orig, _ = self._get_fidelity_training_data()
+            y_norma = self.y_norma
+            is_acting = self.is_acting_train
+            _, cat_features = compute_X_cont(X_orig, self.design_space)
+            cat_features_indices = [i for i, feat in enumerate(cat_features) if feat]
+            self._mix_int_corr.de_encoder.fit_distributions(
+                X_orig[:, cat_features],
+                y_norma,
+                cat_features_indices,
+                is_acting=is_acting,
+                loo=True,
+            )
+
     def _initialize_theta(self, theta, n_levels, cat_features, cat_kernel):
         """Delegate to :class:`MixedIntegerCorrelation._initialize_theta`."""
-        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
-            self._mix_int_corr = MixedIntegerCorrelation(self)
         return self._mix_int_corr._initialize_theta(
             theta, n_levels, cat_features, cat_kernel
         )
@@ -784,8 +770,6 @@ class KrgBased(SurrogateModel):
         The signature is preserved for backward compatibility (used by
         subclasses such as MFK).
         """
-        if not hasattr(self, "_mix_int_corr") or self._mix_int_corr is None:
-            self._mix_int_corr = MixedIntegerCorrelation(self)
         return self._mix_int_corr.compute(
             corr=corr,
             design_space=design_space,
@@ -839,8 +823,6 @@ class KrgBased(SurrogateModel):
             Q, G
             QR decomposition of the matrix Ft.
         """
-        if not hasattr(self, "_likelihood_evaluator"):
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.evaluate(theta)
 
     def _compute_sigma2(
@@ -882,8 +864,6 @@ class KrgBased(SurrogateModel):
         sigma2: float or None
             - The computed Gaussian Process variance, or None if the computation fails.
         """
-        if not hasattr(self, "_likelihood_evaluator"):
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.compute_sigma2(
             R, reduced_likelihood_function_value, par, p, q, is_ri
         )
@@ -929,8 +909,6 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        if not hasattr(self, "_likelihood_evaluator"):
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.gradient(theta)
 
     def _reduced_likelihood_hessian(self, theta):
@@ -976,8 +954,6 @@ class KrgBased(SurrogateModel):
             dsigma
             List of all sigma derivatives
         """
-        if not hasattr(self, "_likelihood_evaluator"):
-            self._likelihood_evaluator = LikelihoodEvaluator(self)
         return self._likelihood_evaluator.hessian(theta)
 
     def _predict_init(self, x, is_acting):
@@ -1031,6 +1007,17 @@ class KrgBased(SurrogateModel):
                     dx[:, np.logical_not(self.unfolded_cat)] = (
                         dnum / self.X2_scale[np.logical_not(self.unfolded_cat)]
                     )
+
+            if self.options["categorical_kernel"] == MixIntKernelType.DIST_ENCODING:
+                # Replace Gower distances with Wasserstein distances in dx using the new method
+                self._mix_int_corr.replace_with_de_distances(
+                    dx,
+                    self.X_train,
+                    ij,
+                    self.options["categorical_kernel_beta"],
+                    x_pred=x,
+                )
+
             Lij, _ = cross_levels(
                 X=x, ij=ij, design_space=self.design_space, y=self.X_train
             )
@@ -1075,11 +1062,7 @@ class KrgBased(SurrogateModel):
             self.options["print_global"] and self.options["print_prediction"]
         )
 
-        if self.name == "MixExp":
-            # Mixture of experts model
-            self.printer._title("Evaluation of the Mixture of experts")
-        else:
-            self.printer._title("Evaluation")
+        self.printer._title("Evaluation")
         self.printer("   %-12s : %i" % ("# eval points.", n))
         self.printer()
 
@@ -1114,7 +1097,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1260,7 +1243,7 @@ class KrgBased(SurrogateModel):
             r = self._matrix_data_corr(
                 corr=self.options["corr"],
                 design_space=self.design_space,
-                power=self.options["pow_exp_power"],
+                power=self._pow_exp_power,
                 theta=self.optimal_theta,
                 theta_bounds=self.options["theta_bounds"],
                 dx=dx,
@@ -1288,7 +1271,7 @@ class KrgBased(SurrogateModel):
             np.dot(self.optimal_par["Ft"].T, rt)
             - self._regression_types[self.options["poly"]](X_cont).T,
         )
-        is_noisy = np.max(self.options["noise0"]) > 0.0 or self.options["eval_noise"]
+        is_noisy = np.max(self._noise0) > 0.0 or self._eval_noise
         if is_noisy and is_ri:
             A = self.optimal_par["sigma2_ri"]
         else:
@@ -1429,9 +1412,9 @@ class KrgBased(SurrogateModel):
             derived_variance = np.array((np.outer(sigma2, np.diag(prime.T)) / x_std))
             return np.atleast_2d(derived_variance).T
 
-    def _optimize_hyperparam(self, D):
+    def _optimize_hyperparam(self, D, use_multistart=True, limit=None):
         """
-        This function evaluates the Gaussian Process model at x.
+        Optimize the hyperparameters of the Gaussian Process model.
 
         Parameters
         ----------
@@ -1439,6 +1422,12 @@ class KrgBased(SurrogateModel):
             - The componentwise cross-spatial-correlation-distance between the
               vectors in X.
            For SGP surrogate, D is not used
+        use_multistart : bool, optional
+            Whether to add LHS multistart samples for the optimizer.
+            Default is True.
+        limit : int or None, optional
+            Iteration limit for the optimizer. If None, a default is computed
+            from the number of hyperparameters.
 
         Returns
         -------
@@ -1492,13 +1481,9 @@ class KrgBased(SurrogateModel):
                 hess = -self._reduced_likelihood_hessian(theta)[0]
                 return hess
 
-        limit, _rhobeg = max(12 * len(self.options["theta0"]), 50), 0.5
-        exit_function = False
-        if self.kplsk_second_loop is None:
-            self.kplsk_second_loop = False
-        elif self.kplsk_second_loop is True:
-            exit_function = True
-        n_iter = self._n_outer_iterations
+        if limit is None:
+            limit = max(12 * len(self._theta0), 50)
+        _rhobeg = 0.5
 
         # Create optimizer strategy
         optimizer = self._create_optimizer()
@@ -1515,220 +1500,201 @@ class KrgBased(SurrogateModel):
             [],
         )
 
-        for ii in range(n_iter, -1, -1):
-            bounds_hyp = []
-            self.kplsk_second_loop = (
-                self._n_outer_iterations > 0 and ii == 0
-            ) or self.kplsk_second_loop
-            self.theta0 = deepcopy(self.options["theta0"])
-            self.corr.theta = deepcopy(self.options["theta0"])
-            for i in range(len(self.theta0)):
-                # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
-                # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
-                # By standardising X in R, X_norm = (X-X_mean)/X_std, then
-                # X_norm in [-1,1] if considering one std intervals. This leads
-                # to theta in (0,2e1]
-                theta_bounds = self.options["theta_bounds"]
-                if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
-                    self.theta0[i] = self._handle_theta0_out_of_bounds(
-                        self.theta0[i], i, theta_bounds
-                    )
-
-                new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
-                    theta_bounds, i
+        bounds_hyp = []
+        self.theta0 = deepcopy(self._theta0)
+        self.corr.theta = deepcopy(self._theta0)
+        for i in range(len(self.theta0)):
+            # In practice, in 1D and for X in [0,1], theta^{-2} in [1e-2,infty),
+            # i.e. theta in (0,1e1], is a good choice to avoid overfitting.
+            # By standardising X in R, X_norm = (X-X_mean)/X_std, then
+            # X_norm in [-1,1] if considering one std intervals. This leads
+            # to theta in (0,2e1]
+            theta_bounds = self.options["theta_bounds"]
+            if self.theta0[i] < theta_bounds[0] or self.theta0[i] > theta_bounds[1]:
+                self.theta0[i] = self._handle_theta0_out_of_bounds(
+                    self.theta0[i], i, theta_bounds
                 )
-                constraints.extend(new_constraints)
-                bounds_hyp.append(bounds_entry)
 
-            theta0, theta0_rand = self._get_optimizer_initial_theta(
-                self.options["theta_bounds"]
+            new_constraints, bounds_entry = self._get_optimizer_theta_bounds(
+                theta_bounds, i
             )
+            constraints.extend(new_constraints)
+            bounds_hyp.append(bounds_entry)
 
-            if self._should_compute_distances_in_train:
-                if not (self.is_continuous):
-                    self.D = D
-                else:
-                    ##from abs distance to kernel distance
-                    self.D = self._componentwise_distance(D, opt=ii)
-            else:  # SGP case, D is not used
-                pass
+        theta0, theta0_rand = self._get_optimizer_initial_theta(
+            self.options["theta_bounds"]
+        )
 
-            # Initialization
-            k, stop, best_optimal_rlf_value = 0, 1, -1e20
-            while k < stop:
-                # Use specified starting point as first guess
-                self.noise0 = np.array(self.options["noise0"])
-                noise_bounds = self.options["noise_bounds"]
+        if self._should_compute_distances_in_train:
+            if not (self.is_continuous):
+                self.D = D
+            else:
+                ##from abs distance to kernel distance
+                self.D = self._componentwise_distance(D)
+        else:  # SGP case, D is not used
+            pass
 
-                # GP variance is optimized too when _optimize_sigma2 is True
-                offset = 0
-                if self._optimize_sigma2 and self.retry == MAX_RETRY:
-                    sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
-                    theta0_sigma2 = np.concatenate([theta0, sigma2_0])
-                    sigma2_bounds = np.log10(
-                        np.array([1e-12, (3.0 * self.y_std[0]) ** 2])
-                    )
-                    constraints.append(
-                        lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
-                    )
-                    constraints.append(
-                        lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
-                    )
-                    bounds_hyp.append(sigma2_bounds)
-                    offset = 1
-                    theta0 = theta0_sigma2
-                    theta0_rand = np.concatenate([theta0_rand, sigma2_0])
+        # Initialization
+        k, stop, best_optimal_rlf_value = 0, 1, -1e20
+        while k < stop:
+            # Use specified starting point as first guess
+            self.noise0 = np.array(self._noise0)
+            noise_bounds = self.options["noise_bounds"]
 
-                if (
-                    self.options["eval_noise"]
-                    and not self.options["use_het_noise"]
-                    and self.retry == MAX_RETRY
-                ):
-                    self.noise0[self.noise0 == 0.0] = noise_bounds[0]
-                    for i in range(len(self.noise0)):
-                        if (
-                            self.noise0[i] < noise_bounds[0]
-                            or self.noise0[i] > noise_bounds[1]
-                        ):
-                            self.noise0[i] = noise_bounds[0]
-                            warnings.warn(
-                                "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
-                            )
-
-                    theta0 = np.concatenate(
-                        [theta0, np.log10(np.array([self.noise0]).flatten())]
-                    )
-                    theta0_rand = np.concatenate(
-                        [
-                            theta0_rand,
-                            np.log10(np.array([self.noise0]).flatten()),
-                        ]
-                    )
-
-                    for i in range(len(self.noise0)):
-                        noise_bounds = np.log10(noise_bounds)
-                        constraints.append(
-                            lambda log10t, i=i: (
-                                log10t[offset + i + len(self.theta0)] - noise_bounds[0]
-                            )
-                        )
-                        constraints.append(
-                            lambda log10t, i=i: (
-                                noise_bounds[1] - log10t[offset + i + len(self.theta0)]
-                            )
-                        )
-                        bounds_hyp.append(noise_bounds)
-                theta_limits = np.repeat(
-                    np.log10([theta_bounds]), repeats=len(theta0), axis=0
+            # GP variance is optimized too when _optimize_sigma2 is True
+            offset = 0
+            if self._optimize_sigma2 and self.retry == MAX_RETRY:
+                sigma2_0 = np.log10(np.array([self.y_std[0] ** 2]))
+                theta0_sigma2 = np.concatenate([theta0, sigma2_0])
+                sigma2_bounds = np.log10(np.array([1e-12, (3.0 * self.y_std[0]) ** 2]))
+                constraints.append(
+                    lambda log10t: log10t[len(self.theta0)] - sigma2_bounds[0]
                 )
-                theta_all_loops = np.vstack((theta0, theta0_rand))
-                if self._should_sample_multistart(ii):
-                    if self.options["n_start"] > 1:
-                        sampling = LHS(
-                            xlimits=theta_limits,
-                            criterion="maximin",
-                            seed=self.random_state,
+                constraints.append(
+                    lambda log10t: sigma2_bounds[1] - log10t[len(self.theta0)]
+                )
+                bounds_hyp.append(sigma2_bounds)
+                offset = 1
+                theta0 = theta0_sigma2
+                theta0_rand = np.concatenate([theta0_rand, sigma2_0])
+
+            if (
+                self._eval_noise
+                and not self.options["use_het_noise"]
+                and self.retry == MAX_RETRY
+            ):
+                self.noise0[self.noise0 == 0.0] = noise_bounds[0]
+                for i in range(len(self.noise0)):
+                    if (
+                        self.noise0[i] < noise_bounds[0]
+                        or self.noise0[i] > noise_bounds[1]
+                    ):
+                        self.noise0[i] = noise_bounds[0]
+                        warnings.warn(
+                            "Warning: noise0 is out the feasible bounds. The lowest possible value is used instead."
                         )
-                        theta_lhs_loops = sampling(self.options["n_start"])
-                        theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
 
-                try:
-                    # Delegate to optimizer strategy
-                    optimal_theta_res = optimizer.optimize(
-                        objective=minus_reduced_likelihood_function,
-                        theta_starts=theta_all_loops,
-                        gradient=grad_minus_reduced_likelihood_function,
-                        hessian=hessian_minus_reduced_likelihood_function,
-                        constraints=constraints,
-                        bounds=bounds_hyp,
-                        limit=limit,
-                    )
+                theta0 = np.concatenate(
+                    [theta0, np.log10(np.array([self.noise0]).flatten())]
+                )
+                theta0_rand = np.concatenate(
+                    [
+                        theta0_rand,
+                        np.log10(np.array([self.noise0]).flatten()),
+                    ]
+                )
 
-                    if optimal_theta_res is None or "x" not in optimal_theta_res:
-                        raise ValueError(
-                            "Optimizer encountered a problem: no valid result found"
+                for i in range(len(self.noise0)):
+                    noise_bounds = np.log10(noise_bounds)
+                    constraints.append(
+                        lambda log10t, i=i: (
+                            log10t[offset + i + len(self.theta0)] - noise_bounds[0]
                         )
-                    optimal_theta = optimal_theta_res["x"]
-
-                    optimal_theta = self._transform_optimal_theta(optimal_theta)
-
-                    optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
-                        theta=optimal_theta
                     )
-                    # Compare the new optimizer to the best previous one
-                    if k > 0:
-                        if np.isinf(optimal_rlf_value):
-                            raise RuntimeError(
-                                "Cannot train the model: infinite likelihood found"
-                            )
-                        else:
-                            if (
-                                self.best_iteration_fail is not None
-                                and optimal_rlf_value >= self.best_iteration_fail
-                            ):
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
-                                else:
-                                    if (
-                                        self.best_iteration_fail
-                                        > best_optimal_rlf_value
-                                    ):
-                                        best_optimal_theta = self._thetaMemory
-                                        (
-                                            best_optimal_rlf_value,
-                                            best_optimal_par,
-                                        ) = self._reduced_likelihood_function(
-                                            theta=best_optimal_theta
-                                        )
+                    constraints.append(
+                        lambda log10t, i=i: (
+                            noise_bounds[1] - log10t[offset + i + len(self.theta0)]
+                        )
+                    )
+                    bounds_hyp.append(noise_bounds)
+            theta_limits = np.repeat(
+                np.log10([theta_bounds]), repeats=len(theta0), axis=0
+            )
+            theta_all_loops = np.vstack((theta0, theta0_rand))
+            if use_multistart:
+                if self.options["n_start"] > 1:
+                    sampling = LHS(
+                        xlimits=theta_limits,
+                        criterion="maximin",
+                        seed=self.rng,
+                    )
+                    theta_lhs_loops = sampling(self.options["n_start"])
+                    theta_all_loops = np.vstack((theta_all_loops, theta_lhs_loops))
+
+            try:
+                # Delegate to optimizer strategy
+                optimal_theta_res = optimizer.optimize(
+                    objective=minus_reduced_likelihood_function,
+                    theta_starts=theta_all_loops,
+                    gradient=grad_minus_reduced_likelihood_function,
+                    hessian=hessian_minus_reduced_likelihood_function,
+                    constraints=constraints,
+                    bounds=bounds_hyp,
+                    limit=limit,
+                )
+
+                if optimal_theta_res is None or "x" not in optimal_theta_res:
+                    raise ValueError(
+                        "Optimizer encountered a problem: no valid result found"
+                    )
+                optimal_theta = optimal_theta_res["x"]
+
+                optimal_theta = self._transform_optimal_theta(optimal_theta)
+
+                optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
+                    theta=optimal_theta
+                )
+                # Compare the new optimizer to the best previous one
+                if k > 0:
+                    if np.isinf(optimal_rlf_value):
+                        raise RuntimeError(
+                            "Cannot train the model: infinite likelihood found"
+                        )
                     else:
-                        if np.isinf(optimal_rlf_value):
-                            stop += 1
-                        else:
-                            best_optimal_rlf_value = optimal_rlf_value
-                            best_optimal_par = optimal_par
-                            best_optimal_theta = optimal_theta
-                    k += 1
-                except ValueError as ve:
-                    # raise ve
-                    # If iteration is max when fmin_cobyla fail is not reached
-                    if self.retry > 0:
-                        self.retry -= 1
-                        k += 1
+                        if (
+                            self.best_iteration_fail is not None
+                            and optimal_rlf_value >= self.best_iteration_fail
+                        ):
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
+                            else:
+                                if self.best_iteration_fail > best_optimal_rlf_value:
+                                    best_optimal_theta = self._thetaMemory
+                                    (
+                                        best_optimal_rlf_value,
+                                        best_optimal_par,
+                                    ) = self._reduced_likelihood_function(
+                                        theta=best_optimal_theta
+                                    )
+                else:
+                    if np.isinf(optimal_rlf_value):
                         stop += 1
-                        # One evaluation objectif function is done at least
-                        if self.best_iteration_fail is not None:
-                            if self.best_iteration_fail > best_optimal_rlf_value:
-                                best_optimal_theta = self._thetaMemory
-                                (
-                                    best_optimal_rlf_value,
-                                    best_optimal_par,
-                                ) = self._reduced_likelihood_function(
-                                    theta=best_optimal_theta
-                                )
-                        else:
-                            self.print_failed_optimization_msg()
-                            raise ve
-                    # Optimization fail
-                    elif np.size(best_optimal_par) == 0:
+                    else:
+                        best_optimal_rlf_value = optimal_rlf_value
+                        best_optimal_par = optimal_par
+                        best_optimal_theta = optimal_theta
+                k += 1
+            except ValueError as ve:
+                # raise ve
+                # If iteration is max when fmin_cobyla fail is not reached
+                if self.retry > 0:
+                    self.retry -= 1
+                    k += 1
+                    stop += 1
+                    # One evaluation objectif function is done at least
+                    if self.best_iteration_fail is not None:
+                        if self.best_iteration_fail > best_optimal_rlf_value:
+                            best_optimal_theta = self._thetaMemory
+                            (
+                                best_optimal_rlf_value,
+                                best_optimal_par,
+                            ) = self._reduced_likelihood_function(
+                                theta=best_optimal_theta
+                            )
+                    else:
                         self.print_failed_optimization_msg()
                         raise ve
-                    # Break the while loop
-                    else:
-                        k = stop + 1
-                        print("fmin_cobyla failed but the best value is retained")
+                # Optimization fail
+                elif np.size(best_optimal_par) == 0:
+                    self.print_failed_optimization_msg()
+                    raise ve
+                # Break the while loop
+                else:
+                    k = stop + 1
+                    print("fmin_cobyla failed but the best value is retained")
 
-            should_return, exit_function, new_limit = self._finalize_outer_loop(
-                best_optimal_rlf_value,
-                best_optimal_par,
-                best_optimal_theta,
-                exit_function,
-            )
-            if new_limit is not None:
-                limit = new_limit
-            if should_return:
-                return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def print_failed_optimization_msg(self):
@@ -1748,6 +1714,17 @@ class KrgBased(SurrogateModel):
         This function checks some parameters of the model
         and amend theta0 if possible (see _amend_theta0_option).
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        if isinstance(self.options["corr"], Kernel):
+            self._theta0 = list(np.atleast_1d(self.corr.theta))
+        else:
+            self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
+
         d = self.options["n_comp"] if "n_comp" in self.options else self.nx
 
         mat_dim = (
@@ -1770,34 +1747,35 @@ class KrgBased(SurrogateModel):
                     self.is_continuous
                     or self.options["categorical_kernel"] == MixIntKernelType.GOWER
                 ):
-                    self.options["theta0"] *= np.ones(2 * self.n_param)
+                    self._theta0 = list(
+                        np.array(self._theta0) * np.ones(2 * self.n_param)
+                    )
                 else:
                     self.n_param += len([self.design_space.is_cat_mask])
-                    self.options["theta0"] *= np.ones(self.n_param)
+                    self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
 
             else:
-                self.options["theta0"] *= np.ones(self.n_param)
+                self._theta0 = list(np.array(self._theta0) * np.ones(self.n_param))
         if (
             self.options["corr"] not in ["squar_exp", "abs_exp", "pow_exp"]
             and not (self.is_continuous)
-            and self.options["categorical_kernel"]
-            not in [
-                MixIntKernelType.GOWER,
-                MixIntKernelType.COMPOUND_SYMMETRY,
-                MixIntKernelType.HOMO_HSPHERE,
-            ]
+            and not self.options["categorical_kernel"].is_scalar_encoding()
+            and self.options["categorical_kernel"] != MixIntKernelType.HOMO_HSPHERE
         ):
             raise ValueError(
                 "Categorical kernels should be matrix or exponential based."
             )
 
-        if len(self.options["theta0"]) != d and (
-            self.options["categorical_kernel"]
-            in [MixIntKernelType.GOWER, MixIntKernelType.COMPOUND_SYMMETRY]
-            or self.is_continuous
+        if (
+            not isinstance(self.options["corr"], Kernel)
+            and len(self._theta0) != d
+            and (
+                self.options["categorical_kernel"].is_scalar_encoding()
+                or self.is_continuous
+            )
         ):
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 if self.options["corr"] in (
                     "pow_exp",
@@ -1809,31 +1787,31 @@ class KrgBased(SurrogateModel):
                 ):
                     raise ValueError(
                         "the length of theta0 (%s) should be equal to the number of dim (%s)."
-                        % (len(self.options["theta0"]), d)
+                        % (len(self._theta0), d)
                     )
         if (
-            self.options["eval_noise"] or np.max(self.options["noise0"]) > 1e-12
-        ) and self.options["hyper_opt"] == "TNC":
+            self._eval_noise or np.max(self._noise0) > 1e-12
+        ) and self._hyper_opt == "TNC":
             warnings.warn(
                 "TNC not available yet for noise handling. Switching to Cobyla"
             )
-            self.options["hyper_opt"] = "Cobyla"
+            self._hyper_opt = "Cobyla"
 
-        if self.options["use_het_noise"] and not self.options["eval_noise"]:
-            if len(self.options["noise0"]) != self.nt:
-                if len(self.options["noise0"]) == 1:
-                    self.options["noise0"] *= np.ones(self.nt)
+        if self.options["use_het_noise"] and not self._eval_noise:
+            if len(self._noise0) != self.nt:
+                if len(self._noise0) == 1:
+                    self._noise0 *= np.ones(self.nt)
                 else:
                     raise ValueError(
                         "for the heteroscedastic case, the length of noise0 (%s) \
                             should be equal to the number of observations (%s)."
-                        % (len(self.options["noise0"]), self.nt)
+                        % (len(self._noise0), self.nt)
                     )
         if not self.options["use_het_noise"]:
-            if len(self.options["noise0"]) != 1:
+            if len(self._noise0) != 1:
                 raise ValueError(
                     "for the homoscedastic noise case, the length of noise0 (%s) should be equal to one."
-                    % (len(self.options["noise0"]))
+                    % (len(self._noise0))
                 )
 
         if self.supports["training_derivatives"]:

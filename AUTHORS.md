@@ -37,6 +37,7 @@ SMT has been developed thanks to contributions from:
 * Nina Moëllo
 * Paul Saves
 * Raul Carreira Rufato
+* Rafaela Octaviani de Assunção
 * Reino Ruusu
 * Rémi Vauclin
 * Rémy Charayron

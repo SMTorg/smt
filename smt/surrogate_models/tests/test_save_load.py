@@ -28,7 +28,7 @@ class TestSaveLoad(unittest.TestCase):
         ndim = 2
         fun = Sphere(ndim=ndim)
 
-        sampling = LHS(xlimits=fun.xlimits, criterion="m")
+        sampling = LHS(xlimits=fun.xlimits, criterion="m", seed=42)
         xt = sampling(20)
         yt = fun(xt)
 
@@ -69,7 +69,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def test_save_load_surrogates(self):
         surrogates = [KRG, KPLS, KPLSK, MGP, SGP, QP, GENN, LS]
-        rng = np.random.RandomState(1)
+        rng = np.random.default_rng(42)
         N_inducing = 30
         num = 100
 
@@ -84,7 +84,7 @@ class TestSaveLoad(unittest.TestCase):
             sm.set_training_values(xt, yt)
 
             if surrogate == SGP:
-                sm.Z = 2 * rng.rand(N_inducing, 1) - 1
+                sm.Z = 2 * rng.random((N_inducing, 1)) - 1
                 sm.set_inducing_inputs(Z=sm.Z)
 
             sm.train()

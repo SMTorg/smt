@@ -25,13 +25,17 @@ class TestKrgBased(unittest.TestCase):
         krg = KrgBased()
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))
         krg._check_param()
-        self.assertTrue(np.array_equal(krg.options["theta0"], [1e-2, 1e-2, 1e-2]))
+        self.assertTrue(np.array_equal(krg._theta0, [1e-2, 1e-2, 1e-2]))
+        # options["theta0"] should NOT be mutated
+        self.assertTrue(np.array_equal(krg.options["theta0"], [1e-2]))
 
     def test_theta0_one_dim_init(self):
         krg = KrgBased(theta0=[2e-2])
         krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1]]))
         krg._check_param()
-        self.assertTrue(np.array_equal(krg.options["theta0"], [2e-2, 2e-2, 2e-2]))
+        self.assertTrue(np.array_equal(krg._theta0, [2e-2, 2e-2, 2e-2]))
+        # options["theta0"] should NOT be mutated
+        self.assertTrue(np.array_equal(krg.options["theta0"], [2e-2]))
 
     def test_theta0_erroneous_init(self):
         krg = KrgBased(theta0=[2e-2, 1e-2])
@@ -46,11 +50,12 @@ class TestKrgBased(unittest.TestCase):
             krg.set_training_values(np.array([[1, 2, 3]]), np.array([[1, 1]]))
 
     def test_less_almost_squar_exp(self):
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
-        xt = np.random.uniform(size=nobs)  # design points
+        xt = rng.uniform(size=nobs)  # design points
 
         # adding a random noise to observations
-        yt = target_fun(xt) + np.random.normal(scale=0.05, size=nobs)
+        yt = target_fun(xt) + rng.normal(scale=0.05, size=nobs)
 
         # training the model with the option eval_noise= True
         sm = KRG(eval_noise=True, corr="pow_exp", pow_exp_power=1.99, seed=42)
@@ -595,8 +600,9 @@ class TestKrgBased(unittest.TestCase):
         self.assertTrue(t.is_training_ill_conditioned())
 
     def test_random_generator(self):
+        rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
-        xt = np.random.uniform(size=nobs)  # design points
+        xt = rng.uniform(size=nobs)  # design points
         yt = target_fun(xt)
 
         ntest = 10  # test
@@ -612,11 +618,11 @@ class TestKrgBased(unittest.TestCase):
 
         np.testing.assert_allclose(sm1.predict_values(xtest), sm2.predict_values(xtest))
 
-    def test_deprecated_random_state(self):
-        with self.assertWarns(DeprecationWarning):
-            _sm1 = KRG(random_state=42)
-        with self.assertRaises(ValueError):
-            _sm1 = KRG(random_state=np.random.RandomState(42))
+    def test_removed_random_state(self):
+        with self.assertRaises(AssertionError):
+            KRG(random_state=42)
+        with self.assertRaises(AssertionError):
+            KRG(random_state=np.random.RandomState(42))
 
 
 if __name__ == "__main__":

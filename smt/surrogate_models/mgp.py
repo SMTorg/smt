@@ -13,7 +13,7 @@ from scipy.stats import multivariate_normal as m_norm
 from smt.kernels.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.checks import check_nx, check_support, ensure_2d_array
-from smt.utils.kriging import componentwise_distance, differences
+from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 
 """
 The Active kriging class.
@@ -47,7 +47,7 @@ class MGP(KrgBased):
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
 
-    def _componentwise_distance(self, dx, small=False, opt=0):
+    def _componentwise_distance(self, dx, small=False):
         """
         Compute the componentwise distance with respect to the correlation kernel
 
@@ -59,8 +59,6 @@ class MGP(KrgBased):
         small : bool, optional
             Compute the componentwise distance in small (n_components) dimension
             or in initial dimension. The default is False.
-        opt : int, optional
-            useless for MGP
 
         Returns
         -------
@@ -543,6 +541,13 @@ class MGP(KrgBased):
         Overrides KrgBased implementation
         This function checks some parameters of the model.
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
 
         d = self.options["n_comp"] * self.nx
 
@@ -551,11 +556,11 @@ class MGP(KrgBased):
         if self.options["hyper_opt"] != "TNC":
             raise ValueError("MGP must be used with TNC hyperparameters optimizer")
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+        if len(self._theta0) != d:
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 raise ValueError(
                     "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    % (d, len(self._theta0))
                 )

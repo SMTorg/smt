@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.cross_decomposition import PLSRegression as pls
 
 from smt.surrogate_models.krg_based import KrgBased, MixIntKernelType
-from smt.utils.kriging import componentwise_distance_PLS
+from smt.surrogate_models.krg_based.distances import componentwise_distance_PLS
 
 
 class KPLS(KrgBased):
@@ -22,7 +22,7 @@ class KPLS(KrgBased):
         super(KPLS, self)._initialize()
         declare = self.options.declare
         declare("n_comp", 1, types=int, desc="Number of principal components")
-        # KPLS used only with "abs_exp" and "squar_exp" correlations
+        # KPLS used only with "abs_exp", "squar_exp" and "pow_exp" correlations
         declare(
             "corr",
             "squar_exp",
@@ -72,29 +72,25 @@ class KPLS(KrgBased):
         """
         Validates KPLS-specific parameters before calling base class validation.
         """
-        if self.options["corr"] not in ["pow_exp", "squar_exp", "abs_exp"]:
-            raise ValueError(
-                "KPLS only works with a squared exponential, or an absolute exponential kernel with variable power"
-            )
         if (
             self.options["categorical_kernel"]
             not in [
                 MixIntKernelType.EXP_HOMO_HSPHERE,
                 MixIntKernelType.HOMO_HSPHERE,
             ]
-            and self.name == "KPLS"
+            and self._use_pls
         ):
             if self.options["cat_kernel_comps"] is not None:
                 raise ValueError("cat_kernel_comps option is for homoscedastic kernel.")
         super()._check_param()
 
-    def _componentwise_distance(self, dx, opt=0, theta=None, return_derivative=False):
+    def _componentwise_distance(self, dx, theta=None, return_derivative=False):
         d = componentwise_distance_PLS(
             dx,
             self.options["corr"],
             self.options["n_comp"],
             self.coeff_pls,
-            power=self.options["pow_exp_power"],
+            power=self._pow_exp_power,
             theta=theta,
             return_derivative=return_derivative,
         )
@@ -117,7 +113,7 @@ class KPLS(KrgBased):
             self.options["n_comp"] += 1
             press_m = press_m1
             press_m1 = 0
-            self.options["theta0"] = [0.1]
+            self._theta0 = [0.1]
             for fold in range(k_fold):
                 self.nt = len(X) - nbk
                 todel = np.arange(fold * nbk, (fold + 1) * nbk)
@@ -144,7 +140,7 @@ class KPLS(KrgBased):
         self.training_points[None][0][0] = X
         self.training_points[None][0][1] = y
         self.nt = len(X)
-        self.options["theta0"] = [0.1]
+        self._theta0 = [0.1]
 
     def _train(self):
         """

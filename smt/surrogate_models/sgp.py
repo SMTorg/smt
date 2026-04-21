@@ -18,7 +18,7 @@ from scipy.cluster.vq import kmeans
 
 from smt.surrogate_models.krg import KRG
 from smt.utils.checks import ensure_2d_array
-from smt.utils.kriging import differences
+from smt.surrogate_models.krg_based.distances import differences
 from smt.utils.misc import standardization
 
 
@@ -121,7 +121,7 @@ class SGP(KRG):
     def _post_optim_hook(self):
         """SGP extracts sigma2 (and optionally noise) from optimal_theta."""
         if not self.options["use_het_noise"]:
-            if self.options["eval_noise"]:
+            if self._eval_noise:
                 self.optimal_noise = self.optimal_theta[-1]
                 self.optimal_sigma2 = self.optimal_theta[-2]
                 self.optimal_theta = self.optimal_theta[:-2]
@@ -217,13 +217,13 @@ class SGP(KRG):
         Y = self.training_points[None][0][1]
         Z = self.Z
 
-        if self.options["eval_noise"]:
+        if self._eval_noise:
             sigma2 = theta[-2]
             noise = theta[-1]
             theta = theta[0:-2]
         else:
             sigma2 = theta[-1]
-            noise = self.options["noise0"]
+            noise = self._noise0
             theta = theta[0:-1]
 
         nugget = self.options["nugget"]
