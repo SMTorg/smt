@@ -549,13 +549,107 @@ class MFCK(KrgBased):
         covariance: np.ndarray
             Returns the conditional covariance matrixes per level.
         """
-        means, covariances = self.predict_all_levels(x)
+        x = (x - self.X_offset) / self.X_scale
 
-        return means[self.lvl - 1]
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all, self.X_norma_all, self.optimal_theta
+                )
+                noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
+                    self.K.shape[0]
+                )
+                L = np.linalg.cholesky(self.K + noise_matrix)
+            else:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all,
+                    self.X_norma_all,
+                    self.optimal_theta[: -self.lvl],
+                )
 
-    def predict_variances(
-        self, X: np.ndarray, is_acting=None, is_ri=False
-    ) -> np.ndarray:
+                noises = self.optimal_theta[-self.lvl : :]
+                varis = []
+                for i, v in enumerate(noises):
+                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
+                noise_matrix = varis * np.eye(self.K.shape[0])
+                L = np.linalg.cholesky(self.K + noise_matrix)
+        else:
+            self.K = self.compute_blockwise_K(
+                self.X_norma_all, self.X_norma_all, self.optimal_theta
+            )
+            L = np.linalg.cholesky(
+                self.K + self.options["nugget"] * np.eye(self.K.shape[0])
+            )
+
+        k_xX = []
+
+        ind = self.lvl - 1
+
+        for j in range(self.lvl):
+            if ind >= j:
+                if self.options["eval_noise"]:
+                    if self.options["use_het_noise"]:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                ind,
+                                j,
+                                self.optimal_theta,
+                            )
+                        )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                ind,
+                                j,
+                                self.optimal_theta[: -self.lvl],
+                            )
+                        )
+                else:
+                    k_xX.append(
+                        self.compute_cross_K(
+                            self.X_norma_all[j], x, ind, j, self.optimal_theta
+                        )
+                    )
+            else:
+                if self.options["eval_noise"]:
+                    if self.options["use_het_noise"]:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                j,
+                                ind,
+                                self.optimal_theta,
+                            )
+                        )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                j,
+                                ind,
+                                self.optimal_theta[: -self.lvl],
+                            )
+                        )
+                else:
+                    k_xX.append(
+                        self.compute_cross_K(
+                            self.X_norma_all[j], x, j, ind, self.optimal_theta
+                        )
+                    )
+
+        beta1 = solve_triangular(L, np.vstack(k_xX), lower=True)
+
+        alpha1 = solve_triangular(L, self.y_norma_all, lower=True)
+
+        return self.y_std * np.dot(beta1.T, alpha1) + self.y_mean
+
+    def predict_variances(self, x: np.ndarray) -> np.ndarray:
         """
         Evaluates the model at a set of points.
 
@@ -569,9 +663,263 @@ class MFCK(KrgBased):
         y : np.ndarray
             Evaluation point output variable values
         """
-        means, covariances = self.predict_all_levels(X)
 
-        return covariances[self.lvl - 1]
+        x = (x - self.X_offset) / self.X_scale
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all, self.X_norma_all, self.optimal_theta
+                )
+                noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
+                    self.K.shape[0]
+                )
+                L = np.linalg.cholesky(self.K + noise_matrix)
+            else:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all,
+                    self.X_norma_all,
+                    self.optimal_theta[: -self.lvl],
+                )
+
+                noises = self.optimal_theta[-self.lvl : :]
+                varis = []
+                for i, v in enumerate(noises):
+                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
+                noise_matrix = varis * np.eye(self.K.shape[0])
+                L = np.linalg.cholesky(self.K + noise_matrix)
+        else:
+            self.K = self.compute_blockwise_K(
+                self.X_norma_all, self.X_norma_all, self.optimal_theta
+            )
+            L = np.linalg.cholesky(
+                self.K + self.options["nugget"] * np.eye(self.K.shape[0])
+            )
+
+        k_xX = []
+        ind = self.lvl - 1
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
+            else:
+                k_xx = self.compute_diag_K(
+                    x, x, ind, ind, self.optimal_theta[: -self.lvl]
+                )
+        else:
+            k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
+
+        for j in range(self.lvl):
+            if ind >= j:
+                if self.options["eval_noise"]:
+                    if self.options["use_het_noise"]:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                ind,
+                                j,
+                                self.optimal_theta,
+                            )
+                        )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                ind,
+                                j,
+                                self.optimal_theta[: -self.lvl],
+                            )
+                        )
+                else:
+                    k_xX.append(
+                        self.compute_cross_K(
+                            self.X_norma_all[j], x, ind, j, self.optimal_theta
+                        )
+                    )
+            else:
+                if self.options["eval_noise"]:
+                    if self.options["use_het_noise"]:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                j,
+                                ind,
+                                self.optimal_theta,
+                            )
+                        )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j],
+                                x,
+                                j,
+                                ind,
+                                self.optimal_theta[: -self.lvl],
+                            )
+                        )
+                else:
+                    k_xX.append(
+                        self.compute_cross_K(
+                            self.X_norma_all[j], x, j, ind, self.optimal_theta
+                        )
+                    )
+
+        beta1 = solve_triangular(L, np.vstack(k_xX), lower=True)
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                variance = k_xx - np.diag(np.dot(beta1.T, beta1))
+            else:
+                variance = k_xx
+                +np.diag(
+                    noises[ind] * np.eye(k_xx.shape[0])
+                    - np.diag(np.dot(beta1.T, beta1))
+                )
+        else:
+            variance = k_xx - np.diag(np.dot(beta1.T, beta1))
+
+        return variance
+
+    def predict_variances_all_levels(self, x):
+        """
+        Evaluates the model at a set of points.
+
+        Arguments
+        ---------
+        x : np.ndarray [n_evals, dim]
+            Evaluation point input variable values
+
+        Returns
+        -------
+        y : np.ndarray
+            Evaluation point output variable values
+        Theta : Optimal parameters.
+        """
+        x = (x - self.X_offset) / self.X_scale
+
+        if self.options["eval_noise"]:
+            if self.options["use_het_noise"]:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all, self.X_norma_all, self.optimal_theta
+                )
+                noise_matrix = np.concatenate(self.options["noise0"]) * np.eye(
+                    self.K.shape[0]
+                )
+                L = np.linalg.cholesky(self.K + noise_matrix)
+            else:
+                self.K = self.compute_blockwise_K(
+                    self.X_norma_all,
+                    self.X_norma_all,
+                    self.optimal_theta[: -self.lvl],
+                )
+
+                noises = self.optimal_theta[-self.lvl : :]
+                varis = []
+                for i, v in enumerate(noises):
+                    varis = np.hstack([varis, np.full(self.X[i].shape[0], noises[i])])
+                noise_matrix = varis * np.eye(self.K.shape[0])
+                L = np.linalg.cholesky(self.K + noise_matrix)
+        else:
+            self.K = self.compute_blockwise_K(
+                self.X_norma_all, self.X_norma_all, self.optimal_theta
+            )
+            L = np.linalg.cholesky(
+                self.K + self.options["nugget"] * np.eye(self.K.shape[0])
+            )
+
+        k_xX = []
+        MSE = np.zeros((x.shape[0], self.lvl))
+
+        for ind in range(self.lvl):
+            if self.options["eval_noise"]:
+                if self.options["use_het_noise"]:
+                    k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
+                else:
+                    k_xx = self.compute_diag_K(
+                        x, x, ind, ind, self.optimal_theta[: -self.lvl]
+                    )
+            else:
+                k_xx = self.compute_diag_K(x, x, ind, ind, self.optimal_theta)
+
+            for j in range(self.lvl):
+                if ind >= j:
+                    if self.options["eval_noise"]:
+                        if self.options["use_het_noise"]:
+                            k_xX.append(
+                                self.compute_cross_K(
+                                    self.X_norma_all[j],
+                                    x,
+                                    ind,
+                                    j,
+                                    self.optimal_theta,
+                                )
+                            )
+                        else:
+                            k_xX.append(
+                                self.compute_cross_K(
+                                    self.X_norma_all[j],
+                                    x,
+                                    ind,
+                                    j,
+                                    self.optimal_theta[: -self.lvl],
+                                )
+                            )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j], x, ind, j, self.optimal_theta
+                            )
+                        )
+                else:
+                    if self.options["eval_noise"]:
+                        if self.options["use_het_noise"]:
+                            k_xX.append(
+                                self.compute_cross_K(
+                                    self.X_norma_all[j],
+                                    x,
+                                    j,
+                                    ind,
+                                    self.optimal_theta,
+                                )
+                            )
+                        else:
+                            k_xX.append(
+                                self.compute_cross_K(
+                                    self.X_norma_all[j],
+                                    x,
+                                    j,
+                                    ind,
+                                    self.optimal_theta[: -self.lvl],
+                                )
+                            )
+                    else:
+                        k_xX.append(
+                            self.compute_cross_K(
+                                self.X_norma_all[j], x, j, ind, self.optimal_theta
+                            )
+                        )
+
+            beta1 = solve_triangular(L, np.vstack(k_xX), lower=True)
+
+            if self.options["eval_noise"]:
+                if self.options["use_het_noise"]:
+                    MSE[:, ind] = k_xx - np.diag(np.dot(beta1.T, beta1))
+                else:
+                    MSE[:, ind] = k_xx
+                    +np.diag(
+                        noises[ind] * np.eye(k_xx.shape[0])
+                        - np.diag(np.dot(beta1.T, beta1))
+                    )
+            else:
+                MSE[:, ind] = k_xx - np.diag(np.dot(beta1.T, beta1))
+
+            k_xX.clear()
+
+        MSE *= self.y_std**2
+        return MSE, self.optimal_theta
 
     def neg_log_likelihood(self, param, grad=None):
         if self.lvl == 1:
