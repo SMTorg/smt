@@ -593,7 +593,6 @@ class MFCK(KrgBased):
         -------
         y : np.ndarray
             Evaluation point output variable values
-        Theta : Optimal parameters.
         """
         x = (x - self.X_offset) / self.X_scale
         _, L, noises = self._compute_K_and_cholesky()
