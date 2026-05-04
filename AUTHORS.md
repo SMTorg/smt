@@ -2,16 +2,16 @@
 
 SMT is developed by:
 
-* Nathalie Bartoli
-* Mohamed Amine Bouhlel
 * Jasper Bussemaker
-* Youssef Diouane
+* Joaquim Martins
 * John Hwang
+* Joseph Morlier
+* Mohamed Amine Bouhlel
+* Nathalie Bartoli
+* Paul Saves
 * Rémi Lafage
 * Thierry Lefebvre
-* Joaquim Martins
-* Joseph Morlier
-* Paul Saves
+* Youssef Diouane
 
 SMT has been developed thanks to contributions from:
 
@@ -26,7 +26,6 @@ SMT has been developed thanks to contributions from:
 * Heine Røstum
 * Hugo Reimeringer
 * Hugo Valayer
-* Jasper Bussemaker
 * Julien Schueller
 * Laurent Wilkens
 * Lisa Pretsch
@@ -39,7 +38,6 @@ SMT has been developed thanks to contributions from:
 * Nick Thompson
 * Nicolas Gonel
 * Nina Moëllo
-* Paul Saves
 * Raul Carreira Rufato
 * Rafaela Octaviani de Assunção
 * Reino Ruusu
@@ -53,4 +51,3 @@ SMT has been developed thanks to contributions from:
 * Vincent Drouet
 * Yingqian Liao
 * Zhou Tianxun
-
