@@ -71,3 +71,18 @@ For examples demonstrating how to use SMT, you can take a look at the [tutorial 
 # Contributing
 
 To contribute to SMT refer to the [contributing section](https://smt.readthedocs.io/en/latest/_src_docs/dev_docs.html#contributing-to-smt)  of the documentation.
+
+## Associated Scientific production
+Bouhlel, Mohamed A., and Joaquim RRA Martins. "Gradient-enhanced kriging for high-dimensional problems." Engineering with Computers 35.1 (2019): 157-173.
+Bouhlel, Mohamed Amine, Sicheng He, and Joaquim RRA Martins. "Scalable gradient–enhanced artificial neural networks for airfoil shape design in the subsonic and transonic regimes." Structural and Multidisciplinary Optimization 61.4 (2020): 1363-1376.
+Bouhlel, M. A., Bartoli, N., Otsmane, A., and Morlier, J., An Improved Approach for Estimating the Hyperparameters of the Kriging Model for High-Dimensional Problems through the Partial Least Squares Method,” Mathematical Problems in Engineering, vol. 2016, Article ID 6723410, 2016.
+Berguin, Steven H. "Jacobian-Enhanced Neural Networks." arXiv preprint arXiv:2406.09132 (2024).
+Valayer, H., Bartoli, N., Castaño-Aguirre, M., Lafage, R., Lefebvre, T., Lopez-Lopera, A. F., & Mouton, S. (2024). A Python Toolbox for Data-Driven Aerodynamic Modeling Using Sparse Gaussian Processes. Aerospace, 11(4), 260.
+Saves, P., Hallé-Hannan, E., Bussemaker, J., Diouane, Y., & Bartoli, N. (2026). Modeling hierarchical spaces: a review and unified framework for surrogate-based architecture design. Structural and Multidisciplinary Optimization, 69(3), 65.
+Robani, M. D., Palar, P. S., Zuhal, L. R., Saves, P., & Morlier, J. (2025). SMT-EX: An explainable surrogate modeling toolbox for mixed-variables design exploration. In AIAA SCITECH 2025 Forum (p. 0777).
+Gonel, Nicolas, Paul Saves, and Joseph Morlier. "Frequency-aware Surrogate Modeling With SMT Kernels For Advanced Data Forecasting." ECCOMAS AeroBest (2025).
+Hwang, J. T., & Martins, J. R. (2018). A fast-prediction surrogate model for large datasets. Aerospace Science and Technology, 75, 74-87.
+Dimitri Bettebghor, Nathalie Bartoli, Stephane Grihon, Joseph Morlier, and Manuel Samuelides. Surrogate modeling approximation using a mixture of experts based on EM joint estimation. Structural and Multidisciplinary Optimization, 43(2) :243–259, 2011. 10.1007/s00158-010-0554-2.
+Castano-Aguirre, M., López-Lopera, F. A., Bartoli, N., Massa, F., & Lefebvre, T. Scalable Sparse Co-Kriging for Multi-Fidelity Data Fusion: An Application to Aerodynamics. Reliability Engineering & System Safety, 112485, 2026
+
+
