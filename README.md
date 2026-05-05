@@ -44,7 +44,7 @@ To cite SMT legacy: M. A. Bouhlel and J. T. Hwang and N. Bartoli and R. Lafage a
 
 # Required packages
 
-SMT depends on the following modules: numpy, scipy, scikit-learn, pyDOE3 and Cython.
+SMT depends on the following modules: numpy, scipy, scikit-learn, pydoe and Cython.
 
 # Installation
 

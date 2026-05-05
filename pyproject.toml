@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "packaging",
     "scikit-learn",
-    "pyDOE3>=1.5.0",
+    "pydoe>=1.0.0,<2.0",
     "scipy",
     "jenn>=2.0.0,<3.0",
 ]

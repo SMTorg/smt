@@ -3,7 +3,7 @@ packaging
 numpy
 scipy
 scikit-learn
-pyDOE3 >= 1.5.0
+pydoe >= 1.0.0, <2.0
 numpydoc
 matplotlib
 jenn >= 2.0.0, <3.0

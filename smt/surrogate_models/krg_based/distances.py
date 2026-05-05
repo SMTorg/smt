@@ -37,7 +37,7 @@ njit_use
 import os
 
 import numpy as np
-from pyDOE3 import bbdesign
+from pydoe import bbdesign
 from sklearn.cross_decomposition import PLSRegression as pls
 from sklearn.metrics.pairwise import check_pairwise_arrays
 
