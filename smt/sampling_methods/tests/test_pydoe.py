@@ -5,7 +5,7 @@ import numpy as np
 from smt.sampling_methods import pydoe
 
 
-class TestPyDOE3(unittest.TestCase):
+class TestPyDOE(unittest.TestCase):
     def test_bbdesign(self):
         xlimits = np.array([[2.0, 5], [-5, 1], [0, 3]])
         sampling = pydoe.BoxBehnken(xlimits=xlimits)
