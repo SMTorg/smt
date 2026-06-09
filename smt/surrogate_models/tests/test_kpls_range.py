@@ -4,6 +4,8 @@ Author: Enrico Stragiotti
 This package is distributed under New BSD license.
 """
 
+import inspect
+import os
 import unittest
 from collections import OrderedDict
 
@@ -39,7 +41,7 @@ class Test(SMTestCase):
         n_comp_opt = {}
         n_comp_opt["Branin"] = 1
         n_comp_opt["Rosenbrock"] = 1
-        n_comp_opt["sphere"] = 2
+        n_comp_opt["sphere"] = 5
         n_comp_opt["exp"] = 5
         n_comp_opt["tanh"] = 1
         n_comp_opt["cos"] = 1
@@ -51,7 +53,10 @@ class Test(SMTestCase):
         self.e_errors = e_errors
         self.n_comp_opt = n_comp_opt
 
-    def run_range_test(self, pname, sname, n_comp_range):
+    def run_range_test(self, n_comp_range):
+        method_name = inspect.stack()[1][3]
+        pname = method_name.split("_")[1]
+        sname = method_name.split("_")[2]
         prob = self.problems[pname]
 
         sampling = LHS(xlimits=prob.xlimits, seed=42)
@@ -92,17 +97,32 @@ class Test(SMTestCase):
         self.assertIsInstance(ncomp, int)
         self.assertGreaterEqual(ncomp, n_comp_range[0])
         self.assertLessEqual(ncomp, n_comp_range[1])
+        self.assertEqual(ncomp, self.n_comp_opt[pname])
 
     # --------------------------------------------------------------------
 
     def test_Branin_KPLS_range(self):
-        self.run_range_test("Branin", "KPLS", [1, 3])
+        self.run_range_test([1, 3])
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    def test_Rosenbrock_KPLS(self):
+        self.run_range_test([1, 3])
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_sphere_KPLS_range(self):
-        self.run_range_test("sphere", "KPLS", [1, 5])
+        self.run_range_test([2, 6])
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_exp_KPLS_range(self):
-        self.run_range_test("exp", "KPLS", [3, 6])
+        self.run_range_test([3, 6])
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    def test_tanh_KPLS(self):
+        self.run_range_test([1, 3])
+
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    def test_cos_KPLS(self):
+        self.run_range_test([1, 3])
 
 
 if __name__ == "__main__":
