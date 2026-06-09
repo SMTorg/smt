@@ -1,0 +1,111 @@
+"""
+Author: Enrico Stragiotti
+
+This package is distributed under New BSD license.
+"""
+
+import unittest
+from collections import OrderedDict
+
+from smt.problems import Branin, Rosenbrock, Sphere, TensorProduct
+from smt.sampling_methods import LHS
+from smt.surrogate_models import KPLS
+from smt.utils.misc import compute_relative_error
+from smt.utils.silence import Silence
+from smt.utils.sm_test_case import SMTestCase
+
+print_output = False
+
+
+class Test(SMTestCase):
+    def setUp(self):
+        ndim = 10
+        nt = 50
+        ne = 100
+
+        problems = OrderedDict()
+        problems["Branin"] = Branin(ndim=2)
+        problems["Rosenbrock"] = Rosenbrock(ndim=3)
+        problems["sphere"] = Sphere(ndim=ndim)
+        problems["exp"] = TensorProduct(ndim=ndim, func="exp")
+        problems["tanh"] = TensorProduct(ndim=ndim, func="tanh")
+        problems["cos"] = TensorProduct(ndim=ndim, func="cos")
+
+        t_errors = {}
+        e_errors = {}
+        t_errors["KPLS"] = 1e-3
+        e_errors["KPLS"] = 2.5
+
+        n_comp_opt = {}
+        n_comp_opt["Branin"] = 1
+        n_comp_opt["Rosenbrock"] = 1
+        n_comp_opt["sphere"] = 2
+        n_comp_opt["exp"] = 5
+        n_comp_opt["tanh"] = 1
+        n_comp_opt["cos"] = 1
+
+        self.nt = nt
+        self.ne = ne
+        self.problems = problems
+        self.t_errors = t_errors
+        self.e_errors = e_errors
+        self.n_comp_opt = n_comp_opt
+
+    def run_range_test(self, pname, sname, n_comp_range):
+        prob = self.problems[pname]
+
+        sampling = LHS(xlimits=prob.xlimits, seed=42)
+
+        xt = sampling(self.nt)
+        yt = prob(xt)
+
+        xe = sampling(self.ne)
+        ye = prob(xe)
+
+        sm0 = KPLS(eval_n_comp=False)
+
+        sm = sm0.__class__()
+        sm.options = sm0.options.clone()
+
+        if sm.options.is_declared("xlimits"):
+            sm.options["xlimits"] = prob.xlimits
+
+        sm.options["print_global"] = False
+
+        sm.options["n_comp"] = n_comp_range
+
+        sm.set_training_values(xt, yt)
+
+        with Silence():
+            sm.train()
+
+        ncomp = sm.options["n_comp"]
+
+        t_error = compute_relative_error(sm)
+        e_error = compute_relative_error(sm, xe, ye)
+
+        if print_output:
+            print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
+
+        self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
+        self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
+        self.assertIsInstance(ncomp, int)
+        self.assertGreaterEqual(ncomp, n_comp_range[0])
+        self.assertLessEqual(ncomp, n_comp_range[1])
+
+    # --------------------------------------------------------------------
+
+    def test_Branin_KPLS_range(self):
+        self.run_range_test("Branin", "KPLS", [1, 3])
+
+    def test_sphere_KPLS_range(self):
+        self.run_range_test("sphere", "KPLS", [1, 5])
+
+    def test_exp_KPLS_range(self):
+        self.run_range_test("exp", "KPLS", [3, 6])
+
+
+if __name__ == "__main__":
+    print_output = True
+    print("%6s %8s %18s %18s" % ("SM", "Problem", "Train. pt. error", "Test pt. error"))
+    unittest.main()

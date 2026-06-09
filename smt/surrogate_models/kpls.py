@@ -21,7 +21,12 @@ class KPLS(KrgBased):
     def _initialize(self):
         super(KPLS, self)._initialize()
         declare = self.options.declare
-        declare("n_comp", 1, types=int, desc="Number of principal components")
+        declare(
+            "n_comp",
+            1,
+            types=(list, tuple, np.ndarray, int),
+            desc="Number of principal components",
+        )
         # KPLS used only with "abs_exp", "squar_exp" and "pow_exp" correlations
         declare(
             "corr",
@@ -96,7 +101,7 @@ class KPLS(KrgBased):
         )
         return d
 
-    def _estimate_number_of_components(self):
+    def _estimate_number_of_components_opt(self):
         """
         self.options[n_comp] value from user is ignored and replaced by an estimated one wrt Wold's R criterion.
         """
@@ -104,6 +109,8 @@ class KPLS(KrgBased):
         X = self.training_points[None][0][0]
         y = self.training_points[None][0][1]
         k_fold = 4
+        if self.nt < k_fold:
+            k_fold = self.nt
         nbk = int(self.nt / k_fold)
         press_m = 0.0
         press_m1 = 0.0
@@ -117,9 +124,7 @@ class KPLS(KrgBased):
             for fold in range(k_fold):
                 self.nt = len(X) - nbk
                 todel = np.arange(fold * nbk, (fold + 1) * nbk)
-                Xfold = np.copy(X)
                 Xfold = np.delete(X, todel, axis=0)
-                yfold = np.copy(y)
                 yfold = np.delete(y, todel, axis=0)
                 Xtest = np.copy(X)[fold * nbk : (fold + 1) * nbk, :]
                 ytest = np.copy(y)[fold * nbk : (fold + 1) * nbk, :]
@@ -142,6 +147,50 @@ class KPLS(KrgBased):
         self.nt = len(X)
         self._theta0 = [0.1]
 
+    def _estimate_number_of_components_from_range(self):
+        """
+        If self.options[n_comp] is an array-like with two values n_comp_min, n_comp_max we test the
+        range between the two values and we select the best n_dim based on the Wold's R criterion.
+        """
+        X = self.training_points[None][0][0]
+        y = self.training_points[None][0][1]
+        k_fold = 4
+        if self.nt < k_fold:
+            k_fold = self.nt
+        nbk = int(self.nt / k_fold)
+        press_m = []
+        n_comp_min, n_comp_max = map(int, self.options["n_comp"])  # We want int only
+        n_comp_values = list(range(n_comp_min, n_comp_max + 1))
+        for n_comp in n_comp_values:
+            self.options["n_comp"] = n_comp
+            self._theta0 = [0.1]
+            press_m.append(0.0)
+            for fold in range(k_fold):
+                self.nt = len(X) - nbk
+                todel = np.arange(fold * nbk, (fold + 1) * nbk)
+                Xfold = np.delete(X, todel, axis=0)
+                yfold = np.delete(y, todel, axis=0)
+                Xtest = np.copy(X)[fold * nbk : (fold + 1) * nbk, :]
+                ytest = np.copy(y)[fold * nbk : (fold + 1) * nbk, :]
+
+                self.training_points[None][0][0] = Xfold
+                self.training_points[None][0][1] = yfold
+                try:
+                    self._new_train()
+                except ValueError:
+                    press_m[-1] = np.inf
+                    break
+                ye = self._predict_values(Xtest)
+                press_m[-1] = press_m[-1] + np.sum(
+                    np.power((1 / len(X)) * (ye - ytest), 2)
+                )
+
+        self.options["n_comp"] = n_comp_values[np.argmin(press_m)]
+        self.training_points[None][0][0] = X
+        self.training_points[None][0][1] = y
+        self.nt = len(X)
+        self._theta0 = [0.1]
+
     def _train(self):
         """
         Train the model
@@ -149,5 +198,15 @@ class KPLS(KrgBased):
         # outputs['sol'] = self.sol
 
         if self.options["eval_n_comp"]:
-            self._estimate_number_of_components()
+            self._estimate_number_of_components_opt()
+        n_comp = np.asarray(self.options["n_comp"])
+        if n_comp.ndim == 1 and n_comp.size == 2:
+            self._estimate_number_of_components_from_range()
+        elif n_comp.ndim == 0:
+            pass  # single value, continue training
+        else:
+            raise ValueError(
+                "n_comp must be an integer or an array-like of length 2 "
+                "[min_n_comp, max_n_comp], with min_n_comp < max_n_comp"
+            )
         self._new_train()
