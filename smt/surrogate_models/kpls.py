@@ -160,6 +160,11 @@ class KPLS(KrgBased):
         nbk = int(self.nt / k_fold)
         press_m = []
         n_comp_min, n_comp_max = map(int, self.options["n_comp"])  # We want int only
+        if n_comp_min >= n_comp_max:
+            raise ValueError(
+                "n_comp must be an integer or an array-like of length 2 "
+                "[min_n_comp, max_n_comp], with min_n_comp < max_n_comp"
+            )
         n_comp_values = list(range(n_comp_min, n_comp_max + 1))
         for n_comp in n_comp_values:
             self.options["n_comp"] = n_comp
