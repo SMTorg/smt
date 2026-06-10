@@ -395,14 +395,57 @@ class Test(unittest.TestCase):
         ndim = 10
         prob = TensorProduct(ndim=ndim, func="exp")
 
-        sm = KPLS(eval_n_comp=True)
+        sm = KPLS(
+            eval_n_comp=True,
+            eval_n_comp_strategy="wold",
+        )
         samp = LHS(xlimits=prob.xlimits, seed=42)
         xt = samp(50)
         yt = prob(xt)
         sm.set_training_values(xt, yt)
         sm.train()
 
-        ## The model automatically choose a dimension of 3
+        ## The model automatically choose a dimension of 5
+        ncomp = sm.options["n_comp"]
+        print("\n The model automatically choose " + str(ncomp) + " components.")
+
+        ## You can predict a 10-dimension point from the 3-dimensional model
+        print(
+            sm.predict_values(
+                np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+            )
+        )
+        print(
+            sm.predict_variances(
+                np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+            )
+        )
+
+    def test_kpls_range(self):
+        import numpy as np
+
+        from smt.problems import TensorProduct
+        from smt.sampling_methods import LHS
+        from smt.surrogate_models import KPLS
+
+        # The problem is the exponential problem with dimension 10
+        ndim = 10
+        prob = TensorProduct(ndim=ndim, func="exp")
+
+        n_comp_range = [2, 6]  # We explore the range [1, 5] n_dim and we chose the best
+
+        sm = KPLS(
+            eval_n_comp=True,
+            eval_n_comp_strategy="exhaustive",
+            range_n_comp_exhaustive=n_comp_range,
+        )
+        samp = LHS(xlimits=prob.xlimits, seed=42)
+        xt = samp(50)
+        yt = prob(xt)
+        sm.set_training_values(xt, yt)
+        sm.train()
+
+        ## The model automatically choose a dimension of 5
         ncomp = sm.options["n_comp"]
         print("\n The model automatically choose " + str(ncomp) + " components.")
 

@@ -21,7 +21,6 @@ class KPLS(KrgBased):
     def _initialize(self):
         super(KPLS, self)._initialize()
         declare = self.options.declare
-
         declare(
             "n_comp",
             1,
@@ -165,11 +164,11 @@ class KPLS(KrgBased):
 
         Parameters
         ----------
-        X : ndarray, shape (original_nt, n_features) — full training inputs, never mutated
-        y : ndarray, shape (original_nt, n_outputs)  — full training outputs, never mutated
-        n_comp : int — number of PLS components to use
-        k_fold : int — number of folds
-        original_nt : int — size of the full dataset; used to compute fold width
+        X : ndarray, shape (original_nt, n_features), full training inputs, never mutated
+        y : ndarray, shape (original_nt, n_outputs), full training outputs, never mutated
+        n_comp : int, number of PLS components to use
+        k_fold : int, number of folds
+        original_nt : int, size of the full dataset; used to compute fold width
                       and the PRESS normalisation factor. Passed explicitly so
                       this method does not depend on self.nt, which may have
                       been overwritten by a previous fold.
@@ -255,6 +254,8 @@ class KPLS(KrgBased):
                 if error < best_error:
                     best_error = error
                     best_comp = n_comp
+        else:
+            raise ValueError("Strategy '" + strategy + "' not implemented.")
 
         # Restore training data and state
         self.training_points[None][0][0] = X

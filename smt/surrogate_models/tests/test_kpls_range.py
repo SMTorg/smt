@@ -4,6 +4,7 @@ This package is distributed under New BSD license.
 """
 
 import inspect
+import os
 import unittest
 from collections import OrderedDict
 
@@ -64,15 +65,13 @@ class Test(SMTestCase):
 
         xe = sampling(self.ne)
         ye = prob(xe)
-        sm0 = KPLS(
+
+        sm = KPLS(
             eval_n_comp=True,
             eval_n_comp_strategy="exhaustive",
             range_n_comp_exhaustive=n_comp_range,
             print_global=False,
         )
-
-        sm = sm0.__class__()
-        sm.options = sm0.options.clone()
 
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
@@ -108,23 +107,23 @@ class Test(SMTestCase):
     def test_Branin_KPLS_range(self):
         self.run_range_test([1, 3])
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_Rosenbrock_KPLS(self):
         self.run_range_test([1, 3])
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_sphere_KPLS_range(self):
         self.run_range_test([2, 6])
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_exp_KPLS_range(self):
         self.run_range_test([3, 6])
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_tanh_KPLS(self):
         self.run_range_test([1, 3])
 
-    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_cos_KPLS(self):
         self.run_range_test([1, 3])
 
