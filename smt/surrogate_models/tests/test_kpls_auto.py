@@ -1,6 +1,5 @@
 """
 Author: Paul Saves
-
 This package is distributed under New BSD license.
 """
 
@@ -67,10 +66,11 @@ class Test(SMTestCase):
         xe = sampling(self.ne)
         ye = prob(xe)
 
-        sm0 = KPLS(eval_n_comp=True)
-
-        sm = sm0.__class__()
-        sm.options = sm0.options.clone()
+        sm = KPLS(
+            eval_n_comp=True,
+            eval_n_comp_strategy="wold",
+            print_global=False,
+        )
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
         sm.options["print_global"] = False
@@ -86,14 +86,18 @@ class Test(SMTestCase):
         e_error = compute_relative_error(sm, xe, ye)
 
         if print_output:
-            print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
+            print(
+                "%8s %6s  n_comp=%d  %18.9e %18.9e"
+                % (pname[:6], sname, ncomp, t_error, e_error)
+            )
 
         self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
         self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
         self.assertEqual(ncomp, self.n_comp_opt[pname])
 
-    # --------------------------------------------------------------------
-    # Function: sphere
+    # ------------------------------------------------------------------
+    # Test cases
+    # ------------------------------------------------------------------
 
     def test_Branin_KPLS(self):
         self.run_test()

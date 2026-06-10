@@ -1,11 +1,9 @@
 """
 Author: Enrico Stragiotti
-
 This package is distributed under New BSD license.
 """
 
 import inspect
-import os
 import unittest
 from collections import OrderedDict
 
@@ -66,8 +64,12 @@ class Test(SMTestCase):
 
         xe = sampling(self.ne)
         ye = prob(xe)
-
-        sm0 = KPLS(eval_n_comp=False)
+        sm0 = KPLS(
+            eval_n_comp=True,
+            eval_n_comp_strategy="exhaustive",
+            range_n_comp_exhaustive=n_comp_range,
+            print_global=False,
+        )
 
         sm = sm0.__class__()
         sm.options = sm0.options.clone()
@@ -76,8 +78,6 @@ class Test(SMTestCase):
             sm.options["xlimits"] = prob.xlimits
 
         sm.options["print_global"] = False
-
-        sm.options["n_comp"] = n_comp_range
 
         sm.set_training_values(xt, yt)
 
@@ -90,8 +90,10 @@ class Test(SMTestCase):
         e_error = compute_relative_error(sm, xe, ye)
 
         if print_output:
-            print("%8s %6s %18.9e %18.9e" % (pname[:6], sname, t_error, e_error))
-
+            print(
+                "%8s %6s  n_comp=%d  %18.9e %18.9e"
+                % (pname[:6], sname, ncomp, t_error, e_error)
+            )
         self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
         self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
         self.assertIsInstance(ncomp, int)
@@ -99,28 +101,30 @@ class Test(SMTestCase):
         self.assertLessEqual(ncomp, n_comp_range[1])
         self.assertEqual(ncomp, self.n_comp_opt[pname])
 
-    # --------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Test cases
+    # ------------------------------------------------------------------
 
     def test_Branin_KPLS_range(self):
         self.run_range_test([1, 3])
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_Rosenbrock_KPLS(self):
         self.run_range_test([1, 3])
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_sphere_KPLS_range(self):
         self.run_range_test([2, 6])
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_exp_KPLS_range(self):
         self.run_range_test([3, 6])
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_tanh_KPLS(self):
         self.run_range_test([1, 3])
 
-    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    # @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_cos_KPLS(self):
         self.run_range_test([1, 3])
 
