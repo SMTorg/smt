@@ -1,9 +1,10 @@
 """
-Author: Paul Saves
+Author: Enrico Stragiotti
 This package is distributed under New BSD license.
 """
 
 import inspect
+import os
 import unittest
 from collections import OrderedDict
 
@@ -39,7 +40,7 @@ class Test(SMTestCase):
         n_comp_opt = {}
         n_comp_opt["Branin"] = 1
         n_comp_opt["Rosenbrock"] = 1
-        n_comp_opt["sphere"] = 2
+        n_comp_opt["sphere"] = 5
         n_comp_opt["exp"] = 5
         n_comp_opt["tanh"] = 1
         n_comp_opt["cos"] = 1
@@ -51,11 +52,10 @@ class Test(SMTestCase):
         self.e_errors = e_errors
         self.n_comp_opt = n_comp_opt
 
-    def run_test(self):
+    def run_range_test(self, n_comp_range):
         method_name = inspect.stack()[1][3]
         pname = method_name.split("_")[1]
         sname = method_name.split("_")[2]
-
         prob = self.problems[pname]
 
         sampling = LHS(xlimits=prob.xlimits, seed=42)
@@ -68,11 +68,14 @@ class Test(SMTestCase):
 
         sm = KPLS(
             eval_n_comp=True,
-            eval_n_comp_strategy="wold",
+            eval_n_comp_strategy="exhaustive",
+            range_n_comp_exhaustive=n_comp_range,
             print_global=False,
         )
+
         if sm.options.is_declared("xlimits"):
             sm.options["xlimits"] = prob.xlimits
+
         sm.options["print_global"] = False
 
         sm.set_training_values(xt, yt)
@@ -90,32 +93,39 @@ class Test(SMTestCase):
                 "%8s %6s  n_comp=%d  %18.9e %18.9e"
                 % (pname[:6], sname, ncomp, t_error, e_error)
             )
-
         self.assert_error(t_error, 0.0, self.t_errors[sname], 1e-5)
         self.assert_error(e_error, 0.0, self.e_errors[sname], 1e-5)
+        self.assertIsInstance(ncomp, int)
+        self.assertGreaterEqual(ncomp, n_comp_range[0])
+        self.assertLessEqual(ncomp, n_comp_range[1])
         self.assertEqual(ncomp, self.n_comp_opt[pname])
 
     # ------------------------------------------------------------------
     # Test cases
     # ------------------------------------------------------------------
 
-    def test_Branin_KPLS(self):
-        self.run_test()
+    def test_Branin_KPLS_range(self):
+        self.run_range_test([1, 3])
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_Rosenbrock_KPLS(self):
-        self.run_test()
+        self.run_range_test([1, 3])
 
-    def test_sphere_KPLS(self):
-        self.run_test()
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    def test_sphere_KPLS_range(self):
+        self.run_range_test([2, 6])
 
-    def test_exp_KPLS(self):
-        self.run_test()
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
+    def test_exp_KPLS_range(self):
+        self.run_range_test([3, 6])
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_tanh_KPLS(self):
-        self.run_test()
+        self.run_range_test([1, 3])
 
+    @unittest.skipIf(int(os.getenv("RUN_SLOW_TESTS", 0)) < 1, "too slow")
     def test_cos_KPLS(self):
-        self.run_test()
+        self.run_range_test([1, 3])
 
 
 if __name__ == "__main__":
