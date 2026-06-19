@@ -121,7 +121,7 @@ def test_interpolant_models():
         mfk_mix.set_training_values(x_doe[0], y_doe[0], name=0)
         mfk_mix.set_training_values(x_doe[1], y_doe[1])
 
-        _names = [
+        names = [
             "Continuous KRG",
             "Mixed-variable KRG",
             "Continuous MFK",
@@ -133,4 +133,5 @@ def test_interpolant_models():
         for idx, model in enumerate(models):
             model.train()
             y_pred = model.predict_values(x_doe[-1])
+            print(f"{names[idx]:<20}: mse={np.mean((y_pred - y_doe[-1]) ** 2):.3e}")
             np.testing.assert_allclose(y_pred, y_doe[-1], rtol=1e-5, atol=1e-5)
