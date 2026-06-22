@@ -339,16 +339,27 @@ class Test(SMTestCase):
             "pow_exp",
         ]:
             self.setUp()
-            kr = KRG(print_global=False, corr=corr_str)
-            kr.options["poly"] = "constant"
-            kr.options["pow_exp_power"] = self.power_val[corr_str]
+            kr = KRG(
+                print_global=False,
+                corr=corr_str,
+                poly="constant",
+                pow_exp_power=self.power_val[corr_str],
+            )
             kr.set_training_values(self.X, self.y)
             kr.train()
 
-            e = 1e-6
+            e = 1e-4
+            self.random = np.random.default_rng(2)
             xa = self.random.random()
             xb = self.random.random()
-            x_valid = [[xa, xb], [xa + e, xb], [xa - e, xb], [xa, xb + e], [xa, xb - e]]
+            print(f"xa={xa}, xb={xb}")
+            x_valid = [
+                [xa, xb],
+                [xa + e, xb],
+                [xa - e, xb],
+                [xa, xb + e],
+                [xa, xb - e],
+            ]
 
             y_predicted = kr.predict_variances(np.array(x_valid))
             y_jacob = np.zeros((2, 5))
@@ -362,11 +373,12 @@ class Test(SMTestCase):
             diff_g = (y_predicted[1] - y_predicted[2]) / (2 * e)
             diff_d = (y_predicted[3] - y_predicted[4]) / (2 * e)
 
+            print(f"Test KRG var derivatives with kernel {corr_str}")
             jac_rel_error1 = abs((y_jacob[0][0] - diff_g) / y_jacob[0][0])
-            self.assert_error(jac_rel_error1, 1e-3, atol=0.01, rtol=0.01)
+            self.assert_error(jac_rel_error1, 0.0, atol=0.01, rtol=0.01)
 
             jac_rel_error2 = abs((y_jacob[1][0] - diff_d) / y_jacob[1][1])
-            self.assert_error(jac_rel_error2, 1e-3, atol=0.01, rtol=0.01)
+            self.assert_error(jac_rel_error2, 0.0, atol=0.01, rtol=0.01)
 
 
 if __name__ == "__main__":
