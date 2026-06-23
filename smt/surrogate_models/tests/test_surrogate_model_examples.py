@@ -23,6 +23,7 @@ except ImportError:
     NO_COMPILED = True
 
 from smt.surrogate_models.gpx import GPX_AVAILABLE
+from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
 
 
 class Test(unittest.TestCase):
@@ -1031,6 +1032,91 @@ class Test(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             MockSurrogate.load("test.pkl")
 
+    @unittest.skipIf(NO_MATPLOTLIB or not RBFGEN_AVAILABLE, "Matplotlib or PyTorch not installed")
+    def test_rbfgen(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.surrogate_models import RBFGen
+        from smt.utils.nn_lossterms import MonotonicityLossTerm, PositivityLossTerm
+        from smt.utils.nn_rich_rbf import rbf_features
+
+        xt = np.array([[0.0], [2.0], [3.0], [4.0]])
+        yt = np.array([[0.0], [1.5], [2.0], [3.0]])
+
+        sm = RBFGen(epochs=500, learning_rate=5e-2, rbf_m_centers=50)
+        sm.set_training_values(xt, yt)
+
+        sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
+        sm.add_loss_term(PositivityLossTerm(x_train=xt))
+        sm.train()
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+        y = sm.predict_values(x)
+        s2 = sm.predict_variances(x)
+        s2 = s2[:, 0]
+
+        plt.figure()
+        rbf = sm.options["rbf_surrogate"]
+        Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
+        y_ensemble = sm.network_weights @ Phi_q.T
+        for i in range(y_ensemble.shape[0]):
+            plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
+        plt.plot(xt, yt, "o", color='black', label="Training data")
+        plt.plot(x, y, color='red', label="Mean Prediction")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title("RBFGen")
+        plt.legend()
+        plt.show()
+
+    @unittest.skipIf(NO_MATPLOTLIB or not RBFGEN_AVAILABLE, "Matplotlib or PyTorch not installed")
+    def test_rbfgen_with_priorloss(self):
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        from smt.surrogate_models import RBFGen
+        from smt.utils.nn_lossterms import MonotonicityLossTerm, PositivityLossTerm, SliceBasedPriorLossTerm
+        from smt.utils.nn_rich_rbf import rbf_features
+
+        xt = np.array([[0.0], [2.0], [3.0], [4.0]])
+        yt = np.array([[0.0], [1.5], [2.0], [3.0]])
+
+        prior_points = np.array([[1.0]])
+        prior_means = np.array([0.2])
+        prior_stds = np.array([0.05])
+
+        sm = RBFGen(epochs=1000, learning_rate=5e-2, rbf_m_centers=50)
+        sm.set_training_values(xt, yt)
+
+        sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
+        sm.add_loss_term(PositivityLossTerm(x_train=xt))
+        sm.add_loss_term(SliceBasedPriorLossTerm(x_train=xt, prior_points=prior_points,
+                                                 prior_means=prior_means, prior_stds=prior_stds,
+                                                 loss_term_weight=1.))
+        sm.train()
+
+        num = 100
+        x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+        y = sm.predict_values(x)
+        s2 = sm.predict_variances(x)
+        s2 = s2[:, 0]
+
+        plt.figure()
+        rbf = sm.options["rbf_surrogate"]
+        Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
+        y_ensemble = sm.network_weights @ Phi_q.T
+        for i in range(y_ensemble.shape[0]):
+            plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
+        plt.plot(xt, yt, "o", color='black', label="Training data")
+        plt.plot(x, y, color='red', label="Mean Prediction")
+        plt.axvline(1.0, color='green', linestyle='--', label="Slice-based prior (x=1)")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title("RBFGen with Slice-Based Prior")
+        plt.legend()
+        plt.show()
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,3 +13,4 @@ ruff            # format and lint code
 setuptools-scm  # version from git tags
 jenn >= 2.0.0, <3.0
 egobox >= 0.36, <1.0
+pytorch >= 2.4.1

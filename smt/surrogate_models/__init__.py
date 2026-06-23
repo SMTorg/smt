@@ -9,6 +9,7 @@ from .genn import GENN
 from .mgp import MGP
 from .sgp import SGP
 from .cckrg import CoopCompKRG
+from .rbfgen import RBFGen
 
 from .krg_based import MixIntKernelType
 
@@ -33,6 +34,7 @@ __all__ = [
     "MGP",
     "SGP",
     "CoopCompKRG",
+    "RBFGen",
     "MixIntKernelType",
     "DesignSpace",
     "FloatVariable",

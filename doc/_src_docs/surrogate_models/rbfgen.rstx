@@ -1,0 +1,83 @@
+Knowledge-enhanced radial basis functions
+=========================================
+
+The effectiveness of surrogate models is often limited by data scarcity. One way to improve the performance of such surrogate models is by leveraging domain-specific knowledge to guide model predictions. RBF-Gen [1]_ is a radial basis function (RBF)-based generative model that allows for the integration of domain-specific knowledge in surrogate models without affecting data interpolation. First an RBF model is constructed
+
+
+.. math ::
+  y = \sum_i^{K} \phi(\mathbf{x}, \mathbf{xf}_i) w_i ,
+
+where
+:math:`\mathbf{x} \in \mathbb{R}^{n_x}` is the prediction input vector,
+:math:`y \in \mathbb{R}` is the prediction output,
+:math:`\phi(\mathbf{x}, \mathbf{xf}_i) \in \mathbb{R}` is a radial basis function kernel,
+:math:`\mathbf{xf}_i \in \mathbb{R}^{nx}` is the location of the center of the :math:`i` th radial kernel, and
+:math:`w_i \in \mathbb{R}` are the radial basis function coefficients. Enforcing interpolation of :math:`nt` data points :math:`\mathbf{yt}_i \in \mathbb{R}` at corresponding input vectors :math:`\mathbf{xt}_i \in \mathbb{R}^{nx}` with :math:`K` radial kernels results in the following linear system,
+
+.. math ::
+
+  \underbrace{\begin{bmatrix}
+    \phi( \mathbf{xt}_1 , \mathbf{xf}_1 ) & \dots & \phi( \mathbf{xt}_1 , \mathbf{xf}_{K} ) \\
+    \vdots & \ddots & \vdots \\
+    \phi( \mathbf{xt}_{nt} , \mathbf{xf}_1 ) & \dots & \phi( \mathbf{xt}_{nt} , \mathbf{xf}_{K} ) \\
+  \end{bmatrix}
+  \begin{bmatrix}
+    \mathbf{w}_1 \\
+    \vdots \\
+    \mathbf{w}_{K} \\
+  \end{bmatrix}}_{= \Phi}
+  =
+  \begin{bmatrix}
+    yt_1 \\
+    \vdots \\
+    yt_{nt} \\
+  \end{bmatrix},
+
+where :math:`\Phi \in \mathbb{R}^{nt \times K}`. For :math:`K > nt` this system is underdetermined and does not have a unique solution. We use a least-squares approach to compute the minimum-norm solution :math:`\mathbf{w}_0`, 
+
+.. math ::
+
+  \mathbf{w}_0 = 
+  \left(\Phi^T \Phi \right)^{-1} \Phi^T 
+  \begin{bmatrix}
+  yt_1 \\
+  \vdots \\
+  yt_{nt} \\
+  \end{bmatrix},
+
+and compute an orthonormal basis :math:`N \in \mathbb{R}^{K \times K - nt}` for the nullspace of :math:`\Phi`. 
+
+The radial basis function weight vector :math:`\mathbf{w} = \mathbf{w}_0 + N \mathbf{\alpha}`, with :math:`\mathbf{\alpha} \in \mathbb{R}^{K-nt}`, interpolates the given data points for any :math:`\mathbf{\alpha}`. We train a neural network generator :math:`G` to map latent variables :math:`z \sim \mathcal{N}(0, 1)^d`, with :math:`d` the dimension of the latent space, into coefficient vectors :math:`\mathbf{\alpha}`, such that the interpolant with the resultant weight vector :math:`\mathbf{w} = \mathbf{w}_0 + N \mathbf{\alpha}` is consistent with domain-specific knowledge. To this end, the generator :math:`G` is trained to minimize one or more loss terms. Every training epoch we sample a batch of latent variables :math:`z \sim \mathcal{N}(0, 1)^d`. Several types of loss terms are implemented in SMT: 
+
+
+* Monotonicity: We know that the underlying model increases (decreases) monotonically under input changes, and therefore penalize negative (positive) derivatives.  
+
+* Positivity: We know that the output quantity is always positive, and therefore penalize negative output values.
+
+* Slice-based priors: We know the output mean and standard deviation in one or more points, for example from experimental data. We therefore penalize deviations from this imposed output mean and standard deviation of the batch of outputs :math:`\mathbf{w} = \mathbf{w}_0 + N \mathbf{\alpha}(z)`.
+
+A base `LossTerm` class is available, which can be used to create custom loss terms. A non-exhaustive list of examples can be found in [1]_.
+
+
+
+.. [1] Wang, B., Jeong, S., van Schie, S. P. C., Han, D., Min, J., and Hwang, J. T., Knowledge-Guided Generative Surrogate Modeling for High-Dimensional Design Optimization under Scarce Data, ASME J. Comput. Inf. Sci. Eng, 2026, https://doi.org/10.1115/1.4070934.
+
+
+Usage
+-----
+
+Example 1, with monotonicity and positivity loss terms
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rbfgen , 80
+
+Example 2, with monotonicity, positivity and slice-based prior loss terms
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rbfgen_with_priorloss , 80
+
+
+Options
+-------
+
+.. embed-options-table :: smt.surrogate_models , RBFGen , options

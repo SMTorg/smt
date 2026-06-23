@@ -14,6 +14,7 @@ SMT contains the surrogate modeling methods listed below.
    surrogate_models/idw
    surrogate_models/rmts
    surrogate_models/genn
+   surrogate_models/rbfgen
 
 
 Usage
