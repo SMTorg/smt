@@ -1,13 +1,28 @@
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-
 from smt.surrogate_models.surrogate_model import SurrogateModel
-from smt.utils.nn_rich_rbf import NNRichRBF, rbf_features
 
-class Generator(nn.Module):
+from smt.utils.nn_rich_rbf import (
+    NNRichRBF,
+    rbf_features,
+)
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    RBFGEN_AVAILABLE = True
+    BaseGenerator = nn.Module
+except ImportError:
+    RBFGEN_AVAILABLE = False
+    BaseGenerator = object
+
+class Generator(BaseGenerator):
     def __init__(self, zdim, rdim, hidden=64):
+        if not RBFGEN_AVAILABLE:
+            raise RuntimeError(
+                'RBFGen not available. Please install RBFGen dependencies with: pip install smt["rbfgen"]'
+            )
+
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(zdim, hidden), nn.ReLU(),
@@ -15,7 +30,7 @@ class Generator(nn.Module):
             nn.Linear(hidden, rdim)
         )
         
-        # Initialize weights and biases to zero
+        # Initialize weights and biases with values drawn from uniform distribution
         for m in self.net.modules():
             if isinstance(m, nn.Linear):
                 nn.init.uniform_(m.weight)
@@ -30,6 +45,11 @@ class RBFGen(SurrogateModel):
     name = "RBFGen"
 
     def _initialize(self):
+        if not RBFGEN_AVAILABLE:
+            raise RuntimeError(
+                'RBFGen not available. Please install RBFGen dependencies with: pip install smt["rbfgen"]'
+            )
+            
         super()._initialize()
         declare = self.options.declare
         

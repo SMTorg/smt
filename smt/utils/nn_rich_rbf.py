@@ -3,11 +3,16 @@ Contains the RBFSurrogate class.
 """
 
 import numpy as np
-import torch
 from scipy.linalg import lstsq, null_space
 from scipy.spatial.distance import cdist
 
 from smt.surrogate_models.surrogate_model import SurrogateModel
+
+try:
+    import torch
+    RBFGEN_AVAILABLE = True
+except ImportError:
+    RBFGEN_AVAILABLE = False
 
 
 def gaussian_rbf(r, eps):
@@ -17,6 +22,19 @@ def gaussian_rbf(r, eps):
 def rbf_features(X, C, eps):
     R = cdist(np.atleast_2d(X), C, metric="euclidean")
     return gaussian_rbf(R, eps)
+
+
+def rbf_features_grad(X, C, eps, target_dims):
+    Phi = rbf_features(X, C, eps)
+    N = Phi.shape[0]
+    
+    X_target = X[np.arange(N), target_dims][:, np.newaxis]
+    C_target = C.T[target_dims, :]
+    
+    diff = X_target - C_target
+    grad_Phi = -2.0 * (eps**2) * diff * Phi
+    
+    return grad_Phi
 
 
 def median_eps(X):
@@ -46,6 +64,11 @@ class NNRichRBF(SurrogateModel):
     name = "NNRichRBF"
 
     def _initialize(self):
+        if not RBFGEN_AVAILABLE:
+            raise RuntimeError(
+                'RBFGen not available. Please install RBFGen dependencies with: pip install smt["rbfgen"]'
+            )
+
         super()._initialize()
         declare = self.options.declare
         

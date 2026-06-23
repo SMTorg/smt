@@ -1,4 +1,15 @@
 import numpy as np
+try:
+    import torch
+    from smt.utils.nn_rich_rbf import (
+        rbf_features,
+        rbf_features_grad,
+    )
+
+    RBFGEN_AVAILABLE = True
+except ImportError:
+    RBFGEN_AVAILABLE = False
+
 
 class LossTerm:
     def __init__(self, x_train, loss_term_weight=1.):
@@ -56,105 +67,79 @@ class LossTerm:
 
 
 class SliceBasedPriorLossTerm(LossTerm):
-    def __init__(self, x_train, y_train, num_parameters, parameter_space_bounds, base_model, constraint_upper_limit, num_eval_pts=5, loss_term_weight=1.):
+    """
+    Penalizes deviations from a user-defined prior normal distribution at specific points 
+    (e.g., along 1D slices). The loss uses the Wasserstein distance 
+    between the modeled ensemble's normal distribution and the user's prior normal distribution.
+    """
+    def __init__(self, x_train, prior_points, prior_means, prior_stds, loss_term_weight=1.):
         super().__init__(x_train, loss_term_weight)
-        self.y_train = y_train
-        self.num_parameters = num_parameters
-        self.parameter_space_bounds = parameter_space_bounds
-        self.base_model = base_model
-        self.constraint_upper_limit = constraint_upper_limit
-        self.num_eval_pts = num_eval_pts
+        self.prior_points = np.atleast_2d(prior_points)
+        self.prior_means = np.atleast_1d(prior_means)
+        self.prior_stds = np.atleast_1d(prior_stds)
         
-        self.prior_list = None
-        self.prior_rbf_evals = None
-        self.rbf_d0 = None
+        self.Phi_prior = None
+        self.prior_means_t = None
+        self.prior_vars_t = None
 
     def setup(self, rbf_surrogate):
-        self.prior_rbf_evals = rbf_surrogate.rbf_centers
-        self.rbf_d0 = rbf_surrogate.d0
-        self.make_multi_dim_point_priors(self.base_model, self.constraint_upper_limit, num_x_vals=self.num_eval_pts)
-
-    def make_multi_dim_point_priors(self, base_model, constraint_upper_limit, num_x_vals=5, rng=None):
-        """
-        For each dimension j, build 20 slice points (others fixed to feasible nominal mean),
-        evaluate TRUE compliance, perturb ±30% → log targets, return list of (Phi_cond, log_target).
-        """
-
-        self.x_vals_per_dim = np.linspace(self.parameter_space_bounds[0], self.parameter_space_bounds[1], num_x_vals)
-
-        if rng is None:
-            rng = np.random.default_rng(777)
-
-        # feasible nominal anchor (by scaling mean if needed)
-        # Note: using self.x_train requires it was passed in init
-        anchor = self.x_train.mean(axis=0).copy()
-        base_model_inputs = {base_model.input_key: anchor}
-
-        vol_a = base_model.compute_constraint_value(base_model_inputs, None)
-        if vol_a > constraint_upper_limit:
-            anchor *= (constraint_upper_limit / vol_a)
-
-        prior_list = []
-        for j in range(self.num_parameters):
-            for xj in self.x_vals_per_dim:
-                h = anchor.copy()
-                h[j] = float(xj)
-                base_model_inputs = {base_model.input_key: h}
-                model_output = base_model.compute_model_output(base_model_inputs)
-                base_model_outputs = {base_model.output_key: model_output}
-                true_val = base_model.compute_objective_func(base_model_inputs, base_model_outputs)
-                sign = rng.choice([-1.0, 1.0])     # ±30%
-                y_prior = max(true_val * (1.0 + 0.30 * sign), 1e-12)
-                log_target = y_prior  # np.log(y_prior)
-                
-                # rbf_features wants (X, C, eps)
-                Phi_cond = rbf_features(h.reshape(1, -1), self.prior_rbf_evals, self.d0)  # (1, m)
-                
-                log_target_torch = torch.tensor(log_target, dtype=torch.float32)
-                Phi_cond_torch = torch.tensor(Phi_cond, dtype=torch.float32)
-                prior_list.append((Phi_cond_torch, log_target_torch))
-        
-        self.prior_list = prior_list
+        self.Phi_prior = torch.tensor(
+            rbf_features(self.prior_points, rbf_surrogate.rbf_centers, rbf_surrogate.d0),
+            dtype=torch.float32
+        )
+        self.prior_means_t = torch.tensor(self.prior_means, dtype=torch.float32)
+        self.prior_vars_t = torch.tensor(self.prior_stds**2, dtype=torch.float32)
 
     def __call__(self, W):
-        loss_prior = torch.tensor(0.0)
-        for (Phi_cond, t_log) in self.prior_list:
-            f = (W @ Phi_cond.T).squeeze(1)
-            f = torch.clamp(f, min=1e-12)
-            log_f = f  # torch.log(f)
-            loss_prior = loss_prior + (log_f.mean() - t_log).pow(2).sum()
-        return loss_prior
+        f = W @ self.Phi_prior.T
+        
+        mu_1 = f.mean(dim=0)
+        std_1 = f.std(dim=0, unbiased=False) 
+
+        mu_0 = torch.tensor(self.prior_means, dtype=torch.float32)
+        std_0 = torch.tensor(self.prior_stds, dtype=torch.float32)
+
+        # Use Huber loss. This acts like the Wasserstein distance near convergence
+        # but prevents explosive quadratic gradients during initial epochs.
+        loss_mu = torch.nn.functional.huber_loss(mu_1, mu_0, delta=1.0, reduction='sum')
+        loss_std = torch.nn.functional.huber_loss(std_1, std_0, delta=1.0, reduction='sum')
+        
+        return loss_mu + loss_std
+
 
 
 class MonotonicityLossTerm(LossTerm):
-    def __init__(self, x_train, sign=1, stepsize_frac=0.01, mono_pts_per_input_dim=5, random_base_points=False, inside_convex_hull=False, input_indices=None, loss_term_weight=1.):
+    """
+    Penalizes violations of monotonicity in the surrogate model with respect to
+    specified input dimensions. It evaluates the exact analytical gradient of the 
+    surrogate at various points and applies a penalty if the gradient contradicts 
+    the given target sign (e.g., enforcing strictly increasing or strictly decreasing relationships).
+    """
+    def __init__(self, x_train, sign=1, stepsize_frac=None, mono_pts_per_input_dim=5, random_base_points=False, inside_convex_hull=False, input_indices=None, loss_term_weight=1., **kwargs):
         super().__init__(x_train, loss_term_weight)
-        self.stepsize_frac = stepsize_frac
         self.mono_pts_per_input_dim = mono_pts_per_input_dim
         self.random_base_points = random_base_points
         self.inside_convex_hull = inside_convex_hull
         self.sign = sign
         self.input_indices = input_indices
 
-        self.x_train_minus = None
-        self.x_train_plus = None
-
-        self.rbf_evals_minus = None
-        self.rbf_evals_plus = None
+        self.base_points_list = None
+        self.target_dims_list = None
+        self.rbf_grad_evals = None
 
     def setup(self, rbf_surrogate):
-        self.build_mono_pairs()
-        self.eval_rbf_basis_in_mono_pts(rbf_surrogate.rbf_centers, rbf_surrogate.d0)
+        self.build_mono_points()
+        self.eval_rbf_grad_in_mono_pts(rbf_surrogate.rbf_centers, rbf_surrogate.d0)
 
-    def build_mono_pairs(self, rng=None):
+    def build_mono_points(self, rng=None):
         if rng is None:
             rng = np.random.default_rng(1)
         lo = self.x_train.min(axis=0); hi = self.x_train.max(axis=0)
-        span = np.where(hi > lo, hi - lo, 1.0)
-        step = self.stepsize_frac * span
-        Xm_list, Xp_list = [], []
         
         indices = self.input_indices if self.input_indices is not None else range(self.x_train.shape[1])
+        
+        X_list = []
+        dims_list = []
         
         for i in indices:
             if self.random_base_points:
@@ -166,26 +151,29 @@ class MonotonicityLossTerm(LossTerm):
                  idx = rng.integers(0, len(self.x_train), size=self.mono_pts_per_input_dim)
                  base = self.x_train[idx].copy()
 
-            xm = base.copy(); xp = base.copy()
-            xm[:, i] = np.clip(xm[:, i] - step[i], lo[i], hi[i])
-            xp[:, i] = np.clip(xp[:, i] + step[i], lo[i], hi[i])
-            Xm_list.append(xm); Xp_list.append(xp)
+            X_list.append(base)
+            dims_list.append(np.full(self.mono_pts_per_input_dim, i))
         
-        self.x_train_minus = np.vstack(Xm_list)
-        self.x_train_plus = np.vstack(Xp_list)
+        self.base_points_list = np.vstack(X_list)
+        self.target_dims_list = np.concatenate(dims_list)
 
-    def eval_rbf_basis_in_mono_pts(self, rbf_centers, rbf_d0):
-        self.rbf_evals_minus = torch.tensor(rbf_features(self.x_train_minus, rbf_centers, rbf_d0), dtype=torch.float32)
-        self.rbf_evals_plus = torch.tensor(rbf_features(self.x_train_plus, rbf_centers, rbf_d0), dtype=torch.float32)
+    def eval_rbf_grad_in_mono_pts(self, rbf_centers, rbf_d0):
+        grad_Phi = rbf_features_grad(self.base_points_list, rbf_centers, rbf_d0, self.target_dims_list)
+        self.rbf_grad_evals = torch.tensor(grad_Phi, dtype=torch.float32)
 
     def __call__(self, W, beta=100):
-        fm = W @ self.rbf_evals_minus.T
-        fp = W @ self.rbf_evals_plus.T
-        loss_mono = torch.nn.functional.softplus( -self.sign * (fp - fm), beta=beta).mean()
+        f_grad = W @ self.rbf_grad_evals.T 
+        loss_mono = torch.nn.functional.softplus(-self.sign * f_grad, beta=beta).mean()
         return loss_mono
 
 
 class PositivityLossTerm(LossTerm):
+    """
+    Penalizes negative prediction values from the surrogate model. 
+    It probes the surrogate at randomly sampled points across the allowed space 
+    (or within the convex hull of the training data) and applies a penalty for any point 
+    where the predicted output is less than zero.
+    """
     def __init__(self, x_train, n_pos_pts=128, loss_term_weight=1., inside_convex_hull=False):
         super().__init__(x_train, loss_term_weight)
         self.n_pos_pts = n_pos_pts
@@ -199,7 +187,7 @@ class PositivityLossTerm(LossTerm):
 
     def build_pos_probes_with_rng(self, rng_seed=None):
         if rng_seed is None:
-            rng_seed = np.random.default_rng(2)
+            rng_seed = np.random.default_rng(5)
         
         if self.inside_convex_hull:
             self.pos_probe_pts = self.sample_within_convex_hull(self.n_pos_pts, rng=rng_seed)
@@ -217,4 +205,5 @@ class PositivityLossTerm(LossTerm):
     def __call__(self, W, beta=100):
         f_pos = W @ self.rbf_evals.T
         loss_pos = torch.nn.functional.softplus(-f_pos, beta=beta).mean()
+        # loss_pos = torch.nn.functional.relu( -f_pos).mean()
         return loss_pos

@@ -9,6 +9,7 @@ from .genn import GENN
 from .mgp import MGP
 from .sgp import SGP
 from .cckrg import CoopCompKRG
+from .rbfgen import RBFGen
 
 from .krg_based import MixIntKernelType
 
@@ -33,6 +34,7 @@ __all__ = [
     "MGP",
     "SGP",
     "CoopCompKRG",
+    "RBFGen",
     "MixIntKernelType",
     "DesignSpace",
     "FloatVariable",
@@ -47,9 +49,8 @@ try:
     from .rbf import RBF
     from .rmtc import RMTC
     from .rmtb import RMTB
-    from .rbfgen import RBFGen
 
-    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB", "RBFGen"]
+    __all__ = __all__ + ["IDW", "RBF", "RMTC", "RMTB"]
 
 except ImportError:
     pass
