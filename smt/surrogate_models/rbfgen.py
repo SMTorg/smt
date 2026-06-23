@@ -29,7 +29,7 @@ class Generator(BaseGenerator):
             nn.Linear(hidden, hidden), nn.ReLU(),
             nn.Linear(hidden, rdim)
         )
-        
+
         # Initialize weights and biases with values drawn from uniform distribution
         for m in self.net.modules():
             if isinstance(m, nn.Linear):
@@ -49,11 +49,11 @@ class RBFGen(SurrogateModel):
             raise RuntimeError(
                 'RBFGen not available. Please install RBFGen dependencies with: pip install smt["rbfgen"]'
             )
-            
+
         super()._initialize()
         declare = self.options.declare
-        
-        declare("rbf_surrogate", None, types=(NNRichRBF, type(None)), desc="The RBF surrogate object")
+
+        declare("rbf_surrogate", None, types=(NNRichRBF, type(None)), desc="Pre-constructed rich RBF surrogate object")
         declare(
             "rbf_m_centers",
             None,
@@ -78,7 +78,7 @@ class RBFGen(SurrogateModel):
             values=("random", "linspace"),
             desc="Distribution of RBF centers: 'random' (uniform random) or 'linspace' (regular grid).",
         )
-        declare("learning_rate", 1e-3, types=(float), desc="Learning rate for the network optimizer")
+        declare("learning_rate", 1e-3, types=(float), desc="Learning rate for the neural network optimizer")
         declare("alpha_scale", 1.0, types=(float), desc="Scaling factor for alpha")
         declare("epochs", 1000, types=(int), desc="Number of training epochs")
         declare("batch_size", 64, types=(int), desc="Batch size for training")
@@ -91,9 +91,9 @@ class RBFGen(SurrogateModel):
         self.generator = None
         self.opt_generator = None
         self.network_weights = None
-        
+
         self.loss_terms = []
-        
+
         # We'll need to store training data because add_... methods use it
         self.x_train = None
         self.y_train = None
@@ -120,9 +120,9 @@ class RBFGen(SurrogateModel):
             rbf.set_training_values(xt, yt)
             rbf.train()
             self.options["rbf_surrogate"] = rbf
-        
+
         self.x_train, self.y_train = self.training_points[None][0]
-        
+
         # Setup loss terms
         for loss_term in self.loss_terms:
             loss_term.setup(rbf)
@@ -131,16 +131,16 @@ class RBFGen(SurrogateModel):
         nullspace_dim = rbf.nullspace.shape[1]
         latent_dim = self.options["latent_space_dim"]
         self.generator = Generator(zdim=latent_dim, rdim=nullspace_dim).train()
-        
+
         # Optimizer
         lr = self.options["learning_rate"]
         self.opt_generator = optim.Adam(self.generator.parameters(), lr=lr)
-        
+
         # Training loop
         epochs = self.options["epochs"]
         batchsize = self.options["batch_size"]
         alpha_scale = self.options["alpha_scale"]
-        
+
         for ep in range(epochs):
             latent_vars = torch.randn(batchsize, latent_dim)
             alpha = self.generator(latent_vars)
@@ -155,7 +155,7 @@ class RBFGen(SurrogateModel):
                 # weighted_loss is tensor, keep graph
                 weighted_loss = term_loss * loss_term.loss_term_weight
                 total_loss += weighted_loss
-                
+
                 # For printing, extract scalar
                 name = loss_term.__class__.__name__
                 if name not in current_losses:
@@ -186,8 +186,8 @@ class RBFGen(SurrogateModel):
         C = rbf.rbf_centers
         eps = rbf.d0
         W = self.network_weights
-        
-        Phi_q = rbf_features(x, C, eps) 
+
+        Phi_q = rbf_features(x, C, eps)
         # W is (K, m), Phi_q is (nq, m)
         # We want mean prediction
         return (W @ Phi_q.T).mean(axis=0)
@@ -200,14 +200,14 @@ class RBFGen(SurrogateModel):
         C = rbf.rbf_centers
         eps = rbf.d0
         W = self.network_weights
-        
+
         Phi_q = rbf_features(x, C, eps)
         # W is (K, m), Phi_q is (nq, m)
-        
+
         # Compute ensemble predictions: (K, nq)
         # (W @ Phi_q.T) shape is (K, nq)
         y_ensemble = W @ Phi_q.T
-        
+
         # Compute variance across the ensemble (axis 0)
         # Result should be (nq,) or (nq, 1) to match SMT standards (dataset dim)
         # SMT usually expects (nt, ny)

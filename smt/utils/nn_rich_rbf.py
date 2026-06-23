@@ -27,13 +27,13 @@ def rbf_features(X, C, eps):
 def rbf_features_grad(X, C, eps, target_dims):
     Phi = rbf_features(X, C, eps)
     N = Phi.shape[0]
-    
+
     X_target = X[np.arange(N), target_dims][:, np.newaxis]
     C_target = C.T[target_dims, :]
-    
+
     diff = X_target - C_target
     grad_Phi = -2.0 * (eps**2) * diff * Phi
-    
+
     return grad_Phi
 
 
@@ -49,7 +49,8 @@ def median_eps(X):
 def lhs(n, dim, low, high, rng):
     cut = np.linspace(0, 1, n + 1)
     u = rng.uniform(0, 1, size=(n, dim))
-    a = cut[:-1][:, None]; bnds = cut[1:][:, None]
+    a = cut[:-1][:, None]
+    bnds = cut[1:][:, None]
     X01 = a + (bnds - a) * u
     for j in range(dim):
         rng.shuffle(X01[:, j])
@@ -71,7 +72,7 @@ class NNRichRBF(SurrogateModel):
 
         super()._initialize()
         declare = self.options.declare
-        
+
         declare(
             "m_centers",
             None,
@@ -109,43 +110,43 @@ class NNRichRBF(SurrogateModel):
         Train the model: select centers, compute features, solve for weights, and compute nullspace.
         """
         xt, yt = self.training_points[None][0]
-        
+
         # Ensure xt, yt are proper shapes
         # xt is (nt, nx), yt is (nt, ny)
-        
+
         m_centers = self.options["m_centers"]
         d0 = self.options["d0"]
         rng_seed = self.options["rng_seed"]
-        centers_distribution = self.options["centers_distribution"]
-        
+
         # Helper implementation from original code
         self._build_rbf_nullspace(xt, yt, m_centers, d0, rng_seed)
 
     def _build_rbf_nullspace(self, Xtr, ytr, m_centers=None, eps=None, rng=None):
         ntr, d = Xtr.shape
-        
+
         # Handle RNG
         if rng is None:
             rng = np.random.default_rng(0)
         elif isinstance(rng, int):
             rng = np.random.default_rng(rng)
-            
+
         if m_centers is None:
             m_centers = max(3 * ntr, 100)  # rich basis -> nontrivial nullspace
-            
+
         lo = Xtr.min(axis=0)
         hi = Xtr.max(axis=0)
-        
+
         # Select centers
         centers_dist = self.options["centers_distribution"]
-        
+
         if centers_dist == "linspace":
             # Grid of centers
             # k^d approx m_centers => k = m_centers^(1/d)
             k = int(np.round(m_centers**(1/d)))
-            # Ensure at least 2 points per dim if m_centers is large enough, else k=1??
-            if k < 2: k = 2 
-            
+            # Ensure at least 2 points per dim if m_centers is large enough, else k=1
+            if k < 2:
+                k = 2
+
             # Generate 1D linspaces
             ranges = [np.linspace(lo[i], hi[i], k) for i in range(d)]
             # Meshgrid
@@ -154,7 +155,6 @@ class NNRichRBF(SurrogateModel):
             C = np.stack([m.flatten() for m in mesh], axis=-1)
             # Update m_centers to actual number of points
             m_centers = C.shape[0] # Not strictly necessary to update option, but C is what matters
-            
         else:
             # Random uniform, but include training points
             n_random = m_centers - ntr
@@ -163,38 +163,33 @@ class NNRichRBF(SurrogateModel):
                 C_rand = lhs(n_random, d, lo, hi, rng)  # use latin hypercube sampling to generate the rbf centers
                 C = np.vstack([Xtr, C_rand])
             else:
-                # If m_centers is less than ntr, we just use Xtr (or should we subsample? 
-                # Request implies "centers located at each of the Xtr points", so we must include them all)
+                # If m_centers is less than ntr, we just use Xtr
                 C = Xtr.copy()
-            
+
         self.rbf_centers = C
-        
+
         # Determine epsilon
         if eps is None:
             eps = median_eps(C)
         self.d0 = eps
-        
+
         # Compute features
         Phi = rbf_features(Xtr, C, eps)
         self.rbf_evals = Phi
-        
+
         # Solve for particular solution (weights)
         # lstsq returns (x, residues, rank, s)
         w_p, residues, rank, s = lstsq(Phi, ytr)
         self.data_interp_coeffs = torch.tensor(w_p[:, 0], dtype=torch.float32)
-        
+
         # Compute nullspace
         N = null_space(Phi)
         self.nullspace = torch.tensor(N, dtype=torch.float32)
-        
-        # Recursive retry if nullspace is empty (implied by original code logic, 
-        # though original code returned call, here we just recurse on self method)
+
+        # Recursive retry if nullspace is empty
         if N.shape[1] == 0:
             # Increase centers and retry
             new_m_centers = int(1.5 * m_centers)
-            # Avoid infinite recursion if m_centers doesn't grow or other issues? 
-            # Or just trust logic.
-            # We strictly follow the original logic: return self.build_rbf_nullspace(...)
             self._build_rbf_nullspace(Xtr, ytr, m_centers=new_m_centers, eps=eps, rng=rng)
 
     def _predict_values(self, x):
@@ -202,8 +197,7 @@ class NNRichRBF(SurrogateModel):
         Predict values using the particular solution.
         """
         Phi_q = rbf_features(x, self.rbf_centers, self.d0)
-        # w_p is torch tensor, convert to numpy for prediction return?
-        # SMT expects numpy arrays.
+
         w_p_np = self.data_interp_coeffs.cpu().numpy()
         y_pred = Phi_q @ w_p_np
         return y_pred

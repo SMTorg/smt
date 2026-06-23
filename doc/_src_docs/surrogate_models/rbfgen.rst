@@ -66,235 +66,228 @@ A base `LossTerm` class is available, which can be used to create custom loss te
 Usage
 -----
 
-Example 1, with monotonicity and positivity constraints
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example 1, with monotonicity and positivity loss terms
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-  from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
   import matplotlib.pyplot as plt
   import numpy as np
-
+  
   from smt.surrogate_models import RBFGen
   from smt.utils.nn_lossterms import MonotonicityLossTerm, PositivityLossTerm
   from smt.utils.nn_rich_rbf import rbf_features
-
-
-  if RBFGEN_AVAILABLE:
-      xt = np.array([[0.0], [2.0], [3.0], [4.0]])
-      yt = np.array([[0.0], [1.5], [2.0], [3.0]])
-
-      sm = RBFGen(epochs=1000, learning_rate=5e-2, rbf_m_centers=50)
-      sm.set_training_values(xt, yt)
-
-      sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
-      sm.add_loss_term(PositivityLossTerm(x_train=xt))
-
-      sm.train()
-
-      num = 100
-      x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
-      y = sm.predict_values(x)
-      s2 = sm.predict_variances(x)
-      s2 = s2[:, 0]
-
-      plt.figure()
-      rbf = sm.options["rbf_surrogate"]
-      Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
-      y_ensemble = sm.network_weights @ Phi_q.T
-      for i in range(y_ensemble.shape[0]):
-          plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
-      plt.plot(xt, yt, "o", color='black', label="Training data")
-      plt.plot(x, y, color='red', label="Mean Prediction")
-      plt.xlabel("x")
-      plt.ylabel("y")
-      plt.title("RBFGen")
-      plt.legend()
-      plt.show()
+  
+  xt = np.array([[0.0], [2.0], [3.0], [4.0]])
+  yt = np.array([[0.0], [1.5], [2.0], [3.0]])
+  
+  sm = RBFGen(epochs=500, learning_rate=5e-2, rbf_m_centers=50)
+  sm.set_training_values(xt, yt)
+  
+  sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
+  sm.add_loss_term(PositivityLossTerm(x_train=xt))
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+  y = sm.predict_values(x)
+  s2 = sm.predict_variances(x)
+  s2 = s2[:, 0]
+  
+  plt.figure()
+  rbf = sm.options["rbf_surrogate"]
+  Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
+  y_ensemble = sm.network_weights @ Phi_q.T
+  for i in range(y_ensemble.shape[0]):
+      plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
+  plt.plot(xt, yt, "o", color='black', label="Training data")
+  plt.plot(x, y, color='red', label="Mean Prediction")
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.title("RBFGen")
+  plt.legend()
+  plt.show()
   
 ::
 
   ___________________________________________________________________________
-   
+     
                                     RBFGen
   ___________________________________________________________________________
-   
+     
    Problem size
-   
+     
         # training points.        : 4
-   
+     
   ___________________________________________________________________________
-   
+     
    Training
-   
+     
      Training ...
   ___________________________________________________________________________
-   
+     
                                    NNRichRBF
   ___________________________________________________________________________
-   
+     
    Problem size
-   
+     
         # training points.        : 4
-   
+     
   ___________________________________________________________________________
-   
+     
    Training
-   
+     
      Training ...
-     Training - done. Time (sec):  0.0012760
-  Epoch   100/500 | Total Loss: 9.6284e-05 | MonotonicityLossTerm: 8.6200e-11 | PositivityLossTerm: 9.6284e-05
-  Epoch   200/500 | Total Loss: 9.5670e-05 | MonotonicityLossTerm: 9.7880e-11 | PositivityLossTerm: 9.5670e-05
-  Epoch   300/500 | Total Loss: 9.5816e-05 | MonotonicityLossTerm: 1.3220e-10 | PositivityLossTerm: 9.5816e-05
-  Epoch   400/500 | Total Loss: 9.5633e-05 | MonotonicityLossTerm: 1.7539e-10 | PositivityLossTerm: 9.5633e-05
-  Epoch   500/500 | Total Loss: 9.5242e-05 | MonotonicityLossTerm: 2.5682e-10 | PositivityLossTerm: 9.5242e-05
-     Training - done. Time (sec):  1.1074991
+     Training - done. Time (sec):  0.0009499
+  Epoch   100/500 | Total Loss: 9.6226e-05 | MonotonicityLossTerm: 1.0189e-09 | PositivityLossTerm: 9.6225e-05
+  Epoch   200/500 | Total Loss: 9.5401e-05 | MonotonicityLossTerm: 1.0459e-09 | PositivityLossTerm: 9.5400e-05
+  Epoch   300/500 | Total Loss: 9.4618e-05 | MonotonicityLossTerm: 1.2594e-09 | PositivityLossTerm: 9.4616e-05
+  Epoch   400/500 | Total Loss: 9.4926e-05 | MonotonicityLossTerm: 1.8646e-09 | PositivityLossTerm: 9.4924e-05
+  Epoch   500/500 | Total Loss: 9.4423e-05 | MonotonicityLossTerm: 2.4403e-09 | PositivityLossTerm: 9.4420e-05
+     Training - done. Time (sec):  1.0252733
   ___________________________________________________________________________
-   
+     
    Evaluation
-   
+     
         # eval points. : 100
-   
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002801
-   
-     Prediction time/pt. (sec) :  0.0000028
-   
+     Predicting - done. Time (sec):  0.0001841
+     
+     Prediction time/pt. (sec) :  0.0000018
+     
   ___________________________________________________________________________
-   
+     
    Evaluation
-   
+     
         # eval points. : 100
-   
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0001576
-   
-     Prediction time/pt. (sec) :  0.0000016
+     Predicting - done. Time (sec):  0.0001655
+     
+     Prediction time/pt. (sec) :  0.0000017
      
   
-.. figure:: rbfgen_Test_test_1.png
+.. figure:: rbfgen_Test_test_rbfgen.png
   :scale: 80 %
   :align: center
 
 Example 2, with monotonicity, positivity and slice-based prior loss terms
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-  from smt.surrogate_models.rbfgen import RBFGEN_AVAILABLE
   import matplotlib.pyplot as plt
   import numpy as np
-
+  
   from smt.surrogate_models import RBFGen
   from smt.utils.nn_lossterms import MonotonicityLossTerm, PositivityLossTerm, SliceBasedPriorLossTerm
   from smt.utils.nn_rich_rbf import rbf_features
-
-
-  if RBFGEN_AVAILABLE:
-      xt = np.array([[0.0], [2.0], [3.0], [4.0]])
-      yt = np.array([[0.0], [1.5], [2.0], [3.0]])
-
-      prior_points = np.array([[1.0]])
-      prior_means = np.array([0.2])
-      prior_stds = np.array([0.05])
-
-      sm = RBFGen(epochs=1000, learning_rate=5e-2, rbf_m_centers=50)
-      sm.set_training_values(xt, yt)
-
-      sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
-      sm.add_loss_term(PositivityLossTerm(x_train=xt))
-
-      sm.add_loss_term(SliceBasedPriorLossTerm(x_train=xt, prior_points=prior_points, prior_means=prior_means, prior_stds=prior_stds, loss_term_weight=1.))
-      sm.train()
-
-      num = 100
-      x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
-      y = sm.predict_values(x)
-      s2 = sm.predict_variances(x)
-      s2 = s2[:, 0]
-
-      plt.figure()
-      rbf = sm.options["rbf_surrogate"]
-      Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
-      y_ensemble = sm.network_weights @ Phi_q.T
-      for i in range(y_ensemble.shape[0]):
-          plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
-      plt.plot(xt, yt, "o", color='black', label="Training data")
-      plt.plot(x, y, color='red', label="Mean Prediction")
-      plt.axvline(1.0, color='green', linestyle='--', label="Slice-based prior (x=1)")
-      plt.xlabel("x")
-      plt.ylabel("y")
-      plt.title("RBFGen with Slice-Based Prior")
-      plt.legend()
-      plt.show()
-
-
+  
+  xt = np.array([[0.0], [2.0], [3.0], [4.0]])
+  yt = np.array([[0.0], [1.5], [2.0], [3.0]])
+  
+  prior_points = np.array([[1.0]])
+  prior_means = np.array([0.2])
+  prior_stds = np.array([0.05])
+  
+  sm = RBFGen(epochs=1000, learning_rate=5e-2, rbf_m_centers=50)
+  sm.set_training_values(xt, yt)
+  
+  sm.add_loss_term(MonotonicityLossTerm(x_train=xt, random_base_points=True))
+  sm.add_loss_term(PositivityLossTerm(x_train=xt))
+  sm.add_loss_term(SliceBasedPriorLossTerm(x_train=xt, prior_points=prior_points,
+                                           prior_means=prior_means, prior_stds=prior_stds,
+                                           loss_term_weight=1.))
+  sm.train()
+  
+  num = 100
+  x = np.linspace(0.0, 4.0, num).reshape(-1, 1)
+  y = sm.predict_values(x)
+  s2 = sm.predict_variances(x)
+  s2 = s2[:, 0]
+  
+  plt.figure()
+  rbf = sm.options["rbf_surrogate"]
+  Phi_q = rbf_features(x, rbf.rbf_centers, rbf.d0)
+  y_ensemble = sm.network_weights @ Phi_q.T
+  for i in range(y_ensemble.shape[0]):
+      plt.plot(x, y_ensemble[i, :], alpha=0.05, color='blue')
+  plt.plot(xt, yt, "o", color='black', label="Training data")
+  plt.plot(x, y, color='red', label="Mean Prediction")
+  plt.axvline(1.0, color='green', linestyle='--', label="Slice-based prior (x=1)")
+  plt.xlabel("x")
+  plt.ylabel("y")
+  plt.title("RBFGen with Slice-Based Prior")
+  plt.legend()
+  plt.show()
+  
 ::
 
   ___________________________________________________________________________
-   
+     
                                     RBFGen
   ___________________________________________________________________________
-   
+     
    Problem size
-   
+     
         # training points.        : 4
-   
+     
   ___________________________________________________________________________
-   
+     
    Training
-   
+     
      Training ...
   ___________________________________________________________________________
-   
+     
                                    NNRichRBF
   ___________________________________________________________________________
-   
+     
    Problem size
-   
+     
         # training points.        : 4
-   
+     
   ___________________________________________________________________________
-   
+     
    Training
-   
+     
      Training ...
-     Training - done. Time (sec):  0.0012794
-  Epoch   100/1000 | Total Loss: 1.1156e-02 | MonotonicityLossTerm: 8.5115e-15 | PositivityLossTerm: 9.5316e-03 | SliceBasedPriorLossTerm: 1.6245e-03
-  Epoch   200/1000 | Total Loss: 1.0257e-02 | MonotonicityLossTerm: 1.1536e-13 | PositivityLossTerm: 8.5492e-03 | SliceBasedPriorLossTerm: 1.7075e-03
-  Epoch   300/1000 | Total Loss: 9.1635e-03 | MonotonicityLossTerm: 4.8187e-14 | PositivityLossTerm: 7.5699e-03 | SliceBasedPriorLossTerm: 1.5936e-03
-  Epoch   400/1000 | Total Loss: 7.7977e-03 | MonotonicityLossTerm: 9.1851e-14 | PositivityLossTerm: 6.3744e-03 | SliceBasedPriorLossTerm: 1.4234e-03
-  Epoch   500/1000 | Total Loss: 5.9947e-03 | MonotonicityLossTerm: 3.1715e-10 | PositivityLossTerm: 4.3859e-03 | SliceBasedPriorLossTerm: 1.6088e-03
-  Epoch   600/1000 | Total Loss: 3.6352e-03 | MonotonicityLossTerm: 1.2038e-07 | PositivityLossTerm: 2.9237e-03 | SliceBasedPriorLossTerm: 7.1142e-04
-  Epoch   700/1000 | Total Loss: 1.7989e-03 | MonotonicityLossTerm: 3.8805e-05 | PositivityLossTerm: 1.3541e-03 | SliceBasedPriorLossTerm: 4.0602e-04
-  Epoch   800/1000 | Total Loss: 1.1258e-03 | MonotonicityLossTerm: 7.8219e-05 | PositivityLossTerm: 6.2071e-04 | SliceBasedPriorLossTerm: 4.2691e-04
-  Epoch   900/1000 | Total Loss: 1.0009e-03 | MonotonicityLossTerm: 1.3448e-05 | PositivityLossTerm: 5.8774e-04 | SliceBasedPriorLossTerm: 3.9967e-04
-  Epoch  1000/1000 | Total Loss: 1.1003e-03 | MonotonicityLossTerm: 4.2802e-04 | PositivityLossTerm: 4.7839e-04 | SliceBasedPriorLossTerm: 1.9392e-04
-     Training - done. Time (sec):  1.9414334
+     Training - done. Time (sec):  0.0005474
+  Epoch   100/1000 | Total Loss: 1.2562e-02 | MonotonicityLossTerm: 5.6323e-16 | PositivityLossTerm: 1.1543e-02 | SliceBasedPriorLossTerm: 1.0192e-03
+  Epoch   200/1000 | Total Loss: 1.1136e-02 | MonotonicityLossTerm: 1.2610e-13 | PositivityLossTerm: 8.9831e-03 | SliceBasedPriorLossTerm: 2.1533e-03
+  Epoch   300/1000 | Total Loss: 1.0373e-02 | MonotonicityLossTerm: 3.3316e-10 | PositivityLossTerm: 8.0135e-03 | SliceBasedPriorLossTerm: 2.3594e-03
+  Epoch   400/1000 | Total Loss: 9.4484e-03 | MonotonicityLossTerm: 1.3334e-15 | PositivityLossTerm: 6.7688e-03 | SliceBasedPriorLossTerm: 2.6796e-03
+  Epoch   500/1000 | Total Loss: 8.4162e-03 | MonotonicityLossTerm: 2.3027e-08 | PositivityLossTerm: 6.2890e-03 | SliceBasedPriorLossTerm: 2.1272e-03
+  Epoch   600/1000 | Total Loss: 7.3066e-03 | MonotonicityLossTerm: 8.5274e-10 | PositivityLossTerm: 5.0991e-03 | SliceBasedPriorLossTerm: 2.2075e-03
+  Epoch   700/1000 | Total Loss: 6.1193e-03 | MonotonicityLossTerm: 7.6946e-10 | PositivityLossTerm: 4.5380e-03 | SliceBasedPriorLossTerm: 1.5813e-03
+  Epoch   800/1000 | Total Loss: 5.1085e-03 | MonotonicityLossTerm: 1.9992e-12 | PositivityLossTerm: 3.3375e-03 | SliceBasedPriorLossTerm: 1.7710e-03
+  Epoch   900/1000 | Total Loss: 4.0144e-03 | MonotonicityLossTerm: 5.2812e-08 | PositivityLossTerm: 3.0393e-03 | SliceBasedPriorLossTerm: 9.7513e-04
+  Epoch  1000/1000 | Total Loss: 3.1242e-03 | MonotonicityLossTerm: 9.6583e-08 | PositivityLossTerm: 2.2126e-03 | SliceBasedPriorLossTerm: 9.1151e-04
+     Training - done. Time (sec):  1.3454084
   ___________________________________________________________________________
-   
+     
    Evaluation
-   
+     
         # eval points. : 100
-   
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0002983
-   
-     Prediction time/pt. (sec) :  0.0000030
-   
+     Predicting - done. Time (sec):  0.0001571
+     
+     Prediction time/pt. (sec) :  0.0000016
+     
   ___________________________________________________________________________
-   
+     
    Evaluation
-   
+     
         # eval points. : 100
-   
+     
      Predicting ...
-     Predicting - done. Time (sec):  0.0001428
-   
+     Predicting - done. Time (sec):  0.0001385
+     
      Prediction time/pt. (sec) :  0.0000014
-
-
-.. figure:: rbfgen_Test_test_2.png
+     
+  
+.. figure:: rbfgen_Test_test_rbfgen_with_priorloss.png
   :scale: 80 %
   :align: center
 
@@ -337,28 +330,58 @@ Options
      -  None
      -  ['bool']
      -  Whether to print solver information
-  *  -  d0
+  *  -  rbf_surrogate
+     -  None
+     -  None
+     -  ['NNRichRBF', 'NoneType']
+     -  The RBF surrogate object
+  *  -  rbf_m_centers
+     -  None
+     -  None
+     -  ['int', 'NoneType']
+     -  Number of RBF centers. If None, defaults to max(3*[number of training points], 100).
+  *  -  rbf_d0
+     -  None
+     -  None
+     -  ['float', 'int', 'NoneType']
+     -  RBF width (epsilon). If None, computed via median heuristic.
+  *  -  rbf_rng_seed
+     -  1
+     -  None
+     -  ['int', 'Generator', 'NoneType']
+     -  Random seed or generator for center selection.
+  *  -  rbf_centers_distribution
+     -  random
+     -  ['random', 'linspace']
+     -  None
+     -  Distribution of RBF centers: 'random' (uniform random) or 'linspace' (regular grid).
+  *  -  learning_rate
+     -  0.001
+     -  None
+     -  ['float']
+     -  Learning rate for the network optimizer
+  *  -  alpha_scale
      -  1.0
      -  None
-     -  ['int', 'float', 'list', 'ndarray']
-     -  basis function scaling parameter in exp(-d^2 / d0^2)
-  *  -  poly_degree
-     -  -1
-     -  [-1, 0, 1]
-     -  ['int']
-     -  -1 means no global polynomial, 0 means constant, 1 means linear trend
-  *  -  data_dir
-     -  None
-     -  None
-     -  ['str']
-     -  Directory for loading / saving cached data; None means do not save or load
-  *  -  reg
-     -  1e-10
-     -  None
-     -  ['int', 'float']
-     -  Regularization coeff.
-  *  -  max_print_depth
-     -  5
+     -  ['float']
+     -  Scaling factor for alpha
+  *  -  epochs
+     -  1000
      -  None
      -  ['int']
-     -  Maximum depth (level of nesting) to print operation descriptions and times
+     -  Number of training epochs
+  *  -  batch_size
+     -  64
+     -  None
+     -  ['int']
+     -  Batch size for training
+  *  -  latent_space_dim
+     -  12
+     -  None
+     -  ['int']
+     -  Dimension of the latent space
+  *  -  num_eval_pts
+     -  100
+     -  None
+     -  ['int']
+     -  Number of evaluation points for nullspace
