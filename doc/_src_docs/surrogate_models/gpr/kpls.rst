@@ -83,7 +83,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.0663459
+     Training - done. Time (sec):  0.0968523
   ___________________________________________________________________________
      
    Evaluation
@@ -91,9 +91,9 @@ Usage
         # eval points. : 100
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0002611
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0000026
      
   ___________________________________________________________________________
      
@@ -102,9 +102,9 @@ Usage
         # eval points. : 5
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0005040
+     Predicting - done. Time (sec):  0.0003815
      
-     Prediction time/pt. (sec) :  0.0001008
+     Prediction time/pt. (sec) :  0.0000763
      
   
 .. figure:: kpls_Test_test_kpls.png
@@ -126,14 +126,17 @@ Usage with an automatic number of components
   ndim = 10
   prob = TensorProduct(ndim=ndim, func="exp")
   
-  sm = KPLS(eval_n_comp=True)
+  sm = KPLS(
+      eval_n_comp=True,
+      eval_n_comp_strategy="wold",
+  )
   samp = LHS(xlimits=prob.xlimits, seed=42)
   xt = samp(50)
   yt = prob(xt)
   sm.set_training_values(xt, yt)
   sm.train()
   
-  ## The model automatically choose a dimension of 3
+  ## The model automatically choose a dimension of 5
   ncomp = sm.options["n_comp"]
   print("\n The model automatically choose " + str(ncomp) + " components.")
   
@@ -165,7 +168,7 @@ Usage with an automatic number of components
    Training
      
      Training ...
-     Training - done. Time (sec): 27.0634744
+     Training - done. Time (sec): 87.2217591
   
    The model automatically choose 5 components.
   ___________________________________________________________________________
@@ -175,12 +178,90 @@ Usage with an automatic number of components
         # eval points. : 1
      
      Predicting ...
-     Predicting - done. Time (sec):  0.0000000
+     Predicting - done. Time (sec):  0.0002754
      
-     Prediction time/pt. (sec) :  0.0000000
+     Prediction time/pt. (sec) :  0.0002754
      
-  [[2.73415691]]
-  [[40.38140342]]
+  [[2.73415724]]
+  [[40.38142747]]
+  
+
+Usage with a range of number of components
+--------------------------------------------
+
+.. code-block:: python
+
+  import numpy as np
+  
+  from smt.problems import TensorProduct
+  from smt.sampling_methods import LHS
+  from smt.surrogate_models import KPLS
+  
+  # The problem is the exponential problem with dimension 10
+  ndim = 10
+  prob = TensorProduct(ndim=ndim, func="exp")
+  
+  n_comp_range = [2, 6]  # We explore the range [1, 5] n_dim and we chose the best
+  
+  sm = KPLS(
+      eval_n_comp=True,
+      eval_n_comp_strategy="exhaustive",
+      range_n_comp_exhaustive=n_comp_range,
+  )
+  samp = LHS(xlimits=prob.xlimits, seed=42)
+  xt = samp(50)
+  yt = prob(xt)
+  sm.set_training_values(xt, yt)
+  sm.train()
+  
+  ## The model automatically choose a dimension of 5
+  ncomp = sm.options["n_comp"]
+  print("\n The model automatically choose " + str(ncomp) + " components.")
+  
+  ## You can predict a 10-dimension point from the 3-dimensional model
+  print(
+      sm.predict_values(
+          np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+      )
+  )
+  print(
+      sm.predict_variances(
+          np.array([[-0.9, -0.7, -0.5, -0.3, -0.1, 0.1, 0.3, 0.5, 0.7, 0.9]])
+      )
+  )
+  
+::
+
+  ___________________________________________________________________________
+     
+                                     KPLS
+  ___________________________________________________________________________
+     
+   Problem size
+     
+        # training points.        : 50
+     
+  ___________________________________________________________________________
+     
+   Training
+     
+     Training ...
+     Training - done. Time (sec): 59.3835318
+  
+   The model automatically choose 5 components.
+  ___________________________________________________________________________
+     
+   Evaluation
+     
+        # eval points. : 1
+     
+     Predicting ...
+     Predicting - done. Time (sec):  0.0003910
+     
+     Prediction time/pt. (sec) :  0.0003910
+     
+  [[2.73416137]]
+  [[40.38140393]]
   
 
 Options
@@ -238,9 +319,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
@@ -311,26 +397,31 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  random_state
-     -  None
-     -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
   *  -  n_comp
      -  1
      -  None
      -  ['int']
-     -  Number of principal components
+     -  Number of principal components. Only used when eval_n_comp=False. Ignored when eval_n_comp=True (the optimal value is estimated instead).
   *  -  eval_n_comp
      -  False
      -  [True, False]
      -  ['bool']
-     -  n_comp evaluation flag
+     -  If True, the optimal number of components is estimated automatically using the strategy defined by eval_n_comp_strategy. If False, the value of n_comp is used directly.
   *  -  eval_comp_treshold
      -  1.0
      -  None
      -  ['float']
-     -  n_comp evaluation treshold for Wold's R criterion
+     -  Threshold for Wold's R criterion (used when eval_n_comp_strategy='wold').
+  *  -  eval_n_comp_strategy
+     -  wold
+     -  ['wold', 'exhaustive']
+     -  ['str']
+     -  Strategy used to estimate the optimal number of components when eval_n_comp=True. 'wold': increments n_comp until the cross-validation error stops decreasing (early stopping via Wold's R criterion). 'exhaustive': evaluates all values in range_n_comp_exhaustive and picks the global minimum.
+  *  -  range_n_comp_exhaustive
+     -  None
+     -  None
+     -  ['list', 'tuple', 'ndarray', 'NoneType']
+     -  Search range [n_min, n_max] (inclusive) for the exhaustive strategy. Only used when eval_n_comp=True and eval_n_comp_strategy='exhaustive'. If None, defaults to [1, max(1, n_features // 10)].
   *  -  cat_kernel_comps
      -  None
      -  None

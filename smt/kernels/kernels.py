@@ -7,6 +7,14 @@ class Kernel(metaclass=ABCMeta):
     def __init__(self, theta):
         self.theta = np.atleast_1d(theta)
 
+    @property
+    def theta(self):
+        return self._theta
+
+    @theta.setter
+    def theta(self, theta):
+        self._theta = np.atleast_1d(theta)
+
     def __add__(self, k):
         if not isinstance(k, Kernel):
             return Sum(self, Constant(k))
@@ -560,7 +568,8 @@ class Operator(Kernel):
 
     @theta.setter
     def theta(self, theta):
-        n = self.corr1.theta.shape[0]
+        theta = np.atleast_1d(theta)
+        n = np.atleast_1d(self.corr1.theta).shape[0]
         self.corr1.theta = theta[:n]
         self.corr2.theta = theta[n:]
 

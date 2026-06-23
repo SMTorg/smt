@@ -3,12 +3,13 @@ packaging
 numpy
 scipy
 scikit-learn
-pyDOE3 >= 1.5.0
+pydoe >= 1.0.0, <2.0
 numba           # JIT compiler
 matplotlib      # used in examples and tests
 pytest          # tests runner
 pytest-xdist    # allows running parallel testing with pytest -n <num_workers>
 pytest-cov      # allows to get coverage report
 ruff            # format and lint code
+setuptools-scm  # version from git tags
 jenn >= 2.0.0, <3.0
 egobox >= 0.36, <1.0

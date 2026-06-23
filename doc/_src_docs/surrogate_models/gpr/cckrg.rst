@@ -19,11 +19,9 @@ Usage
 
 .. code-block:: python
 
-  import random
-  
   import numpy as np
   
-  from smt.applications import CoopCompKRG
+  from smt.surrogate_models import CoopCompKRG
   from smt.problems import TensorProduct
   from smt.sampling_methods import LHS
   
@@ -32,7 +30,6 @@ Usage
   prob = TensorProduct(ndim=ndim, func="exp")
   
   # Example with three random components
-  # (use physical components if available)
   ncomp = 3
   
   # Initial sampling
@@ -40,24 +37,11 @@ Usage
   xt = samp(50)
   yt = prob(xt)
   
-  # Random design variable to component allocation
-  comps = [*range(ncomp)]
-  vars = [*range(ndim)]
-  random.shuffle(vars)
-  comp_var = np.full((ndim, ncomp), False)
-  for c in comps:
-      comp_size = int(ndim / ncomp)
-      start = c * comp_size
-      end = (c + 1) * comp_size
-      if c + 1 == ncomp:
-          end = max((c + 1) * comp_size, ndim)
-      comp_var[vars[start:end], c] = True
-  
   # Cooperative components Kriging model fit
-  sm = CoopCompKRG()
-  for active_coop_comp in comps:
-      sm.set_training_values(xt, yt)
-      sm.train(active_coop_comp, comp_var)
+  # comp_var is auto-computed from ncomp and seed
+  sm = CoopCompKRG(ncomp=ncomp)
+  sm.set_training_values(xt, yt)
+  sm.train()
   
   # Prediction as for ordinary Kriging
   xpoint = (-5 + np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])) / 10.0
@@ -80,37 +64,7 @@ Usage
    Training
      
      Training ...
-     Training - done. Time (sec):  0.5913942
-  ___________________________________________________________________________
-     
-                        Cooperative Components Kriging
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 50
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.4922669
-  ___________________________________________________________________________
-     
-                        Cooperative Components Kriging
-  ___________________________________________________________________________
-     
-   Problem size
-     
-        # training points.        : 50
-     
-  ___________________________________________________________________________
-     
-   Training
-     
-     Training ...
-     Training - done. Time (sec):  0.7231290
+     Training - done. Time (sec):  2.1547103
   ___________________________________________________________________________
      
    Evaluation
@@ -122,8 +76,8 @@ Usage
      
      Prediction time/pt. (sec) :  0.0000000
      
-  [[-2.25281975]]
-  [[15.32276756]]
+  [[0.42716488]]
+  [[6.5016309]]
   
 
 Options
@@ -181,9 +135,14 @@ Options
      -  Power for the pow_exp kernel function (valid values in (0.0, 2.0]).                 This option is set automatically when corr option is squar, abs, or matern.
   *  -  categorical_kernel
      -  MixIntKernelType.CONT_RELAX
-     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>]
+     -  [<MixIntKernelType.CONT_RELAX: 'CONT_RELAX'>, <MixIntKernelType.GOWER: 'GOWER'>, <MixIntKernelType.EXP_HOMO_HSPHERE: 'EXP_HOMO_HSPHERE'>, <MixIntKernelType.HOMO_HSPHERE: 'HOMO_HSPHERE'>, <MixIntKernelType.COMPOUND_SYMMETRY: 'COMPOUND_SYMMETRY'>, <MixIntKernelType.DIST_ENCODING: 'DIST_ENCODING'>]
      -  None
      -  The kernel to use for categorical inputs. Only for non continuous Kriging
+  *  -  categorical_kernel_beta
+     -  1.0
+     -  None
+     -  ['float', 'int']
+     -  Power for the distributional encoding kernel (valid values in (0.0, 2.0]).
   *  -  hierarchical_kernel
      -  MixHrcKernelType.ALG_KERNEL
      -  [<MixHrcKernelType.ALG_KERNEL: 'ALG_KERNEL'>, <MixHrcKernelType.ARC_KERNEL: 'ARC_KERNEL'>]
@@ -208,7 +167,7 @@ Options
      -  Cobyla
      -  ['Cobyla']
      -  ['str']
-     -  Correlation function type
+     -  Optimizer for hyperparameters optimisation
   *  -  eval_noise
      -  False
      -  [True, False]
@@ -254,8 +213,13 @@ Options
      -  None
      -  ['NoneType', 'int', 'Generator']
      -  Numpy Generator object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
-  *  -  random_state
+  *  -  comp_var
      -  None
      -  None
-     -  ['NoneType', 'int', 'RandomState']
-     -  DEPRECATED (use seed instead): Numpy RandomState object or seed number which controls random draws                 for internal optim (set by default to get reproductibility)
+     -  None
+     -  Boolean array [nx, n_comp] mapping design variables to components. If None, computed automatically from ncomp and seed.
+  *  -  ncomp
+     -  3
+     -  None
+     -  ['int']
+     -  Number of components (used to build comp_var when not provided)

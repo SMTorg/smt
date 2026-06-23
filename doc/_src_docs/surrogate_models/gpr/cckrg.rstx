@@ -17,9 +17,9 @@ References
 Usage
 -----
 
-.. embed-test-print :: smt.applications.tests.test_cckrg , TestCCKRG , run_cckrg_example
+.. embed-test-print :: smt.surrogate_models.tests.test_cckrg , TestCCKRG , run_cckrg_example
 
 Options
 -------
 
-.. embed-options-table :: smt.applications , CoopCompKRG , options
+.. embed-options-table :: smt.surrogate_models , CoopCompKRG , options

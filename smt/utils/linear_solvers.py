@@ -139,7 +139,10 @@ class DenseCholeskySolver(LinearSolver):
     def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options["print_init"]) as printer:
-            self.mtx = mtx.todense()
+            if hasattr(mtx, "todense"):
+                self.mtx = mtx.todense()
+            else:
+                self.mtx = mtx
             assert isinstance(self.mtx, np.ndarray), "mtx is of type %s" % type(mtx)
 
             with printer._timed_context(
@@ -168,13 +171,16 @@ class DenseLUSolver(LinearSolver):
     def _setup(self, mtx, printer, mg_matrices=[]):
         self.printer = printer
         with self._active(self.options["print_init"]) as printer:
-            self.mtx = mtx
-            assert isinstance(mtx, np.ndarray), "mtx is of type %s" % type(mtx)
+            if hasattr(mtx, "todense"):
+                self.mtx = mtx.todense()
+            else:
+                self.mtx = mtx
+            assert isinstance(self.mtx, np.ndarray), "mtx is of type %s" % type(mtx)
 
             with printer._timed_context(
                 "Performing LU fact. (%i x %i mtx)" % mtx.shape
             ):
-                self.fact = scipy.linalg.lu_factor(mtx)
+                self.fact = scipy.linalg.lu_factor(self.mtx)
 
     def _solve(self, rhs, sol=None, ind_y=0):
         with self._active(self.options["print_solve"]) as printer:

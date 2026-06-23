@@ -7,13 +7,15 @@ import unittest
 import numpy as np
 
 from smt.surrogate_models import KRG
-from smt.utils.krg_sampling import (
+from smt.surrogate_models.krg_based.krg_sampling import (
     covariance_matrix,
     eig_grid,
-    gauss_legendre_grid,
-    rectangular_grid,
     sample_eigen,
     sample_trajectory,
+)
+from smt.utils.quadrature import (
+    gauss_legendre_grid,
+    rectangular_grid,
     simpson_grid,
 )
 

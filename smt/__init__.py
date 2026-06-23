@@ -1,4 +1,9 @@
-__version__ = "2.11.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("smt")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     "surrogate_models",

@@ -23,17 +23,14 @@ class Test(unittest.TestCase):
         doe2 = sampling(num)
         self.assertTrue(np.allclose(doe1, doe2))
 
-    def test_deprecated_random_state(self):
+    def test_removed_random_state(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])
-        num = 10
-        with self.assertWarns(DeprecationWarning):
-            sampling = LHS(xlimits=xlimits, criterion="ese", random_state=42)
-            _doe = sampling(num)
-        with self.assertRaises(ValueError):
-            sampling = LHS(
+        with self.assertRaises(AssertionError):
+            LHS(xlimits=xlimits, criterion="ese", random_state=42)
+        with self.assertRaises(AssertionError):
+            LHS(
                 xlimits=xlimits, criterion="ese", random_state=np.random.RandomState(42)
             )
-            _doe = sampling(num)
 
     def test_random_state(self):
         xlimits = np.array([[0.0, 4.0], [0.0, 3.0]])

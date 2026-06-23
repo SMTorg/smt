@@ -4,7 +4,7 @@ Latin Hypercube sampling
 The LHS design is a statistical method for generating a quasi-random sampling distribution. It is among the most popular sampling techniques in computer experiments thanks to its simplicity and projection properties with high-dimensional problems. LHS is built as follows: we cut each dimension space, which represents a variable, into n
 sections where n is the number of sampling points, and we put only one point in each section.
 
-The LHS method uses the pyDOE package (Design of Experiments for Python) [1]_. Five criteria for the construction of LHS are implemented in SMT:
+The LHS method uses the pydoe package (Design of Experiments for Python) [1]_. Five criteria for the construction of LHS are implemented in SMT:
 
 - Center the points within the sampling intervals.
 - Maximize the minimum distance between points and place the point in a randomized location within its interval.
@@ -12,9 +12,9 @@ The LHS method uses the pyDOE package (Design of Experiments for Python) [1]_. F
 - Minimize the maximum correlation coefficient.
 - Optimize the design using the Enhanced Stochastic Evolutionary algorithm (ESE).
 
-The four first criteria are the same than in pyDOE (for more details, see [1]_). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [2]_).
+The four first criteria are the same than in pydoe (for more details, see [1]_). The last criterion, ESE, is implemented by the authors of SMT (more details about such method could be found in [2]_).
 
-.. [1] https://pydoe3.readthedocs.io/en/stable
+.. [1] https://pydoe.github.io/pydoe/
 
 .. [2] Jin, R. and Chen, W. and Sudjianto, A. (2005), "An efficient algorithm for constructing optimal design of computer experiments." Journal of Statistical Planning and Inference, 134:268-287.
 

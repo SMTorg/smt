@@ -8,11 +8,12 @@ from __future__ import division
 
 import numpy as np
 from scipy import linalg
+from scipy.stats import multivariate_normal as m_norm
 
 from smt.kernels.kernels import Kernel
 from smt.surrogate_models.krg_based import KrgBased
 from smt.utils.checks import check_nx, check_support, ensure_2d_array
-from smt.utils.kriging import componentwise_distance, differences
+from smt.surrogate_models.krg_based.distances import componentwise_distance, differences
 
 """
 The Active kriging class.
@@ -46,7 +47,7 @@ class MGP(KrgBased):
         self.options["hyper_opt"] = "TNC"
         self.options["corr"] = "act_exp"
 
-    def _componentwise_distance(self, dx, small=False, opt=0):
+    def _componentwise_distance(self, dx, small=False):
         """
         Compute the componentwise distance with respect to the correlation kernel
 
@@ -58,8 +59,6 @@ class MGP(KrgBased):
         small : bool, optional
             Compute the componentwise distance in small (n_components) dimension
             or in initial dimension. The default is False.
-        opt : int, optional
-            useless for MGP
 
         Returns
         -------
@@ -505,11 +504,50 @@ class MGP(KrgBased):
         svd_sum = np.sum(svd[1])
         self.best_ncomp = min(np.argwhere(svd_cumsum > 0.99 * svd_sum)) + 1
 
+    # --- Polymorphic hook overrides ---
+
+    def _post_optim_hook(self):
+        """MGP runs _specific_train after optimization."""
+        self._specific_train()
+
+    def _uses_log_theta_space(self) -> bool:
+        """MGP works in linear theta space, not log10."""
+        return False
+
+    def _get_optimizer_theta_bounds(self, theta_bounds, i):
+        """MGP uses linear-space symmetric bounds."""
+        constraints = [
+            lambda theta, i=i: theta[i] + theta_bounds[1],
+            lambda theta, i=i: theta_bounds[1] - theta[i],
+        ]
+        return constraints, (-theta_bounds[1], theta_bounds[1])
+
+    def _get_optimizer_initial_theta(self, theta_bounds):
+        """MGP samples initial theta from prior distribution."""
+        theta0_rand = m_norm.rvs(
+            self.options["prior"]["mean"] * len(self.theta0),
+            self.options["prior"]["var"],
+            1,
+        )
+        theta0 = self.theta0
+        return theta0, theta0_rand
+
+    def _transform_optimal_theta(self, optimal_theta):
+        """MGP operates in linear theta space; no transformation needed."""
+        return optimal_theta
+
     def _check_param(self):
         """
         Overrides KrgBased implementation
         This function checks some parameters of the model.
         """
+        # Create working copies of mutable options to avoid mutating self.options
+        self._theta0 = list(self.options["theta0"])
+        self._eval_noise = getattr(
+            self, "_eval_noise_request", self.options["eval_noise"]
+        )
+        self._noise0 = list(self.options["noise0"])
+        self._hyper_opt = self.options["hyper_opt"]
 
         d = self.options["n_comp"] * self.nx
 
@@ -518,11 +556,11 @@ class MGP(KrgBased):
         if self.options["hyper_opt"] != "TNC":
             raise ValueError("MGP must be used with TNC hyperparameters optimizer")
 
-        if len(self.options["theta0"]) != d:
-            if len(self.options["theta0"]) == 1:
-                self.options["theta0"] *= np.ones(d)
+        if len(self._theta0) != d:
+            if len(self._theta0) == 1:
+                self._theta0 = list(np.array(self._theta0) * np.ones(d))
             else:
                 raise ValueError(
                     "the number of dim %s should be equal to the length of theta0 %s."
-                    % (d, len(self.options["theta0"]))
+                    % (d, len(self._theta0))
                 )

@@ -8,6 +8,7 @@ from .gpx import GPX
 from .genn import GENN
 from .mgp import MGP
 from .sgp import SGP
+from .cckrg import CoopCompKRG
 
 from .krg_based import MixIntKernelType
 
@@ -18,7 +19,7 @@ from smt.design_space import (
     IntegerVariable,
     OrdinalVariable,
 )
-from smt.utils.kriging import MixHrcKernelType
+from .krg_based import MixHrcKernelType
 
 __all__ = [
     "LS",
@@ -31,6 +32,7 @@ __all__ = [
     "GENN",
     "MGP",
     "SGP",
+    "CoopCompKRG",
     "MixIntKernelType",
     "DesignSpace",
     "FloatVariable",

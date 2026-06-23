@@ -26,8 +26,11 @@ Squared Exponential (Gaussian) correlation function:
 
 Exponential correlation function with a variable power:
 
+
 .. math ::
   \prod\limits_{l=1}^{nx}\exp\left(-\theta_l\left|x_l^{(i)}-x_l^{(j)}\right|^{p}\right),  \quad \forall\ \theta_l\in\mathbb{R}^+
+
+In order to have a better condition number for the Gaussian correlation  matrices, the power exponential kernel is considered with power = 1.9 by default (see Zimmermann, R. (2015). 'On the condition number anomaly of Gaussian correlation matrices'. Linear Algebra and its Applications, 466, 512-526 and Schoenberg, I. J. [1938], 'Metric spaces and positive definite functions', Transactions  of the American Mathematical Society 44, 522–536)
   
 Matérn 5/2 correlation function:
 
@@ -72,6 +75,9 @@ then we round in the prediction to the output dimension giving the greatest cont
 
 A special case is the use of the Gower distance to handle mixed integer variables (hence the `gower` kernel/correlation model option).
 See the `MixedInteger Tutorial <https://github.com/SMTorg/smt/blob/master/tutorial/SMT_MixedInteger_application.ipynb>`_ for such usage.  
+
+Another advanced method for categorical variables is the **Distributional Encoding (DE)** kernel, which represents categorical levels as empirical distributions of the target values. 
+See :ref:`Mixed Integer and hierarchical Surrogates` for more details.
 
 More details available in [2]_. See also :ref:`Mixed Integer and hierarchical Surrogates`.
 

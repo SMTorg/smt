@@ -20,7 +20,7 @@ from smt.applications.mixed_integer import (
 )
 from smt.design_space import BaseDesignSpace, DesignSpace
 from smt.sampling_methods import LHS
-from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP
+from smt.surrogate_models import GEKPLS, GPX, KPLS, KPLSK, KRG, MGP, CoopCompKRG
 
 
 class Evaluator(object):
@@ -119,7 +119,7 @@ class EGO(SurrogateBasedApplication):
         declare(
             "surrogate",
             KRG(print_global=False),
-            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX),
+            types=(KRG, KPLS, KPLSK, GEKPLS, MGP, GPX, CoopCompKRG),
             desc="SMT kriging-based surrogate model used internaly",
         )
         self.options.declare(

@@ -10,13 +10,21 @@ Adapted on March 2020 by Nathalie Bartoli to the new SMT version
 Adapted on January 2021 by Andres Lopez-Lopera to the new SMT version
 """
 
+import numpy as np
+
 from smt.applications import MFKPLS
-from smt.utils.kriging import componentwise_distance
+from smt.surrogate_models.krg_based import compute_n_param
+from smt.surrogate_models.krg_based.distances import componentwise_distance
 
 
 class MFKPLSK(MFKPLS):
+    @property
+    def _is_kplsk_style(self) -> bool:
+        return True
+
     def _initialize(self):
         super(MFKPLSK, self)._initialize()
+        self._pls_pass = False
         declare = self.options.declare
         # Like KPLSK, MFKPLSK used only with "squar_exp" correlations
         declare(
@@ -35,36 +43,59 @@ class MFKPLSK(MFKPLS):
         )
         self.name = "MFKPLSK"
 
-    def _componentwise_distance(self, dx, opt=0):
-        # Modif for KPLSK model
-        if opt == 0:
-            # Kriging step
-            d = componentwise_distance(
-                dx, self.options["corr"], self.nx, power=self.options["pow_exp_power"]
-            )
+    def _componentwise_distance(self, dx):
+        if self._pls_pass:
+            # PLS step (reduced space for first optimization pass)
+            d = super(MFKPLSK, self)._componentwise_distance(dx)
         else:
-            # KPLS step
-            d = super(MFKPLSK, self)._componentwise_distance(dx, opt)
-
+            # Full Kriging step (prediction and second optimization pass)
+            d = componentwise_distance(
+                dx, self.options["corr"], self.nx, power=self._pow_exp_power
+            )
         return d
 
-    def _new_train(self):
-        """
-        Overrides KrgBased implementation
-        Trains the Multi-Fidelity model + PLS (done on the highest fidelity level) + Kriging  (MFKPLSK)
-        """
-        self._new_train_init()
-        self.n_comp = self.options["n_comp"]
-        theta0 = self.options["theta0"].copy()
-        noise0 = self.options["noise0"].copy()
+    def _handle_theta0_out_of_bounds(self, theta0_i, i, theta_bounds):
+        """Clamp theta0 to bounds like KPLSK."""
+        if theta0_i - theta_bounds[1] > 0:
+            return theta_bounds[1] - 1e-10
+        else:
+            return theta_bounds[0] + 1e-10
 
-        for lvl in range(self.nlvl):
-            self._new_train_iteration(lvl)
-            self.options["n_comp"] = self.n_comp
-            self.options["theta0"] = theta0
-            self.options["noise0"] = noise0
+    def _run_optimization(self, D):
+        """Two-pass optimization: PLS space then full Kriging space."""
+        # First pass: optimize in reduced PLS space
+        self._pls_pass = True
+        self.kplsk_second_loop = False
+        _, _, best_theta = self._optimize_hyperparam(D)
 
-        self._reinterpolate(lvl)
+        # Project PLS theta back to full Kriging space
+        if self._eval_noise:
+            theta = best_theta[:-1]
+        else:
+            theta = best_theta
+
+        if self.options["corr"] == "squar_exp":
+            self._theta0 = list((theta * self.coeff_pls**2).sum(1))
+        else:
+            self._theta0 = list((theta * np.abs(self.coeff_pls)).sum(1))
+        self.n_param = compute_n_param(
+            self.design_space,
+            self.options["categorical_kernel"],
+            self.nx,
+            None,
+            None,
+        )
+        self._n_comp = int(self.n_param)
+        self.best_iteration_fail = None
+
+        # Second pass: optimize in full Kriging space (no multistart)
+        self._pls_pass = False
+        self.kplsk_second_loop = True
+        return self._optimize_hyperparam(
+            D,
+            use_multistart=False,
+            limit=10 * self._n_comp,
+        )
 
     def _get_theta(self, i):
         return self.optimal_theta[i]

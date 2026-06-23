@@ -83,6 +83,21 @@ class TestSMFCK(SMTestCase):
 
             self.assert_error(t_error, 0.0, 5e-1, 5e-1)
 
+    def test_smfck_error_branches(self):
+        """Covers ValueError in eta and inconsistent n_inducing."""
+        sm = SMFCK()
+        with self.assertRaises(ValueError):
+            sm.eta(j=5, jp=2, rho=[1.0, 1.0])
+
+        # Inconsistent n_inducing
+        sm3 = SMFCK(n_inducing=[10])
+        xt = np.array([[0.0], [1.0]])
+        yt = np.array([[0.0], [1.0]])
+        sm3.set_training_values(xt, yt)
+        sm3.set_training_values(xt, yt, name=0)
+        with self.assertRaises(ValueError):
+            sm3.train()
+
     @staticmethod
     def run_smfck_example():
         import matplotlib.pyplot as plt

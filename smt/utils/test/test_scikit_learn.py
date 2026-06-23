@@ -20,8 +20,8 @@ from inspect import Signature, Parameter
 class TestSklearnAdapter(unittest.TestCase):
     def setUp(self):
         # Prepare a sample dataset
-        rng = np.random.RandomState(0)
-        self.X = rng.rand(50, 1)
+        rng = np.random.default_rng(0)
+        self.X = rng.random((50, 1))
         self.y = np.sin(2 * self.X).ravel()
 
     def test_adapter_basic_fit_predict(self):
