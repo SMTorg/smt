@@ -59,7 +59,7 @@ def lhs(n, dim, low, high, rng):
 
 class NNRichRBF(SurrogateModel):
     """
-    RBF Surrogate model that generates a nullspace for InfoGAN.
+    RBF Surrogate model that generates a nullspace for RBFGen.
     """
 
     name = "NNRichRBF"
