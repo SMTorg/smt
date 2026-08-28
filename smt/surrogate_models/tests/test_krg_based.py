@@ -8,11 +8,9 @@ import unittest
 
 import numpy as np
 
-from smt.problems import Rosenbrock
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG, SGP
 from smt.surrogate_models.krg_based import KrgBased
-from smt.utils.misc import compute_relative_error
 
 
 # defining the toy example
@@ -553,52 +551,6 @@ class TestKrgBased(unittest.TestCase):
             1.0e-2,
         )
 
-    def test_check_training_numerically(self):
-        ndim = 2
-        ndoe = 20  # int(10*ndim)
-        # Define the function
-        fun = Rosenbrock(ndim=ndim)
-
-        # Construction of the DOE
-        # in order to have the always same LHS points, seed=1
-        sampling = LHS(xlimits=fun.xlimits, criterion="ese", seed=1)
-        xt = sampling(ndoe)
-        # Compute the outputs
-        yt = fun(xt)
-
-        # Construction of the validation points
-        ntest = 200  # 500
-        sampling = LHS(xlimits=fun.xlimits, criterion="ese", seed=1)
-        xtest = sampling(ntest)
-        ytest = fun(xtest)
-
-        # The variable 'theta0' is a list of length ndim.
-        t = KRG(theta0=[1e-2] * ndim, print_prediction=False, corr="pow_exp")
-        t.set_training_values(xt, yt[:, 0])
-
-        t.train()
-
-        # Prediction of the validation points
-        t.predict_values(xtest)
-        print("Kriging,  err: " + str(compute_relative_error(t, xtest, ytest)))
-        print("R is ill-conditioned?", t.is_training_ill_conditioned())
-        self.assertTrue(not (t.is_training_ill_conditioned()))
-        # The variable 'theta0' is a list of length ndim.
-        ndoe = 50  # int(10*ndim)
-        xt = sampling(ndoe)
-        # Compute the outputs
-        yt = fun(xt)
-        t = KRG(theta0=[1e-2] * ndim, print_prediction=False, corr="squar_exp")
-        t.set_training_values(xt, yt[:, 0])
-
-        t.train()
-
-        # Prediction of the validation points
-        t.predict_values(xtest)
-        print("Kriging,  err: " + str(compute_relative_error(t, xtest, ytest)))
-        print("R is ill-conditioned?", t.is_training_ill_conditioned())
-        self.assertTrue(t.is_training_ill_conditioned())
-
     def test_random_generator(self):
         rng = np.random.default_rng(42)
         nobs = 50  # number of obsertvations
@@ -623,6 +575,39 @@ class TestKrgBased(unittest.TestCase):
             KRG(random_state=42)
         with self.assertRaises(AssertionError):
             KRG(random_state=np.random.RandomState(42))
+
+    def test_is_training_ill_conditioned_well_conditioned(self):
+        """Test is_training_ill_conditioned with well-conditioned training data."""
+        # Create training data with very close points
+        xt = np.array([[0.0], [0.2], [0.5], [0.8], [1.0]])
+        yt = np.cos(5 * xt)
+
+        # Train Kriging model
+        krg = KRG(print_global=False)
+        krg.set_training_values(xt, yt)
+        krg.train()
+
+        # Should not be ill-conditioned
+        is_ill = krg.is_training_ill_conditioned()
+        self.assertFalse(
+            is_ill, "Well-conditioned data should not be flagged as ill-conditioned"
+        )
+
+    def test_is_training_ill_conditioned_close_points(self):
+        """Test is_training_ill_conditioned with very close training points."""
+        # Create training data with very close points
+        xt = np.array([[0.0], [1e-6], [2e-6], [0.5], [1.0]])
+        yt = np.cos(5 * xt)
+
+        krg = KRG(print_global=False)
+        krg.set_training_values(xt, yt)
+        krg.train()
+
+        # Should detect ill-conditioning due to close points
+        is_ill = krg.is_training_ill_conditioned()
+        # The function returns a numpy boolean, so check it's a boolean-like value
+        # and that the function executes without errors
+        self.assertTrue(is_ill, "Close points should be flagged as ill-conditioned")
 
 
 if __name__ == "__main__":
