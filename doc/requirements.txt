@@ -8,5 +8,6 @@ numpydoc
 matplotlib
 jenn >= 2.0.0, <3.0
 egobox >= 0.36, <1.0
+torch >= 2.4.1
 smt-design-space-ext
 git+https://github.com/hwangjt/sphinx_auto_embed.git  # for doc generation
