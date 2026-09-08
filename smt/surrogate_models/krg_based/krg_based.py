@@ -60,6 +60,9 @@ from smt.utils.misc import standardization
 # Nb of tries when inner optimization fails
 MAX_RETRY = 5
 
+# Threshold for ill-conditioned correlation matrix
+IS_ILL_CONDITIONNED_LIMIT = 1e9
+
 
 class KrgBased(SurrogateModel):
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
@@ -700,7 +703,7 @@ class KrgBased(SurrogateModel):
         ----
         Returns true if R is ill_conditionned
         """
-        R = self.optimal_par["C"] @ self.optimal_par["C"]
+        R = self.optimal_par["C"] @ self.optimal_par["C"].T
         condR = np.linalg.cond(R)
         print(
             "Minimal distance between two points in any dimension is",
@@ -709,12 +712,10 @@ class KrgBased(SurrogateModel):
         print(
             "Correlation matrix R condition number is",
             "{:.2e}".format(condR),
+            "(when significantly greater than 1, correlation matrix is ill-conditioned, "
+            f"checked if > {IS_ILL_CONDITIONNED_LIMIT})",
         )
-        return (
-            linalg.svd(R, compute_uv=False)[-1]
-            < (1.5 * 100.0 * np.finfo(np.double).eps)
-            and condR > 1e9
-        )
+        return condR > IS_ILL_CONDITIONNED_LIMIT
 
     def _train(self):
         """
